@@ -83,8 +83,9 @@ static void report(char const *fmt, ...) {
 	vfprintf(stderr, fmt, ap);
 	va_end(ap);
 
-	if (nbErrors != UINT8_MAX)
+	if (nbErrors != UINT8_MAX) {
 		nbErrors++;
+	}
 }
 
 enum MbcType {
@@ -189,16 +190,19 @@ static bool readMBCSlice(char const *&name, char const *expected) {
 	while (*expected) {
 		char c = *name++;
 
-		if (c == '\0') // Name too short
+		if (c == '\0') { // Name too short
 			return false;
+		}
 
-		if (c >= 'a' && c <= 'z') // Perform the comparison case-insensitive
+		if (c >= 'a' && c <= 'z') { // Perform the comparison case-insensitive
 			c = c - 'a' + 'A';
-		else if (c == '_') // Treat underscores as spaces
+		} else if (c == '_') { // Treat underscores as spaces
 			c = ' ';
+		}
 
-		if (c != *expected++)
+		if (c != *expected++) {
 			return false;
+		}
 	}
 	return true;
 }
@@ -221,10 +225,12 @@ static MbcType parseMBC(char const *name) {
 		char *endptr;
 		unsigned long mbc = strtoul(name, &endptr, base);
 
-		if (*endptr)
+		if (*endptr) {
 			return MBC_BAD;
-		if (mbc > 0xFF)
+		}
+		if (mbc > 0xFF) {
 			return MBC_BAD_RANGE;
+		}
 		return static_cast<MbcType>(mbc);
 
 	} else {
@@ -233,8 +239,9 @@ static MbcType parseMBC(char const *name) {
 		char const *ptr = name;
 
 		// Trim off leading whitespace
-		while (*ptr == ' ' || *ptr == '\t')
+		while (*ptr == ' ' || *ptr == '\t') {
 			ptr++;
+		}
 
 #define tryReadSlice(expected) \
 	do { \
@@ -247,8 +254,9 @@ static MbcType parseMBC(char const *name) {
 		case 'r':
 			tryReadSlice("OM");
 			// Handle optional " ONLY"
-			while (*ptr == ' ' || *ptr == '\t' || *ptr == '_')
+			while (*ptr == ' ' || *ptr == '\t' || *ptr == '_') {
 				ptr++;
+			}
 			if (*ptr == 'O' || *ptr == 'o') {
 				ptr++;
 				tryReadSlice("NLY");
@@ -323,8 +331,9 @@ static MbcType parseMBC(char const *name) {
 			case 'P': {
 				tryReadSlice("P1");
 				// Parse version
-				while (*ptr == ' ' || *ptr == '_')
+				while (*ptr == ' ' || *ptr == '_') {
 					ptr++;
+				}
 				// Major
 				char *endptr;
 				unsigned long val = strtoul(ptr, &endptr, 10);
@@ -392,18 +401,22 @@ static MbcType parseMBC(char const *name) {
 
 		for (;;) {
 			// Trim off trailing whitespace
-			while (*ptr == ' ' || *ptr == '\t' || *ptr == '_')
+			while (*ptr == ' ' || *ptr == '\t' || *ptr == '_') {
 				ptr++;
+			}
 
 			// If done, start processing "features"
-			if (!*ptr)
+			if (!*ptr) {
 				break;
+			}
 			// We expect a '+' at this point
-			if (*ptr++ != '+')
+			if (*ptr++ != '+') {
 				return MBC_BAD;
+			}
 			// Trim off leading whitespace
-			while (*ptr == ' ' || *ptr == '\t' || *ptr == '_')
+			while (*ptr == ' ' || *ptr == '\t' || *ptr == '_') {
 				ptr++;
+			}
 
 			switch (*ptr++) {
 			case 'B': // BATTERY
@@ -428,8 +441,9 @@ static MbcType parseMBC(char const *name) {
 					break;
 				case 'A':
 				case 'a':
-					if (*ptr != 'M' && *ptr != 'm')
+					if (*ptr != 'M' && *ptr != 'm') {
 						return MBC_BAD;
+					}
 					ptr++;
 					features |= RAM;
 					break;
@@ -458,8 +472,9 @@ static MbcType parseMBC(char const *name) {
 
 		switch (mbc) {
 		case ROM:
-			if (!features)
+			if (!features) {
 				break;
+			}
 			mbc = ROM_RAM - 1;
 			static_assert(ROM_RAM + 1 == ROM_RAM_BATTERY, "Enum sanity check failed!");
 			static_assert(MBC1 + 1 == MBC1_RAM, "Enum sanity check failed!");
@@ -469,26 +484,29 @@ static MbcType parseMBC(char const *name) {
 			[[fallthrough]];
 		case MBC1:
 		case MMM01:
-			if (features == RAM)
+			if (features == RAM) {
 				mbc++;
-			else if (features == (RAM | BATTERY))
+			} else if (features == (RAM | BATTERY)) {
 				mbc += 2;
-			else if (features)
+			} else if (features) {
 				return MBC_WRONG_FEATURES;
+			}
 			break;
 
 		case MBC2:
-			if (features == BATTERY)
+			if (features == BATTERY) {
 				mbc = MBC2_BATTERY;
-			else if (features)
+			} else if (features) {
 				return MBC_WRONG_FEATURES;
+			}
 			break;
 
 		case MBC3:
 			// Handle timer, which also requires battery
 			if (features & TIMER) {
-				if (!(features & BATTERY))
+				if (!(features & BATTERY)) {
 					fprintf(stderr, "warning: MBC3+TIMER implies BATTERY\n");
+				}
 				features &= ~(TIMER | BATTERY); // Reset those bits
 				mbc = MBC3_TIMER_BATTERY;
 				// RAM is handled below
@@ -498,12 +516,13 @@ static MbcType parseMBC(char const *name) {
 			static_assert(
 			    MBC3_TIMER_BATTERY + 1 == MBC3_TIMER_RAM_BATTERY, "Enum sanity check failed!"
 			);
-			if (features == RAM)
+			if (features == RAM) {
 				mbc++;
-			else if (features == (RAM | BATTERY))
+			} else if (features == (RAM | BATTERY)) {
 				mbc += 2;
-			else if (features)
+			} else if (features) {
 				return MBC_WRONG_FEATURES;
+			}
 			break;
 
 		case MBC5:
@@ -515,12 +534,13 @@ static MbcType parseMBC(char const *name) {
 			static_assert(MBC5 + 2 == MBC5_RAM_BATTERY, "Enum sanity check failed!");
 			static_assert(MBC5_RUMBLE + 1 == MBC5_RUMBLE_RAM, "Enum sanity check failed!");
 			static_assert(MBC5_RUMBLE + 2 == MBC5_RUMBLE_RAM_BATTERY, "Enum sanity check failed!");
-			if (features == RAM)
+			if (features == RAM) {
 				mbc++;
-			else if (features == (RAM | BATTERY))
+			} else if (features == (RAM | BATTERY)) {
 				mbc += 2;
-			else if (features)
+			} else if (features) {
 				return MBC_WRONG_FEATURES;
+			}
 			break;
 
 		case MBC6:
@@ -528,45 +548,56 @@ static MbcType parseMBC(char const *name) {
 		case BANDAI_TAMA5:
 		case HUC3:
 			// No extra features accepted
-			if (features)
+			if (features) {
 				return MBC_WRONG_FEATURES;
+			}
 			break;
 
 		case MBC7_SENSOR_RUMBLE_RAM_BATTERY:
-			if (features != (SENSOR | RUMBLE | RAM | BATTERY))
+			if (features != (SENSOR | RUMBLE | RAM | BATTERY)) {
 				return MBC_WRONG_FEATURES;
+			}
 			break;
 
 		case HUC1_RAM_BATTERY:
-			if (features != (RAM | BATTERY)) // HuC1 expects RAM+BATTERY
+			if (features != (RAM | BATTERY)) { // HuC1 expects RAM+BATTERY
 				return MBC_WRONG_FEATURES;
+			}
 			break;
 
 		case TPP1:
-			if (features & RAM)
+			if (features & RAM) {
 				fprintf(
 				    stderr, "warning: TPP1 requests RAM implicitly if given a non-zero RAM size"
 				);
-			if (features & BATTERY)
+			}
+			if (features & BATTERY) {
 				mbc |= 0x08;
-			if (features & TIMER)
+			}
+			if (features & TIMER) {
 				mbc |= 0x04;
-			if (features & MULTIRUMBLE)
+			}
+			if (features & MULTIRUMBLE) {
 				mbc |= 0x03; // Also set the rumble flag
-			if (features & RUMBLE)
+			}
+			if (features & RUMBLE) {
 				mbc |= 0x01;
-			if (features & SENSOR)
+			}
+			if (features & SENSOR) {
 				return MBC_WRONG_FEATURES;
+			}
 			break;
 		}
 
 		// Trim off trailing whitespace
-		while (*ptr == ' ' || *ptr == '\t')
+		while (*ptr == ' ' || *ptr == '\t') {
 			ptr++;
+		}
 
 		// If there is still something past the whitespace, error out
-		if (*ptr)
+		if (*ptr) {
 			return MBC_BAD;
+		}
 
 		return static_cast<MbcType>(mbc);
 	}
@@ -780,11 +811,13 @@ static ssize_t readBytes(int fd, uint8_t *buf, size_t len) {
 	while (len) {
 		ssize_t ret = read(fd, buf, len);
 
-		if (ret == -1 && errno != EINTR) // Return errors, unless we only were interrupted
+		if (ret == -1 && errno != EINTR) { // Return errors, unless we only were interrupted
 			return -1;
+		}
 		// EOF reached
-		if (ret == 0)
+		if (ret == 0) {
 			return total;
+		}
 		// If anything was read, accumulate it, and continue
 		if (ret != -1) {
 			total += ret;
@@ -805,8 +838,9 @@ static ssize_t writeBytes(int fd, uint8_t *buf, size_t len) {
 	while (len) {
 		ssize_t ret = write(fd, buf, len);
 
-		if (ret == -1 && errno != EINTR) // Return errors, unless we only were interrupted
+		if (ret == -1 && errno != EINTR) { // Return errors, unless we only were interrupted
 			return -1;
+		}
 		// If anything was written, accumulate it, and continue
 		if (ret != -1) {
 			total += ret;
@@ -825,8 +859,9 @@ static ssize_t writeBytes(int fd, uint8_t *buf, size_t len) {
 static void overwriteByte(uint8_t *rom0, uint16_t addr, uint8_t fixedByte, char const *areaName) {
 	uint8_t origByte = rom0[addr];
 
-	if (!overwriteRom && origByte != 0 && origByte != fixedByte)
+	if (!overwriteRom && origByte != 0 && origByte != fixedByte) {
 		fprintf(stderr, "warning: Overwrote a non-zero byte in the %s\n", areaName);
+	}
 
 	rom0[addr] = fixedByte;
 }
@@ -859,10 +894,11 @@ static void overwriteBytes(
 // @param fileSize The file's size if known, 0 if not.
 static void processFile(int input, int output, char const *name, off_t fileSize) {
 	// Both of these should be true for seekable files, and neither otherwise
-	if (input == output)
+	if (input == output) {
 		assume(fileSize != 0);
-	else
+	} else {
 		assume(fileSize == 0);
+	}
 
 	uint8_t rom0[BANK_SIZE];
 	ssize_t rom0Len = readBytes(input, rom0, sizeof(rom0));
@@ -884,21 +920,25 @@ static void processFile(int input, int output, char const *name, off_t fileSize)
 	}
 	// Accept partial reads if the file contains at least the header
 
-	if (fixSpec & (FIX_LOGO | TRASH_LOGO))
+	if (fixSpec & (FIX_LOGO | TRASH_LOGO)) {
 		overwriteBytes(rom0, 0x0104, logo, sizeof(logo), logoFilename ? "logo" : "Nintendo logo");
+	}
 
-	if (title)
+	if (title) {
 		overwriteBytes(rom0, 0x134, reinterpret_cast<uint8_t const *>(title), titleLen, "title");
+	}
 
-	if (gameID)
+	if (gameID) {
 		overwriteBytes(
 		    rom0, 0x13F, reinterpret_cast<uint8_t const *>(gameID), gameIDLen, "manufacturer code"
 		);
+	}
 
-	if (model != DMG)
+	if (model != DMG) {
 		overwriteByte(rom0, 0x143, model == BOTH ? 0x80 : 0xC0, "CGB flag");
+	}
 
-	if (newLicensee)
+	if (newLicensee) {
 		overwriteBytes(
 		    rom0,
 		    0x144,
@@ -906,9 +946,11 @@ static void processFile(int input, int output, char const *name, off_t fileSize)
 		    newLicenseeLen,
 		    "new licensee code"
 		);
+	}
 
-	if (sgb)
+	if (sgb) {
 		overwriteByte(rom0, 0x146, 0x03, "SGB flag");
+	}
 
 	// If a valid MBC was specified...
 	if (cartridgeType < MBC_NONE) {
@@ -931,31 +973,36 @@ static void processFile(int input, int output, char const *name, off_t fileSize)
 
 		overwriteBytes(rom0, 0x150, tpp1Rev, sizeof(tpp1Rev), "TPP1 revision number");
 
-		if (ramSize != UNSPECIFIED)
+		if (ramSize != UNSPECIFIED) {
 			overwriteByte(rom0, 0x152, ramSize, "RAM size");
+		}
 
 		overwriteByte(rom0, 0x153, cartridgeType & 0xFF, "TPP1 feature flags");
 	} else {
 		// Regular mappers
 
-		if (ramSize != UNSPECIFIED)
+		if (ramSize != UNSPECIFIED) {
 			overwriteByte(rom0, 0x149, ramSize, "RAM size");
+		}
 
-		if (!japanese)
+		if (!japanese) {
 			overwriteByte(rom0, 0x14A, 0x01, "destination code");
+		}
 	}
 
-	if (oldLicensee != UNSPECIFIED)
+	if (oldLicensee != UNSPECIFIED) {
 		overwriteByte(rom0, 0x14B, oldLicensee, "old licensee code");
-	else if (sgb && rom0[0x14B] != 0x33)
+	} else if (sgb && rom0[0x14B] != 0x33) {
 		fprintf(
 		    stderr,
 		    "warning: SGB compatibility enabled, but old licensee was 0x%02x, not 0x33\n",
 		    rom0[0x14B]
 		);
+	}
 
-	if (romVersion != UNSPECIFIED)
+	if (romVersion != UNSPECIFIED) {
 		overwriteByte(rom0, 0x14C, romVersion, "mask ROM version number");
+	}
 
 	// Remain to be handled the ROM size, and header checksum.
 	// The latter depends on the former, and so will be handled after it.
@@ -1003,13 +1050,15 @@ static void processFile(int input, int output, char const *name, off_t fileSize)
 				nbBanks++;
 
 				// Update global checksum, too
-				for (uint16_t i = 0; i < bankLen; i++)
+				for (uint16_t i = 0; i < bankLen; i++) {
 					globalSum += romx[totalRomxLen + i];
+				}
 				totalRomxLen += bankLen;
 			}
 			// Stop when an incomplete bank has been read
-			if (bankLen != BANK_SIZE)
+			if (bankLen != BANK_SIZE) {
 				break;
+			}
 		}
 	}
 
@@ -1036,8 +1085,9 @@ static void processFile(int input, int output, char const *name, off_t fileSize)
 		// Alter number of banks to reflect required value
 		// x&(x-1) is zero iff x is a power of 2, or 0; we know for sure it's non-zero,
 		// so this is true (non-zero) when we don't have a power of 2
-		if (nbBanks & (nbBanks - 1))
+		if (nbBanks & (nbBanks - 1)) {
 			nbBanks = 1 << (CHAR_BIT * sizeof(nbBanks) - clz(nbBanks));
+		}
 		// Write final ROM size
 		rom0[0x148] = ctz(nbBanks / 2);
 		// Alter global checksum based on how many bytes will be added (not counting ROM0)
@@ -1048,8 +1098,9 @@ static void processFile(int input, int output, char const *name, off_t fileSize)
 	if (fixSpec & (FIX_HEADER_SUM | TRASH_HEADER_SUM)) {
 		uint8_t sum = 0;
 
-		for (uint16_t i = 0x134; i < 0x14D; i++)
+		for (uint16_t i = 0x134; i < 0x14D; i++) {
 			sum -= rom0[i] + 1;
+		}
 
 		overwriteByte(rom0, 0x14D, fixSpec & TRASH_HEADER_SUM ? ~sum : sum, "header checksum");
 	}
@@ -1057,24 +1108,29 @@ static void processFile(int input, int output, char const *name, off_t fileSize)
 	if (fixSpec & (FIX_GLOBAL_SUM | TRASH_GLOBAL_SUM)) {
 		// Computation of the global checksum does not include the checksum bytes
 		assume(rom0Len >= 0x14E);
-		for (uint16_t i = 0; i < 0x14E; i++)
+		for (uint16_t i = 0; i < 0x14E; i++) {
 			globalSum += rom0[i];
-		for (uint16_t i = 0x150; i < rom0Len; i++)
+		}
+		for (uint16_t i = 0x150; i < rom0Len; i++) {
 			globalSum += rom0[i];
+		}
 		// Pipes have already read ROMX and updated globalSum, but not regular files
 		if (input == output) {
 			for (;;) {
 				ssize_t bankLen = readBytes(input, bank, sizeof(bank));
 
-				for (uint16_t i = 0; i < bankLen; i++)
+				for (uint16_t i = 0; i < bankLen; i++) {
 					globalSum += bank[i];
-				if (bankLen != sizeof(bank))
+				}
+				if (bankLen != sizeof(bank)) {
 					break;
+				}
 			}
 		}
 
-		if (fixSpec & TRASH_GLOBAL_SUM)
+		if (fixSpec & TRASH_GLOBAL_SUM) {
 			globalSum = ~globalSum;
+		}
 
 		uint8_t bytes[2] = {
 		    static_cast<uint8_t>(globalSum >> 8), static_cast<uint8_t>(globalSum & 0xFF)
@@ -1094,8 +1150,9 @@ static void processFile(int input, int output, char const *name, off_t fileSize)
 		}
 		// If modifying the file in-place, we only need to edit the header
 		// However, padding may have modified ROM0 (added padding), so don't in that case
-		if (padValue == UNSPECIFIED)
+		if (padValue == UNSPECIFIED) {
 			rom0Len = headerSize;
+		}
 	}
 	writeLen = writeBytes(output, rom0, rom0Len);
 
@@ -1198,7 +1255,7 @@ static bool processFilename(char const *name) {
 		}
 	}
 
-	if (nbErrors)
+	if (nbErrors) {
 		fprintf(
 		    stderr,
 		    "Fixing \"%s\" failed with %u error%s\n",
@@ -1206,6 +1263,7 @@ static bool processFilename(char const *name) {
 		    nbErrors,
 		    nbErrors == 1 ? "" : "s"
 		);
+	}
 	return nbErrors;
 }
 
@@ -1386,21 +1444,23 @@ int main(int argc, char *argv[]) {
 		}
 	}
 
-	if ((cartridgeType & 0xFF00) == TPP1 && !japanese)
+	if ((cartridgeType & 0xFF00) == TPP1 && !japanese) {
 		fprintf(
 		    stderr,
 		    "warning: TPP1 overwrites region flag for its identification code, ignoring `-j`\n"
 		);
+	}
 
 	// Check that RAM size is correct for "standard" mappers
 	if (ramSize != UNSPECIFIED && (cartridgeType & 0xFF00) == 0) {
 		if (cartridgeType == ROM_RAM || cartridgeType == ROM_RAM_BATTERY) {
-			if (ramSize != 1)
+			if (ramSize != 1) {
 				fprintf(
 				    stderr,
 				    "warning: MBC \"%s\" should have 2 KiB of RAM (-r 1)\n",
 				    mbcName(cartridgeType)
 				);
+			}
 		} else if (hasRAM(cartridgeType)) {
 			if (!ramSize) {
 				fprintf(
@@ -1425,12 +1485,13 @@ int main(int argc, char *argv[]) {
 		}
 	}
 
-	if (sgb && oldLicensee != UNSPECIFIED && oldLicensee != 0x33)
+	if (sgb && oldLicensee != UNSPECIFIED && oldLicensee != 0x33) {
 		fprintf(
 		    stderr,
 		    "warning: SGB compatibility enabled, but old licensee is 0x%02x, not 0x33\n",
 		    oldLicensee
 		);
+	}
 
 	argv += musl_optind;
 	bool failed = nbErrors;
@@ -1481,8 +1542,9 @@ int main(int argc, char *argv[]) {
 		memcpy(logo, nintendoLogo, sizeof(nintendoLogo));
 	}
 	if (fixSpec & TRASH_LOGO) {
-		for (uint16_t i = 0; i < sizeof(logo); i++)
+		for (uint16_t i = 0; i < sizeof(logo); i++) {
 			logo[i] = 0xFF ^ logo[i];
+		}
 	}
 
 	if (!*argv) {

@@ -19,8 +19,9 @@ static int musl_optpos;
 static void musl_getopt_msg(char const *a, char const *b, char const *c, size_t l) {
 	FILE *f = stderr;
 
-	if (fputs(a, f) >= 0 && fwrite(b, strlen(b), 1, f) && fwrite(c, 1, l, f) == l)
+	if (fputs(a, f) >= 0 && fwrite(b, strlen(b), 1, f) && fwrite(c, 1, l, f) == l) {
 		putc('\n', f);
+	}
 }
 
 static int getopt(int argc, char *argv[], char const *optstring) {
@@ -35,8 +36,9 @@ static int getopt(int argc, char *argv[], char const *optstring) {
 		musl_optind = 1;
 	}
 
-	if (musl_optind >= argc || !argv[musl_optind])
+	if (musl_optind >= argc || !argv[musl_optind]) {
 		return -1;
+	}
 
 	if (argv[musl_optind][0] != '-') {
 		if (optstring[0] == '-') {
@@ -46,14 +48,17 @@ static int getopt(int argc, char *argv[], char const *optstring) {
 		return -1;
 	}
 
-	if (!argv[musl_optind][1])
+	if (!argv[musl_optind][1]) {
 		return -1;
+	}
 
-	if (argv[musl_optind][1] == '-' && !argv[musl_optind][2])
+	if (argv[musl_optind][1] == '-' && !argv[musl_optind][2]) {
 		return musl_optind++, -1;
+	}
 
-	if (!musl_optpos)
+	if (!musl_optpos) {
 		musl_optpos++;
+	}
 	k = mbtowc(&c, argv[musl_optind] + musl_optpos, MB_LEN_MAX);
 	if (k < 0) {
 		k = 1;
@@ -67,23 +72,26 @@ static int getopt(int argc, char *argv[], char const *optstring) {
 		musl_optpos = 0;
 	}
 
-	if (optstring[0] == '-' || optstring[0] == '+')
+	if (optstring[0] == '-' || optstring[0] == '+') {
 		optstring++;
+	}
 
 	i = 0;
 	d = 0;
 	do {
 		l = mbtowc(&d, optstring + i, MB_LEN_MAX);
-		if (l > 0)
+		if (l > 0) {
 			i += l;
-		else
+		} else {
 			i++;
+		}
 	} while (l && d != c);
 
 	if (d != c || c == ':') {
 		musl_optopt = c;
-		if (optstring[0] != ':' && musl_opterr)
+		if (optstring[0] != ':' && musl_opterr) {
 			musl_getopt_msg(argv[0], ": unrecognized option: ", optchar, k);
+		}
 		return '?';
 	}
 	if (optstring[i] == ':') {
@@ -94,10 +102,12 @@ static int getopt(int argc, char *argv[], char const *optstring) {
 		}
 		if (musl_optind > argc) {
 			musl_optopt = c;
-			if (optstring[0] == ':')
+			if (optstring[0] == ':') {
 				return ':';
-			if (musl_opterr)
+			}
+			if (musl_opterr) {
 				musl_getopt_msg(argv[0], ": option requires an argument: ", optchar, k);
+			}
 			return '?';
 		}
 	}
@@ -108,8 +118,9 @@ static void permute(char **argv, int dest, int src) {
 	char *tmp = argv[src];
 	int i;
 
-	for (i = src; i > dest; i--)
+	for (i = src; i > dest; i--) {
 		argv[i] = argv[i - 1];
+	}
 	argv[dest] = tmp;
 }
 
@@ -128,17 +139,20 @@ static int musl_getopt_long(
 		musl_optind = 1;
 	}
 
-	if (musl_optind >= argc || !argv[musl_optind])
+	if (musl_optind >= argc || !argv[musl_optind]) {
 		return -1;
+	}
 
 	skipped = musl_optind;
 	if (optstring[0] != '+' && optstring[0] != '-') {
 		int i;
 		for (i = musl_optind;; i++) {
-			if (i >= argc || !argv[i])
+			if (i >= argc || !argv[i]) {
 				return -1;
-			if (argv[i][0] == '-' && argv[i][1])
+			}
+			if (argv[i][0] == '-' && argv[i][1]) {
 				break;
+			}
 		}
 		musl_optind = i;
 	}
@@ -147,8 +161,9 @@ static int musl_getopt_long(
 	if (resumed > skipped) {
 		int i, cnt = musl_optind - resumed;
 
-		for (i = 0; i < cnt; i++)
+		for (i = 0; i < cnt; i++) {
 			permute(argv, skipped, musl_optind - 1);
+		}
 		musl_optind = skipped + cnt;
 	}
 	return ret;
@@ -169,14 +184,16 @@ static int musl_getopt_long_core(
 			char const *name = longopts[i].name;
 
 			opt = start;
-			if (*opt == '-')
+			if (*opt == '-') {
 				opt++;
+			}
 			while (*opt && *opt != '=' && *opt == *name) {
 				name++;
 				opt++;
 			}
-			if (*opt && *opt != '=')
+			if (*opt && *opt != '=') {
 				continue;
+			}
 			arg = opt;
 			match = i;
 			if (!*name) {
@@ -191,8 +208,9 @@ static int musl_getopt_long_core(
 			for (i = 0; optstring[i]; i++) {
 				int j = 0;
 
-				while (j < l && start[j] == optstring[i + j])
+				while (j < l && start[j] == optstring[i + j]) {
 					j++;
+				}
 				if (j == l) {
 					cnt++;
 					break;
@@ -206,8 +224,9 @@ static int musl_getopt_long_core(
 			if (*opt == '=') {
 				if (!longopts[i].has_arg) {
 					musl_optopt = longopts[i].val;
-					if (colon || !musl_opterr)
+					if (colon || !musl_opterr) {
 						return '?';
+					}
 					musl_getopt_msg(
 					    argv[0],
 					    ": option does not take an argument: ",
@@ -221,10 +240,12 @@ static int musl_getopt_long_core(
 				musl_optarg = argv[musl_optind];
 				if (!musl_optarg) {
 					musl_optopt = longopts[i].val;
-					if (colon)
+					if (colon) {
 						return ':';
-					if (!musl_opterr)
+					}
+					if (!musl_opterr) {
 						return '?';
+					}
 					musl_getopt_msg(
 					    argv[0],
 					    ": option requires an argument: ",
@@ -235,8 +256,9 @@ static int musl_getopt_long_core(
 				}
 				musl_optind++;
 			}
-			if (idx)
+			if (idx) {
 				*idx = i;
+			}
 			if (longopts[i].flag) {
 				*longopts[i].flag = longopts[i].val;
 				return 0;
@@ -245,13 +267,14 @@ static int musl_getopt_long_core(
 		}
 		if (argv[musl_optind][1] == '-') {
 			musl_optopt = 0;
-			if (!colon && musl_opterr)
+			if (!colon && musl_opterr) {
 				musl_getopt_msg(
 				    argv[0],
 				    cnt ? ": option is ambiguous: " : ": unrecognized option: ",
 				    argv[musl_optind] + 2,
 				    strlen(argv[musl_optind] + 2)
 				);
+			}
 			musl_optind++;
 			return '?';
 		}

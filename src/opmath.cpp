@@ -24,11 +24,13 @@ int32_t op_exponent(int32_t base, uint32_t power) {
 	int32_t result = 1;
 
 	for (;;) {
-		if (power % 2)
+		if (power % 2) {
 			result *= base;
+		}
 		power /= 2;
-		if (!power)
+		if (!power) {
 			break;
+		}
 		base *= base;
 	}
 
@@ -37,14 +39,18 @@ int32_t op_exponent(int32_t base, uint32_t power) {
 
 int32_t op_shift_left(int32_t value, int32_t amount) {
 	// Get the easy cases out of the way
-	if (amount == 0)
+	if (amount == 0) {
 		return value;
-	if (value == 0 || amount >= 32)
+	}
+	if (value == 0 || amount >= 32) {
 		return 0;
-	if (amount < -31)
+	}
+	if (amount < -31) {
 		return (value < 0) ? -1 : 0;
-	if (amount < 0)
+	}
+	if (amount < 0) {
 		return op_shift_right(value, -amount);
+	}
 
 	// Use unsigned to force a bitwise shift
 	// Casting back is OK because the types implement two's complement behavior
@@ -53,17 +59,22 @@ int32_t op_shift_left(int32_t value, int32_t amount) {
 
 int32_t op_shift_right(int32_t value, int32_t amount) {
 	// Repeat the easy cases here to avoid INT_MIN funny business
-	if (amount == 0)
+	if (amount == 0) {
 		return value;
-	if (value == 0 || amount < -31)
+	}
+	if (value == 0 || amount < -31) {
 		return 0;
-	if (amount > 31)
+	}
+	if (amount > 31) {
 		return (value < 0) ? -1 : 0;
-	if (amount < 0)
+	}
+	if (amount < 0) {
 		return op_shift_left(value, -amount);
+	}
 
-	if (value > 0)
+	if (value > 0) {
 		return static_cast<uint32_t>(value) >> amount;
+	}
 
 	// Calculate an OR mask for sign extension
 	// 1->0x80000000, 2->0xC0000000, ..., 31->0xFFFFFFFE
@@ -76,12 +87,15 @@ int32_t op_shift_right(int32_t value, int32_t amount) {
 
 int32_t op_shift_right_unsigned(int32_t value, int32_t amount) {
 	// Repeat the easy cases here to avoid INT_MIN funny business
-	if (amount == 0)
+	if (amount == 0) {
 		return value;
-	if (value == 0 || amount < -31 || amount > 31)
+	}
+	if (value == 0 || amount < -31 || amount > 31) {
 		return 0;
-	if (amount < 0)
+	}
+	if (amount < 0) {
 		return op_shift_left(value, -amount);
+	}
 
 	return static_cast<uint32_t>(value) >> amount;
 }

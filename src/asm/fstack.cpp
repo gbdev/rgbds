@@ -90,8 +90,9 @@ std::shared_ptr<std::string> fstk_GetUniqueIDStr() {
 	std::shared_ptr<std::string> &str = contextStack.top().uniqueIDStr;
 
 	// If a unique ID is allowed but has not been generated yet, generate one now.
-	if (str && str->empty())
+	if (str && str->empty()) {
 		*str = "_u"s + std::to_string(nextUniqueID++);
+	}
 
 	return str;
 }
@@ -103,27 +104,32 @@ MacroArgs *fstk_GetCurrentMacroArgs() {
 }
 
 void fstk_AddIncludePath(std::string const &path) {
-	if (path.empty())
+	if (path.empty()) {
 		return;
+	}
 
 	std::string &includePath = includePaths.emplace_back(path);
-	if (includePath.back() != '/')
+	if (includePath.back() != '/') {
 		includePath += '/';
+	}
 }
 
 void fstk_SetPreIncludeFile(std::string const &path) {
-	if (!preIncludeName.empty())
+	if (!preIncludeName.empty()) {
 		warnx("Overriding pre-included filename %s", preIncludeName.c_str());
+	}
 	preIncludeName = path;
-	if (verbose)
+	if (verbose) {
 		printf("Pre-included filename %s\n", preIncludeName.c_str());
+	}
 }
 
 static void printDep(std::string const &path) {
 	if (dependFile) {
 		fprintf(dependFile, "%s: %s\n", targetFileName.c_str(), path.c_str());
-		if (generatePhonyDeps)
+		if (generatePhonyDeps) {
 			fprintf(dependFile, "%s:\n", path.c_str());
+		}
 	}
 }
 
@@ -141,20 +147,22 @@ std::optional<std::string> fstk_FindFile(std::string const &path) {
 	}
 
 	errno = ENOENT;
-	if (generatedMissingIncludes)
+	if (generatedMissingIncludes) {
 		printDep(path);
+	}
 	return std::nullopt;
 }
 
 bool yywrap() {
 	uint32_t ifDepth = lexer_GetIFDepth();
 
-	if (ifDepth != 0)
+	if (ifDepth != 0) {
 		fatalerror(
 		    "Ended block with %" PRIu32 " unterminated IF construct%s\n",
 		    ifDepth,
 		    ifDepth == 1 ? "" : "s"
 		);
+	}
 
 	if (Context &context = contextStack.top(); context.fileInfo->type == NODE_REPT) {
 		// The context is a REPT or FOR block, which may loop
@@ -177,8 +185,9 @@ bool yywrap() {
 			Symbol *sym = sym_AddVar(context.forName, context.forValue);
 
 			// This error message will refer to the current iteration
-			if (sym->type != SYM_VAR)
+			if (sym->type != SYM_VAR) {
 				fatalerror("Failed to update FOR symbol value\n");
+			}
 		}
 		// Advance to the next iteration
 		fileInfoIters.front()++;
@@ -199,8 +208,9 @@ bool yywrap() {
 }
 
 static void checkRecursionDepth() {
-	if (contextStack.size() > maxRecursionDepth)
+	if (contextStack.size() > maxRecursionDepth) {
 		fatalerror("Recursion limit (%zu) exceeded\n", maxRecursionDepth);
+	}
 }
 
 static bool newFileContext(std::string const &filePath, bool updateStateNow) {
@@ -298,8 +308,9 @@ void fstk_RunInclude(std::string const &path, bool preInclude) {
 
 	if (!fullPath) {
 		if (generatedMissingIncludes && !preInclude) {
-			if (verbose)
+			if (verbose) {
 				printf("Aborting (-MG) on INCLUDE file '%s' (%s)\n", path.c_str(), strerror(errno));
+			}
 			failedOnMissingInclude = true;
 		} else {
 			error("Unable to open included file '%s': %s\n", path.c_str(), strerror(errno));
@@ -307,18 +318,20 @@ void fstk_RunInclude(std::string const &path, bool preInclude) {
 		return;
 	}
 
-	if (!newFileContext(*fullPath, false))
+	if (!newFileContext(*fullPath, false)) {
 		fatalerror("Failed to set up lexer for file include\n");
+	}
 }
 
 void fstk_RunMacro(std::string const &macroName, std::shared_ptr<MacroArgs> macroArgs) {
 	Symbol *macro = sym_FindExactSymbol(macroName);
 
 	if (!macro) {
-		if (sym_IsPurgedExact(macroName))
+		if (sym_IsPurgedExact(macroName)) {
 			error("Macro \"%s\" not defined; it was purged\n", macroName.c_str());
-		else
+		} else {
 			error("Macro \"%s\" not defined\n", macroName.c_str());
+		}
 		return;
 	}
 	if (macro->type != SYM_MACRO) {
@@ -330,8 +343,9 @@ void fstk_RunMacro(std::string const &macroName, std::shared_ptr<MacroArgs> macr
 }
 
 void fstk_RunRept(uint32_t count, int32_t reptLineNo, ContentSpan const &span) {
-	if (count == 0)
+	if (count == 0) {
 		return;
+	}
 
 	newReptContext(reptLineNo, span, count);
 }
@@ -344,24 +358,28 @@ void fstk_RunFor(
     int32_t reptLineNo,
     ContentSpan const &span
 ) {
-	if (Symbol *sym = sym_AddVar(symName, start); sym->type != SYM_VAR)
+	if (Symbol *sym = sym_AddVar(symName, start); sym->type != SYM_VAR) {
 		return;
+	}
 
 	uint32_t count = 0;
-	if (step > 0 && start < stop)
+	if (step > 0 && start < stop) {
 		count = (static_cast<int64_t>(stop) - start - 1) / step + 1;
-	else if (step < 0 && stop < start)
+	} else if (step < 0 && stop < start) {
 		count = (static_cast<int64_t>(start) - stop - 1) / -static_cast<int64_t>(step) + 1;
-	else if (step == 0)
+	} else if (step == 0) {
 		error("FOR cannot have a step value of 0\n");
+	}
 
-	if ((step > 0 && start > stop) || (step < 0 && start < stop))
+	if ((step > 0 && start > stop) || (step < 0 && start < stop)) {
 		warning(
 		    WARNING_BACKWARDS_FOR, "FOR goes backwards from %d to %d by %d\n", start, stop, step
 		);
+	}
 
-	if (count == 0)
+	if (count == 0) {
 		return;
+	}
 
 	Context &context = newReptContext(reptLineNo, span, count);
 	context.isForLoop = true;
@@ -385,17 +403,20 @@ bool fstk_Break() {
 }
 
 void fstk_NewRecursionDepth(size_t newDepth) {
-	if (contextStack.size() > newDepth + 1)
+	if (contextStack.size() > newDepth + 1) {
 		fatalerror("Recursion limit (%zu) exceeded\n", newDepth);
+	}
 	maxRecursionDepth = newDepth;
 }
 
 void fstk_Init(std::string const &mainPath, size_t maxDepth) {
-	if (!newFileContext(mainPath, true))
+	if (!newFileContext(mainPath, true)) {
 		fatalerror("Failed to open main file\n");
+	}
 
 	maxRecursionDepth = maxDepth;
 
-	if (!preIncludeName.empty())
+	if (!preIncludeName.empty()) {
 		fstk_RunInclude(preIncludeName, true);
+	}
 }

@@ -46,8 +46,9 @@ int32_t Expression::getConstVal() const {
 }
 
 Symbol const *Expression::symbolOf() const {
-	if (!isSymbol)
+	if (!isSymbol) {
 		return nullptr;
+	}
 	return sym_FindScopedSymbol(reinterpret_cast<char const *>(&rpn[1]));
 }
 
@@ -55,8 +56,9 @@ bool Expression::isDiffConstant(Symbol const *sym) const {
 	// Check if both expressions only refer to a single symbol
 	Symbol const *sym1 = symbolOf();
 
-	if (!sym1 || !sym || sym1->type != SYM_LABEL || sym->type != SYM_LABEL)
+	if (!sym1 || !sym || sym1->type != SYM_LABEL || sym->type != SYM_LABEL) {
 		return false;
+	}
 
 	Section const *sect1 = sym1->getSection();
 	Section const *sect2 = sym->getSection();
@@ -208,8 +210,9 @@ static bool tryConstNonzero(Expression const &lhs, Expression const &rhs) {
 
 static bool tryConstLogNot(Expression const &expr) {
 	Symbol const *sym = expr.symbolOf();
-	if (!sym || !sym->getSection() || !sym->isDefined())
+	if (!sym || !sym->getSection() || !sym->isDefined()) {
 		return false;
+	}
 
 	assume(sym->isNumeric());
 
@@ -230,15 +233,17 @@ static bool tryConstLogNot(Expression const &expr) {
 // @return The constant `LOW(expr)` result if it can be computed, or -1 otherwise.
 static int32_t tryConstLow(Expression const &expr) {
 	Symbol const *sym = expr.symbolOf();
-	if (!sym || !sym->getSection() || !sym->isDefined())
+	if (!sym || !sym->getSection() || !sym->isDefined()) {
 		return -1;
+	}
 
 	assume(sym->isNumeric());
 
 	// The low byte must not cover any unknown bits
 	Section const &sect = *sym->getSection();
-	if (sect.align < 8)
+	if (sect.align < 8) {
 		return -1;
+	}
 
 	// `sym->getValue()` attempts to add the section's address, but that's `UINT32_MAX`
 	// because the section is floating (otherwise we wouldn't be here)
@@ -258,15 +263,17 @@ static int32_t tryConstMask(Expression const &lhs, Expression const &rhs) {
 	bool lhsIsSymbol = lhsSymbol && lhsSymbol->getSection();
 	bool rhsIsSymbol = rhsSymbol && rhsSymbol->getSection();
 
-	if (!lhsIsSymbol && !rhsIsSymbol)
+	if (!lhsIsSymbol && !rhsIsSymbol) {
 		return -1;
+	}
 
 	// If the lhs isn't a symbol, try again the other way around
 	Symbol const &sym = lhsIsSymbol ? *lhsSymbol : *rhsSymbol;
 	Expression const &expr = lhsIsSymbol ? rhs : lhs; // Opposite side of `sym`
 
-	if (!sym.isDefined() || !expr.isKnown())
+	if (!sym.isDefined() || !expr.isKnown()) {
 		return -1;
+	}
 
 	assume(sym.isNumeric());
 
@@ -275,8 +282,9 @@ static int32_t tryConstMask(Expression const &lhs, Expression const &rhs) {
 
 	// The mask must not cover any unknown bits
 	Section const &sect = *sym.getSection();
-	if (int32_t unknownBits = (1 << 16) - (1 << sect.align); (unknownBits & mask) != 0)
+	if (int32_t unknownBits = (1 << 16) - (1 << sect.align); (unknownBits & mask) != 0) {
 		return -1;
+	}
 
 	// `sym.getValue()` attempts to add the section's address, but that's `UINT32_MAX`
 	// because the section is floating (otherwise we wouldn't be here)
@@ -412,38 +420,45 @@ void Expression::makeBinaryOp(RPNCommand op, Expression &&src1, Expression const
 			data = lval & rval;
 			break;
 		case RPN_SHL:
-			if (rval < 0)
+			if (rval < 0) {
 				warning(
 				    WARNING_SHIFT_AMOUNT, "Shifting left by negative amount %" PRId32 "\n", rval
 				);
+			}
 
-			if (rval >= 32)
+			if (rval >= 32) {
 				warning(WARNING_SHIFT_AMOUNT, "Shifting left by large amount %" PRId32 "\n", rval);
+			}
 
 			data = op_shift_left(lval, rval);
 			break;
 		case RPN_SHR:
-			if (lval < 0)
+			if (lval < 0) {
 				warning(WARNING_SHIFT, "Shifting right negative value %" PRId32 "\n", lval);
+			}
 
-			if (rval < 0)
+			if (rval < 0) {
 				warning(
 				    WARNING_SHIFT_AMOUNT, "Shifting right by negative amount %" PRId32 "\n", rval
 				);
+			}
 
-			if (rval >= 32)
+			if (rval >= 32) {
 				warning(WARNING_SHIFT_AMOUNT, "Shifting right by large amount %" PRId32 "\n", rval);
+			}
 
 			data = op_shift_right(lval, rval);
 			break;
 		case RPN_USHR:
-			if (rval < 0)
+			if (rval < 0) {
 				warning(
 				    WARNING_SHIFT_AMOUNT, "Shifting right by negative amount %" PRId32 "\n", rval
 				);
+			}
 
-			if (rval >= 32)
+			if (rval >= 32) {
 				warning(WARNING_SHIFT_AMOUNT, "Shifting right by large amount %" PRId32 "\n", rval);
+			}
 
 			data = op_shift_right_unsigned(lval, rval);
 			break;
@@ -451,8 +466,9 @@ void Expression::makeBinaryOp(RPNCommand op, Expression &&src1, Expression const
 			data = static_cast<int32_t>(ulval * urval);
 			break;
 		case RPN_DIV:
-			if (rval == 0)
+			if (rval == 0) {
 				fatalerror("Division by zero\n");
+			}
 
 			if (lval == INT32_MIN && rval == -1) {
 				warning(
@@ -467,17 +483,20 @@ void Expression::makeBinaryOp(RPNCommand op, Expression &&src1, Expression const
 			}
 			break;
 		case RPN_MOD:
-			if (rval == 0)
+			if (rval == 0) {
 				fatalerror("Modulo by zero\n");
+			}
 
-			if (lval == INT32_MIN && rval == -1)
+			if (lval == INT32_MIN && rval == -1) {
 				data = 0;
-			else
+			} else {
 				data = op_modulo(lval, rval);
+			}
 			break;
 		case RPN_EXP:
-			if (rval < 0)
+			if (rval < 0) {
 				fatalerror("Exponentiation by negative power\n");
+			}
 
 			data = op_exponent(lval, rval);
 			break;
@@ -554,9 +573,10 @@ void Expression::makeBinaryOp(RPNCommand op, Expression &&src1, Expression const
 			// Copy the right RPN and append the operator
 			uint32_t rightRpnSize = src2.rpn.size();
 			uint8_t *ptr = reserveSpace(rightRpnSize + 1, src2.rpnPatchSize + 1);
-			if (rightRpnSize > 0)
+			if (rightRpnSize > 0) {
 				// If `rightRpnSize == 0`, then `memcpy(ptr, nullptr, rightRpnSize)` would be UB
 				memcpy(ptr, src2.rpn.data(), rightRpnSize);
+			}
 			ptr[rightRpnSize] = op;
 		}
 	}
@@ -589,8 +609,9 @@ void Expression::makeCheckRST() {
 
 // Checks that an RPN expression's value fits within N bits (signed or unsigned)
 void Expression::checkNBit(uint8_t n) const {
-	if (isKnown())
+	if (isKnown()) {
 		::checkNBit(value(), n, "Expression");
+	}
 }
 
 bool checkNBit(int32_t v, uint8_t n, char const *name) {

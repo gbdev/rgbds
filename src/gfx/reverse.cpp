@@ -167,8 +167,9 @@ void reverse() {
 		// This avoids redundancy with `-r 1` which results in a vertical column.
 		width = static_cast<size_t>(ceil(sqrt(mapSize)));
 		for (; width < mapSize; ++width) {
-			if (mapSize % width == 0)
+			if (mapSize % width == 0) {
 				break;
+			}
 		}
 		options.verbosePrint(Options::VERB_INTERM, "Picked reversing width of %zu tiles\n", width);
 	}

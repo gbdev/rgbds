@@ -40,8 +40,9 @@ bool sym_IsPC(Symbol const *sym) {
 }
 
 void sym_ForEach(void (*callback)(Symbol &)) {
-	for (auto &it : symbols)
+	for (auto &it : symbols) {
 		callback(it.second);
+	}
 }
 
 static int32_t NARGCallback() {
@@ -101,8 +102,9 @@ std::shared_ptr<std::string> Symbol::getEqus() const {
 	    std::holds_alternative<std::shared_ptr<std::string>>(data)
 	    || std::holds_alternative<std::shared_ptr<std::string> (*)()>(data)
 	);
-	if (auto *callback = std::get_if<std::shared_ptr<std::string> (*)()>(&data); callback)
+	if (auto *callback = std::get_if<std::shared_ptr<std::string> (*)()>(&data); callback) {
 		return (*callback)();
+	}
 	return std::get<std::shared_ptr<std::string>>(data);
 }
 
@@ -123,8 +125,9 @@ static void updateSymbolFilename(Symbol &sym) {
 	sym.fileLine = sym.src ? lexer_GetLineNo() : 0;
 
 	// If the old node was registered, ensure the new one is too
-	if (oldSrc && oldSrc->ID != UINT32_MAX)
+	if (oldSrc && oldSrc->ID != UINT32_MAX) {
 		out_RegisterNode(sym.src);
+	}
 }
 
 static void alreadyDefinedError(Symbol const &sym, char const *asType) {
@@ -133,8 +136,9 @@ static void alreadyDefinedError(Symbol const &sym, char const *asType) {
 		error("'%s' is reserved for a built-in symbol\n", sym.name.c_str());
 	} else {
 		error("'%s' already defined", sym.name.c_str());
-		if (asType)
+		if (asType) {
 			fprintf(stderr, " as %s", asType);
+		}
 		fputs(" at ", stderr);
 		dumpFilename(sym);
 	}
@@ -184,28 +188,34 @@ static bool isAutoScoped(std::string const &symName) {
 	size_t dotPos = symName.find('.');
 
 	// If there are no dots, it's not a local label
-	if (dotPos == std::string::npos)
+	if (dotPos == std::string::npos) {
 		return false;
+	}
 
 	// Label scopes `.` and `..` are the only nonlocal identifiers that start with a dot
-	if (dotPos == 0 && symName.find_first_not_of('.') == symName.npos)
+	if (dotPos == 0 && symName.find_first_not_of('.') == symName.npos) {
 		return false;
+	}
 
 	// Check for nothing after the dot
-	if (dotPos == symName.length() - 1)
+	if (dotPos == symName.length() - 1) {
 		fatalerror("'%s' is a nonsensical reference to an empty local label\n", symName.c_str());
+	}
 
 	// Check for more than one dot
-	if (symName.find('.', dotPos + 1) != std::string::npos)
+	if (symName.find('.', dotPos + 1) != std::string::npos) {
 		fatalerror("'%s' is a nonsensical reference to a nested local label\n", symName.c_str());
+	}
 
 	// Check for already-qualified local label
-	if (dotPos > 0)
+	if (dotPos > 0) {
 		return false;
+	}
 
 	// Check for unqualifiable local label
-	if (!globalScope)
+	if (!globalScope) {
 		fatalerror("Unqualified local label '%s' in main scope\n", symName.c_str());
+	}
 
 	return true;
 }
@@ -252,24 +262,28 @@ void sym_Purge(std::string const &symName) {
 	Symbol *sym = sym_FindScopedValidSymbol(symName);
 
 	if (!sym) {
-		if (sym_IsPurgedScoped(symName))
+		if (sym_IsPurgedScoped(symName)) {
 			error("'%s' was already purged\n", symName.c_str());
-		else
+		} else {
 			error("'%s' not defined\n", symName.c_str());
+		}
 	} else if (sym->isBuiltin) {
 		error("Built-in symbol '%s' cannot be purged\n", symName.c_str());
 	} else if (sym->ID != UINT32_MAX) {
 		error("Symbol \"%s\" is referenced and thus cannot be purged\n", symName.c_str());
 	} else {
-		if (sym->isExported)
+		if (sym->isExported) {
 			warning(WARNING_PURGE_1, "Purging an exported symbol \"%s\"\n", symName.c_str());
-		else if (sym->isLabel())
+		} else if (sym->isLabel()) {
 			warning(WARNING_PURGE_2, "Purging a label \"%s\"\n", symName.c_str());
+		}
 		// Do not keep a reference to the label after purging it
-		if (sym == globalScope)
+		if (sym == globalScope) {
 			globalScope = nullptr;
-		if (sym == localScope)
+		}
+		if (sym == localScope) {
 			localScope = nullptr;
+		}
 		purgedSymbols.emplace(sym->name);
 		symbols.erase(sym->name);
 	}
@@ -295,14 +309,16 @@ void sym_SetRSValue(int32_t value) {
 }
 
 uint32_t Symbol::getConstantValue() const {
-	if (isConstant())
+	if (isConstant()) {
 		return getValue();
+	}
 
 	if (sym_IsPC(this)) {
-		if (!getSection())
+		if (!getSection()) {
 			error("PC has no value outside of a section\n");
-		else
+		} else {
 			error("PC does not have a constant value; the current section is not fixed\n");
+		}
 	} else {
 		error("\"%s\" does not have a constant value\n", name.c_str());
 	}
@@ -310,13 +326,15 @@ uint32_t Symbol::getConstantValue() const {
 }
 
 uint32_t sym_GetConstantValue(std::string const &symName) {
-	if (Symbol const *sym = sym_FindScopedSymbol(symName); sym)
+	if (Symbol const *sym = sym_FindScopedSymbol(symName); sym) {
 		return sym->getConstantValue();
+	}
 
-	if (sym_IsPurgedScoped(symName))
+	if (sym_IsPurgedScoped(symName)) {
 		error("'%s' not defined; it was purged\n", symName.c_str());
-	else
+	} else {
 		error("'%s' not defined\n", symName.c_str());
+	}
 	return 0;
 }
 
@@ -361,8 +379,9 @@ static Symbol *createNonrelocSymbol(std::string const &symName, bool numeric) {
 Symbol *sym_AddEqu(std::string const &symName, int32_t value) {
 	Symbol *sym = createNonrelocSymbol(symName, true);
 
-	if (!sym)
+	if (!sym) {
 		return nullptr;
+	}
 
 	sym->type = SYM_EQU;
 	sym->data = value;
@@ -373,8 +392,9 @@ Symbol *sym_AddEqu(std::string const &symName, int32_t value) {
 Symbol *sym_RedefEqu(std::string const &symName, int32_t value) {
 	Symbol *sym = sym_FindExactSymbol(symName);
 
-	if (!sym)
+	if (!sym) {
 		return sym_AddEqu(symName, value);
+	}
 
 	if (sym->isDefined() && sym->type != SYM_EQU) {
 		alreadyDefinedError(*sym, "non-EQU");
@@ -394,8 +414,9 @@ Symbol *sym_RedefEqu(std::string const &symName, int32_t value) {
 Symbol *sym_AddString(std::string const &symName, std::shared_ptr<std::string> str) {
 	Symbol *sym = createNonrelocSymbol(symName, false);
 
-	if (!sym)
+	if (!sym) {
 		return nullptr;
+	}
 
 	sym->type = SYM_EQUS;
 	sym->data = str;
@@ -405,8 +426,9 @@ Symbol *sym_AddString(std::string const &symName, std::shared_ptr<std::string> s
 Symbol *sym_RedefString(std::string const &symName, std::shared_ptr<std::string> str) {
 	Symbol *sym = sym_FindExactSymbol(symName);
 
-	if (!sym)
+	if (!sym) {
 		return sym_AddString(symName, str);
+	}
 
 	if (sym->type != SYM_EQUS) {
 		if (sym->isDefined()) {
@@ -462,12 +484,14 @@ static Symbol *addLabel(std::string const &symName) {
 	sym->type = SYM_LABEL;
 	sym->data = static_cast<int32_t>(sect_GetSymbolOffset());
 	// Don't export anonymous labels
-	if (exportAll && !symName.starts_with('!'))
+	if (exportAll && !symName.starts_with('!')) {
 		sym->isExported = true;
+	}
 	sym->section = sect_GetSymbolSection();
 
-	if (sym && !sym->section)
+	if (sym && !sym->section) {
 		error("Label \"%s\" created outside of a SECTION\n", symName.c_str());
+	}
 
 	return sym;
 }
@@ -478,8 +502,9 @@ Symbol *sym_AddLocalLabel(std::string const &symName) {
 
 	Symbol *sym = addLabel(isAutoScoped(symName) ? globalScope->name + symName : symName);
 
-	if (sym)
+	if (sym) {
 		localScope = sym;
+	}
 
 	return sym;
 }
@@ -516,7 +541,7 @@ std::string sym_MakeAnonLabelName(uint32_t ofs, bool neg) {
 	uint32_t id = 0;
 
 	if (neg) {
-		if (ofs > anonLabelID)
+		if (ofs > anonLabelID) {
 			error(
 			    "Reference to anonymous label %" PRIu32 " before, when only %" PRIu32
 			    " ha%s been created so far\n",
@@ -524,19 +549,21 @@ std::string sym_MakeAnonLabelName(uint32_t ofs, bool neg) {
 			    anonLabelID,
 			    anonLabelID == 1 ? "s" : "ve"
 			);
-		else
+		} else {
 			id = anonLabelID - ofs;
+		}
 	} else {
 		ofs--; // We're referencing symbols that haven't been created yet...
-		if (ofs > UINT32_MAX - anonLabelID)
+		if (ofs > UINT32_MAX - anonLabelID) {
 			error(
 			    "Reference to anonymous label %" PRIu32 " after, when only %" PRIu32
 			    " may still be created\n",
 			    ofs + 1,
 			    UINT32_MAX - anonLabelID
 			);
-		else
+		} else {
 			id = anonLabelID + ofs;
+		}
 	}
 
 	std::string anon("!");
@@ -553,16 +580,18 @@ void sym_Export(std::string const &symName) {
 	Symbol *sym = sym_FindScopedSymbol(symName);
 
 	// If the symbol doesn't exist, create a ref that can be purged
-	if (!sym)
+	if (!sym) {
 		sym = sym_Ref(symName);
+	}
 	sym->isExported = true;
 }
 
 Symbol *sym_AddMacro(std::string const &symName, int32_t defLineNo, ContentSpan const &span) {
 	Symbol *sym = createNonrelocSymbol(symName, false);
 
-	if (!sym)
+	if (!sym) {
 		return nullptr;
+	}
 
 	sym->type = SYM_MACRO;
 	sym->data = span;

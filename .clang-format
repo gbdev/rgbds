@@ -61,6 +61,7 @@ IndentPPDirectives: BeforeHash
 IndentRequires: true
 IndentWidth: 4
 IndentWrappedFunctionNames: true
+InsertBraces: true
 InsertNewlineAtEOF: true
 # Only support for Javascript as of clang-format 14...
 # InsertTrailingCommas: Wrapped

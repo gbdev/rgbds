@@ -14,8 +14,9 @@ std::vector<std::unique_ptr<Section>> sectionList;
 std::unordered_map<std::string, size_t> sectionMap; // Indexes into `sectionList`
 
 void sect_ForEach(void (*callback)(Section &)) {
-	for (auto &ptr : sectionList)
+	for (auto &ptr : sectionList) {
 		callback(*ptr);
+	}
 }
 
 static void checkAgainstFixedAddress(Section const &target, Section const &other, uint16_t org) {
@@ -117,8 +118,9 @@ static void checkFragmentCompat(Section &target, Section &other) {
 		target.org = org;
 	} else if (other.isAlignFixed) {
 		int32_t ofs = (other.alignOfs - target.size) % (other.alignMask + 1);
-		if (ofs < 0)
+		if (ofs < 0) {
 			ofs += other.alignMask + 1;
+		}
 		if (checkAgainstFixedAlign(target, other, ofs)) {
 			target.isAlignFixed = true;
 			target.alignMask = other.alignMask;
@@ -183,8 +185,9 @@ static void mergeSections(Section &target, std::unique_ptr<Section> &&other) {
 	switch (other->modifier) {
 	case SECTION_UNION:
 		checkSectUnionCompat(target, *other);
-		if (other->size > target.size)
+		if (other->size > target.size) {
 			target.size = other->size;
+		}
 		break;
 
 	case SECTION_FRAGMENT:
@@ -196,8 +199,9 @@ static void mergeSections(Section &target, std::unique_ptr<Section> &&other) {
 		if (!other->data.empty()) {
 			target.data.insert(target.data.end(), RANGE(other->data));
 			// Adjust patches' PC offsets
-			for (Patch &patch : other->patches)
+			for (Patch &patch : other->patches) {
 				patch.pcOffset += other->offset;
+			}
 		} else if (!target.data.empty()) {
 			assume(other->size == 0);
 		}
@@ -250,37 +254,41 @@ static void doSanityChecks(Section &section) {
 	}
 
 	if (is32kMode && section.type == SECTTYPE_ROMX) {
-		if (section.isBankFixed && section.bank != 1)
+		if (section.isBankFixed && section.bank != 1) {
 			error(
 			    nullptr,
 			    0,
 			    "%s: ROMX sections must be in bank 1 (if any) with option -t",
 			    section.name.c_str()
 			);
-		else
+		} else {
 			section.type = SECTTYPE_ROM0;
+		}
 	}
 	if (isWRAM0Mode && section.type == SECTTYPE_WRAMX) {
-		if (section.isBankFixed && section.bank != 1)
+		if (section.isBankFixed && section.bank != 1) {
 			error(
 			    nullptr,
 			    0,
 			    "%s: WRAMX sections must be in bank 1 with options -w or -d",
 			    section.name.c_str()
 			);
-		else
+		} else {
 			section.type = SECTTYPE_WRAM0;
+		}
 	}
-	if (isDmgMode && section.type == SECTTYPE_VRAM && section.bank == 1)
+	if (isDmgMode && section.type == SECTTYPE_VRAM && section.bank == 1) {
 		error(nullptr, 0, "%s: VRAM bank 1 can't be used with option -d", section.name.c_str());
+	}
 
 	// Check if alignment is reasonable, this is important to avoid UB
 	// An alignment of zero is equivalent to no alignment, basically
-	if (section.isAlignFixed && section.alignMask == 0)
+	if (section.isAlignFixed && section.alignMask == 0) {
 		section.isAlignFixed = false;
+	}
 
 	// Too large an alignment may not be satisfiable
-	if (section.isAlignFixed && (section.alignMask & sectionTypeInfo[section.type].startAddr))
+	if (section.isAlignFixed && (section.alignMask & sectionTypeInfo[section.type].startAddr)) {
 		error(
 		    nullptr,
 		    0,
@@ -289,11 +297,12 @@ static void doSanityChecks(Section &section) {
 		    sectionTypeInfo[section.type].name.c_str(),
 		    section.alignMask + 1
 		);
+	}
 
 	uint32_t minbank = sectionTypeInfo[section.type].firstBank,
 	         maxbank = sectionTypeInfo[section.type].lastBank;
 
-	if (section.isBankFixed && section.bank < minbank && section.bank > maxbank)
+	if (section.isBankFixed && section.bank < minbank && section.bank > maxbank) {
 		error(
 		    nullptr,
 		    0,
@@ -306,9 +315,10 @@ static void doSanityChecks(Section &section) {
 		    minbank,
 		    maxbank
 		);
+	}
 
 	// Check if section has a chance to be placed
-	if (section.size > sectionTypeInfo[section.type].size)
+	if (section.size > sectionTypeInfo[section.type].size) {
 		error(
 		    nullptr,
 		    0,
@@ -317,6 +327,7 @@ static void doSanityChecks(Section &section) {
 		    section.size,
 		    sectionTypeInfo[section.type].size
 		);
+	}
 
 	// Translate loose constraints to strong ones when they're equivalent
 
@@ -328,19 +339,20 @@ static void doSanityChecks(Section &section) {
 	if (section.isAddressFixed) {
 		// It doesn't make sense to have both org and alignment set
 		if (section.isAlignFixed) {
-			if ((section.org & section.alignMask) != section.alignOfs)
+			if ((section.org & section.alignMask) != section.alignOfs) {
 				error(
 				    nullptr,
 				    0,
 				    "Section \"%s\"'s fixed address doesn't match its alignment",
 				    section.name.c_str()
 				);
+			}
 			section.isAlignFixed = false;
 		}
 
 		// Ensure the target address is valid
 		if (section.org < sectionTypeInfo[section.type].startAddr
-		    || section.org > endaddr(section.type))
+		    || section.org > endaddr(section.type)) {
 			error(
 			    nullptr,
 			    0,
@@ -351,8 +363,9 @@ static void doSanityChecks(Section &section) {
 			    sectionTypeInfo[section.type].startAddr,
 			    endaddr(section.type)
 			);
+		}
 
-		if (section.org + section.size > endaddr(section.type) + 1)
+		if (section.org + section.size > endaddr(section.type) + 1) {
 			error(
 			    nullptr,
 			    0,
@@ -361,6 +374,7 @@ static void doSanityChecks(Section &section) {
 			    section.org + section.size,
 			    endaddr(section.type) + 1
 			);
+		}
 	}
 }
 

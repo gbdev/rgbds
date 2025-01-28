@@ -52,16 +52,19 @@ bool charmap_ForEach(
 			auto [nodeIdx, mapping] = std::move(prefixes.top());
 			prefixes.pop();
 			CharmapNode const &node = charmap.nodes[nodeIdx];
-			if (node.isTerminal())
+			if (node.isTerminal()) {
 				mappings[nodeIdx] = mapping;
+			}
 			for (unsigned c = 0; c < 256; c++) {
-				if (size_t nextIdx = node.next[c]; nextIdx)
+				if (size_t nextIdx = node.next[c]; nextIdx) {
 					prefixes.push({nextIdx, mapping + static_cast<char>(c)});
+				}
 			}
 		}
 		mapFunc(charmap.name);
-		for (auto [nodeIdx, mapping] : mappings)
+		for (auto [nodeIdx, mapping] : mappings) {
 			charFunc(mapping, charmap.nodes[nodeIdx].value);
+		}
 	}
 	return !charmapList.empty();
 }
@@ -70,10 +73,11 @@ void charmap_New(std::string const &name, std::string const *baseName) {
 	size_t baseIdx = SIZE_MAX;
 
 	if (baseName != nullptr) {
-		if (auto search = charmapMap.find(*baseName); search == charmapMap.end())
+		if (auto search = charmapMap.find(*baseName); search == charmapMap.end()) {
 			error("Base charmap '%s' doesn't exist\n", baseName->c_str());
-		else
+		} else {
 			baseIdx = search->second;
+		}
 	}
 
 	if (charmapMap.find(name) != charmapMap.end()) {
@@ -85,10 +89,11 @@ void charmap_New(std::string const &name, std::string const *baseName) {
 	charmapMap[name] = charmapList.size();
 	Charmap &charmap = charmapList.emplace_back();
 
-	if (baseIdx != SIZE_MAX)
+	if (baseIdx != SIZE_MAX) {
 		charmap.nodes = charmapList[baseIdx].nodes; // Copies `charmapList[baseIdx].nodes`
-	else
+	} else {
 		charmap.nodes.emplace_back(); // Zero-init the root node
+	}
 
 	charmap.name = name;
 
@@ -96,10 +101,11 @@ void charmap_New(std::string const &name, std::string const *baseName) {
 }
 
 void charmap_Set(std::string const &name) {
-	if (auto search = charmapMap.find(name); search == charmapMap.end())
+	if (auto search = charmapMap.find(name); search == charmapMap.end()) {
 		error("Charmap '%s' doesn't exist\n", name.c_str());
-	else
+	} else {
 		currentCharmap = &charmapList[search->second];
+	}
 }
 
 void charmap_Push() {
@@ -149,8 +155,9 @@ void charmap_Add(std::string const &mapping, std::vector<int32_t> &&value) {
 
 	CharmapNode &node = charmap.nodes[nodeIdx];
 
-	if (node.isTerminal())
+	if (node.isTerminal()) {
 		warning(WARNING_CHARMAP_REDEF, "Overriding charmap mapping\n");
+	}
 
 	std::swap(node.value, value);
 }
@@ -162,8 +169,9 @@ bool charmap_HasChar(std::string const &input) {
 	for (char c : input) {
 		nodeIdx = charmap.nodes[nodeIdx].next[static_cast<uint8_t>(c)];
 
-		if (!nodeIdx)
+		if (!nodeIdx) {
 			return false;
+		}
 	}
 
 	return charmap.nodes[nodeIdx].isTerminal();
@@ -188,8 +196,9 @@ size_t charmap_ConvertNext(std::string_view &input, std::vector<int32_t> *output
 	for (size_t nodeIdx = 0; inputIdx < input.length();) {
 		nodeIdx = charmap.nodes[nodeIdx].next[static_cast<uint8_t>(input[inputIdx])];
 
-		if (!nodeIdx)
+		if (!nodeIdx) {
 			break;
+		}
 
 		inputIdx++; // Consume that char
 
@@ -209,8 +218,9 @@ size_t charmap_ConvertNext(std::string_view &input, std::vector<int32_t> *output
 	if (matchIdx) { // A match was found, use it
 		std::vector<int32_t> const &value = charmap.nodes[matchIdx].value;
 
-		if (output)
+		if (output) {
 			output->insert(output->end(), RANGE(value));
+		}
 
 		matchLen = value.size();
 	} else if (inputIdx < input.length()) { // No match found, but there is some input left
@@ -218,18 +228,20 @@ size_t charmap_ConvertNext(std::string_view &input, std::vector<int32_t> *output
 		// This will write the codepoint's value to `output`, little-endian
 		size_t codepointLen = readUTF8Char(output, input.data() + inputIdx);
 
-		if (codepointLen == 0)
+		if (codepointLen == 0) {
 			error("Input string is not valid UTF-8\n");
+		}
 
 		// Warn if this character is not mapped but any others are
-		if (charmap.nodes.size() > 1)
+		if (charmap.nodes.size() > 1) {
 			warning(WARNING_UNMAPPED_CHAR_1, "Unmapped character %s\n", printChar(firstChar));
-		else if (charmap.name != DEFAULT_CHARMAP_NAME)
+		} else if (charmap.name != DEFAULT_CHARMAP_NAME) {
 			warning(
 			    WARNING_UNMAPPED_CHAR_2,
 			    "Unmapped character %s not in " DEFAULT_CHARMAP_NAME " charmap\n",
 			    printChar(firstChar)
 			);
+		}
 
 		inputIdx += codepointLen;
 		matchLen = codepointLen;

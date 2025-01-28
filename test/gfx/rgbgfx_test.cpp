@@ -341,8 +341,9 @@ static char *execProg(char const *name, char * const *argv) {
 
 	std::vector<char> cmdLine;
 	for (size_t i = 0; argv[i]; ++i) {
-		if (i > 0)
+		if (i > 0) {
 			cmdLine.push_back(' ');
+		}
 		cmdLine.insert(cmdLine.end(), argv[i], argv[i] + strlen(argv[i]));
 	}
 	cmdLine.push_back('\0');
