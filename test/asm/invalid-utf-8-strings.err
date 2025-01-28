@@ -50,4 +50,30 @@ error: invalid-utf-8-strings.asm(35):
     STRLEN: Invalid UTF-8 byte 0xFF
 error: invalid-utf-8-strings.asm(36):
     Input string is not valid UTF-8
-error: Assembly aborted (26 errors)!
+error: invalid-utf-8-strings.asm(36):
+    Input string is not valid UTF-8
+error: invalid-utf-8-strings.asm(36):
+    Input string is not valid UTF-8
+error: invalid-utf-8-strings.asm(39):
+    Input string is not valid UTF-8
+error: invalid-utf-8-strings.asm(39):
+    Input string is not valid UTF-8
+error: invalid-utf-8-strings.asm(39):
+    Input string is not valid UTF-8
+error: invalid-utf-8-strings.asm(39):
+    Input string is not valid UTF-8
+error: invalid-utf-8-strings.asm(39):
+    Input string is not valid UTF-8
+error: invalid-utf-8-strings.asm(40):
+    Input string is not valid UTF-8
+error: invalid-utf-8-strings.asm(40):
+    Input string is not valid UTF-8
+error: invalid-utf-8-strings.asm(40):
+    Input string is not valid UTF-8
+error: invalid-utf-8-strings.asm(40):
+    Input string is not valid UTF-8
+error: invalid-utf-8-strings.asm(40):
+    Input string is not valid UTF-8
+error: invalid-utf-8-strings.asm(40):
+    Input string is not valid UTF-8
+error: Assembly aborted (39 errors)!

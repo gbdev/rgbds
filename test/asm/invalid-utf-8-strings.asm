@@ -29,9 +29,13 @@ println "\"{mid2}{mid1}\""
 ; 4: invalid byte 0x81
 ; 5: invalid byte 0xFF
 ; 6: U+0020 space
-; 7: U+0042 B
-REDEF invalid EQUS "A şÿ B"
+; 7: U+6F22 kanji (0xE6 0xBC 0xA2)
+REDEF invalid EQUS "A şÿ æ¼¢"
 
-DEF n = strlen("{invalid}")
-DEF r = charlen("{invalid}")
-println "\"{#s:invalid}\": {d:n} != {d:r}"
+DEF n = STRLEN("{invalid}")
+DEF r = CHARLEN("{invalid}")
+println "\"{#s:invalid}\": {d:n} == {d:r}"
+
+REDEF mid1 EQUS CHARSUB("{invalid}", 4)
+REDEF mid2 EQUS CHARSUB("{invalid}", 7)
+println "\"{mid2}{mid1}\""
