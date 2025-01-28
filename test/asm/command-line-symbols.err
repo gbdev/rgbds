@@ -1,0 +1,3 @@
+error: command-line-symbols.asm(3):
+    'FOO' already defined at <command-line>
+error: Assembly aborted (1 error)!
