@@ -12,6 +12,7 @@
 
 	void script_ProcessScript(char const *path);
 }
+
 %code {
 	#include <algorithm>
 	#include <array>
@@ -394,7 +395,8 @@ static void setActiveTypeAndIdx(SectionType type, uint32_t idx) {
 
 static void setFloatingSectionType(SectionType type) {
 	if (nbbanks(type) == 1) {
-		setActiveTypeAndIdx(type, 0); // There is only a single bank anyway, so just set the index to 0.
+		// There is only a single bank anyway, so just set the index to 0.
+		setActiveTypeAndIdx(type, 0);
 	} else {
 		activeType = type;
 		activeBankIdx = UINT32_MAX;
@@ -634,7 +636,8 @@ static void placeSection(std::string const &name, bool isOptional) {
 			    typeInfo.name.c_str()
 			);
 		} else {
-			// SDCC areas don't have a type assigned yet, so the linker script is used to give them one.
+			// SDCC areas don't have a type assigned yet, so the linker script is used to give them
+			// one.
 			for (Section *fragment = section; fragment; fragment = fragment->nextu.get()) {
 				fragment->type = activeType;
 			}
