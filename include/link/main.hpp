@@ -32,8 +32,9 @@ extern bool disablePadding;
 // Helper macro for printing verbose-mode messages
 #define verbosePrint(...) \
 	do { \
-		if (beVerbose) \
+		if (beVerbose) { \
 			fprintf(stderr, __VA_ARGS__); \
+		} \
 	} while (0)
 
 struct FileStackNode {

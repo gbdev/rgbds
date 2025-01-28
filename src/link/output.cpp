@@ -347,12 +347,14 @@ static void writeSymBank(SortedSections const &bankSections, SectionType type, u
 		for (auto it = bankSections.zeroLenSections.begin(); \
 		     it != bankSections.zeroLenSections.end(); \
 		     it++) { \
-			for (Section const *sect = *it; sect; sect = sect->nextu.get()) \
+			for (Section const *sect = *it; sect; sect = sect->nextu.get()) { \
 				__VA_ARGS__ \
+			} \
 		} \
 		for (auto it = bankSections.sections.begin(); it != bankSections.sections.end(); it++) { \
-			for (Section const *sect = *it; sect; sect = sect->nextu.get()) \
+			for (Section const *sect = *it; sect; sect = sect->nextu.get()) { \
 				__VA_ARGS__ \
+			} \
 		} \
 	} while (0)
 

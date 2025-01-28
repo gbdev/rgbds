@@ -27,8 +27,9 @@ static inline void unreachable_() {
 		//  `[[gnu::assume()]]` for GCC or compatible also has insufficient support (GCC 13+ only)
 		#define assume(x) \
 			do { \
-				if (!(x)) \
+				if (!(x)) { \
 					unreachable_(); \
+				} \
 			} while (0)
 	#endif
 #else

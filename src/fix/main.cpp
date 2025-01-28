@@ -245,8 +245,9 @@ static MbcType parseMBC(char const *name) {
 
 #define tryReadSlice(expected) \
 	do { \
-		if (!readMBCSlice(ptr, expected)) \
+		if (!readMBCSlice(ptr, expected)) { \
 			return MBC_BAD; \
+		} \
 	} while (0)
 
 		switch (*ptr++) {
@@ -1313,8 +1314,9 @@ int main(int argc, char *argv[]) {
 				switch (*musl_optarg) {
 #define OVERRIDE_SPEC(cur, bad, curFlag, badFlag) \
 	case STR(cur)[0]: \
-		if (fixSpec & badFlag) \
+		if (fixSpec & badFlag) { \
 			fprintf(stderr, "warning: '" STR(cur) "' overriding '" STR(bad) "' in fix spec\n"); \
+		} \
 		fixSpec = (fixSpec & ~badFlag) | curFlag; \
 		break
 #define overrideSpecs(fix, fixFlag, trash, trashFlag) \
