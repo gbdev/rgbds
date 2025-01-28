@@ -148,19 +148,21 @@ void sdobj_ReadFile(FileStackNode const &where, FILE *file, std::vector<Symbol> 
 #define getToken(ptr, ...) \
 	do { \
 		token = strtok((ptr), delim); \
-		if (!token) \
+		if (!token) { \
 			fatal(&where, lineNo, __VA_ARGS__); \
+		} \
 	} while (0)
 #define expectEol(...) \
 	do { \
 		token = strtok(nullptr, delim); \
-		if (token) \
+		if (token) { \
 			fatal(&where, lineNo, __VA_ARGS__); \
+		} \
 	} while (0)
 #define expectToken(expected, lineType) \
 	do { \
 		getToken(nullptr, "'%c' line is too short", (lineType)); \
-		if (strcasecmp(token, (expected)) != 0) \
+		if (strcasecmp(token, (expected)) != 0) { \
 			fatal( \
 			    &where, \
 			    lineNo, \
@@ -169,6 +171,7 @@ void sdobj_ReadFile(FileStackNode const &where, FILE *file, std::vector<Symbol> 
 			    (expected), \
 			    token \
 			); \
+		} \
 	} while (0)
 
 	uint32_t lineNo = 0;
