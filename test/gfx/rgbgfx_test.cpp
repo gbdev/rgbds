@@ -63,7 +63,8 @@ static void error(char const *fmt, ...) {
 	}
 }
 
-[[noreturn]] static void fatal(char const *fmt, ...) {
+[[noreturn]]
+static void fatal(char const *fmt, ...) {
 	va_list ap;
 
 	fputs("FATAL: ", stderr);
@@ -96,7 +97,8 @@ class Png {
 	int nbTransparentEntries;
 	png_bytep transparencyPal = nullptr;
 
-	[[noreturn]] static void handleError(png_structp png, char const *msg) {
+	[[noreturn]]
+	static void handleError(png_structp png, char const *msg) {
 		Png *self = reinterpret_cast<Png *>(png_get_error_ptr(png));
 
 		fatal("Error reading input image (\"%s\"): %s", self->path.c_str(), msg);
@@ -314,12 +316,7 @@ static char *execProg(char const *name, char * const *argv) {
 	if (int info; waitpid(pid, &info, 0) == -1 || !WIFEXITED(info)) {
 		fatal("Error waiting for %s: %s", name, strerror(errno));
 	} else if (int status = WEXITSTATUS(info); status != 0) {
-		fatal(
-		    "%s returned with status %d\n\tThe command was: [%s]",
-		    name,
-		    status,
-		    formatArgv()
-		);
+		fatal("%s returned with status %d\n\tThe command was: [%s]", name, status, formatArgv());
 	}
 
 #else // defined(_MSC_VER) || defined(__MINGW32__)

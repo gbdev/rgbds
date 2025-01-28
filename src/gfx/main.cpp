@@ -41,7 +41,8 @@ static struct LocalOptions {
 
 static uintmax_t nbErrors;
 
-[[noreturn]] void giveUp() {
+[[noreturn]]
+void giveUp() {
 	fprintf(stderr, "Conversion aborted after %ju error%s\n", nbErrors, nbErrors == 1 ? "" : "s");
 	exit(1);
 }
@@ -82,7 +83,8 @@ void errorMessage(char const *msg) {
 		nbErrors++;
 }
 
-[[noreturn]] void fatal(char const *fmt, ...) {
+[[noreturn]]
+void fatal(char const *fmt, ...) {
 	va_list ap;
 
 	fputs("FATAL: ", stderr);

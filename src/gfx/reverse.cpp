@@ -49,7 +49,8 @@ static DefaultInitVec<uint8_t> readInto(std::string const &path) {
 	return data;
 }
 
-[[noreturn]] static void pngError(png_structp png, char const *msg) {
+[[noreturn]]
+static void pngError(png_structp png, char const *msg) {
 	fatal(
 	    "Error writing reversed image (\"%s\"): %s",
 	    static_cast<char const *>(png_get_error_ptr(png)),

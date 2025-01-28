@@ -22,7 +22,8 @@ static void vwarnx(char const *fmt, va_list ap) {
 	putc('\n', stderr);
 }
 
-[[noreturn]] static void verr(char const *fmt, va_list ap) {
+[[noreturn]]
+static void verr(char const *fmt, va_list ap) {
 	char const *error = strerror(errno);
 
 	fprintf(stderr, "error: ");
@@ -32,7 +33,8 @@ static void vwarnx(char const *fmt, va_list ap) {
 	exit(1);
 }
 
-[[noreturn]] static void verrx(char const *fmt, va_list ap) {
+[[noreturn]]
+static void verrx(char const *fmt, va_list ap) {
 	fprintf(stderr, "error: ");
 	vfprintf(stderr, fmt, ap);
 	putc('\n', stderr);
@@ -56,14 +58,16 @@ void warnx(char const *fmt, ...) {
 	va_end(ap);
 }
 
-[[noreturn]] void err(char const *fmt, ...) {
+[[noreturn]]
+void err(char const *fmt, ...) {
 	va_list ap;
 
 	va_start(ap, fmt);
 	verr(fmt, ap);
 }
 
-[[noreturn]] void errx(char const *fmt, ...) {
+[[noreturn]]
+void errx(char const *fmt, ...) {
 	va_list ap;
 
 	va_start(ap, fmt);

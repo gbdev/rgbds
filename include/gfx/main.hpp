@@ -57,7 +57,8 @@ struct Options {
 	static constexpr uint8_t VERB_TRACE   = 5; // Step-by-step algorithm details
 	static constexpr uint8_t VERB_VVVVVV  = 6; // What, can't I have a little fun?
 	// clang-format on
-	[[gnu::format(printf, 3, 4)]] void verbosePrint(uint8_t level, char const *fmt, ...) const;
+	[[gnu::format(printf, 3, 4)]]
+	void verbosePrint(uint8_t level, char const *fmt, ...) const;
 
 	mutable bool hasTransparentPixels = false;
 	uint8_t maxOpaqueColors() const { return nbColorsPerPal - hasTransparentPixels; }
@@ -66,19 +67,23 @@ struct Options {
 extern Options options;
 
 // Prints the error count, and exits with failure
-[[noreturn]] void giveUp();
+[[noreturn]]
+void giveUp();
 // If any error has been emitted thus far, calls `giveUp()`.
 void requireZeroErrors();
 // Prints a warning, and does not change the error count
-[[gnu::format(printf, 1, 2)]] void warning(char const *fmt, ...);
+[[gnu::format(printf, 1, 2)]]
+void warning(char const *fmt, ...);
 // Prints an error, and increments the error count
-[[gnu::format(printf, 1, 2)]] void error(char const *fmt, ...);
+[[gnu::format(printf, 1, 2)]]
+void error(char const *fmt, ...);
 // Prints an error, and increments the error count
 // Does not take format arguments so `format_` and `-Wformat-security` won't complain about
 // calling `errorMessage(msg)`.
 void errorMessage(char const *msg);
 // Prints a fatal error, increments the error count, and gives up
-[[gnu::format(printf, 1, 2), noreturn]] void fatal(char const *fmt, ...);
+[[gnu::format(printf, 1, 2), noreturn]]
+void fatal(char const *fmt, ...);
 
 struct Palette {
 	// An array of 4 GBC-native (RGB555) colors

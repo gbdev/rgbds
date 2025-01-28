@@ -14,7 +14,8 @@
 #else
 // This seems to generate similar code to __builtin_unreachable, despite different semantics
 // Note that executing this is undefined behavior (declared [[noreturn]], but does return)
-[[noreturn]] static inline void unreachable_() {
+[[noreturn]]
+static inline void unreachable_() {
 }
 #endif
 
