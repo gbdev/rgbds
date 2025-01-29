@@ -30,7 +30,7 @@ RGBASM=../../rgbasm
 RGBLINK=../../rgblink
 
 tryDiff () {
-	if ! diff -au --strip-trailing-cr "$1" "$2"; then
+	if ! diff -au "$1" "$2"; then
 		echo "${bold}${red}${i%.asm}${variant}.$3 mismatch!${rescolors}${resbold}"
 		false
 	fi

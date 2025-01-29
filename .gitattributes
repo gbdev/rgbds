@@ -5,6 +5,10 @@
 # Flags also need Unix line endings (see https://github.com/gbdev/rgbds/issues/955)
 *.flags text eol=lf
 
+# Test outputs need Windows line endings (see https://github.com/gbdev/rgbds/pull/1635)
+*.out text eol=crlf
+*.err text eol=crlf
+
 # Binary files need exact bytes
 *.bin binary
 *.gb binary

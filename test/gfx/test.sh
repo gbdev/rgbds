@@ -83,7 +83,7 @@ for f in *.png; do
 	newTest "$RGBGFX" $flags "$f"
 	if [[ -e "${f%.png}.err" ]]; then
 		runTest 2>"$errtmp"
-		diff -au --strip-trailing-cr "${f%.png}.err" "$errtmp" || failTest
+		diff -au "${f%.png}.err" "$errtmp" || failTest
 	else
 		runTest && checkOutput "${f%.png}" || failTest $?
 	fi
@@ -91,7 +91,7 @@ for f in *.png; do
 	newTest "$RGBGFX" $flags - "<$f"
 	if [[ -e "${f%.png}.err" ]]; then
 		runTest 2>"$errtmp"
-		diff -au --strip-trailing-cr <(sed "s/$f/<stdin>/g" "${f%.png}.err") "$errtmp" || failTest
+		diff -au <(sed "s/$f/<stdin>/g" "${f%.png}.err") "$errtmp" || failTest
 	else
 		runTest && checkOutput "${f%.png}" || failTest $?
 	fi

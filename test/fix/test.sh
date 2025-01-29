@@ -25,7 +25,7 @@ rescolors="$(tput op)"
 RGBFIX=./rgbfix
 
 tryDiff () {
-	if ! diff -au --strip-trailing-cr "$1" "$2"; then
+	if ! diff -au "$1" "$2"; then
 		echo "${bold}${red}${3:-$1} mismatch!${rescolors}${resbold}"
 		false
 	fi
