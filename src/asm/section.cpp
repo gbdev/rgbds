@@ -83,7 +83,7 @@ void sect_CheckSizes() {
 		if (uint32_t maxSize = sectionTypeInfo[sect.type].size; sect.size > maxSize) {
 			error(
 			    "Section '%s' grew too big (max size = 0x%" PRIX32 " bytes, reached 0x%" PRIX32
-			    ").\n",
+			    ")\n",
 			    sect.name.c_str(),
 			    maxSize,
 			    sect.size
@@ -239,7 +239,7 @@ static void mergeSections(
 	}
 
 	if (sect.modifier != mod) {
-		sectError("Section already declared as %s section\n", sectionModNames[sect.modifier]);
+		sectError("Section already declared as SECTION %s\n", sectionModNames[sect.modifier]);
 	} else {
 		switch (mod) {
 		case SECTION_UNION:
@@ -850,8 +850,8 @@ void sect_PCRelByte(Expression &expr, uint32_t pcShift) {
 
 		if (offset < -128 || offset > 127) {
 			error(
-			    "jr target must be between -128 and 127 bytes away, not %" PRId16
-			    "; use jp instead\n",
+			    "JR target must be between -128 and 127 bytes away, not %" PRId16
+			    "; use JP instead\n",
 			    offset
 			);
 			writeByte(0);

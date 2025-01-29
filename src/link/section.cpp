@@ -133,12 +133,12 @@ static void mergeSections(Section &target, std::unique_ptr<Section> &&other) {
 	if (target.modifier != other->modifier) {
 		fprintf(
 		    stderr,
-		    "error: Section \"%s\" is defined as %s at ",
+		    "error: Section \"%s\" is defined as SECTION %s at ",
 		    target.name.c_str(),
 		    sectionModNames[target.modifier]
 		);
 		target.src->dump(target.lineNo);
-		fprintf(stderr, ", but as %s at ", sectionModNames[other->modifier]);
+		fprintf(stderr, ", but as SECTION %s at ", sectionModNames[other->modifier]);
 		other->src->dump(other->lineNo);
 		putc('\n', stderr);
 		exit(1);

@@ -68,7 +68,7 @@ SectionTypeInfo sectionTypeInfo[SECTTYPE_INVALID] = {
 // clang-format on
 
 char const * const sectionModNames[] = {
-    "regular",  // SECTION_NORMAL
-    "union",    // SECTION_UNION
-    "fragment", // SECTION_FRAGMENT
+    "(no modifier)", // SECTION_NORMAL
+    "UNION",         // SECTION_UNION
+    "FRAGMENT",      // SECTION_FRAGMENT
 };
