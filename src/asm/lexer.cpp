@@ -509,8 +509,9 @@ void BufferedContent::advance() {
 	if (offset == std::size(buf)) {
 		offset = 0; // Wrap around if necessary
 	}
-	assume(size > 0);
-	size--;
+	if (size > 0) {
+		size--;
+	}
 }
 
 void BufferedContent::refill() {

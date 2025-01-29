@@ -41,6 +41,9 @@ for {s}, 3, 30, 3
 	print "{d:x} "
 endr
 	println "-> {d:x}"
+for s, 10
+	println "{d:s}"
+endr
 
 for v, 10
 	println "{d:v}"
