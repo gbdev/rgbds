@@ -258,7 +258,7 @@ static void doSanityChecks(Section &section) {
 			error(
 			    nullptr,
 			    0,
-			    "%s: ROMX sections must be in bank 1 (if any) with option -t",
+			    "Section \"%s\" has type ROMX, which must be in bank 1 (if any) with option `-t`",
 			    section.name.c_str()
 			);
 		} else {
@@ -270,7 +270,7 @@ static void doSanityChecks(Section &section) {
 			error(
 			    nullptr,
 			    0,
-			    "%s: WRAMX sections must be in bank 1 with options -w or -d",
+			    "Section \"%s\" has type WRAMX, which must be in bank 1 with options `-w` or `-d`",
 			    section.name.c_str()
 			);
 		} else {
@@ -278,7 +278,12 @@ static void doSanityChecks(Section &section) {
 		}
 	}
 	if (isDmgMode && section.type == SECTTYPE_VRAM && section.bank == 1) {
-		error(nullptr, 0, "%s: VRAM bank 1 can't be used with option -d", section.name.c_str());
+		error(
+		    nullptr,
+		    0,
+		    "Section \"%s\" has type VRAM, which must be in bank 0 with option `-d`",
+		    section.name.c_str()
+		);
 	}
 
 	// Check if alignment is reasonable, this is important to avoid UB
@@ -292,7 +297,7 @@ static void doSanityChecks(Section &section) {
 		error(
 		    nullptr,
 		    0,
-		    "%s: %s sections cannot be aligned to $%04x bytes",
+		    "Section \"%s\" has type %s, which cannot be aligned to $%04x bytes",
 		    section.name.c_str(),
 		    sectionTypeInfo[section.type].name.c_str(),
 		    section.alignMask + 1

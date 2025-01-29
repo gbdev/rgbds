@@ -239,7 +239,7 @@ static void readPatch(
 	tryReadLong(
 	    nodeID,
 	    file,
-	    "%s: Unable to read \"%s\"'s patch #%" PRIu32 "'s node ID: %s",
+	    "%s: Cannot read \"%s\"'s patch #%" PRIu32 "'s node ID: %s",
 	    fileName,
 	    sectName.c_str(),
 	    i
@@ -248,7 +248,7 @@ static void readPatch(
 	tryReadLong(
 	    patch.lineNo,
 	    file,
-	    "%s: Unable to read \"%s\"'s patch #%" PRIu32 "'s line number: %s",
+	    "%s: Cannot read \"%s\"'s patch #%" PRIu32 "'s line number: %s",
 	    fileName,
 	    sectName.c_str(),
 	    i
@@ -256,7 +256,7 @@ static void readPatch(
 	tryReadLong(
 	    patch.offset,
 	    file,
-	    "%s: Unable to read \"%s\"'s patch #%" PRIu32 "'s offset: %s",
+	    "%s: Cannot read \"%s\"'s patch #%" PRIu32 "'s offset: %s",
 	    fileName,
 	    sectName.c_str(),
 	    i
@@ -264,7 +264,7 @@ static void readPatch(
 	tryReadLong(
 	    patch.pcSectionID,
 	    file,
-	    "%s: Unable to read \"%s\"'s patch #%" PRIu32 "'s PC offset: %s",
+	    "%s: Cannot read \"%s\"'s patch #%" PRIu32 "'s PC offset: %s",
 	    fileName,
 	    sectName.c_str(),
 	    i
@@ -272,7 +272,7 @@ static void readPatch(
 	tryReadLong(
 	    patch.pcOffset,
 	    file,
-	    "%s: Unable to read \"%s\"'s patch #%" PRIu32 "'s PC offset: %s",
+	    "%s: Cannot read \"%s\"'s patch #%" PRIu32 "'s PC offset: %s",
 	    fileName,
 	    sectName.c_str(),
 	    i
@@ -281,7 +281,7 @@ static void readPatch(
 	    PatchType,
 	    type,
 	    file,
-	    "%s: Unable to read \"%s\"'s patch #%" PRIu32 "'s type: %s",
+	    "%s: Cannot read \"%s\"'s patch #%" PRIu32 "'s type: %s",
 	    fileName,
 	    sectName.c_str(),
 	    i
@@ -290,7 +290,7 @@ static void readPatch(
 	tryReadLong(
 	    rpnSize,
 	    file,
-	    "%s: Unable to read \"%s\"'s patch #%" PRIu32 "'s RPN size: %s",
+	    "%s: Cannot read \"%s\"'s patch #%" PRIu32 "'s RPN size: %s",
 	    fileName,
 	    sectName.c_str(),
 	    i
