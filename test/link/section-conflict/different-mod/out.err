@@ -1,0 +1,1 @@
+error: Section "test" is defined as SECTION FRAGMENT at section-conflict/different-mod/a.asm(1), but as SECTION UNION at section-conflict/different-mod/b.asm(1)
