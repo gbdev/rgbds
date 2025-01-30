@@ -67,11 +67,6 @@ static Symbol const *getSymbol(std::vector<Symbol> const &symbolList, uint32_t i
 }
 
 // Compute a patch's value from its RPN string.
-// @param patch The patch to compute the value of
-// @param section The section the patch is contained in
-// @return The patch's value
-// @return isError Set if an error occurred during evaluation, and further
-//                 errors caused by the value should be suppressed.
 static int32_t computeRPNExpr(Patch const &patch, std::vector<Symbol> const &fileSymbols) {
 	uint8_t const *expression = patch.rpnExpression.data();
 	int32_t size = static_cast<int32_t>(patch.rpnExpression.size());
@@ -476,9 +471,7 @@ void patch_CheckAssertions() {
 	}
 }
 
-// Applies all of a section's patches
-// @param section The section component to patch
-// @param dataSection The section to patch
+// Applies all of a section's patches to a data section
 static void applyFilePatches(Section &section, Section &dataSection) {
 	verbosePrint("Patching section \"%s\"...\n", section.name.c_str());
 	for (Patch &patch : section.patches) {
@@ -543,7 +536,6 @@ static void applyFilePatches(Section &section, Section &dataSection) {
 }
 
 // Applies all of a section's patches, iterating over "components" of unionized sections
-// @param section The section to patch
 static void applyPatches(Section &section) {
 	if (!sect_HasData(section.type)) {
 		return;

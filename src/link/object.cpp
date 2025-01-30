@@ -41,9 +41,7 @@ static std::vector<std::vector<FileStackNode>> nodes;
 		var = static_cast<vartype>(tmpVal); \
 	} while (0)
 
-// Reads an unsigned long (32-bit) value from a file.
-// @param file The file to read from. This will read 4 bytes from the file.
-// @return The value read, cast to a int64_t, or `INT64_MAX` on failure.
+// Reads an unsigned long (32-bit) value from a file, or `INT64_MAX` on failure.
 static int64_t readLong(FILE *file) {
 	uint32_t value = 0;
 
@@ -65,31 +63,14 @@ static int64_t readLong(FILE *file) {
 	return value;
 }
 
-// Helper macro for reading longs from a file, and errors out if it fails to.
-// Not as a function to avoid overhead in the general case.
-// @param var The variable to stash the number into
-// @param file The file to read from. Its position will be advanced
-// @param ... A format string and related arguments; note that an extra string
-//            argument is provided, the reason for failure
+// Helper macro to read a long from a file to a var, or error out if it fails to.
 #define tryReadLong(var, file, ...) \
 	tryRead(readLong, int64_t, INT64_MAX, long, var, file, __VA_ARGS__)
 
-// There is no `readByte`, just use `fgetc` or `getc`.
-
-// Helper macro for reading bytes from a file, and errors out if it fails to.
-// Not as a function to avoid overhead in the general case.
-// @param var The variable to stash the number into
-// @param file The file to read from. Its position will be advanced
-// @param ... A format string and related arguments; note that an extra string
-//            argument is provided, the reason for failure
+// Helper macro to read a byte from a file to a var, or error out if it fails to.
 #define tryGetc(type, var, file, ...) tryRead(getc, int, EOF, type, var, file, __VA_ARGS__)
 
-// Helper macro for readings '\0'-terminated strings from a file, and errors out if it fails to.
-// Not as a function to avoid overhead in the general case.
-// @param var The variable to stash the string into
-// @param file The file to read from. Its position will be advanced
-// @param ... A format string and related arguments; note that an extra string
-//            argument is provided, the reason for failure
+// Helper macro to read a '\0'-terminated string from a file, or error out if it fails to.
 #define tryReadString(var, file, ...) \
 	do { \
 		FILE *tmpFile = file; \
@@ -105,21 +86,19 @@ static int64_t readLong(FILE *file) {
 
 // Functions to parse object files
 
-// Reads a file stack node form a file.
-// @param file The file to read from
-// @param nodes The file's array of nodes
-// @param i The ID of the node in the array
-// @param fileName The filename to report in errors
+// Reads a file stack node from a file.
 static void readFileStackNode(
-    FILE *file, std::vector<FileStackNode> &fileNodes, uint32_t i, char const *fileName
+    FILE *file, std::vector<FileStackNode> &fileNodes, uint32_t nodeID, char const *fileName
 ) {
-	FileStackNode &node = fileNodes[i];
+	FileStackNode &node = fileNodes[nodeID];
 	uint32_t parentID;
 
-	tryReadLong(parentID, file, "%s: Cannot read node #%" PRIu32 "'s parent ID: %s", fileName, i);
+	tryReadLong(
+	    parentID, file, "%s: Cannot read node #%" PRIu32 "'s parent ID: %s", fileName, nodeID
+	);
 	node.parent = parentID != UINT32_MAX ? &fileNodes[parentID] : nullptr;
 	tryReadLong(
-	    node.lineNo, file, "%s: Cannot read node #%" PRIu32 "'s line number: %s", fileName, i
+	    node.lineNo, file, "%s: Cannot read node #%" PRIu32 "'s line number: %s", fileName, nodeID
 	);
 	tryGetc(
 	    FileStackNodeType,
@@ -127,29 +106,31 @@ static void readFileStackNode(
 	    file,
 	    "%s: Cannot read node #%" PRIu32 "'s type: %s",
 	    fileName,
-	    i
+	    nodeID
 	);
 	switch (node.type) {
 	case NODE_FILE:
 	case NODE_MACRO:
 		node.data = "";
 		tryReadString(
-		    node.name(), file, "%s: Cannot read node #%" PRIu32 "'s file name: %s", fileName, i
+		    node.name(), file, "%s: Cannot read node #%" PRIu32 "'s file name: %s", fileName, nodeID
 		);
 		break;
 
 		uint32_t depth;
 	case NODE_REPT:
-		tryReadLong(depth, file, "%s: Cannot read node #%" PRIu32 "'s rept depth: %s", fileName, i);
+		tryReadLong(
+		    depth, file, "%s: Cannot read node #%" PRIu32 "'s rept depth: %s", fileName, nodeID
+		);
 		node.data = std::vector<uint32_t>(depth);
-		for (uint32_t k = 0; k < depth; k++) {
+		for (uint32_t i = 0; i < depth; i++) {
 			tryReadLong(
-			    node.iters()[k],
+			    node.iters()[i],
 			    file,
 			    "%s: Cannot read node #%" PRIu32 "'s iter #%" PRIu32 ": %s",
 			    fileName,
-			    i,
-			    k
+			    nodeID,
+			    i
 			);
 		}
 		if (!node.parent) {
@@ -158,16 +139,13 @@ static void readFileStackNode(
 			    0,
 			    "%s is not a valid object file: root node (#%" PRIu32 ") may not be REPT",
 			    fileName,
-			    i
+			    nodeID
 			);
 		}
 	}
 }
 
 // Reads a symbol from a file.
-// @param file The file to read from
-// @param symbol The symbol to fill
-// @param fileName The filename to report in errors
 static void readSymbol(
     FILE *file, Symbol &symbol, char const *fileName, std::vector<FileStackNode> const &fileNodes
 ) {
@@ -221,16 +199,12 @@ static void readSymbol(
 }
 
 // Reads a patch from a file.
-// @param file The file to read from
-// @param patch The patch to fill
-// @param fileName The filename to report in errors
-// @param i The number of the patch to report in errors
 static void readPatch(
     FILE *file,
     Patch &patch,
     char const *fileName,
     std::string const &sectName,
-    uint32_t i,
+    uint32_t patchID,
     std::vector<FileStackNode> const &fileNodes
 ) {
 	uint32_t nodeID, rpnSize;
@@ -242,7 +216,7 @@ static void readPatch(
 	    "%s: Cannot read \"%s\"'s patch #%" PRIu32 "'s node ID: %s",
 	    fileName,
 	    sectName.c_str(),
-	    i
+	    patchID
 	);
 	patch.src = &fileNodes[nodeID];
 	tryReadLong(
@@ -251,7 +225,7 @@ static void readPatch(
 	    "%s: Cannot read \"%s\"'s patch #%" PRIu32 "'s line number: %s",
 	    fileName,
 	    sectName.c_str(),
-	    i
+	    patchID
 	);
 	tryReadLong(
 	    patch.offset,
@@ -259,7 +233,7 @@ static void readPatch(
 	    "%s: Cannot read \"%s\"'s patch #%" PRIu32 "'s offset: %s",
 	    fileName,
 	    sectName.c_str(),
-	    i
+	    patchID
 	);
 	tryReadLong(
 	    patch.pcSectionID,
@@ -267,7 +241,7 @@ static void readPatch(
 	    "%s: Cannot read \"%s\"'s patch #%" PRIu32 "'s PC offset: %s",
 	    fileName,
 	    sectName.c_str(),
-	    i
+	    patchID
 	);
 	tryReadLong(
 	    patch.pcOffset,
@@ -275,7 +249,7 @@ static void readPatch(
 	    "%s: Cannot read \"%s\"'s patch #%" PRIu32 "'s PC offset: %s",
 	    fileName,
 	    sectName.c_str(),
-	    i
+	    patchID
 	);
 	tryGetc(
 	    PatchType,
@@ -284,7 +258,7 @@ static void readPatch(
 	    "%s: Cannot read \"%s\"'s patch #%" PRIu32 "'s type: %s",
 	    fileName,
 	    sectName.c_str(),
-	    i
+	    patchID
 	);
 	patch.type = type;
 	tryReadLong(
@@ -293,7 +267,7 @@ static void readPatch(
 	    "%s: Cannot read \"%s\"'s patch #%" PRIu32 "'s RPN size: %s",
 	    fileName,
 	    sectName.c_str(),
-	    i
+	    patchID
 	);
 
 	patch.rpnExpression.resize(rpnSize);
@@ -304,14 +278,13 @@ static void readPatch(
 		    "%s: Cannot read \"%s\"'s patch #%" PRIu32 "'s RPN expression: %s",
 		    fileName,
 		    sectName.c_str(),
-		    i,
+		    patchID,
 		    feof(file) ? "Unexpected end of file" : strerror(errno)
 		);
 	}
 }
 
-// Sets a patch's pcSection from its pcSectionID.
-// @param patch The patch to fix
+// Sets a patch's `pcSection` from its `pcSectionID`.
 static void
     linkPatchToPCSect(Patch &patch, std::vector<std::unique_ptr<Section>> const &fileSections) {
 	patch.pcSection =
@@ -319,9 +292,6 @@ static void
 }
 
 // Reads a section from a file.
-// @param file The file to read from
-// @param section The section to fill
-// @param fileName The filename to report in errors
 static void readSection(
     FILE *file, Section &section, char const *fileName, std::vector<FileStackNode> const &fileNodes
 ) {
@@ -432,8 +402,6 @@ static void readSection(
 }
 
 // Links a symbol to a section, keeping the section's symbol list sorted.
-// @param symbol The symbol to link
-// @param section The section to link
 static void linkSymToSect(Symbol &symbol, Section &section) {
 	uint32_t a = 0, b = section.symbols.size();
 	int32_t symbolOffset = symbol.label().offset;
@@ -452,20 +420,17 @@ static void linkSymToSect(Symbol &symbol, Section &section) {
 	section.symbols.insert(section.symbols.begin() + a, &symbol);
 }
 
-// Reads an assertion from a file
-// @param file The file to read from
-// @param assert The assertion to fill
-// @param fileName The filename to report in errors
+// Reads an assertion from a file.
 static void readAssertion(
     FILE *file,
     Assertion &assert,
     char const *fileName,
-    uint32_t i,
+    uint32_t assertID,
     std::vector<FileStackNode> const &fileNodes
 ) {
 	std::string assertName("Assertion #");
 
-	assertName += std::to_string(i);
+	assertName += std::to_string(assertID);
 	readPatch(file, assert.patch, fileName, assertName, 0, fileNodes);
 	tryReadString(assert.message, file, "%s: Cannot read assertion's message: %s", fileName);
 }

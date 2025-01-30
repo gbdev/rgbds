@@ -103,7 +103,7 @@ Section const *out_OverlappingSection(Section const &section) {
 }
 
 // Performs sanity checks on the overlay file.
-// @return The number of ROM banks in the overlay file
+// Returns the number of ROM banks in the overlay file.
 static uint32_t checkOverlaySize() {
 	if (!overlayFile) {
 		return 0;
@@ -133,7 +133,6 @@ static uint32_t checkOverlaySize() {
 // Expand `sections[SECTTYPE_ROMX]` to cover all the overlay banks.
 // This ensures that `writeROM` will output each bank, even if some are not
 // covered by any sections.
-// @param nbOverlayBanks The number of banks in the overlay file
 static void coverOverlayBanks(uint32_t nbOverlayBanks) {
 	// 2 if is32kMode, 1 otherwise
 	uint32_t nbRom0Banks = sectionTypeInfo[SECTTYPE_ROM0].size / BANK_SIZE;
@@ -165,10 +164,7 @@ static uint8_t getNextFillByte() {
 	return padValue;
 }
 
-// Write a ROM bank's sections to the output file.
-// @param bankSections The bank's sections, ordered by increasing address
-// @param baseOffset The address of the bank's first byte in GB address space
-// @param size The size of the bank
+// Write a ROM bank's sections, ordered by increasing address, to the output file.
 static void
     writeBank(std::deque<Section const *> *bankSections, uint16_t baseOffset, uint16_t size) {
 	uint16_t offset = 0;
@@ -340,7 +336,6 @@ static bool compareSymbols(SortedSymbol const &sym1, SortedSymbol const &sym2) {
 }
 
 // Write a bank's contents to the sym file
-// @param bankSections The bank's sections
 static void writeSymBank(SortedSections const &bankSections, SectionType type, uint32_t bank) {
 #define forEachSortedSection(sect, ...) \
 	do { \
