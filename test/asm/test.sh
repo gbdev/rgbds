@@ -45,7 +45,7 @@ tryCmp () {
 }
 
 # Add the version constants test, outputting the closest tag to the HEAD
-if git describe --tags --abbrev=0 >version.out; then
+if git -c safe.directory='*' describe --tags --abbrev=0 >version.out; then
 	$RGBASM --version >>version.out
 	cat >version.asm <<EOF
 IF !DEF(__RGBDS_RC__)

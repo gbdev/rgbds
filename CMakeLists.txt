@@ -75,7 +75,7 @@ endif()
 
 find_program(GIT git)
 if(GIT)
-  execute_process(COMMAND ${GIT} --git-dir=.git describe --tags --dirty --always
+  execute_process(COMMAND ${GIT} --git-dir=.git -c safe.directory='*' describe --tags --dirty --always
                   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
                   OUTPUT_VARIABLE GIT_REV OUTPUT_STRIP_TRAILING_WHITESPACE
                   ERROR_QUIET)
