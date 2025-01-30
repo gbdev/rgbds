@@ -185,7 +185,6 @@ static void printAcceptedMBCNames() {
 
 static uint8_t tpp1Rev[2];
 
-// @return False on failure
 static bool readMBCSlice(char const *&name, char const *expected) {
 	while (*expected) {
 		char c = *name++;
@@ -853,10 +852,6 @@ static ssize_t writeBytes(int fd, uint8_t *buf, size_t len) {
 	return total;
 }
 
-// @param rom0 A pointer to rom0
-// @param addr What address to check
-// @param fixedByte The fixed byte at the address
-// @param areaName Name to be displayed in the warning message
 static void overwriteByte(uint8_t *rom0, uint16_t addr, uint8_t fixedByte, char const *areaName) {
 	uint8_t origByte = rom0[addr];
 
@@ -867,11 +862,6 @@ static void overwriteByte(uint8_t *rom0, uint16_t addr, uint8_t fixedByte, char 
 	rom0[addr] = fixedByte;
 }
 
-// @param rom0 A pointer to rom0
-// @param startAddr What address to begin checking from
-// @param fixed The fixed bytes at the address
-// @param size How many bytes to check
-// @param areaName Name to be displayed in the warning message
 static void overwriteBytes(
     uint8_t *rom0, uint16_t startAddr, uint8_t const *fixed, uint8_t size, char const *areaName
 ) {
@@ -889,10 +879,6 @@ static void overwriteBytes(
 	memcpy(&rom0[startAddr], fixed, size);
 }
 
-// @param input File descriptor to be used for reading
-// @param output File descriptor to be used for writing, may be equal to `input`
-// @param name The file's name, to be displayed for error output
-// @param fileSize The file's size if known, 0 if not.
 static void processFile(int input, int output, char const *name, off_t fileSize) {
 	// Both of these should be true for seekable files, and neither otherwise
 	if (input == output) {

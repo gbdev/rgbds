@@ -270,8 +270,7 @@ static void registerInput(char const *arg) {
 	}
 }
 
-// Turn an "at-file"'s contents into an argv that `getopt` can handle
-// @param argPool Argument characters will be appended to this vector, for storage purposes.
+// Turn an at-file's contents into an argv that `getopt` can handle, appending them to `argPool`.
 static std::vector<size_t> readAtFile(std::string const &path, std::vector<char> &argPool) {
 	File file;
 	if (!file.open(path, std::ios_base::in)) {

@@ -49,8 +49,6 @@ static void initFreeSpace() {
 }
 
 // Assigns a section to a given memory location
-// @param section The section to assign
-// @param location The location to assign the section to
 static void assignSection(Section &section, MemoryLocation const &location) {
 	// Propagate the assigned location to all UNIONs/FRAGMENTs
 	// so `jr` patches in them will have the correct offset
@@ -67,10 +65,6 @@ static void assignSection(Section &section, MemoryLocation const &location) {
 // Checks whether a given location is suitable for placing a given section
 // This checks not only that the location has enough room for the section, but
 // also that the constraints (alignment...) are respected.
-// @param section The section to be placed
-// @param freeSpace The candidate free space to place the section into
-// @param location The location to attempt placing the section at
-// @return True if the location is suitable, false otherwise.
 static bool isLocationSuitable(
     Section const &section, FreeSpace const &freeSpace, MemoryLocation const &location
 ) {
@@ -89,11 +83,8 @@ static bool isLocationSuitable(
 	return location.address + section.size <= freeSpace.address + freeSpace.size;
 }
 
-// Finds a suitable location to place a section at.
-// @param section The section to be placed
-// @param location A pointer to a memory location that will be filled
-// @return The index into `memory[section->type]` of the free space encompassing the location,
-//         or -1 if none was found
+// Returns a suitable free space index into `memory[section->type]` at which to place the given
+// section, or -1 if none was found.
 static ssize_t getPlacement(Section const &section, MemoryLocation &location) {
 	SectionTypeInfo const &typeInfo = sectionTypeInfo[section.type];
 
@@ -214,9 +205,7 @@ static ssize_t getPlacement(Section const &section, MemoryLocation &location) {
 }
 
 // Places a section in a suitable location, or error out if it fails to.
-// @warning Due to the implemented algorithm, this should be called with
-//          sections of decreasing size.
-// @param section The section to place
+// Due to the implemented algorithm, this should be called with sections of decreasing size!
 static void placeSection(Section &section) {
 	MemoryLocation location;
 
@@ -347,9 +336,8 @@ static constexpr uint8_t ALIGN_CONSTRAINED = 1 << 0;
 // clang-format on
 static std::deque<Section *> unassignedSections[1 << 3];
 
-// Categorize a section depending on how constrained it is
-// This is so the most-constrained sections are placed first
-// @param section The section to categorize
+// Categorize a section depending on how constrained it is.
+// This is so the most-constrained sections are placed first.
 static void categorizeSection(Section &section) {
 	uint8_t constraints = 0;
 

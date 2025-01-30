@@ -67,16 +67,12 @@ extern std::deque<Assertion> assertions;
 
 // Execute a callback for each section currently registered.
 // This is to avoid exposing the data structure in which sections are stored.
-// @param callback The function to call for each structure.
 void sect_ForEach(void (*callback)(Section &));
 
 // Registers a section to be processed.
-// @param section The section to register.
 void sect_AddSection(std::unique_ptr<Section> &&section);
 
 // Finds a section by its name.
-// @param name The name of the section to look for
-// @return A pointer to the section, or `nullptr` if it wasn't found
 Section *sect_GetSection(std::string const &name);
 
 // Checks if all sections meet reasonable criteria, such as max size
