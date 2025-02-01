@@ -137,9 +137,12 @@ The RGBDS source code file structure is as follows:
   this version as [rgbds-linux](https://github.com/vegard/rgbds-linux).
 - 2010-01-12: Anthony J. Bentley [forks](https://github.com/bentley) Nossum's
   repository. The fork becomes the reference implementation of RGBDS.
+- 2010-09-25: Sørensen continues development of
+  [ASMotor](https://github.com/asmotor/asmotor) to this day.
 - 2015-01-18: stag019 begins implementing [RGBGFX](https://github.com/stag019/rgbgfx),
   a PNG‐to‐Game Boy graphics converter, for eventual integration into RGBDS.
-- 2016-09-05: RGBGFX is [integrated](https://github.com/gbdev/rgbds/commit/c3c31138ddbd8680d4e67957e387f2816798a71b)
+- 2016-09-05: RGBGFX is
+  [integrated](https://github.com/gbdev/rgbds/commit/c3c31138ddbd8680d4e67957e387f2816798a71b)
   into Bentley's repository.
 - 2017-02-23: Bentley's repository is moved to the [rednex](https://github.com/rednex)
   organization.
