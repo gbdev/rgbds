@@ -1052,7 +1052,7 @@ and
 .Ic WRAMX
 types are still considered different.
 .It
-Different constraints (alignment, bank, etc.) can be specified for each unionized section declaration, but they must all be compatible.
+Different constraints (alignment, bank, etc.) can be specified for each section fragment declaration, but they must all be compatible.
 For example, alignment must be compatible with any fixed address, all specified banks must be the same, etc.
 .It
 A section fragment may not be unionized; after all, that wouldn't make much sense.
@@ -1075,6 +1075,70 @@ first, followed by the one from
 and the one from
 .Ql bar.o
 last.
+.Ss Fragment literals
+Fragment literals are useful for short blocks of code or data that are only referenced once.
+They are section fragments created by surrounding instructions or directives with
+.Ql [[
+double brackets
+.Ql ]] ,
+without a separate
+.Ic SECTION FRAGMENT
+declaration.
+.Pp
+The content of a fragment literal becomes a
+.Ic SECTION FRAGMENT ,
+sharing the same name and bank as its parent ROM section, but without any other constraints.
+The parent section also becomes a
+.Ic FRAGMENT
+if it was not one already, so that it can be merged with its fragment literals.
+RGBLINK merges the fragments in no particular order.
+.Pp
+A fragment literal can take the place of any 16-bit integer constant
+.Ql n16
+from the
+.Xr gbz80 7
+documentation, as well as a
+.Ic DW
+item.
+The fragment literal then evaluates to its starting address.
+For example, you can
+.Ic CALL
+or
+.Ic JP
+to a fragment literal.
+.Pp
+This code using named labels:
+.Bd -literal -offset indent
+FortyTwo:
+    call Sub1
+    jp Sub2
+Sub1:
+    ld a, [Twenty]
+    ret
+Sub2:
+    inc a
+    add a
+    ret
+Twenty: db 20
+dw FortyTwo
+.Ed
+.Pp
+is equivalent to this code using fragment literals:
+.Bd -literal -offset indent
+dw [[
+    call [[
+        ld a, [ [[db 20]] ]
+        ret
+    ]]
+    jp [[
+        inc a
+        add a
+        ret
+    ]]
+]]
+.Ed
+.Pp
+The difference is that the example using fragment literals does not declare a particular order for its pieces.
 .Sh SYMBOLS
 RGBDS supports several types of symbols:
 .Bl -hang
