@@ -108,9 +108,9 @@ fi
 
 if "$nonfree"; then
 	action pret  pokecrystal      2024-12-28 86a87a355e6805663cfecf150a3af71c66441a3e
-	action pret  pokered          2024-12-26 f023c68417ff0b14db1ab28ecff67f8d123ede44
-	action zladx LADX-Disassembly 2024-12-29 f78e32c8befcd4dc1f34ae89508b6fac636d753a
+	action pret  pokered          2025-01-29 43f21cc4948682b51b4c72bcef38631f95b47bfe
+	action zladx LADX-Disassembly 2025-01-06 e5ab607f39b0a4bd35f0bae6c6354fde9eecca3c
 fi
 action AntonioND ucity   2024-12-26 2056166b0a84271d6c2a5a1f7d037dd416085796
 action pinobatch libbet  2024-12-26 de2081260d6111a3e60b16120bbb905ef00c6a34
-action LIJI32    SameBoy 2024-12-26 9079c8ba86337b5f86eb92e09fd7ef0f64ac6244
+action LIJI32    SameBoy 2025-01-23 1798edf4c1f8cbf018d14436f14c2a18ff256ae4
