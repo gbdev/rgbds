@@ -343,6 +343,7 @@
 
 // Strings
 %type <std::string> string
+%type <std::string> string_literal
 %type <std::string> strcat_args
 // Strings used for identifiers
 %type <std::string> def_id
@@ -1210,9 +1211,20 @@ print_expr:
 	relocexpr_no_str {
 		printf("$%" PRIX32, $1.getConstVal());
 	}
-	| string {
+	| string_literal {
 		// Allow printing NUL characters
 		fwrite($1.data(), 1, $1.length(), stdout);
+	}
+	| scoped_sym {
+		if (Symbol *sym = sym_FindScopedSymbol($1); sym && sym->type == SYM_EQUS) {
+			std::shared_ptr<std::string> str = sym->getEqus();
+			// Allow printing NUL characters
+			fwrite(str->data(), 1, str->length(), stdout);
+		} else {
+			Expression expr;
+			expr.makeSymbol($1);
+			printf("$%" PRIX32, expr.getConstVal());
+		}
 	}
 ;
 
@@ -1233,9 +1245,20 @@ constlist_8bit_entry:
 		$1.checkNBit(8);
 		sect_RelByte($1, 0);
 	}
-	| string {
+	| string_literal {
 		std::vector<int32_t> output = charmap_Convert($1);
 		sect_ByteString(output);
+	}
+	| scoped_sym {
+		if (Symbol *sym = sym_FindScopedSymbol($1); sym && sym->type == SYM_EQUS) {
+			std::vector<int32_t> output = charmap_Convert(*sym->getEqus());
+			sect_ByteString(output);
+		} else {
+			Expression expr;
+			expr.makeSymbol($1);
+			expr.checkNBit(8);
+			sect_RelByte(expr, 0);
+		}
 	}
 ;
 
@@ -1249,9 +1272,20 @@ constlist_16bit_entry:
 		$1.checkNBit(16);
 		sect_RelWord($1, 0);
 	}
-	| string {
+	| string_literal {
 		std::vector<int32_t> output = charmap_Convert($1);
 		sect_WordString(output);
+	}
+	| scoped_sym {
+		if (Symbol *sym = sym_FindScopedSymbol($1); sym && sym->type == SYM_EQUS) {
+			std::vector<int32_t> output = charmap_Convert(*sym->getEqus());
+			sect_WordString(output);
+		} else {
+			Expression expr;
+			expr.makeSymbol($1);
+			expr.checkNBit(16);
+			sect_RelWord(expr, 0);
+		}
 	}
 ;
 
@@ -1264,9 +1298,19 @@ constlist_32bit_entry:
 	relocexpr_no_str {
 		sect_RelLong($1, 0);
 	}
-	| string {
+	| string_literal {
 		std::vector<int32_t> output = charmap_Convert($1);
 		sect_LongString(output);
+	}
+	| scoped_sym {
+		if (Symbol *sym = sym_FindScopedSymbol($1); sym && sym->type == SYM_EQUS) {
+			std::vector<int32_t> output = charmap_Convert(*sym->getEqus());
+			sect_LongString(output);
+		} else {
+			Expression expr;
+			expr.makeSymbol($1);
+			sect_RelLong(expr, 0);
+		}
 	}
 ;
 
@@ -1299,17 +1343,22 @@ relocexpr:
 	relocexpr_no_str {
 		$$ = std::move($1);
 	}
-	| string {
+	| string_literal {
 		std::vector<int32_t> output = charmap_Convert($1);
 		$$.makeNumber(strToNum(output));
+	}
+	| scoped_sym {
+		if (Symbol *sym = sym_FindScopedSymbol($1); sym && sym->type == SYM_EQUS) {
+			std::vector<int32_t> output = charmap_Convert(*sym->getEqus());
+			$$.makeNumber(strToNum(output));
+		} else {
+			$$.makeSymbol($1);
+		}
 	}
 ;
 
 relocexpr_no_str:
-	scoped_sym {
-		$$.makeSymbol($1);
-	}
-	| NUMBER {
+	NUMBER {
 		$$.makeNumber($1);
 	}
 	| OP_LOGICNOT relocexpr %prec NEG {
@@ -1403,7 +1452,7 @@ relocexpr_no_str:
 		// '@' is also a SYMBOL; it is handled here
 		$$.makeBankSymbol($3);
 	}
-	| OP_BANK LPAREN string RPAREN {
+	| OP_BANK LPAREN string_literal RPAREN {
 		$$.makeBankSection($3);
 	}
 	| OP_SIZEOF LPAREN string RPAREN {
@@ -1540,7 +1589,7 @@ precision_arg:
 	}
 ;
 
-string:
+string_literal:
 	STRING {
 		$$ = std::move($1);
 	}
@@ -1625,6 +1674,19 @@ string:
 	}
 ;
 
+string:
+	string_literal {
+		$$ = std::move($1);
+	}
+	| scoped_sym {
+		if (Symbol *sym = sym_FindScopedSymbol($1); sym && sym->type == SYM_EQUS) {
+			$$ = *sym->getEqus();
+		} else {
+			::error("'%s' is not a string symbol\n", $1.c_str());
+		}
+	}
+;
+
 strcat_args:
 	string {
 		$$ = std::move($1);
@@ -1649,9 +1711,19 @@ strfmt_va_args:
 		$$ = std::move($1);
 		$$.args.push_back(static_cast<uint32_t>($3.getConstVal()));
 	}
-	| strfmt_va_args COMMA string {
+	| strfmt_va_args COMMA string_literal {
 		$$ = std::move($1);
 		$$.args.push_back(std::move($3));
+	}
+	| strfmt_va_args COMMA scoped_sym {
+		$$ = std::move($1);
+		if (Symbol *sym = sym_FindScopedSymbol($3); sym && sym->type == SYM_EQUS) {
+			$$.args.push_back(*sym->getEqus());
+		} else {
+			Expression expr;
+			expr.makeSymbol($3);
+			$$.args.push_back(static_cast<uint32_t>(expr.getConstVal()));
+		}
 	}
 ;
 

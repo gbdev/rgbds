@@ -1915,8 +1915,8 @@ static Token yylex_NORMAL() {
 				// `token` is either a `SYMBOL` or a `LOCAL`, and both have a `std::string` value.
 				assume(token.value.holds<std::string>());
 
-				// Local symbols cannot be string expansions
-				if (token.type == T_(SYMBOL) && lexerState->expandStrings) {
+				// Raw symbols and local symbols cannot be string expansions
+				if (!raw && token.type == T_(SYMBOL) && lexerState->expandStrings) {
 					// Attempt string expansion
 					Symbol const *sym = sym_FindExactSymbol(token.value.get<std::string>());
 
