@@ -327,14 +327,11 @@
 %type <Expression> relocexpr
 %type <Expression> relocexpr_no_str
 %type <Expression> reloc_8bit
-%type <Expression> reloc_8bit_no_str
 %type <Expression> reloc_8bit_offset
 %type <Expression> reloc_16bit
-%type <Expression> reloc_16bit_no_str
 
 // Constant numbers
 %type <int32_t> iconst
-%type <int32_t> const_no_str
 %type <int32_t> uconst
 // Constant numbers used only in specific contexts
 %type <int32_t> bit_const
@@ -1226,8 +1223,8 @@ print_exprs:
 ;
 
 print_expr:
-	const_no_str {
-		printf("$%" PRIX32, $1);
+	relocexpr_no_str {
+		printf("$%" PRIX32, $1.getConstVal());
 	}
 	| string {
 		// Allow printing NUL characters
@@ -1251,7 +1248,8 @@ constlist_8bit:
 ;
 
 constlist_8bit_entry:
-	reloc_8bit_no_str {
+	relocexpr_no_str {
+		$1.checkNBit(8);
 		sect_RelByte($1, 0);
 	}
 	| string {
@@ -1266,7 +1264,8 @@ constlist_16bit:
 ;
 
 constlist_16bit_entry:
-	reloc_16bit_no_str {
+	relocexpr_no_str {
+		$1.checkNBit(16);
 		sect_RelWord($1, 0);
 	}
 	| string {
@@ -1297,13 +1296,6 @@ reloc_8bit:
 	}
 ;
 
-reloc_8bit_no_str:
-	relocexpr_no_str {
-		$$ = std::move($1);
-		$$.checkNBit(8);
-	}
-;
-
 reloc_8bit_offset:
 	OP_ADD relocexpr {
 		$$ = std::move($2);
@@ -1317,13 +1309,6 @@ reloc_8bit_offset:
 
 reloc_16bit:
 	relocexpr {
-		$$ = std::move($1);
-		$$.checkNBit(16);
-	}
-;
-
-reloc_16bit_no_str:
-	relocexpr_no_str {
 		$$ = std::move($1);
 		$$.checkNBit(16);
 	}
@@ -1545,12 +1530,6 @@ iconst:
 	}
 ;
 
-const_no_str:
-	relocexpr_no_str {
-		$$ = $1.getConstVal();
-	}
-;
-
 precision_arg:
 	%empty {
 		$$ = fix_Precision();
@@ -1647,9 +1626,9 @@ strfmt_args:
 
 strfmt_va_args:
 	  %empty {}
-	| strfmt_va_args COMMA const_no_str {
+	| strfmt_va_args COMMA relocexpr_no_str {
 		$$ = std::move($1);
-		$$.args.push_back(static_cast<uint32_t>($3));
+		$$.args.push_back(static_cast<uint32_t>($3.getConstVal()));
 	}
 	| strfmt_va_args COMMA string {
 		$$ = std::move($1);
