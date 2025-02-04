@@ -72,9 +72,14 @@ GitHub.
 
 8. Update the following related projects.
 
-   - [rgbobj](https://github.com/gbdev/rgbobj) and [rgbds-obj](https://github.com/gbdev/rgbds-obj):
-     make sure that object files created by the latest RGBASM can be parsed and displayed.
-     If the object file revision has been updated, rgbobj will need a corresponding release.
-   - [rgbds-www](https://github.com/gbdev/rgbds-www): update
-     [src/pages/versions.mdx](https://github.com/gbdev/rgbds-www/blob/master/src/pages/versions.mdx)
-     to list the new release.
+   1. [rgbds-www](https://github.com/gbdev/rgbds-www): update
+      [src/pages/versions.mdx](https://github.com/gbdev/rgbds-www/blob/master/src/pages/versions.mdx)
+      to list the new release.
+   2. [rgbds-live](https://github.com/gbdev/rgbds-live): update the `rgbds` submodule (and
+      [patches/rgbds.patch](https://github.com/gbdev/rgbds-live/blob/master/patches/rgbds.patch)
+      if necessary) to use the new release, and
+      [index.html](https://github.com/gbdev/rgbds-live/blob/master/index.html)
+      to link to the new manual version.
+   3. [rgbobj](https://github.com/gbdev/rgbobj) and [rgbds-obj](https://github.com/gbdev/rgbds-obj):
+       make sure that object files created by the latest RGBASM can be parsed and displayed.
+       If the object file revision has been updated, `rgbobj` will need a corresponding release.
