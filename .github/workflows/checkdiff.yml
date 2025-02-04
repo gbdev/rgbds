@@ -11,7 +11,7 @@ jobs:
           cd rgbds
           git remote add upstream "${{ github.event.pull_request.base.repo.clone_url }}"
           git fetch upstream
-      - name: Checkdiff
+      - name: Check diff
         working-directory: rgbds
         run: |
           make checkdiff "BASE_REF=${{ github.event.pull_request.base.sha }}" Q= | tee log
