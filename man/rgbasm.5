@@ -1104,7 +1104,9 @@ Additionally, label names can contain up to a single dot
 .Ql \&. ,
 which may not be the first character.
 .Pp
-A symbol cannot have the same name as a reserved keyword, unless it is prefixed by a hash
+A symbol cannot have the same name as a reserved keyword, unless it is a
+.Dq raw symbol
+prefixed by a hash
 .Sq # .
 For example,
 .Ql #load
@@ -1387,6 +1389,8 @@ This expansion is disabled in a few contexts:
 and
 .Ql MACRO name
 will not expand string constants in their names.
+Expansion is also disabled for raw string constant symbols (string constant symbols prefixed by a hash
+.Sq # ) .
 .Bd -literal -offset indent
 DEF COUNTREG EQUS "[hl+]"
     ld a, COUNTREG

@@ -314,6 +314,7 @@
 %token <int32_t> NUMBER "number"
 %token <std::string> STRING "string"
 %token <std::string> SYMBOL "symbol"
+%token <std::string> STR_SYMBOL "string symbol"
 %token <std::string> LABEL "label"
 %token <std::string> LOCAL "local label"
 %token <std::string> ANON "anonymous label"
@@ -354,10 +355,14 @@
 %type <std::string> def_rl
 %type <std::string> def_equs
 %type <std::string> redef_equs
+%type <std::string> symbol
 %type <std::string> scoped_sym
 // `scoped_sym_no_anon` exists because anonymous labels usually count as "scoped symbols", but some
 // contexts treat anonymous labels and other labels/symbols differently, e.g. `purge` or `export`.
 %type <std::string> scoped_sym_no_anon
+// `scoped_sym_no_str` exists because string symbols usually count as symbols, but some contexts
+// treat string symbols and other symbols differently, e.g. `relocexpr_no_str`.
+%type <std::string> scoped_sym_no_str
 
 // SM83 instruction parameters
 %type <int32_t> reg_r
@@ -514,7 +519,7 @@ endc:
 def_id:
 	OP_DEF {
 		lexer_ToggleStringExpansion(false);
-	} SYMBOL {
+	} symbol {
 		lexer_ToggleStringExpansion(true);
 		$$ = std::move($3);
 	}
@@ -523,13 +528,17 @@ def_id:
 redef_id:
 	POP_REDEF {
 		lexer_ToggleStringExpansion(false);
-	} SYMBOL {
+	} symbol {
 		lexer_ToggleStringExpansion(true);
 		$$ = std::move($3);
 	}
 ;
 
-scoped_sym_no_anon: SYMBOL | LABEL | LOCAL;
+symbol: SYMBOL | STR_SYMBOL;
+
+scoped_sym_no_str: SYMBOL | LABEL | LOCAL | ANON;
+
+scoped_sym_no_anon: symbol | LABEL | LOCAL;
 
 scoped_sym: scoped_sym_no_anon | ANON;
 
@@ -558,7 +567,7 @@ label:
 ;
 
 macro:
-	SYMBOL {
+	symbol {
 		// Parsing 'macro_args' will restore the lexer's normal mode
 		lexer_SetMode(LEXER_RAW);
 	} macro_args {
@@ -844,7 +853,7 @@ rept:
 for:
 	POP_FOR {
 		lexer_ToggleStringExpansion(false);
-	} SYMBOL {
+	} symbol {
 		lexer_ToggleStringExpansion(true);
 	} COMMA for_args NEWLINE capture_rept endofline {
 		if ($8.span.ptr) {
@@ -888,7 +897,7 @@ break:
 def_macro:
 	POP_MACRO {
 		lexer_ToggleStringExpansion(false);
-	} SYMBOL {
+	} symbol {
 		lexer_ToggleStringExpansion(true);
 	} NEWLINE capture_macro endofline {
 		if ($6.span.ptr) {
@@ -1153,16 +1162,16 @@ charmap_args:
 ;
 
 newcharmap:
-	POP_NEWCHARMAP SYMBOL {
+	POP_NEWCHARMAP symbol {
 		charmap_New($2, nullptr);
 	}
-	| POP_NEWCHARMAP SYMBOL COMMA SYMBOL {
+	| POP_NEWCHARMAP symbol COMMA symbol {
 		charmap_New($2, &$4);
 	}
 ;
 
 setcharmap:
-	POP_SETCHARMAP SYMBOL {
+	POP_SETCHARMAP symbol {
 		charmap_Set($2);
 	}
 ;
@@ -1174,7 +1183,7 @@ pushc:
 ;
 
 pushc_setcharmap:
-	POP_PUSHC SYMBOL {
+	POP_PUSHC symbol {
 		charmap_Push();
 		charmap_Set($2);
 	}
@@ -1307,7 +1316,7 @@ relocexpr:
 ;
 
 relocexpr_no_str:
-	scoped_sym {
+	scoped_sym_no_str {
 		$$.makeSymbol($1);
 	}
 	| NUMBER {
@@ -1400,7 +1409,7 @@ relocexpr_no_str:
 	| OP_ISCONST LPAREN relocexpr RPAREN {
 		$$.makeNumber($3.isKnown());
 	}
-	| OP_BANK LPAREN scoped_sym RPAREN {
+	| OP_BANK LPAREN scoped_sym_no_str RPAREN {
 		// '@' is also a SYMBOL; it is handled here
 		$$.makeBankSymbol($3);
 	}
@@ -1528,6 +1537,13 @@ precision_arg:
 string:
 	STRING {
 		$$ = std::move($1);
+	}
+	| STR_SYMBOL {
+		if (Symbol *sym = sym_FindExactSymbol($1); sym && sym->type == SYM_EQUS) {
+			$$ = *sym->getEqus();
+		} else {
+			::error("'%s' is not a string symbol", $1.c_str());
+		}
 	}
 	| OP_STRSUB LPAREN string COMMA iconst COMMA uconst RPAREN {
 		size_t len = strlenUTF8($3, false);

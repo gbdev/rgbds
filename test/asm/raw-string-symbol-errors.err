@@ -1,0 +1,27 @@
+warning: raw-string-symbol-errors.asm(7): [-Wobsolete]
+    Treating multi-unit strings as numbers is deprecated
+error: raw-string-symbol-errors.asm(8):
+    'm' is not a numeric symbol
+error: raw-string-symbol-errors.asm(11):
+    syntax error, unexpected symbol
+error: raw-string-symbol-errors.asm(13):
+    syntax error, unexpected symbol
+error: raw-string-symbol-errors.asm(14):
+    syntax error, unexpected symbol
+warning: raw-string-symbol-errors.asm(17): [-Wobsolete]
+    Treating multi-unit strings as numbers is deprecated
+error: raw-string-symbol-errors.asm(18):
+    'm' is not a numeric symbol
+error: raw-string-symbol-errors.asm(19):
+    Expected constant expression: 'u' is not constant at assembly time
+error: raw-string-symbol-errors.asm(21):
+    syntax error, unexpected symbol
+error: raw-string-symbol-errors.asm(23):
+    syntax error, unexpected symbol
+error: raw-string-symbol-errors.asm(24):
+    syntax error, unexpected symbol
+error: raw-string-symbol-errors.asm(27):
+    's' was already purged
+error: raw-string-symbol-errors.asm(29):
+    syntax error, unexpected symbol
+error: Assembly aborted (11 errors)!

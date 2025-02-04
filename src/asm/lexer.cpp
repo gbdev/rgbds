@@ -1908,17 +1908,21 @@ static Token yylex_NORMAL() {
 				// `token` is either a `SYMBOL` or a `LOCAL`, and both have a `std::string` value.
 				assume(token.value.holds<std::string>());
 
-				// Local symbols cannot be string expansions
+				// Raw symbols and local symbols cannot be string expansions
 				if (token.type == T_(SYMBOL) && lexerState->expandStrings) {
 					// Attempt string expansion
 					Symbol const *sym = sym_FindExactSymbol(token.value.get<std::string>());
 
 					if (sym && sym->type == SYM_EQUS) {
-						std::shared_ptr<std::string> str = sym->getEqus();
+						if (raw) {
+							token.type = T_(STR_SYMBOL);
+						} else {
+							std::shared_ptr<std::string> str = sym->getEqus();
 
-						assume(str);
-						beginExpansion(str, sym->name);
-						continue; // Restart, reading from the new buffer
+							assume(str);
+							beginExpansion(str, sym->name);
+							continue; // Restart, reading from the new buffer
+						}
 					}
 				}
 
@@ -1934,7 +1938,7 @@ static Token yylex_NORMAL() {
 				// ':' character *immediately* follows the identifier. Thus, at the beginning of a
 				// line, "Label:" and "mac:" are treated as label definitions, but "Label :" and
 				// "mac :" are treated as macro invocations.
-				if (token.type == T_(SYMBOL) && peek() == ':') {
+				if ((token.type == T_(SYMBOL) || token.type == T_(STR_SYMBOL)) && peek() == ':') {
 					token.type = T_(LABEL);
 				}
 
