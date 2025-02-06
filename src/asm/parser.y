@@ -313,18 +313,17 @@
 // Literals
 %token <int32_t> NUMBER "number"
 %token <std::string> STRING "string"
+%token <std::string> SYMBOL "symbol"
 %token <std::string> LABEL "label"
-%token <std::string> ID "identifier"
-%token <std::string> LOCAL_ID "local identifier"
+%token <std::string> LOCAL "local label"
 %token <std::string> ANON "anonymous label"
 
 /******************** Data types ********************/
 
-// The "no_str" types below are to distinguish numeric and string expressions, since many
-// contexts treat strings differently than numbers, e.g. `db "string"` or `print "string"`.
-
 // RPN expressions
 %type <Expression> relocexpr
+// `relocexpr_no_str` exists because strings usually count as numeric expressions, but some
+// contexts treat numbers and strings differently, e.g. `db "string"` or `print "string"`.
 %type <Expression> relocexpr_no_str
 %type <Expression> reloc_8bit
 %type <Expression> reloc_8bit_offset
@@ -355,8 +354,10 @@
 %type <std::string> def_rl
 %type <std::string> def_equs
 %type <std::string> redef_equs
-%type <std::string> scoped_id
-%type <std::string> scoped_anon_id
+%type <std::string> scoped_sym
+// `scoped_sym_no_anon` exists because anonymous labels usually count as "scoped symbols", but some
+// contexts treat anonymous labels and other labels/symbols differently, e.g. `purge` or `export`.
+%type <std::string> scoped_sym_no_anon
 
 // SM83 instruction parameters
 %type <int32_t> reg_r
@@ -513,7 +514,7 @@ endc:
 def_id:
 	OP_DEF {
 		lexer_ToggleStringExpansion(false);
-	} ID {
+	} SYMBOL {
 		lexer_ToggleStringExpansion(true);
 		$$ = std::move($3);
 	}
@@ -522,61 +523,42 @@ def_id:
 redef_id:
 	POP_REDEF {
 		lexer_ToggleStringExpansion(false);
-	} ID {
+	} SYMBOL {
 		lexer_ToggleStringExpansion(true);
 		$$ = std::move($3);
 	}
 ;
 
-// LABEL covers identifiers followed by a double colon (e.g. `call Function::ret`,
-// to be read as `call Function :: ret`). This should not conflict with anything.
-scoped_id:
-	ID {
-		$$ = std::move($1);
-	}
-	| LOCAL_ID {
-		$$ = std::move($1);
-	}
-	| LABEL {
-		$$ = std::move($1);
-	}
-;
+scoped_sym_no_anon: SYMBOL | LABEL | LOCAL;
 
-scoped_anon_id:
-	scoped_id {
-		$$ = std::move($1);
-	}
-	| ANON {
-		$$ = std::move($1);
-	}
-;
+scoped_sym: scoped_sym_no_anon | ANON;
 
 label:
 	  %empty
-	| COLON {
-		sym_AddAnonLabel();
-	}
-	| LOCAL_ID {
-		sym_AddLocalLabel($1);
-	}
-	| LOCAL_ID COLON {
-		sym_AddLocalLabel($1);
-	}
 	| LABEL COLON {
 		sym_AddLabel($1);
-	}
-	| LOCAL_ID DOUBLE_COLON {
-		sym_AddLocalLabel($1);
-		sym_Export($1);
 	}
 	| LABEL DOUBLE_COLON {
 		sym_AddLabel($1);
 		sym_Export($1);
 	}
+	| LOCAL {
+		sym_AddLocalLabel($1);
+	}
+	| LOCAL COLON {
+		sym_AddLocalLabel($1);
+	}
+	| LOCAL DOUBLE_COLON {
+		sym_AddLocalLabel($1);
+		sym_Export($1);
+	}
+	| COLON {
+		sym_AddAnonLabel();
+	}
 ;
 
 macro:
-	ID {
+	SYMBOL {
 		// Parsing 'macro_args' will restore the lexer's normal mode
 		lexer_SetMode(LEXER_RAW);
 	} macro_args {
@@ -862,7 +844,7 @@ rept:
 for:
 	POP_FOR {
 		lexer_ToggleStringExpansion(false);
-	} ID {
+	} SYMBOL {
 		lexer_ToggleStringExpansion(true);
 	} COMMA for_args NEWLINE capture_rept endofline {
 		if ($8.span.ptr) {
@@ -906,7 +888,7 @@ break:
 def_macro:
 	POP_MACRO {
 		lexer_ToggleStringExpansion(false);
-	} ID {
+	} SYMBOL {
 		lexer_ToggleStringExpansion(true);
 	} NEWLINE capture_macro endofline {
 		if ($6.span.ptr) {
@@ -1096,10 +1078,10 @@ purge:
 ;
 
 purge_args:
-	scoped_id {
+	scoped_sym_no_anon {
 		$$.push_back($1);
 	}
-	| purge_args COMMA scoped_id {
+	| purge_args COMMA scoped_sym_no_anon {
 		$$ = std::move($1);
 		$$.push_back($3);
 	}
@@ -1113,7 +1095,7 @@ export_list:
 ;
 
 export_list_entry:
-	scoped_id {
+	scoped_sym_no_anon {
 		sym_Export($1);
 	}
 ;
@@ -1171,16 +1153,16 @@ charmap_args:
 ;
 
 newcharmap:
-	POP_NEWCHARMAP ID {
+	POP_NEWCHARMAP SYMBOL {
 		charmap_New($2, nullptr);
 	}
-	| POP_NEWCHARMAP ID COMMA ID {
+	| POP_NEWCHARMAP SYMBOL COMMA SYMBOL {
 		charmap_New($2, &$4);
 	}
 ;
 
 setcharmap:
-	POP_SETCHARMAP ID {
+	POP_SETCHARMAP SYMBOL {
 		charmap_Set($2);
 	}
 ;
@@ -1192,7 +1174,7 @@ pushc:
 ;
 
 pushc_setcharmap:
-	POP_PUSHC ID {
+	POP_PUSHC SYMBOL {
 		charmap_Push();
 		charmap_Set($2);
 	}
@@ -1325,7 +1307,7 @@ relocexpr:
 ;
 
 relocexpr_no_str:
-	scoped_anon_id {
+	scoped_sym {
 		$$.makeSymbol($1);
 	}
 	| NUMBER {
@@ -1418,8 +1400,8 @@ relocexpr_no_str:
 	| OP_ISCONST LPAREN relocexpr RPAREN {
 		$$.makeNumber($3.isKnown());
 	}
-	| OP_BANK LPAREN scoped_anon_id RPAREN {
-		// '@' is also an ID; it is handled here
+	| OP_BANK LPAREN scoped_sym RPAREN {
+		// '@' is also a SYMBOL; it is handled here
 		$$.makeBankSymbol($3);
 	}
 	| OP_BANK LPAREN string RPAREN {
@@ -1439,7 +1421,7 @@ relocexpr_no_str:
 	}
 	| OP_DEF {
 		lexer_ToggleStringExpansion(false);
-	} LPAREN scoped_anon_id RPAREN {
+	} LPAREN scoped_sym RPAREN {
 		$$.makeNumber(sym_FindScopedValidSymbol($4) != nullptr);
 		lexer_ToggleStringExpansion(true);
 	}
@@ -1585,7 +1567,7 @@ string:
 	| OP_STRFMT LPAREN strfmt_args RPAREN {
 		$$ = strfmt($3.format, $3.args);
 	}
-	| POP_SECTION LPAREN scoped_anon_id RPAREN {
+	| POP_SECTION LPAREN scoped_sym RPAREN {
 		Symbol *sym = sym_FindScopedValidSymbol($3);
 
 		if (!sym) {

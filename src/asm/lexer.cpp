@@ -134,11 +134,9 @@ struct CaseInsensitive {
 	}
 };
 
-// Identifiers that are also keywords are listed here. This ONLY applies to ones
-// that would normally be matched as identifiers! Check out `yylex_NORMAL` to
-// see how this is used.
-// Tokens / keywords not handled here are handled in `yylex_NORMAL`'s switch.
-// This assumes that no two keywords have the same name.
+// This map lists all RGBASM keywords which `yylex_NORMAL` lexes as identifiers
+// (see `startsIdentifier` and `continuesIdentifier` below). All non-identifier
+// tokens are lexed separately.
 static std::unordered_map<std::string, int, CaseInsensitive, CaseInsensitive> keywordDict = {
     {"ADC",           T_(SM83_ADC)         },
     {"ADD",           T_(SM83_ADD)         },
@@ -1179,7 +1177,7 @@ static uint32_t readGfxConstant() {
 	return bitPlaneUpper << 8 | bitPlaneLower;
 }
 
-// Functions to read identifiers & keywords
+// Functions to read identifiers and keywords
 
 static bool startsIdentifier(int c) {
 	// Anonymous labels internally start with '!'
@@ -1192,18 +1190,18 @@ static bool continuesIdentifier(int c) {
 
 static Token readIdentifier(char firstChar, bool raw) {
 	std::string identifier(1, firstChar);
-	int tokenType = firstChar == '.' ? T_(LOCAL_ID) : T_(ID);
+	int tokenType = firstChar == '.' ? T_(LOCAL) : T_(SYMBOL);
 
-	// Continue reading while the char is in the symbol charset
+	// Continue reading while the char is in the identifier charset
 	for (int c = peek(); continuesIdentifier(c); c = peek()) {
 		shiftChar();
 
 		// Write the char to the identifier's name
 		identifier += c;
 
-		// If the char was a dot, mark the identifier as local
+		// If the char was a dot, the identifier is a local label
 		if (c == '.') {
-			tokenType = T_(LOCAL_ID);
+			tokenType = T_(LOCAL);
 		}
 	}
 
@@ -1219,7 +1217,7 @@ static Token readIdentifier(char firstChar, bool raw) {
 
 	// Label scopes `.` and `..` are the only nonlocal identifiers that start with a dot
 	if (identifier.find_first_not_of('.') == identifier.npos) {
-		tokenType = T_(ID);
+		tokenType = T_(SYMBOL);
 	}
 
 	return Token(tokenType, identifier);
@@ -1276,7 +1274,7 @@ static std::shared_ptr<std::string> readInterpolation(size_t depth) {
 	lexerState->disableInterpolation = disableInterpolation;
 
 	if (fmtBuf.starts_with('#')) {
-		// Skip a '#' raw identifier prefix, but after expanding any nested interpolations.
+		// Skip a '#' raw symbol prefix, but after expanding any nested interpolations.
 		fmtBuf.erase(0, 1);
 	} else if (keywordDict.find(fmtBuf) != keywordDict.end()) {
 		// Don't allow symbols that alias keywords without a '#' prefix.
@@ -1641,7 +1639,7 @@ static Token yylex_NORMAL() {
 
 		case '@': {
 			std::string symName("@");
-			return Token(T_(ID), symName);
+			return Token(T_(SYMBOL), symName);
 		}
 
 		case '[':
@@ -1903,15 +1901,15 @@ static Token yylex_NORMAL() {
 				}
 
 				// If a keyword, don't try to expand
-				if (token.type != T_(ID) && token.type != T_(LOCAL_ID)) {
+				if (token.type != T_(SYMBOL) && token.type != T_(LOCAL)) {
 					return token;
 				}
 
-				// `token` is either an `ID` or a `LOCAL_ID`, and both have a `std::string` value.
+				// `token` is either a `SYMBOL` or a `LOCAL`, and both have a `std::string` value.
 				assume(token.value.holds<std::string>());
 
 				// Local symbols cannot be string expansions
-				if (token.type == T_(ID) && lexerState->expandStrings) {
+				if (token.type == T_(SYMBOL) && lexerState->expandStrings) {
 					// Attempt string expansion
 					Symbol const *sym = sym_FindExactSymbol(token.value.get<std::string>());
 
@@ -1925,18 +1923,18 @@ static Token yylex_NORMAL() {
 				}
 
 				// This is a "lexer hack"! We need it to distinguish between label definitions
-				// (which start with `LABEL`) and macro invocations (which start with `ID`).
+				// (which start with `LABEL`) and macro invocations (which start with `SYMBOL`).
 				//
 				// If we had one `IDENTIFIER` token, the parser would need to perform "lookahead"
 				// to determine which rule applies. But since macros need to enter "raw" mode to
 				// parse their arguments, which may not even be valid tokens in "normal" mode, we
 				// cannot use lookahead to check for the presence of a `COLON`.
 				//
-				// Instead, we have separate `ID` and `LABEL` tokens, lexing as a `LABEL` if a ':'
-				// character *immediately* follows the identifier. Thus, at the beginning of a line,
-				// "Label:" and "mac:" are treated as label definitions, but "Label :" and "mac :"
-				// are treated as macro invocations.
-				if (token.type == T_(ID) && peek() == ':') {
+				// Instead, we have separate `SYMBOL` and `LABEL` tokens, lexing as a `LABEL` if a
+				// ':' character *immediately* follows the identifier. Thus, at the beginning of a
+				// line, "Label:" and "mac:" are treated as label definitions, but "Label :" and
+				// "mac :" are treated as macro invocations.
+				if (token.type == T_(SYMBOL) && peek() == ':') {
 					token.type = T_(LABEL);
 				}
 
@@ -2390,7 +2388,7 @@ Capture lexer_CaptureRept() {
 		do { // Discard initial whitespace
 			c = nextChar();
 		} while (isWhitespace(c));
-		// Now, try to match `REPT`, `FOR` or `ENDR` as a **whole** identifier
+		// Now, try to match `REPT`, `FOR` or `ENDR` as a **whole** keyword
 		if (startsIdentifier(c)) {
 			switch (readIdentifier(c, false).type) {
 			case T_(POP_REPT):
@@ -2443,7 +2441,7 @@ Capture lexer_CaptureMacro() {
 		do { // Discard initial whitespace
 			c = nextChar();
 		} while (isWhitespace(c));
-		// Now, try to match `ENDM` as a **whole** identifier
+		// Now, try to match `ENDM` as a **whole** keyword
 		if (startsIdentifier(c)) {
 			switch (readIdentifier(c, false).type) {
 			case T_(POP_ENDM):
