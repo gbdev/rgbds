@@ -10,8 +10,10 @@ error: invalid-instructions.asm(5):
     syntax error, unexpected bc, expecting hl
 error: invalid-instructions.asm(6):
     syntax error, unexpected number, expecting hl
+warning: invalid-instructions.asm(7): [-Wtruncation]
+    Expression must be 3-bit
 error: invalid-instructions.asm(7):
-    Bit number must be between 0 and 7, not 8
+    Invalid bit index 8 for BIT
 error: invalid-instructions.asm(8):
     Invalid address $40 for RST
 error: Assembly aborted (8 errors)!

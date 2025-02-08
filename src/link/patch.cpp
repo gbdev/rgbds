@@ -363,7 +363,6 @@ static int32_t computeRPNExpr(Patch const &patch, std::vector<Symbol> const &fil
 		case RPN_RST:
 			value = popRPN(patch);
 			// Acceptable values are 0x00, 0x08, 0x10, ..., 0x38
-			// They can be easily checked with a bitmask
 			if (value & ~0x38) {
 				if (!isError) {
 					error(patch.src, patch.lineNo, "Value $%" PRIx32 " is not a RST vector", value);
@@ -373,6 +372,21 @@ static int32_t computeRPNExpr(Patch const &patch, std::vector<Symbol> const &fil
 			}
 			value |= 0xC7;
 			break;
+
+		case RPN_BIT_INDEX: {
+			value = popRPN(patch);
+			int32_t mask = getRPNByte(expression, size, patch);
+			// Acceptable values are 0 to 7
+			if (value & ~0x07) {
+				if (!isError) {
+					error(patch.src, patch.lineNo, "Value $%" PRIx32 " is not a bit index", value);
+					isError = true;
+				}
+				value = 0;
+			}
+			value = mask | (value << 3);
+			break;
+		}
 
 		case RPN_CONST:
 			value = 0;

@@ -355,6 +355,7 @@ void Expression::makeUnaryOp(RPNCommand op, Expression &&src) {
 		case RPN_STARTOF_SECTTYPE:
 		case RPN_HRAM:
 		case RPN_RST:
+		case RPN_BIT_INDEX:
 		case RPN_CONST:
 		case RPN_SYM:
 			fatalerror("%d is not an unary operator\n", op);
@@ -514,6 +515,7 @@ void Expression::makeBinaryOp(RPNCommand op, Expression &&src1, Expression const
 		case RPN_STARTOF_SECTTYPE:
 		case RPN_HRAM:
 		case RPN_RST:
+		case RPN_BIT_INDEX:
 		case RPN_HIGH:
 		case RPN_LOW:
 		case RPN_BITWIDTH:
@@ -605,6 +607,20 @@ void Expression::makeCheckRST() {
 	} else if (int32_t val = value(); val & ~0x38) {
 		// A valid RST address must be masked with 0x38
 		error("Invalid address $%" PRIx32 " for RST\n", val);
+	}
+}
+
+void Expression::makeCheckBitIndex(uint8_t mask) {
+	assume((mask & 0xC0) != 0x00); // The high two bits must correspond to BIT, RES, or SET
+
+	if (!isKnown()) {
+		uint8_t *ptr = reserveSpace(2);
+		*ptr++ = RPN_BIT_INDEX;
+		*ptr = mask;
+	} else if (int32_t val = value(); val & ~0x07) {
+		// A valid bit index must be masked with 0x07
+		static char const *instructions[4] = {"instruction", "BIT", "RES", "SET"};
+		error("Invalid bit index %" PRId32 " for %s\n", val, instructions[mask >> 6]);
 	}
 }
 

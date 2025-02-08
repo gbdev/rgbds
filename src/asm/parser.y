@@ -325,6 +325,7 @@
 // `relocexpr_no_str` exists because strings usually count as numeric expressions, but some
 // contexts treat numbers and strings differently, e.g. `db "string"` or `print "string"`.
 %type <Expression> relocexpr_no_str
+%type <Expression> reloc_3bit
 %type <Expression> reloc_8bit
 %type <Expression> reloc_8bit_offset
 %type <Expression> reloc_16bit
@@ -333,7 +334,6 @@
 %type <int32_t> iconst
 %type <int32_t> uconst
 // Constant numbers used only in specific contexts
-%type <int32_t> bit_const
 %type <int32_t> precision_arg
 %type <int32_t> rs_uconst
 %type <int32_t> sect_org
@@ -1214,13 +1214,10 @@ print_expr:
 	}
 ;
 
-bit_const:
-	iconst {
-		$$ = $1;
-		if ($$ < 0 || $$ > 7) {
-			::error("Bit number must be between 0 and 7, not %" PRId32 "\n", $$);
-			$$ = 0;
-		}
+reloc_3bit:
+	relocexpr {
+		$$ = std::move($1);
+		$$.checkNBit(3);
 	}
 ;
 
@@ -1794,9 +1791,15 @@ sm83_and:
 ;
 
 sm83_bit:
-	SM83_BIT bit_const COMMA reg_r {
+	SM83_BIT reloc_3bit COMMA reg_r {
+		uint8_t mask = static_cast<uint8_t>(0x40 | $4);
+		$2.makeCheckBitIndex(mask);
 		sect_ConstByte(0xCB);
-		sect_ConstByte(0x40 | ($2 << 3) | $4);
+		if (!$2.isKnown()) {
+			sect_RelByte($2, 0);
+		} else {
+			sect_ConstByte(mask | ($2.value() << 3));
+		}
 	}
 ;
 
@@ -2108,9 +2111,15 @@ sm83_push:
 ;
 
 sm83_res:
-	SM83_RES bit_const COMMA reg_r {
+	SM83_RES reloc_3bit COMMA reg_r {
+		uint8_t mask = static_cast<uint8_t>(0x80 | $4);
+		$2.makeCheckBitIndex(mask);
 		sect_ConstByte(0xCB);
-		sect_ConstByte(0x80 | ($2 << 3) | $4);
+		if (!$2.isKnown()) {
+			sect_RelByte($2, 0);
+		} else {
+			sect_ConstByte(mask | ($2.value() << 3));
+		}
 	}
 ;
 
@@ -2209,9 +2218,15 @@ sm83_scf:
 ;
 
 sm83_set:
-	SM83_SET bit_const COMMA reg_r {
+	SM83_SET reloc_3bit COMMA reg_r {
+		uint8_t mask = static_cast<uint8_t>(0xC0 | $4);
+		$2.makeCheckBitIndex(mask);
 		sect_ConstByte(0xCB);
-		sect_ConstByte(0xC0 | ($2 << 3) | $4);
+		if (!$2.isKnown()) {
+			sect_RelByte($2, 0);
+		} else {
+			sect_ConstByte(mask | ($2.value() << 3));
+		}
 	}
 ;
 
