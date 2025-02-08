@@ -1,0 +1,13 @@
+error: non-numeric-symbol.asm(4):
+    'mac' is not a numeric symbol
+error: non-numeric-symbol.asm(5):
+    'mac' is not a numeric symbol
+error: non-numeric-symbol.asm(6):
+    'mac' is not a numeric symbol
+error: non-numeric-symbol.asm(9):
+    'mac' is not a numeric symbol
+error: non-numeric-symbol.asm(10):
+    'mac' is not a numeric symbol
+error: non-numeric-symbol.asm(11):
+    'mac' is not a numeric symbol
+error: Assembly aborted (6 errors)!
