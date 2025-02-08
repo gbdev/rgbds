@@ -75,6 +75,9 @@ void Expression::makeSymbol(std::string const &symName) {
 	if (Symbol *sym = sym_FindScopedSymbol(symName); sym_IsPC(sym) && !sect_GetSymbolSection()) {
 		error("PC has no value outside of a section\n");
 		data = 0;
+	} else if (sym && !sym->isNumeric() && !sym->isLabel()) {
+		error("'%s' is not a numeric symbol\n", symName.c_str());
+		data = 0;
 	} else if (!sym || !sym->isConstant()) {
 		isSymbol = true;
 
