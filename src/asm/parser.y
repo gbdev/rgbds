@@ -73,9 +73,13 @@
 	static uint32_t strToNum(std::vector<int32_t> const &s);
 	static void errorInvalidUTF8Byte(uint8_t byte, char const *functionName);
 	static size_t strlenUTF8(std::string const &str, bool printErrors);
+	static std::string strsliceUTF8(std::string const &str, uint32_t start, uint32_t stop);
 	static std::string strsubUTF8(std::string const &str, uint32_t pos, uint32_t len);
 	static size_t charlenUTF8(std::string const &str);
+	static std::string strcharUTF8(std::string const &str, uint32_t idx);
 	static std::string charsubUTF8(std::string const &str, uint32_t pos);
+	static int32_t charcmp(std::string_view str1, std::string_view str2);
+	static uint32_t adjustNegativeIndex(int32_t idx, size_t len, char const *functionName);
 	static uint32_t adjustNegativePos(int32_t pos, size_t len, char const *functionName);
 	static std::string strrpl(std::string_view str, std::string const &old, std::string const &rep);
 	static std::string strfmt(
@@ -269,7 +273,9 @@
 %token OP_BANK "BANK"
 %token OP_BITWIDTH "BITWIDTH"
 %token OP_CEIL "CEIL"
+%token OP_CHARCMP "CHARCMP"
 %token OP_CHARLEN "CHARLEN"
+%token OP_CHARSIZE "CHARSIZE"
 %token OP_CHARSUB "CHARSUB"
 %token OP_COS "COS"
 %token OP_DEF "DEF"
@@ -283,18 +289,23 @@
 %token OP_LOG "LOG"
 %token OP_LOW "LOW"
 %token OP_POW "POW"
+%token OP_REVCHAR "REVCHAR"
 %token OP_ROUND "ROUND"
 %token OP_SIN "SIN"
 %token OP_SIZEOF "SIZEOF"
 %token OP_STARTOF "STARTOF"
 %token OP_STRCAT "STRCAT"
+%token OP_STRCHAR "STRCHAR"
 %token OP_STRCMP "STRCMP"
+%token OP_STRFIND "STRFIND"
 %token OP_STRFMT "STRFMT"
 %token OP_STRIN "STRIN"
 %token OP_STRLEN "STRLEN"
 %token OP_STRLWR "STRLWR"
+%token OP_STRRFIND "STRRFIND"
 %token OP_STRRIN "STRRIN"
 %token OP_STRRPL "STRRPL"
+%token OP_STRSLICE "STRSLICE"
 %token OP_STRSUB "STRSUB"
 %token OP_STRUPR "STRUPR"
 %token OP_TAN "TAN"
@@ -1473,6 +1484,14 @@ relocexpr_no_str:
 	| OP_STRCMP LPAREN string COMMA string RPAREN {
 		$$.makeNumber($3.compare($5));
 	}
+	| OP_STRFIND LPAREN string COMMA string RPAREN {
+		size_t pos = $3.find($5);
+		$$.makeNumber(pos != std::string::npos ? pos : -1);
+	}
+	| OP_STRRFIND LPAREN string COMMA string RPAREN {
+		size_t pos = $3.rfind($5);
+		$$.makeNumber(pos != std::string::npos ? pos : -1);
+	}
 	| OP_STRIN LPAREN string COMMA string RPAREN {
 		size_t pos = $3.find($5);
 		$$.makeNumber(pos != std::string::npos ? pos + 1 : 0);
@@ -1489,6 +1508,16 @@ relocexpr_no_str:
 	}
 	| OP_INCHARMAP LPAREN string RPAREN {
 		$$.makeNumber(charmap_HasChar($3));
+	}
+	| OP_CHARCMP LPAREN string COMMA string RPAREN {
+		$$.makeNumber(charcmp($3, $5));
+	}
+	| OP_CHARSIZE LPAREN string RPAREN {
+		size_t charSize = charmap_CharSize($3);
+		if (charSize == 0) {
+			::error("CHARSIZE: No character mapping for \"%s\"\n", $3.c_str());
+		}
+		$$.makeNumber(charSize);
 	}
 	| LPAREN relocexpr RPAREN {
 		$$ = std::move($2);
@@ -1527,6 +1556,17 @@ string:
 	STRING {
 		$$ = std::move($1);
 	}
+	| OP_STRSLICE LPAREN string COMMA iconst COMMA iconst RPAREN {
+		size_t len = strlenUTF8($3, false);
+		uint32_t start = adjustNegativeIndex($5, len, "STRSLICE");
+		uint32_t stop = adjustNegativeIndex($7, len, "STRSLICE");
+		$$ = strsliceUTF8($3, start, stop);
+	}
+	| OP_STRSLICE LPAREN string COMMA iconst RPAREN {
+		size_t len = strlenUTF8($3, false);
+		uint32_t start = adjustNegativeIndex($5, len, "STRSLICE");
+		$$ = strsliceUTF8($3, start, len - 1);
+	}
 	| OP_STRSUB LPAREN string COMMA iconst COMMA uconst RPAREN {
 		size_t len = strlenUTF8($3, false);
 		uint32_t pos = adjustNegativePos($5, len, "STRSUB");
@@ -1537,10 +1577,24 @@ string:
 		uint32_t pos = adjustNegativePos($5, len, "STRSUB");
 		$$ = strsubUTF8($3, pos, pos > len ? 0 : len + 1 - pos);
 	}
+	| OP_STRCHAR LPAREN string COMMA iconst RPAREN {
+		size_t len = charlenUTF8($3);
+		uint32_t idx = adjustNegativeIndex($5, len, "STRCHAR");
+		$$ = strcharUTF8($3, idx);
+	}
 	| OP_CHARSUB LPAREN string COMMA iconst RPAREN {
 		size_t len = charlenUTF8($3);
 		uint32_t pos = adjustNegativePos($5, len, "CHARSUB");
 		$$ = charsubUTF8($3, pos);
+	}
+	| OP_REVCHAR LPAREN charmap_args RPAREN {
+		bool unique;
+		$$ = charmap_Reverse($3, unique);
+		if (!unique) {
+			::error("REVCHAR: Multiple character mappings to values\n");
+		} else if ($$.empty()) {
+			::error("REVCHAR: No character mapping to values\n");
+		}
 	}
 	| OP_STRCAT LPAREN RPAREN {
 		$$.clear();
@@ -2510,6 +2564,70 @@ static size_t strlenUTF8(std::string const &str, bool printErrors) {
 	return len;
 }
 
+static std::string strsliceUTF8(std::string const &str, uint32_t start, uint32_t stop) {
+	char const *ptr = str.c_str();
+	size_t index = 0;
+	uint32_t state = 0;
+	uint32_t codepoint = 0;
+	uint32_t curIdx = 0;
+
+	// Advance to starting index in source string.
+	while (ptr[index] && curIdx < start) {
+		switch (decode(&state, &codepoint, ptr[index])) {
+		case 1:
+			errorInvalidUTF8Byte(ptr[index], "STRSLICE");
+			state = 0;
+			// fallthrough
+		case 0:
+			curIdx++;
+			break;
+		}
+		index++;
+	}
+
+	// An index 1 past the end of the string is allowed, but will trigger the
+	// "Length too big" warning below if the length is nonzero.
+	if (!ptr[index] && start > curIdx) {
+		warning(
+		    WARNING_BUILTIN_ARG,
+		    "STRSLICE: Start index %" PRIu32 " is past the end of the string\n",
+		    start
+		);
+	}
+
+	size_t startIndex = index;
+
+	// Advance to ending index in source string.
+	while (ptr[index] && curIdx < stop) {
+		switch (decode(&state, &codepoint, ptr[index])) {
+		case 1:
+			errorInvalidUTF8Byte(ptr[index], "STRSLICE");
+			state = 0;
+			// fallthrough
+		case 0:
+			curIdx++;
+			break;
+		}
+		index++;
+	}
+
+	// Check for partial code point.
+	if (state != 0) {
+		error("STRSLICE: Incomplete UTF-8 character\n");
+		curIdx++;
+	}
+
+	if (curIdx < stop) {
+		warning(
+		    WARNING_BUILTIN_ARG,
+		    "STRSLICE: Stop index %" PRIu32 " is past the end of the string\n",
+		    stop
+		);
+	}
+
+	return std::string(ptr + startIndex, ptr + index);
+}
+
 static std::string strsubUTF8(std::string const &str, uint32_t pos, uint32_t len) {
 	char const *ptr = str.c_str();
 	size_t index = 0;
@@ -2578,6 +2696,29 @@ static size_t charlenUTF8(std::string const &str) {
 	return len;
 }
 
+static std::string strcharUTF8(std::string const &str, uint32_t idx) {
+	std::string_view view = str;
+	size_t charLen = 1;
+
+	// Advance to starting index in source string.
+	for (uint32_t curIdx = 0; charLen && curIdx < idx; curIdx++) {
+		charLen = charmap_ConvertNext(view, nullptr);
+	}
+
+	std::string_view start = view;
+
+	if (!charmap_ConvertNext(view, nullptr)) {
+		warning(
+		    WARNING_BUILTIN_ARG,
+		    "STRCHAR: Index %" PRIu32 " is past the end of the string\n",
+		    idx
+		);
+	}
+
+	start = start.substr(0, start.length() - view.length());
+	return std::string(start);
+}
+
 static std::string charsubUTF8(std::string const &str, uint32_t pos) {
 	std::string_view view = str;
 	size_t charLen = 1;
@@ -2599,6 +2740,46 @@ static std::string charsubUTF8(std::string const &str, uint32_t pos) {
 
 	start = start.substr(0, start.length() - view.length());
 	return std::string(start);
+}
+
+static int32_t charcmp(std::string_view str1, std::string_view str2) {
+	std::vector<int32_t> seq1, seq2;
+	size_t idx1 = 0, idx2 = 0;
+	for (;;) {
+		if (idx1 >= seq1.size()) {
+			idx1 = 0;
+			seq1.clear();
+			charmap_ConvertNext(str1, &seq1);
+		}
+		if (idx2 >= seq2.size()) {
+			idx2 = 0;
+			seq2.clear();
+			charmap_ConvertNext(str2, &seq2);
+		}
+		if (seq1.empty() != seq2.empty()) {
+			return seq1.empty() ? -1 : 1;
+		} else if (seq1.empty()) {
+			return 0;
+		} else {
+			int32_t value1 = seq1[idx1++], value2 = seq2[idx2++];
+			if (value1 != value2) {
+				return (value1 > value2) - (value1 < value2);
+			}
+		}
+	}
+}
+
+static uint32_t adjustNegativeIndex(int32_t idx, size_t len, char const *functionName) {
+	// String functions adjust negative index arguments the same way,
+	// such that position -1 is the last character of a string.
+	if (idx < 0) {
+		idx += len;
+	}
+	if (idx < 0) {
+		warning(WARNING_BUILTIN_ARG, "%s: Index starts at 0\n", functionName);
+		idx = 0;
+	}
+	return static_cast<uint32_t>(idx);
 }
 
 static uint32_t adjustNegativePos(int32_t pos, size_t len, char const *functionName) {

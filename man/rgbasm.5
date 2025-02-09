@@ -564,22 +564,17 @@ is equivalent to the regular string
 (Note that this prevents raw strings from including the double quote character.)
 Raw strings also may be contained in triple quotes for them to be multi-line, so they can include literal newline or quote characters (although still not three quotes in a row).
 .Pp
-The following functions operate on string expressions.
-Most of them return a string, however some of these functions actually return an integer and can be used as part of an integer expression!
-.Bl -column "STRSUB(str, pos, len)"
+The following functions operate on string expressions, and return strings themselves.
+.Bl -column "STRSLICE(str, start, stop)"
 .It Sy Name Ta Sy Operation
-.It Fn STRLEN str Ta Returns the number of characters in Ar str .
 .It Fn STRCAT strs... Ta Concatenates Ar strs .
-.It Fn STRCMP str1 str2 Ta Returns -1 if Ar str1 No is alphabetically lower than Ar str2 No , zero if they match, 1 if Ar str1 No is greater than Ar str2 .
-.It Fn STRIN str1 str2 Ta Returns the first position of Ar str2 No in Ar str1 No or zero if it's not present Pq first character is position 1 .
-.It Fn STRRIN str1 str2 Ta Returns the last position of Ar str2 No in Ar str1 No or zero if it's not present Pq first character is position 1 .
-.It Fn STRSUB str pos len Ta Returns a substring from Ar str No starting at Ar pos No (first character is position 1, last is position -1) and Ar len No characters long. If Ar len No is not specified the substring continues to the end of Ar str .
 .It Fn STRUPR str Ta Returns Ar str No with all ASCII letters
 .Pq Ql a-z
 in uppercase.
 .It Fn STRLWR str Ta Returns Ar str No with all ASCII letters
 .Pq Ql A-Z
 in lowercase.
+.It Fn STRSLICE str start stop Ta Returns a substring of Ar str No starting at Ar start No and ending at Ar stop No (exclusive). If Ar stop No is not specified, the substring continues to the end of Ar str Ns .
 .It Fn STRRPL str old new Ta Returns Ar str No with each non-overlapping occurrence of the substring Ar old No replaced with Ar new .
 .It Fn STRFMT fmt args... Ta Returns the string Ar fmt No with each
 .Ql %spec
@@ -589,9 +584,35 @@ pattern replaced by interpolating the format
 with its corresponding argument in
 .Ar args
 .Pq So %% Sc is replaced by the So % Sc character .
-.It Fn INCHARMAP str Ta Returns 1 if Ar str No has an entry in the current charmap, and 0 otherwise .
+.It Fn STRCHAR str idx Ta Returns the substring of Ar str No for the charmap entry at Ar idx No with the current charmap . Pq Ar idx No counts charmap entries, not characters.
+.It Fn REVCHAR vals... Ta Returns the string that is mapped to Ar vals No with the current charmap. If there is no unique charmap entry for Ar vals Ns , an error occurs.
+.El
+.Pp
+The following functions operate on string expressions, but return integers.
+.Bl -column "STRRFIND(str, sub)"
+.It Sy Name Ta Sy Operation
+.It Fn STRLEN str Ta Returns the number of characters in Ar str .
+.It Fn STRCMP str1 str2 Ta Compares Ar str1 No and Ar str2 No according to ASCII ordering of their characters. Returns -1 if Ar str1 No is lower than Ar str2 Ns , 1 if Ar str1 No is greater than Ar str2 Ns , or 0 if they match.
+.It Fn STRFIND str sub Ta Returns the first index of Ar sub No in Ar str Ns , or -1 if it's not present.
+.It Fn STRRFIND str sub Ta Returns the last index of Ar sub No in Ar str Ns , or -1 if it's not present.
+.It Fn INCHARMAP str Ta Returns 1 if Ar str No has an entry in the current charmap, or 0 otherwise .
 .It Fn CHARLEN str Ta Returns the number of charmap entries in Ar str No with the current charmap .
-.It Fn CHARSUB str pos Ta Returns the substring for the charmap entry at Ar pos No in Ar str No (first character is position 1, last is position -1) with the current charmap .
+.It Fn CHARCMP str1 str2 Ta Compares Ar str1 No and Ar str2 No according to their charmap entry values with the current charmap. Returns -1 if Ar str1 No is lower than Ar str2 Ns , 1 if Ar str1 No is greater than Ar str2 Ns , or 0 if they match.
+.It Fn CHARSIZE char Ta Returns how many values are in the charmap entry for Ar char No with the current charmap.
+.El
+.Pp
+Note that the first character of a string is at index 0, and the last is at index -1.
+.Pp
+The following legacy functions are similar to other functions that operate on string expressions, but for historical reasons, they count characters starting from
+.Em position 1 ,
+not from index 0!
+(Position -1 still counts from the last character.)
+.Bl -column "STRSUB(str, pos, len)"
+.It Sy Name Ta Sy Operation
+.It Fn STRSUB str pos len Ta Returns a substring of Ar str No starting at Ar pos No and Ar len No characters long. If Ar len No is not specified, the substring continues to the end of Ar str No .
+.It Fn STRIN str sub Ta Returns the first position of Ar sub No in Ar str Ns , or 0 if it's not present.
+.It Fn STRRIN str sub Ta Returns the last position of Ar sub No in Ar str Ns , or 0 if it's not present.
+.It Fn CHARSUB str pos Ta Returns the substring of Ar str No for the charmap entry at Ar pos No with the current charmap . Pq Ar pos No counts charmap entries, not characters.
 .El
 .Ss Character maps
 When writing text strings that are meant to be displayed on the Game Boy, the character encoding in the ROM may need to be different than the source file encoding.
