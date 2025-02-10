@@ -163,11 +163,11 @@ void charmap_Add(std::string const &mapping, std::vector<int32_t> &&value) {
 	std::swap(node.value, value);
 }
 
-bool charmap_HasChar(std::string const &input) {
+bool charmap_HasChar(std::string const &mapping) {
 	Charmap const &charmap = *currentCharmap;
 	size_t nodeIdx = 0;
 
-	for (char c : input) {
+	for (char c : mapping) {
 		nodeIdx = charmap.nodes[nodeIdx].next[static_cast<uint8_t>(c)];
 
 		if (!nodeIdx) {

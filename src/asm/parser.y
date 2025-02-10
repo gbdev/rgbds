@@ -1474,13 +1474,11 @@ relocexpr_no_str:
 		$$.makeNumber($3.compare($5));
 	}
 	| OP_STRIN LPAREN string COMMA string RPAREN {
-		auto pos = $3.find($5);
-
+		size_t pos = $3.find($5);
 		$$.makeNumber(pos != std::string::npos ? pos + 1 : 0);
 	}
 	| OP_STRRIN LPAREN string COMMA string RPAREN {
-		auto pos = $3.rfind($5);
-
+		size_t pos = $3.rfind($5);
 		$$.makeNumber(pos != std::string::npos ? pos + 1 : 0);
 	}
 	| OP_STRLEN LPAREN string RPAREN {
@@ -1532,19 +1530,16 @@ string:
 	| OP_STRSUB LPAREN string COMMA iconst COMMA uconst RPAREN {
 		size_t len = strlenUTF8($3, false);
 		uint32_t pos = adjustNegativePos($5, len, "STRSUB");
-
 		$$ = strsubUTF8($3, pos, $7);
 	}
 	| OP_STRSUB LPAREN string COMMA iconst RPAREN {
 		size_t len = strlenUTF8($3, false);
 		uint32_t pos = adjustNegativePos($5, len, "STRSUB");
-
 		$$ = strsubUTF8($3, pos, pos > len ? 0 : len + 1 - pos);
 	}
 	| OP_CHARSUB LPAREN string COMMA iconst RPAREN {
 		size_t len = charlenUTF8($3);
 		uint32_t pos = adjustNegativePos($5, len, "CHARSUB");
-
 		$$ = charsubUTF8($3, pos);
 	}
 	| OP_STRCAT LPAREN RPAREN {
@@ -2520,7 +2515,7 @@ static std::string strsubUTF8(std::string const &str, uint32_t pos, uint32_t len
 	size_t index = 0;
 	uint32_t state = 0;
 	uint32_t codepoint = 0;
-	uint32_t curPos = 1; // RGBASM strings are 1-indexed!
+	uint32_t curPos = 1;
 
 	// Advance to starting position in source string.
 	while (ptr[index] && curPos < pos) {
@@ -2607,7 +2602,7 @@ static std::string charsubUTF8(std::string const &str, uint32_t pos) {
 }
 
 static uint32_t adjustNegativePos(int32_t pos, size_t len, char const *functionName) {
-	// STRSUB and CHARSUB adjust negative `pos` arguments the same way,
+	// STRSUB and CHARSUB adjust negative position arguments the same way,
 	// such that position -1 is the last character of a string.
 	if (pos < 0) {
 		pos += len + 1;

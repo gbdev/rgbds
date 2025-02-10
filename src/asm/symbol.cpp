@@ -566,9 +566,7 @@ std::string sym_MakeAnonLabelName(uint32_t ofs, bool neg) {
 		}
 	}
 
-	std::string anon("!");
-	anon += std::to_string(id);
-	return anon;
+	return "!"s + std::to_string(id);
 }
 
 void sym_Export(std::string const &symName) {

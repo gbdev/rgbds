@@ -20,7 +20,7 @@ void charmap_Push();
 void charmap_Pop();
 void charmap_CheckStack();
 void charmap_Add(std::string const &mapping, std::vector<int32_t> &&value);
-bool charmap_HasChar(std::string const &input);
+bool charmap_HasChar(std::string const &mapping);
 std::vector<int32_t> charmap_Convert(std::string const &input);
 size_t charmap_ConvertNext(std::string_view &input, std::vector<int32_t> *output);
 
