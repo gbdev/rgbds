@@ -51,6 +51,7 @@ struct Expression {
 
 	bool makeCheckHRAM();
 	void makeCheckRST();
+	void makeCheckBitIndex(uint8_t mask);
 
 	void checkNBit(uint8_t n) const;
 

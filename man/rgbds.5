@@ -388,10 +388,19 @@ The value is then ANDed with $00FF
 check.
 Checks if the value is a valid
 .Ql rst
-.Pq see Do RST vec Dc in Xr gbz80 7
-vector, that is one of $00, $08, $10, $18, $20, $28, $30, or $38.
+vector
+.Pq see Do RST vec Dc in Xr gbz80 7 ,
+that is, one of $00, $08, $10, $18, $20, $28, $30, or $38.
 The value is then ORed with $C7
 .Pq Ql \&| $C7 .
+.It Li $62 Ta Ql bit/res/set
+check; followed by the instruction's
+.Cm BYTE
+mask.
+Checks if the value is a valid bit index
+.Pq see e.g. Do BIT u3, r8 Dc in Xr gbz80 7 ,
+that is, from 0 to 7.
+The value is then ORed with the instruction's mask.
 .It Li $80 Ta Integer literal; followed by the
 .Cm LONG
 integer.
