@@ -31,15 +31,6 @@
 	struct StrFmtArgList {
 		std::string format;
 		std::vector<Either<uint32_t, std::string>> args;
-
-		StrFmtArgList() = default;
-		StrFmtArgList(StrFmtArgList &&) = default;
-	#ifdef _MSC_VER
-		// MSVC and WinFlexBison won't build without this...
-		StrFmtArgList(StrFmtArgList const &) = default;
-	#endif
-
-		StrFmtArgList &operator=(StrFmtArgList &&) = default;
 	};
 }
 
