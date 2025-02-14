@@ -1125,8 +1125,8 @@ Additionally, label names can contain up to a single dot
 .Ql \&. ,
 which may not be the first character.
 .Pp
-A symbol cannot have the same name as a reserved keyword, unless it is a
-.Dq raw symbol
+A symbol cannot have the same name as a reserved keyword, unless its name is a
+.Dq raw identifier
 prefixed by a hash
 .Sq # .
 For example,
@@ -1302,7 +1302,7 @@ it at the same time.
 below).
 .Ss Numeric constants
 .Ic EQU
-is used to define immutable numeric symbols.
+is used to define numeric constant symbols.
 Unlike
 .Sq =
 above, constants defined this way cannot be redefined.
@@ -1410,8 +1410,8 @@ This expansion is disabled in a few contexts:
 and
 .Ql MACRO name
 will not expand string constants in their names.
-Expansion is also disabled for raw string constant symbols (string constant symbols prefixed by a hash
-.Sq # ) .
+Expansion is also disabled if the string constant's name is a raw identifier prefixed by a hash
+.Sq # .
 .Bd -literal -offset indent
 DEF COUNTREG EQUS "[hl+]"
     ld a, COUNTREG
@@ -1877,7 +1877,7 @@ being the second, and so on. Since there are only nine digits, you can only use 
 To use the rest, you put the argument number in angle brackets, like
 .Ic \e<10> .
 .Pp
-This bracketed syntax supports decimal numbers and numeric constant symbols.
+This bracketed syntax supports decimal numbers and numeric symbols.
 For example,
 .Ql \e<_NARG>
 will get the last argument.
