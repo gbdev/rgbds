@@ -22,15 +22,6 @@ struct Expression {
 	std::vector<uint8_t> rpn{}; // Bytes serializing the RPN expression
 	uint32_t rpnPatchSize = 0;  // Size the expression will take in the object file
 
-	Expression() = default;
-	Expression(Expression &&) = default;
-#ifdef _MSC_VER
-	// MSVC and WinFlexBison won't build without this...
-	Expression(Expression const &) = default;
-#endif
-
-	Expression &operator=(Expression &&) = default;
-
 	bool isKnown() const { return data.holds<int32_t>(); }
 	int32_t value() const { return data.get<int32_t>(); }
 
