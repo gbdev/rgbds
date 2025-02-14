@@ -32,9 +32,6 @@
 		std::string format;
 		std::vector<Either<uint32_t, std::string>> args;
 	};
-
-	template <typename T = void, typename N, typename S>
-	static T handleSymbolByType(std::string const &symName, N numCallback, S strCallback);
 }
 
 %code {
@@ -83,8 +80,8 @@
 	static void failAssert(AssertionType type);
 	static void failAssertMsg(AssertionType type, std::string const &message);
 
-	template <typename T, typename N, typename S>
-	static T handleSymbolByType(std::string const &symName, N numCallback, S strCallback) {
+	template <typename N, typename S>
+	static auto handleSymbolByType(std::string const &symName, N numCallback, S strCallback) {
 		if (Symbol *sym = sym_FindScopedSymbol(symName); sym && sym->type == SYM_EQUS) {
 			return strCallback(*sym->getEqus());
 		} else {
@@ -1337,7 +1334,7 @@ relocexpr:
 		$$ = handleRelocExprForStr($1);
 	}
 	| scoped_sym {
-		$$ = handleSymbolByType<Expression>($1, handleRelocExprForNum, handleRelocExprForStr);
+		$$ = handleSymbolByType($1, handleRelocExprForNum, handleRelocExprForStr);
 	}
 ;
 
