@@ -768,7 +768,7 @@ void sect_Skip(uint32_t skip, bool ds) {
 }
 
 // Output a byte that can be relocatable or constant
-void sect_RelByte(Expression &expr, uint32_t pcShift) {
+void sect_RelByte(Expression const &expr, uint32_t pcShift) {
 	if (!requireCodeSection()) {
 		return;
 	}
@@ -782,15 +782,13 @@ void sect_RelByte(Expression &expr, uint32_t pcShift) {
 }
 
 // Output several bytes that can be relocatable or constant
-void sect_RelBytes(uint32_t n, std::vector<Expression> &exprs) {
+void sect_RelBytes(uint32_t n, std::vector<Expression> const &exprs) {
 	if (!requireCodeSection()) {
 		return;
 	}
 
 	for (uint32_t i = 0; i < n; i++) {
-		Expression &expr = exprs[i % exprs.size()];
-
-		if (!expr.isKnown()) {
+		if (Expression const &expr = exprs[i % exprs.size()]; !expr.isKnown()) {
 			createPatch(PATCHTYPE_BYTE, expr, i);
 			writeByte(0);
 		} else {
@@ -800,7 +798,7 @@ void sect_RelBytes(uint32_t n, std::vector<Expression> &exprs) {
 }
 
 // Output a word that can be relocatable or constant
-void sect_RelWord(Expression &expr, uint32_t pcShift) {
+void sect_RelWord(Expression const &expr, uint32_t pcShift) {
 	if (!requireCodeSection()) {
 		return;
 	}
@@ -814,7 +812,7 @@ void sect_RelWord(Expression &expr, uint32_t pcShift) {
 }
 
 // Output a long that can be relocatable or constant
-void sect_RelLong(Expression &expr, uint32_t pcShift) {
+void sect_RelLong(Expression const &expr, uint32_t pcShift) {
 	if (!requireCodeSection()) {
 		return;
 	}
@@ -828,7 +826,7 @@ void sect_RelLong(Expression &expr, uint32_t pcShift) {
 }
 
 // Output a PC-relative byte that can be relocatable or constant
-void sect_PCRelByte(Expression &expr, uint32_t pcShift) {
+void sect_PCRelByte(Expression const &expr, uint32_t pcShift) {
 	if (!requireCodeSection()) {
 		return;
 	}
