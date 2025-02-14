@@ -32,6 +32,9 @@
 		std::string format;
 		std::vector<Either<uint32_t, std::string>> args;
 	};
+
+	template <typename T = void, typename N, typename S>
+	static T handleSymbolByType(std::string const &symName, N numCallback, S strCallback);
 }
 
 %code {
@@ -79,6 +82,30 @@
 	static void compoundAssignment(std::string const &symName, RPNCommand op, int32_t constValue);
 	static void failAssert(AssertionType type);
 	static void failAssertMsg(AssertionType type, std::string const &message);
+
+	template <typename T, typename N, typename S>
+	static T handleSymbolByType(std::string const &symName, N numCallback, S strCallback) {
+		if (Symbol *sym = sym_FindScopedSymbol(symName); sym && sym->type == SYM_EQUS) {
+			return strCallback(*sym->getEqus());
+		} else {
+			Expression expr;
+			expr.makeSymbol(symName);
+			return numCallback(expr);
+		}
+	}
+
+	static void handlePrintForNum(Expression const &expr);
+	static void handlePrintForStr(std::string const &str);
+	static void handleConstByteForNum(Expression const &expr);
+	static void handleConstByteForStr(std::string const &str);
+	static void handleConstWordForNum(Expression const &expr);
+	static void handleConstWordForStr(std::string const &str);
+	static void handleConstLongForNum(Expression const &expr);
+	static void handleConstLongForStr(std::string const &str);
+	static Expression handleRelocExprForNum(Expression const &expr);
+	static Expression handleRelocExprForStr(std::string const &str);
+	static void handleStrFmtForNum(StrFmtArgList &args, Expression const &expr);
+	static void handleStrFmtForStr(StrFmtArgList &args, std::string const &str);
 
 	// The CPU encodes instructions in a logical way, so most instructions actually follow patterns.
 	// These enums thus help with bit twiddling to compute opcodes.
@@ -1209,22 +1236,13 @@ print_exprs:
 
 print_expr:
 	relocexpr_no_str {
-		printf("$%" PRIX32, $1.getConstVal());
+		handlePrintForNum($1);
 	}
 	| string_literal {
-		// Allow printing NUL characters
-		fwrite($1.data(), 1, $1.length(), stdout);
+		handlePrintForStr($1);
 	}
 	| scoped_sym {
-		if (Symbol *sym = sym_FindScopedSymbol($1); sym && sym->type == SYM_EQUS) {
-			std::shared_ptr<std::string> str = sym->getEqus();
-			// Allow printing NUL characters
-			fwrite(str->data(), 1, str->length(), stdout);
-		} else {
-			Expression expr;
-			expr.makeSymbol($1);
-			printf("$%" PRIX32, expr.getConstVal());
-		}
+		handleSymbolByType($1, handlePrintForNum, handlePrintForStr);
 	}
 ;
 
@@ -1242,23 +1260,13 @@ constlist_8bit:
 
 constlist_8bit_entry:
 	relocexpr_no_str {
-		$1.checkNBit(8);
-		sect_RelByte($1, 0);
+		handleConstByteForNum($1);
 	}
 	| string_literal {
-		std::vector<int32_t> output = charmap_Convert($1);
-		sect_ByteString(output);
+		handleConstByteForStr($1);
 	}
 	| scoped_sym {
-		if (Symbol *sym = sym_FindScopedSymbol($1); sym && sym->type == SYM_EQUS) {
-			std::vector<int32_t> output = charmap_Convert(*sym->getEqus());
-			sect_ByteString(output);
-		} else {
-			Expression expr;
-			expr.makeSymbol($1);
-			expr.checkNBit(8);
-			sect_RelByte(expr, 0);
-		}
+		handleSymbolByType($1, handleConstByteForNum, handleConstByteForStr);
 	}
 ;
 
@@ -1269,23 +1277,13 @@ constlist_16bit:
 
 constlist_16bit_entry:
 	relocexpr_no_str {
-		$1.checkNBit(16);
-		sect_RelWord($1, 0);
+		handleConstWordForNum($1);
 	}
 	| string_literal {
-		std::vector<int32_t> output = charmap_Convert($1);
-		sect_WordString(output);
+		handleConstWordForStr($1);
 	}
 	| scoped_sym {
-		if (Symbol *sym = sym_FindScopedSymbol($1); sym && sym->type == SYM_EQUS) {
-			std::vector<int32_t> output = charmap_Convert(*sym->getEqus());
-			sect_WordString(output);
-		} else {
-			Expression expr;
-			expr.makeSymbol($1);
-			expr.checkNBit(16);
-			sect_RelWord(expr, 0);
-		}
+		handleSymbolByType($1, handleConstWordForNum, handleConstWordForStr);
 	}
 ;
 
@@ -1296,21 +1294,13 @@ constlist_32bit:
 
 constlist_32bit_entry:
 	relocexpr_no_str {
-		sect_RelLong($1, 0);
+		handleConstLongForNum($1);
 	}
 	| string_literal {
-		std::vector<int32_t> output = charmap_Convert($1);
-		sect_LongString(output);
+		handleConstLongForStr($1);
 	}
 	| scoped_sym {
-		if (Symbol *sym = sym_FindScopedSymbol($1); sym && sym->type == SYM_EQUS) {
-			std::vector<int32_t> output = charmap_Convert(*sym->getEqus());
-			sect_LongString(output);
-		} else {
-			Expression expr;
-			expr.makeSymbol($1);
-			sect_RelLong(expr, 0);
-		}
+		handleSymbolByType($1, handleConstLongForNum, handleConstLongForStr);
 	}
 ;
 
@@ -1341,19 +1331,13 @@ reloc_16bit:
 
 relocexpr:
 	relocexpr_no_str {
-		$$ = std::move($1);
+		$$ = handleRelocExprForNum($1);
 	}
 	| string_literal {
-		std::vector<int32_t> output = charmap_Convert($1);
-		$$.makeNumber(strToNum(output));
+		$$ = handleRelocExprForStr($1);
 	}
 	| scoped_sym {
-		if (Symbol *sym = sym_FindScopedSymbol($1); sym && sym->type == SYM_EQUS) {
-			std::vector<int32_t> output = charmap_Convert(*sym->getEqus());
-			$$.makeNumber(strToNum(output));
-		} else {
-			$$.makeSymbol($1);
-		}
+		$$ = handleSymbolByType<Expression>($1, handleRelocExprForNum, handleRelocExprForStr);
 	}
 ;
 
@@ -1709,21 +1693,19 @@ strfmt_va_args:
 	  %empty {}
 	| strfmt_va_args COMMA relocexpr_no_str {
 		$$ = std::move($1);
-		$$.args.push_back(static_cast<uint32_t>($3.getConstVal()));
+		handleStrFmtForNum($$, $3);
 	}
 	| strfmt_va_args COMMA string_literal {
 		$$ = std::move($1);
-		$$.args.push_back(std::move($3));
+		handleStrFmtForStr($$, $3);
 	}
 	| strfmt_va_args COMMA scoped_sym {
 		$$ = std::move($1);
-		if (Symbol *sym = sym_FindScopedSymbol($3); sym && sym->type == SYM_EQUS) {
-			$$.args.push_back(*sym->getEqus());
-		} else {
-			Expression expr;
-			expr.makeSymbol($3);
-			$$.args.push_back(static_cast<uint32_t>(expr.getConstVal()));
-		}
+		handleSymbolByType(
+		    $3,
+		    [&](Expression const &expr) { handleStrFmtForNum($$, expr); },
+		    [&](std::string const &str) { handleStrFmtForStr($$, str); }
+		);
 	}
 ;
 
@@ -2994,4 +2976,62 @@ static void failAssertMsg(AssertionType type, std::string const &message) {
 		warning(WARNING_ASSERT, "Assertion failed: %s\n", message.c_str());
 		break;
 	}
+}
+
+static void handlePrintForNum(Expression const &expr) {
+	printf("$%" PRIX32, expr.getConstVal());
+}
+
+static void handlePrintForStr(std::string const &str) {
+	// Allow printing NUL characters
+	fwrite(str.data(), 1, str.length(), stdout);
+}
+
+static void handleConstByteForNum(Expression const &expr) {
+	expr.checkNBit(8);
+	sect_RelByte(expr, 0);
+}
+
+static void handleConstByteForStr(std::string const &str) {
+	std::vector<int32_t> output = charmap_Convert(str);
+	sect_ByteString(output);
+}
+
+static void handleConstWordForNum(Expression const &expr) {
+	expr.checkNBit(16);
+	sect_RelWord(expr, 0);
+}
+
+static void handleConstWordForStr(std::string const &str) {
+	std::vector<int32_t> output = charmap_Convert(str);
+	sect_WordString(output);
+}
+
+static void handleConstLongForNum(Expression const &expr) {
+	sect_RelLong(expr, 0);
+}
+
+static void handleConstLongForStr(std::string const &str) {
+	std::vector<int32_t> output = charmap_Convert(str);
+	sect_LongString(output);
+}
+
+static Expression handleRelocExprForNum(Expression const &expr) {
+	return expr;
+}
+
+static Expression handleRelocExprForStr(std::string const &str) {
+	std::vector<int32_t> output = charmap_Convert(str);
+	Expression expr;
+	expr.makeNumber(strToNum(output));
+	return expr;
+}
+
+static void handleStrFmtForNum(StrFmtArgList &args, Expression const &expr) {
+	uint32_t value = static_cast<uint32_t>(expr.getConstVal());
+	args.args.push_back(value);
+}
+
+static void handleStrFmtForStr(StrFmtArgList &args, std::string const &str) {
+	args.args.push_back(str);
 }
