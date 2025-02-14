@@ -1,0 +1,5 @@
+error: revchar.asm(22) -> revchar.asm::test(13):
+    REVCHAR: Multiple character mappings to values
+error: revchar.asm(23) -> revchar.asm::test(13):
+    REVCHAR: No character mapping to values
+error: Assembly aborted (2 errors)!

@@ -36,8 +36,8 @@ DEF n = STRLEN("{invalid}")
 DEF r = CHARLEN("{invalid}")
 println "\"{#s:invalid}\": {d:n} == {d:r}"
 
-REDEF mid1 EQUS CHARSUB("{invalid}", 4)
-REDEF mid2 EQUS CHARSUB("{invalid}", 7)
+REDEF mid1 EQUS STRCHAR("{invalid}", 3)
+REDEF mid2 EQUS STRCHAR("{invalid}", 6)
 println "\"{#s:mid2}{#s:mid1}\""
 
 ; characters:
