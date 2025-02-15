@@ -37,6 +37,7 @@
 %code {
 	#include <algorithm>
 	#include <ctype.h>
+	#include <functional>
 	#include <inttypes.h>
 	#include <stdio.h>
 	#include <stdlib.h>
@@ -90,19 +91,6 @@
 			return numCallback(expr);
 		}
 	}
-
-	static void handlePrintForNum(Expression const &expr);
-	static void handlePrintForStr(std::string const &str);
-	static void handleConstByteForNum(Expression const &expr);
-	static void handleConstByteForStr(std::string const &str);
-	static void handleConstWordForNum(Expression const &expr);
-	static void handleConstWordForStr(std::string const &str);
-	static void handleConstLongForNum(Expression const &expr);
-	static void handleConstLongForStr(std::string const &str);
-	static Expression handleRelocExprForNum(Expression const &expr);
-	static Expression handleRelocExprForStr(std::string const &str);
-	static void handleStrFmtForNum(StrFmtArgList &args, Expression const &expr);
-	static void handleStrFmtForStr(StrFmtArgList &args, std::string const &str);
 
 	// The CPU encodes instructions in a logical way, so most instructions actually follow patterns.
 	// These enums thus help with bit twiddling to compute opcodes.
@@ -1233,13 +1221,18 @@ print_exprs:
 
 print_expr:
 	relocexpr_no_str {
-		handlePrintForNum($1);
+		printf("$%" PRIX32, $1.getConstVal());
 	}
 	| string_literal {
-		handlePrintForStr($1);
+		// Allow printing NUL characters
+		fwrite($1.data(), 1, $1.length(), stdout);
 	}
 	| scoped_sym {
-		handleSymbolByType($1, handlePrintForNum, handlePrintForStr);
+		handleSymbolByType(
+		    $1,
+		    [](Expression const &expr) { printf("$%" PRIX32, expr.getConstVal()); },
+		    [](std::string const &str) { fwrite(str.data(), 1, str.length(), stdout); }
+		);
 	}
 ;
 
@@ -1257,13 +1250,21 @@ constlist_8bit:
 
 constlist_8bit_entry:
 	relocexpr_no_str {
-		handleConstByteForNum($1);
+		$1.checkNBit(8);
+		sect_RelByte($1, 0);
 	}
 	| string_literal {
-		handleConstByteForStr($1);
+		sect_ByteString(charmap_Convert($1));
 	}
 	| scoped_sym {
-		handleSymbolByType($1, handleConstByteForNum, handleConstByteForStr);
+		handleSymbolByType(
+		    $1,
+		    [](Expression const &expr) {
+			    expr.checkNBit(8);
+			    sect_RelByte(expr, 0);
+		    },
+		    [](std::string const &str) { sect_ByteString(charmap_Convert(str)); }
+		);
 	}
 ;
 
@@ -1274,13 +1275,21 @@ constlist_16bit:
 
 constlist_16bit_entry:
 	relocexpr_no_str {
-		handleConstWordForNum($1);
+		$1.checkNBit(16);
+		sect_RelWord($1, 0);
 	}
 	| string_literal {
-		handleConstWordForStr($1);
+		sect_WordString(charmap_Convert($1));
 	}
 	| scoped_sym {
-		handleSymbolByType($1, handleConstWordForNum, handleConstWordForStr);
+		handleSymbolByType(
+		    $1,
+		    [](Expression const &expr) {
+			    expr.checkNBit(16);
+			    sect_RelWord(expr, 0);
+		    },
+		    [](std::string const &str) { sect_WordString(charmap_Convert(str)); }
+		);
 	}
 ;
 
@@ -1291,13 +1300,17 @@ constlist_32bit:
 
 constlist_32bit_entry:
 	relocexpr_no_str {
-		handleConstLongForNum($1);
+		sect_RelLong($1, 0);
 	}
 	| string_literal {
-		handleConstLongForStr($1);
+		sect_LongString(charmap_Convert($1));
 	}
 	| scoped_sym {
-		handleSymbolByType($1, handleConstLongForNum, handleConstLongForStr);
+		handleSymbolByType(
+		    $1,
+		    [](Expression const &expr) { sect_RelLong(expr, 0); },
+		    [](std::string const &str) { sect_LongString(charmap_Convert(str)); }
+		);
 	}
 ;
 
@@ -1328,13 +1341,21 @@ reloc_16bit:
 
 relocexpr:
 	relocexpr_no_str {
-		$$ = handleRelocExprForNum($1);
+		$$ = std::move($1);
 	}
 	| string_literal {
-		$$ = handleRelocExprForStr($1);
+		$$.makeNumber(strToNum(charmap_Convert($1)));
 	}
 	| scoped_sym {
-		$$ = handleSymbolByType($1, handleRelocExprForNum, handleRelocExprForStr);
+		$$ = handleSymbolByType(
+		    $1,
+		    [](Expression const &expr) { return expr; },
+		    [](std::string const &str) {
+			    Expression expr;
+			    expr.makeNumber(strToNum(charmap_Convert(str)));
+			    return expr;
+		    }
+		);
 	}
 ;
 
@@ -1690,18 +1711,20 @@ strfmt_va_args:
 	  %empty {}
 	| strfmt_va_args COMMA relocexpr_no_str {
 		$$ = std::move($1);
-		handleStrFmtForNum($$, $3);
+		$$.args.push_back(static_cast<uint32_t>($3.getConstVal()));
 	}
 	| strfmt_va_args COMMA string_literal {
 		$$ = std::move($1);
-		handleStrFmtForStr($$, $3);
+		$$.args.push_back($3);
 	}
 	| strfmt_va_args COMMA scoped_sym {
 		$$ = std::move($1);
 		handleSymbolByType(
 		    $3,
-		    [&](Expression const &expr) { handleStrFmtForNum($$, expr); },
-		    [&](std::string const &str) { handleStrFmtForStr($$, str); }
+		    [&](Expression const &expr) {
+			    $$.args.push_back(static_cast<uint32_t>(expr.getConstVal()));
+		    },
+		    [&](std::string const &str) { $$.args.push_back(str); }
 		);
 	}
 ;
@@ -2973,62 +2996,4 @@ static void failAssertMsg(AssertionType type, std::string const &message) {
 		warning(WARNING_ASSERT, "Assertion failed: %s\n", message.c_str());
 		break;
 	}
-}
-
-static void handlePrintForNum(Expression const &expr) {
-	printf("$%" PRIX32, expr.getConstVal());
-}
-
-static void handlePrintForStr(std::string const &str) {
-	// Allow printing NUL characters
-	fwrite(str.data(), 1, str.length(), stdout);
-}
-
-static void handleConstByteForNum(Expression const &expr) {
-	expr.checkNBit(8);
-	sect_RelByte(expr, 0);
-}
-
-static void handleConstByteForStr(std::string const &str) {
-	std::vector<int32_t> output = charmap_Convert(str);
-	sect_ByteString(output);
-}
-
-static void handleConstWordForNum(Expression const &expr) {
-	expr.checkNBit(16);
-	sect_RelWord(expr, 0);
-}
-
-static void handleConstWordForStr(std::string const &str) {
-	std::vector<int32_t> output = charmap_Convert(str);
-	sect_WordString(output);
-}
-
-static void handleConstLongForNum(Expression const &expr) {
-	sect_RelLong(expr, 0);
-}
-
-static void handleConstLongForStr(std::string const &str) {
-	std::vector<int32_t> output = charmap_Convert(str);
-	sect_LongString(output);
-}
-
-static Expression handleRelocExprForNum(Expression const &expr) {
-	return expr;
-}
-
-static Expression handleRelocExprForStr(std::string const &str) {
-	std::vector<int32_t> output = charmap_Convert(str);
-	Expression expr;
-	expr.makeNumber(strToNum(output));
-	return expr;
-}
-
-static void handleStrFmtForNum(StrFmtArgList &args, Expression const &expr) {
-	uint32_t value = static_cast<uint32_t>(expr.getConstVal());
-	args.args.push_back(value);
-}
-
-static void handleStrFmtForStr(StrFmtArgList &args, std::string const &str) {
-	args.args.push_back(str);
 }
