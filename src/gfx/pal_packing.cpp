@@ -86,7 +86,8 @@ private:
 	public:
 		Iter() = default;
 
-		bool operator==(Iter const &other) const { return _iter == other._iter; }
+		bool operator==(Iter const &rhs) const { return _iter == rhs._iter; }
+		bool operator!=(Iter const &rhs) const { return !operator==(rhs); }
 
 		Iter &operator++() {
 			++_iter;
