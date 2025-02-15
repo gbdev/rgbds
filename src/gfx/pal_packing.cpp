@@ -87,7 +87,6 @@ private:
 		Iter() = default;
 
 		bool operator==(Iter const &rhs) const { return _iter == rhs._iter; }
-		bool operator!=(Iter const &rhs) const { return !operator==(rhs); }
 
 		Iter &operator++() {
 			++_iter;
