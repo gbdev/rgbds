@@ -80,6 +80,17 @@
 	static void failAssert(AssertionType type);
 	static void failAssertMsg(AssertionType type, std::string const &message);
 
+	template <typename N, typename S>
+	static auto handleSymbolByType(std::string const &symName, N numCallback, S strCallback) {
+		if (Symbol *sym = sym_FindScopedSymbol(symName); sym && sym->type == SYM_EQUS) {
+			return strCallback(*sym->getEqus());
+		} else {
+			Expression expr;
+			expr.makeSymbol(symName);
+			return numCallback(expr);
+		}
+	}
+
 	// The CPU encodes instructions in a logical way, so most instructions actually follow patterns.
 	// These enums thus help with bit twiddling to compute opcodes.
 	enum { REG_B, REG_C, REG_D, REG_E, REG_H, REG_L, REG_HL_IND, REG_A };
@@ -343,6 +354,7 @@
 
 // Strings
 %type <std::string> string
+%type <std::string> string_literal
 %type <std::string> strcat_args
 // Strings used for identifiers
 %type <std::string> def_id
@@ -1210,9 +1222,16 @@ print_expr:
 	relocexpr_no_str {
 		printf("$%" PRIX32, $1.getConstVal());
 	}
-	| string {
+	| string_literal {
 		// Allow printing NUL characters
 		fwrite($1.data(), 1, $1.length(), stdout);
+	}
+	| scoped_sym {
+		handleSymbolByType(
+		    $1,
+		    [](Expression const &expr) { printf("$%" PRIX32, expr.getConstVal()); },
+		    [](std::string const &str) { fwrite(str.data(), 1, str.length(), stdout); }
+		);
 	}
 ;
 
@@ -1233,9 +1252,22 @@ constlist_8bit_entry:
 		$1.checkNBit(8);
 		sect_RelByte($1, 0);
 	}
-	| string {
+	| string_literal {
 		std::vector<int32_t> output = charmap_Convert($1);
 		sect_ByteString(output);
+	}
+	| scoped_sym {
+		handleSymbolByType(
+		    $1,
+		    [](Expression const &expr) {
+			    expr.checkNBit(8);
+			    sect_RelByte(expr, 0);
+		    },
+		    [](std::string const &str) {
+			    std::vector<int32_t> output = charmap_Convert(str);
+			    sect_ByteString(output);
+		    }
+		);
 	}
 ;
 
@@ -1249,9 +1281,22 @@ constlist_16bit_entry:
 		$1.checkNBit(16);
 		sect_RelWord($1, 0);
 	}
-	| string {
+	| string_literal {
 		std::vector<int32_t> output = charmap_Convert($1);
 		sect_WordString(output);
+	}
+	| scoped_sym {
+		handleSymbolByType(
+		    $1,
+		    [](Expression const &expr) {
+			    expr.checkNBit(16);
+			    sect_RelWord(expr, 0);
+		    },
+		    [](std::string const &str) {
+			    std::vector<int32_t> output = charmap_Convert(str);
+			    sect_WordString(output);
+		    }
+		);
 	}
 ;
 
@@ -1264,9 +1309,19 @@ constlist_32bit_entry:
 	relocexpr_no_str {
 		sect_RelLong($1, 0);
 	}
-	| string {
+	| string_literal {
 		std::vector<int32_t> output = charmap_Convert($1);
 		sect_LongString(output);
+	}
+	| scoped_sym {
+		handleSymbolByType(
+		    $1,
+		    [](Expression const &expr) { sect_RelLong(expr, 0); },
+		    [](std::string const &str) {
+			    std::vector<int32_t> output = charmap_Convert(str);
+			    sect_LongString(output);
+		    }
+		);
 	}
 ;
 
@@ -1299,17 +1354,26 @@ relocexpr:
 	relocexpr_no_str {
 		$$ = std::move($1);
 	}
-	| string {
+	| string_literal {
 		std::vector<int32_t> output = charmap_Convert($1);
 		$$.makeNumber(strToNum(output));
+	}
+	| scoped_sym {
+		$$ = handleSymbolByType(
+		    $1,
+		    [](Expression const &expr) { return expr; },
+		    [](std::string const &str) {
+			    std::vector<int32_t> output = charmap_Convert(str);
+			    Expression expr;
+			    expr.makeNumber(strToNum(output));
+			    return expr;
+		    }
+		);
 	}
 ;
 
 relocexpr_no_str:
-	scoped_sym {
-		$$.makeSymbol($1);
-	}
-	| NUMBER {
+	NUMBER {
 		$$.makeNumber($1);
 	}
 	| OP_LOGICNOT relocexpr %prec NEG {
@@ -1403,7 +1467,7 @@ relocexpr_no_str:
 		// '@' is also a SYMBOL; it is handled here
 		$$.makeBankSymbol($3);
 	}
-	| OP_BANK LPAREN string RPAREN {
+	| OP_BANK LPAREN string_literal RPAREN {
 		$$.makeBankSection($3);
 	}
 	| OP_SIZEOF LPAREN string RPAREN {
@@ -1540,7 +1604,7 @@ precision_arg:
 	}
 ;
 
-string:
+string_literal:
 	STRING {
 		$$ = std::move($1);
 	}
@@ -1625,6 +1689,19 @@ string:
 	}
 ;
 
+string:
+	string_literal {
+		$$ = std::move($1);
+	}
+	| scoped_sym {
+		if (Symbol *sym = sym_FindScopedSymbol($1); sym && sym->type == SYM_EQUS) {
+			$$ = *sym->getEqus();
+		} else {
+			::error("'%s' is not a string symbol\n", $1.c_str());
+		}
+	}
+;
+
 strcat_args:
 	string {
 		$$ = std::move($1);
@@ -1649,9 +1726,19 @@ strfmt_va_args:
 		$$ = std::move($1);
 		$$.args.push_back(static_cast<uint32_t>($3.getConstVal()));
 	}
-	| strfmt_va_args COMMA string {
+	| strfmt_va_args COMMA string_literal {
 		$$ = std::move($1);
 		$$.args.push_back(std::move($3));
+	}
+	| strfmt_va_args COMMA scoped_sym {
+		$$ = std::move($1);
+		handleSymbolByType(
+		    $3,
+		    [&](Expression const &expr) {
+			    $$.args.push_back(static_cast<uint32_t>(expr.getConstVal()));
+		    },
+		    [&](std::string const &str) { $$.args.push_back(str); }
+		);
 	}
 ;
 
