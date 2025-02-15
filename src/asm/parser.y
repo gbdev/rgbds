@@ -1694,14 +1694,11 @@ string:
 		$$ = std::move($1);
 	}
 	| scoped_sym {
-		$$ = handleSymbolByType(
-		    $1,
-		    [&](Expression const &) {
-			    ::error("'%s' is not a string symbol\n", $1.c_str());
-			    return ""s;
-		    },
-		    [](std::string const &str) { return str; }
-		);
+		if (Symbol *sym = sym_FindScopedSymbol($1); sym && sym->type == SYM_EQUS) {
+			$$ = *sym->getEqus();
+		} else {
+			::error("'%s' is not a string symbol\n", $1.c_str());
+		}
 	}
 ;
 
