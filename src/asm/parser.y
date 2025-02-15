@@ -37,7 +37,6 @@
 %code {
 	#include <algorithm>
 	#include <ctype.h>
-	#include <functional>
 	#include <inttypes.h>
 	#include <stdio.h>
 	#include <stdlib.h>
@@ -1254,7 +1253,8 @@ constlist_8bit_entry:
 		sect_RelByte($1, 0);
 	}
 	| string_literal {
-		sect_ByteString(charmap_Convert($1));
+		std::vector<int32_t> output = charmap_Convert($1);
+		sect_ByteString(output);
 	}
 	| scoped_sym {
 		handleSymbolByType(
@@ -1263,7 +1263,10 @@ constlist_8bit_entry:
 			    expr.checkNBit(8);
 			    sect_RelByte(expr, 0);
 		    },
-		    [](std::string const &str) { sect_ByteString(charmap_Convert(str)); }
+		    [](std::string const &str) {
+			    std::vector<int32_t> output = charmap_Convert(str);
+			    sect_ByteString(output);
+		    }
 		);
 	}
 ;
@@ -1279,7 +1282,8 @@ constlist_16bit_entry:
 		sect_RelWord($1, 0);
 	}
 	| string_literal {
-		sect_WordString(charmap_Convert($1));
+		std::vector<int32_t> output = charmap_Convert($1);
+		sect_WordString(output);
 	}
 	| scoped_sym {
 		handleSymbolByType(
@@ -1288,7 +1292,10 @@ constlist_16bit_entry:
 			    expr.checkNBit(16);
 			    sect_RelWord(expr, 0);
 		    },
-		    [](std::string const &str) { sect_WordString(charmap_Convert(str)); }
+		    [](std::string const &str) {
+			    std::vector<int32_t> output = charmap_Convert(str);
+			    sect_WordString(output);
+		    }
 		);
 	}
 ;
@@ -1303,13 +1310,17 @@ constlist_32bit_entry:
 		sect_RelLong($1, 0);
 	}
 	| string_literal {
-		sect_LongString(charmap_Convert($1));
+		std::vector<int32_t> output = charmap_Convert($1);
+		sect_LongString(output);
 	}
 	| scoped_sym {
 		handleSymbolByType(
 		    $1,
 		    [](Expression const &expr) { sect_RelLong(expr, 0); },
-		    [](std::string const &str) { sect_LongString(charmap_Convert(str)); }
+		    [](std::string const &str) {
+			    std::vector<int32_t> output = charmap_Convert(str);
+			    sect_LongString(output);
+		    }
 		);
 	}
 ;
@@ -1344,15 +1355,17 @@ relocexpr:
 		$$ = std::move($1);
 	}
 	| string_literal {
-		$$.makeNumber(strToNum(charmap_Convert($1)));
+		std::vector<int32_t> output = charmap_Convert($1);
+		$$.makeNumber(strToNum(output));
 	}
 	| scoped_sym {
 		$$ = handleSymbolByType(
 		    $1,
 		    [](Expression const &expr) { return expr; },
 		    [](std::string const &str) {
+			    std::vector<int32_t> output = charmap_Convert(str);
 			    Expression expr;
-			    expr.makeNumber(strToNum(charmap_Convert(str)));
+			    expr.makeNumber(strToNum(output));
 			    return expr;
 		    }
 		);
@@ -1681,11 +1694,14 @@ string:
 		$$ = std::move($1);
 	}
 	| scoped_sym {
-		if (Symbol *sym = sym_FindScopedSymbol($1); sym && sym->type == SYM_EQUS) {
-			$$ = *sym->getEqus();
-		} else {
-			::error("'%s' is not a string symbol\n", $1.c_str());
-		}
+		$$ = handleSymbolByType(
+		    $1,
+		    [&](Expression const &) {
+			    ::error("'%s' is not a string symbol\n", $1.c_str());
+			    return ""s;
+		    },
+		    [](std::string const &str) { return str; }
+		);
 	}
 ;
 
@@ -1715,7 +1731,7 @@ strfmt_va_args:
 	}
 	| strfmt_va_args COMMA string_literal {
 		$$ = std::move($1);
-		$$.args.push_back($3);
+		$$.args.push_back(std::move($3));
 	}
 	| strfmt_va_args COMMA scoped_sym {
 		$$ = std::move($1);
