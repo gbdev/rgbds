@@ -25,7 +25,6 @@ class EnumSeq {
 		auto operator*() const { return _value; }
 
 		bool operator==(Iterator const &rhs) const { return _value == rhs._value; }
-		bool operator!=(Iterator const &rhs) const { return !operator==(rhs); }
 	};
 
 public:
@@ -59,7 +58,6 @@ public:
 	bool operator==(ZipIterator const &rhs) const {
 		return std::get<0>(_iters) == std::get<0>(rhs._iters);
 	}
-	bool operator!=(ZipIterator const &rhs) const { return !operator==(rhs); }
 };
 
 template<typename... Ts>

@@ -38,7 +38,6 @@ struct Rgba {
 	}
 
 	bool operator==(Rgba const &rhs) const { return toCSS() == rhs.toCSS(); }
-	bool operator!=(Rgba const &rhs) const { return !operator==(rhs); }
 
 	// CGB colors are RGB555, so we use bit 15 to signify that the color is transparent instead
 	// Since the rest of the bits don't matter then, we return 0x8000 exactly.

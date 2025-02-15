@@ -100,7 +100,7 @@ jobs:
           path: rgbds-${{ env.version }}-macos.zip
 
   linux:
-    runs-on: ubuntu-20.04 # Oldest supported, for best glibc compatibility.
+    runs-on: ubuntu-22.04 # Oldest supported, for best glibc compatibility.
     steps:
       - name: Get version from tag
         shell: bash
@@ -112,7 +112,7 @@ jobs:
       - name: Install deps
         shell: bash
         run: |
-          ./.github/scripts/install_deps.sh ubuntu-20.04
+          ./.github/scripts/install_deps.sh ubuntu-22.04
       - name: Build binaries
         run: |
           make -kj WARNFLAGS="-Wall -Wextra -pedantic -static" PKG_CONFIG="pkg-config --static" Q=
