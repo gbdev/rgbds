@@ -4,4 +4,6 @@ error: const-and.asm(11):
     Expected constant expression: 'Aligned' is not constant at assembly time
 error: const-and.asm(17):
     Expected constant expression: PC is not constant at assembly time
-error: Assembly aborted (3 errors)!
+error: const-and.asm(20):
+    Expected constant expression: 'Floating' is not constant at assembly time
+error: Assembly aborted (4 errors)!

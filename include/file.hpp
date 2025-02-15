@@ -18,12 +18,10 @@
 #include "gfx/main.hpp"
 
 class File {
-	// Construct a `std::streambuf *` by default, since it's probably lighter than a `filebuf`.
 	Either<std::streambuf *, std::filebuf> _file;
 
 public:
-	File() {}
-	~File() { close(); }
+	File() : _file(nullptr) {}
 
 	// This should only be called once, and before doing any `->` operations.
 	// Returns `nullptr` on error, and a non-null pointer otherwise.
@@ -59,20 +57,6 @@ public:
 	std::streambuf const *operator->() const {
 		// See the `operator*` equivalent.
 		return const_cast<File *>(this)->operator->();
-	}
-
-	File *close() {
-		if (_file.holds<std::filebuf>()) {
-			// This is called by the destructor, and an explicit `close` shouldn't close twice.
-			std::filebuf fileBuf = std::move(_file.get<std::filebuf>());
-			_file.emplace<std::streambuf *>(nullptr);
-			if (fileBuf.close() != nullptr) {
-				return this;
-			}
-		} else if (_file.get<std::streambuf *>() != nullptr) {
-			return this;
-		}
-		return nullptr;
 	}
 
 	char const *c_str(std::string const &path) const {
