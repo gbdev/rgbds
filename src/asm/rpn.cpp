@@ -94,7 +94,7 @@ void Expression::makeSymbol(std::string const &symName) {
 		*ptr++ = RPN_SYM;
 		memcpy(ptr, sym->name.c_str(), nameLen);
 	} else {
-		data = static_cast<int32_t>(sym_GetConstantValue(symName));
+		data = static_cast<int32_t>(sym->getConstantValue());
 	}
 }
 
@@ -325,42 +325,12 @@ void Expression::makeUnaryOp(RPNCommand op, Expression &&src) {
 		case RPN_TZCOUNT:
 			data = val != 0 ? ctz(uval) : 32;
 			break;
-
-		case RPN_LOGOR:
-		case RPN_LOGAND:
-		case RPN_LOGEQ:
-		case RPN_LOGGT:
-		case RPN_LOGLT:
-		case RPN_LOGGE:
-		case RPN_LOGLE:
-		case RPN_LOGNE:
-		case RPN_ADD:
-		case RPN_SUB:
-		case RPN_XOR:
-		case RPN_OR:
-		case RPN_AND:
-		case RPN_SHL:
-		case RPN_SHR:
-		case RPN_USHR:
-		case RPN_MUL:
-		case RPN_DIV:
-		case RPN_MOD:
-		case RPN_EXP:
-		case RPN_BANK_SYM:
-		case RPN_BANK_SECT:
-		case RPN_BANK_SELF:
-		case RPN_SIZEOF_SECT:
-		case RPN_STARTOF_SECT:
-		case RPN_SIZEOF_SECTTYPE:
-		case RPN_STARTOF_SECTTYPE:
-		case RPN_HRAM:
-		case RPN_RST:
-		case RPN_BIT_INDEX:
-		case RPN_CONST:
-		case RPN_SYM:
+		default:
 			// `makeUnaryOp` should never be called with a non-unary operator!
+			// LCOV_EXCL_START
 			unreachable_();
 		}
+		// LCOV_EXCL_STOP
 	} else if (op == RPN_LOGNOT && tryConstLogNot(src)) {
 		data = 0;
 	} else if (int32_t constVal; op == RPN_LOW && (constVal = tryConstLow(src)) != -1) {
@@ -503,29 +473,12 @@ void Expression::makeBinaryOp(RPNCommand op, Expression &&src1, Expression const
 
 			data = op_exponent(lval, rval);
 			break;
-
-		case RPN_NEG:
-		case RPN_NOT:
-		case RPN_LOGNOT:
-		case RPN_BANK_SYM:
-		case RPN_BANK_SECT:
-		case RPN_BANK_SELF:
-		case RPN_SIZEOF_SECT:
-		case RPN_STARTOF_SECT:
-		case RPN_SIZEOF_SECTTYPE:
-		case RPN_STARTOF_SECTTYPE:
-		case RPN_HRAM:
-		case RPN_RST:
-		case RPN_BIT_INDEX:
-		case RPN_HIGH:
-		case RPN_LOW:
-		case RPN_BITWIDTH:
-		case RPN_TZCOUNT:
-		case RPN_CONST:
-		case RPN_SYM:
+		default:
 			// `makeBinaryOp` should never be called with a non-binary operator!
+			// LCOV_EXCL_START
 			unreachable_();
 		}
+		// LCOV_EXCL_STOP
 	} else if (op == RPN_SUB && src1.isDiffConstant(src2.symbolOf())) {
 		data = src1.symbolOf()->getValue() - src2.symbolOf()->getValue();
 	} else if ((op == RPN_LOGAND || op == RPN_AND) && tryConstZero(src1, src2)) {

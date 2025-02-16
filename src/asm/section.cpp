@@ -875,9 +875,11 @@ void sect_BinaryFile(std::string const &name, int32_t startPos) {
 	}
 	if (!file) {
 		if (generatedMissingIncludes) {
+			// LCOV_EXCL_START
 			if (verbose) {
 				printf("Aborting (-MG) on INCBIN file '%s' (%s)\n", name.c_str(), strerror(errno));
 			}
+			// LCOV_EXCL_STOP
 			failedOnMissingInclude = true;
 		} else {
 			error("Error opening INCBIN file '%s': %s\n", name.c_str(), strerror(errno));
@@ -942,9 +944,11 @@ void sect_BinaryFileSlice(std::string const &name, int32_t startPos, int32_t len
 	}
 	if (!file) {
 		if (generatedMissingIncludes) {
+			// LCOV_EXCL_START
 			if (verbose) {
 				printf("Aborting (-MG) on INCBIN file '%s' (%s)\n", name.c_str(), strerror(errno));
 			}
+			// LCOV_EXCL_STOP
 			failedOnMissingInclude = true;
 		} else {
 			error("Error opening INCBIN file '%s': %s\n", name.c_str(), strerror(errno));

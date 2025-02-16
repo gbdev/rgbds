@@ -28,7 +28,10 @@ purge #name
 assert !def(name) && !def(#name) && def(hello)
 
 section "test", rom0
-#label:
+
 db #hello
 dw #hello
+dl #hello
+
+#label:
 dw BANK(#label), #label

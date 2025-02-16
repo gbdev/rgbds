@@ -7,6 +7,17 @@ FOR V, 1, 100
       PRINTLN "cont"
 ENDR
 WARN "done {d:V}"
+rept 2
+  break
+  ; skips nested code
+  rept 3
+    println "\tinner"
+  endr
+  if 1
+    println "\tconditional"
+  endc
+  println "outer"
+endr
 rept 1
   break
   ; skips invalid code

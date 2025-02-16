@@ -87,6 +87,7 @@ static option const longopts[] = {
     {nullptr,           no_argument,       nullptr,  0  }
 };
 
+// LCOV_EXCL_START
 static void printUsage() {
 	fputs(
 	    "Usage: rgbasm [-EhVvw] [-b chars] [-D name[=value]] [-g chars] [-I path]\n"
@@ -107,6 +108,7 @@ static void printUsage() {
 	    stderr
 	);
 }
+// LCOV_EXCL_STOP
 
 int main(int argc, char *argv[]) {
 	time_t now = time(nullptr);
@@ -176,8 +178,10 @@ int main(int argc, char *argv[]) {
 			break;
 
 		case 'h':
+			// LCOV_EXCL_START
 			printUsage();
 			exit(0);
+			// LCOV_EXCL_STOP
 
 		case 'I':
 			fstk_AddIncludePath(musl_optarg);
@@ -195,7 +199,7 @@ int main(int argc, char *argv[]) {
 				dependFileName = "<stdout>";
 			}
 			if (dependFile == nullptr) {
-				err("Failed to open dependfile \"%s\"", dependFileName);
+				err("Failed to open dependfile \"%s\"", dependFileName); // LCOV_EXCL_LINE
 			}
 			break;
 
@@ -302,9 +306,11 @@ int main(int argc, char *argv[]) {
 			if (stateFileSpecs.find(name) != stateFileSpecs.end()) {
 				warnx("Overriding state filename %s", name);
 			}
+			// LCOV_EXCL_START
 			if (verbose) {
 				printf("State filename %s\n", name);
 			}
+			// LCOV_EXCL_STOP
 			stateFileSpecs.emplace(name, std::move(features));
 			break;
 		}
@@ -314,8 +320,10 @@ int main(int argc, char *argv[]) {
 			exit(0);
 
 		case 'v':
+			// LCOV_EXCL_START
 			verbose = true;
 			break;
+			// LCOV_EXCL_STOP
 
 		case 'W':
 			opt_W(musl_optarg);
@@ -367,8 +375,10 @@ int main(int argc, char *argv[]) {
 
 		// Unrecognized options
 		default:
+			// LCOV_EXCL_START
 			printUsage();
 			exit(1);
+			// LCOV_EXCL_STOP
 		}
 	}
 
@@ -391,7 +401,7 @@ int main(int argc, char *argv[]) {
 	std::string mainFileName = argv[musl_optind];
 
 	if (verbose) {
-		printf("Assembling %s\n", mainFileName.c_str());
+		printf("Assembling %s\n", mainFileName.c_str()); // LCOV_EXCL_LINE
 	}
 
 	if (dependFile) {

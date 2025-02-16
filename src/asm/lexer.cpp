@@ -77,6 +77,7 @@ struct FileUnmapDeleter {
 
 static char *mapFile(int fd, std::string const &path, size_t size) {
 	void *mappingAddr = mmap(nullptr, size, PROT_READ, MAP_PRIVATE, fd, 0);
+	// LCOV_EXCL_START
 	if (mappingAddr == MAP_FAILED && errno == ENOTSUP) {
 		// The implementation may not support MAP_PRIVATE; try again with MAP_SHARED
 		// instead, offering, I believe, weaker guarantees about external modifications to
@@ -86,6 +87,7 @@ static char *mapFile(int fd, std::string const &path, size_t size) {
 		}
 		mappingAddr = mmap(nullptr, size, PROT_READ, MAP_SHARED, fd, 0);
 	}
+	// LCOV_EXCL_STOP
 	return mappingAddr != MAP_FAILED ? static_cast<char *>(mappingAddr) : nullptr;
 }
 
@@ -412,21 +414,27 @@ bool LexerState::setFileAsNextState(std::string const &filePath, bool updateStat
 	if (filePath == "-") {
 		path = "<stdin>";
 		content.emplace<BufferedContent>(STDIN_FILENO);
+		// LCOV_EXCL_START
 		if (verbose) {
 			printf("Opening stdin\n");
 		}
+		// LCOV_EXCL_STOP
 	} else {
 		struct stat statBuf;
 		if (stat(filePath.c_str(), &statBuf) != 0) {
+			// LCOV_EXCL_START
 			error("Failed to stat file \"%s\": %s\n", filePath.c_str(), strerror(errno));
 			return false;
+			// LCOV_EXCL_STOP
 		}
 		path = filePath;
 
 		int fd = open(path.c_str(), O_RDONLY);
 		if (fd < 0) {
+			// LCOV_EXCL_START
 			error("Failed to open file \"%s\": %s\n", path.c_str(), strerror(errno));
 			return false;
+			// LCOV_EXCL_STOP
 		}
 
 		bool isMmapped = false;
@@ -438,9 +446,11 @@ bool LexerState::setFileAsNextState(std::string const &filePath, bool updateStat
 				content.emplace<ViewedContent>(
 				    std::shared_ptr<char[]>(mappingAddr, FileUnmapDeleter(size)), size
 				);
+				// LCOV_EXCL_START
 				if (verbose) {
 					printf("File \"%s\" is mmap()ped\n", path.c_str());
 				}
+				// LCOV_EXCL_STOP
 				isMmapped = true;
 			}
 		}
@@ -448,6 +458,7 @@ bool LexerState::setFileAsNextState(std::string const &filePath, bool updateStat
 		if (!isMmapped) {
 			// Sometimes mmap() fails or isn't available, so have a fallback
 			content.emplace<BufferedContent>(fd);
+			// LCOV_EXCL_START
 			if (verbose) {
 				if (statBuf.st_size == 0) {
 					printf("File \"%s\" is empty\n", path.c_str());
@@ -457,6 +468,7 @@ bool LexerState::setFileAsNextState(std::string const &filePath, bool updateStat
 					);
 				}
 			}
+			// LCOV_EXCL_STOP
 		}
 	}
 
@@ -552,7 +564,9 @@ size_t BufferedContent::readMore(size_t startIndex, size_t nbChars) {
 	ssize_t nbReadChars = read(fd, &buf[startIndex], nbChars);
 
 	if (nbReadChars == -1) {
+		// LCOV_EXCL_START
 		fatalerror("Error while reading \"%s\": %s\n", lexerState->path.c_str(), strerror(errno));
+		// LCOV_EXCL_STOP
 	}
 
 	size += nbReadChars;
@@ -761,7 +775,9 @@ int LexerState::peekCharAhead() {
 		// and `.peekCharAhead()` will continue with its parent
 		assume(exp.offset <= exp.size());
 		if (exp.offset + distance < exp.size()) {
-			return static_cast<uint8_t>((*exp.contents)[exp.offset + distance]);
+			// Macro args can't be recursive, since `peek()` marks them as scanned, so
+			// this is a failsafe that (as far as I can tell) won't ever actually run.
+			return static_cast<uint8_t>((*exp.contents)[exp.offset + distance]); // LCOV_EXCL_LINE
 		}
 		distance -= exp.size() - exp.offset;
 	}
@@ -1323,8 +1339,11 @@ static void appendEscapedString(std::string &str, std::string const &escape) {
 			str += "\\n";
 			break;
 		case '\r':
+			// A literal CR in a string may get treated as a LF, so '\r' is not tested.
+			// LCOV_EXCL_START
 			str += "\\r";
 			break;
+			// LCOV_EXCL_STOP
 		case '\t':
 			str += "\\t";
 			break;
@@ -2163,7 +2182,8 @@ static Token skipIfBlock(bool toEndc) {
 
 				case T_(POP_ELIF):
 					if (lexer_ReachedELSEBlock()) {
-						fatalerror("Found ELIF after an ELSE block\n");
+						// This should be redundant, as the parser handles this error first.
+						fatalerror("Found ELIF after an ELSE block\n"); // LCOV_EXCL_LINE
 					}
 					if (!toEndc && lexer_GetIFDepth() == startingDepth) {
 						return token;
@@ -2255,9 +2275,8 @@ static Token yylex_SKIP_TO_ENDR() {
 
 				case T_(POP_ENDR):
 					depth--;
-					if (!depth) {
-						return Token(T_(YYEOF)); // yywrap() will finish the REPT/FOR loop
-					}
+					// `lexer_CaptureRept` has already guaranteed that the `ENDR`s are balanced
+					assume(depth > 0);
 					break;
 
 				case T_(POP_IF):

@@ -61,7 +61,7 @@ void out_RegisterNode(std::shared_ptr<FileStackNode> node) {
 	}
 }
 
-// Return a section's ID, or UINT32_MAX if the section is not in the list
+// Return a section's ID, or UINT32_MAX if the section does not exist
 static uint32_t getSectIDIfAny(Section *sect) {
 	if (!sect) {
 		return UINT32_MAX;
@@ -71,7 +71,8 @@ static uint32_t getSectIDIfAny(Section *sect) {
 		return static_cast<uint32_t>(search->second);
 	}
 
-	fatalerror("Unknown section '%s'\n", sect->name.c_str());
+	// Every section that exists should be in `sectionMap`
+	fatalerror("Unknown section '%s'\n", sect->name.c_str()); // LCOV_EXCL_LINE
 }
 
 static void writePatch(Patch const &patch, FILE *file) {
@@ -175,7 +176,7 @@ static void writeRpn(std::vector<uint8_t> &rpnexpr, std::vector<uint8_t> const &
 			sym = sym_FindExactSymbol(symName);
 			if (sym->isConstant()) {
 				rpnexpr[rpnptr++] = RPN_CONST;
-				value = sym_GetConstantValue(symName);
+				value = sym->getConstantValue();
 			} else {
 				rpnexpr[rpnptr++] = RPN_SYM;
 				registerUnregisteredSymbol(*sym); // Ensure that `sym->ID` is set
@@ -323,7 +324,7 @@ void out_WriteObject() {
 		file = stdout;
 	}
 	if (!file) {
-		err("Failed to open object file '%s'", objectFileName.c_str());
+		err("Failed to open object file '%s'", objectFileName.c_str()); // LCOV_EXCL_LINE
 	}
 	Defer closeFile{[&] { fclose(file); }};
 
@@ -343,14 +344,7 @@ void out_WriteObject() {
 		writeFileStackNode(node, file);
 
 		// The list is supposed to have decrementing IDs
-		if (it + 1 != fileStackNodes.end() && it[1]->ID != node.ID - 1) {
-			fatalerror(
-			    "Internal error: fstack node #%" PRIu32 " follows #%" PRIu32
-			    ". Please report this to the developers!\n",
-			    it[1]->ID,
-			    node.ID
-			);
-		}
+		assume(it + 1 == fileStackNodes.end() || it[1]->ID == node.ID - 1);
 	}
 
 	for (Symbol const *sym : objectSymbols) {
@@ -373,9 +367,11 @@ void out_SetFileName(std::string const &name) {
 		warnx("Overriding output filename %s", objectFileName.c_str());
 	}
 	objectFileName = name;
+	// LCOV_EXCL_START
 	if (verbose) {
 		printf("Output filename %s\n", objectFileName.c_str());
 	}
+	// LCOV_EXCL_STOP
 }
 
 static void dumpString(std::string const &escape, FILE *file) {
@@ -528,7 +524,7 @@ void out_WriteState(std::string name, std::vector<StateFeature> const &features)
 		file = stdout;
 	}
 	if (!file) {
-		err("Failed to open state file '%s'", name.c_str());
+		err("Failed to open state file '%s'", name.c_str()); // LCOV_EXCL_LINE
 	}
 	Defer closeFile{[&] { fclose(file); }};
 
