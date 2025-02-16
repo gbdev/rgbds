@@ -109,6 +109,10 @@ for f in *.[12]bpp; do
 	runTest && tryCmp "$f" result.2bpp || failTest $?
 done
 
+# Test writing to stdout
+newTest "$RGBGFX -m -o - write_stdout.bin > result.2bpp"
+runTest && tryCmp write_stdout.out.2bpp result.2bpp || failTest $?
+
 if [[ "$failed" -eq 0 ]]; then
 	echo "${bold}${green}All ${tests} tests passed!${rescolors}${resbold}"
 else

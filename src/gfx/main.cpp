@@ -156,6 +156,7 @@ static option const longopts[] = {
     {nullptr,            no_argument,       nullptr, 0  }
 };
 
+// LCOV_EXCL_START
 static void printUsage() {
 	fputs(
 	    "Usage: rgbgfx [-r stride] [-ChmOuVXYZ] [-v [-v ...]] [-a <attr_map> | -A]\n"
@@ -174,6 +175,7 @@ static void printUsage() {
 	    stderr
 	);
 }
+// LCOV_EXCL_STOP
 
 // Parses a number at the beginning of a string, moving the pointer to skip the parsed characters.
 // Returns the provided errVal on error.
@@ -425,8 +427,10 @@ static char *parseArgv(int argc, char *argv[]) {
 			}
 			break;
 		case 'h':
+			// LCOV_EXCL_START
 			printUsage();
 			exit(0);
+			// LCOV_EXCL_STOP
 		case 'i':
 			if (!options.inputTileset.empty()) {
 				warning("Overriding input tileset file %s", options.inputTileset.c_str());
@@ -615,8 +619,10 @@ static char *parseArgv(int argc, char *argv[]) {
 			}
 			break;
 		default:
+			// LCOV_EXCL_START
 			printUsage();
 			exit(1);
+			// LCOV_EXCL_STOP
 		}
 	}
 

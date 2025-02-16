@@ -1,5 +1,5 @@
-error: macro-arg-escape-chars.asm(5):
+error: macro-arg-illegal-escape.asm(5):
     Illegal character escape 'w'
-error: macro-arg-escape-chars.asm(5):
+error: macro-arg-illegal-escape.asm(5):
     Illegal character escape at end of input
 error: Assembly aborted (2 errors)!

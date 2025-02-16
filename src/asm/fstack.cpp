@@ -119,9 +119,11 @@ void fstk_SetPreIncludeFile(std::string const &path) {
 		warnx("Overriding pre-included filename %s", preIncludeName.c_str());
 	}
 	preIncludeName = path;
+	// LCOV_EXCL_START
 	if (verbose) {
 		printf("Pre-included filename %s\n", preIncludeName.c_str());
 	}
+	// LCOV_EXCL_STOP
 }
 
 static void printDep(std::string const &path) {
@@ -308,9 +310,11 @@ void fstk_RunInclude(std::string const &path, bool preInclude) {
 
 	if (!fullPath) {
 		if (generatedMissingIncludes && !preInclude) {
+			// LCOV_EXCL_START
 			if (verbose) {
 				printf("Aborting (-MG) on INCLUDE file '%s' (%s)\n", path.c_str(), strerror(errno));
 			}
+			// LCOV_EXCL_STOP
 			failedOnMissingInclude = true;
 		} else {
 			error("Unable to open included file '%s': %s\n", path.c_str(), strerror(errno));
@@ -319,7 +323,7 @@ void fstk_RunInclude(std::string const &path, bool preInclude) {
 	}
 
 	if (!newFileContext(*fullPath, false)) {
-		fatalerror("Failed to set up lexer for file include\n");
+		fatalerror("Failed to set up lexer for file include\n"); // LCOV_EXCL_LINE
 	}
 }
 

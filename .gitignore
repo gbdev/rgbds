@@ -14,4 +14,5 @@ CMakeCache.txt
 CMakeFiles/
 cmake_install.cmake
 build/
+*.dSYM/
 callgrind.out.*

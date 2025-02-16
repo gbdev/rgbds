@@ -163,6 +163,7 @@ static option const longopts[] = {
     {nullptr,         no_argument,       nullptr, 0  }
 };
 
+// LCOV_EXCL_START
 static void printUsage() {
 	fputs(
 	    "Usage: rgblink [-dhMtVvwx] [-l script] [-m map_file] [-n sym_file]\n"
@@ -181,6 +182,7 @@ static void printUsage() {
 	    stderr
 	);
 }
+// LCOV_EXCL_STOP
 
 enum ScrambledRegion {
 	SCRAMBLE_ROMX,
@@ -335,8 +337,10 @@ int main(int argc, char *argv[]) {
 			isWRAM0Mode = true;
 			break;
 		case 'h':
+			// LCOV_EXCL_START
 			printUsage();
 			exit(0);
+			// LCOV_EXCL_STOP
 		case 'l':
 			if (linkerScriptName) {
 				warnx("Overriding linker script %s", linkerScriptName);
@@ -407,8 +411,10 @@ int main(int argc, char *argv[]) {
 			is32kMode = true;
 			break;
 		default:
+			// LCOV_EXCL_START
 			printUsage();
 			exit(1);
+			// LCOV_EXCL_STOP
 		}
 	}
 

@@ -325,19 +325,6 @@ uint32_t Symbol::getConstantValue() const {
 	return 0;
 }
 
-uint32_t sym_GetConstantValue(std::string const &symName) {
-	if (Symbol const *sym = sym_FindScopedSymbol(symName); sym) {
-		return sym->getConstantValue();
-	}
-
-	if (sym_IsPurgedScoped(symName)) {
-		error("'%s' not defined; it was purged\n", symName.c_str());
-	} else {
-		error("'%s' not defined\n", symName.c_str());
-	}
-	return 0;
-}
-
 std::pair<Symbol const *, Symbol const *> sym_GetCurrentLabelScopes() {
 	return {globalScope, localScope};
 }
@@ -528,8 +515,10 @@ static uint32_t anonLabelID = 0;
 
 Symbol *sym_AddAnonLabel() {
 	if (anonLabelID == UINT32_MAX) {
+		// LCOV_EXCL_START
 		error("Only %" PRIu32 " anonymous labels can be created!", anonLabelID);
 		return nullptr;
+		// LCOV_EXCL_STOP
 	}
 
 	std::string anon = sym_MakeAnonLabelName(0, true); // The direction is important!
@@ -555,6 +544,7 @@ std::string sym_MakeAnonLabelName(uint32_t ofs, bool neg) {
 	} else {
 		ofs--; // We're referencing symbols that haven't been created yet...
 		if (ofs > UINT32_MAX - anonLabelID) {
+			// LCOV_EXCL_START
 			error(
 			    "Reference to anonymous label %" PRIu32 " after, when only %" PRIu32
 			    " may still be created\n",
@@ -562,6 +552,7 @@ std::string sym_MakeAnonLabelName(uint32_t ofs, bool neg) {
 			    UINT32_MAX - anonLabelID
 			);
 		} else {
+			// LCOV_EXCL_STOP
 			id = anonLabelID + ofs;
 		}
 	}
@@ -571,8 +562,11 @@ std::string sym_MakeAnonLabelName(uint32_t ofs, bool neg) {
 
 void sym_Export(std::string const &symName) {
 	if (symName.starts_with('!')) {
+		// LCOV_EXCL_START
+		// The parser does not accept anonymous labels for an `EXPORT` directive
 		error("Anonymous labels cannot be exported\n");
 		return;
+		// LCOV_EXCL_STOP
 	}
 
 	Symbol *sym = sym_FindScopedSymbol(symName);
@@ -654,11 +648,13 @@ void sym_Init(time_t now) {
 	sym_AddEqu("__RGBDS_RC__"s, PACKAGE_VERSION_RC)->isBuiltin = true;
 #endif
 
+	// LCOV_EXCL_START
 	if (now == static_cast<time_t>(-1)) {
 		warn("Failed to determine current time");
 		// Fall back by pretending we are at the Epoch
 		now = 0;
 	}
+	// LCOV_EXCL_STOP
 
 	tm const *time_local = localtime(&now);
 

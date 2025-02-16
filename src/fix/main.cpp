@@ -54,6 +54,7 @@ static option const longopts[] = {
     {nullptr,            no_argument,       nullptr, 0  }
 };
 
+// LCOV_EXCL_START
 static void printUsage() {
 	fputs(
 	    "Usage: rgbfix [-hjOsVv] [-C | -c] [-f <fix_spec>] [-i <game_id>] [-k <licensee>]\n"
@@ -72,6 +73,7 @@ static void printUsage() {
 	    stderr
 	);
 }
+// LCOV_EXCL_STOP
 
 static uint8_t nbErrors;
 
@@ -1322,8 +1324,10 @@ int main(int argc, char *argv[]) {
 			break;
 
 		case 'h':
+			// LCOV_EXCL_START
 			printUsage();
 			exit(0);
+			// LCOV_EXCL_STOP
 
 		case 'i':
 			gameID = musl_optarg;
