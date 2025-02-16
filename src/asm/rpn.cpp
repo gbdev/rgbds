@@ -358,7 +358,8 @@ void Expression::makeUnaryOp(RPNCommand op, Expression &&src) {
 		case RPN_BIT_INDEX:
 		case RPN_CONST:
 		case RPN_SYM:
-			fatalerror("%d is not an unary operator\n", op);
+			// `makeUnaryOp` should never be called with a non-unary operator!
+			unreachable_();
 		}
 	} else if (op == RPN_LOGNOT && tryConstLogNot(src)) {
 		data = 0;
@@ -522,7 +523,8 @@ void Expression::makeBinaryOp(RPNCommand op, Expression &&src1, Expression const
 		case RPN_TZCOUNT:
 		case RPN_CONST:
 		case RPN_SYM:
-			fatalerror("%d is not a binary operator\n", op);
+			// `makeBinaryOp` should never be called with a non-binary operator!
+			unreachable_();
 		}
 	} else if (op == RPN_SUB && src1.isDiffConstant(src2.symbolOf())) {
 		data = src1.symbolOf()->getValue() - src2.symbolOf()->getValue();
