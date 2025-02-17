@@ -193,13 +193,15 @@ public:
 		    PNG_LIBPNG_VER_STRING, static_cast<png_voidp>(this), handleError, handleWarning
 		);
 		if (!png) {
-			fatal("Failed to allocate PNG structure: %s", strerror(errno));
+			fatal("Failed to create PNG read structure: %s", strerror(errno)); // LCOV_EXCL_LINE
 		}
 
 		info = png_create_info_struct(png);
 		if (!info) {
+			// LCOV_EXCL_START
 			png_destroy_read_struct(&png, nullptr, nullptr);
-			fatal("Failed to allocate PNG info structure: %s", strerror(errno));
+			fatal("Failed to create PNG info structure: %s", strerror(errno));
+			// LCOV_EXCL_STOP
 		}
 
 		png_set_read_fn(png, this, readData);
@@ -555,6 +557,7 @@ static std::tuple<DefaultInitVec<size_t>, std::vector<Palette>>
 	auto [mappings, nbPalettes] = overloadAndRemove(protoPalettes);
 	assume(mappings.size() == protoPalettes.size());
 
+	// LCOV_EXCL_START
 	if (options.verbosity >= Options::VERB_INTERM) {
 		fprintf(
 		    stderr,
@@ -566,6 +569,7 @@ static std::tuple<DefaultInitVec<size_t>, std::vector<Palette>>
 			fprintf(stderr, "%zu -> %zu\n", i, mappings[i]);
 		}
 	}
+	// LCOV_EXCL_STOP
 
 	std::vector<Palette> palettes(nbPalettes);
 	// If the image contains at least one transparent pixel, force transparency in the first slot of
@@ -653,6 +657,7 @@ static std::tuple<DefaultInitVec<size_t>, std::vector<Palette>>
 }
 
 static void outputPalettes(std::vector<Palette> const &palettes) {
+	// LCOV_EXCL_START
 	if (options.verbosity >= Options::VERB_INTERM) {
 		for (auto &&palette : palettes) {
 			fputs("{ ", stderr);
@@ -662,6 +667,7 @@ static void outputPalettes(std::vector<Palette> const &palettes) {
 			fputs("}\n", stderr);
 		}
 	}
+	// LCOV_EXCL_STOP
 
 	if (palettes.size() > options.nbPalettes) {
 		// If the palette generation is wrong, other (dependee) operations are likely to be
@@ -676,7 +682,9 @@ static void outputPalettes(std::vector<Palette> const &palettes) {
 	if (!options.palettes.empty()) {
 		File output;
 		if (!output.open(options.palettes, std::ios_base::out | std::ios_base::binary)) {
+			// LCOV_EXCL_START
 			fatal("Failed to create \"%s\": %s", output.c_str(options.palettes), strerror(errno));
+			// LCOV_EXCL_STOP
 		}
 
 		for (Palette const &palette : palettes) {
@@ -829,7 +837,9 @@ static void outputUnoptimizedTileData(
 ) {
 	File output;
 	if (!output.open(options.output, std::ios_base::out | std::ios_base::binary)) {
+		// LCOV_EXCL_START
 		fatal("Failed to create \"%s\": %s", output.c_str(options.output), strerror(errno));
+		// LCOV_EXCL_STOP
 	}
 
 	uint16_t widthTiles = options.inputSlice.width ? options.inputSlice.width : png.getWidth() / 8;
@@ -868,7 +878,9 @@ static void outputUnoptimizedMaps(
 		if (!path.empty()) {
 			file.emplace();
 			if (!file->open(path, std::ios_base::out | std::ios_base::binary)) {
+				// LCOV_EXCL_START
 				fatal("Failed to create \"%s\": %s", file->c_str(options.tilemap), strerror(errno));
+				// LCOV_EXCL_STOP
 			}
 		}
 	};
@@ -1013,7 +1025,9 @@ static UniqueTiles dedupTiles(
 static void outputTileData(UniqueTiles const &tiles) {
 	File output;
 	if (!output.open(options.output, std::ios_base::out | std::ios_base::binary)) {
+		// LCOV_EXCL_START
 		fatal("Failed to create \"%s\": %s", output.c_str(options.output), strerror(errno));
+		// LCOV_EXCL_STOP
 	}
 
 	uint16_t tileID = 0;
@@ -1035,7 +1049,9 @@ static void outputTileData(UniqueTiles const &tiles) {
 static void outputTilemap(DefaultInitVec<AttrmapEntry> const &attrmap) {
 	File output;
 	if (!output.open(options.tilemap, std::ios_base::out | std::ios_base::binary)) {
+		// LCOV_EXCL_START
 		fatal("Failed to create \"%s\": %s", output.c_str(options.tilemap), strerror(errno));
+		// LCOV_EXCL_STOP
 	}
 
 	for (AttrmapEntry const &entry : attrmap) {
@@ -1048,7 +1064,9 @@ static void outputAttrmap(
 ) {
 	File output;
 	if (!output.open(options.attrmap, std::ios_base::out | std::ios_base::binary)) {
+		// LCOV_EXCL_START
 		fatal("Failed to create \"%s\": %s", output.c_str(options.attrmap), strerror(errno));
+		// LCOV_EXCL_STOP
 	}
 
 	for (AttrmapEntry const &entry : attrmap) {
@@ -1064,7 +1082,9 @@ static void outputPalmap(
 ) {
 	File output;
 	if (!output.open(options.palmap, std::ios_base::out | std::ios_base::binary)) {
+		// LCOV_EXCL_START
 		fatal("Failed to create \"%s\": %s", output.c_str(options.palmap), strerror(errno));
+		// LCOV_EXCL_STOP
 	}
 
 	for (AttrmapEntry const &entry : attrmap) {
@@ -1092,6 +1112,7 @@ void process() {
 	// Now, we have all the image's colors in `colors`
 	// The next step is to order the palette
 
+	// LCOV_EXCL_START
 	if (options.verbosity >= Options::VERB_INTERM) {
 		fputs("Image colors: [ ", stderr);
 		for (auto const &slot : colors) {
@@ -1102,6 +1123,7 @@ void process() {
 		}
 		fputs("]\n", stderr);
 	}
+	// LCOV_EXCL_STOP
 
 	// Now, iterate through the tiles, generating proto-palettes as we go
 	// We do this unconditionally because this performs the image validation (which we want to
@@ -1191,6 +1213,7 @@ continue_visiting_tiles:;
 	    protoPalettes.size(),
 	    protoPalettes.size() != 1 ? "s" : ""
 	);
+	// LCOV_EXCL_START
 	if (options.verbosity >= Options::VERB_INTERM) {
 		for (auto const &protoPal : protoPalettes) {
 			fputs("[ ", stderr);
@@ -1200,6 +1223,7 @@ continue_visiting_tiles:;
 			fputs("]\n", stderr);
 		}
 	}
+	// LCOV_EXCL_STOP
 
 	if (options.palSpecType == Options::EMBEDDED) {
 		generatePalSpec(png);

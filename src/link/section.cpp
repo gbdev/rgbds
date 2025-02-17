@@ -208,8 +208,10 @@ static void mergeSections(Section &target, std::unique_ptr<Section> &&other) {
 		break;
 
 	case SECTION_NORMAL:
+		// LCOV_EXCL_START
 		unreachable_();
 	}
+	// LCOV_EXCL_STOP
 
 	// Note that the order in which fragments are stored in the `nextu` list does not
 	// really matter, only that offsets were properly computed above

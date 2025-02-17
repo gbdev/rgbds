@@ -397,11 +397,15 @@ int main(int argc, char *argv[]) {
 			is32kMode = true;
 			break;
 		case 'V':
+			// LCOV_EXCL_START
 			printf("rgblink %s\n", get_package_version_string());
 			exit(0);
+			// LCOV_EXCL_STOP
 		case 'v':
+			// LCOV_EXCL_START
 			beVerbose = true;
 			break;
+			// LCOV_EXCL_STOP
 		case 'w':
 			isWRAM0Mode = true;
 			break;

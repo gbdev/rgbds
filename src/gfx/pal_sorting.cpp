@@ -40,7 +40,7 @@ void sortIndexed(
 					return true;
 				}
 			}
-			unreachable_(); // This should not be possible
+			unreachable_(); // LCOV_EXCL_LINE
 		});
 	}
 }

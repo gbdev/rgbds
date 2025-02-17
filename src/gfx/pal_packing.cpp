@@ -559,6 +559,7 @@ std::tuple<DefaultInitVec<size_t>, size_t>
 		}
 	}
 
+	// LCOV_EXCL_START
 	if (options.verbosity >= Options::VERB_INTERM) {
 		for (auto &&assignment : assignments) {
 			fprintf(stderr, "{ ");
@@ -571,11 +572,13 @@ std::tuple<DefaultInitVec<size_t>, size_t>
 			fprintf(stderr, "} (volume = %zu)\n", assignment.volume());
 		}
 	}
+	// LCOV_EXCL_STOP
 
 	// "Decant" the result
 	decant(assignments, protoPalettes);
 	// Note that the result does not contain any empty palettes
 
+	// LCOV_EXCL_START
 	if (options.verbosity >= Options::VERB_INTERM) {
 		for (auto &&assignment : assignments) {
 			fprintf(stderr, "{ ");
@@ -588,6 +591,7 @@ std::tuple<DefaultInitVec<size_t>, size_t>
 			fprintf(stderr, "} (volume = %zu)\n", assignment.volume());
 		}
 	}
+	// LCOV_EXCL_STOP
 
 	DefaultInitVec<size_t> mappings(protoPalettes.size());
 	for (size_t i = 0; i < assignments.size(); ++i) {
