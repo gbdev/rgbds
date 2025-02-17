@@ -698,10 +698,12 @@ static char const *mbcName(MbcType type) {
 	case MBC_WRONG_FEATURES:
 	case MBC_BAD_RANGE:
 	case MBC_BAD_TPP1:
+		// LCOV_EXCL_START
 		unreachable_();
 	}
 
 	unreachable_();
+	// LCOV_EXCL_STOP
 }
 
 static bool hasRAM(MbcType type) {
@@ -763,7 +765,7 @@ static bool hasRAM(MbcType type) {
 		break;
 	}
 
-	unreachable_();
+	unreachable_(); // LCOV_EXCL_LINE
 }
 
 static uint8_t const nintendoLogo[] = {
@@ -813,8 +815,9 @@ static ssize_t readBytes(int fd, uint8_t *buf, size_t len) {
 	while (len) {
 		ssize_t ret = read(fd, buf, len);
 
-		if (ret == -1 && errno != EINTR) { // Return errors, unless we only were interrupted
-			return -1;
+		// Return errors, unless we only were interrupted
+		if (ret == -1 && errno != EINTR) {
+			return -1; // LCOV_EXCL_LINE
 		}
 		// EOF reached
 		if (ret == 0) {
@@ -840,8 +843,9 @@ static ssize_t writeBytes(int fd, uint8_t *buf, size_t len) {
 	while (len) {
 		ssize_t ret = write(fd, buf, len);
 
-		if (ret == -1 && errno != EINTR) { // Return errors, unless we only were interrupted
-			return -1;
+		// Return errors, unless we only were interrupted
+		if (ret == -1 && errno != EINTR) {
+			return -1; // LCOV_EXCL_LINE
 		}
 		// If anything was written, accumulate it, and continue
 		if (ret != -1) {
@@ -895,8 +899,10 @@ static void processFile(int input, int output, char const *name, off_t fileSize)
 	ssize_t headerSize = (cartridgeType & 0xFF00) == TPP1 ? 0x154 : 0x150;
 
 	if (rom0Len == -1) {
+		// LCOV_EXCL_START
 		report("FATAL: Failed to read \"%s\"'s header: %s\n", name, strerror(errno));
 		return;
+		// LCOV_EXCL_STOP
 	} else if (rom0Len < headerSize) {
 		report(
 		    "FATAL: \"%s\" too short, expected at least %jd ($%jx) bytes, got only %jd\n",
@@ -1134,8 +1140,10 @@ static void processFile(int input, int output, char const *name, off_t fileSize)
 	// write the header
 	if (input == output) {
 		if (lseek(output, 0, SEEK_SET) == static_cast<off_t>(-1)) {
+			// LCOV_EXCL_START
 			report("FATAL: Failed to rewind \"%s\": %s\n", name, strerror(errno));
 			return;
+			// LCOV_EXCL_STOP
 		}
 		// If modifying the file in-place, we only need to edit the header
 		// However, padding may have modified ROM0 (added padding), so don't in that case
@@ -1146,9 +1154,12 @@ static void processFile(int input, int output, char const *name, off_t fileSize)
 	writeLen = writeBytes(output, rom0, rom0Len);
 
 	if (writeLen == -1) {
+		// LCOV_EXCL_START
 		report("FATAL: Failed to write \"%s\"'s ROM0: %s\n", name, strerror(errno));
 		return;
+		// LCOV_EXCL_STOP
 	} else if (writeLen < rom0Len) {
+		// LCOV_EXCL_START
 		report(
 		    "FATAL: Could only write %jd of \"%s\"'s %jd ROM0 bytes\n",
 		    static_cast<intmax_t>(writeLen),
@@ -1156,6 +1167,7 @@ static void processFile(int input, int output, char const *name, off_t fileSize)
 		    static_cast<intmax_t>(rom0Len)
 		);
 		return;
+		// LCOV_EXCL_STOP
 	}
 
 	// Output ROMX if it was buffered
@@ -1164,9 +1176,12 @@ static void processFile(int input, int output, char const *name, off_t fileSize)
 		// so it's fine to cast to `size_t`
 		writeLen = writeBytes(output, romx.data(), totalRomxLen);
 		if (writeLen == -1) {
+			// LCOV_EXCL_START
 			report("FATAL: Failed to write \"%s\"'s ROMX: %s\n", name, strerror(errno));
 			return;
+			// LCOV_EXCL_STOP
 		} else if (static_cast<size_t>(writeLen) < totalRomxLen) {
+			// LCOV_EXCL_START
 			report(
 			    "FATAL: Could only write %jd of \"%s\"'s %zu ROMX bytes\n",
 			    static_cast<intmax_t>(writeLen),
@@ -1174,6 +1189,7 @@ static void processFile(int input, int output, char const *name, off_t fileSize)
 			    totalRomxLen
 			);
 			return;
+			// LCOV_EXCL_STOP
 		}
 	}
 
@@ -1181,8 +1197,10 @@ static void processFile(int input, int output, char const *name, off_t fileSize)
 	if (padValue != UNSPECIFIED) {
 		if (input == output) {
 			if (lseek(output, 0, SEEK_END) == static_cast<off_t>(-1)) {
+				// LCOV_EXCL_START
 				report("FATAL: Failed to seek to end of \"%s\": %s\n", name, strerror(errno));
 				return;
+				// LCOV_EXCL_STOP
 			}
 		}
 		memset(bank, padValue, sizeof(bank));
@@ -1196,8 +1214,10 @@ static void processFile(int input, int output, char const *name, off_t fileSize)
 			// The return value is either -1, or at most `thisLen`,
 			// so it's fine to cast to `size_t`
 			if (static_cast<size_t>(ret) != thisLen) {
+				// LCOV_EXCL_START
 				report("FATAL: Failed to write \"%s\"'s padding: %s\n", name, strerror(errno));
 				break;
+				// LCOV_EXCL_STOP
 			}
 			len -= thisLen;
 		}
@@ -1224,12 +1244,16 @@ static bool processFilename(char const *name) {
 			Defer closeInput{[&] { close(input); }};
 			struct stat stat;
 			if (fstat(input, &stat) == -1) {
+				// LCOV_EXCL_START
 				report("FATAL: Failed to stat \"%s\": %s\n", name, strerror(errno));
-			} else if (!S_ISREG(stat.st_mode)) { // TODO: Do we want to support other types?
+				// LCOV_EXCL_STOP
+			} else if (!S_ISREG(stat.st_mode)) { // TODO: Do we want to support FIFOs or symlinks?
+				// LCOV_EXCL_START
 				report(
 				    "FATAL: \"%s\" is not a regular file, and thus cannot be modified in-place\n",
 				    name
 				);
+				// LCOV_EXCL_STOP
 			} else if (stat.st_size < 0x150) {
 				// This check is in theory redundant with the one in `processFile`, but it
 				// prevents passing a file size of 0, which usually indicates pipes
@@ -1423,16 +1447,20 @@ int main(int argc, char *argv[]) {
 		}
 
 		case 'V':
+			// LCOV_EXCL_START
 			printf("rgbfix %s\n", get_package_version_string());
 			exit(0);
+			// LCOV_EXCL_STOP
 
 		case 'v':
 			fixSpec = FIX_LOGO | FIX_HEADER_SUM | FIX_GLOBAL_SUM;
 			break;
 
 		default:
+			// LCOV_EXCL_START
 			printUsage();
 			exit(1);
+			// LCOV_EXCL_STOP
 		}
 	}
 

@@ -424,5 +424,5 @@ max_out:
 		}
 	}
 
-	unreachable_();
+	unreachable_(); // LCOV_EXCL_LINE
 }

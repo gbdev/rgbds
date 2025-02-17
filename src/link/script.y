@@ -228,7 +228,7 @@ static uint8_t parseHexDigit(int c) {
 	} else if (c >= 'a' && c <= 'f') {
 		return c - 'a' + 10;
 	} else {
-		unreachable_();
+		unreachable_(); // LCOV_EXCL_LINE
 	}
 }
 

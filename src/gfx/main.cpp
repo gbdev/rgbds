@@ -103,6 +103,7 @@ void fatal(char const *fmt, ...) {
 }
 
 void Options::verbosePrint(uint8_t level, char const *fmt, ...) const {
+	// LCOV_EXCL_START
 	if (verbosity >= level) {
 		va_list ap;
 
@@ -110,6 +111,7 @@ void Options::verbosePrint(uint8_t level, char const *fmt, ...) const {
 		vfprintf(stderr, fmt, ap);
 		va_end(ap);
 	}
+	// LCOV_EXCL_STOP
 }
 
 // Short options
@@ -586,13 +588,17 @@ static char *parseArgv(int argc, char *argv[]) {
 			options.tilemap = musl_optarg;
 			break;
 		case 'V':
+			// LCOV_EXCL_START
 			printf("rgbgfx %s\n", get_package_version_string());
 			exit(0);
+			// LCOV_EXCL_STOP
 		case 'v':
+			// LCOV_EXCL_START
 			if (options.verbosity < Options::VERB_VVVVVV) {
 				++options.verbosity;
 			}
 			break;
+			// LCOV_EXCL_STOP
 		case 'x':
 			options.trim = parseNumber(arg, "Number of tiles to trim", 0);
 			if (*arg != '\0') {
@@ -750,6 +756,7 @@ int main(int argc, char *argv[]) {
 		parseExternalPalSpec(localOptions.externalPalSpec);
 	}
 
+	// LCOV_EXCL_START
 	if (options.verbosity >= Options::VERB_CFG) {
 		fprintf(stderr, "rgbgfx %s\n", get_package_version_string());
 
@@ -862,6 +869,7 @@ int main(int argc, char *argv[]) {
 		printPath("Output palettes", options.palettes);
 		fputs("Ready.\n", stderr);
 	}
+	// LCOV_EXCL_STOP
 
 	// Do not do anything if option parsing went wrong.
 	requireZeroErrors();

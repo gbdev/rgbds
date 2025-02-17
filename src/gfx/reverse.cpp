@@ -401,7 +401,9 @@ void reverse() {
 	options.verbosePrint(Options::VERB_LOG_ACT, "Writing image...\n");
 	File pngFile;
 	if (!pngFile.open(options.input, std::ios::out | std::ios::binary)) {
+		// LCOV_EXCL_START
 		fatal("Failed to create \"%s\": %s", pngFile.c_str(options.input), strerror(errno));
+		// LCOV_EXCL_STOP
 	}
 	png_structp png = png_create_write_struct(
 	    PNG_LIBPNG_VER_STRING,
@@ -410,11 +412,15 @@ void reverse() {
 	    pngWarning
 	);
 	if (!png) {
+		// LCOV_EXCL_START
 		fatal("Failed to create PNG write struct: %s", strerror(errno));
+		// LCOV_EXCL_STOP
 	}
 	png_infop pngInfo = png_create_info_struct(png);
 	if (!pngInfo) {
-		fatal("Failed to create PNG info struct: %s", strerror(errno));
+		// LCOV_EXCL_START
+		fatal("Failed to create PNG info structure: %s", strerror(errno));
+		// LCOV_EXCL_STOP
 	}
 	png_set_write_fn(png, &pngFile, writePng, flushPng);
 
