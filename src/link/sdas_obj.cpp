@@ -34,28 +34,31 @@ static char const *delim = " \f\n\r\t\v"; // Whitespace according to the C and P
 
 static int
     nextLine(std::vector<char> &lineBuf, uint32_t &lineNo, FileStackNode const &where, FILE *file) {
-retry:
-	++lineNo;
-	int firstChar = getc(file);
-	lineBuf.clear();
+	int firstChar;
+	for (;;) {
+		++lineNo;
+		firstChar = getc(file);
+		lineBuf.clear();
 
-	switch (firstChar) {
-	case EOF:
-		return EOF;
-	case ';':
-		// Discard comment line
-		// TODO: if `;!FILE [...]` on the first line (`lineNo`), return it
-		do {
-			firstChar = getc(file);
-		} while (firstChar != EOF && firstChar != '\r' && firstChar != '\n');
-		[[fallthrough]];
-	case '\r':
-		if (firstChar == '\r' && getc(file) != '\n') {
-			consumeLF(where, lineNo, file);
+		switch (firstChar) {
+		case EOF:
+			return EOF;
+		case ';':
+			// Discard comment line
+			// TODO: if `;!FILE [...]` on the first line (`lineNo`), return it
+			do {
+				firstChar = getc(file);
+			} while (firstChar != EOF && firstChar != '\r' && firstChar != '\n');
+			[[fallthrough]];
+		case '\r':
+			if (firstChar == '\r' && getc(file) != '\n') {
+				consumeLF(where, lineNo, file);
+			}
+			[[fallthrough]];
+		case '\n':
+			continue;
 		}
-		[[fallthrough]];
-	case '\n':
-		goto retry;
+		break;
 	}
 
 	for (;;) {
