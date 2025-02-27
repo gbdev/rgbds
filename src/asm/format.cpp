@@ -22,29 +22,29 @@ void FormatSpec::useCharacter(int c) {
 	case ' ':
 	case '+':
 		if (state > FORMAT_SIGN) {
-			goto invalid;
+			break;
 		}
 		state = FORMAT_EXACT;
 		sign = c;
-		break;
+		return;
 
 	// exact
 	case '#':
 		if (state > FORMAT_EXACT) {
-			goto invalid;
+			break;
 		}
 		state = FORMAT_ALIGN;
 		exact = true;
-		break;
+		return;
 
 	// align
 	case '-':
 		if (state > FORMAT_ALIGN) {
-			goto invalid;
+			break;
 		}
 		state = FORMAT_WIDTH;
 		alignLeft = true;
-		break;
+		return;
 
 	// pad, width, and prec values
 	case '0':
@@ -71,27 +71,27 @@ void FormatSpec::useCharacter(int c) {
 		} else if (state == FORMAT_PREC) {
 			precision = precision * 10 + (c - '0');
 		} else {
-			goto invalid;
+			break;
 		}
-		break;
+		return;
 
 	// width
 	case '.':
 		if (state > FORMAT_WIDTH) {
-			goto invalid;
+			break;
 		}
 		state = FORMAT_FRAC;
 		hasFrac = true;
-		break;
+		return;
 
 	// prec
 	case 'q':
 		if (state > FORMAT_PREC) {
-			goto invalid;
+			break;
 		}
 		state = FORMAT_PREC;
 		hasPrec = true;
-		break;
+		return;
 
 	// type
 	case 'd':
@@ -103,18 +103,19 @@ void FormatSpec::useCharacter(int c) {
 	case 'f':
 	case 's':
 		if (state >= FORMAT_DONE) {
-			goto invalid;
+			break;
 		}
 		state = FORMAT_DONE;
 		valid = true;
 		type = c;
-		break;
+		return;
 
 	default:
-invalid:
-		state = FORMAT_INVALID;
-		valid = false;
+		break;
 	}
+
+	state = FORMAT_INVALID;
+	valid = false;
 }
 
 void FormatSpec::finishCharacters() {
