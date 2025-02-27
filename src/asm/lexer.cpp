@@ -862,22 +862,24 @@ static void shiftChar() {
 
 	lexerState->macroArgScanDistance--;
 
-restart:
-	if (!lexerState->expansions.empty()) {
-		// Advance within the current expansion
-		if (Expansion &exp = lexerState->expansions.front(); exp.advance()) {
-			// When advancing would go past an expansion's end,
-			// move up to its parent and try again to advance
-			lexerState->expansions.pop_front();
-			goto restart;
-		}
-	} else {
-		// Advance within the file contents
-		if (lexerState->content.holds<ViewedContent>()) {
-			lexerState->content.get<ViewedContent>().offset++;
+	for (;;) {
+		if (!lexerState->expansions.empty()) {
+			// Advance within the current expansion
+			if (Expansion &exp = lexerState->expansions.front(); exp.advance()) {
+				// When advancing would go past an expansion's end,
+				// move up to its parent and try again to advance
+				lexerState->expansions.pop_front();
+				continue;
+			}
 		} else {
-			lexerState->content.get<BufferedContent>().advance();
+			// Advance within the file contents
+			if (lexerState->content.holds<ViewedContent>()) {
+				lexerState->content.get<ViewedContent>().offset++;
+			} else {
+				lexerState->content.get<BufferedContent>().advance();
+			}
 		}
+		return;
 	}
 }
 
@@ -2114,7 +2116,7 @@ append:
 		}
 	}
 
-finish:
+finish: // Can't `break` out of a nested `for`-`switch`
 	// Trim right whitespace
 	auto rightPos = std::find_if_not(str.rbegin(), str.rend(), isWhitespace);
 	str.resize(rightPos.base() - str.begin());
