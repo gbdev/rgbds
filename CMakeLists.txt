@@ -59,8 +59,7 @@ else()
     add_compile_options(-Werror -Wextra
                         -Walloc-zero -Wcast-align -Wcast-qual -Wduplicated-branches -Wduplicated-cond
                         -Wfloat-equal -Wlogical-op -Wnull-dereference -Wold-style-cast -Wshift-overflow=2
-                        -Wstringop-overflow=4 -Wundef -Wuninitialized -Wunused
-                        -Wshadow # TODO: -Wshadow=compatible-local?
+                        -Wstringop-overflow=4 -Wtrampolines -Wundef -Wuninitialized -Wunused -Wshadow
                         -Wformat=2 -Wformat-overflow=2 -Wformat-truncation=1
                         -Wno-format-nonliteral -Wno-strict-overflow
                         -Wno-unused-but-set-variable # bison's `yynerrs_` is incremented but unused
