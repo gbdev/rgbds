@@ -23,7 +23,7 @@ static_assert(UNSPECIFIED > 0xFF, "UNSPECIFIED should not be in byte range!");
 static constexpr off_t BANK_SIZE = 0x4000;
 
 // Short options
-static char const *optstring = "Ccf:hi:jk:L:l:m:n:Op:r:st:Vv";
+static char const *optstring = "Ccf:hi:jk:L:l:m:n:Oo:p:r:st:Vv";
 
 // Equivalent long options
 // Please keep in the same order as short opts.
@@ -45,6 +45,7 @@ static option const longopts[] = {
     {"mbc-type",         required_argument, nullptr, 'm'},
     {"rom-version",      required_argument, nullptr, 'n'},
     {"overwrite",        no_argument,       nullptr, 'O'},
+    {"output",           required_argument, nullptr, 'o'},
     {"pad-value",        required_argument, nullptr, 'p'},
     {"ram-size",         required_argument, nullptr, 'r'},
     {"sgb-compatible",   no_argument,       nullptr, 's'},
@@ -66,6 +67,7 @@ static void printUsage() {
 	    "                                  to the man page for a list of values\n"
 	    "    -p, --pad-value <value>     pad to the next valid size using this value\n"
 	    "    -r, --ram-size <code>       set the cart RAM size byte to this value\n"
+	    "    -o, --output <path>         set the output file\n"
 	    "    -V, --version               print RGBFIX version and exit\n"
 	    "    -v, --validate              fix the header logo and both checksums (-f lhg)\n"
 	    "\n"
@@ -885,9 +887,9 @@ static void overwriteBytes(
 	memcpy(&rom0[startAddr], fixed, size);
 }
 
-static void processFile(int input, int output, char const *name, off_t fileSize) {
-	// Both of these should be true for seekable files, and neither otherwise
-	if (input == output) {
+static void
+    processFile(int input, int output, char const *name, off_t fileSize, bool expectFileSize) {
+	if (expectFileSize) {
 		assume(fileSize != 0);
 	} else {
 		assume(fileSize == 0);
@@ -1224,21 +1226,48 @@ static void processFile(int input, int output, char const *name, off_t fileSize)
 	}
 }
 
-static bool processFilename(char const *name) {
+static bool processFilename(char const *name, char const *outputName) {
 	nbErrors = 0;
 
-	if (!strcmp(name, "-")) {
+	bool inputStdin = !strcmp(name, "-");
+	if (inputStdin && !outputName) {
+		outputName = "-";
+	}
+
+	int output = -1;
+	bool openedOutput = false;
+	if (outputName) {
+		if (!strcmp(outputName, "-")) {
+			output = STDOUT_FILENO;
+			(void)setmode(STDOUT_FILENO, O_BINARY);
+		} else {
+			output = open(outputName, O_WRONLY | O_BINARY | O_CREAT, 0600);
+			if (output == -1) {
+				report(
+				    "FATAL: Failed to open \"%s\" for writing: %s\n", outputName, strerror(errno)
+				);
+				return true;
+			}
+			openedOutput = true;
+		}
+	}
+	Defer closeOutput{[&] {
+		if (openedOutput) {
+			close(output);
+		}
+	}};
+
+	if (inputStdin) {
 		name = "<stdin>";
 		(void)setmode(STDIN_FILENO, O_BINARY);
-		(void)setmode(STDOUT_FILENO, O_BINARY);
-		processFile(STDIN_FILENO, STDOUT_FILENO, name, 0);
+		processFile(STDIN_FILENO, output, name, 0, false);
 	} else {
 		// POSIX specifies that the results of O_RDWR on a FIFO are undefined.
 		// However, this is necessary to avoid a TOCTTOU, if the file was changed between
 		// `stat()` and `open(O_RDWR)`, which could trigger the UB anyway.
 		// Thus, we're going to hope that either the `open` fails, or it succeeds but IO
 		// operations may fail, all of which we handle.
-		if (int input = open(name, O_RDWR | O_BINARY); input == -1) {
+		if (int input = open(name, (outputName ? O_RDONLY : O_RDWR) | O_BINARY); input == -1) {
 			report("FATAL: Failed to open \"%s\" for reading+writing: %s\n", name, strerror(errno));
 		} else {
 			Defer closeInput{[&] { close(input); }};
@@ -1263,7 +1292,10 @@ static bool processFilename(char const *name) {
 				    static_cast<intmax_t>(stat.st_size)
 				);
 			} else {
-				processFile(input, input, name, stat.st_size);
+				if (!outputName) {
+					output = input;
+				}
+				processFile(input, output, name, stat.st_size, true);
 			}
 		}
 	}
@@ -1307,6 +1339,7 @@ static void parseByte(uint16_t &output, char name) {
 int main(int argc, char *argv[]) {
 	nbErrors = 0;
 
+	char const *outputFilename = nullptr;
 	for (int ch; (ch = musl_getopt_long_only(argc, argv, optstring, longopts, nullptr)) != -1;) {
 		switch (ch) {
 			size_t len;
@@ -1419,6 +1452,10 @@ int main(int argc, char *argv[]) {
 
 		case 'O':
 			overwriteRom = true;
+			break;
+
+		case 'o':
+			outputFilename = musl_optarg;
 			break;
 
 		case 'p':
@@ -1575,8 +1612,14 @@ int main(int argc, char *argv[]) {
 		exit(1);
 	}
 
+	if (outputFilename && argc != musl_optind + 1) {
+		fputs("FATAL: If `-o` is set then only a single input file may be specified\n", stderr);
+		printUsage();
+		exit(1);
+	}
+
 	do {
-		failed |= processFilename(*argv);
+		failed |= processFilename(*argv, outputFilename);
 	} while (*++argv);
 
 	return failed;

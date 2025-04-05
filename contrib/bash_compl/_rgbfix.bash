@@ -21,6 +21,7 @@ _rgbfix_completions() {
 		[l]="old-licensee:unk"
 		[m]="mbc-type:mbc"
 		[n]="rom-version:unk"
+		[o]="output:glob-*.gb *.gbc *.sgb"
 		[p]="pad-value:unk"
 		[r]="ram-size:unk"
 		[t]="title:unk"

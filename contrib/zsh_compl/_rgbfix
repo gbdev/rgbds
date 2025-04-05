@@ -53,6 +53,7 @@ local args=(
 	'(-L --logo)'{-L,--logo}'+[Set custom logo]:1bpp image:'
 	'(-m --mbc-type)'{-m,--mbc-type}"+[Set MBC flags]:mbc name:_mbc_names"
 	'(-n --rom-version)'{-n,--rom-version}'+[Set ROM version]:rom version byte:'
+	'(-o --output)'{-o,--output}"+[Output file]:output file:_files -g '*.{gb,sgb,gbc}'"
 	'(-p --pad-value)'{-p,--pad-value}'+[Pad to next valid size using this byte as padding]:padding byte:'
 	'(-r --ram-size)'{-r,--ram-size}'+[Set RAM size]:ram size byte:'
 	'(-t --title)'{-t,--title}'+[Set title string]:11-char title string:'
