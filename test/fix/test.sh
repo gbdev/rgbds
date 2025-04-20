@@ -45,7 +45,7 @@ runTest () {
 		sed "s# ./# ${src//#/\\#}/#g" # Prepend src directory to path arguments
 	)
 
-	for variant in '' ' piped'; do
+	for variant in '' ' piped' ' output'; do
 		(( tests++ ))
 		our_rc=0
 		if [[ $progress -ne 0 ]]; then
@@ -63,13 +63,19 @@ runTest () {
 				our_rc=1
 			fi
 			subst=out.gb
-		else
+		elif [[ "$variant" = ' piped' ]]; then
 			# Stop! This is not a Useless Use Of Cat. Using cat instead of
 			# stdin redirection makes the input an unseekable pipe - a scenario
 			# that's harder to deal with.
 			# shellcheck disable=SC2002
 			cat "$desired_input" | eval $RGBFIX "$flags" - '>out.gb' '2>out.err'
 			subst='<stdin>'
+		elif [[ "$variant" = ' output' ]]; then
+			cp "$desired_input" input.gb
+			if [[ -n "$(eval "$RGBFIX" $flags -o out.gb input.gb '2>out.err')" ]]; then
+				our_rc=1
+			fi
+			subst=input.gb
 		fi
 
 		if [[ -r "$2/$1.err" ]]; then
