@@ -1,0 +1,26 @@
+error: negative-macro-args.asm(21) -> negative-macro-args.asm::mac(7):
+    Invalid bracketed macro argument '\<0>'
+error: negative-macro-args.asm(21) -> negative-macro-args.asm::mac(7):
+    Invalid bracketed macro argument '\<0>'
+error: negative-macro-args.asm(21) -> negative-macro-args.asm::mac(9):
+    Macro argument '\<-8>' not defined
+error: negative-macro-args.asm(21) -> negative-macro-args.asm::mac(9):
+    Macro argument '\<-8>' not defined
+error: negative-macro-args.asm(21) -> negative-macro-args.asm::mac(11):
+    Macro argument '\<2147483647>' not defined
+error: negative-macro-args.asm(21) -> negative-macro-args.asm::mac(11):
+    Macro argument '\<2147483647>' not defined
+error: negative-macro-args.asm(21) -> negative-macro-args.asm::mac(14):
+    Macro argument '\<-2147483648>' not defined
+error: negative-macro-args.asm(21) -> negative-macro-args.asm::mac(14):
+    Number in bracketed macro argument is too large
+while expanding symbol "-2147483648"
+error: negative-macro-args.asm(21) -> negative-macro-args.asm::mac(15):
+    Macro argument '\<-2147483648>' not defined
+error: negative-macro-args.asm(21) -> negative-macro-args.asm::mac(15):
+    Number in bracketed macro argument is too large
+while expanding symbol "2147483648"
+error: negative-macro-args.asm(21) -> negative-macro-args.asm::mac(18):
+    Number in bracketed macro argument is too large
+while expanding symbol "4294967295"
+error: Assembly aborted (11 errors)!

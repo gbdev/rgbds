@@ -625,13 +625,24 @@ static uint32_t readBracketedMacroArgNum() {
 		lexerState->disableInterpolation = disableInterpolation;
 	}};
 
-	uint32_t num = 0;
+	int32_t num = 0;
 	int c = peek();
 	bool empty = false;
 	bool symbolError = false;
+	bool negative = c == '-';
+
+	if (negative) {
+		shiftChar();
+		c = peek();
+	}
 
 	if (c >= '0' && c <= '9') {
-		num = readNumber(10, 0);
+		uint32_t n = readNumber(10, 0);
+		if (n > INT32_MAX) {
+			error("Number in bracketed macro argument is too large\n");
+			return 0;
+		}
+		num = negative ? -n : static_cast<int32_t>(n);
 	} else if (startsIdentifier(c) || c == '#') {
 		if (c == '#') {
 			shiftChar();
@@ -664,7 +675,7 @@ static uint32_t readBracketedMacroArgNum() {
 			num = 0;
 			symbolError = true;
 		} else {
-			num = sym->getConstantValue();
+			num = static_cast<int32_t>(sym->getConstantValue());
 		}
 	} else {
 		empty = true;
@@ -704,7 +715,7 @@ static std::shared_ptr<std::string> readMacroArg(char name) {
 		assume(str); // '\#' should always be defined (at least as an empty string)
 		return str;
 	} else if (name == '<') {
-		uint32_t num = readBracketedMacroArgNum();
+		int32_t num = readBracketedMacroArgNum();
 		if (num == 0) {
 			// The error was already reported by `readBracketedMacroArgNum`.
 			return nullptr;
@@ -718,7 +729,7 @@ static std::shared_ptr<std::string> readMacroArg(char name) {
 
 		auto str = macroArgs->getArg(num);
 		if (!str) {
-			error("Macro argument '\\<%" PRIu32 ">' not defined\n", num);
+			error("Macro argument '\\<%" PRId32 ">' not defined\n", num);
 		}
 		return str;
 	} else {
