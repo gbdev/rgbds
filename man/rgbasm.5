@@ -1877,9 +1877,11 @@ being the second, and so on. Since there are only nine digits, you can only use 
 To use the rest, you put the argument number in angle brackets, like
 .Ic \e<10> .
 .Pp
-This bracketed syntax supports decimal numbers and numeric symbols.
+This bracketed syntax supports decimal numbers and numeric symbols, where negative values count from the last argument.
 For example,
 .Ql \e<_NARG>
+or
+.Ql \e<-1>
 will get the last argument.
 .Pp
 Other macro arguments and symbol interpolations will also be expanded inside the angle brackets.

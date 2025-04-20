@@ -8,10 +8,16 @@
 
 #include "asm/warning.hpp"
 
-std::shared_ptr<std::string> MacroArgs::getArg(uint32_t i) const {
-	uint32_t realIndex = i + shift - 1;
+std::shared_ptr<std::string> MacroArgs::getArg(int32_t i) const {
+	// Bracketed macro arguments adjust negative indexes such that -1 is the last argument.
+	if (i < 0) {
+		i += args.size() + 1;
+	}
 
-	return realIndex >= args.size() ? nullptr : args[realIndex];
+	int32_t realIndex = i + shift - 1;
+
+	return realIndex < 0 || static_cast<uint32_t>(realIndex) >= args.size() ? nullptr
+	                                                                        : args[realIndex];
 }
 
 std::shared_ptr<std::string> MacroArgs::getAllArgs() const {
