@@ -231,8 +231,7 @@ static std::optional<U> parseDec(std::string const &str, size_t &n) {
 	return std::optional<U>{value};
 }
 
-static std::optional<Rgba>
-    parseColor(std::string const &str, size_t &n, uint16_t i) {
+static std::optional<Rgba> parseColor(std::string const &str, size_t &n, uint16_t i) {
 	std::optional<uint8_t> r = parseDec<uint8_t>(str, n);
 	if (!r) {
 		error("Failed to parse color #%d (\"%s\"): invalid red component", i + 1, str.c_str());
@@ -602,10 +601,9 @@ void parseExternalPalSpec(char const *arg) {
 	    std::tuple{"GBC", &parseGBCFile, std::ios::binary},
 	};
 
-	auto iter =
-	    std::find_if(RANGE(parsers), [&arg, &ptr](auto const &parser) {
-		    return strncasecmp(arg, std::get<0>(parser), ptr - arg) == 0;
-	    });
+	auto iter = std::find_if(RANGE(parsers), [&arg, &ptr](auto const &parser) {
+		return strncasecmp(arg, std::get<0>(parser), ptr - arg) == 0;
+	});
 	if (iter == parsers.end()) {
 		error(
 		    "Unknown external palette format \"%.*s\"",
