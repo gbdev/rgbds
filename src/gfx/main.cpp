@@ -12,7 +12,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <string_view>
-#include <type_traits>
 #include <vector>
 
 #include "extern/getopt.hpp"
@@ -283,8 +282,8 @@ static std::vector<size_t> readAtFile(std::string const &path, std::vector<char>
 
 	// We only filter out `EOF`, but calling `isblank()` on anything else is UB!
 	static_assert(
-	    std::remove_reference_t<decltype(*file)>::traits_type::eof() == EOF,
-	    "isblank(char_traits<...>::eof()) is UB!"
+	    std::streambuf::traits_type::eof() == EOF,
+	    "isblank(std::streambuf::traits_type::eof()) is UB!"
 	);
 	std::vector<size_t> argvOfs;
 

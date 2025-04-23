@@ -45,7 +45,7 @@ constexpr uint8_t singleToHex(char c) {
 }
 
 template<typename Str> // Should be std::string or std::string_view
-static void skipWhitespace(Str const &str, typename Str::size_type &pos) {
+static void skipWhitespace(Str const &str, size_t &pos) {
 	pos = std::min(str.find_first_not_of(" \t"sv, pos), str.length());
 }
 
@@ -54,9 +54,8 @@ void parseInlinePalSpec(char const * const rawArg) {
 	// Palettes are separated by colons.
 
 	std::string_view arg(rawArg);
-	using size_type = decltype(arg)::size_type;
 
-	auto parseError = [&rawArg, &arg](size_type ofs, size_type len, char const *msg) {
+	auto parseError = [&rawArg, &arg](size_t ofs, size_t len, char const *msg) {
 		(void)arg; // With NDEBUG, `arg` is otherwise not used
 		assume(ofs <= arg.length());
 		assume(len <= arg.length());
@@ -80,7 +79,7 @@ void parseInlinePalSpec(char const * const rawArg) {
 	options.palSpec.clear();
 	options.palSpec.emplace_back(); // Value-initialized, not default-init'd, so we get zeros
 
-	size_type n = 0; // Index into the argument
+	size_t n = 0; // Index into the argument
 	// TODO: store max `nbColors` ever reached, and compare against palette size later
 	size_t nbColors = 0; // Number of colors in the current palette
 	for (;;) {
@@ -222,7 +221,7 @@ static bool readLine(std::filebuf &file, std::string &buffer) {
 
 // Parses the initial part of a string_view, advancing the "read index" as it does
 template<typename U> // Should be uint*_t
-static std::optional<U> parseDec(std::string const &str, std::string::size_type &n) {
+static std::optional<U> parseDec(std::string const &str, size_t &n) {
 	uintmax_t value = 0;
 	auto result = std::from_chars(str.data() + n, str.data() + str.size(), value);
 	if (static_cast<bool>(result.ec)) {
@@ -233,7 +232,7 @@ static std::optional<U> parseDec(std::string const &str, std::string::size_type 
 }
 
 static std::optional<Rgba>
-    parseColor(std::string const &str, std::string::size_type &n, uint16_t i) {
+    parseColor(std::string const &str, size_t &n, uint16_t i) {
 	std::optional<uint8_t> r = parseDec<uint8_t>(str, n);
 	if (!r) {
 		error("Failed to parse color #%d (\"%s\"): invalid red component", i + 1, str.c_str());
@@ -281,7 +280,7 @@ static void parsePSPFile(std::filebuf &file) {
 
 	line.clear();
 	requireLine("PSP", file, line);
-	std::string::size_type n = 0;
+	size_t n = 0;
 	std::optional<uint16_t> nbColors = parseDec<uint16_t>(line, n);
 	if (!nbColors || n != line.length()) {
 		error("Invalid \"number of colors\" line in PSP file (%s)", line.c_str());
@@ -347,7 +346,7 @@ static void parseGPLFile(std::filebuf &file) {
 			continue;
 		}
 
-		std::string::size_type n = 0;
+		size_t n = 0;
 		skipWhitespace(line, n);
 		// Skip empty lines, or lines that contain just a comment.
 		if (line.length() == n || line[n] == '#') {
@@ -604,7 +603,7 @@ void parseExternalPalSpec(char const *arg) {
 	};
 
 	auto iter =
-	    std::find_if(RANGE(parsers), [&arg, &ptr](decltype(parsers)::value_type const &parser) {
+	    std::find_if(RANGE(parsers), [&arg, &ptr](auto const &parser) {
 		    return strncasecmp(arg, std::get<0>(parser), ptr - arg) == 0;
 	    });
 	if (iter == parsers.end()) {

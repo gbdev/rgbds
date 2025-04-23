@@ -36,7 +36,7 @@ public:
 	// color), then the other color is returned. Otherwise, `nullptr` is returned.
 	[[nodiscard]]
 	Rgba const *registerColor(Rgba const &rgba) {
-		decltype(_colors)::value_type &slot = _colors[rgba.cgbColor()];
+		std::optional<Rgba> &slot = _colors[rgba.cgbColor()];
 
 		if (rgba.cgbColor() == Rgba::transparent) {
 			options.hasTransparentPixels = true;
@@ -52,7 +52,7 @@ public:
 	}
 
 	size_t size() const {
-		return std::count_if(RANGE(_colors), [](decltype(_colors)::value_type const &slot) {
+		return std::count_if(RANGE(_colors), [](std::optional<Rgba> const &slot) {
 			return slot.has_value() && !slot->isTransparent();
 		});
 	}
