@@ -59,5 +59,6 @@ uint16_t Rgba::cgbColor() const {
 uint8_t Rgba::grayIndex() const {
 	assume(isGray());
 	// Convert from 0..<256 to hasTransparentPixels..<nbColorsPerPal
+	// Note that `maxOpaqueColors()` already takes `hasTransparentPixels` into account
 	return (255 - red) * options.maxOpaqueColors() / 256 + options.hasTransparentPixels;
 }
