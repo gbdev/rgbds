@@ -398,7 +398,10 @@ static char *parseArgv(int argc, char *argv[]) {
 				}
 
 				if (musl_optarg[colorLen + 1] != '\0') {
-					error("Unexpected text \"%s\" after background color specification", &musl_optarg[colorLen + 1]);
+					error(
+					    "Unexpected text \"%s\" after background color specification",
+					    &musl_optarg[colorLen + 1]
+					);
 				}
 			}
 			break;

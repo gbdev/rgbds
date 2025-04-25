@@ -524,7 +524,8 @@ struct AttrmapEntry {
 
 	bool isBackgroundTile() const { return protoPaletteID == background; }
 	size_t getPalID(DefaultInitVec<size_t> const &mappings) const {
-		return isBackgroundTile() ? 0xFF : mappings[protoPaletteID == transparent ? 0 : protoPaletteID];
+		return isBackgroundTile() ? 0xFF
+		                          : mappings[protoPaletteID == transparent ? 0 : protoPaletteID];
 	}
 };
 
@@ -1009,7 +1010,10 @@ static UniqueTiles dedupTiles(
 
 	bool inputWithoutOutput = !options.inputTileset.empty() && options.output.empty();
 	for (auto [tile, attr] : zip(png.visitAsTiles(), attrmap)) {
-		auto [tileID, matchType] = attr.isBackgroundTile() ? std::tuple{uint16_t(0), TileData::EXACT} : tiles.addTile({tile, palettes[mappings[attr.protoPaletteID]]});
+		auto [tileID, matchType] =
+		    attr.isBackgroundTile()
+		        ? std::tuple{uint16_t(0), TileData::EXACT}
+		        : tiles.addTile({tile, palettes[mappings[attr.protoPaletteID]]});
 
 		if (inputWithoutOutput && matchType == TileData::NOPE) {
 			error(
