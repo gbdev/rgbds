@@ -354,6 +354,7 @@ static char *parseArgv(int argc, char *argv[]) {
 	for (int ch; (ch = musl_getopt_long_only(argc, argv, optstring, longopts, nullptr)) != -1;) {
 		char *arg = musl_optarg; // Make a copy for scanning
 		uint16_t number;
+		size_t size;
 		switch (ch) {
 		case 'A':
 			localOptions.autoAttrmap = true;
@@ -366,43 +367,41 @@ static char *parseArgv(int argc, char *argv[]) {
 			options.attrmap = musl_optarg;
 			break;
 		case 'B':
-			if (musl_optarg[0] != '#' || musl_optarg[1] == '\0') {
+			if (musl_optarg[0] != '#') {
 				error("Background color specification must be either `#rgb` or `#rrggbb`");
-			} else {
-				size_t colorLen = strspn(&musl_optarg[1], "0123456789ABCDEFabcdef");
-				switch (colorLen) {
-				case 3:
-					options.bgColor = Rgba(
-					    singleToHex(musl_optarg[1]),
-					    singleToHex(musl_optarg[2]),
-					    singleToHex(musl_optarg[3]),
-					    0xFF
-					);
-					break;
-				case 6:
-					options.bgColor = Rgba(
-					    toHex(musl_optarg[1], musl_optarg[2]),
-					    toHex(musl_optarg[3], musl_optarg[4]),
-					    toHex(musl_optarg[5], musl_optarg[6]),
-					    0xFF
-					);
-					break;
-				default:
-					error("Unknown background color specification \"%s\"", musl_optarg);
-				}
-
-				options.bgColorStrict = true;
-				if (musl_optarg[colorLen + 1] == '!') {
-					options.bgColorStrict = false;
-					++colorLen;
-				}
-
-				if (musl_optarg[colorLen + 1] != '\0') {
-					error(
-					    "Unexpected text \"%s\" after background color specification",
-					    &musl_optarg[colorLen + 1]
-					);
-				}
+				break;
+			}
+			size = strspn(&musl_optarg[1], "0123456789ABCDEFabcdef");
+			switch (size) {
+			case 3:
+				options.bgColor = Rgba(
+				    singleToHex(musl_optarg[1]),
+				    singleToHex(musl_optarg[2]),
+				    singleToHex(musl_optarg[3]),
+				    0xFF
+				);
+				break;
+			case 6:
+				options.bgColor = Rgba(
+				    toHex(musl_optarg[1], musl_optarg[2]),
+				    toHex(musl_optarg[3], musl_optarg[4]),
+				    toHex(musl_optarg[5], musl_optarg[6]),
+				    0xFF
+				);
+				break;
+			default:
+				error("Unknown background color specification \"%s\"", musl_optarg);
+			}
+			options.bgColorStrict = true;
+			if (musl_optarg[size + 1] == '!') {
+				options.bgColorStrict = false;
+				++size;
+			}
+			if (musl_optarg[size + 1] != '\0') {
+				error(
+				    "Unexpected text \"%s\" after background color specification",
+				    &musl_optarg[size + 1]
+				);
 			}
 			break;
 		case 'b':
