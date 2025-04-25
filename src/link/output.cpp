@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: MIT */
+// SPDX-License-Identifier: MIT
 
 #include "link/output.hpp"
 
@@ -20,7 +20,7 @@
 #include "link/section.hpp"
 #include "link/symbol.hpp"
 
-#define BANK_SIZE 0x4000
+static constexpr size_t BANK_SIZE = 0x4000;
 
 FILE *outputFile;
 FILE *overlayFile;
@@ -66,24 +66,27 @@ void out_AddSection(Section const &section) {
 	uint32_t targetBank = section.bank - sectionTypeInfo[section.type].firstBank;
 	uint32_t minNbBanks = targetBank + 1;
 
-	if (minNbBanks > maxNbBanks[section.type])
+	if (minNbBanks > maxNbBanks[section.type]) {
 		errx(
 		    "Section \"%s\" has an invalid bank range (%" PRIu32 " > %" PRIu32 ")",
 		    section.name.c_str(),
 		    section.bank,
 		    maxNbBanks[section.type] - 1
 		);
+	}
 
-	for (uint32_t i = sections[section.type].size(); i < minNbBanks; i++)
+	for (uint32_t i = sections[section.type].size(); i < minNbBanks; i++) {
 		sections[section.type].emplace_back();
+	}
 
 	std::deque<Section const *> &bankSections =
 	    section.size ? sections[section.type][targetBank].sections
 	                 : sections[section.type][targetBank].zeroLenSections;
 	auto pos = bankSections.begin();
 
-	while (pos != bankSections.end() && (*pos)->org < section.org)
+	while (pos != bankSections.end() && (*pos)->org < section.org) {
 		pos++;
+	}
 
 	bankSections.insert(pos, &section);
 }
@@ -92,19 +95,19 @@ Section const *out_OverlappingSection(Section const &section) {
 	uint32_t bank = section.bank - sectionTypeInfo[section.type].firstBank;
 
 	for (Section const *ptr : sections[section.type][bank].sections) {
-		if (ptr->org < section.org + section.size && section.org < ptr->org + ptr->size)
+		if (ptr->org < section.org + section.size && section.org < ptr->org + ptr->size) {
 			return ptr;
+		}
 	}
 	return nullptr;
 }
 
-/*
- * Performs sanity checks on the overlay file.
- * @return The number of ROM banks in the overlay file
- */
+// Performs sanity checks on the overlay file.
+// Returns the number of ROM banks in the overlay file.
 static uint32_t checkOverlaySize() {
-	if (!overlayFile)
+	if (!overlayFile) {
 		return 0;
+	}
 
 	if (fseek(overlayFile, 0, SEEK_END) != 0) {
 		warnx("Overlay file is not seekable, cannot check if properly formed");
@@ -116,22 +119,20 @@ static uint32_t checkOverlaySize() {
 	// Reset back to beginning
 	fseek(overlayFile, 0, SEEK_SET);
 
-	if (overlaySize % BANK_SIZE)
+	if (overlaySize % BANK_SIZE) {
 		warnx("Overlay file does not have a size multiple of 0x4000");
-	else if (is32kMode && overlaySize != 0x8000)
+	} else if (is32kMode && overlaySize != 0x8000) {
 		warnx("Overlay is not exactly 0x8000 bytes large");
-	else if (overlaySize < 0x8000)
+	} else if (overlaySize < 0x8000) {
 		warnx("Overlay is less than 0x8000 bytes large");
+	}
 
 	return (overlaySize + BANK_SIZE - 1) / BANK_SIZE;
 }
 
-/*
- * Expand `sections[SECTTYPE_ROMX]` to cover all the overlay banks.
- * This ensures that `writeROM` will output each bank, even if some are not
- * covered by any sections.
- * @param nbOverlayBanks The number of banks in the overlay file
- */
+// Expand `sections[SECTTYPE_ROMX]` to cover all the overlay banks.
+// This ensures that `writeROM` will output each bank, even if some are not
+// covered by any sections.
 static void coverOverlayBanks(uint32_t nbOverlayBanks) {
 	// 2 if is32kMode, 1 otherwise
 	uint32_t nbRom0Banks = sectionTypeInfo[SECTTYPE_ROM0].size / BANK_SIZE;
@@ -141,8 +142,9 @@ static void coverOverlayBanks(uint32_t nbOverlayBanks) {
 	                                : 0;
 
 	if (nbUncoveredBanks > sections[SECTTYPE_ROMX].size()) {
-		for (uint32_t i = sections[SECTTYPE_ROMX].size(); i < nbUncoveredBanks; i++)
+		for (uint32_t i = sections[SECTTYPE_ROMX].size(); i < nbUncoveredBanks; i++) {
 			sections[SECTTYPE_ROMX].emplace_back();
+		}
 	}
 }
 
@@ -162,12 +164,7 @@ static uint8_t getNextFillByte() {
 	return padValue;
 }
 
-/*
- * Write a ROM bank's sections to the output file.
- * @param bankSections The bank's sections, ordered by increasing address
- * @param baseOffset The address of the bank's first byte in GB address space
- * @param size The size of the bank
- */
+// Write a ROM bank's sections, ordered by increasing address, to the output file.
 static void
     writeBank(std::deque<Section const *> *bankSections, uint16_t baseOffset, uint16_t size) {
 	uint16_t offset = 0;
@@ -185,8 +182,9 @@ static void
 			fwrite(section->data.data(), 1, section->size, outputFile);
 			if (overlayFile) {
 				// Skip bytes even with pipes
-				for (uint16_t i = 0; i < section->size; i++)
+				for (uint16_t i = 0; i < section->size; i++) {
 					getc(overlayFile);
+				}
 			}
 			offset += section->size;
 		}
@@ -210,12 +208,14 @@ static void writeROM() {
 			(void)setmode(STDOUT_FILENO, O_BINARY);
 			outputFile = stdout;
 		}
-		if (!outputFile)
+		if (!outputFile) {
 			err("Failed to open output file \"%s\"", outputFileName);
+		}
 	}
 	Defer closeOutputFile{[&] {
-		if (outputFile)
+		if (outputFile) {
 			fclose(outputFile);
+		}
 	}};
 
 	if (overlayFileName) {
@@ -226,18 +226,21 @@ static void writeROM() {
 			(void)setmode(STDIN_FILENO, O_BINARY);
 			overlayFile = stdin;
 		}
-		if (!overlayFile)
+		if (!overlayFile) {
 			err("Failed to open overlay file \"%s\"", overlayFileName);
+		}
 	}
 	Defer closeOverlayFile{[&] {
-		if (overlayFile)
+		if (overlayFile) {
 			fclose(overlayFile);
+		}
 	}};
 
 	uint32_t nbOverlayBanks = checkOverlaySize();
 
-	if (nbOverlayBanks > 0)
+	if (nbOverlayBanks > 0) {
 		coverOverlayBanks(nbOverlayBanks);
+	}
 
 	if (outputFile) {
 		writeBank(
@@ -246,12 +249,13 @@ static void writeROM() {
 		    sectionTypeInfo[SECTTYPE_ROM0].size
 		);
 
-		for (uint32_t i = 0; i < sections[SECTTYPE_ROMX].size(); i++)
+		for (uint32_t i = 0; i < sections[SECTTYPE_ROMX].size(); i++) {
 			writeBank(
 			    &sections[SECTTYPE_ROMX][i].sections,
 			    sectionTypeInfo[SECTTYPE_ROMX].startAddr,
 			    sectionTypeInfo[SECTTYPE_ROMX].size
 			);
+		}
 	}
 }
 
@@ -288,8 +292,9 @@ static void printSymName(std::string const &name, FILE *file) {
 					codepoint = 0xFFFD;
 					// Skip continuation bytes
 					// A NUL byte does not qualify, so we're good
-					while ((*ptr & 0xC0) == 0x80)
+					while ((*ptr & 0xC0) == 0x80) {
 						++ptr;
+					}
 					break;
 				}
 				++ptr;
@@ -303,8 +308,9 @@ static void printSymName(std::string const &name, FILE *file) {
 // Comparator function for `std::stable_sort` to sort symbols
 // Symbols are ordered by address, then by parentage
 static bool compareSymbols(SortedSymbol const &sym1, SortedSymbol const &sym2) {
-	if (sym1.addr != sym2.addr)
+	if (sym1.addr != sym2.addr) {
 		return sym1.addr < sym2.addr;
+	}
 
 	std::string const &sym1_name = sym1.sym->name;
 	std::string const &sym2_name = sym2.sym->name;
@@ -316,10 +322,12 @@ static bool compareSymbols(SortedSymbol const &sym1, SortedSymbol const &sym2) {
 		size_t sym2_len = sym2_name.length();
 
 		// Sort parent labels before their child local labels
-		if (sym2_name.starts_with(sym1_name) && sym2_name[sym1_len] == '.')
+		if (sym2_name.starts_with(sym1_name) && sym2_name[sym1_len] == '.') {
 			return true;
-		if (sym1_name.starts_with(sym2_name) && sym1_name[sym2_len] == '.')
+		}
+		if (sym1_name.starts_with(sym2_name) && sym1_name[sym2_len] == '.') {
 			return false;
+		}
 		// Sort local labels before unrelated global labels
 		return sym1_local;
 	}
@@ -327,22 +335,21 @@ static bool compareSymbols(SortedSymbol const &sym1, SortedSymbol const &sym2) {
 	return false;
 }
 
-/*
- * Write a bank's contents to the sym file
- * @param bankSections The bank's sections
- */
+// Write a bank's contents to the sym file
 static void writeSymBank(SortedSections const &bankSections, SectionType type, uint32_t bank) {
 #define forEachSortedSection(sect, ...) \
 	do { \
 		for (auto it = bankSections.zeroLenSections.begin(); \
 		     it != bankSections.zeroLenSections.end(); \
 		     it++) { \
-			for (Section const *sect = *it; sect; sect = sect->nextu.get()) \
+			for (Section const *sect = *it; sect; sect = sect->nextu.get()) { \
 				__VA_ARGS__ \
+			} \
 		} \
 		for (auto it = bankSections.sections.begin(); it != bankSections.sections.end(); it++) { \
-			for (Section const *sect = *it; sect; sect = sect->nextu.get()) \
+			for (Section const *sect = *it; sect; sect = sect->nextu.get()) { \
 				__VA_ARGS__ \
+			} \
 		} \
 	} while (0)
 
@@ -350,8 +357,9 @@ static void writeSymBank(SortedSections const &bankSections, SectionType type, u
 
 	forEachSortedSection(sect, { nbSymbols += sect->symbols.size(); });
 
-	if (!nbSymbols)
+	if (!nbSymbols) {
 		return;
+	}
 
 	std::vector<SortedSymbol> symList;
 
@@ -360,11 +368,12 @@ static void writeSymBank(SortedSections const &bankSections, SectionType type, u
 	forEachSortedSection(sect, {
 		for (Symbol const *sym : sect->symbols) {
 			// Don't output symbols that begin with an illegal character
-			if (!sym->name.empty() && canStartSymName(sym->name[0]))
+			if (!sym->name.empty() && canStartSymName(sym->name[0])) {
 				symList.push_back({
 				    .sym = sym,
 				    .addr = static_cast<uint16_t>(sym->label().offset + sect->org),
 				});
+			}
 		}
 	});
 
@@ -421,9 +430,7 @@ static void printSectionName(std::string const &name, FILE *file) {
 	}
 }
 
-/*
- * Write a bank's contents to the map file
- */
+// Write a bank's contents to the map file
 static void writeMapBank(SortedSections const &sectList, SectionType type, uint32_t bank) {
 	fprintf(
 	    mapFile,
@@ -453,8 +460,9 @@ static void writeMapBank(SortedSections const &sectList, SectionType type, uint3
 		prevEndAddr = sect->org + sect->size;
 
 		fprintf(mapFile, "\tSECTION: $%04" PRIx16, sect->org);
-		if (sect->size != 0)
+		if (sect->size != 0) {
 			fprintf(mapFile, "-$%04x", prevEndAddr - 1);
+		}
 		fprintf(mapFile, " ($%04" PRIx16 " byte%s) [\"", sect->size, sect->size == 1 ? "" : "s");
 		printSectionName(sect->name, mapFile);
 		fputs("\"]\n", mapFile);
@@ -471,10 +479,11 @@ static void writeMapBank(SortedSections const &sectList, SectionType type, uint3
 
 				if (sect->nextu) {
 					// Announce the following "piece"
-					if (sect->nextu->modifier == SECTION_UNION)
+					if (sect->nextu->modifier == SECTION_UNION) {
 						fprintf(mapFile, "\t         ; Next union\n");
-					else if (sect->nextu->modifier == SECTION_FRAGMENT)
+					} else if (sect->nextu->modifier == SECTION_FRAGMENT) {
 						fprintf(mapFile, "\t         ; Next fragment\n");
+					}
 				}
 			}
 		}
@@ -495,9 +504,7 @@ static void writeMapBank(SortedSections const &sectList, SectionType type, uint3
 	}
 }
 
-/*
- * Write the total used and free space by section type to the map file
- */
+// Write the total used and free space by section type to the map file
 static void writeMapSummary() {
 	fputs("SUMMARY:\n", mapFile);
 
@@ -506,12 +513,14 @@ static void writeMapSummary() {
 		uint32_t nbBanks = sections[type].size();
 
 		// Do not output used space for VRAM or OAM
-		if (type == SECTTYPE_VRAM || type == SECTTYPE_OAM)
+		if (type == SECTTYPE_VRAM || type == SECTTYPE_OAM) {
 			continue;
+		}
 
 		// Do not output unused section types
-		if (nbBanks == 0)
+		if (nbBanks == 0) {
 			continue;
+		}
 
 		uint32_t usedTotal = 0;
 
@@ -544,16 +553,18 @@ static void writeMapSummary() {
 		    usedTotal == 1 ? "" : "s",
 		    nbBanks * sectionTypeInfo[type].size - usedTotal
 		);
-		if (sectionTypeInfo[type].firstBank != sectionTypeInfo[type].lastBank || nbBanks > 1)
+		if (sectionTypeInfo[type].firstBank != sectionTypeInfo[type].lastBank || nbBanks > 1) {
 			fprintf(mapFile, " in %u bank%s", nbBanks, nbBanks == 1 ? "" : "s");
+		}
 		putc('\n', mapFile);
 	}
 }
 
 // Writes the sym file, if applicable.
 static void writeSym() {
-	if (!symFileName)
+	if (!symFileName) {
 		return;
+	}
 
 	if (strcmp(symFileName, "-")) {
 		symFile = fopen(symFileName, "w");
@@ -562,8 +573,9 @@ static void writeSym() {
 		(void)setmode(STDOUT_FILENO, O_TEXT); // May have been set to O_BINARY previously
 		symFile = stdout;
 	}
-	if (!symFile)
+	if (!symFile) {
 		err("Failed to open sym file \"%s\"", symFileName);
+	}
 	Defer closeSymFile{[&] { fclose(symFile); }};
 
 	fputs("; File generated by rgblink\n", symFile);
@@ -571,8 +583,9 @@ static void writeSym() {
 	for (uint8_t i = 0; i < SECTTYPE_INVALID; i++) {
 		SectionType type = typeMap[i];
 
-		for (uint32_t bank = 0; bank < sections[type].size(); bank++)
+		for (uint32_t bank = 0; bank < sections[type].size(); bank++) {
 			writeSymBank(sections[type][bank], type, bank);
+		}
 	}
 
 	// Output the exported numeric constants
@@ -580,8 +593,9 @@ static void writeSym() {
 	constants.clear();
 	sym_ForEach([](Symbol &sym) {
 		// Symbols are already limited to the exported ones
-		if (sym.data.holds<int32_t>())
+		if (sym.data.holds<int32_t>()) {
 			constants.push_back(&sym);
+		}
 	});
 	// Numeric constants are ordered by value, then by name
 	std::sort(RANGE(constants), [](Symbol *sym1, Symbol *sym2) -> bool {
@@ -599,8 +613,9 @@ static void writeSym() {
 
 // Writes the map file, if applicable.
 static void writeMap() {
-	if (!mapFileName)
+	if (!mapFileName) {
 		return;
+	}
 
 	if (strcmp(mapFileName, "-")) {
 		mapFile = fopen(mapFileName, "w");
@@ -609,8 +624,9 @@ static void writeMap() {
 		(void)setmode(STDOUT_FILENO, O_TEXT); // May have been set to O_BINARY previously
 		mapFile = stdout;
 	}
-	if (!mapFile)
+	if (!mapFile) {
 		err("Failed to open map file \"%s\"", mapFileName);
+	}
 	Defer closeMapFile{[&] { fclose(mapFile); }};
 
 	writeMapSummary();
@@ -618,8 +634,9 @@ static void writeMap() {
 	for (uint8_t i = 0; i < SECTTYPE_INVALID; i++) {
 		SectionType type = typeMap[i];
 
-		for (uint32_t bank = 0; bank < sections[type].size(); bank++)
+		for (uint32_t bank = 0; bank < sections[type].size(); bank++) {
 			writeMapBank(sections[type][bank], type, bank);
+		}
 	}
 }
 

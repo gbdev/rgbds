@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: MIT */
+// SPDX-License-Identifier: MIT
 
 #ifndef RGBDS_EITHER_HPP
 #define RGBDS_EITHER_HPP
@@ -103,7 +103,7 @@ public:
 		} else if (other._tag == other._t2.tag_value) {
 			*this = other._t2.value;
 		} else {
-			_tag = nulltag;
+			_tag = nulltag; // LCOV_EXCL_LINE
 		}
 		return *this;
 	}

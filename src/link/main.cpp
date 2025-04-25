@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: MIT */
+// SPDX-License-Identifier: MIT
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -52,8 +52,9 @@ std::string const &FileStackNode::dump(uint32_t curLineNo) const {
 		std::string const &lastName = parent->dump(lineNo);
 		fputs(" -> ", stderr);
 		fputs(lastName.c_str(), stderr);
-		for (uint32_t iter : iters())
+		for (uint32_t iter : iters()) {
 			fprintf(stderr, "::REPT~%" PRIu32, iter);
+		}
 		fprintf(stderr, "(%" PRIu32 ")", curLineNo);
 		return lastName;
 	} else {
@@ -96,8 +97,9 @@ void error(FileStackNode const *where, uint32_t lineNo, char const *fmt, ...) {
 	printDiag(fmt, args, "error", where, lineNo);
 	va_end(args);
 
-	if (nbErrors != UINT32_MAX)
+	if (nbErrors != UINT32_MAX) {
 		nbErrors++;
+	}
 }
 
 void argErr(char flag, char const *fmt, ...) {
@@ -109,19 +111,22 @@ void argErr(char flag, char const *fmt, ...) {
 	va_end(args);
 	putc('\n', stderr);
 
-	if (nbErrors != UINT32_MAX)
+	if (nbErrors != UINT32_MAX) {
 		nbErrors++;
+	}
 }
 
-[[noreturn]] void fatal(FileStackNode const *where, uint32_t lineNo, char const *fmt, ...) {
+[[noreturn]]
+void fatal(FileStackNode const *where, uint32_t lineNo, char const *fmt, ...) {
 	va_list args;
 
 	va_start(args, fmt);
 	printDiag(fmt, args, "FATAL", where, lineNo);
 	va_end(args);
 
-	if (nbErrors != UINT32_MAX)
+	if (nbErrors != UINT32_MAX) {
 		nbErrors++;
+	}
 
 	fprintf(
 	    stderr, "Linking aborted after %" PRIu32 " error%s\n", nbErrors, nbErrors == 1 ? "" : "s"
@@ -130,20 +135,18 @@ void argErr(char flag, char const *fmt, ...) {
 }
 
 // Short options
-static char const *optstring = "dl:m:Mn:O:o:p:S:tVvWwx";
+static char const *optstring = "dhl:m:Mn:O:o:p:S:tVvWwx";
 
-/*
- * Equivalent long options
- * Please keep in the same order as short opts
- *
- * Also, make sure long opts don't create ambiguity:
- * A long opt's name should start with the same letter as its short opt,
- * except if it doesn't create any ambiguity (`verbose` versus `version`).
- * This is because long opt matching, even to a single char, is prioritized
- * over short opt matching
- */
+// Equivalent long options
+// Please keep in the same order as short opts.
+// Also, make sure long opts don't create ambiguity:
+// A long opt's name should start with the same letter as its short opt,
+// except if it doesn't create any ambiguity (`verbose` versus `version`).
+// This is because long opt matching, even to a single char, is prioritized
+// over short opt matching.
 static option const longopts[] = {
     {"dmg",           no_argument,       nullptr, 'd'},
+    {"help",          no_argument,       nullptr, 'h'},
     {"linkerscript",  required_argument, nullptr, 'l'},
     {"map",           required_argument, nullptr, 'm'},
     {"no-sym-in-map", no_argument,       nullptr, 'M'},
@@ -160,9 +163,10 @@ static option const longopts[] = {
     {nullptr,         no_argument,       nullptr, 0  }
 };
 
+// LCOV_EXCL_START
 static void printUsage() {
 	fputs(
-	    "Usage: rgblink [-dMtVvwx] [-l script] [-m map_file] [-n sym_file]\n"
+	    "Usage: rgblink [-dhMtVvwx] [-l script] [-m map_file] [-n sym_file]\n"
 	    "               [-O overlay_file] [-o out_file] [-p pad_value]\n"
 	    "               [-S spec] <file> ...\n"
 	    "Useful options:\n"
@@ -178,6 +182,7 @@ static void printUsage() {
 	    stderr
 	);
 }
+// LCOV_EXCL_STOP
 
 enum ScrambledRegion {
 	SCRAMBLE_ROMX,
@@ -217,19 +222,19 @@ static void parseScrambleSpec(char const *spec) {
 		if (regionNameLen == 0) {
 			argErr('S', "Missing region name");
 
-			if (*spec == '\0')
+			if (*spec == '\0') {
 				break;
-			if (*spec == '=')                 // Skip the limit, too
+			}
+			if (*spec == '=') {               // Skip the limit, too
 				spec = strchr(&spec[1], ','); // Skip to next comma, if any
+			}
 			goto next;
 		}
 
 		// Find the next non-blank char after the region name's end
 		spec += regionNameLen + strspn(&spec[regionNameLen], " \t");
 		if (*spec != '\0' && *spec != ',' && *spec != '=') {
-			argErr(
-			    'S', "Unexpected '%c' after region name \"%.*s\"", regionNameFmtLen, regionName
-			);
+			argErr('S', "Unexpected '%c' after region name \"%.*s\"", regionNameFmtLen, regionName);
 			// Skip to next ',' or '=' (or NUL) and keep parsing
 			spec += 1 + strcspn(&spec[1], ",=");
 		}
@@ -245,8 +250,9 @@ static void parseScrambleSpec(char const *spec) {
 			}
 		}
 
-		if (region == SCRAMBLE_UNK)
+		if (region == SCRAMBLE_UNK) {
 			argErr('S', "Unknown region \"%.*s\"", regionNameFmtLen, regionName);
+		}
 
 		if (*spec == '=') {
 			spec++; // `strtoul` will skip the whitespace on its own
@@ -304,15 +310,18 @@ static void parseScrambleSpec(char const *spec) {
 next: // Can't `continue` a `for` loop with this nontrivial iteration logic
 		if (spec) {
 			assume(*spec == ',' || *spec == '\0');
-			if (*spec == ',')
+			if (*spec == ',') {
 				spec += 1 + strspn(&spec[1], " \t");
-			if (*spec == '\0')
+			}
+			if (*spec == '\0') {
 				break;
+			}
 		}
 	}
 }
 
-[[noreturn]] void reportErrors() {
+[[noreturn]]
+void reportErrors() {
 	fprintf(
 	    stderr, "Linking failed with %" PRIu32 " error%s\n", nbErrors, nbErrors == 1 ? "" : "s"
 	);
@@ -327,32 +336,42 @@ int main(int argc, char *argv[]) {
 			isDmgMode = true;
 			isWRAM0Mode = true;
 			break;
+		case 'h':
+			// LCOV_EXCL_START
+			printUsage();
+			exit(0);
+			// LCOV_EXCL_STOP
 		case 'l':
-			if (linkerScriptName)
+			if (linkerScriptName) {
 				warnx("Overriding linker script %s", linkerScriptName);
+			}
 			linkerScriptName = musl_optarg;
 			break;
 		case 'M':
 			noSymInMap = true;
 			break;
 		case 'm':
-			if (mapFileName)
+			if (mapFileName) {
 				warnx("Overriding map file %s", mapFileName);
+			}
 			mapFileName = musl_optarg;
 			break;
 		case 'n':
-			if (symFileName)
+			if (symFileName) {
 				warnx("Overriding sym file %s", symFileName);
+			}
 			symFileName = musl_optarg;
 			break;
 		case 'O':
-			if (overlayFileName)
+			if (overlayFileName) {
 				warnx("Overriding overlay file %s", overlayFileName);
+			}
 			overlayFileName = musl_optarg;
 			break;
 		case 'o':
-			if (outputFileName)
+			if (outputFileName) {
 				warnx("Overriding output file %s", outputFileName);
+			}
 			outputFileName = musl_optarg;
 			break;
 		case 'p': {
@@ -378,11 +397,15 @@ int main(int argc, char *argv[]) {
 			is32kMode = true;
 			break;
 		case 'V':
+			// LCOV_EXCL_START
 			printf("rgblink %s\n", get_package_version_string());
 			exit(0);
+			// LCOV_EXCL_STOP
 		case 'v':
+			// LCOV_EXCL_START
 			beVerbose = true;
 			break;
+			// LCOV_EXCL_STOP
 		case 'w':
 			isWRAM0Mode = true;
 			break;
@@ -392,8 +415,10 @@ int main(int argc, char *argv[]) {
 			is32kMode = true;
 			break;
 		default:
+			// LCOV_EXCL_START
 			printUsage();
 			exit(1);
+			// LCOV_EXCL_STOP
 		}
 	}
 
@@ -409,18 +434,22 @@ int main(int argc, char *argv[]) {
 	}
 
 	// Patch the size array depending on command-line options
-	if (!is32kMode)
+	if (!is32kMode) {
 		sectionTypeInfo[SECTTYPE_ROM0].size = 0x4000;
-	if (!isWRAM0Mode)
+	}
+	if (!isWRAM0Mode) {
 		sectionTypeInfo[SECTTYPE_WRAM0].size = 0x1000;
+	}
 
 	// Patch the bank ranges array depending on command-line options
-	if (isDmgMode)
+	if (isDmgMode) {
 		sectionTypeInfo[SECTTYPE_VRAM].lastBank = 0;
+	}
 
 	// Read all object files first,
-	for (obj_Setup(argc - curArgIndex); curArgIndex < argc; curArgIndex++)
+	for (obj_Setup(argc - curArgIndex); curArgIndex < argc; curArgIndex++) {
 		obj_ReadFile(argv[curArgIndex], argc - curArgIndex - 1);
+	}
 
 	// apply the linker script's modifications,
 	if (linkerScriptName) {
@@ -429,20 +458,23 @@ int main(int argc, char *argv[]) {
 		script_ProcessScript(linkerScriptName);
 
 		// If the linker script produced any errors, some sections may be in an invalid state
-		if (nbErrors != 0)
+		if (nbErrors != 0) {
 			reportErrors();
+		}
 	}
 
 	// then process them,
 	sect_DoSanityChecks();
-	if (nbErrors != 0)
+	if (nbErrors != 0) {
 		reportErrors();
+	}
 	assign_AssignSections();
 	patch_CheckAssertions();
 
 	// and finally output the result.
 	patch_ApplyPatches();
-	if (nbErrors != 0)
+	if (nbErrors != 0) {
 		reportErrors();
+	}
 	out_WriteFiles();
 }

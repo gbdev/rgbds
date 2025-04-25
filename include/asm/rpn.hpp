@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: MIT */
+// SPDX-License-Identifier: MIT
 
 #ifndef RGBDS_ASM_RPN_HPP
 #define RGBDS_ASM_RPN_HPP
@@ -22,21 +22,8 @@ struct Expression {
 	std::vector<uint8_t> rpn{}; // Bytes serializing the RPN expression
 	uint32_t rpnPatchSize = 0;  // Size the expression will take in the object file
 
-	Expression() = default;
-	Expression(Expression &&) = default;
-#ifdef _MSC_VER
-	// MSVC and WinFlexBison won't build without this...
-	Expression(Expression const &) = default;
-#endif
-
-	Expression &operator=(Expression &&) = default;
-
-	bool isKnown() const {
-		return data.holds<int32_t>();
-	}
-	int32_t value() const {
-		return data.get<int32_t>();
-	}
+	bool isKnown() const { return data.holds<int32_t>(); }
+	int32_t value() const { return data.get<int32_t>(); }
 
 	int32_t getConstVal() const;
 	Symbol const *symbolOf() const;
@@ -55,6 +42,7 @@ struct Expression {
 
 	bool makeCheckHRAM();
 	void makeCheckRST();
+	void makeCheckBitIndex(uint8_t mask);
 
 	void checkNBit(uint8_t n) const;
 

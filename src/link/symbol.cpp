@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: MIT */
+// SPDX-License-Identifier: MIT
 
 #include "link/symbol.hpp"
 
@@ -16,14 +16,16 @@ std::unordered_map<std::string, Symbol *> symbols;
 std::unordered_map<std::string, std::vector<Symbol *>> localSymbols;
 
 void sym_ForEach(void (*callback)(Symbol &)) {
-	for (auto &it : symbols)
+	for (auto &it : symbols) {
 		callback(*it.second);
+	}
 }
 
 void sym_AddSymbol(Symbol &symbol) {
 	if (symbol.type != SYMTYPE_EXPORT) {
-		if (symbol.type != SYMTYPE_IMPORT)
+		if (symbol.type != SYMTYPE_IMPORT) {
 			localSymbols[symbol.name].push_back(&symbol);
+		}
 		return;
 	}
 
@@ -35,17 +37,19 @@ void sym_AddSymbol(Symbol &symbol) {
 	// Check if the symbol already exists with a different value
 	if (other && !(symValue && otherValue && *symValue == *otherValue)) {
 		fprintf(stderr, "error: \"%s\" is defined as ", symbol.name.c_str());
-		if (symValue)
+		if (symValue) {
 			fprintf(stderr, "%" PRId32, *symValue);
-		else
+		} else {
 			fputs("a label", stderr);
+		}
 		fputs(" at ", stderr);
 		symbol.src->dump(symbol.lineNo);
 		fputs(", but as ", stderr);
-		if (otherValue)
+		if (otherValue) {
 			fprintf(stderr, "%" PRId32, *otherValue);
-		else
+		} else {
 			fputs("another label", stderr);
+		}
 		fputs(" at ", stderr);
 		other->src->dump(other->lineNo);
 		putc('\n', stderr);

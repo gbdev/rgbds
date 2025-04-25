@@ -15,3 +15,6 @@ SECTION "Unaligned", ROM0
 
 	println @ & 0
 	println @ & 1 ; Nope
+
+Floating:
+	println Floating & Aligned ; Neither defined

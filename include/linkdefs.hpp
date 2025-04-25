@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: MIT */
+// SPDX-License-Identifier: MIT
 
 #ifndef RGBDS_LINKDEFS_HPP
 #define RGBDS_LINKDEFS_HPP
@@ -9,7 +9,7 @@
 #include "helpers.hpp" // assume
 
 #define RGBDS_OBJECT_VERSION_STRING "RGB9"
-#define RGBDS_OBJECT_REV            11U
+#define RGBDS_OBJECT_REV            12U
 
 enum AssertionType { ASSERT_WARN, ASSERT_ERROR, ASSERT_FATAL };
 
@@ -52,6 +52,7 @@ enum RPNCommand {
 
 	RPN_HRAM = 0x60,
 	RPN_RST = 0x61,
+	RPN_BIT_INDEX = 0x62,
 
 	RPN_HIGH = 0x70,
 	RPN_LOW = 0x71,
@@ -92,29 +93,19 @@ extern struct SectionTypeInfo {
 	uint32_t lastBank;
 } sectionTypeInfo[SECTTYPE_INVALID];
 
-/*
- * Tells whether a section has data in its object file definition,
- * depending on type.
- * @param type The section's type
- * @return `true` if the section's definition includes data
- */
+// Tells whether a section has data in its object file definition,
+// depending on type.
 static inline bool sect_HasData(SectionType type) {
 	assume(type != SECTTYPE_INVALID);
 	return type == SECTTYPE_ROM0 || type == SECTTYPE_ROMX;
 }
 
-/*
- * Computes a memory region's end address (last byte), eg. 0x7FFF
- * @return The address of the last byte in that memory region
- */
+// Returns a memory region's end address (last byte), e.g. 0x7FFF
 static inline uint16_t endaddr(SectionType type) {
 	return sectionTypeInfo[type].startAddr + sectionTypeInfo[type].size - 1;
 }
 
-/*
- * Computes a memory region's number of banks
- * @return The number of banks, 1 for regions without banking
- */
+// Returns a memory region's number of banks, or 1 for regions without banking
 static inline uint32_t nbbanks(SectionType type) {
 	return sectionTypeInfo[type].lastBank - sectionTypeInfo[type].firstBank + 1;
 }

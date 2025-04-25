@@ -45,11 +45,8 @@ else()
     add_compile_options(-Wno-gnu-zero-variadic-macro-arguments)
   endif()
   if(SANITIZERS)
-    set(SAN_FLAGS -fsanitize=shift -fsanitize=integer-divide-by-zero
-                  -fsanitize=unreachable -fsanitize=vla-bound
-                  -fsanitize=signed-integer-overflow -fsanitize=bounds
-                  -fsanitize=object-size -fsanitize=bool -fsanitize=enum
-                  -fsanitize=alignment -fsanitize=null -fsanitize=address)
+    set(SAN_FLAGS -fsanitize=address -fsanitize=undefined
+                  -fsanitize=float-divide-by-zero)
     add_compile_options(${SAN_FLAGS})
     add_link_options(${SAN_FLAGS})
     add_definitions(-D_GLIBCXX_ASSERTIONS)
@@ -62,8 +59,7 @@ else()
     add_compile_options(-Werror -Wextra
                         -Walloc-zero -Wcast-align -Wcast-qual -Wduplicated-branches -Wduplicated-cond
                         -Wfloat-equal -Wlogical-op -Wnull-dereference -Wold-style-cast -Wshift-overflow=2
-                        -Wstringop-overflow=4 -Wundef -Wuninitialized -Wunused
-                        -Wshadow # TODO: -Wshadow=compatible-local?
+                        -Wstringop-overflow=4 -Wtrampolines -Wundef -Wuninitialized -Wunused -Wshadow
                         -Wformat=2 -Wformat-overflow=2 -Wformat-truncation=1
                         -Wno-format-nonliteral -Wno-strict-overflow
                         -Wno-unused-but-set-variable # bison's `yynerrs_` is incremented but unused
@@ -78,7 +74,7 @@ endif()
 
 find_program(GIT git)
 if(GIT)
-  execute_process(COMMAND ${GIT} --git-dir=.git describe --tags --dirty --always
+  execute_process(COMMAND ${GIT} --git-dir=.git -c safe.directory='*' describe --tags --dirty --always
                   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
                   OUTPUT_VARIABLE GIT_REV OUTPUT_STRIP_TRAILING_WHITESPACE
                   ERROR_QUIET)

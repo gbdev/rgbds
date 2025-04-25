@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: MIT */
+// SPDX-License-Identifier: MIT
 
 #ifndef RGBDS_ASM_LEXER_HPP
 #define RGBDS_ASM_LEXER_HPP
@@ -15,7 +15,7 @@
 
 // This value is a compromise between `LexerState` allocation performance when `mmap` works, and
 // buffering performance when it doesn't/can't (e.g. when piping a file into RGBASM).
-#define LEXER_BUF_SIZE 64
+static constexpr size_t LEXER_BUF_SIZE = 64;
 // The buffer needs to be large enough for the maximum `lexerState->peek()` lookahead distance
 static_assert(LEXER_BUF_SIZE > 1, "Lexer buffer size is too small");
 // This caps the size of buffer reads, and according to POSIX, passing more than SSIZE_MAX is UB
@@ -83,7 +83,6 @@ struct LexerState {
 	LexerMode mode;
 	bool atLineStart;
 	uint32_t lineNo;
-	uint32_t colNo;
 	int lastToken;
 
 	std::deque<IfStackEntry> ifStack;
@@ -147,7 +146,6 @@ void lexer_ReachELSEBlock();
 
 void lexer_CheckRecursionDepth();
 uint32_t lexer_GetLineNo();
-uint32_t lexer_GetColNo();
 void lexer_DumpStringExpansions();
 
 struct Capture {

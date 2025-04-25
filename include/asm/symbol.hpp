@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: MIT */
+// SPDX-License-Identifier: MIT
 
 #ifndef RGBDS_ASM_SYMBOL_HPP
 #define RGBDS_ASM_SYMBOL_HPP
@@ -82,7 +82,6 @@ Symbol *sym_RedefEqu(std::string const &symName, int32_t value);
 Symbol *sym_AddVar(std::string const &symName, int32_t value);
 int32_t sym_GetRSValue();
 void sym_SetRSValue(int32_t value);
-uint32_t sym_GetConstantValue(std::string const &symName);
 // Find a symbol by exact name, bypassing expansion checks
 Symbol *sym_FindExactSymbol(std::string const &symName);
 // Find a symbol, possibly scoped, by name

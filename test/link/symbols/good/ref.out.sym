@@ -5,8 +5,8 @@
 00:0006 End
 00:c000 wStart
 00:c000 wStart
-00:c000 wStart.long1
 00:c000 wStart.word1
+00:c000 wStart.long1
 00:c002 wStart.word2
 00:c004 wEnd
 00:c004 wEnd

@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: MIT */
+// SPDX-License-Identifier: MIT
 
 #include "asm/warning.hpp"
 
@@ -35,13 +35,13 @@ struct WarningFlag {
 	WarningLevel level;
 };
 
-static const WarningFlag metaWarnings[] = {
+static WarningFlag const metaWarnings[] = {
     {"all",        LEVEL_ALL       },
     {"extra",      LEVEL_EXTRA     },
     {"everything", LEVEL_EVERYTHING},
 };
 
-static const WarningFlag warningFlags[NB_WARNINGS] = {
+static WarningFlag const warningFlags[NB_WARNINGS] = {
     {"assert",               LEVEL_DEFAULT   },
     {"backwards-for",        LEVEL_ALL       },
     {"builtin-args",         LEVEL_ALL       },
@@ -85,8 +85,9 @@ enum WarningBehavior { DISABLED, ENABLED, ERROR };
 
 static WarningBehavior getWarningBehavior(WarningID id) {
 	// Check if warnings are globally disabled
-	if (!warnings)
+	if (!warnings) {
 		return WarningBehavior::DISABLED;
+	}
 
 	// Get the state of this warning flag
 	WarningState const &flagState = warningStates.flagStates[id];
@@ -100,34 +101,43 @@ static WarningBehavior getWarningBehavior(WarningID id) {
 	    warningIsError ? WarningBehavior::ERROR : WarningBehavior::ENABLED;
 
 	// First, check the state of the specific warning flag
-	if (flagState.state == WARNING_DISABLED) // -Wno-<flag>
+	if (flagState.state == WARNING_DISABLED) { // -Wno-<flag>
 		return WarningBehavior::DISABLED;
-	if (flagState.error == WARNING_ENABLED) // -Werror=<flag>
+	}
+	if (flagState.error == WARNING_ENABLED) { // -Werror=<flag>
 		return WarningBehavior::ERROR;
-	if (flagState.state == WARNING_ENABLED) // -W<flag>
+	}
+	if (flagState.state == WARNING_ENABLED) { // -W<flag>
 		return enabledBehavior;
+	}
 
 	// If no flag is specified, check the state of the "meta" flags that affect this warning flag
-	if (metaState.state == WARNING_DISABLED) // -Wno-<meta>
+	if (metaState.state == WARNING_DISABLED) { // -Wno-<meta>
 		return WarningBehavior::DISABLED;
-	if (metaState.error == WARNING_ENABLED) // -Werror=<meta>
+	}
+	if (metaState.error == WARNING_ENABLED) { // -Werror=<meta>
 		return WarningBehavior::ERROR;
-	if (metaState.state == WARNING_ENABLED) // -W<meta>
+	}
+	if (metaState.state == WARNING_ENABLED) { // -W<meta>
 		return enabledBehavior;
+	}
 
 	// If no meta flag is specified, check the default state of this warning flag
-	if (warningFlags[id].level == LEVEL_DEFAULT) // enabled by default
+	if (warningFlags[id].level == LEVEL_DEFAULT) { // enabled by default
 		return enabledBehavior;
+	}
 
 	// No flag enables this warning, explicitly or implicitly
 	return WarningBehavior::DISABLED;
 }
 
 void WarningState::update(WarningState other) {
-	if (other.state != WARNING_DEFAULT)
+	if (other.state != WARNING_DEFAULT) {
 		state = other.state;
-	if (other.error != WARNING_DEFAULT)
+	}
+	if (other.error != WARNING_DEFAULT) {
 		error = other.error;
+	}
 }
 
 void processWarningFlag(char const *flag) {
@@ -149,16 +159,16 @@ void processWarningFlag(char const *flag) {
 	if (rootFlag.starts_with("error=")) {
 		// `-Werror=<flag>` enables the flag as an error
 		state = {.state = WARNING_ENABLED, .error = WARNING_ENABLED};
-		rootFlag.erase(0, QUOTEDSTRLEN("error="));
+		rootFlag.erase(0, literal_strlen("error="));
 	} else if (rootFlag.starts_with("no-error=")) {
 		// `-Wno-error=<flag>` prevents the flag from being an error,
 		// without affecting whether it is enabled
 		state = {.state = WARNING_DEFAULT, .error = WARNING_DISABLED};
-		rootFlag.erase(0, QUOTEDSTRLEN("no-error="));
+		rootFlag.erase(0, literal_strlen("no-error="));
 	} else if (rootFlag.starts_with("no-")) {
 		// `-Wno-<flag>` disables the flag
 		state = {.state = WARNING_DISABLED, .error = WARNING_DEFAULT};
-		rootFlag.erase(0, QUOTEDSTRLEN("no-"));
+		rootFlag.erase(0, literal_strlen("no-"));
 	} else {
 		// `-W<flag>` enables the flag
 		state = {.state = WARNING_ENABLED, .error = WARNING_DEFAULT};
@@ -184,12 +194,14 @@ void processWarningFlag(char const *flag) {
 			// The `if`'s condition above ensures that this will run at least once
 			do {
 				// If we don't have a digit, bail
-				if (*ptr < '0' || *ptr > '9')
+				if (*ptr < '0' || *ptr > '9') {
 					break;
+				}
 				// Avoid overflowing!
 				if (param > UINT8_MAX - (*ptr - '0')) {
-					if (!warned)
+					if (!warned) {
 						warnx("Invalid warning flag \"%s\": capping parameter at 255", flag);
+					}
 					warned = true; // Only warn once, cap always
 					param = 255;
 					continue;
@@ -203,8 +215,9 @@ void processWarningFlag(char const *flag) {
 			if (*ptr == '\0') {
 				rootFlag.resize(equals);
 				// `-W<flag>=0` is equivalent to `-Wno-<flag>`
-				if (param == 0)
+				if (param == 0) {
 					state.state = WARNING_DISABLED;
+				}
 			}
 		}
 	}
@@ -218,8 +231,9 @@ void processWarningFlag(char const *flag) {
 		assume(paramWarning.defaultLevel <= maxParam);
 
 		if (rootFlag == warningFlags[baseID].name) { // Match!
-			if (rootFlag == "numeric-string")
+			if (rootFlag == "numeric-string") {
 				warning(WARNING_OBSOLETE, "Warning flag \"numeric-string\" is deprecated\n");
+			}
 
 			// If making the warning an error but param is 0, set to the maximum
 			// This accommodates `-Werror=<flag>`, but also `-Werror=<flag>=0`, which is
@@ -229,7 +243,7 @@ void processWarningFlag(char const *flag) {
 			if (param == 0) {
 				param = paramWarning.defaultLevel;
 			} else if (param > maxParam) {
-				if (param != 255) // Don't warn if already capped
+				if (param != 255) { // Don't warn if already capped
 					warnx(
 					    "Invalid parameter %" PRIu8
 					    " for warning flag \"%s\"; capping at maximum %" PRIu8,
@@ -237,16 +251,18 @@ void processWarningFlag(char const *flag) {
 					    rootFlag.c_str(),
 					    maxParam
 					);
+				}
 				param = maxParam;
 			}
 
 			// Set the first <param> to enabled/error, and disable the rest
 			for (uint8_t ofs = 0; ofs < maxParam; ofs++) {
 				WarningState &warning = warningStates.flagStates[baseID + ofs];
-				if (ofs < param)
+				if (ofs < param) {
 					warning.update(state);
-				else
+				} else {
 					warning.state = WARNING_DISABLED;
+				}
 			}
 			return;
 		}
@@ -259,8 +275,9 @@ void processWarningFlag(char const *flag) {
 			if (rootFlag == metaWarning.name) {
 				// Set each of the warning flags that meets this level
 				for (WarningID id : EnumSeq(NB_WARNINGS)) {
-					if (metaWarning.level >= warningFlags[id].level)
+					if (metaWarning.level >= warningFlags[id].level) {
 						warningStates.metaStates[id].update(state);
+					}
 				}
 				return;
 			}
@@ -299,16 +316,18 @@ void error(char const *fmt, ...) {
 
 	// This intentionally makes 0 act as "unlimited" (or at least "limited to sizeof(unsigned)")
 	nbErrors++;
-	if (nbErrors == maxErrors)
+	if (nbErrors == maxErrors) {
 		errx(
 		    "The maximum of %u error%s was reached (configure with \"-X/--max-errors\"); assembly "
 		    "aborted!",
 		    maxErrors,
 		    maxErrors == 1 ? "" : "s"
 		);
+	}
 }
 
-[[noreturn]] void fatalerror(char const *fmt, ...) {
+[[noreturn]]
+void fatalerror(char const *fmt, ...) {
 	va_list args;
 
 	va_start(args, fmt);

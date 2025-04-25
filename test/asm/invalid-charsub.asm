@@ -1,1 +1,0 @@
-DEF S EQUS CHARSUB("ABC", 4)

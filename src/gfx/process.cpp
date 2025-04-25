@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: MIT */
+// SPDX-License-Identifier: MIT
 
 #include "gfx/process.hpp"
 
@@ -26,19 +26,17 @@
 #include "gfx/proto_palette.hpp"
 
 class ImagePalette {
-	// Use as many slots as there are CGB colors (plus transparency)
-	std::array<std::optional<Rgba>, 0x8001> _colors;
+	std::array<std::optional<Rgba>, NB_COLOR_SLOTS> _colors;
 
 public:
 	ImagePalette() = default;
 
-	/*
-	 * Registers a color in the palette.
-	 * If the newly inserted color "conflicts" with another one (different color, but same CGB
-	 * color), then the other color is returned. Otherwise, `nullptr` is returned.
-	 */
-	[[nodiscard]] Rgba const *registerColor(Rgba const &rgba) {
-		decltype(_colors)::value_type &slot = _colors[rgba.cgbColor()];
+	// Registers a color in the palette.
+	// If the newly inserted color "conflicts" with another one (different color, but same CGB
+	// color), then the other color is returned. Otherwise, `nullptr` is returned.
+	[[nodiscard]]
+	Rgba const *registerColor(Rgba const &rgba) {
+		std::optional<Rgba> &slot = _colors[rgba.cgbColor()];
 
 		if (rgba.cgbColor() == Rgba::transparent) {
 			options.hasTransparentPixels = true;
@@ -54,7 +52,7 @@ public:
 	}
 
 	size_t size() const {
-		return std::count_if(RANGE(_colors), [](decltype(_colors)::value_type const &slot) {
+		return std::count_if(RANGE(_colors), [](std::optional<Rgba> const &slot) {
 			return slot.has_value() && !slot->isTransparent();
 		});
 	}
@@ -80,7 +78,8 @@ class Png {
 	int nbTransparentEntries;
 	png_bytep transparencyPal = nullptr;
 
-	[[noreturn]] static void handleError(png_structp png, char const *msg) {
+	[[noreturn]]
+	static void handleError(png_structp png, char const *msg) {
 		Png *self = reinterpret_cast<Png *>(png_get_error_ptr(png));
 
 		fatal("Error reading input image (\"%s\"): %s", self->c_str(), msg);
@@ -166,15 +165,13 @@ public:
 		return true;
 	}
 
-	/*
-	 * Reads a PNG and notes all of its colors
-	 *
-	 * This code is more complicated than strictly necessary, but that's because of the API
-	 * being used: the "high-level" interface doesn't provide all the transformations we need,
-	 * so we use the "lower-level" one instead.
-	 * We also use that occasion to only read the PNG one line at a time, since we store all of
-	 * the pixel data in `pixels`, which saves on memory allocations.
-	 */
+	// Reads a PNG and notes all of its colors
+	//
+	// This code is more complicated than strictly necessary, but that's because of the API
+	// being used: the "high-level" interface doesn't provide all the transformations we need,
+	// so we use the "lower-level" one instead.
+	// We also use that occasion to only read the PNG one line at a time, since we store all of
+	// the pixel data in `pixels`, which saves on memory allocations.
 	explicit Png(std::string const &filePath) : path(filePath), colors() {
 		if (file.open(path, std::ios_base::in | std::ios_base::binary) == nullptr) {
 			fatal("Failed to open input image (\"%s\"): %s", file.c_str(path), strerror(errno));
@@ -196,13 +193,15 @@ public:
 		    PNG_LIBPNG_VER_STRING, static_cast<png_voidp>(this), handleError, handleWarning
 		);
 		if (!png) {
-			fatal("Failed to allocate PNG structure: %s", strerror(errno));
+			fatal("Failed to create PNG read structure: %s", strerror(errno)); // LCOV_EXCL_LINE
 		}
 
 		info = png_create_info_struct(png);
 		if (!info) {
+			// LCOV_EXCL_START
 			png_destroy_read_struct(&png, nullptr, nullptr);
-			fatal("Failed to allocate PNG info structure: %s", strerror(errno));
+			fatal("Failed to create PNG info structure: %s", strerror(errno));
+			// LCOV_EXCL_STOP
 		}
 
 		png_set_read_fn(png, this, readData);
@@ -469,7 +468,6 @@ public:
 			}
 
 			bool operator==(Iterator const &rhs) const { return coords() == rhs.coords(); }
-			bool operator!=(Iterator const &rhs) const { return coords() != rhs.coords(); }
 		};
 
 	public:
@@ -491,9 +489,7 @@ public:
 };
 
 class RawTiles {
-	/*
-	 * A tile which only contains indices into the image's global palette
-	 */
+	// A tile which only contains indices into the image's global palette
 	class RawTile {
 		std::array<std::array<size_t, 8>, 8> _pixelIndices{};
 
@@ -506,9 +502,7 @@ private:
 	std::vector<RawTile> _tiles;
 
 public:
-	/*
-	 * Creates a new raw tile, and returns a reference to it so it can be filled in
-	 */
+	// Creates a new raw tile, and returns a reference to it so it can be filled in
 	RawTile &newTile() {
 		_tiles.emplace_back();
 		return _tiles.back();
@@ -516,11 +510,9 @@ public:
 };
 
 struct AttrmapEntry {
-	/*
-	 * This field can either be a proto-palette ID, or `transparent` to indicate that the
-	 * corresponding tile is fully transparent. If you are looking to get the palette ID for this
-	 * attrmap entry while correctly handling the above, use `getPalID`.
-	 */
+	// This field can either be a proto-palette ID, or `transparent` to indicate that the
+	// corresponding tile is fully transparent. If you are looking to get the palette ID for this
+	// attrmap entry while correctly handling the above, use `getPalID`.
 	size_t protoPaletteID; // Only this field is used when outputting "unoptimized" data
 	uint8_t tileID;        // This is the ID as it will be output to the tilemap
 	bool bank;
@@ -567,6 +559,7 @@ static std::tuple<DefaultInitVec<size_t>, std::vector<Palette>>
 	auto [mappings, nbPalettes] = overloadAndRemove(protoPalettes);
 	assume(mappings.size() == protoPalettes.size());
 
+	// LCOV_EXCL_START
 	if (options.verbosity >= Options::VERB_INTERM) {
 		fprintf(
 		    stderr,
@@ -578,6 +571,7 @@ static std::tuple<DefaultInitVec<size_t>, std::vector<Palette>>
 			fprintf(stderr, "%zu -> %zu\n", i, mappings[i]);
 		}
 	}
+	// LCOV_EXCL_STOP
 
 	std::vector<Palette> palettes(nbPalettes);
 	// If the image contains at least one transparent pixel, force transparency in the first slot of
@@ -612,9 +606,9 @@ static std::tuple<DefaultInitVec<size_t>, std::vector<Palette>>
 	// Convert the palette spec to actual palettes
 	std::vector<Palette> palettes(options.palSpec.size());
 	for (auto [spec, pal] : zip(options.palSpec, palettes)) {
-		for (size_t i = 0; i < options.nbColorsPerPal && (!spec[i] || spec[i]->isOpaque()); ++i) {
+		for (size_t i = 0; i < options.nbColorsPerPal; ++i) {
 			// If the spec has a gap, there's no need to copy anything.
-			if (spec[i]) {
+			if (spec[i].has_value() && !spec[i]->isTransparent()) {
 				pal[i] = spec[i]->cgbColor();
 			}
 		}
@@ -626,7 +620,7 @@ static std::tuple<DefaultInitVec<size_t>, std::vector<Palette>>
 		for (uint16_t cgbColor : list) {
 			ptr += snprintf(ptr, sizeof(", $XXXX"), ", $%04x", cgbColor);
 		}
-		return &buf[QUOTEDSTRLEN(", ")];
+		return &buf[literal_strlen(", ")];
 	};
 
 	// Iterate through proto-palettes, and try mapping them to the specified palettes
@@ -665,6 +659,7 @@ static std::tuple<DefaultInitVec<size_t>, std::vector<Palette>>
 }
 
 static void outputPalettes(std::vector<Palette> const &palettes) {
+	// LCOV_EXCL_START
 	if (options.verbosity >= Options::VERB_INTERM) {
 		for (auto &&palette : palettes) {
 			fputs("{ ", stderr);
@@ -674,6 +669,7 @@ static void outputPalettes(std::vector<Palette> const &palettes) {
 			fputs("}\n", stderr);
 		}
 	}
+	// LCOV_EXCL_STOP
 
 	if (palettes.size() > options.nbPalettes) {
 		// If the palette generation is wrong, other (dependee) operations are likely to be
@@ -688,7 +684,9 @@ static void outputPalettes(std::vector<Palette> const &palettes) {
 	if (!options.palettes.empty()) {
 		File output;
 		if (!output.open(options.palettes, std::ios_base::out | std::ios_base::binary)) {
+			// LCOV_EXCL_START
 			fatal("Failed to create \"%s\": %s", output.c_str(options.palettes), strerror(errno));
+			// LCOV_EXCL_STOP
 		}
 
 		for (Palette const &palette : palettes) {
@@ -715,8 +713,9 @@ static void hashBitplanes(uint16_t bitplanes, uint16_t &hash) {
 
 class TileData {
 	// Importantly, `TileData` is **always** 2bpp.
-	// If the active bit depth is 1bpp, all tiles are processed as 2bpp nonetheless, but emitted as 1bpp.
-	// This massively simplifies internal processing, since bit depth is always identical outside of I/O / serialization boundaries.
+	// If the active bit depth is 1bpp, all tiles are processed as 2bpp nonetheless, but emitted as
+	// 1bpp. This massively simplifies internal processing, since bit depth is always identical
+	// outside of I/O / serialization boundaries.
 	std::array<uint8_t, 16> _data;
 	// The hash is a bit lax: it's the XOR of all lines, and every other nibble is identical
 	// if horizontal mirroring is in effect. It should still be a reasonable tie-breaker in
@@ -840,7 +839,9 @@ static void outputUnoptimizedTileData(
 ) {
 	File output;
 	if (!output.open(options.output, std::ios_base::out | std::ios_base::binary)) {
+		// LCOV_EXCL_START
 		fatal("Failed to create \"%s\": %s", output.c_str(options.output), strerror(errno));
+		// LCOV_EXCL_STOP
 	}
 
 	uint16_t widthTiles = options.inputSlice.width ? options.inputSlice.width : png.getWidth() / 8;
@@ -882,7 +883,9 @@ static void outputUnoptimizedMaps(
 		if (!path.empty()) {
 			file.emplace();
 			if (!file->open(path, std::ios_base::out | std::ios_base::binary)) {
+				// LCOV_EXCL_START
 				fatal("Failed to create \"%s\": %s", file->c_str(options.tilemap), strerror(errno));
+				// LCOV_EXCL_STOP
 			}
 		}
 	};
@@ -927,9 +930,7 @@ struct UniqueTiles {
 	UniqueTiles(UniqueTiles const &) = delete;
 	UniqueTiles(UniqueTiles &&) = default;
 
-	/*
-	 * Adds a tile to the collection, and returns its ID
-	 */
+	// Adds a tile to the collection, and returns its ID
 	std::tuple<uint16_t, TileData::MatchType> addTile(TileData newTile) {
 		auto [tileData, inserted] = tileset.insert(newTile);
 
@@ -951,12 +952,10 @@ struct UniqueTiles {
 	auto end() const { return tiles.end(); }
 };
 
-/*
- * Generate tile data while deduplicating unique tiles (via mirroring if enabled)
- * Additionally, while we have the info handy, convert from the 16-bit "global" tile IDs to
- * 8-bit tile IDs + the bank bit; this will save the work when we output the data later (potentially
- * twice)
- */
+// Generate tile data while deduplicating unique tiles (via mirroring if enabled)
+// Additionally, while we have the info handy, convert from the 16-bit "global" tile IDs to
+// 8-bit tile IDs + the bank bit; this will save the work when we output the data later (potentially
+// twice)
 static UniqueTiles dedupTiles(
     Png const &png,
     DefaultInitVec<AttrmapEntry> &attrmap,
@@ -1008,10 +1007,11 @@ static UniqueTiles dedupTiles(
 		}
 	}
 
+	bool inputWithoutOutput = !options.inputTileset.empty() && options.output.empty();
 	for (auto [tile, attr] : zip(png.visitAsTiles(), attrmap)) {
 		auto [tileID, matchType] = attr.isBackgroundTile() ? std::tuple{uint16_t(0), TileData::EXACT} : tiles.addTile({tile, palettes[mappings[attr.protoPaletteID]]});
 
-		if (matchType == TileData::NOPE && options.output.empty()) {
+		if (inputWithoutOutput && matchType == TileData::NOPE) {
 			error(
 			    "Tile at (%" PRIu32 ", %" PRIu32
 			    ") is not within the input tileset, and `-o` was not given!",
@@ -1034,7 +1034,9 @@ static UniqueTiles dedupTiles(
 static void outputTileData(UniqueTiles const &tiles) {
 	File output;
 	if (!output.open(options.output, std::ios_base::out | std::ios_base::binary)) {
+		// LCOV_EXCL_START
 		fatal("Failed to create \"%s\": %s", output.c_str(options.output), strerror(errno));
+		// LCOV_EXCL_STOP
 	}
 
 	uint16_t tileID = 0;
@@ -1056,7 +1058,9 @@ static void outputTileData(UniqueTiles const &tiles) {
 static void outputTilemap(DefaultInitVec<AttrmapEntry> const &attrmap) {
 	File output;
 	if (!output.open(options.tilemap, std::ios_base::out | std::ios_base::binary)) {
+		// LCOV_EXCL_START
 		fatal("Failed to create \"%s\": %s", output.c_str(options.tilemap), strerror(errno));
+		// LCOV_EXCL_STOP
 	}
 
 	for (AttrmapEntry const &entry : attrmap) {
@@ -1069,7 +1073,9 @@ static void outputAttrmap(
 ) {
 	File output;
 	if (!output.open(options.attrmap, std::ios_base::out | std::ios_base::binary)) {
+		// LCOV_EXCL_START
 		fatal("Failed to create \"%s\": %s", output.c_str(options.attrmap), strerror(errno));
+		// LCOV_EXCL_STOP
 	}
 
 	for (AttrmapEntry const &entry : attrmap) {
@@ -1085,7 +1091,9 @@ static void outputPalmap(
 ) {
 	File output;
 	if (!output.open(options.palmap, std::ios_base::out | std::ios_base::binary)) {
+		// LCOV_EXCL_START
 		fatal("Failed to create \"%s\": %s", output.c_str(options.palmap), strerror(errno));
+		// LCOV_EXCL_STOP
 	}
 
 	for (AttrmapEntry const &entry : attrmap) {
@@ -1113,6 +1121,7 @@ void process() {
 	// Now, we have all the image's colors in `colors`
 	// The next step is to order the palette
 
+	// LCOV_EXCL_START
 	if (options.verbosity >= Options::VERB_INTERM) {
 		fputs("Image colors: [ ", stderr);
 		for (auto const &slot : colors) {
@@ -1123,6 +1132,7 @@ void process() {
 		}
 		fputs("]\n", stderr);
 	}
+	// LCOV_EXCL_STOP
 
 	// Now, iterate through the tiles, generating proto-palettes as we go
 	// We do this unconditionally because this performs the image validation (which we want to
@@ -1198,18 +1208,17 @@ void process() {
 				protoPalettes[n] = protoPalette; // Override them
 				// Remove any other proto-palettes that we encompass
 				// (Example [(0, 1), (0, 2)], inserting (0, 1, 2))
-				/*
-				 * The following code does its job, except that references to the removed
-				 * proto-palettes are not updated, causing issues.
-				 * TODO: overlap might not be detrimental to the packing algorithm.
-				 * Investigation is necessary, especially if pathological cases are found.
-				 *
-				 * for (size_t i = protoPalettes.size(); --i != n;) {
-				 *     if (protoPalette.compare(protoPalettes[i]) == ProtoPalette::WE_BIGGER) {
-				 *         protoPalettes.erase(protoPalettes.begin() + i);
-				 *     }
-				 * }
-				 */
+				//
+				// The following code does its job, except that references to the removed
+				// proto-palettes are not updated, causing issues.
+				// TODO: overlap might not be detrimental to the packing algorithm.
+				// Investigation is necessary, especially if pathological cases are found.
+				//
+				// for (size_t i = protoPalettes.size(); --i != n;) {
+				//     if (protoPalette.compare(protoPalettes[i]) == ProtoPalette::WE_BIGGER) {
+				//         protoPalettes.erase(protoPalettes.begin() + i);
+				//     }
+				// }
 				[[fallthrough]];
 
 			case ProtoPalette::THEY_BIGGER:
@@ -1239,6 +1248,7 @@ continue_visiting_tiles:;
 	    protoPalettes.size(),
 	    protoPalettes.size() != 1 ? "s" : ""
 	);
+	// LCOV_EXCL_START
 	if (options.verbosity >= Options::VERB_INTERM) {
 		for (auto const &protoPal : protoPalettes) {
 			fputs("[ ", stderr);
@@ -1248,6 +1258,7 @@ continue_visiting_tiles:;
 			fputs("]\n", stderr);
 		}
 	}
+	// LCOV_EXCL_STOP
 
 	if (options.palSpecType == Options::EMBEDDED) {
 		generatePalSpec(png);

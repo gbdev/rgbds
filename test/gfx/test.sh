@@ -83,7 +83,7 @@ for f in *.png; do
 	newTest "$RGBGFX" $flags "$f"
 	if [[ -e "${f%.png}.err" ]]; then
 		runTest 2>"$errtmp"
-		diff -u --strip-trailing-cr "${f%.png}.err" "$errtmp" || failTest
+		diff -au --strip-trailing-cr "${f%.png}.err" "$errtmp" || failTest
 	else
 		runTest && checkOutput "${f%.png}" || failTest $?
 	fi
@@ -91,7 +91,7 @@ for f in *.png; do
 	newTest "$RGBGFX" $flags - "<$f"
 	if [[ -e "${f%.png}.err" ]]; then
 		runTest 2>"$errtmp"
-		diff -u --strip-trailing-cr <(sed "s/$f/<stdin>/g" "${f%.png}.err") "$errtmp" || failTest
+		diff -au --strip-trailing-cr <(sed "s/$f/<stdin>/g" "${f%.png}.err") "$errtmp" || failTest
 	else
 		runTest && checkOutput "${f%.png}" || failTest $?
 	fi
@@ -108,6 +108,10 @@ for f in *.[12]bpp; do
 	newTest "$RGBGFX $flags -o $f -r 1 result.png && $RGBGFX $flags -o result.2bpp result.png"
 	runTest && tryCmp "$f" result.2bpp || failTest $?
 done
+
+# Test writing to stdout
+newTest "$RGBGFX -m -o - write_stdout.bin > result.2bpp"
+runTest && tryCmp write_stdout.out.2bpp result.2bpp || failTest $?
 
 if [[ "$failed" -eq 0 ]]; then
 	echo "${bold}${green}All ${tests} tests passed!${rescolors}${resbold}"

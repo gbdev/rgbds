@@ -25,6 +25,7 @@ _rgbasm_completions() {
 	# See the `state` variable below for info about `state_after`
 	declare -A opts=(
 		[V]="version:normal"
+		[h]="help:normal"
 		[E]="export-all:normal"
 		[v]="verbose:normal"
 		[w]=":normal"

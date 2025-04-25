@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: MIT */
+// SPDX-License-Identifier: MIT
 
 #include "link/section.hpp"
 
@@ -14,8 +14,9 @@ std::vector<std::unique_ptr<Section>> sectionList;
 std::unordered_map<std::string, size_t> sectionMap; // Indexes into `sectionList`
 
 void sect_ForEach(void (*callback)(Section &)) {
-	for (auto it = sectionList.rbegin(); it != sectionList.rend(); it++)
-		callback(*it->get());
+	for (auto &ptr : sectionList) {
+		callback(*ptr);
+	}
 }
 
 static void checkAgainstFixedAddress(Section const &target, Section const &other, uint16_t org) {
@@ -117,8 +118,9 @@ static void checkFragmentCompat(Section &target, Section &other) {
 		target.org = org;
 	} else if (other.isAlignFixed) {
 		int32_t ofs = (other.alignOfs - target.size) % (other.alignMask + 1);
-		if (ofs < 0)
+		if (ofs < 0) {
 			ofs += other.alignMask + 1;
+		}
 		if (checkAgainstFixedAlign(target, other, ofs)) {
 			target.isAlignFixed = true;
 			target.alignMask = other.alignMask;
@@ -127,10 +129,27 @@ static void checkFragmentCompat(Section &target, Section &other) {
 	}
 }
 
-static void mergeSections(Section &target, std::unique_ptr<Section> &&other, SectionModifier mod) {
-	// Common checks
-
-	if (target.type != other->type) {
+static void mergeSections(Section &target, std::unique_ptr<Section> &&other) {
+	if (target.modifier != other->modifier) {
+		fprintf(
+		    stderr,
+		    "error: Section \"%s\" is defined as SECTION %s at ",
+		    target.name.c_str(),
+		    sectionModNames[target.modifier]
+		);
+		target.src->dump(target.lineNo);
+		fprintf(stderr, ", but as SECTION %s at ", sectionModNames[other->modifier]);
+		other->src->dump(other->lineNo);
+		putc('\n', stderr);
+		exit(1);
+	} else if (other->modifier == SECTION_NORMAL) {
+		fprintf(stderr, "error: Section \"%s\" is defined at ", target.name.c_str());
+		target.src->dump(target.lineNo);
+		fputs(", but also at ", stderr);
+		other->src->dump(other->lineNo);
+		putc('\n', stderr);
+		exit(1);
+	} else if (target.type != other->type) {
 		fprintf(
 		    stderr,
 		    "error: Section \"%s\" is defined with type %s at ",
@@ -163,64 +182,47 @@ static void mergeSections(Section &target, std::unique_ptr<Section> &&other, Sec
 		}
 	}
 
-	switch (mod) {
+	switch (other->modifier) {
 	case SECTION_UNION:
 		checkSectUnionCompat(target, *other);
-		if (other->size > target.size)
+		if (other->size > target.size) {
 			target.size = other->size;
+		}
 		break;
 
 	case SECTION_FRAGMENT:
 		checkFragmentCompat(target, *other);
 		// Append `other` to `target`
-		// Note that the order in which fragments are stored in the `nextu` list does not
-		// really matter, only that offsets are properly computed
 		other->offset = target.size;
 		target.size += other->size;
 		// Normally we'd check that `sect_HasData`, but SDCC areas may be `_INVALID` here
 		if (!other->data.empty()) {
 			target.data.insert(target.data.end(), RANGE(other->data));
 			// Adjust patches' PC offsets
-			for (Patch &patch : other->patches)
+			for (Patch &patch : other->patches) {
 				patch.pcOffset += other->offset;
+			}
 		} else if (!target.data.empty()) {
 			assume(other->size == 0);
 		}
 		break;
 
 	case SECTION_NORMAL:
+		// LCOV_EXCL_START
 		unreachable_();
 	}
+	// LCOV_EXCL_STOP
 
+	// Note that the order in which fragments are stored in the `nextu` list does not
+	// really matter, only that offsets were properly computed above
 	other->nextu = std::move(target.nextu);
 	target.nextu = std::move(other);
 }
 
 void sect_AddSection(std::unique_ptr<Section> &&section) {
 	// Check if the section already exists
-	if (Section *other = sect_GetSection(section->name); other) {
-		if (section->modifier != other->modifier) {
-			fprintf(
-			    stderr,
-			    "error: Section \"%s\" is defined as %s at ",
-			    section->name.c_str(),
-			    sectionModNames[section->modifier]
-			);
-			section->src->dump(section->lineNo);
-			fprintf(stderr, ", but as %s at ", sectionModNames[other->modifier]);
-			other->src->dump(other->lineNo);
-			putc('\n', stderr);
-			exit(1);
-		} else if (section->modifier == SECTION_NORMAL) {
-			fprintf(stderr, "error: Section \"%s\" is defined at ", section->name.c_str());
-			section->src->dump(section->lineNo);
-			fputs(", but also at ", stderr);
-			other->src->dump(other->lineNo);
-			putc('\n', stderr);
-			exit(1);
-		} else {
-			mergeSections(*other, std::move(section), section->modifier);
-		}
+	if (Section *target = sect_GetSection(section->name); target) {
+		mergeSections(*target, std::move(section));
 	} else if (section->modifier == SECTION_UNION && sect_HasData(section->type)) {
 		errx(
 		    "Section \"%s\" is of type %s, which cannot be unionized",
@@ -254,50 +256,60 @@ static void doSanityChecks(Section &section) {
 	}
 
 	if (is32kMode && section.type == SECTTYPE_ROMX) {
-		if (section.isBankFixed && section.bank != 1)
+		if (section.isBankFixed && section.bank != 1) {
 			error(
 			    nullptr,
 			    0,
-			    "%s: ROMX sections must be in bank 1 (if any) with option -t",
+			    "Section \"%s\" has type ROMX, which must be in bank 1 (if any) with option `-t`",
 			    section.name.c_str()
 			);
-		else
+		} else {
 			section.type = SECTTYPE_ROM0;
+		}
 	}
 	if (isWRAM0Mode && section.type == SECTTYPE_WRAMX) {
-		if (section.isBankFixed && section.bank != 1)
+		if (section.isBankFixed && section.bank != 1) {
 			error(
 			    nullptr,
 			    0,
-			    "%s: WRAMX sections must be in bank 1 with options -w or -d",
+			    "Section \"%s\" has type WRAMX, which must be in bank 1 with options `-w` or `-d`",
 			    section.name.c_str()
 			);
-		else
+		} else {
 			section.type = SECTTYPE_WRAM0;
+		}
 	}
-	if (isDmgMode && section.type == SECTTYPE_VRAM && section.bank == 1)
-		error(nullptr, 0, "%s: VRAM bank 1 can't be used with option -d", section.name.c_str());
-
-	// Check if alignment is reasonable, this is important to avoid UB
-	// An alignment of zero is equivalent to no alignment, basically
-	if (section.isAlignFixed && section.alignMask == 0)
-		section.isAlignFixed = false;
-
-	// Too large an alignment may not be satisfiable
-	if (section.isAlignFixed && (section.alignMask & sectionTypeInfo[section.type].startAddr))
+	if (isDmgMode && section.type == SECTTYPE_VRAM && section.bank == 1) {
 		error(
 		    nullptr,
 		    0,
-		    "%s: %s sections cannot be aligned to $%04x bytes",
+		    "Section \"%s\" has type VRAM, which must be in bank 0 with option `-d`",
+		    section.name.c_str()
+		);
+	}
+
+	// Check if alignment is reasonable, this is important to avoid UB
+	// An alignment of zero is equivalent to no alignment, basically
+	if (section.isAlignFixed && section.alignMask == 0) {
+		section.isAlignFixed = false;
+	}
+
+	// Too large an alignment may not be satisfiable
+	if (section.isAlignFixed && (section.alignMask & sectionTypeInfo[section.type].startAddr)) {
+		error(
+		    nullptr,
+		    0,
+		    "Section \"%s\" has type %s, which cannot be aligned to $%04x bytes",
 		    section.name.c_str(),
 		    sectionTypeInfo[section.type].name.c_str(),
 		    section.alignMask + 1
 		);
+	}
 
 	uint32_t minbank = sectionTypeInfo[section.type].firstBank,
 	         maxbank = sectionTypeInfo[section.type].lastBank;
 
-	if (section.isBankFixed && section.bank < minbank && section.bank > maxbank)
+	if (section.isBankFixed && section.bank < minbank && section.bank > maxbank) {
 		error(
 		    nullptr,
 		    0,
@@ -310,9 +322,10 @@ static void doSanityChecks(Section &section) {
 		    minbank,
 		    maxbank
 		);
+	}
 
 	// Check if section has a chance to be placed
-	if (section.size > sectionTypeInfo[section.type].size)
+	if (section.size > sectionTypeInfo[section.type].size) {
 		error(
 		    nullptr,
 		    0,
@@ -321,6 +334,7 @@ static void doSanityChecks(Section &section) {
 		    section.size,
 		    sectionTypeInfo[section.type].size
 		);
+	}
 
 	// Translate loose constraints to strong ones when they're equivalent
 
@@ -332,19 +346,20 @@ static void doSanityChecks(Section &section) {
 	if (section.isAddressFixed) {
 		// It doesn't make sense to have both org and alignment set
 		if (section.isAlignFixed) {
-			if ((section.org & section.alignMask) != section.alignOfs)
+			if ((section.org & section.alignMask) != section.alignOfs) {
 				error(
 				    nullptr,
 				    0,
 				    "Section \"%s\"'s fixed address doesn't match its alignment",
 				    section.name.c_str()
 				);
+			}
 			section.isAlignFixed = false;
 		}
 
 		// Ensure the target address is valid
 		if (section.org < sectionTypeInfo[section.type].startAddr
-		    || section.org > endaddr(section.type))
+		    || section.org > endaddr(section.type)) {
 			error(
 			    nullptr,
 			    0,
@@ -355,8 +370,9 @@ static void doSanityChecks(Section &section) {
 			    sectionTypeInfo[section.type].startAddr,
 			    endaddr(section.type)
 			);
+		}
 
-		if (section.org + section.size > endaddr(section.type) + 1)
+		if (section.org + section.size > endaddr(section.type) + 1) {
 			error(
 			    nullptr,
 			    0,
@@ -365,6 +381,7 @@ static void doSanityChecks(Section &section) {
 			    section.org + section.size,
 			    endaddr(section.type) + 1
 			);
+		}
 	}
 }
 

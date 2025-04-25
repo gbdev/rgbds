@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: MIT */
+// SPDX-License-Identifier: MIT
 
 #ifndef RGBDS_ITERTOOLS_HPP
 #define RGBDS_ITERTOOLS_HPP
@@ -25,7 +25,6 @@ class EnumSeq {
 		auto operator*() const { return _value; }
 
 		bool operator==(Iterator const &rhs) const { return _value == rhs._value; }
-		bool operator!=(Iterator const &rhs) const  { return _value != rhs._value; }
 	};
 
 public:
@@ -58,10 +57,6 @@ public:
 
 	bool operator==(ZipIterator const &rhs) const {
 		return std::get<0>(_iters) == std::get<0>(rhs._iters);
-	}
-
-	bool operator!=(ZipIterator const &rhs) const {
-		return std::get<0>(_iters) != std::get<0>(rhs._iters);
 	}
 };
 

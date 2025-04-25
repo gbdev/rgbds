@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: MIT */
+// SPDX-License-Identifier: MIT
 
 #ifndef RGBDS_OP_MATH_HPP
 #define RGBDS_OP_MATH_HPP

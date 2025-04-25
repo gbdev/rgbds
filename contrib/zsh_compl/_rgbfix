@@ -35,8 +35,9 @@ _mbc_names() {
 }
 
 local args=(
-	# Arguments are listed here in the same order as in the manual, except for the version
-	'(- : * options)'{-V,--version}'[Print version number]'
+	# Arguments are listed here in the same order as in the manual, except for the version and help
+	'(- : * options)'{-V,--version}'[Print version number and exit]'
+	'(- : * options)'{-h,--help}'[Print help text and exit]'
 
 	'(-C --color-only -c --color-compatible)'{-C,--color-only}'[Mark ROM as GBC-only]'
 	'(-C --color-only -c --color-compatible)'{-c,--color-compatible}'[Mark ROM as GBC-compatible]'
@@ -52,6 +53,7 @@ local args=(
 	'(-L --logo)'{-L,--logo}'+[Set custom logo]:1bpp image:'
 	'(-m --mbc-type)'{-m,--mbc-type}"+[Set MBC flags]:mbc name:_mbc_names"
 	'(-n --rom-version)'{-n,--rom-version}'+[Set ROM version]:rom version byte:'
+	'(-o --output)'{-o,--output}"+[Output file]:output file:_files -g '*.{gb,sgb,gbc}'"
 	'(-p --pad-value)'{-p,--pad-value}'+[Pad to next valid size using this byte as padding]:padding byte:'
 	'(-r --ram-size)'{-r,--ram-size}'+[Set RAM size]:ram size byte:'
 	'(-t --title)'{-t,--title}'+[Set title string]:11-char title string:'

@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: MIT */
+// SPDX-License-Identifier: MIT
 
 #include "asm/main.hpp"
 
@@ -37,30 +37,30 @@ static std::string make_escape(std::string &str) {
 	for (;;) {
 		// All dollars needs to be doubled
 		size_t nextPos = str.find("$", pos);
-		if (nextPos == std::string::npos)
+		if (nextPos == std::string::npos) {
 			break;
+		}
 		escaped.append(str, pos, nextPos - pos);
 		escaped.append("$$");
-		pos = nextPos + QUOTEDSTRLEN("$");
+		pos = nextPos + literal_strlen("$");
 	}
 	escaped.append(str, pos, str.length() - pos);
 	return escaped;
 }
 
 // Short options
-static char const *optstring = "b:D:Eg:I:M:o:P:p:Q:r:s:VvW:wX:";
+static char const *optstring = "b:D:Eg:hI:M:o:P:p:Q:r:s:VvW:wX:";
 
 // Variables for the long-only options
 static int depType; // Variants of `-M`
 
 // Equivalent long options
-// Please keep in the same order as short opts
-//
+// Please keep in the same order as short opts.
 // Also, make sure long opts don't create ambiguity:
 // A long opt's name should start with the same letter as its short opt,
 // except if it doesn't create any ambiguity (`verbose` versus `version`).
 // This is because long opt matching, even to a single char, is prioritized
-// over short opt matching
+// over short opt matching.
 static option const longopts[] = {
     {"binary-digits",   required_argument, nullptr,  'b'},
     {"define",          required_argument, nullptr,  'D'},
@@ -69,6 +69,7 @@ static option const longopts[] = {
     {"include",         required_argument, nullptr,  'I'},
     {"dependfile",      required_argument, nullptr,  'M'},
     {"MG",              no_argument,       &depType, 'G'},
+    {"help",            no_argument,       nullptr,  'h'},
     {"MP",              no_argument,       &depType, 'P'},
     {"MT",              required_argument, &depType, 'T'},
     {"warning",         required_argument, nullptr,  'W'},
@@ -86,9 +87,10 @@ static option const longopts[] = {
     {nullptr,           no_argument,       nullptr,  0  }
 };
 
+// LCOV_EXCL_START
 static void printUsage() {
 	fputs(
-	    "Usage: rgbasm [-EVvw] [-b chars] [-D name[=value]] [-g chars] [-I path]\n"
+	    "Usage: rgbasm [-EhVvw] [-b chars] [-D name[=value]] [-g chars] [-I path]\n"
 	    "              [-M depend_file] [-MG] [-MP] [-MT target_file] [-MQ target_file]\n"
 	    "              [-o out_file] [-P include_file] [-p pad_value] [-Q precision]\n"
 	    "              [-r depth] [-s features:state_file] [-W warning] [-X max_errors]\n"
@@ -106,17 +108,20 @@ static void printUsage() {
 	    stderr
 	);
 }
+// LCOV_EXCL_STOP
 
 int main(int argc, char *argv[]) {
 	time_t now = time(nullptr);
 	// Support SOURCE_DATE_EPOCH for reproducible builds
 	// https://reproducible-builds.org/docs/source-date-epoch/
-	if (char const *sourceDateEpoch = getenv("SOURCE_DATE_EPOCH"); sourceDateEpoch)
+	if (char const *sourceDateEpoch = getenv("SOURCE_DATE_EPOCH"); sourceDateEpoch) {
 		now = static_cast<time_t>(strtoul(sourceDateEpoch, nullptr, 0));
+	}
 
 	Defer closeDependFile{[&] {
-		if (dependFile)
+		if (dependFile) {
 			fclose(dependFile);
+		}
 	}};
 
 	// Perform some init for below
@@ -128,23 +133,25 @@ int main(int argc, char *argv[]) {
 	opt_P(0);
 	opt_Q(16);
 	sym_SetExportAll(false);
-	uint32_t maxDepth = DEFAULT_MAX_DEPTH;
+	uint32_t maxDepth = 64;
 	char const *dependFileName = nullptr;
 	std::unordered_map<std::string, std::vector<StateFeature>> stateFileSpecs;
 	std::string newTarget;
 	// Maximum of 100 errors only applies if rgbasm is printing errors to a terminal.
-	if (isatty(STDERR_FILENO))
+	if (isatty(STDERR_FILENO)) {
 		maxErrors = 100;
+	}
 
 	for (int ch; (ch = musl_getopt_long_only(argc, argv, optstring, longopts, nullptr)) != -1;) {
 		switch (ch) {
 			char *endptr;
 
 		case 'b':
-			if (strlen(musl_optarg) == 2)
+			if (strlen(musl_optarg) == 2) {
 				opt_B(musl_optarg);
-			else
+			} else {
 				errx("Must specify exactly 2 characters for option 'b'");
+			}
 			break;
 
 			char *equals;
@@ -163,19 +170,27 @@ int main(int argc, char *argv[]) {
 			break;
 
 		case 'g':
-			if (strlen(musl_optarg) == 4)
+			if (strlen(musl_optarg) == 4) {
 				opt_G(musl_optarg);
-			else
+			} else {
 				errx("Must specify exactly 4 characters for option 'g'");
+			}
 			break;
+
+		case 'h':
+			// LCOV_EXCL_START
+			printUsage();
+			exit(0);
+			// LCOV_EXCL_STOP
 
 		case 'I':
 			fstk_AddIncludePath(musl_optarg);
 			break;
 
 		case 'M':
-			if (dependFile)
+			if (dependFile) {
 				warnx("Overriding dependfile %s", dependFileName);
+			}
 			if (strcmp("-", musl_optarg)) {
 				dependFile = fopen(musl_optarg, "w");
 				dependFileName = musl_optarg;
@@ -183,8 +198,9 @@ int main(int argc, char *argv[]) {
 				dependFile = stdout;
 				dependFileName = "<stdout>";
 			}
-			if (dependFile == nullptr)
-				err("Failed to open dependfile \"%s\"", dependFileName);
+			if (dependFile == nullptr) {
+				err("Failed to open dependfile \"%s\"", dependFileName); // LCOV_EXCL_LINE
+			}
 			break;
 
 		case 'o':
@@ -199,11 +215,13 @@ int main(int argc, char *argv[]) {
 		case 'p':
 			padByte = strtoul(musl_optarg, &endptr, 0);
 
-			if (musl_optarg[0] == '\0' || *endptr != '\0')
+			if (musl_optarg[0] == '\0' || *endptr != '\0') {
 				errx("Invalid argument for option 'p'");
+			}
 
-			if (padByte > 0xFF)
+			if (padByte > 0xFF) {
 				errx("Argument for option 'p' must be between 0 and 0xFF");
+			}
 
 			opt_P(padByte);
 			break;
@@ -212,15 +230,18 @@ int main(int argc, char *argv[]) {
 			char const *precisionArg;
 		case 'Q':
 			precisionArg = musl_optarg;
-			if (precisionArg[0] == '.')
+			if (precisionArg[0] == '.') {
 				precisionArg++;
+			}
 			precision = strtoul(precisionArg, &endptr, 0);
 
-			if (musl_optarg[0] == '\0' || *endptr != '\0')
+			if (musl_optarg[0] == '\0' || *endptr != '\0') {
 				errx("Invalid argument for option 'Q'");
+			}
 
-			if (precision < 1 || precision > 31)
+			if (precision < 1 || precision > 31) {
 				errx("Argument for option 'Q' must be between 1 and 31");
+			}
 
 			opt_Q(precision);
 			break;
@@ -228,35 +249,41 @@ int main(int argc, char *argv[]) {
 		case 'r':
 			maxDepth = strtoul(musl_optarg, &endptr, 0);
 
-			if (musl_optarg[0] == '\0' || *endptr != '\0')
+			if (musl_optarg[0] == '\0' || *endptr != '\0') {
 				errx("Invalid argument for option 'r'");
+			}
 			break;
 
 		case 's': {
 			// Split "<features>:<name>" so `musl_optarg` is "<features>" and `name` is "<name>"
 			char *name = strchr(musl_optarg, ':');
-			if (!name)
+			if (!name) {
 				errx("Invalid argument for option 's'");
+			}
 			*name++ = '\0';
 
 			std::vector<StateFeature> features;
 			for (char *feature = musl_optarg; feature;) {
 				// Split "<feature>,<rest>" so `feature` is "<feature>" and `next` is "<rest>"
 				char *next = strchr(feature, ',');
-				if (next)
+				if (next) {
 					*next++ = '\0';
+				}
 				// Trim whitespace from the beginning of `feature`...
 				feature += strspn(feature, " \t");
 				// ...and from the end
-				if (char *end = strpbrk(feature, " \t"); end)
+				if (char *end = strpbrk(feature, " \t"); end) {
 					*end = '\0';
+				}
 				// A feature must be specified
-				if (*feature == '\0')
+				if (*feature == '\0') {
 					errx("Empty feature for option 's'");
+				}
 				// Parse the `feature` and update the `features` list
 				if (!strcasecmp(feature, "all")) {
-					if (!features.empty())
+					if (!features.empty()) {
 						warnx("Redundant feature before \"%s\" for option 's'", feature);
+					}
 					features.assign({STATE_EQU, STATE_VAR, STATE_EQUS, STATE_CHAR, STATE_MACRO});
 				} else {
 					StateFeature value = !strcasecmp(feature, "equ")     ? STATE_EQU
@@ -276,10 +303,14 @@ int main(int argc, char *argv[]) {
 				feature = next;
 			}
 
-			if (stateFileSpecs.find(name) != stateFileSpecs.end())
+			if (stateFileSpecs.find(name) != stateFileSpecs.end()) {
 				warnx("Overriding state filename %s", name);
-			if (verbose)
+			}
+			// LCOV_EXCL_START
+			if (verbose) {
 				printf("State filename %s\n", name);
+			}
+			// LCOV_EXCL_STOP
 			stateFileSpecs.emplace(name, std::move(features));
 			break;
 		}
@@ -289,8 +320,10 @@ int main(int argc, char *argv[]) {
 			exit(0);
 
 		case 'v':
+			// LCOV_EXCL_START
 			verbose = true;
 			break;
+			// LCOV_EXCL_STOP
 
 		case 'W':
 			opt_W(musl_optarg);
@@ -304,11 +337,13 @@ int main(int argc, char *argv[]) {
 		case 'X':
 			maxValue = strtoul(musl_optarg, &endptr, 0);
 
-			if (musl_optarg[0] == '\0' || *endptr != '\0')
+			if (musl_optarg[0] == '\0' || *endptr != '\0') {
 				errx("Invalid argument for option 'X'");
+			}
 
-			if (maxValue > UINT_MAX)
+			if (maxValue > UINT_MAX) {
 				errx("Argument for option 'X' must be between 0 and %u", UINT_MAX);
+			}
 
 			maxErrors = maxValue;
 			break;
@@ -327,10 +362,12 @@ int main(int argc, char *argv[]) {
 			case 'Q':
 			case 'T':
 				newTarget = musl_optarg;
-				if (depType == 'Q')
+				if (depType == 'Q') {
 					newTarget = make_escape(newTarget);
-				if (!targetFileName.empty())
+				}
+				if (!targetFileName.empty()) {
 					targetFileName += ' ';
+				}
 				targetFileName += newTarget;
 				break;
 			}
@@ -338,13 +375,16 @@ int main(int argc, char *argv[]) {
 
 		// Unrecognized options
 		default:
+			// LCOV_EXCL_START
 			printUsage();
 			exit(1);
+			// LCOV_EXCL_STOP
 		}
 	}
 
-	if (targetFileName.empty() && !objectFileName.empty())
+	if (targetFileName.empty() && !objectFileName.empty()) {
 		targetFileName = objectFileName;
+	}
 
 	if (argc == musl_optind) {
 		fputs(
@@ -360,13 +400,15 @@ int main(int argc, char *argv[]) {
 
 	std::string mainFileName = argv[musl_optind];
 
-	if (verbose)
-		printf("Assembling %s\n", mainFileName.c_str());
+	if (verbose) {
+		printf("Assembling %s\n", mainFileName.c_str()); // LCOV_EXCL_LINE
+	}
 
 	if (dependFile) {
-		if (targetFileName.empty())
+		if (targetFileName.empty()) {
 			errx("Dependency files can only be created if a target file is specified with either "
 			     "-o, -MQ or -MT");
+		}
 
 		fprintf(dependFile, "%s: %s\n", targetFileName.c_str(), mainFileName.c_str());
 	}
@@ -377,28 +419,34 @@ int main(int argc, char *argv[]) {
 	fstk_Init(mainFileName, maxDepth);
 
 	// Perform parse (`yy::parser` is auto-generated from `parser.y`)
-	if (yy::parser parser; parser.parse() != 0 && nbErrors == 0)
+	if (yy::parser parser; parser.parse() != 0 && nbErrors == 0) {
 		nbErrors = 1;
+	}
 
-	sect_CheckUnionClosed();
-	sect_CheckLoadClosed();
-	sect_CheckSizes();
+	if (!failedOnMissingInclude) {
+		sect_CheckUnionClosed();
+		sect_CheckLoadClosed();
+		sect_CheckSizes();
 
-	charmap_CheckStack();
-	opt_CheckStack();
-	sect_CheckStack();
+		charmap_CheckStack();
+		opt_CheckStack();
+		sect_CheckStack();
+	}
 
-	if (nbErrors != 0)
+	if (nbErrors != 0) {
 		errx("Assembly aborted (%u error%s)!", nbErrors, nbErrors == 1 ? "" : "s");
+	}
 
 	// If parse aborted due to missing an include, and `-MG` was given, exit normally
-	if (failedOnMissingInclude)
+	if (failedOnMissingInclude) {
 		return 0;
+	}
 
 	out_WriteObject();
 
-	for (auto [name, features] : stateFileSpecs)
+	for (auto [name, features] : stateFileSpecs) {
 		out_WriteState(name, features);
+	}
 
 	return 0;
 }

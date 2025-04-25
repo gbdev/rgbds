@@ -7,43 +7,43 @@
 
 # User-defined variables
 
-Q		:= @
-PREFIX		:= /usr/local
-bindir		:= ${PREFIX}/bin
-mandir		:= ${PREFIX}/share/man
-SUFFIX		:=
-STRIP		:= -s
-BINMODE		:= 755
-MANMODE		:= 644
+Q       := @
+PREFIX  := /usr/local
+bindir  := ${PREFIX}/bin
+mandir  := ${PREFIX}/share/man
+SUFFIX  :=
+STRIP   := -s
+BINMODE := 755
+MANMODE := 644
 
 # Other variables
 
-PKG_CONFIG	:= pkg-config
-PNGCFLAGS	:= `${PKG_CONFIG} --cflags libpng`
-PNGLDFLAGS	:= `${PKG_CONFIG} --libs-only-L libpng`
-PNGLDLIBS	:= `${PKG_CONFIG} --libs-only-l libpng`
+PKG_CONFIG := pkg-config
+PNGCFLAGS  := `${PKG_CONFIG} --cflags libpng`
+PNGLDFLAGS := `${PKG_CONFIG} --libs-only-L libpng`
+PNGLDLIBS  := `${PKG_CONFIG} --libs-only-l libpng`
 
 # Note: if this comes up empty, `version.cpp` will automatically fall back to last release number
-VERSION_STRING	:= `git --git-dir=.git describe --tags --dirty --always 2>/dev/null`
+VERSION_STRING := `git --git-dir=.git -c safe.directory='*' describe --tags --dirty --always 2>/dev/null`
 
-WARNFLAGS	:= -Wall -pedantic -Wno-unknown-warning-option -Wno-gnu-zero-variadic-macro-arguments
+WARNFLAGS := -Wall -pedantic -Wno-unknown-warning-option -Wno-gnu-zero-variadic-macro-arguments
 
 # Overridable CXXFLAGS
-CXXFLAGS	?= -O3 -flto -DNDEBUG
+CXXFLAGS     ?= -O3 -flto -DNDEBUG
 # Non-overridable CXXFLAGS
-REALCXXFLAGS	:= ${CXXFLAGS} ${WARNFLAGS} -std=c++2a -I include -fno-exceptions -fno-rtti
+REALCXXFLAGS := ${CXXFLAGS} ${WARNFLAGS} -std=c++2a -I include -fno-exceptions -fno-rtti
 # Overridable LDFLAGS
-LDFLAGS		?=
+LDFLAGS      ?=
 # Non-overridable LDFLAGS
-REALLDFLAGS	:= ${LDFLAGS} ${WARNFLAGS} -DBUILD_VERSION_STRING=\"${VERSION_STRING}\"
+REALLDFLAGS  := ${LDFLAGS} ${WARNFLAGS} -DBUILD_VERSION_STRING=\"${VERSION_STRING}\"
 
 # Wrapper around bison that passes flags depending on what the version supports
-BISON		:= src/bison.sh
+BISON := src/bison.sh
 
-RM		:= rm -rf
+RM := rm -rf
 
 # Used for checking pull requests
-BASE_REF	:= origin/master
+BASE_REF := origin/master
 
 # Rules to build the RGBDS binaries
 
@@ -202,16 +202,12 @@ develop:
 	$Q${MAKE} WARNFLAGS="${WARNFLAGS} -Werror -Wextra \
 		-Walloc-zero -Wcast-align -Wcast-qual -Wduplicated-branches -Wduplicated-cond \
 		-Wfloat-equal -Wlogical-op -Wnull-dereference -Wold-style-cast -Wshift-overflow=2 \
-		-Wstringop-overflow=4 -Wundef -Wuninitialized -Wunused -Wshadow \
+		-Wstringop-overflow=4 -Wtrampolines -Wundef -Wuninitialized -Wunused -Wshadow \
 		-Wformat=2 -Wformat-overflow=2 -Wformat-truncation=1 \
 		-Wno-format-nonliteral -Wno-strict-overflow -Wno-unused-but-set-variable \
 		-Wno-type-limits -Wno-tautological-constant-out-of-range-compare -Wvla \
-		-D_GLIBCXX_ASSERTIONS \
-		-fsanitize=shift -fsanitize=integer-divide-by-zero \
-		-fsanitize=unreachable -fsanitize=vla-bound \
-		-fsanitize=signed-integer-overflow -fsanitize=bounds \
-		-fsanitize=object-size -fsanitize=bool -fsanitize=enum \
-		-fsanitize=alignment -fsanitize=null -fsanitize=address" \
+		-D_GLIBCXX_ASSERTIONS -fsanitize=address -fsanitize=undefined \
+		-fsanitize=float-divide-by-zero" \
 		CXXFLAGS="-ggdb3 -Og -fno-omit-frame-pointer -fno-optimize-sibling-calls"
 
 # This target is used during development in order to more easily debug with gdb.
@@ -269,4 +265,4 @@ wine-shim:
 
 dist:
 	$Qgit ls-files | sed s~^~$${PWD##*/}/~ \
-	  | tar -czf rgbds-`git describe --tags | cut -c 2-`.tar.gz -C .. -T -
+	  | tar -czf rgbds-`git -c safe.directory='*' describe --tags | cut -c 2-`.tar.gz -C .. -T -

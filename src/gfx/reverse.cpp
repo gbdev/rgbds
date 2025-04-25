@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: MIT */
+// SPDX-License-Identifier: MIT
 
 #include "gfx/reverse.hpp"
 
@@ -49,7 +49,8 @@ static DefaultInitVec<uint8_t> readInto(std::string const &path) {
 	return data;
 }
 
-[[noreturn]] static void pngError(png_structp png, char const *msg) {
+[[noreturn]]
+static void pngError(png_structp png, char const *msg) {
 	fatal(
 	    "Error writing reversed image (\"%s\"): %s",
 	    static_cast<char const *>(png_get_error_ptr(png)),
@@ -166,8 +167,9 @@ void reverse() {
 		// This avoids redundancy with `-r 1` which results in a vertical column.
 		width = static_cast<size_t>(ceil(sqrt(mapSize)));
 		for (; width < mapSize; ++width) {
-			if (mapSize % width == 0)
+			if (mapSize % width == 0) {
 				break;
+			}
 		}
 		options.verbosePrint(Options::VERB_INTERM, "Picked reversing width of %zu tiles\n", width);
 	}
@@ -399,7 +401,9 @@ void reverse() {
 	options.verbosePrint(Options::VERB_LOG_ACT, "Writing image...\n");
 	File pngFile;
 	if (!pngFile.open(options.input, std::ios::out | std::ios::binary)) {
+		// LCOV_EXCL_START
 		fatal("Failed to create \"%s\": %s", pngFile.c_str(options.input), strerror(errno));
+		// LCOV_EXCL_STOP
 	}
 	png_structp png = png_create_write_struct(
 	    PNG_LIBPNG_VER_STRING,
@@ -408,11 +412,15 @@ void reverse() {
 	    pngWarning
 	);
 	if (!png) {
+		// LCOV_EXCL_START
 		fatal("Failed to create PNG write struct: %s", strerror(errno));
+		// LCOV_EXCL_STOP
 	}
 	png_infop pngInfo = png_create_info_struct(png);
 	if (!pngInfo) {
-		fatal("Failed to create PNG info struct: %s", strerror(errno));
+		// LCOV_EXCL_START
+		fatal("Failed to create PNG info structure: %s", strerror(errno));
+		// LCOV_EXCL_STOP
 	}
 	png_set_write_fn(png, &pngFile, writePng, flushPng);
 
@@ -467,24 +475,7 @@ void reverse() {
 			assume(palID < palettes.size()); // Should be ensured on data read
 
 			// We do not have data for tiles trimmed with `-x`, so assume they are "blank"
-			static std::array<uint8_t, 16> const trimmedTile{
-			    0x00,
-			    0x00,
-			    0x00,
-			    0x00,
-			    0x00,
-			    0x00,
-			    0x00,
-			    0x00,
-			    0x00,
-			    0x00,
-			    0x00,
-			    0x00,
-			    0x00,
-			    0x00,
-			    0x00,
-			    0x00,
-			};
+			static std::array<uint8_t, 16> const trimmedTile{0x00};
 			uint8_t const *tileData =
 			    tileOfs >= nbTiles ? trimmedTile.data() : &tiles[tileOfs * tileSize];
 			auto const &palette = palettes[palID];

@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: MIT */
+// SPDX-License-Identifier: MIT
 
 #include "asm/output.hpp"
 
@@ -61,15 +61,18 @@ void out_RegisterNode(std::shared_ptr<FileStackNode> node) {
 	}
 }
 
-// Return a section's ID, or UINT32_MAX if the section is not in the list
+// Return a section's ID, or UINT32_MAX if the section does not exist
 static uint32_t getSectIDIfAny(Section *sect) {
-	if (!sect)
+	if (!sect) {
 		return UINT32_MAX;
+	}
 
-	if (auto search = sectionMap.find(sect->name); search != sectionMap.end())
-		return static_cast<uint32_t>(sectionMap.size() - search->second - 1);
+	if (auto search = sectionMap.find(sect->name); search != sectionMap.end()) {
+		return static_cast<uint32_t>(search->second);
+	}
 
-	fatalerror("Unknown section '%s'\n", sect->name.c_str());
+	// Every section that exists should be in `sectionMap`
+	fatalerror("Unknown section '%s'\n", sect->name.c_str()); // LCOV_EXCL_LINE
 }
 
 static void writePatch(Patch const &patch, FILE *file) {
@@ -109,8 +112,9 @@ static void writeSection(Section const &sect, FILE *file) {
 		fwrite(sect.data.data(), 1, sect.size, file);
 		putLong(sect.patches.size(), file);
 
-		for (Patch const &patch : sect.patches)
+		for (Patch const &patch : sect.patches) {
 			writePatch(patch, file);
+		}
 	}
 }
 
@@ -162,8 +166,9 @@ static void writeRpn(std::vector<uint8_t> &rpnexpr, std::vector<uint8_t> const &
 			symName.clear();
 			for (;;) {
 				uint8_t c = rpn[offset++];
-				if (c == 0)
+				if (c == 0) {
 					break;
+				}
 				symName += c;
 			}
 
@@ -171,7 +176,7 @@ static void writeRpn(std::vector<uint8_t> &rpnexpr, std::vector<uint8_t> const &
 			sym = sym_FindExactSymbol(symName);
 			if (sym->isConstant()) {
 				rpnexpr[rpnptr++] = RPN_CONST;
-				value = sym_GetConstantValue(symName);
+				value = sym->getConstantValue();
 			} else {
 				rpnexpr[rpnptr++] = RPN_SYM;
 				registerUnregisteredSymbol(*sym); // Ensure that `sym->ID` is set
@@ -188,8 +193,9 @@ static void writeRpn(std::vector<uint8_t> &rpnexpr, std::vector<uint8_t> const &
 			symName.clear();
 			for (;;) {
 				uint8_t c = rpn[offset++];
-				if (c == 0)
+				if (c == 0) {
 					break;
+				}
 				symName += c;
 			}
 
@@ -282,7 +288,7 @@ void out_CreateAssert(
 	assertion.message = message;
 }
 
-static void writeAssert(Assertion &assert, FILE *file) {
+static void writeAssert(Assertion const &assert, FILE *file) {
 	writePatch(assert.patch, file);
 	putString(assert.message, file);
 }
@@ -298,14 +304,16 @@ static void writeFileStackNode(FileStackNode const &node, FILE *file) {
 
 		putLong(nodeIters.size(), file);
 		// Iters are stored by decreasing depth, so reverse the order for output
-		for (uint32_t i = nodeIters.size(); i--;)
+		for (uint32_t i = nodeIters.size(); i--;) {
 			putLong(nodeIters[i], file);
+		}
 	}
 }
 
 void out_WriteObject() {
-	if (objectFileName.empty())
+	if (objectFileName.empty()) {
 		return;
+	}
 
 	FILE *file;
 	if (objectFileName != "-") {
@@ -315,14 +323,15 @@ void out_WriteObject() {
 		(void)setmode(STDOUT_FILENO, O_BINARY);
 		file = stdout;
 	}
-	if (!file)
-		err("Failed to open object file '%s'", objectFileName.c_str());
+	if (!file) {
+		err("Failed to open object file '%s'", objectFileName.c_str()); // LCOV_EXCL_LINE
+	}
 	Defer closeFile{[&] { fclose(file); }};
 
 	// Also write symbols that weren't written above
 	sym_ForEach(registerUnregisteredSymbol);
 
-	fprintf(file, RGBDS_OBJECT_VERSION_STRING);
+	fputs(RGBDS_OBJECT_VERSION_STRING, file);
 	putLong(RGBDS_OBJECT_REV, file);
 
 	putLong(objectSymbols.size(), file);
@@ -335,33 +344,34 @@ void out_WriteObject() {
 		writeFileStackNode(node, file);
 
 		// The list is supposed to have decrementing IDs
-		if (it + 1 != fileStackNodes.end() && it[1]->ID != node.ID - 1)
-			fatalerror(
-			    "Internal error: fstack node #%" PRIu32 " follows #%" PRIu32
-			    ". Please report this to the developers!\n",
-			    it[1]->ID,
-			    node.ID
-			);
+		assume(it + 1 == fileStackNodes.end() || it[1]->ID == node.ID - 1);
 	}
 
-	for (Symbol const *sym : objectSymbols)
+	for (Symbol const *sym : objectSymbols) {
 		writeSymbol(*sym, file);
+	}
 
-	for (auto it = sectionList.rbegin(); it != sectionList.rend(); it++)
-		writeSection(*it, file);
+	for (Section const &sect : sectionList) {
+		writeSection(sect, file);
+	}
 
 	putLong(assertions.size(), file);
 
-	for (Assertion &assert : assertions)
+	for (Assertion const &assert : assertions) {
 		writeAssert(assert, file);
+	}
 }
 
 void out_SetFileName(std::string const &name) {
-	if (!objectFileName.empty())
+	if (!objectFileName.empty()) {
 		warnx("Overriding output filename %s", objectFileName.c_str());
+	}
 	objectFileName = name;
-	if (verbose)
+	// LCOV_EXCL_START
+	if (verbose) {
 		printf("Output filename %s\n", objectFileName.c_str());
+	}
+	// LCOV_EXCL_STOP
 }
 
 static void dumpString(std::string const &escape, FILE *file) {
@@ -397,8 +407,9 @@ static bool dumpEquConstants(FILE *file) {
 	equConstants.clear();
 
 	sym_ForEach([](Symbol &sym) {
-		if (!sym.isBuiltin && sym.type == SYM_EQU)
+		if (!sym.isBuiltin && sym.type == SYM_EQU) {
 			equConstants.push_back(&sym);
+		}
 	});
 	// Constants are ordered by file, then by definition order
 	std::sort(RANGE(equConstants), [](Symbol *sym1, Symbol *sym2) -> bool {
@@ -418,8 +429,9 @@ static bool dumpVariables(FILE *file) {
 	variables.clear();
 
 	sym_ForEach([](Symbol &sym) {
-		if (!sym.isBuiltin && sym.type == SYM_VAR)
+		if (!sym.isBuiltin && sym.type == SYM_VAR) {
 			variables.push_back(&sym);
+		}
 	});
 	// Variables are ordered by file, then by definition order
 	std::sort(RANGE(variables), [](Symbol *sym1, Symbol *sym2) -> bool {
@@ -439,8 +451,9 @@ static bool dumpEqusConstants(FILE *file) {
 	equsConstants.clear();
 
 	sym_ForEach([](Symbol &sym) {
-		if (!sym.isBuiltin && sym.type == SYM_EQUS)
+		if (!sym.isBuiltin && sym.type == SYM_EQUS) {
 			equsConstants.push_back(&sym);
+		}
 	});
 	// Constants are ordered by file, then by definition order
 	std::sort(RANGE(equsConstants), [](Symbol *sym1, Symbol *sym2) -> bool {
@@ -467,8 +480,9 @@ static bool dumpCharmaps(FILE *file) {
 		    fputs("charmap \"", charmapFile);
 		    dumpString(mapping, charmapFile);
 		    putc('"', charmapFile);
-		    for (int32_t v : value)
+		    for (int32_t v : value) {
 			    fprintf(charmapFile, ", $%" PRIx32, v);
+		    }
 		    putc('\n', charmapFile);
 	    }
 	);
@@ -479,8 +493,9 @@ static bool dumpMacros(FILE *file) {
 	macros.clear();
 
 	sym_ForEach([](Symbol &sym) {
-		if (!sym.isBuiltin && sym.type == SYM_MACRO)
+		if (!sym.isBuiltin && sym.type == SYM_MACRO) {
 			macros.push_back(&sym);
+		}
 	});
 	// Macros are ordered by file, then by definition order
 	std::sort(RANGE(macros), [](Symbol *sym1, Symbol *sym2) -> bool {
@@ -508,8 +523,9 @@ void out_WriteState(std::string name, std::vector<StateFeature> const &features)
 		(void)setmode(STDOUT_FILENO, O_BINARY);
 		file = stdout;
 	}
-	if (!file)
-		err("Failed to open state file '%s'", name.c_str());
+	if (!file) {
+		err("Failed to open state file '%s'", name.c_str()); // LCOV_EXCL_LINE
+	}
 	Defer closeFile{[&] { fclose(file); }};
 
 	static char const *dumpHeadings[NB_STATE_FEATURES] = {
@@ -530,7 +546,8 @@ void out_WriteState(std::string name, std::vector<StateFeature> const &features)
 	fputs("; File generated by rgbasm\n", file);
 	for (StateFeature feature : features) {
 		fprintf(file, "\n; %s\n", dumpHeadings[feature]);
-		if (!dumpFuncs[feature](file))
+		if (!dumpFuncs[feature](file)) {
 			fprintf(file, "; No values\n");
+		}
 	}
 }

@@ -8,6 +8,7 @@ _rgbfix_completions() {
 	# See the `state` variable below for info about `state_after`
 	declare -A opts=(
 		[V]="version:normal"
+		[h]="help:normal"
 		[j]="non-japanese:normal"
 		[s]="sgb-compatible:normal"
 		[v]="validate:normal"
@@ -20,6 +21,7 @@ _rgbfix_completions() {
 		[l]="old-licensee:unk"
 		[m]="mbc-type:mbc"
 		[n]="rom-version:unk"
+		[o]="output:glob-*.gb *.gbc *.sgb"
 		[p]="pad-value:unk"
 		[r]="ram-size:unk"
 		[t]="title:unk"

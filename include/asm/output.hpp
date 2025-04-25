@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: MIT */
+// SPDX-License-Identifier: MIT
 
 #ifndef RGBDS_ASM_OUTPUT_HPP
 #define RGBDS_ASM_OUTPUT_HPP
@@ -14,14 +14,7 @@
 struct Expression;
 struct FileStackNode;
 
-enum StateFeature {
-    STATE_EQU,
-    STATE_VAR,
-    STATE_EQUS,
-    STATE_CHAR,
-    STATE_MACRO,
-    NB_STATE_FEATURES
-};
+enum StateFeature { STATE_EQU, STATE_VAR, STATE_EQUS, STATE_CHAR, STATE_MACRO, NB_STATE_FEATURES };
 
 extern std::string objectFileName;
 

@@ -2,7 +2,7 @@
 .\"
 .\" SPDX-License-Identifier: MIT
 .\"
-.Dd December 10, 2024
+.Dd February 2, 2025
 .Dt RGBASM-OLD 5
 .Os
 .Sh NAME
@@ -15,7 +15,7 @@ assembly language over its decades of evolution, along with their modern alterna
 Its goal is to be a reference for backwards incompatibility, when upgrading an old assembly codebase to work with the latest RGBDS release.
 It does
 .Em not
-attempt to list syntax bugs that were fixed, nor new reserved keywords that may conflict with old identifiers.
+attempt to list every syntax bug that was ever fixed (with some notable exceptions), nor new reserved keywords that may conflict with old identifiers.
 .Sh REMOVED
 These are features which have been completely removed, without any direct alternatives.
 Usually these features were limiting the addition of other features, or had awkward limits on their own intended effects.
@@ -185,6 +185,10 @@ Instead, just use commas without backslashes.
 .Ss '*' comments
 Deprecated in 0.4.1, removed in 0.5.0.
 .Pp
+These comments had to have the
+.Ql *
+typed in column 1.
+.Pp
 Instead, use
 .Ql \&;
 comments.
@@ -241,20 +245,15 @@ Deprecated in 0.3.0, removed in 0.4.0.
 Instead, use
 .Ql LDI A, [HL]
 and
-LDD A, [HL]
+.Ql LDD A, [HL]
 (or
 .Ql LD A, [HLI]
 and
 .Ql LD A, [HLD] ;
 or
-LD A, [HL+]
+.Ql LD A, [HL+]
 and
 .Ql LD A, [HL-] ) .
-.Ss LD HL, [SP + e8]
-Deprecated in 0.3.0, removed in 0.4.0.
-.Pp
-Instead, use
-.Ql LD HL, SP + e8 .
 .Ss LDIO
 Deprecated in 0.9.0.
 .Pp
@@ -267,6 +266,14 @@ Instead, use
 .Ql LDH [C], A
 and
 .Ql LDH A, [C] .
+.Pp
+Note that
+.Ql LD [$FF00+C], A
+and
+.Ql LD A, [$FF00+C]
+were also deprecated in 0.9.0, but were
+.Em undeprecated
+in 0.9.1.
 .Ss LDH [n8], A and LDH A, [n8]
 Deprecated in 0.9.0.
 .Pp
@@ -284,6 +291,16 @@ Instead, use
 .Ql LDH [n16], A
 and
 .Ql LDH A, [n16] .
+.Ss LD HL, [SP + e8]
+Deprecated in 0.3.0, removed in 0.4.0.
+.Pp
+Instead, use
+.Ql LD HL, SP + e8 .
+.Ss LDHL SP, e8
+Supported in ASMotor, removed in RGBDS.
+.Pp
+Instead, use
+.Ql LD HL, SP + e8 .
 .Ss rgbasm -i
 Deprecated in 0.6.0, removed in 0.8.0.
 .Pp
@@ -351,6 +368,68 @@ Previously we had
 .Pp
 Instead, now we have
 .Ql p ** q ** r == p ** (q ** r) .
+.Sh BUGS
+These are misfeatures that may have been possible by mistake.
+They do not get deprecated, just fixed.
+.Ss Space between exported labels' colons
+Fixed in 0.7.0.
+.Pp
+Labels with two colons used to ignore a space between them; for example,
+.Ql Label:\ : .
+.Pp
+Instead, use
+.Ql Label:: .
+.Ss Space between label and colon
+Fixed in 0.9.0.
+.Pp
+Space between a label and its colon(s) used to be ignored; for example,
+.Ql Label\ :
+and
+.Ql Label\ :: .
+Now they are treated as invocations of the
+.Ql Label
+macro with
+.Ql \&:
+and
+.Ql ::
+as arguments.
+.Pp
+Instead, use
+.Ql Label:
+and
+.Ql Label:: .
+.Ss ADD r16 with implicit first HL operand
+Fixed in 0.5.0.
+.Pp
+For example,
+.Ql ADD BC
+used to be treated as
+.Ql ADD HL, BC ,
+and likewise for
+.Ql DE ,
+.Ql HL ,
+and
+.Ql SP .
+.Pp
+Instead, use an explicit first
+.Ql HL
+operand.
+.Ss = instead of SET
+Fixed in 0.4.0.
+.Pp
+The
+.Ic =
+operator used to be an alias for the
+.Ic SET
+keyword, which included using
+.Ic =
+for the
+.Ic SET
+.Em instruction .
+.Pp
+Instead, just use
+.Ic SET
+for the instruction.
 .Sh SEE ALSO
 .Xr rgbasm 1 ,
 .Xr gbz80 7 ,

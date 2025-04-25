@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: MIT */
+// SPDX-License-Identifier: MIT
 
 #include "gfx/pal_packing.hpp"
 
@@ -27,15 +27,11 @@
 //  Tile | Proto-palette
 //  Page | Palette
 
-/*
- * A reference to a proto-palette, and attached attributes for sorting purposes
- */
+// A reference to a proto-palette, and attached attributes for sorting purposes
 struct ProtoPalAttrs {
 	size_t protoPalIndex;
-	/*
-	 * Pages from which we are banned (to prevent infinite loops)
-	 * This is dynamic because we wish not to hard-cap the amount of palettes
-	 */
+	// Pages from which we are banned (to prevent infinite loops)
+	// This is dynamic because we wish not to hard-cap the amount of palettes
 	std::vector<bool> bannedPages;
 
 	explicit ProtoPalAttrs(size_t index) : protoPalIndex(index) {}
@@ -50,10 +46,8 @@ struct ProtoPalAttrs {
 	}
 };
 
-/*
- * A collection of proto-palettes assigned to a palette
- * Does not contain the actual color indices because we need to be able to remove elements
- */
+// A collection of proto-palettes assigned to a palette
+// Does not contain the actual color indices because we need to be able to remove elements
 class AssignedProtos {
 	// We leave room for emptied slots to avoid copying the structs around on removal
 	std::vector<std::optional<ProtoPalAttrs>> _assigned;
@@ -92,8 +86,8 @@ private:
 	public:
 		Iter() = default;
 
-		bool operator==(Iter const &other) const { return _iter == other._iter; }
-		bool operator!=(Iter const &other) const { return !(*this == other); }
+		bool operator==(Iter const &rhs) const { return _iter == rhs._iter; }
+
 		Iter &operator++() {
 			++_iter;
 			skipEmpty();
@@ -104,6 +98,7 @@ private:
 			++(*this);
 			return it;
 		}
+
 		reference operator*() const {
 			assume((*_iter).has_value());
 			return **_iter;
@@ -127,10 +122,8 @@ public:
 	}
 	const_iterator end() const { return const_iterator{&_assigned, _assigned.end()}; }
 
-	/*
-	 * Assigns a new ProtoPalAttrs in a free slot, assuming there is one
-	 * Args are passed to the `ProtoPalAttrs`'s constructor
-	 */
+	// Assigns a new ProtoPalAttrs in a free slot, assuming there is one
+	// Args are passed to the `ProtoPalAttrs`'s constructor
 	template<typename... Ts>
 	void assign(Ts &&...args) {
 		auto freeSlot =
@@ -192,9 +185,7 @@ private:
 		return colors;
 	}
 public:
-	/*
-	 * Returns the number of distinct colors
-	 */
+	// Returns the number of distinct colors
 	size_t volume() const { return uniqueColors().size(); }
 	bool canFit(ProtoPalette const &protoPal) const {
 		auto &colors = uniqueColors();
@@ -218,10 +209,8 @@ public:
 		return factor;
 	}();
 
-	/*
-	 * Computes the "relative size" of a proto-palette on this palette;
-	 * it's a measure of how much this proto-palette would "cost" to introduce.
-	 */
+	// Computes the "relative size" of a proto-palette on this palette;
+	// it's a measure of how much this proto-palette would "cost" to introduce.
 	uint32_t relSizeOf(ProtoPalette const &protoPal) const {
 		// NOTE: this function must not call `uniqueColors`, or one of its callers will break!
 
@@ -244,9 +233,7 @@ public:
 		return relSize;
 	}
 
-	/*
-	 * Computes the "relative size" of a set of proto-palettes on this palette
-	 */
+	// Computes the "relative size" of a set of proto-palettes on this palette
 	template<typename Iter>
 	auto combinedVolume(Iter &&begin, Iter const &end, std::vector<ProtoPalette> const &protoPals)
 	    const {
@@ -254,9 +241,7 @@ public:
 		addUniqueColors(colors, std::forward<Iter>(begin), end, protoPals);
 		return colors.size();
 	}
-	/*
-	 * Computes the "relative size" of a set of colors on this palette
-	 */
+	// Computes the "relative size" of a set of colors on this palette
 	template<typename Iter>
 	auto combinedVolume(Iter &&begin, Iter &&end) const {
 		auto &colors = uniqueColors();
@@ -574,6 +559,7 @@ std::tuple<DefaultInitVec<size_t>, size_t>
 		}
 	}
 
+	// LCOV_EXCL_START
 	if (options.verbosity >= Options::VERB_INTERM) {
 		for (auto &&assignment : assignments) {
 			fprintf(stderr, "{ ");
@@ -586,11 +572,13 @@ std::tuple<DefaultInitVec<size_t>, size_t>
 			fprintf(stderr, "} (volume = %zu)\n", assignment.volume());
 		}
 	}
+	// LCOV_EXCL_STOP
 
 	// "Decant" the result
 	decant(assignments, protoPalettes);
 	// Note that the result does not contain any empty palettes
 
+	// LCOV_EXCL_START
 	if (options.verbosity >= Options::VERB_INTERM) {
 		for (auto &&assignment : assignments) {
 			fprintf(stderr, "{ ");
@@ -603,6 +591,7 @@ std::tuple<DefaultInitVec<size_t>, size_t>
 			fprintf(stderr, "} (volume = %zu)\n", assignment.volume());
 		}
 	}
+	// LCOV_EXCL_STOP
 
 	DefaultInitVec<size_t> mappings(protoPalettes.size());
 	for (size_t i = 0; i < assignments.size(); ++i) {

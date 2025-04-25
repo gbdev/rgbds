@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: MIT */
+// SPDX-License-Identifier: MIT
 
 // Contains some assembler-wide defines and externs
 
@@ -41,15 +41,11 @@ struct FileStackNode {
 	std::string const &name() const { return data.get<std::string>(); }
 
 	FileStackNode(FileStackNodeType type_, Either<std::vector<uint32_t>, std::string> data_)
-	    : type(type_), data(data_){};
+	    : type(type_), data(data_) {}
 
 	std::string const &dump(uint32_t curLineNo) const;
-
-	// If true, entering this context generates a new unique ID.
-	bool generatesUniqueID() const { return type == NODE_REPT || type == NODE_MACRO; }
 };
 
-#define DEFAULT_MAX_DEPTH 64
 extern size_t maxRecursionDepth;
 
 struct MacroArgs;

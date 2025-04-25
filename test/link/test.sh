@@ -38,7 +38,7 @@ continueTest () {
 }
 
 tryDiff () {
-	if ! diff -u --strip-trailing-cr "$1" "$2"; then
+	if ! diff -au --strip-trailing-cr "$1" "$2"; then
 		echo "${bold}${red}$1 mismatch!${rescolors}${resbold}"
 		false
 	fi
@@ -145,7 +145,7 @@ startTest
 "$RGBASM" -o "$otemp" "$test"/a.asm
 "$RGBASM" -o "$gbtemp2" "$test"/b.asm
 continueTest
-rgblinkQuiet -o "$gbtemp" "$gbtemp2" "$otemp" 2>"$outtemp"
+rgblinkQuiet -o "$gbtemp" "$otemp" "$gbtemp2" 2>"$outtemp"
 tryDiff "$test"/out.err "$outtemp"
 evaluateTest
 
@@ -237,7 +237,7 @@ startTest
 "$RGBASM" -o "$otemp" "$test"/a.asm
 "$RGBASM" -o "$gbtemp2" "$test"/b.asm
 continueTest
-rgblinkQuiet -o "$gbtemp" "$gbtemp2" "$otemp" 2>"$outtemp"
+rgblinkQuiet -o "$gbtemp" "$otemp" "$gbtemp2" 2>"$outtemp"
 tryDiff "$test"/out.err "$outtemp"
 evaluateTest
 
@@ -266,6 +266,15 @@ startTest
 "$RGBASM" -o "$otemp" "$test"/a.asm
 continueTest
 rgblinkQuiet "$otemp" "$test"/b.rel 2>"$outtemp"
+tryDiff "$test"/out.err "$outtemp"
+evaluateTest
+
+test="section-conflict/different-mod"
+startTest
+"$RGBASM" -o "$otemp" "$test"/a.asm
+"$RGBASM" -o "$gbtemp" "$test"/b.asm
+continueTest
+rgblinkQuiet "$otemp" "$gbtemp" 2>"$outtemp"
 tryDiff "$test"/out.err "$outtemp"
 evaluateTest
 
@@ -319,7 +328,7 @@ startTest
 "$RGBASM" -o "$otemp" "$test"/a.asm
 "$RGBASM" -o "$gbtemp2" "$test"/b.asm
 continueTest
-rgblinkQuiet "$gbtemp2" "$otemp" 2>"$outtemp"
+rgblinkQuiet "$otemp" "$gbtemp2" 2>"$outtemp"
 tryDiff "$test"/out.err "$outtemp"
 evaluateTest
 
@@ -328,7 +337,7 @@ startTest
 "$RGBASM" -o "$otemp" "$test"/a.asm
 "$RGBASM" -o "$gbtemp2" "$test"/b.asm
 continueTest
-rgblinkQuiet -o "$gbtemp" "$gbtemp2" "$otemp" 2>"$outtemp"
+rgblinkQuiet -o "$gbtemp" "$otemp" "$gbtemp2" 2>"$outtemp"
 tryDiff "$test"/out.err "$outtemp"
 tryCmpRom "$test"/ref.out.bin
 evaluateTest
@@ -364,7 +373,7 @@ startTest
 "$RGBASM" -o "$otemp" "$test"/a.asm
 "$RGBASM" -o "$gbtemp2" "$test"/b.asm
 continueTest
-rgblinkQuiet -o "$gbtemp" -n "$outtemp2" "$gbtemp2" "$otemp" 2>"$outtemp"
+rgblinkQuiet -o "$gbtemp" -n "$outtemp2" "$otemp" "$gbtemp2" 2>"$outtemp"
 tryDiff "$test"/out.err "$outtemp"
 tryDiff "$test"/ref.out.sym "$outtemp2"
 tryCmpRom "$test"/ref.out.bin

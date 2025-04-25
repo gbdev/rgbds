@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: MIT */
+// SPDX-License-Identifier: MIT
 
 #include <ctype.h>
 #include <errno.h>
@@ -53,17 +53,19 @@ void opt_W(char const *flag) {
 void opt_Parse(char const *s) {
 	switch (s[0]) {
 	case 'b':
-		if (strlen(&s[1]) == 2)
+		if (strlen(&s[1]) == 2) {
 			opt_B(&s[1]);
-		else
+		} else {
 			error("Must specify exactly 2 characters for option 'b'\n");
+		}
 		break;
 
 	case 'g':
-		if (strlen(&s[1]) == 4)
+		if (strlen(&s[1]) == 4) {
 			opt_G(&s[1]);
-		else
+		} else {
 			error("Must specify exactly 4 characters for option 'g'\n");
+		}
 		break;
 
 	case 'p':
@@ -72,12 +74,13 @@ void opt_Parse(char const *s) {
 			unsigned int padByte;
 
 			result = sscanf(&s[1], "%x", &padByte);
-			if (result != 1)
+			if (result != 1) {
 				error("Invalid argument for option 'p'\n");
-			else if (padByte > 0xFF)
+			} else if (padByte > 0xFF) {
 				error("Argument for option 'p' must be between 0 and 0xFF\n");
-			else
+			} else {
 				opt_P(padByte);
+			}
 		} else {
 			error("Invalid argument for option 'p'\n");
 		}
@@ -86,19 +89,21 @@ void opt_Parse(char const *s) {
 		char const *precisionArg;
 	case 'Q':
 		precisionArg = &s[1];
-		if (precisionArg[0] == '.')
+		if (precisionArg[0] == '.') {
 			precisionArg++;
+		}
 		if (strlen(precisionArg) <= 2) {
 			int result;
 			unsigned int precision;
 
 			result = sscanf(precisionArg, "%u", &precision);
-			if (result != 1)
+			if (result != 1) {
 				error("Invalid argument for option 'Q'\n");
-			else if (precision < 1 || precision > 31)
+			} else if (precision < 1 || precision > 31) {
 				error("Argument for option 'Q' must be between 1 and 31\n");
-			else
+			} else {
 				opt_Q(precision);
+			}
 		} else {
 			error("Invalid argument for option 'Q'\n");
 		}
@@ -106,8 +111,9 @@ void opt_Parse(char const *s) {
 
 	case 'r': {
 		++s; // Skip 'r'
-		while (isblank(*s))
+		while (isblank(*s)) {
 			++s; // Skip leading whitespace
+		}
 
 		if (s[0] == '\0') {
 			error("Missing argument to option 'r'\n");
@@ -128,10 +134,11 @@ void opt_Parse(char const *s) {
 	}
 
 	case 'W':
-		if (strlen(&s[1]) > 0)
+		if (strlen(&s[1]) > 0) {
 			opt_W(&s[1]);
-		else
+		} else {
 			error("Must specify an argument for option 'W'\n");
+		}
 		break;
 
 	default:

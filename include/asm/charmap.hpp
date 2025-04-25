@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: MIT */
+// SPDX-License-Identifier: MIT
 
 #ifndef RGBDS_ASM_CHARMAP_HPP
 #define RGBDS_ASM_CHARMAP_HPP
@@ -20,8 +20,10 @@ void charmap_Push();
 void charmap_Pop();
 void charmap_CheckStack();
 void charmap_Add(std::string const &mapping, std::vector<int32_t> &&value);
-bool charmap_HasChar(std::string const &input);
+bool charmap_HasChar(std::string const &mapping);
+size_t charmap_CharSize(std::string const &mapping);
 std::vector<int32_t> charmap_Convert(std::string const &input);
 size_t charmap_ConvertNext(std::string_view &input, std::vector<int32_t> *output);
+std::string charmap_Reverse(std::vector<int32_t> const &value, bool &unique);
 
 #endif // RGBDS_ASM_CHARMAP_HPP

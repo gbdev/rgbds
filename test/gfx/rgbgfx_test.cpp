@@ -1,20 +1,5 @@
 /* SPDX-License-Identifier: MIT */
 
-// For `execProg` (Windows is its special little snowflake again)
-#if !defined(_MSC_VER) && !defined(__MINGW32__)
-	#include <sys/stat.h>
-	#include <sys/wait.h>
-
-	#include <spawn.h>
-	#include <unistd.h>
-#else
-	#define WIN32_LEAN_AND_MEAN // Include less from `windows.h` to avoid conflicts
-	#include <windows.h>
-	#include <errhandlingapi.h>
-	#include <processthreadsapi.h>
-	#undef max // This macro conflicts with `std::numeric_limits<...>::max()`
-#endif
-
 #include <algorithm>
 #include <array>
 #include <cassert>
@@ -32,6 +17,25 @@
 #include "defaultinitvec.hpp" // Reused from RGBDS
 
 #include "gfx/rgba.hpp" // Reused from RGBGFX
+
+// For `execProg` (Windows and POSIX spawn child processes differently)
+#if !defined(_MSC_VER) && !defined(__MINGW32__)
+	#include <sys/stat.h>
+	#include <sys/wait.h>
+
+	#include <signal.h>
+	#include <spawn.h>
+	#include <unistd.h>
+#else
+// clang-format off: maintain `include` order
+	#define WIN32_LEAN_AND_MEAN // Include less from `windows.h`
+	#include <windows.h>
+// clang-format on
+	#include <errhandlingapi.h>
+	#include <processthreadsapi.h>
+
+	#undef max // This macro conflicts with `std::numeric_limits<...>::max()`
+#endif
 
 static uintmax_t nbErrors;
 
@@ -59,7 +63,8 @@ static void error(char const *fmt, ...) {
 	}
 }
 
-[[noreturn]] static void fatal(char const *fmt, ...) {
+[[noreturn]]
+static void fatal(char const *fmt, ...) {
 	va_list ap;
 
 	fputs("FATAL: ", stderr);
@@ -92,7 +97,8 @@ class Png {
 	int nbTransparentEntries;
 	png_bytep transparencyPal = nullptr;
 
-	[[noreturn]] static void handleError(png_structp png, char const *msg) {
+	[[noreturn]]
+	static void handleError(png_structp png, char const *msg) {
 		Png *self = reinterpret_cast<Png *>(png_get_error_ptr(png));
 
 		fatal("Error reading input image (\"%s\"): %s", self->path.c_str(), msg);
@@ -307,25 +313,10 @@ static char *execProg(char const *name, char * const *argv) {
 		return strerror(err);
 	}
 
-	siginfo_t info;
-	if (waitid(P_PID, pid, &info, WEXITED) != 0) {
+	if (int info; waitpid(pid, &info, 0) == -1 || !WIFEXITED(info)) {
 		fatal("Error waiting for %s: %s", name, strerror(errno));
-	} else if (info.si_code != CLD_EXITED) {
-		assert(info.si_code == CLD_KILLED || info.si_code == CLD_DUMPED);
-		fatal(
-		    "%s was terminated by signal %s%s\n\tThe command was: [%s]",
-		    name,
-		    strsignal(info.si_status),
-		    info.si_code == CLD_DUMPED ? " (core dumped)" : "",
-		    formatArgv()
-		);
-	} else if (info.si_status != 0) {
-		fatal(
-		    "%s returned with status %d\n\tThe command was: [%s]",
-		    name,
-		    info.si_status,
-		    formatArgv()
-		);
+	} else if (int status = WEXITSTATUS(info); status != 0) {
+		fatal("%s returned with status %d\n\tThe command was: [%s]", name, status, formatArgv());
 	}
 
 #else // defined(_MSC_VER) || defined(__MINGW32__)
@@ -350,34 +341,16 @@ static char *execProg(char const *name, char * const *argv) {
 
 	std::vector<char> cmdLine;
 	for (size_t i = 0; argv[i]; ++i) {
-		if (i > 0)
+		if (i > 0) {
 			cmdLine.push_back(' ');
+		}
 		cmdLine.insert(cmdLine.end(), argv[i], argv[i] + strlen(argv[i]));
 	}
 	cmdLine.push_back('\0');
 
 	STARTUPINFOA startupInfo;
 	GetStartupInfoA(&startupInfo);
-	STARTUPINFOA childStartupInfo{
-	    sizeof(startupInfo),
-	    nullptr,
-	    nullptr,
-	    nullptr,
-	    0,
-	    0,
-	    0,
-	    0,
-	    0,
-	    0,
-	    0,
-	    0,
-	    0,
-	    0,
-	    nullptr,
-	    0,
-	    0,
-	    0,
-	};
+	STARTUPINFOA childStartupInfo = {sizeof(startupInfo)};
 
 	PROCESS_INFORMATION child;
 	if (CreateProcessA(

@@ -24,6 +24,7 @@ AttributeMacros:
 BinPackArguments: false
 BinPackParameters: false
 BitFieldColonSpacing: Both
+BreakAfterAttributes: Always
 BreakBeforeBinaryOperators: NonAssignment
 BreakBeforeBraces: Attach
 BreakBeforeConceptDeclarations: true
@@ -54,12 +55,14 @@ IncludeCategories:
 IndentAccessModifiers: false
 IndentCaseBlocks: false
 IndentCaseLabels: false
-IndentExternBlock: NoIndent
+IndentExternBlock: Indent
 IndentGotoLabels: false
 IndentPPDirectives: BeforeHash
 IndentRequires: true
 IndentWidth: 4
 IndentWrappedFunctionNames: true
+InsertBraces: true
+InsertNewlineAtEOF: true
 # Only support for Javascript as of clang-format 14...
 # InsertTrailingCommas: Wrapped
 KeepEmptyLinesAtTheStartOfBlocks: false
@@ -71,6 +74,8 @@ PPIndentWidth: -1
 PointerAlignment: Right
 QualifierAlignment: Right
 ReflowComments: true
+RemoveParentheses: ReturnStatement
+RemoveSemicolon: true
 SortIncludes: CaseSensitive
 SortUsingDeclarations: true
 SpaceAfterCStyleCast: false

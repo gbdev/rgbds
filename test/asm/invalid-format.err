@@ -26,4 +26,6 @@ error: invalid-format.asm(16):
     Formatting type 'd' with exact flag '#'
 error: invalid-format.asm(17):
     Formatting type 'd' with fractional width
-error: Assembly aborted (14 errors)!
+error: invalid-format.asm(18):
+    Formatting type 'd' with fractional precision
+error: Assembly aborted (15 errors)!

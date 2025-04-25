@@ -1,8 +1,8 @@
 warning: break.asm(9): [-Wuser]
     done 5
-warning: break.asm(17): [-Wuser]
+warning: break.asm(28): [-Wuser]
     OK
-error: break.asm(18):
+error: break.asm(29):
     BREAK can only be used inside a REPT/FOR block
-FATAL: break.asm(19) -> break.asm::REPT~1(23):
+FATAL: break.asm(30) -> break.asm::REPT~1(34):
     Ended block with 1 unterminated IF construct

@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: MIT */
+// SPDX-License-Identifier: MIT
 
 #include "asm/section.hpp"
 
@@ -49,9 +49,11 @@ static std::pair<Symbol const *, Symbol const *> currentLoadLabelScopes = {nullp
 int32_t loadOffset; // Offset into the LOAD section's parent (see sect_GetOutputOffset)
 
 // A quick check to see if we have an initialized section
-[[nodiscard]] static bool requireSection() {
-	if (currentSection)
+[[nodiscard]]
+static bool requireSection() {
+	if (currentSection) {
 		return true;
+	}
 
 	error("Cannot output data outside of a SECTION\n");
 	return false;
@@ -59,12 +61,15 @@ int32_t loadOffset; // Offset into the LOAD section's parent (see sect_GetOutput
 
 // A quick check to see if we have an initialized section that can contain
 // this much initialized data
-[[nodiscard]] static bool requireCodeSection() {
-	if (!requireSection())
+[[nodiscard]]
+static bool requireCodeSection() {
+	if (!requireSection()) {
 		return false;
+	}
 
-	if (sect_HasData(currentSection->type))
+	if (sect_HasData(currentSection->type)) {
 		return true;
+	}
 
 	error(
 	    "Section '%s' cannot contain code or data (not ROM0 or ROMX)\n",
@@ -75,14 +80,15 @@ int32_t loadOffset; // Offset into the LOAD section's parent (see sect_GetOutput
 
 void sect_CheckSizes() {
 	for (Section const &sect : sectionList) {
-		if (uint32_t maxSize = sectionTypeInfo[sect.type].size; sect.size > maxSize)
+		if (uint32_t maxSize = sectionTypeInfo[sect.type].size; sect.size > maxSize) {
 			error(
 			    "Section '%s' grew too big (max size = 0x%" PRIX32 " bytes, reached 0x%" PRIX32
-			    ").\n",
+			    ")\n",
 			    sect.name.c_str(),
 			    maxSize,
 			    sect.size
 			);
+		}
 	}
 }
 
@@ -106,33 +112,36 @@ static unsigned int mergeSectUnion(
 
 	// Unionized sections only need "compatible" constraints, and they end up with the strictest
 	// combination of both.
-	if (sect_HasData(type))
+	if (sect_HasData(type)) {
 		sectError("Cannot declare ROM sections as UNION\n");
+	}
 
 	if (org != UINT32_MAX) {
 		// If both are fixed, they must be the same
-		if (sect.org != UINT32_MAX && sect.org != org)
+		if (sect.org != UINT32_MAX && sect.org != org) {
 			sectError(
 			    "Section already declared as fixed at different address $%04" PRIx32 "\n", sect.org
 			);
-		else if (sect.align != 0 && (mask(sect.align) & (org - sect.alignOfs)))
+		} else if (sect.align != 0 && (mask(sect.align) & (org - sect.alignOfs))) {
 			sectError(
 			    "Section already declared as aligned to %u bytes (offset %" PRIu16 ")\n",
 			    1U << sect.align,
 			    sect.alignOfs
 			);
-		else
+		} else {
 			// Otherwise, just override
 			sect.org = org;
+		}
 
 	} else if (alignment != 0) {
 		// Make sure any fixed address given is compatible
 		if (sect.org != UINT32_MAX) {
-			if ((sect.org - alignOffset) & mask(alignment))
+			if ((sect.org - alignOffset) & mask(alignment)) {
 				sectError(
 				    "Section already declared as fixed at incompatible address $%04" PRIx32 "\n",
 				    sect.org
 				);
+			}
 			// Check if alignment offsets are compatible
 		} else if ((alignOffset & mask(sect.align)) != (sect.alignOfs & mask(alignment))) {
 			sectError(
@@ -163,34 +172,37 @@ static unsigned int
 		uint16_t curOrg = org - sect.size;
 
 		// If both are fixed, they must be the same
-		if (sect.org != UINT32_MAX && sect.org != curOrg)
+		if (sect.org != UINT32_MAX && sect.org != curOrg) {
 			sectError(
 			    "Section already declared as fixed at incompatible address $%04" PRIx32 "\n",
 			    sect.org
 			);
-		else if (sect.align != 0 && (mask(sect.align) & (curOrg - sect.alignOfs)))
+		} else if (sect.align != 0 && (mask(sect.align) & (curOrg - sect.alignOfs))) {
 			sectError(
 			    "Section already declared as aligned to %u bytes (offset %" PRIu16 ")\n",
 			    1U << sect.align,
 			    sect.alignOfs
 			);
-		else
+		} else {
 			// Otherwise, just override
 			sect.org = curOrg;
+		}
 
 	} else if (alignment != 0) {
 		int32_t curOfs = (alignOffset - sect.size) % (1U << alignment);
 
-		if (curOfs < 0)
+		if (curOfs < 0) {
 			curOfs += 1U << alignment;
+		}
 
 		// Make sure any fixed address given is compatible
 		if (sect.org != UINT32_MAX) {
-			if ((sect.org - curOfs) & mask(alignment))
+			if ((sect.org - curOfs) & mask(alignment)) {
 				sectError(
 				    "Section already declared as fixed at incompatible address $%04" PRIx32 "\n",
 				    sect.org
 				);
+			}
 			// Check if alignment offsets are compatible
 		} else if ((curOfs & mask(sect.align)) != (sect.alignOfs & mask(alignment))) {
 			sectError(
@@ -220,13 +232,14 @@ static void mergeSections(
 ) {
 	unsigned int nbSectErrors = 0;
 
-	if (type != sect.type)
+	if (type != sect.type) {
 		sectError(
 		    "Section already exists but with type %s\n", sectionTypeInfo[sect.type].name.c_str()
 		);
+	}
 
 	if (sect.modifier != mod) {
-		sectError("Section already declared as %s section\n", sectionModNames[sect.modifier]);
+		sectError("Section already declared as SECTION %s\n", sectionModNames[sect.modifier]);
 	} else {
 		switch (mod) {
 		case SECTION_UNION:
@@ -238,11 +251,13 @@ static void mergeSections(
 			// Common checks
 
 			// If the section's bank is unspecified, override it
-			if (sect.bank == UINT32_MAX)
+			if (sect.bank == UINT32_MAX) {
 				sect.bank = bank;
+			}
 			// If both specify a bank, it must be the same one
-			else if (bank != UINT32_MAX && sect.bank != bank)
+			else if (bank != UINT32_MAX && sect.bank != bank) {
 				sectError("Section already declared with different bank %" PRIu32 "\n", sect.bank);
+			}
 			break;
 
 		case SECTION_NORMAL:
@@ -253,13 +268,14 @@ static void mergeSections(
 		}
 	}
 
-	if (nbSectErrors)
+	if (nbSectErrors) {
 		fatalerror(
 		    "Cannot create section \"%s\" (%u error%s)\n",
 		    sect.name.c_str(),
 		    nbSectErrors,
 		    nbSectErrors == 1 ? "" : "s"
 		);
+	}
 }
 
 #undef sectError
@@ -292,8 +308,9 @@ static Section *createSection(
 	out_RegisterNode(sect.src);
 
 	// It is only needed to allocate memory for ROM sections.
-	if (sect_HasData(type))
+	if (sect_HasData(type)) {
 		sect.data.resize(sectionTypeInfo[type].size);
+	}
 
 	return &sect;
 }
@@ -314,9 +331,10 @@ static Section *getSection(
 
 	if (bank != UINT32_MAX) {
 		if (type != SECTTYPE_ROMX && type != SECTTYPE_VRAM && type != SECTTYPE_SRAM
-		    && type != SECTTYPE_WRAMX)
+		    && type != SECTTYPE_WRAMX) {
 			error("BANK only allowed for ROMX, WRAMX, SRAM, or VRAM sections\n");
-		else if (bank < sectionTypeInfo[type].firstBank || bank > sectionTypeInfo[type].lastBank)
+		} else if (bank < sectionTypeInfo[type].firstBank
+		           || bank > sectionTypeInfo[type].lastBank) {
 			error(
 			    "%s bank value $%04" PRIx32 " out of range ($%04" PRIx32 " to $%04" PRIx32 ")\n",
 			    sectionTypeInfo[type].name.c_str(),
@@ -324,6 +342,7 @@ static Section *getSection(
 			    sectionTypeInfo[type].firstBank,
 			    sectionTypeInfo[type].lastBank
 			);
+		}
 	} else if (nbbanks(type) == 1) {
 		// If the section type only has a single bank, implicitly force it
 		bank = sectionTypeInfo[type].firstBank;
@@ -339,7 +358,7 @@ static Section *getSection(
 	}
 
 	if (org != UINT32_MAX) {
-		if (org < sectionTypeInfo[type].startAddr || org > endaddr(type))
+		if (org < sectionTypeInfo[type].startAddr || org > endaddr(type)) {
 			error(
 			    "Section \"%s\"'s fixed address $%04" PRIx32 " is outside of range [$%04" PRIx16
 			    "; $%04" PRIx16 "]\n",
@@ -348,6 +367,7 @@ static Section *getSection(
 			    sectionTypeInfo[type].startAddr,
 			    endaddr(type)
 			);
+		}
 	}
 
 	if (alignment != 0) {
@@ -359,8 +379,9 @@ static Section *getSection(
 		uint32_t mask = mask(alignment);
 
 		if (org != UINT32_MAX) {
-			if ((org - alignOffset) & mask)
+			if ((org - alignOffset) & mask) {
 				error("Section \"%s\"'s fixed address doesn't match its alignment\n", name.c_str());
+			}
 			alignment = 0; // Ignore it if it's satisfied
 		} else if (sectionTypeInfo[type].startAddr & mask) {
 			error(
@@ -393,25 +414,29 @@ static Section *getSection(
 
 // Set the current section
 static void changeSection() {
-	if (!currentUnionStack.empty())
+	if (!currentUnionStack.empty()) {
 		fatalerror("Cannot change the section within a UNION\n");
+	}
 
 	sym_ResetCurrentLabelScopes();
 }
 
 bool Section::isSizeKnown() const {
 	// SECTION UNION and SECTION FRAGMENT can still grow
-	if (modifier != SECTION_NORMAL)
+	if (modifier != SECTION_NORMAL) {
 		return false;
+	}
 
 	// The current section (or current load section if within one) is still growing
-	if (this == currentSection || this == currentLoadSection)
+	if (this == currentSection || this == currentLoadSection) {
 		return false;
+	}
 
 	// Any section on the stack is still growing
 	for (SectionStackEntry &entry : sectionStack) {
-		if (entry.section && entry.section->name == name)
+		if (entry.section && entry.section->name == name) {
 			return false;
+		}
 	}
 
 	return true;
@@ -426,12 +451,14 @@ void sect_NewSection(
     SectionModifier mod
 ) {
 	for (SectionStackEntry &entry : sectionStack) {
-		if (entry.section && entry.section->name == name)
+		if (entry.section && entry.section->name == name) {
 			fatalerror("Section '%s' is already on the stack\n", name.c_str());
+		}
 	}
 
-	if (currentLoadSection)
+	if (currentLoadSection) {
 		sect_EndLoadSection("SECTION");
+	}
 
 	Section *sect = getSection(name, type, org, attrs, mod);
 
@@ -454,16 +481,18 @@ void sect_SetLoadSection(
 	// Therefore, any interactions are NOT TESTED, so lift either of those restrictions at
 	// your own peril! ^^
 
-	if (!requireCodeSection())
+	if (!requireCodeSection()) {
 		return;
+	}
 
 	if (sect_HasData(type)) {
 		error("`LOAD` blocks cannot create a ROM section\n");
 		return;
 	}
 
-	if (currentLoadSection)
+	if (currentLoadSection) {
 		sect_EndLoadSection("LOAD");
+	}
 
 	Section *sect = getSection(name, type, org, attrs, mod);
 
@@ -475,12 +504,11 @@ void sect_SetLoadSection(
 }
 
 void sect_EndLoadSection(char const *cause) {
-	if (cause)
+	if (cause) {
 		warning(
-		    WARNING_UNTERMINATED_LOAD,
-		    "`LOAD` block without `ENDL` terminated by `%s`\n",
-		    cause
+		    WARNING_UNTERMINATED_LOAD, "`LOAD` block without `ENDL` terminated by `%s`\n", cause
 		);
+	}
 
 	if (!currentLoadSection) {
 		error("Found `ENDL` outside of a `LOAD` block\n");
@@ -495,8 +523,9 @@ void sect_EndLoadSection(char const *cause) {
 }
 
 void sect_CheckLoadClosed() {
-	if (currentLoadSection)
+	if (currentLoadSection) {
 		warning(WARNING_UNTERMINATED_LOAD, "`LOAD` block without `ENDL` terminated by EOF\n");
+	}
 }
 
 Section *sect_GetSymbolSection() {
@@ -515,16 +544,18 @@ uint32_t sect_GetOutputOffset() {
 // Returns how many bytes need outputting for the specified alignment and offset to succeed
 uint32_t sect_GetAlignBytes(uint8_t alignment, uint16_t offset) {
 	Section *sect = sect_GetSymbolSection();
-	if (!sect)
+	if (!sect) {
 		return 0;
+	}
 
 	bool isFixed = sect->org != UINT32_MAX;
 
 	// If the section is not aligned, no bytes are needed
 	// (fixed sections count as being maximally aligned for this purpose)
 	uint8_t curAlignment = isFixed ? 16 : sect->align;
-	if (curAlignment == 0)
+	if (curAlignment == 0) {
 		return 0;
+	}
 
 	// We need `(pcValue + curOffset + return value) % (1 << alignment) == offset`
 	uint16_t pcValue = isFixed ? sect->org : sect->alignOfs;
@@ -533,18 +564,20 @@ uint32_t sect_GetAlignBytes(uint8_t alignment, uint16_t offset) {
 }
 
 void sect_AlignPC(uint8_t alignment, uint16_t offset) {
-	if (!requireSection())
+	if (!requireSection()) {
 		return;
+	}
 
 	Section *sect = sect_GetSymbolSection();
 	uint32_t alignSize = 1 << alignment; // Size of an aligned "block"
 
 	if (sect->org != UINT32_MAX) {
-		if ((sect->org + curOffset - offset) % alignSize)
+		if ((sect->org + curOffset - offset) % alignSize) {
 			error(
 			    "Section's fixed address fails required alignment (PC = $%04" PRIx32 ")\n",
 			    sect->org + curOffset
 			);
+		}
 	} else if (sect->align != 0
 	           && (((sect->alignOfs + curOffset) % (1u << sect->align)) - offset) % alignSize) {
 		error(
@@ -568,18 +601,22 @@ void sect_AlignPC(uint8_t alignment, uint16_t offset) {
 }
 
 static void growSection(uint32_t growth) {
-	if (growth > 0 && curOffset > UINT32_MAX - growth)
+	if (growth > 0 && curOffset > UINT32_MAX - growth) {
 		fatalerror("Section size would overflow internal counter\n");
+	}
 	curOffset += growth;
-	if (uint32_t outOffset = sect_GetOutputOffset(); outOffset > currentSection->size)
+	if (uint32_t outOffset = sect_GetOutputOffset(); outOffset > currentSection->size) {
 		currentSection->size = outOffset;
-	if (currentLoadSection && curOffset > currentLoadSection->size)
+	}
+	if (currentLoadSection && curOffset > currentLoadSection->size) {
 		currentLoadSection->size = curOffset;
+	}
 }
 
 static void writeByte(uint8_t byte) {
-	if (uint32_t index = sect_GetOutputOffset(); index < currentSection->data.size())
+	if (uint32_t index = sect_GetOutputOffset(); index < currentSection->data.size()) {
 		currentSection->data[index] = byte;
+	}
 	growSection(1);
 }
 
@@ -621,8 +658,9 @@ static void endUnionMember() {
 	UnionStackEntry &member = currentUnionStack.top();
 	uint32_t memberSize = curOffset - member.start;
 
-	if (memberSize > member.size)
+	if (memberSize > member.size) {
 		member.size = memberSize;
+	}
 	curOffset = member.start;
 }
 
@@ -645,64 +683,75 @@ void sect_EndUnion() {
 }
 
 void sect_CheckUnionClosed() {
-	if (!currentUnionStack.empty())
+	if (!currentUnionStack.empty()) {
 		error("Unterminated UNION construct\n");
+	}
 }
 
 // Output a constant byte
 void sect_ConstByte(uint8_t byte) {
-	if (!requireCodeSection())
+	if (!requireCodeSection()) {
 		return;
+	}
 
 	writeByte(byte);
 }
 
 // Output a string's character units as bytes
 void sect_ByteString(std::vector<int32_t> const &string) {
-	if (!requireCodeSection())
+	if (!requireCodeSection()) {
 		return;
-
-	for (int32_t unit : string) {
-		if (!checkNBit(unit, 8, "All character units"))
-			break;
 	}
 
-	for (int32_t unit : string)
+	for (int32_t unit : string) {
+		if (!checkNBit(unit, 8, "All character units")) {
+			break;
+		}
+	}
+
+	for (int32_t unit : string) {
 		writeByte(static_cast<uint8_t>(unit));
+	}
 }
 
 // Output a string's character units as words
 void sect_WordString(std::vector<int32_t> const &string) {
-	if (!requireCodeSection())
+	if (!requireCodeSection()) {
 		return;
-
-	for (int32_t unit : string) {
-		if (!checkNBit(unit, 16, "All character units"))
-			break;
 	}
 
-	for (int32_t unit : string)
+	for (int32_t unit : string) {
+		if (!checkNBit(unit, 16, "All character units")) {
+			break;
+		}
+	}
+
+	for (int32_t unit : string) {
 		writeWord(static_cast<uint16_t>(unit));
+	}
 }
 
 // Output a string's character units as longs
 void sect_LongString(std::vector<int32_t> const &string) {
-	if (!requireCodeSection())
+	if (!requireCodeSection()) {
 		return;
+	}
 
-	for (int32_t unit : string)
+	for (int32_t unit : string) {
 		writeLong(static_cast<uint32_t>(unit));
+	}
 }
 
 // Skip this many bytes
 void sect_Skip(uint32_t skip, bool ds) {
-	if (!requireSection())
+	if (!requireSection()) {
 		return;
+	}
 
 	if (!sect_HasData(currentSection->type)) {
 		growSection(skip);
 	} else {
-		if (!ds)
+		if (!ds) {
 			warning(
 			    WARNING_EMPTY_DATA_DIRECTIVE,
 			    "%s directive without data in ROM\n",
@@ -710,16 +759,19 @@ void sect_Skip(uint32_t skip, bool ds) {
 			    : (skip == 2) ? "DW"
 			                  : "DB"
 			);
+		}
 		// We know we're in a code SECTION
-		while (skip--)
+		while (skip--) {
 			writeByte(fillByte);
+		}
 	}
 }
 
 // Output a byte that can be relocatable or constant
-void sect_RelByte(Expression &expr, uint32_t pcShift) {
-	if (!requireCodeSection())
+void sect_RelByte(Expression const &expr, uint32_t pcShift) {
+	if (!requireCodeSection()) {
 		return;
+	}
 
 	if (!expr.isKnown()) {
 		createPatch(PATCHTYPE_BYTE, expr, pcShift);
@@ -730,14 +782,13 @@ void sect_RelByte(Expression &expr, uint32_t pcShift) {
 }
 
 // Output several bytes that can be relocatable or constant
-void sect_RelBytes(uint32_t n, std::vector<Expression> &exprs) {
-	if (!requireCodeSection())
+void sect_RelBytes(uint32_t n, std::vector<Expression> const &exprs) {
+	if (!requireCodeSection()) {
 		return;
+	}
 
 	for (uint32_t i = 0; i < n; i++) {
-		Expression &expr = exprs[i % exprs.size()];
-
-		if (!expr.isKnown()) {
+		if (Expression const &expr = exprs[i % exprs.size()]; !expr.isKnown()) {
 			createPatch(PATCHTYPE_BYTE, expr, i);
 			writeByte(0);
 		} else {
@@ -747,9 +798,10 @@ void sect_RelBytes(uint32_t n, std::vector<Expression> &exprs) {
 }
 
 // Output a word that can be relocatable or constant
-void sect_RelWord(Expression &expr, uint32_t pcShift) {
-	if (!requireCodeSection())
+void sect_RelWord(Expression const &expr, uint32_t pcShift) {
+	if (!requireCodeSection()) {
 		return;
+	}
 
 	if (!expr.isKnown()) {
 		createPatch(PATCHTYPE_WORD, expr, pcShift);
@@ -760,9 +812,10 @@ void sect_RelWord(Expression &expr, uint32_t pcShift) {
 }
 
 // Output a long that can be relocatable or constant
-void sect_RelLong(Expression &expr, uint32_t pcShift) {
-	if (!requireCodeSection())
+void sect_RelLong(Expression const &expr, uint32_t pcShift) {
+	if (!requireCodeSection()) {
 		return;
+	}
 
 	if (!expr.isKnown()) {
 		createPatch(PATCHTYPE_LONG, expr, pcShift);
@@ -773,9 +826,10 @@ void sect_RelLong(Expression &expr, uint32_t pcShift) {
 }
 
 // Output a PC-relative byte that can be relocatable or constant
-void sect_PCRelByte(Expression &expr, uint32_t pcShift) {
-	if (!requireCodeSection())
+void sect_PCRelByte(Expression const &expr, uint32_t pcShift) {
+	if (!requireCodeSection()) {
 		return;
+	}
 
 	if (Symbol const *pc = sym_GetPC(); !expr.isDiffConstant(pc)) {
 		createPatch(PATCHTYPE_JR, expr, pcShift);
@@ -786,15 +840,16 @@ void sect_PCRelByte(Expression &expr, uint32_t pcShift) {
 		int16_t offset;
 
 		// Offset is relative to the byte *after* the operand
-		if (sym == pc)
+		if (sym == pc) {
 			offset = -2; // PC as operand to `jr` is lower than reference PC by 2
-		else
+		} else {
 			offset = sym->getValue() - (pc->getValue() + 1);
+		}
 
 		if (offset < -128 || offset > 127) {
 			error(
-			    "jr target must be between -128 and 127 bytes away, not %" PRId16
-			    "; use jp instead\n",
+			    "JR target must be between -128 and 127 bytes away, not %" PRId16
+			    "; use JP instead\n",
 			    offset
 			);
 			writeByte(0);
@@ -810,16 +865,21 @@ void sect_BinaryFile(std::string const &name, int32_t startPos) {
 		error("Start position cannot be negative (%" PRId32 ")\n", startPos);
 		startPos = 0;
 	}
-	if (!requireCodeSection())
+	if (!requireCodeSection()) {
 		return;
+	}
 
 	FILE *file = nullptr;
-	if (std::optional<std::string> fullPath = fstk_FindFile(name); fullPath)
+	if (std::optional<std::string> fullPath = fstk_FindFile(name); fullPath) {
 		file = fopen(fullPath->c_str(), "rb");
+	}
 	if (!file) {
 		if (generatedMissingIncludes) {
-			if (verbose)
+			// LCOV_EXCL_START
+			if (verbose) {
 				printf("Aborting (-MG) on INCBIN file '%s' (%s)\n", name.c_str(), strerror(errno));
+			}
+			// LCOV_EXCL_STOP
 			failedOnMissingInclude = true;
 		} else {
 			error("Error opening INCBIN file '%s': %s\n", name.c_str(), strerror(errno));
@@ -836,10 +896,11 @@ void sect_BinaryFile(std::string const &name, int32_t startPos) {
 		// The file is seekable; skip to the specified start position
 		fseek(file, startPos, SEEK_SET);
 	} else {
-		if (errno != ESPIPE)
+		if (errno != ESPIPE) {
 			error(
 			    "Error determining size of INCBIN file '%s': %s\n", name.c_str(), strerror(errno)
 			);
+		}
 		// The file isn't seekable, so we'll just skip bytes one at a time
 		while (startPos--) {
 			if (fgetc(file) == EOF) {
@@ -851,11 +912,13 @@ void sect_BinaryFile(std::string const &name, int32_t startPos) {
 		}
 	}
 
-	for (int byte; (byte = fgetc(file)) != EOF;)
+	for (int byte; (byte = fgetc(file)) != EOF;) {
 		writeByte(byte);
+	}
 
-	if (ferror(file))
+	if (ferror(file)) {
 		error("Error reading INCBIN file '%s': %s\n", name.c_str(), strerror(errno));
+	}
 }
 
 // Output a slice of a binary file
@@ -868,18 +931,24 @@ void sect_BinaryFileSlice(std::string const &name, int32_t startPos, int32_t len
 		error("Number of bytes to read cannot be negative (%" PRId32 ")\n", length);
 		length = 0;
 	}
-	if (!requireCodeSection())
+	if (!requireCodeSection()) {
 		return;
-	if (length == 0) // Don't even bother with 0-byte slices
+	}
+	if (length == 0) { // Don't even bother with 0-byte slices
 		return;
+	}
 
 	FILE *file = nullptr;
-	if (std::optional<std::string> fullPath = fstk_FindFile(name); fullPath)
+	if (std::optional<std::string> fullPath = fstk_FindFile(name); fullPath) {
 		file = fopen(fullPath->c_str(), "rb");
+	}
 	if (!file) {
 		if (generatedMissingIncludes) {
-			if (verbose)
+			// LCOV_EXCL_START
+			if (verbose) {
 				printf("Aborting (-MG) on INCBIN file '%s' (%s)\n", name.c_str(), strerror(errno));
+			}
+			// LCOV_EXCL_STOP
 			failedOnMissingInclude = true;
 		} else {
 			error("Error opening INCBIN file '%s': %s\n", name.c_str(), strerror(errno));
@@ -906,10 +975,11 @@ void sect_BinaryFileSlice(std::string const &name, int32_t startPos, int32_t len
 		// The file is seekable; skip to the specified start position
 		fseek(file, startPos, SEEK_SET);
 	} else {
-		if (errno != ESPIPE)
+		if (errno != ESPIPE) {
 			error(
 			    "Error determining size of INCBIN file '%s': %s\n", name.c_str(), strerror(errno)
 			);
+		}
 		// The file isn't seekable, so we'll just skip bytes one at a time
 		while (startPos--) {
 			if (fgetc(file) == EOF) {
@@ -955,11 +1025,13 @@ void sect_PushSection() {
 }
 
 void sect_PopSection() {
-	if (sectionStack.empty())
+	if (sectionStack.empty()) {
 		fatalerror("No entries in the section stack\n");
+	}
 
-	if (currentLoadSection)
+	if (currentLoadSection) {
 		sect_EndLoadSection("POPS");
+	}
 
 	SectionStackEntry entry = sectionStack.front();
 	sectionStack.pop_front();
@@ -980,14 +1052,17 @@ void sect_CheckStack() {
 }
 
 void sect_EndSection() {
-	if (!currentSection)
+	if (!currentSection) {
 		fatalerror("Cannot end the section outside of a SECTION\n");
+	}
 
-	if (!currentUnionStack.empty())
+	if (!currentUnionStack.empty()) {
 		fatalerror("Cannot end the section within a UNION\n");
+	}
 
-	if (currentLoadSection)
+	if (currentLoadSection) {
 		sect_EndLoadSection("ENDSECTION");
+	}
 
 	// Reset the section scope
 	currentSection = nullptr;

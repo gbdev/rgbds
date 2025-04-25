@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: MIT */
+// SPDX-License-Identifier: MIT
 
 #include "link/patch.hpp"
 
@@ -33,8 +33,9 @@ static void pushRPN(int32_t value, bool comesFromError) {
 static bool isError = false;
 
 static int32_t popRPN(Patch const &patch) {
-	if (rpnStack.empty())
+	if (rpnStack.empty()) {
 		fatal(patch.src, patch.lineNo, "Internal error, RPN stack empty");
+	}
 
 	RPNStackEntry entry = rpnStack.front();
 
@@ -46,8 +47,9 @@ static int32_t popRPN(Patch const &patch) {
 // RPN operators
 
 static uint32_t getRPNByte(uint8_t const *&expression, int32_t &size, Patch const &patch) {
-	if (!size--)
+	if (!size--) {
 		fatal(patch.src, patch.lineNo, "Internal error, RPN expression overread");
+	}
 
 	return *expression++;
 }
@@ -57,20 +59,14 @@ static Symbol const *getSymbol(std::vector<Symbol> const &symbolList, uint32_t i
 	Symbol const &symbol = symbolList[index];
 
 	// If the symbol is defined elsewhere...
-	if (symbol.type == SYMTYPE_IMPORT)
+	if (symbol.type == SYMTYPE_IMPORT) {
 		return sym_GetSymbol(symbol.name);
+	}
 
 	return &symbol;
 }
 
-/*
- * Compute a patch's value from its RPN string.
- * @param patch The patch to compute the value of
- * @param section The section the patch is contained in
- * @return The patch's value
- * @return isError Set if an error occurred during evaluation, and further
- *                 errors caused by the value should be suppressed.
- */
+// Compute a patch's value from its RPN string.
 static int32_t computeRPNExpr(Patch const &patch, std::vector<Symbol> const &fileSymbols) {
 	uint8_t const *expression = patch.rpnExpression.data();
 	int32_t size = static_cast<int32_t>(patch.rpnExpression.size());
@@ -220,8 +216,9 @@ static int32_t computeRPNExpr(Patch const &patch, std::vector<Symbol> const &fil
 
 		case RPN_BANK_SYM:
 			value = 0;
-			for (uint8_t shift = 0; shift < 32; shift += 8)
+			for (uint8_t shift = 0; shift < 32; shift += 8) {
 				value |= getRPNByte(expression, size, patch) << shift;
+			}
 
 			if (Symbol const *symbol = getSymbol(fileSymbols, value); !symbol) {
 				error(
@@ -250,8 +247,7 @@ static int32_t computeRPNExpr(Patch const &patch, std::vector<Symbol> const &fil
 			// `expression` is not guaranteed to be '\0'-terminated. If it is not,
 			// `getRPNByte` will have a fatal internal error.
 			char const *name = reinterpret_cast<char const *>(expression);
-			while (getRPNByte(expression, size, patch))
-				;
+			while (getRPNByte(expression, size, patch)) {}
 
 			if (Section const *sect = sect_GetSection(name); !sect) {
 				error(
@@ -281,8 +277,7 @@ static int32_t computeRPNExpr(Patch const &patch, std::vector<Symbol> const &fil
 		case RPN_SIZEOF_SECT: {
 			// This has assumptions commented in the `RPN_BANK_SECT` case above.
 			char const *name = reinterpret_cast<char const *>(expression);
-			while (getRPNByte(expression, size, patch))
-				;
+			while (getRPNByte(expression, size, patch)) {}
 
 			if (Section const *sect = sect_GetSection(name); !sect) {
 				error(
@@ -302,8 +297,7 @@ static int32_t computeRPNExpr(Patch const &patch, std::vector<Symbol> const &fil
 		case RPN_STARTOF_SECT: {
 			// This has assumptions commented in the `RPN_BANK_SECT` case above.
 			char const *name = reinterpret_cast<char const *>(expression);
-			while (getRPNByte(expression, size, patch))
-				;
+			while (getRPNByte(expression, size, patch)) {}
 
 			if (Section const *sect = sect_GetSection(name); !sect) {
 				error(
@@ -369,7 +363,6 @@ static int32_t computeRPNExpr(Patch const &patch, std::vector<Symbol> const &fil
 		case RPN_RST:
 			value = popRPN(patch);
 			// Acceptable values are 0x00, 0x08, 0x10, ..., 0x38
-			// They can be easily checked with a bitmask
 			if (value & ~0x38) {
 				if (!isError) {
 					error(patch.src, patch.lineNo, "Value $%" PRIx32 " is not a RST vector", value);
@@ -380,16 +373,33 @@ static int32_t computeRPNExpr(Patch const &patch, std::vector<Symbol> const &fil
 			value |= 0xC7;
 			break;
 
+		case RPN_BIT_INDEX: {
+			value = popRPN(patch);
+			int32_t mask = getRPNByte(expression, size, patch);
+			// Acceptable values are 0 to 7
+			if (value & ~0x07) {
+				if (!isError) {
+					error(patch.src, patch.lineNo, "Value $%" PRIx32 " is not a bit index", value);
+					isError = true;
+				}
+				value = 0;
+			}
+			value = mask | (value << 3);
+			break;
+		}
+
 		case RPN_CONST:
 			value = 0;
-			for (uint8_t shift = 0; shift < 32; shift += 8)
+			for (uint8_t shift = 0; shift < 32; shift += 8) {
 				value |= getRPNByte(expression, size, patch) << shift;
+			}
 			break;
 
 		case RPN_SYM:
 			value = 0;
-			for (uint8_t shift = 0; shift < 32; shift += 8)
+			for (uint8_t shift = 0; shift < 32; shift += 8) {
 				value |= getRPNByte(expression, size, patch) << shift;
+			}
 
 			if (value == -1) { // PC
 				if (!patch.pcSection) {
@@ -422,8 +432,9 @@ static int32_t computeRPNExpr(Patch const &patch, std::vector<Symbol> const &fil
 		pushRPN(value, isError);
 	}
 
-	if (rpnStack.size() > 1)
+	if (rpnStack.size() > 1) {
 		error(patch.src, patch.lineNo, "RPN stack has %zu entries on exit, not 1", rpnStack.size());
+	}
 
 	isError = false;
 	return popRPN(patch);
@@ -474,11 +485,7 @@ void patch_CheckAssertions() {
 	}
 }
 
-/*
- * Applies all of a section's patches
- * @param section The section component to patch
- * @param dataSection The section to patch
- */
+// Applies all of a section's patches to a data section
 static void applyFilePatches(Section &section, Section &dataSection) {
 	verbosePrint("Patching section \"%s\"...\n", section.name.c_str());
 	for (Patch &patch : section.patches) {
@@ -512,18 +519,19 @@ static void applyFilePatches(Section &section, Section &dataSection) {
 			uint16_t address = patch.pcSection->org + patch.pcOffset + 2;
 			int16_t jumpOffset = value - address;
 
-			if (!isError && (jumpOffset < -128 || jumpOffset > 127))
+			if (!isError && (jumpOffset < -128 || jumpOffset > 127)) {
 				error(
 				    patch.src,
 				    patch.lineNo,
-				    "jr target must be between -128 and 127 bytes away, not %" PRId16
-				    "; use jp instead\n",
+				    "JR target must be between -128 and 127 bytes away, not %" PRId16
+				    "; use JP instead",
 				    jumpOffset
 				);
+			}
 			dataSection.data[offset] = jumpOffset & 0xFF;
 		} else {
 			// Patch a certain number of bytes
-			if (!isError && (value < type.min || value > type.max))
+			if (!isError && (value < type.min || value > type.max)) {
 				error(
 				    patch.src,
 				    patch.lineNo,
@@ -532,6 +540,7 @@ static void applyFilePatches(Section &section, Section &dataSection) {
 				    value < 0 ? " (maybe negative?)" : "",
 				    type.size * 8U
 				);
+			}
 			for (uint8_t i = 0; i < type.size; i++) {
 				dataSection.data[offset + i] = value & 0xFF;
 				value >>= 8;
@@ -540,16 +549,15 @@ static void applyFilePatches(Section &section, Section &dataSection) {
 	}
 }
 
-/*
- * Applies all of a section's patches, iterating over "components" of unionized sections
- * @param section The section to patch
- */
+// Applies all of a section's patches, iterating over "components" of unionized sections
 static void applyPatches(Section &section) {
-	if (!sect_HasData(section.type))
+	if (!sect_HasData(section.type)) {
 		return;
+	}
 
-	for (Section *component = &section; component; component = component->nextu.get())
+	for (Section *component = &section; component; component = component->nextu.get()) {
 		applyFilePatches(*component, section);
+	}
 }
 
 void patch_ApplyPatches() {

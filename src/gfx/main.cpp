@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: MIT */
+// SPDX-License-Identifier: MIT
 
 #include "gfx/main.hpp"
 
@@ -12,7 +12,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <string_view>
-#include <type_traits>
 #include <vector>
 
 #include "extern/getopt.hpp"
@@ -41,7 +40,8 @@ static struct LocalOptions {
 
 static uintmax_t nbErrors;
 
-[[noreturn]] void giveUp() {
+[[noreturn]]
+void giveUp() {
 	fprintf(stderr, "Conversion aborted after %ju error%s\n", nbErrors, nbErrors == 1 ? "" : "s");
 	exit(1);
 }
@@ -71,18 +71,21 @@ void error(char const *fmt, ...) {
 	va_end(ap);
 	putc('\n', stderr);
 
-	if (nbErrors != std::numeric_limits<decltype(nbErrors)>::max())
+	if (nbErrors != std::numeric_limits<decltype(nbErrors)>::max()) {
 		nbErrors++;
+	}
 }
 
 void errorMessage(char const *msg) {
 	fprintf(stderr, "error: %s\n", msg);
 
-	if (nbErrors != std::numeric_limits<decltype(nbErrors)>::max())
+	if (nbErrors != std::numeric_limits<decltype(nbErrors)>::max()) {
 		nbErrors++;
+	}
 }
 
-[[noreturn]] void fatal(char const *fmt, ...) {
+[[noreturn]]
+void fatal(char const *fmt, ...) {
 	va_list ap;
 
 	fputs("FATAL: ", stderr);
@@ -91,13 +94,15 @@ void errorMessage(char const *msg) {
 	va_end(ap);
 	putc('\n', stderr);
 
-	if (nbErrors != std::numeric_limits<decltype(nbErrors)>::max())
+	if (nbErrors != std::numeric_limits<decltype(nbErrors)>::max()) {
 		nbErrors++;
+	}
 
 	giveUp();
 }
 
 void Options::verbosePrint(uint8_t level, char const *fmt, ...) const {
+	// LCOV_EXCL_START
 	if (verbosity >= level) {
 		va_list ap;
 
@@ -105,21 +110,19 @@ void Options::verbosePrint(uint8_t level, char const *fmt, ...) const {
 		vfprintf(stderr, fmt, ap);
 		va_end(ap);
 	}
+	// LCOV_EXCL_STOP
 }
 
 // Short options
-static char const *optstring = "-Aa:B:b:Cc:d:i:L:mN:n:Oo:Pp:Qq:r:s:Tt:U:uVvXx:YZ";
+static char const *optstring = "-Aa:B:b:Cc:d:hi:L:mN:n:Oo:Pp:Qq:r:s:Tt:U:uVvXx:YZ";
 
-/*
- * Equivalent long options
- * Please keep in the same order as short opts
- *
- * Also, make sure long opts don't create ambiguity:
- * A long opt's name should start with the same letter as its short opt,
- * except if it doesn't create any ambiguity (`verbose` versus `version`).
- * This is because long opt matching, even to a single char, is prioritized
- * over short opt matching
- */
+// Equivalent long options
+// Please keep in the same order as short opts.
+// Also, make sure long opts don't create ambiguity:
+// A long opt's name should start with the same letter as its short opt,
+// except if it doesn't create any ambiguity (`verbose` versus `version`).
+// This is because long opt matching, even to a single char, is prioritized
+// over short opt matching.
 static option const longopts[] = {
     {"auto-attr-map",    no_argument,       nullptr, 'A'},
     {"attr-map",         required_argument, nullptr, 'a'},
@@ -128,6 +131,7 @@ static option const longopts[] = {
     {"color-curve",      no_argument,       nullptr, 'C'},
     {"colors",           required_argument, nullptr, 'c'},
     {"depth",            required_argument, nullptr, 'd'},
+    {"help",             no_argument,       nullptr, 'h'},
     {"input-tileset",    required_argument, nullptr, 'i'},
     {"slice",            required_argument, nullptr, 'L'},
     {"mirror-tiles",     no_argument,       nullptr, 'm'},
@@ -154,9 +158,10 @@ static option const longopts[] = {
     {nullptr,            no_argument,       nullptr, 0  }
 };
 
+// LCOV_EXCL_START
 static void printUsage() {
 	fputs(
-	    "Usage: rgbgfx [-r stride] [-CmOuVXYZ] [-v [-v ...]] [-a <attr_map> | -A]\n"
+	    "Usage: rgbgfx [-r stride] [-ChmOuVXYZ] [-v [-v ...]] [-a <attr_map> | -A]\n"
 	    "       [-b <base_ids>] [-c <colors>] [-d <depth>] [-i <tileset_file>]\n"
 	    "       [-L <slice>] [-N <nb_tiles>] [-n <nb_pals>] [-o <out_file>]\n"
 	    "       [-p <pal_file> | -P] [-q <pal_map> | -Q] [-s <nb_colors>]\n"
@@ -172,11 +177,10 @@ static void printUsage() {
 	    stderr
 	);
 }
+// LCOV_EXCL_STOP
 
-/*
- * Parses a number at the beginning of a string, moving the pointer to skip the parsed characters
- * Returns the provided errVal on error
- */
+// Parses a number at the beginning of a string, moving the pointer to skip the parsed characters.
+// Returns the provided errVal on error.
 static uint16_t parseNumber(char *&string, char const *errPrefix, uint16_t errVal = UINT16_MAX) {
 	uint8_t base = 10;
 	if (*string == '\0') {
@@ -199,12 +203,10 @@ static uint16_t parseNumber(char *&string, char const *errPrefix, uint16_t errVa
 		}
 	}
 
-	/*
-	 * Turns a digit into its numeric value in the current base, if it has one.
-	 * Maximum is inclusive. The string_view is modified to "consume" all digits.
-	 * Returns 255 on parse failure (including wrong char for base), in which case
-	 * the string_view may be pointing on garbage.
-	 */
+	// Turns a digit into its numeric value in the current base, if it has one.
+	// Maximum is inclusive. The string_view is modified to "consume" all digits.
+	// Returns 255 on parse failure (including wrong char for base), in which case
+	// the string_view may be pointing on garbage.
 	auto charIndex = [&base](unsigned char c) -> uint8_t {
 		unsigned char index = c - '0'; // Use wrapping semantics
 		if (base == 2 && index >= 2) {
@@ -272,10 +274,7 @@ static void registerInput(char const *arg) {
 	}
 }
 
-/*
- * Turn an "at-file"'s contents into an argv that `getopt` can handle
- * @param argPool Argument characters will be appended to this vector, for storage purposes.
- */
+// Turn an at-file's contents into an argv that `getopt` can handle, appending them to `argPool`.
 static std::vector<size_t> readAtFile(std::string const &path, std::vector<char> &argPool) {
 	File file;
 	if (!file.open(path, std::ios_base::in)) {
@@ -284,8 +283,8 @@ static std::vector<size_t> readAtFile(std::string const &path, std::vector<char>
 
 	// We only filter out `EOF`, but calling `isblank()` on anything else is UB!
 	static_assert(
-	    std::remove_reference_t<decltype(*file)>::traits_type::eof() == EOF,
-	    "isblank(char_traits<...>::eof()) is UB!"
+	    std::streambuf::traits_type::eof() == EOF,
+	    "isblank(std::streambuf::traits_type::eof()) is UB!"
 	);
 	std::vector<size_t> argvOfs;
 
@@ -347,13 +346,10 @@ static std::vector<size_t> readAtFile(std::string const &path, std::vector<char>
 	}
 }
 
-/*
- * Parses an arg vector, modifying `options` and `localOptions` as options are read.
- * The `localOptions` struct is for flags which must be processed after the option parsing finishes.
- *
- * Returns `nullptr` if the vector was fully parsed, or a pointer (which is part of the arg vector)
- * to an "at-file" path if one is encountered.
- */
+// Parses an arg vector, modifying `options` and `localOptions` as options are read.
+// The `localOptions` struct is for flags which must be processed after the option parsing finishes.
+// Returns `nullptr` if the vector was fully parsed, or a pointer (which is part of the arg vector)
+// to an "at-file" path if one is encountered.
 static char *parseArgv(int argc, char *argv[]) {
 	for (int ch; (ch = musl_getopt_long_only(argc, argv, optstring, longopts, nullptr)) != -1;) {
 		char *arg = musl_optarg; // Make a copy for scanning
@@ -364,8 +360,9 @@ static char *parseArgv(int argc, char *argv[]) {
 			break;
 		case 'a':
 			localOptions.autoAttrmap = false;
-			if (!options.attrmap.empty())
+			if (!options.attrmap.empty()) {
 				warning("Overriding attrmap file %s", options.attrmap.c_str());
+			}
 			options.attrmap = musl_optarg;
 			break;
 		case 'B':
@@ -468,9 +465,15 @@ static char *parseArgv(int argc, char *argv[]) {
 				options.bitDepth = 2;
 			}
 			break;
+		case 'h':
+			// LCOV_EXCL_START
+			printUsage();
+			exit(0);
+			// LCOV_EXCL_STOP
 		case 'i':
-			if (!options.inputTileset.empty())
+			if (!options.inputTileset.empty()) {
 				warning("Overriding input tileset file %s", options.inputTileset.c_str());
+			}
 			options.inputTileset = musl_optarg;
 			break;
 		case 'L':
@@ -568,8 +571,9 @@ static char *parseArgv(int argc, char *argv[]) {
 			localOptions.groupOutputs = true;
 			break;
 		case 'o':
-			if (!options.output.empty())
+			if (!options.output.empty()) {
 				warning("Overriding tile data file %s", options.output.c_str());
+			}
 			options.output = musl_optarg;
 			break;
 		case 'P':
@@ -577,8 +581,9 @@ static char *parseArgv(int argc, char *argv[]) {
 			break;
 		case 'p':
 			localOptions.autoPalettes = false;
-			if (!options.palettes.empty())
+			if (!options.palettes.empty()) {
 				warning("Overriding palettes file %s", options.palettes.c_str());
+			}
 			options.palettes = musl_optarg;
 			break;
 		case 'Q':
@@ -586,8 +591,9 @@ static char *parseArgv(int argc, char *argv[]) {
 			break;
 		case 'q':
 			localOptions.autoPalmap = false;
-			if (!options.palmap.empty())
+			if (!options.palmap.empty()) {
 				warning("Overriding palette map file %s", options.palmap.c_str());
+			}
 			options.palmap = musl_optarg;
 			break;
 		case 'r':
@@ -613,18 +619,23 @@ static char *parseArgv(int argc, char *argv[]) {
 			break;
 		case 't':
 			localOptions.autoTilemap = false;
-			if (!options.tilemap.empty())
+			if (!options.tilemap.empty()) {
 				warning("Overriding tilemap file %s", options.tilemap.c_str());
+			}
 			options.tilemap = musl_optarg;
 			break;
 		case 'V':
+			// LCOV_EXCL_START
 			printf("rgbgfx %s\n", get_package_version_string());
 			exit(0);
+			// LCOV_EXCL_STOP
 		case 'v':
+			// LCOV_EXCL_START
 			if (options.verbosity < Options::VERB_VVVVVV) {
 				++options.verbosity;
 			}
 			break;
+			// LCOV_EXCL_STOP
 		case 'x':
 			options.trim = parseNumber(arg, "Number of tiles to trim", 0);
 			if (*arg != '\0') {
@@ -651,8 +662,10 @@ static char *parseArgv(int argc, char *argv[]) {
 			}
 			break;
 		default:
+			// LCOV_EXCL_START
 			printUsage();
 			exit(1);
+			// LCOV_EXCL_STOP
 		}
 	}
 
@@ -780,6 +793,7 @@ int main(int argc, char *argv[]) {
 		parseExternalPalSpec(localOptions.externalPalSpec);
 	}
 
+	// LCOV_EXCL_START
 	if (options.verbosity >= Options::VERB_CFG) {
 		fprintf(stderr, "rgbgfx %s\n", get_package_version_string());
 
@@ -812,19 +826,25 @@ int main(int argc, char *argv[]) {
 		}
 
 		fputs("Options:\n", stderr);
-		if (options.columnMajor)
+		if (options.columnMajor) {
 			fputs("\tVisit image in column-major order\n", stderr);
-		if (options.allowDedup)
+		}
+		if (options.allowDedup) {
 			fputs("\tAllow deduplicating tiles\n", stderr);
-		if (options.allowMirroringX)
+		}
+		if (options.allowMirroringX) {
 			fputs("\tAllow deduplicating horizontally mirrored tiles\n", stderr);
-		if (options.allowMirroringY)
+		}
+		if (options.allowMirroringY) {
 			fputs("\tAllow deduplicating vertically mirrored tiles\n", stderr);
-		if (options.useColorCurve)
+		}
+		if (options.useColorCurve) {
 			fputs("\tUse color curve\n", stderr);
+		}
 		fprintf(stderr, "\tBit depth: %" PRIu8 "bpp\n", options.bitDepth);
-		if (options.trim != 0)
+		if (options.trim != 0) {
 			fprintf(stderr, "\tTrim the last %" PRIu64 " tiles\n", options.trim);
+		}
 		fprintf(stderr, "\tMaximum %" PRIu16 " palettes\n", options.nbPalettes);
 		fprintf(stderr, "\tPalettes contain %" PRIu8 " colors\n", options.nbColorsPerPal);
 		fprintf(stderr, "\t%s palette spec\n", [] {
@@ -855,7 +875,7 @@ int main(int argc, char *argv[]) {
 		}
 		fprintf(
 		    stderr,
-		    "\tInput image slice: %" PRIu32 "x%" PRIu32 " pixels starting at (%" PRIi32 ", %" PRIi32
+		    "\tInput image slice: %" PRIu32 "x%" PRIu32 " pixels starting at (%" PRId32 ", %" PRId32
 		    ")\n",
 		    options.inputSlice.width,
 		    options.inputSlice.height,
@@ -886,6 +906,7 @@ int main(int argc, char *argv[]) {
 		printPath("Output palettes", options.palettes);
 		fputs("Ready.\n", stderr);
 	}
+	// LCOV_EXCL_STOP
 
 	// Do not do anything if option parsing went wrong.
 	requireZeroErrors();
@@ -921,9 +942,7 @@ void Palette::addColor(uint16_t color) {
 	}
 }
 
-/*
- * Returns the ID of the color in the palette, or `size()` if the color is not in
- */
+// Returns the ID of the color in the palette, or `size()` if the color is not in
 uint8_t Palette::indexOf(uint16_t color) const {
 	return color == Rgba::transparent
 	           ? 0

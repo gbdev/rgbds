@@ -15,3 +15,4 @@ println STRFMT("%q16s", "hello")
 
 println STRFMT("%#d", 42)
 println STRFMT("%.5d", 42)
+println STRFMT("%q5d", 42)

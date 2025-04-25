@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: MIT */
+// SPDX-License-Identifier: MIT
 
 #include "gfx/pal_spec.hpp"
 
@@ -24,7 +24,7 @@
 using namespace std::string_view_literals;
 
 template<typename Str> // Should be std::string or std::string_view
-static void skipWhitespace(Str const &str, typename Str::size_type &pos) {
+static void skipWhitespace(Str const &str, size_t &pos) {
 	pos = std::min(str.find_first_not_of(" \t"sv, pos), str.length());
 }
 
@@ -33,9 +33,8 @@ void parseInlinePalSpec(char const * const rawArg) {
 	// Palettes are separated by colons.
 
 	std::string_view arg(rawArg);
-	using size_type = decltype(arg)::size_type;
 
-	auto parseError = [&rawArg, &arg](size_type ofs, size_type len, char const *msg) {
+	auto parseError = [&rawArg, &arg](size_t ofs, size_t len, char const *msg) {
 		(void)arg; // With NDEBUG, `arg` is otherwise not used
 		assume(ofs <= arg.length());
 		assume(len <= arg.length());
@@ -59,7 +58,7 @@ void parseInlinePalSpec(char const * const rawArg) {
 	options.palSpec.clear();
 	options.palSpec.emplace_back(); // Value-initialized, not default-init'd, so we get zeros
 
-	size_type n = 0; // Index into the argument
+	size_t n = 0; // Index into the argument
 	// TODO: store max `nbColors` ever reached, and compare against palette size later
 	size_t nbColors = 0; // Number of colors in the current palette
 	for (;;) {
@@ -150,20 +149,6 @@ void parseInlinePalSpec(char const * const rawArg) {
 	}
 }
 
-/*
- * Tries to read some magic bytes from the provided `file`.
- * Returns whether the magic was correctly read.
- */
-template<size_t n>
-[[gnu::warn_unused_result]] // Ignoring failure to match is a bad idea.
-static bool
-    readMagic(std::filebuf &file, char const *magic) {
-	assume(strlen(magic) == n);
-
-	char magicBuf[n];
-	return file.sgetn(magicBuf, n) == n && memcmp(magicBuf, magic, n);
-}
-
 template<typename T, typename U>
 static T readBE(U const *bytes) {
 	T val = 0;
@@ -182,14 +167,10 @@ static T readLE(U const *bytes) {
 	return val;
 }
 
-/*
- * **Appends** the first line read from `file` to the end of the provided `buffer`.
- *
- * @return true if a line was read.
- */
-[[gnu::warn_unused_result]] // Ignoring EOF is a bad idea.
-static bool
-    readLine(std::filebuf &file, std::string &buffer) {
+// Appends the first line read from `file` to the end of the provided `buffer`.
+// Returns true if a line was read.
+[[gnu::warn_unused_result]]
+static bool readLine(std::filebuf &file, std::string &buffer) {
 	assume(buffer.empty());
 	// TODO: maybe this can be optimized to bulk reads?
 	for (;;) {
@@ -217,11 +198,9 @@ static bool
 		} \
 	} while (0)
 
-/*
- * Parses the initial part of a string_view, advancing the "read index" as it does
- */
+// Parses the initial part of a string_view, advancing the "read index" as it does
 template<typename U> // Should be uint*_t
-static std::optional<U> parseDec(std::string const &str, std::string::size_type &n) {
+static std::optional<U> parseDec(std::string const &str, size_t &n) {
 	uintmax_t value = 0;
 	auto result = std::from_chars(str.data() + n, str.data() + str.size(), value);
 	if (static_cast<bool>(result.ec)) {
@@ -231,8 +210,7 @@ static std::optional<U> parseDec(std::string const &str, std::string::size_type 
 	return std::optional<U>{value};
 }
 
-static std::optional<Rgba>
-    parseColor(std::string const &str, std::string::size_type &n, uint16_t i) {
+static std::optional<Rgba> parseColor(std::string const &str, size_t &n, uint16_t i) {
 	std::optional<uint8_t> r = parseDec<uint8_t>(str, n);
 	if (!r) {
 		error("Failed to parse color #%d (\"%s\"): invalid red component", i + 1, str.c_str());
@@ -280,7 +258,7 @@ static void parsePSPFile(std::filebuf &file) {
 
 	line.clear();
 	requireLine("PSP", file, line);
-	std::string::size_type n = 0;
+	size_t n = 0;
 	std::optional<uint16_t> nbColors = parseDec<uint16_t>(line, n);
 	if (!nbColors || n != line.length()) {
 		error("Invalid \"number of colors\" line in PSP file (%s)", line.c_str());
@@ -346,7 +324,7 @@ static void parseGPLFile(std::filebuf &file) {
 			continue;
 		}
 
-		std::string::size_type n = 0;
+		size_t n = 0;
 		skipWhitespace(line, n);
 		// Skip empty lines, or lines that contain just a comment.
 		if (line.length() == n || line[n] == '#') {
@@ -602,10 +580,9 @@ void parseExternalPalSpec(char const *arg) {
 	    std::tuple{"GBC", &parseGBCFile, std::ios::binary},
 	};
 
-	auto iter =
-	    std::find_if(RANGE(parsers), [&arg, &ptr](decltype(parsers)::value_type const &parser) {
-		    return strncasecmp(arg, std::get<0>(parser), ptr - arg) == 0;
-	    });
+	auto iter = std::find_if(RANGE(parsers), [&arg, &ptr](auto const &parser) {
+		return strncasecmp(arg, std::get<0>(parser), ptr - arg) == 0;
+	});
 	if (iter == parsers.end()) {
 		error(
 		    "Unknown external palette format \"%.*s\"",

@@ -36,8 +36,9 @@ _rgbasm_warnings() {
 }
 
 local args=(
-	# Arguments are listed here in the same order as in the manual, except for the version
-	'(- : * options)'{-V,--version}'[Print version number]'
+	# Arguments are listed here in the same order as in the manual, except for the version and help
+	'(- : * options)'{-V,--version}'[Print version number and exit]'
+	'(- : * options)'{-h,--help}'[Print help text and exit]'
 
 	'(-E --export-all)'{-E,--export-all}'[Export all symbols]'
 	'(-v --verbose)'{-v,--verbose}'[Print additional messages regarding progression]'
