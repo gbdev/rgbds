@@ -524,8 +524,7 @@ struct AttrmapEntry {
 
 	bool isBackgroundTile() const { return protoPaletteID == background; }
 	size_t getPalID(DefaultInitVec<size_t> const &mappings) const {
-		return isBackgroundTile() ? 0xFF
-		                          : mappings[protoPaletteID == transparent ? 0 : protoPaletteID];
+		return mappings[isBackgroundTile() || protoPaletteID == transparent ? 0 : protoPaletteID];
 	}
 };
 
@@ -904,7 +903,8 @@ static void outputUnoptimizedMaps(
 		}
 
 		if (tilemapOutput.has_value()) {
-			(*tilemapOutput)->sputc(tileID + options.baseTileIDs[bank]);
+			(*tilemapOutput)
+			    ->sputc((attr.isBackgroundTile() ? 0 : tileID) + options.baseTileIDs[bank]);
 		}
 		uint8_t palID = attr.getPalID(mappings);
 		if (attrmapOutput.has_value()) {
