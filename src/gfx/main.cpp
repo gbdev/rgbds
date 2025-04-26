@@ -392,11 +392,6 @@ static char *parseArgv(int argc, char *argv[]) {
 			default:
 				error("Unknown background color specification \"%s\"", musl_optarg);
 			}
-			options.bgColorStrict = true;
-			if (musl_optarg[size + 1] == '!') {
-				options.bgColorStrict = false;
-				++size;
-			}
 			if (musl_optarg[size + 1] != '\0') {
 				error(
 				    "Unexpected text \"%s\" after background color specification",

@@ -1190,15 +1190,13 @@ void process() {
 				attrs.protoPaletteID = AttrmapEntry::background;
 				continue;
 			case ProtoPalette::WE_BIGGER:
-				if (options.bgColorStrict) {
-					warning(
-					    "Tile (%" PRIu32 ", %" PRIu32 ") contains the background color (#%06" PRIx32
-					    ")!",
-					    tile.x,
-					    tile.y,
-					    options.bgColor->toCSS() >> 8
-					);
-				}
+				fatal(
+				    "Tile (%" PRIu32 ", %" PRIu32 ") contains the background color (#%06" PRIx32
+				    ")!",
+				    tile.x,
+				    tile.y,
+				    options.bgColor->toCSS() >> 8
+				);
 				break;
 			case ProtoPalette::NEITHER:
 				break;

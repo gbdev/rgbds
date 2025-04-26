@@ -22,9 +22,8 @@ struct Options {
 	bool columnMajor = false;     // -Z
 	uint8_t verbosity = 0;        // -v
 
-	std::string attrmap{};         // -a, -A
-	std::optional<Rgba> bgColor{}; // -B
-	bool bgColorStrict;            // If true, warns when the `bgColor` is ever not alone in a tile.
+	std::string attrmap{};                    // -a, -A
+	std::optional<Rgba> bgColor{};            // -B
 	std::array<uint8_t, 2> baseTileIDs{0, 0}; // -b
 	enum {
 		NO_SPEC,
