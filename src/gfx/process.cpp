@@ -1183,24 +1183,19 @@ void process() {
 			protoPalette.add(cgbColor);
 		}
 
-		if (options.bgColor.has_value()) {
-			switch (protoPalette.compare(bgPal)) {
-			case ProtoPalette::THEY_BIGGER: // Note that ties are resolved as `THEY_BIGGER`.
+		if (options.bgColor.has_value()
+		    && std::find(RANGE(tileColors), options.bgColor->cgbColor()) != tileColors.end()) {
+			if (tileColors.size() == 1) {
 				// The tile contains just the background color, skip it.
 				attrs.protoPaletteID = AttrmapEntry::background;
 				continue;
-			case ProtoPalette::WE_BIGGER:
-				fatal(
-				    "Tile (%" PRIu32 ", %" PRIu32 ") contains the background color (#%06" PRIx32
-				    ")!",
-				    tile.x,
-				    tile.y,
-				    options.bgColor->toCSS() >> 8
-				);
-				break;
-			case ProtoPalette::NEITHER:
-				break;
 			}
+			fatal(
+			    "Tile (%" PRIu32 ", %" PRIu32 ") contains the background color (#%06" PRIx32 ")!",
+			    tile.x,
+			    tile.y,
+			    options.bgColor->toCSS() >> 8
+			);
 		}
 
 		// Insert the proto-palette, making sure to avoid overlaps
