@@ -25,6 +25,10 @@
 #include "gfx/pal_sorting.hpp"
 #include "gfx/proto_palette.hpp"
 
+static bool isBgColorTransparent() {
+	return options.bgColor.has_value() && options.bgColor->isTransparent();
+}
+
 class ImagePalette {
 	std::array<std::optional<Rgba>, NB_COLOR_SLOTS> _colors;
 
@@ -38,7 +42,7 @@ public:
 	Rgba const *registerColor(Rgba const &rgba) {
 		std::optional<Rgba> &slot = _colors[rgba.cgbColor()];
 
-		if (rgba.cgbColor() == Rgba::transparent) {
+		if (rgba.cgbColor() == Rgba::transparent && !isBgColorTransparent()) {
 			options.hasTransparentPixels = true;
 		}
 
@@ -1174,7 +1178,11 @@ void process() {
 
 		if (tileColors.empty()) {
 			// "Empty" proto-palettes screw with the packing process, so discard those
-			attrs.protoPaletteID = AttrmapEntry::transparent;
+			if (isBgColorTransparent()) {
+				attrs.protoPaletteID = AttrmapEntry::background;
+			} else {
+				attrs.protoPaletteID = AttrmapEntry::transparent;
+			}
 			continue;
 		}
 

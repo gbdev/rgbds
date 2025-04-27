@@ -367,8 +367,12 @@ static char *parseArgv(int argc, char *argv[]) {
 			options.attrmap = musl_optarg;
 			break;
 		case 'B':
+			if (!strcmp(musl_optarg, "transparent") || !strcmp(musl_optarg, "TRANSPARENT")) {
+				options.bgColor = Rgba(0x00, 0x00, 0x00, 0x00);
+				break;
+			}
 			if (musl_optarg[0] != '#') {
-				error("Background color specification must be either `#rgb` or `#rrggbb`");
+				error("Background color specification must be `#rgb`, `#rrggbb`, or `transparent`");
 				break;
 			}
 			size = strspn(&musl_optarg[1], "0123456789ABCDEFabcdef");
