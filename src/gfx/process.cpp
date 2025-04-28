@@ -523,8 +523,8 @@ struct AttrmapEntry {
 	bool yFlip;
 	bool xFlip;
 
-	static constexpr decltype(protoPaletteID) transparent = SIZE_MAX;
-	static constexpr decltype(protoPaletteID) background = transparent - 1;
+	static constexpr size_t transparent = SIZE_MAX;
+	static constexpr size_t background = transparent - 1;
 
 	bool isBackgroundTile() const { return protoPaletteID == background; }
 	size_t getPalID(DefaultInitVec<size_t> const &mappings) const {
@@ -1148,10 +1148,6 @@ void process() {
 	// output (with the exception of an un-duplicated tilemap, but that's an acceptable loss.)
 	std::vector<ProtoPalette> protoPalettes;
 	DefaultInitVec<AttrmapEntry> attrmap{};
-	ProtoPalette bgPal;
-	if (options.bgColor.has_value()) {
-		bgPal.add(options.bgColor->cgbColor());
-	}
 
 	for (auto tile : png.visitAsTiles()) {
 		AttrmapEntry &attrs = attrmap.emplace_back();
