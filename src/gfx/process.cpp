@@ -1014,25 +1014,30 @@ static UniqueTiles dedupTiles(
 
 	bool inputWithoutOutput = !options.inputTileset.empty() && options.output.empty();
 	for (auto [tile, attr] : zip(png.visitAsTiles(), attrmap)) {
-		auto [tileID, matchType] =
-		    attr.isBackgroundTile()
-		        ? std::tuple{uint16_t(0), TileData::EXACT}
-		        : tiles.addTile({tile, palettes[mappings[attr.protoPaletteID]]});
+		if (attr.isBackgroundTile()) {
+			attr.xFlip = false;
+			attr.yFlip = false;
+			attr.bank = 0;
+			attr.tileID = 0;
+		} else {
+			auto [tileID, matchType] =
+			    tiles.addTile({tile, palettes[mappings[attr.protoPaletteID]]});
 
-		if (inputWithoutOutput && matchType == TileData::NOPE) {
-			error(
-			    "Tile at (%" PRIu32 ", %" PRIu32
-			    ") is not within the input tileset, and `-o` was not given!",
-			    tile.x,
-			    tile.y
-			);
+			if (inputWithoutOutput && matchType == TileData::NOPE) {
+				error(
+				    "Tile at (%" PRIu32 ", %" PRIu32
+				    ") is not within the input tileset, and `-o` was not given!",
+				    tile.x,
+				    tile.y
+				);
+			}
+
+			attr.xFlip = matchType == TileData::HFLIP || matchType == TileData::VHFLIP;
+			attr.yFlip = matchType == TileData::VFLIP || matchType == TileData::VHFLIP;
+			attr.bank = tileID >= options.maxNbTiles[0];
+			attr.tileID = (attr.bank ? tileID - options.maxNbTiles[0] : tileID)
+			              + options.baseTileIDs[attr.bank];
 		}
-
-		attr.xFlip = matchType == TileData::HFLIP || matchType == TileData::VHFLIP;
-		attr.yFlip = matchType == TileData::VFLIP || matchType == TileData::VHFLIP;
-		attr.bank = tileID >= options.maxNbTiles[0];
-		attr.tileID =
-		    (attr.bank ? tileID - options.maxNbTiles[0] : tileID) + options.baseTileIDs[attr.bank];
 	}
 
 	// Copy elision should prevent the contained `unordered_set` from being re-constructed
