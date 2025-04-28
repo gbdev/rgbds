@@ -1160,7 +1160,8 @@ void process() {
 		std::unordered_set<uint16_t> tileColors;
 		for (uint32_t y = 0; y < 8; ++y) {
 			for (uint32_t x = 0; x < 8; ++x) {
-				if (Rgba color = tile.pixel(x, y); !color.isTransparent()) {
+				if (Rgba color = tile.pixel(x, y);
+				    !color.isTransparent() || !options.hasTransparentPixels) {
 					tileColors.insert(color.cgbColor());
 				}
 			}
@@ -1178,11 +1179,8 @@ void process() {
 
 		if (tileColors.empty()) {
 			// "Empty" proto-palettes screw with the packing process, so discard those
-			if (isBgColorTransparent()) {
-				attrs.protoPaletteID = AttrmapEntry::background;
-			} else {
-				attrs.protoPaletteID = AttrmapEntry::transparent;
-			}
+			assume(!isBgColorTransparent());
+			attrs.protoPaletteID = AttrmapEntry::transparent;
 			continue;
 		}
 
@@ -1199,10 +1197,10 @@ void process() {
 				continue;
 			}
 			fatal(
-			    "Tile (%" PRIu32 ", %" PRIu32 ") contains the background color (#%06" PRIx32 ")!",
+			    "Tile (%" PRIu32 ", %" PRIu32 ") contains the background color (#%08x)!",
 			    tile.x,
 			    tile.y,
-			    options.bgColor->toCSS() >> 8
+			    options.bgColor->toCSS()
 			);
 		}
 
