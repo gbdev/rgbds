@@ -259,8 +259,13 @@ static void writeROM() {
 	}
 }
 
-// Checks whether this character is legal as the first character of a symbol's name in a sym file
-static bool canStartSymName(char c) {
+// Checks whether a symbol is legal for a sym file or map file.
+// Eliminates anonymous labels, which start with a '!'.
+static bool isLegalSymbol(Symbol const &sym) {
+	if (sym.name.empty()) {
+		return false;
+	}
+	char c = sym.name[0];
 	return (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || c == '_';
 }
 
@@ -271,7 +276,7 @@ static bool isLegalForSymName(char c) {
 }
 
 // Prints a symbol's name to a file, assuming that the first character is legal.
-// Illegal characters are UTF-8-decoded (errors are replaced by U+FFFD) and emitted as `\u`/`\U`.
+// Illegal characters are UTF-8-decoded (errors are replaced by U+FFFD) and emitted as '\u'/'\U'.
 static void printSymName(std::string const &name, FILE *file) {
 	for (char const *ptr = name.c_str(); *ptr != '\0';) {
 		char c = *ptr;
@@ -368,7 +373,7 @@ static void writeSymBank(SortedSections const &bankSections, SectionType type, u
 	forEachSortedSection(sect, {
 		for (Symbol const *sym : sect->symbols) {
 			// Don't output symbols that begin with an illegal character
-			if (!sym->name.empty() && canStartSymName(sym->name[0])) {
+			if (isLegalSymbol(*sym)) {
 				symList.push_back({
 				    .sym = sym,
 				    .addr = static_cast<uint16_t>(sym->label().offset + sect->org),
@@ -471,10 +476,13 @@ static void writeMapBank(SortedSections const &sectList, SectionType type, uint3
 			// Also print symbols in the following "pieces"
 			for (uint16_t org = sect->org; sect; sect = sect->nextu.get()) {
 				for (Symbol *sym : sect->symbols) {
-					// Space matches "\tSECTION: $xxxx ..."
-					fprintf(mapFile, "\t         $%04" PRIx32 " = ", sym->label().offset + org);
-					printSymName(sym->name, mapFile);
-					putc('\n', mapFile);
+					// Don't output symbols that begin with an illegal character
+					if (isLegalSymbol(*sym)) {
+						// Space matches "\tSECTION: $xxxx ..."
+						fprintf(mapFile, "\t         $%04" PRIx32 " = ", sym->label().offset + org);
+						printSymName(sym->name, mapFile);
+						putc('\n', mapFile);
+					}
 				}
 
 				if (sect->nextu) {
