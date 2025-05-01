@@ -104,7 +104,18 @@ Same as
 .Fl a Ar base_path Ns .attrmap
 .Pq see Sx Automatic output paths .
 .It Fl B Ar color , Fl \-background-color Ar color
-TODO
+Set a background color to be omitted from output.
+Colors are accepted as
+.Ql #rgb
+or
+.Ql #rrggbb
+format, or as
+.Ql transparent .
+Input tiles which are entirely the specified background color are ignored and will not be output in tile data file.
+The tilemap, atrribute map, or palette map files
+.Em will
+use placeholder values where background tiles were.
+If a background color is specified, it cannot be used within tiles which are not ignored.
 .It Fl b Ar base_ids , Fl \-base-tiles Ar base_ids
 Set the base IDs for tile map output.
 .Ar base_ids
