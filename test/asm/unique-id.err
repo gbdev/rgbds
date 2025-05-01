@@ -1,3 +1,9 @@
+error: unique-id.asm(11):
+    '\@' cannot be used outside of a macro or REPT/FOR block
+while expanding symbol "warn_unique"
+warning: unique-id.asm(11): [-Wuser]
+    !
+while expanding symbol "warn_unique"
 warning: unique-id.asm(12) -> unique-id.asm::m(4): [-Wuser]
     _u1!
 while expanding symbol "warn_unique"
@@ -9,6 +15,12 @@ warning: unique-id.asm(12) -> unique-id.asm::m(5) -> unique-id.asm::m::REPT~2(6)
 while expanding symbol "warn_unique"
 warning: unique-id.asm(12) -> unique-id.asm::m(8): [-Wuser]
     _u1!
+while expanding symbol "warn_unique"
+error: unique-id.asm(13):
+    '\@' cannot be used outside of a macro or REPT/FOR block
+while expanding symbol "warn_unique"
+warning: unique-id.asm(13): [-Wuser]
+    !
 while expanding symbol "warn_unique"
 warning: unique-id.asm(14) -> unique-id.asm::m(4): [-Wuser]
     _u4!
@@ -28,4 +40,4 @@ while expanding symbol "warn_unique"
 warning: unique-id.asm(15): [-Wuser]
     !
 while expanding symbol "warn_unique"
-error: Assembly aborted (1 error)!
+error: Assembly aborted (3 errors)!

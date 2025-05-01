@@ -32,14 +32,15 @@ diff <(xxd "$1") <(xxd "$2") | while read -r LINE; do
 			# Ignore comment lines, only pick matching bank
 			# (The bank regex ignores comments already, make `cut` and `tr` process less lines)
 			grep -Ei "$(printf "^%02x:" $BANK)" "$SYMFILE" |
+			 sed "s/$(printf "^%02x:" $BANK)/0x/g" |
 			 cut -d ';' -f 1 |
 			 tr -d "\r" |
+			 sort -g |
 			 while read -r SYMADDR SYM; do
-				SYMADDR=$((0x${SYMADDR#*:}))
+				SYMADDR=$(($SYMADDR))
 				if [[ $SYMADDR -le $ADDR ]]; then
 					printf " (%s+0x%x)\n" "$SYM" $((ADDR - SYMADDR))
 				fi
-			# TODO: assumes sorted sym files
 			done | tail -n 1
 		fi)
 		printf "%02x:%04x %s\n" $BANK $ADDR "$EXTRA"

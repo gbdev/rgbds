@@ -173,11 +173,6 @@ public:
 		png_set_read_fn(png, this, readData);
 		png_set_sig_bytes(png, pngHeader.size());
 
-		// TODO: png_set_crc_action(png, PNG_CRC_ERROR_QUIT, PNG_CRC_WARN_DISCARD);
-
-		// Skipping chunks we don't use should improve performance
-		// TODO: png_set_keep_unknown_chunks(png, ...);
-
 		// Process all chunks up to but not including the image data
 		png_read_info(png, info);
 
@@ -202,9 +197,7 @@ public:
 			}
 		}
 
-		// Set up transformations; to turn everything into RGBA888
-		// TODO: it's not necessary to uniformize the pixel data (in theory), and not doing
-		// so *might* improve performance, and should reduce memory usage.
+		// Set up transformations to turn everything into RGBA888 for simplicity of handling
 
 		// Convert grayscale to RGB
 		switch (colorType & ~PNG_COLOR_MASK_ALPHA) {

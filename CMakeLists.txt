@@ -51,8 +51,8 @@ else()
     add_link_options(${SAN_FLAGS})
     add_definitions(-D_GLIBCXX_ASSERTIONS)
     # A non-zero optimization level is desired in debug mode, but allow overriding it nonetheless
-    # TODO: this overrides anything previously set... that's a bit sloppy!
-    set(CMAKE_CXX_FLAGS_DEBUG "-g -Og -fno-omit-frame-pointer -fno-optimize-sibling-calls" CACHE STRING "" FORCE)
+    set(CMAKE_CXX_FLAGS_DEBUG "-g -Og -fno-omit-frame-pointer -fno-optimize-sibling-calls ${CMAKE_CXX_FLAGS_DEBUG}"
+                              CACHE STRING "" FORCE)
   endif()
 
   if(MORE_WARNINGS)
