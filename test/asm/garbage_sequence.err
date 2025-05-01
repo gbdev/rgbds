@@ -1,0 +1,11 @@
+error: garbage_sequence.asm(1):
+    Unknown character '#'
+error: garbage_sequence.asm(2):
+    Unknown characters ''', '?'
+error: garbage_sequence.asm(3):
+    Unknown characters '?', ''', ''', '?'
+error: garbage_sequence.asm(3):
+    Unknown character '#'
+error: garbage_sequence.asm(3):
+    Unknown characters '#', '?', '?'
+error: Assembly aborted (5 errors)!

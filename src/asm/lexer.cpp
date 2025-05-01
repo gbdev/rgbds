@@ -1657,6 +1657,12 @@ static void appendStringLiteral(std::string &str, bool raw) {
 
 static Token yylex_SKIP_TO_ENDC(); // forward declaration for yylex_NORMAL
 
+// Must stay in sync with the `switch` in `yylex_NORMAL`!
+static bool isGarbageCharacter(int c) {
+	return c != EOF && !continuesIdentifier(c)
+	       && (c == '\0' || !strchr("; \t~[](),+-*/|^=!<>:&%`\"\r\n\\", c));
+}
+
 static Token yylex_NORMAL() {
 	for (;;) {
 		int c = nextChar();
@@ -1982,8 +1988,19 @@ static Token yylex_NORMAL() {
 
 			// Do not report weird characters when capturing, it'll be done later
 			if (!lexerState->capturing) {
-				// TODO: try to group reportings
-				error("Unknown character %s\n", printChar(c));
+				assume(isGarbageCharacter(c) || c == '#');
+				if (isGarbageCharacter(peek())) {
+					// At least two characters are garbage; group them into one error report
+					std::string garbage = printChar(c);
+					while (isGarbageCharacter(peek())) {
+						c = nextChar();
+						garbage += ", ";
+						garbage += printChar(c);
+					}
+					error("Unknown characters %s\n", garbage.c_str());
+				} else {
+					error("Unknown character %s\n", printChar(c));
+				}
 			}
 		}
 		lexerState->atLineStart = false;
