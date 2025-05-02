@@ -10,6 +10,8 @@
 #include <utility>
 #include <vector>
 
+#include "helpers.hpp"
+
 #include "gfx/rgba.hpp"
 
 struct Options {
@@ -21,6 +23,7 @@ struct Options {
 	uint8_t verbosity = 0;        // -v
 
 	std::string attrmap{};                    // -a, -A
+	std::optional<Rgba> bgColor{};            // -B
 	std::array<uint8_t, 2> baseTileIDs{0, 0}; // -b
 	enum {
 		NO_SPEC,
@@ -115,5 +118,28 @@ static constexpr auto flipTable = ([]() constexpr {
 	}
 	return table;
 })();
+
+// Parsing helpers.
+
+static constexpr uint8_t nibble(char c) {
+	if (c >= 'a') {
+		assume(c <= 'f');
+		return c - 'a' + 10;
+	} else if (c >= 'A') {
+		assume(c <= 'F');
+		return c - 'A' + 10;
+	} else {
+		assume(c >= '0' && c <= '9');
+		return c - '0';
+	}
+}
+
+static constexpr uint8_t toHex(char c1, char c2) {
+	return nibble(c1) * 16 + nibble(c2);
+}
+
+static constexpr uint8_t singleToHex(char c) {
+	return toHex(c, c);
+}
 
 #endif // RGBDS_GFX_MAIN_HPP

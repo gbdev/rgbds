@@ -23,27 +23,6 @@
 
 using namespace std::string_view_literals;
 
-constexpr uint8_t nibble(char c) {
-	if (c >= 'a') {
-		assume(c <= 'f');
-		return c - 'a' + 10;
-	} else if (c >= 'A') {
-		assume(c <= 'F');
-		return c - 'A' + 10;
-	} else {
-		assume(c >= '0' && c <= '9');
-		return c - '0';
-	}
-}
-
-constexpr uint8_t toHex(char c1, char c2) {
-	return nibble(c1) * 16 + nibble(c2);
-}
-
-constexpr uint8_t singleToHex(char c) {
-	return toHex(c, c);
-}
-
 template<typename Str> // Should be std::string or std::string_view
 static void skipWhitespace(Str const &str, size_t &pos) {
 	pos = std::min(str.find_first_not_of(" \t"sv, pos), str.length());

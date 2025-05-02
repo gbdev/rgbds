@@ -1,0 +1,4 @@
+-B #fff
+-i input_tileset_with_bg.in.2bpp
+-c gbc:input_tileset_with_bg.in.pal
+-u

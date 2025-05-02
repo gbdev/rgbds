@@ -28,6 +28,7 @@ local args=(
 	'(-Z --columns)'{-Z,--columns}'[Read the image in column-major order]'
 
 	'(-a --attr-map -A --auto-attr-map)'{-a,--attr-map}'+[Generate a map of tile attributes (mirroring)]:attrmap file:_files'
+	'(-B --background-color)'{-B,--background-color}'+[Ignore tiles containing only specified color]:color:'
 	'(-b --base-tiles)'{-b,--base-tiles}'+[Base tile IDs for tile map output]:base tile IDs:'
 	'(-c --colors)'{-c,--colors}'+[Specify color palettes]:palette spec:'
 	'(-d --depth)'{-d,--depth}'+[Set bit depth]:bit depth:_depths'

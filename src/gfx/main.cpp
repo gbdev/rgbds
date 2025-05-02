@@ -114,7 +114,7 @@ void Options::verbosePrint(uint8_t level, char const *fmt, ...) const {
 }
 
 // Short options
-static char const *optstring = "-Aa:b:Cc:d:hi:L:mN:n:Oo:Pp:Qq:r:s:Tt:U:uVvXx:YZ";
+static char const *optstring = "-Aa:B:b:Cc:d:hi:L:mN:n:Oo:Pp:Qq:r:s:Tt:U:uVvXx:YZ";
 
 // Equivalent long options
 // Please keep in the same order as short opts.
@@ -126,6 +126,7 @@ static char const *optstring = "-Aa:b:Cc:d:hi:L:mN:n:Oo:Pp:Qq:r:s:Tt:U:uVvXx:YZ"
 static option const longopts[] = {
     {"auto-attr-map",    no_argument,       nullptr, 'A'},
     {"attr-map",         required_argument, nullptr, 'a'},
+    {"background-color", required_argument, nullptr, 'B'},
     {"base-tiles",       required_argument, nullptr, 'b'},
     {"color-curve",      no_argument,       nullptr, 'C'},
     {"colors",           required_argument, nullptr, 'c'},
@@ -353,6 +354,7 @@ static char *parseArgv(int argc, char *argv[]) {
 	for (int ch; (ch = musl_getopt_long_only(argc, argv, optstring, longopts, nullptr)) != -1;) {
 		char *arg = musl_optarg; // Make a copy for scanning
 		uint16_t number;
+		size_t size;
 		switch (ch) {
 		case 'A':
 			localOptions.autoAttrmap = true;
@@ -363,6 +365,43 @@ static char *parseArgv(int argc, char *argv[]) {
 				warning("Overriding attrmap file %s", options.attrmap.c_str());
 			}
 			options.attrmap = musl_optarg;
+			break;
+		case 'B':
+			if (strcasecmp(musl_optarg, "transparent") == 0) {
+				options.bgColor = Rgba(0x00, 0x00, 0x00, 0x00);
+				break;
+			}
+			if (musl_optarg[0] != '#') {
+				error("Background color specification must be `#rgb`, `#rrggbb`, or `transparent`");
+				break;
+			}
+			size = strspn(&musl_optarg[1], "0123456789ABCDEFabcdef");
+			switch (size) {
+			case 3:
+				options.bgColor = Rgba(
+				    singleToHex(musl_optarg[1]),
+				    singleToHex(musl_optarg[2]),
+				    singleToHex(musl_optarg[3]),
+				    0xFF
+				);
+				break;
+			case 6:
+				options.bgColor = Rgba(
+				    toHex(musl_optarg[1], musl_optarg[2]),
+				    toHex(musl_optarg[3], musl_optarg[4]),
+				    toHex(musl_optarg[5], musl_optarg[6]),
+				    0xFF
+				);
+				break;
+			default:
+				error("Unknown background color specification \"%s\"", musl_optarg);
+			}
+			if (musl_optarg[size + 1] != '\0') {
+				error(
+				    "Unexpected text \"%s\" after background color specification",
+				    &musl_optarg[size + 1]
+				);
+			}
 			break;
 		case 'b':
 			number = parseNumber(arg, "Bank 0 base tile ID", 0);

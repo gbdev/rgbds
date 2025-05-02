@@ -25,6 +25,10 @@
 #include "gfx/pal_sorting.hpp"
 #include "gfx/proto_palette.hpp"
 
+static bool isBgColorTransparent() {
+	return options.bgColor.has_value() && options.bgColor->isTransparent();
+}
+
 class ImagePalette {
 	std::array<std::optional<Rgba>, NB_COLOR_SLOTS> _colors;
 
@@ -38,7 +42,7 @@ public:
 	Rgba const *registerColor(Rgba const &rgba) {
 		std::optional<Rgba> &slot = _colors[rgba.cgbColor()];
 
-		if (rgba.cgbColor() == Rgba::transparent) {
+		if (rgba.cgbColor() == Rgba::transparent && !isBgColorTransparent()) {
 			options.hasTransparentPixels = true;
 		}
 
@@ -519,10 +523,12 @@ struct AttrmapEntry {
 	bool yFlip;
 	bool xFlip;
 
-	static constexpr decltype(protoPaletteID) transparent = SIZE_MAX;
+	static constexpr size_t transparent = static_cast<size_t>(-1);
+	static constexpr size_t background = static_cast<size_t>(-2);
 
+	bool isBackgroundTile() const { return protoPaletteID == background; }
 	size_t getPalID(DefaultInitVec<size_t> const &mappings) const {
-		return protoPaletteID == transparent ? 0 : mappings[protoPaletteID];
+		return mappings[isBackgroundTile() || protoPaletteID == transparent ? 0 : protoPaletteID];
 	}
 };
 
@@ -852,13 +858,16 @@ static void outputUnoptimizedTileData(
 	remainingTiles -= options.trim;
 
 	for (auto [tile, attr] : zip(png.visitAsTiles(), attrmap)) {
-		// If the tile is fully transparent, default to palette 0
-		Palette const &palette = palettes[attr.getPalID(mappings)];
-		for (uint32_t y = 0; y < 8; ++y) {
-			uint16_t bitplanes = TileData::rowBitplanes(tile, palette, y);
-			output->sputc(bitplanes & 0xFF);
-			if (options.bitDepth == 2) {
-				output->sputc(bitplanes >> 8);
+		// Do not emit fully-background tiles.
+		if (!attr.isBackgroundTile()) {
+			// If the tile is fully transparent, this defaults to palette 0.
+			Palette const &palette = palettes[attr.getPalID(mappings)];
+			for (uint32_t y = 0; y < 8; ++y) {
+				uint16_t bitplanes = TileData::rowBitplanes(tile, palette, y);
+				output->sputc(bitplanes & 0xFF);
+				if (options.bitDepth == 2) {
+					output->sputc(bitplanes >> 8);
+				}
 			}
 		}
 
@@ -898,16 +907,21 @@ static void outputUnoptimizedMaps(
 		}
 
 		if (tilemapOutput.has_value()) {
-			(*tilemapOutput)->sputc(tileID + options.baseTileIDs[bank]);
+			(*tilemapOutput)
+			    ->sputc((attr.isBackgroundTile() ? 0 : tileID) + options.baseTileIDs[bank]);
 		}
+		uint8_t palID = attr.getPalID(mappings);
 		if (attrmapOutput.has_value()) {
-			uint8_t palID = attr.getPalID(mappings) & 7;
-			(*attrmapOutput)->sputc(palID | bank << 3); // The other flags are all 0
+			(*attrmapOutput)->sputc((palID & 7) | bank << 3); // The other flags are all 0
 		}
 		if (palmapOutput.has_value()) {
-			(*palmapOutput)->sputc(attr.getPalID(mappings));
+			(*palmapOutput)->sputc(palID);
 		}
-		++tileID;
+
+		// Background tiles are skipped in the tile data, so they should be skipped in the maps too.
+		if (!attr.isBackgroundTile()) {
+			++tileID;
+		}
 	}
 }
 
@@ -1000,22 +1014,30 @@ static UniqueTiles dedupTiles(
 
 	bool inputWithoutOutput = !options.inputTileset.empty() && options.output.empty();
 	for (auto [tile, attr] : zip(png.visitAsTiles(), attrmap)) {
-		auto [tileID, matchType] = tiles.addTile({tile, palettes[mappings[attr.protoPaletteID]]});
+		if (attr.isBackgroundTile()) {
+			attr.xFlip = false;
+			attr.yFlip = false;
+			attr.bank = 0;
+			attr.tileID = 0;
+		} else {
+			auto [tileID, matchType] =
+			    tiles.addTile({tile, palettes[mappings[attr.protoPaletteID]]});
 
-		if (inputWithoutOutput && matchType == TileData::NOPE) {
-			error(
-			    "Tile at (%" PRIu32 ", %" PRIu32
-			    ") is not within the input tileset, and `-o` was not given!",
-			    tile.x,
-			    tile.y
-			);
+			if (inputWithoutOutput && matchType == TileData::NOPE) {
+				error(
+				    "Tile at (%" PRIu32 ", %" PRIu32
+				    ") is not within the input tileset, and `-o` was not given!",
+				    tile.x,
+				    tile.y
+				);
+			}
+
+			attr.xFlip = matchType == TileData::HFLIP || matchType == TileData::VHFLIP;
+			attr.yFlip = matchType == TileData::VFLIP || matchType == TileData::VHFLIP;
+			attr.bank = tileID >= options.maxNbTiles[0];
+			attr.tileID = (attr.bank ? tileID - options.maxNbTiles[0] : tileID)
+			              + options.baseTileIDs[attr.bank];
 		}
-
-		attr.xFlip = matchType == TileData::HFLIP || matchType == TileData::VHFLIP;
-		attr.yFlip = matchType == TileData::VFLIP || matchType == TileData::VHFLIP;
-		attr.bank = tileID >= options.maxNbTiles[0];
-		attr.tileID =
-		    (attr.bank ? tileID - options.maxNbTiles[0] : tileID) + options.baseTileIDs[attr.bank];
 	}
 
 	// Copy elision should prevent the contained `unordered_set` from being re-constructed
@@ -1139,7 +1161,8 @@ void process() {
 		std::unordered_set<uint16_t> tileColors;
 		for (uint32_t y = 0; y < 8; ++y) {
 			for (uint32_t x = 0; x < 8; ++x) {
-				if (Rgba color = tile.pixel(x, y); !color.isTransparent()) {
+				if (Rgba color = tile.pixel(x, y);
+				    !color.isTransparent() || !options.hasTransparentPixels) {
 					tileColors.insert(color.cgbColor());
 				}
 			}
@@ -1157,6 +1180,7 @@ void process() {
 
 		if (tileColors.empty()) {
 			// "Empty" proto-palettes screw with the packing process, so discard those
+			assume(!isBgColorTransparent());
 			attrs.protoPaletteID = AttrmapEntry::transparent;
 			continue;
 		}
@@ -1164,6 +1188,21 @@ void process() {
 		ProtoPalette protoPalette;
 		for (uint16_t cgbColor : tileColors) {
 			protoPalette.add(cgbColor);
+		}
+
+		if (options.bgColor.has_value()
+		    && std::find(RANGE(tileColors), options.bgColor->cgbColor()) != tileColors.end()) {
+			if (tileColors.size() == 1) {
+				// The tile contains just the background color, skip it.
+				attrs.protoPaletteID = AttrmapEntry::background;
+				continue;
+			}
+			fatal(
+			    "Tile (%" PRIu32 ", %" PRIu32 ") contains the background color (#%08x)!",
+			    tile.x,
+			    tile.y,
+			    options.bgColor->toCSS()
+			);
 		}
 
 		// Insert the proto-palette, making sure to avoid overlaps
@@ -1197,7 +1236,7 @@ void process() {
 		}
 
 		attrs.protoPaletteID = protoPalettes.size();
-		if (protoPalettes.size() == AttrmapEntry::transparent) { // Check for overflow
+		if (protoPalettes.size() == AttrmapEntry::background) { // Check for overflow
 			fatal(
 			    "Reached %zu proto-palettes... sorry, this image is too much for me to handle :(",
 			    AttrmapEntry::transparent
