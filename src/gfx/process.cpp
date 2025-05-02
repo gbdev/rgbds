@@ -523,8 +523,8 @@ struct AttrmapEntry {
 	bool yFlip;
 	bool xFlip;
 
-	static constexpr size_t transparent = SIZE_MAX;
-	static constexpr size_t background = transparent - 1;
+	static constexpr size_t transparent = static_cast<size_t>(-1);
+	static constexpr size_t background = static_cast<size_t>(-2);
 
 	bool isBackgroundTile() const { return protoPaletteID == background; }
 	size_t getPalID(DefaultInitVec<size_t> const &mappings) const {

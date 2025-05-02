@@ -367,7 +367,7 @@ static char *parseArgv(int argc, char *argv[]) {
 			options.attrmap = musl_optarg;
 			break;
 		case 'B':
-			if (!strcmp(musl_optarg, "transparent") || !strcmp(musl_optarg, "TRANSPARENT")) {
+			if (strcasecmp(musl_optarg, "transparent") == 0) {
 				options.bgColor = Rgba(0x00, 0x00, 0x00, 0x00);
 				break;
 			}
