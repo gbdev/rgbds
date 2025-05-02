@@ -58,17 +58,16 @@ void parseInlinePalSpec(char const * const rawArg) {
 	options.palSpec.clear();
 	options.palSpec.emplace_back(); // Value-initialized, not default-init'd, so we get zeros
 
-	size_t n = 0; // Index into the argument
-	// TODO: store max `nbColors` ever reached, and compare against palette size later
+	size_t n = 0;        // Index into the argument
 	size_t nbColors = 0; // Number of colors in the current palette
 	for (;;) {
 		++n; // Ignore the '#' (checked either by caller or previous loop iteration)
 
 		std::optional<Rgba> &color = options.palSpec.back()[nbColors];
-		// Check for #none first.
-		if (arg.compare(n, 4, "none"sv) == 0 || arg.compare(n, 4, "NONE"sv) == 0) {
+		// Check for "#none" first.
+		if (strncasecmp(&rawArg[n], "none", literal_strlen("none")) == 0) {
 			color = {};
-			n += 4;
+			n += literal_strlen("none");
 		} else {
 			auto pos = std::min(arg.find_first_not_of("0123456789ABCDEFabcdef"sv, n), arg.length());
 			switch (pos - n) {
@@ -172,7 +171,6 @@ static T readLE(U const *bytes) {
 [[gnu::warn_unused_result]]
 static bool readLine(std::filebuf &file, std::string &buffer) {
 	assume(buffer.empty());
-	// TODO: maybe this can be optimized to bulk reads?
 	for (;;) {
 		auto c = file.sbumpc();
 		if (c == std::filebuf::traits_type::eof()) {
