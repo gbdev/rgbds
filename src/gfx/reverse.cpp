@@ -195,8 +195,6 @@ void reverse() {
 	    Options::VERB_INTERM, "Reversed image dimensions: %zux%zu tiles\n", width, height
 	);
 
-	// TODO: `-U` to configure tile size beyond 8x8px ("deduplication units")
-
 	std::vector<std::array<std::optional<Rgba>, 4>> palettes{
 	    {Rgba(0xFFFFFFFF), Rgba(0xAAAAAAFF), Rgba(0x555555FF), Rgba(0x000000FF)}
 	};

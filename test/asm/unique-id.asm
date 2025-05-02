@@ -7,9 +7,9 @@ macro m
 	ENDR
 	warn_unique
 endm
-	; TODO: Ideally we'd test now as well, but it'd cause a fatal error
-	;warn_unique
+
+	warn_unique
 	m
-	;warn_unique
+	warn_unique
 	m
 	warn_unique

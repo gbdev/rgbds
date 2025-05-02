@@ -1,6 +1,3 @@
-
-PUSHS
-
 SECTION "floating", ROM0
 
 Known: ; This symbol is known to be a label, but its value is not known yet
@@ -15,15 +12,14 @@ SECTION "fixed 2", ROM0[69]
 
 Constant2: ; Same as above
 
+ENDSECTION ; Ensure we are in neither section
+
 
 MACRO print_diff
 	PRINTLN (\1) - (\2)
 	PRINTLN (\2) - (\1)
 ENDM
 
-POPS ; Ensure we are in neither section
-
-; TODO: uncomment all that can be, there is seriously room for improvement here
 	; Diffing two constants should work
 	print_diff Constant, Constant2
 	; Diffing two labels in the same SECTION as well

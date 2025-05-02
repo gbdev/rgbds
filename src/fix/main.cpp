@@ -719,8 +719,7 @@ static bool hasRAM(MbcType type) {
 	case MBC3_TIMER_BATTERY:
 	case MBC5:
 	case MBC5_RUMBLE:
-	case MBC6:         // TODO: not sure
-	case BANDAI_TAMA5: // TODO: not sure
+	case BANDAI_TAMA5: // "Game de Hakken!! Tamagotchi - Osutchi to Mesutchi" has RAM size 0
 	case MBC_NONE:
 	case MBC_BAD:
 	case MBC_WRONG_FEATURES:
@@ -741,6 +740,7 @@ static bool hasRAM(MbcType type) {
 	case MBC5_RAM_BATTERY:
 	case MBC5_RUMBLE_RAM:
 	case MBC5_RUMBLE_RAM_BATTERY:
+	case MBC6: // "Net de Get - Minigame @ 100" has RAM size 3 (32 KiB)
 	case MBC7_SENSOR_RUMBLE_RAM_BATTERY:
 	case POCKET_CAMERA:
 	case HUC3:
@@ -1276,7 +1276,7 @@ static bool processFilename(char const *name, char const *outputName) {
 				// LCOV_EXCL_START
 				report("FATAL: Failed to stat \"%s\": %s\n", name, strerror(errno));
 				// LCOV_EXCL_STOP
-			} else if (!S_ISREG(stat.st_mode)) { // TODO: Do we want to support FIFOs or symlinks?
+			} else if (!S_ISREG(stat.st_mode)) { // We do not support FIFOs or symlinks
 				// LCOV_EXCL_START
 				report(
 				    "FATAL: \"%s\" is not a regular file, and thus cannot be modified in-place\n",
@@ -1531,7 +1531,7 @@ int main(int argc, char *argv[]) {
 				    "warning: RAM size 1 (2 KiB) was specified for MBC \"%s\"\n",
 				    mbcName(cartridgeType)
 				);
-			} // TODO: check possible values?
+			}
 		} else if (ramSize) {
 			fprintf(
 			    stderr,

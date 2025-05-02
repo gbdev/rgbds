@@ -451,9 +451,9 @@ static char *parseArgv(int argc, char *argv[]) {
 			} else {
 				options.palSpecType = Options::EXPLICIT;
 				// Can't parse the file yet, as "flat" color collections need to know the palette
-				// size to be split; thus, we defer that
-				// TODO: this does not validate the `fmt` part of any external spec but the last
-				// one, but I guess that's okay
+				// size to be split; thus, we defer that.
+				// If a following `-c` overrides a previous one, the `fmt` part of an overridden
+				// external palette spec will not be validated, but I guess that's okay.
 				localOptions.externalPalSpec = musl_optarg;
 			}
 			break;
