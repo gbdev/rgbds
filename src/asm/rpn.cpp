@@ -582,7 +582,7 @@ void Expression::makeCheckBitIndex(uint8_t mask) {
 // Checks that an RPN expression's value fits within N bits (signed or unsigned)
 void Expression::checkNBit(uint8_t n) const {
 	if (isKnown()) {
-		::checkNBit(value(), n, "Expression");
+		::checkNBit(value(), n, nullptr);
 	}
 }
 
@@ -591,11 +591,23 @@ bool checkNBit(int32_t v, uint8_t n, char const *name) {
 	assume(n < CHAR_BIT * sizeof(int)); // Otherwise `1 << n` is UB
 
 	if (v < -(1 << n) || v >= 1 << n) {
-		warning(WARNING_TRUNCATION_1, "%s must be %u-bit\n", name, n);
+		warning(
+		    WARNING_TRUNCATION_1,
+		    n == 8 && !name ? "%s must be %u-bit; use LOW() to force 8-bit\n"
+		                    : "%s must be %u-bit\n",
+		    name ? name : "Expression",
+		    n
+		);
 		return false;
 	}
 	if (v < -(1 << (n - 1))) {
-		warning(WARNING_TRUNCATION_2, "%s must be %u-bit\n", name, n);
+		warning(
+		    WARNING_TRUNCATION_2,
+		    n == 8 && !name ? "%s must be %u-bit; use LOW() to force 8-bit\n"
+		                    : "%s must be %u-bit\n",
+		    name ? name : "Expression",
+		    n
+		);
 		return false;
 	}
 
