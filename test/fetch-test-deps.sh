@@ -107,7 +107,7 @@ if ! "$external"; then
 fi
 
 if "$nonfree"; then
-	action pret  pokecrystal      2025-04-20 098944485b76d6bd758ead442f3f17ac29aacd39
+	action pret  pokecrystal      2025-04-28 f480cb9e247a63e95aa353daef3ecd44fd526659
 	action pret  pokered          2025-04-19 d47f74ee1fed608f902dbc0fd51634dd7bafc6e4
 	action zladx LADX-Disassembly 2025-04-12 8db9dbbd1dcbbdb4df7c455f56d0ad1fa52b124b
 fi
