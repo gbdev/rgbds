@@ -413,7 +413,6 @@ static void parseACTFile(std::filebuf &file) {
 	uint16_t nbColors = 256;
 	if (len == 772) {
 		nbColors = readBE<uint16_t>(&buf[768]);
-		// TODO: apparently there is a "transparent color index"? What?
 		if (nbColors > 256 || nbColors == 0) {
 			error("Invalid number of colors in ACT file (%" PRIu16 ")", nbColors);
 			return;
@@ -524,9 +523,6 @@ static void parseACOFile(std::filebuf &file) {
 			return;
 		}
 	}
-
-	// TODO: maybe scan the v2 data instead (if present)
-	// `codecvt` can be used to convert from UTF-16 to UTF-8
 }
 
 static void parseGBCFile(std::filebuf &file) {
