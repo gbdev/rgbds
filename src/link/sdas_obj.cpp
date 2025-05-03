@@ -9,7 +9,7 @@
 #include <string.h>
 #include <tuple>
 
-#include "helpers.hpp" // assume
+#include "helpers.hpp" // assume, literal_strlen
 #include "linkdefs.hpp"
 #include "platform.hpp"
 
@@ -449,7 +449,7 @@ void sdobj_ReadFile(FileStackNode const &where, FILE *file, std::vector<Symbol> 
 				// It's fine to keep modifying the symbol after `AddSymbol`, only
 				// the name must not be modified
 			}
-			if (strncasecmp(&token[1], "ef", 2) != 0) {
+			if (strncasecmp(&token[1], "ef", literal_strlen("ef")) != 0) {
 				fatal(&where, lineNo, "'S' line is neither \"Def\" nor \"Ref\"");
 			}
 

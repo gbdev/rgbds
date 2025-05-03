@@ -168,16 +168,6 @@ private:
 	std::unordered_set<uint16_t> &uniqueColors() const {
 		// We check for *distinct* colors by stuffing them into a `set`; this should be
 		// faster than "back-checking" on every element (O(n²))
-		//
-		// TODO: calc84maniac suggested another approach; try implementing it, see if it
-		// performs better:
-		// > So basically you make a priority queue that takes iterators into each of your sets
-		// > (paired with end iterators so you'll know where to stop), and the comparator tests the
-		// > values pointed to by each iterator
-		// > Then each iteration you pop from the queue,
-		// > optionally add one to your count, increment the iterator and push it back into the
-		// > queue if it didn't reach the end
-		// > And you do this until the priority queue is empty
 		static std::unordered_set<uint16_t> colors;
 
 		colors.clear();
@@ -477,7 +467,6 @@ std::tuple<DefaultInitVec<size_t>, size_t>
 				);
 
 				// All efficiencies are identical iff min equals max
-				// TODO: maybe not ideal to re-compute these two?
 				ProtoPalette const &minProtoPal = protoPalettes[minEfficiencyIter->protoPalIndex];
 				ProtoPalette const &maxProtoPal = protoPalettes[maxEfficiencyIter->protoPalIndex];
 				size_t minSize = minProtoPal.size();
