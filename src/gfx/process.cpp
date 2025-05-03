@@ -1204,17 +1204,6 @@ void process() {
 				protoPalettes[n] = protoPalette; // Override them
 				// Remove any other proto-palettes that we encompass
 				// (Example [(0, 1), (0, 2)], inserting (0, 1, 2))
-				//
-				// The following code does its job, except that references to the removed
-				// proto-palettes are not updated, causing issues.
-				// TODO: overlap might not be detrimental to the packing algorithm.
-				// Investigation is necessary, especially if pathological cases are found.
-				//
-				// for (size_t i = protoPalettes.size(); --i != n;) {
-				//     if (protoPalette.compare(protoPalettes[i]) == ProtoPalette::WE_BIGGER) {
-				//         protoPalettes.erase(protoPalettes.begin() + i);
-				//     }
-				// }
 				[[fallthrough]];
 
 			case ProtoPalette::THEY_BIGGER:
