@@ -15,13 +15,16 @@ fi
 BISON_FLAGS="-Wall -Dparse.lac=full -Dlr.type=ielr"
 
 # Set some optimization flags on versions that support them
-if [ "$BISON_MAJOR" -eq 4 ] || [ "$BISON_MAJOR" -eq 3 ] && [ "$BISON_MINOR" -ge 5 ]; then
+if [ "$BISON_MAJOR" -ge 4 ] || [ "$BISON_MAJOR" -eq 3 ] && [ "$BISON_MINOR" -ge 5 ]; then
 	BISON_FLAGS="$BISON_FLAGS -Dapi.token.raw=true"
 fi
-if [ "$BISON_MAJOR" -eq 4 ] || [ "$BISON_MAJOR" -eq 3 ] && [ "$BISON_MINOR" -ge 6 ]; then
+if [ "$BISON_MAJOR" -ge 4 ] || [ "$BISON_MAJOR" -eq 3 ] && [ "$BISON_MINOR" -ge 6 ]; then
 	BISON_FLAGS="$BISON_FLAGS -Dparse.error=detailed"
 else
 	BISON_FLAGS="$BISON_FLAGS -Dparse.error=verbose"
+fi
+if [ "$BISON_MAJOR" -ge 4 ] || [ "$BISON_MAJOR" -eq 3 ] && [ "$BISON_MINOR" -ge 7 ]; then
+	BISON_FLAGS="$BISON_FLAGS -Wcounterexamples"
 fi
 
 # Replace the arguments to this script ($@) with the ones in $BISON_FLAGS

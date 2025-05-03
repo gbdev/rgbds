@@ -99,6 +99,10 @@
 
 	// REG_AF == REG_SP since LD/INC/ADD/DEC allow SP, while PUSH/POP allow AF
 	enum { REG_BC, REG_DE, REG_HL, REG_SP, REG_AF = REG_SP };
+	// Names are not needed for AF or SP
+	static char const *reg_tt_names[] = { "BC", "DE", "HL" };
+	static char const *reg_tt_high_names[] = { "B", "D", "H" };
+	static char const *reg_tt_low_names[] = { "C", "E", "L" };
 
 	// CC_NZ == CC_Z ^ 1, and CC_NC == CC_C ^ 1, so `!` can toggle them
 	enum { CC_NZ, CC_Z, CC_NC, CC_C };
@@ -380,6 +384,8 @@
 %type <int32_t> reg_ss
 %type <int32_t> reg_rr
 %type <int32_t> reg_tt
+%type <int32_t> reg_tt_no_af
+%type <int32_t> reg_bc_or_de
 %type <int32_t> ccode_expr
 %type <int32_t> ccode
 %type <Expression> op_a_n
@@ -2115,15 +2121,29 @@ sm83_ld_hl:
 		sect_ConstByte(0xF8);
 		sect_RelByte($5, 1);
 	}
+	| SM83_LD MODE_HL COMMA MODE_SP {
+		::error("LD HL, SP is not a valid instruction; use LD HL, SP + 0\n");
+	}
 	| SM83_LD MODE_HL COMMA reloc_16bit {
 		sect_ConstByte(0x01 | (REG_HL << 4));
 		sect_RelWord($4, 1);
+	}
+	| SM83_LD MODE_HL COMMA reg_tt_no_af {
+		::error(
+		    "LD HL, %s is not a valid instruction; use LD H, %s and LD L, %s\n",
+		    reg_tt_names[$4],
+		    reg_tt_high_names[$4],
+		    reg_tt_low_names[$4]
+		);
 	}
 ;
 
 sm83_ld_sp:
 	SM83_LD MODE_SP COMMA MODE_HL {
 		sect_ConstByte(0xF9);
+	}
+	| SM83_LD MODE_SP COMMA reg_bc_or_de {
+		::error("LD SP, %s is not a valid instruction\n", reg_tt_names[$4]);
 	}
 	| SM83_LD MODE_SP COMMA reloc_16bit {
 		sect_ConstByte(0x01 | (REG_SP << 4));
@@ -2197,13 +2217,20 @@ sm83_ld_a:
 ;
 
 sm83_ld_ss:
-	SM83_LD MODE_BC COMMA reloc_16bit {
-		sect_ConstByte(0x01 | (REG_BC << 4));
+	SM83_LD reg_bc_or_de COMMA reloc_16bit {
+		sect_ConstByte(0x01 | ($2 << 4));
 		sect_RelWord($4, 1);
 	}
-	| SM83_LD MODE_DE COMMA reloc_16bit {
-		sect_ConstByte(0x01 | (REG_DE << 4));
-		sect_RelWord($4, 1);
+	| SM83_LD reg_bc_or_de COMMA reg_tt_no_af {
+		::error(
+		    "LD %s, %s is not a valid instruction; use LD %s, %s and LD %s, %s\n",
+		    reg_tt_names[$2],
+		    reg_tt_names[$4],
+		    reg_tt_high_names[$2],
+		    reg_tt_high_names[$4],
+		    reg_tt_low_names[$2],
+		    reg_tt_low_names[$4]
+		);
 	}
 	// HL is taken care of in sm83_ld_hl
 	// SP is taken care of in sm83_ld_sp
@@ -2532,32 +2559,32 @@ reg_a:
 ;
 
 reg_tt:
-	MODE_BC {
-		$$ = REG_BC;
-	}
-	| MODE_DE {
-		$$ = REG_DE;
-	}
-	| MODE_HL {
-		$$ = REG_HL;
-	}
+	reg_tt_no_af
 	| MODE_AF {
 		$$ = REG_AF;
 	}
 ;
 
 reg_ss:
+	reg_tt_no_af
+	| MODE_SP {
+		$$ = REG_SP;
+	}
+;
+
+reg_tt_no_af:
+	reg_bc_or_de
+	| MODE_HL {
+		$$ = REG_HL;
+	}
+;
+
+reg_bc_or_de:
 	MODE_BC {
 		$$ = REG_BC;
 	}
 	| MODE_DE {
 		$$ = REG_DE;
-	}
-	| MODE_HL {
-		$$ = REG_HL;
-	}
-	| MODE_SP {
-		$$ = REG_SP;
 	}
 ;
 

@@ -16,4 +16,20 @@ error: invalid-instructions.asm(7):
     Invalid bit index 8 for BIT
 error: invalid-instructions.asm(8):
     Invalid address $40 for RST
-error: Assembly aborted (8 errors)!
+error: invalid-instructions.asm(10):
+    LD BC, BC is not a valid instruction; use LD B, B and LD C, C
+error: invalid-instructions.asm(11):
+    LD DE, HL is not a valid instruction; use LD D, H and LD E, L
+error: invalid-instructions.asm(12):
+    LD HL, DE is not a valid instruction; use LD H, D and LD L, E
+error: invalid-instructions.asm(14):
+    LD HL, SP is not a valid instruction; use LD HL, SP + 0
+error: invalid-instructions.asm(17):
+    LD SP, BC is not a valid instruction
+error: invalid-instructions.asm(18):
+    syntax error, unexpected sp
+error: invalid-instructions.asm(20):
+    syntax error, unexpected af
+error: invalid-instructions.asm(21):
+    syntax error, unexpected af
+error: Assembly aborted (16 errors)!
