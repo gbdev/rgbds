@@ -1623,7 +1623,7 @@ string_literal:
 	| OP_STRSLICE LPAREN string COMMA iconst RPAREN {
 		size_t len = strlenUTF8($3, false);
 		uint32_t start = adjustNegativeIndex($5, len, "STRSLICE");
-		$$ = strsliceUTF8($3, start, len - 1);
+		$$ = strsliceUTF8($3, start, len);
 	}
 	| OP_STRSUB LPAREN string COMMA iconst COMMA uconst RPAREN {
 		size_t len = strlenUTF8($3, false);
