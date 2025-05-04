@@ -425,7 +425,6 @@ lines:
 		lexer_SetMode(LEXER_NORMAL);
 		lexer_ToggleStringExpansion(true);
 	} endofline {
-		fstk_StopRept();
 		yyerrok;
 	}
 ;

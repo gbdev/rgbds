@@ -392,17 +392,13 @@ void fstk_RunFor(
 	context.forName = symName;
 }
 
-void fstk_StopRept() {
-	contextStack.top().nbReptIters = 0; // Prevent more iterations
-}
-
 bool fstk_Break() {
 	if (contextStack.top().fileInfo->type != NODE_REPT) {
 		error("BREAK can only be used inside a REPT/FOR block\n");
 		return false;
 	}
 
-	fstk_StopRept();
+	contextStack.top().nbReptIters = 0; // Prevent more iterations
 	return true;
 }
 
