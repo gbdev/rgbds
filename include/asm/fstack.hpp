@@ -71,7 +71,6 @@ void fstk_RunFor(
     int32_t reptLineNo,
     ContentSpan const &span
 );
-void fstk_StopRept();
 bool fstk_Break();
 
 void fstk_NewRecursionDepth(size_t newDepth);
