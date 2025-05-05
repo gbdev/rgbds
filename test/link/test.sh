@@ -149,6 +149,17 @@ rgblinkQuiet -o "$gbtemp" "$otemp" "$gbtemp2" 2>"$outtemp"
 tryDiff "$test"/out.err "$outtemp"
 evaluateTest
 
+test="constant-parent"
+startTest
+"$RGBASM" -o "$otemp" "$test"/a.asm
+"$RGBASM" -o "$gbtemp2" "$test"/b.asm
+continueTest
+rgblinkQuiet -o "$gbtemp" -n "$outtemp2" "$otemp" "$gbtemp2" 2>"$outtemp"
+tryDiff "$test"/out.err "$outtemp"
+tryDiff "$test"/ref.out.sym "$outtemp2"
+tryCmpRom "$test"/ref.out.bin
+evaluateTest
+
 for test in fragment-align/*; do
 	startTest
 	"$RGBASM" -o "$otemp" "$test"/a.asm

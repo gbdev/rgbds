@@ -36,7 +36,7 @@ static std::string make_escape(std::string &str) {
 	size_t pos = 0;
 	for (;;) {
 		// All dollars needs to be doubled
-		size_t nextPos = str.find("$", pos);
+		size_t nextPos = str.find('$', pos);
 		if (nextPos == std::string::npos) {
 			break;
 		}
