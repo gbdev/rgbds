@@ -30,6 +30,7 @@ FILE *mapFile;
 struct SortedSymbol {
 	Symbol const *sym;
 	uint16_t addr;
+	uint16_t parentAddr;
 };
 
 struct SortedSections {
@@ -311,33 +312,28 @@ static void printSymName(std::string const &name, FILE *file) {
 }
 
 // Comparator function for `std::stable_sort` to sort symbols
-// Symbols are ordered by address, then by parentage
 static bool compareSymbols(SortedSymbol const &sym1, SortedSymbol const &sym2) {
+	// First, sort by address
 	if (sym1.addr != sym2.addr) {
 		return sym1.addr < sym2.addr;
 	}
 
+	// Second, sort by locality (global before local)
 	std::string const &sym1_name = sym1.sym->name;
 	std::string const &sym2_name = sym2.sym->name;
-	bool sym1_local = sym1_name.find(".") != std::string::npos;
-	bool sym2_local = sym2_name.find(".") != std::string::npos;
-
+	bool sym1_local = sym1_name.find('.') != std::string::npos;
+	bool sym2_local = sym2_name.find('.') != std::string::npos;
 	if (sym1_local != sym2_local) {
-		size_t sym1_len = sym1_name.length();
-		size_t sym2_len = sym2_name.length();
-
-		// Sort parent labels before their child local labels
-		if (sym2_name.starts_with(sym1_name) && sym2_name[sym1_len] == '.') {
-			return true;
-		}
-		if (sym1_name.starts_with(sym2_name) && sym1_name[sym2_len] == '.') {
-			return false;
-		}
-		// Sort local labels before unrelated global labels
-		return sym1_local;
+		return sym1_local < sym2_local;
 	}
 
-	return false;
+	// Third, sort by parent address
+	if (sym1.parentAddr != sym2.parentAddr) {
+		return sym1.parentAddr < sym2.parentAddr;
+	}
+
+	// Fourth, sort by name
+	return sym1_name < sym2_name;
 }
 
 // Write a bank's contents to the sym file
@@ -374,10 +370,19 @@ static void writeSymBank(SortedSections const &bankSections, SectionType type, u
 		for (Symbol const *sym : sect->symbols) {
 			// Don't output symbols that begin with an illegal character
 			if (isLegalSymbol(*sym)) {
-				symList.push_back({
-				    .sym = sym,
-				    .addr = static_cast<uint16_t>(sym->label().offset + sect->org),
-				});
+				uint16_t addr = static_cast<uint16_t>(sym->label().offset + sect->org);
+				uint16_t parentAddr = addr;
+				if (auto pos = sym->name.find('.'); pos != std::string::npos) {
+					std::string parentName = sym->name.substr(0, pos);
+					if (Symbol const *parentSym = sym_GetSymbol(parentName);
+					    parentSym && parentSym->data.holds<Label>()) {
+						auto const &parentLabel = parentSym->label();
+						assume(parentLabel.section != nullptr);
+						parentAddr =
+						    static_cast<uint16_t>(parentLabel.offset + parentLabel.section->org);
+					}
+				}
+				symList.push_back({.sym = sym, .addr = addr, .parentAddr = parentAddr});
 			}
 		}
 	});
