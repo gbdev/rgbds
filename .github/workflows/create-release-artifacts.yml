@@ -61,12 +61,12 @@ jobs:
           cmake --install build --verbose --prefix install_dir --strip
       - name: Package binaries
         run: |
-          Compress-Archive -LiteralPath @("install_dir/bin/rgbasm.exe", "install_dir/bin/rgblink.exe", "install_dir/bin/rgbfix.exe", "install_dir/bin/rgbgfx.exe", "install_dir/bin/zlib1.dll", "install_dir/bin/libpng16.dll") "rgbds-${{ env.version }}-win${{ matrix.bits }}.zip"
+          Compress-Archive -LiteralPath @("install_dir/bin/rgbasm.exe", "install_dir/bin/rgblink.exe", "install_dir/bin/rgbfix.exe", "install_dir/bin/rgbgfx.exe", "install_dir/bin/zlib1.dll", "install_dir/bin/libpng16.dll") "rgbds-win${{ matrix.bits }}.zip"
       - name: Upload Windows binaries
         uses: actions/upload-artifact@v4
         with:
           name: win${{ matrix.bits }}
-          path: rgbds-${{ env.version }}-win${{ matrix.bits }}.zip
+          path: rgbds-win${{ matrix.bits }}.zip
 
   macos:
     runs-on: macos-14
@@ -92,12 +92,12 @@ jobs:
           strip rgb{asm,link,fix,gfx}
       - name: Package binaries
         run: |
-          zip --junk-paths rgbds-${{ env.version }}-macos.zip rgb{asm,link,fix,gfx} man/* .github/scripts/install.sh
+          zip --junk-paths rgbds-macos.zip rgb{asm,link,fix,gfx} man/* .github/scripts/install.sh
       - name: Upload macOS binaries
         uses: actions/upload-artifact@v4
         with:
           name: macos
-          path: rgbds-${{ env.version }}-macos.zip
+          path: rgbds-macos.zip
 
   linux:
     runs-on: ubuntu-22.04 # Oldest supported, for best glibc compatibility.
@@ -119,12 +119,12 @@ jobs:
           strip rgb{asm,link,fix,gfx}
       - name: Package binaries
         run: |
-          tar caf rgbds-${{ env.version }}-linux-x86_64.tar.xz --transform='s#.*/##' rgb{asm,link,fix,gfx} man/* .github/scripts/install.sh
+          tar caf rgbds-linux-x86_64.tar.xz --transform='s#.*/##' rgb{asm,link,fix,gfx} man/* .github/scripts/install.sh
       - name: Upload Linux binaries
         uses: actions/upload-artifact@v4
         with:
           name: linux
-          path: rgbds-${{ env.version }}-linux-x86_64.tar.xz
+          path: rgbds-linux-x86_64.tar.xz
 
   release:
     runs-on: ubuntu-latest
@@ -155,11 +155,11 @@ jobs:
           draft: true # Don't publish the release quite yet...
           prerelease: ${{ contains(github.ref, '-rc') }}
           files: |
-            win32/rgbds-${{ env.version }}-win32.zip
-            win64/rgbds-${{ env.version }}-win64.zip
-            macos/rgbds-${{ env.version }}-macos.zip
-            linux/rgbds-${{ env.version }}-linux-x86_64.tar.xz
-            rgbds-${{ env.version }}.tar.gz
+            win32/rgbds-win32.zip
+            win64/rgbds-win64.zip
+            macos/rgbds-macos.zip
+            linux/rgbds-linux-x86_64.tar.xz
+            rgbds-source.tar.gz
           fail_on_unmatched_files: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

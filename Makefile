@@ -265,4 +265,4 @@ wine-shim:
 
 dist:
 	$Qgit ls-files | sed s~^~$${PWD##*/}/~ \
-	  | tar -czf rgbds-`git -c safe.directory='*' describe --tags | cut -c 2-`.tar.gz -C .. -T -
+	  | tar -czf rgbds-source.tar.gz -C .. -T -
