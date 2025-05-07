@@ -11,6 +11,7 @@ extern bool warnings; // True to enable warnings, false to disable them.
 
 extern FILE *dependFile;
 extern std::string targetFileName;
+extern bool continueAfterMissingIncludes;
 extern bool generatedMissingIncludes;
 extern bool failedOnMissingInclude;
 extern bool generatePhonyDeps;
