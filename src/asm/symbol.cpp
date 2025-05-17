@@ -141,6 +141,13 @@ static void alreadyDefinedError(Symbol const &sym, char const *asType) {
 		}
 		fputs(" at ", stderr);
 		dumpFilename(sym);
+		if (sym.type == SYM_EQUS) {
+			fprintf(
+			    stderr,
+			    "    (should it be {interpolated} to define its contents \"%s\"?)\n",
+			    sym.getEqus()->c_str()
+			);
+		}
 	}
 }
 
