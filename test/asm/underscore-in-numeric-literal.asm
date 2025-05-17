@@ -22,7 +22,7 @@ _1234::
 	dl 6_._283_185 ; fixed point
 	dw `0123_3210, `00_33_22_11_ ; gfx
 
-; underscores as digits
-	opt g_ABC, b_X
-	db %_X_X__XX
-	dw `_A_B_C__
+; underscores with custom digits
+	opt g.ABC, b.X
+	db %.X.X_..XX_
+	dw `.A.B_.C.._

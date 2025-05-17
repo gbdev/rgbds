@@ -14,8 +14,8 @@
 #include "asm/warning.hpp"
 
 struct OptStackEntry {
-	char binary[2];
-	char gbgfx[4];
+	char binDigits[2];
+	char gfxDigits[4];
 	uint8_t fixPrecision;
 	uint8_t fillByte;
 	bool warningsAreErrors;
@@ -151,13 +151,8 @@ void opt_Push() {
 	OptStackEntry entry;
 
 	// Both of these are pulled from lexer.hpp
-	entry.binary[0] = binDigits[0];
-	entry.binary[1] = binDigits[1];
-
-	entry.gbgfx[0] = gfxDigits[0];
-	entry.gbgfx[1] = gfxDigits[1];
-	entry.gbgfx[2] = gfxDigits[2];
-	entry.gbgfx[3] = gfxDigits[3];
+	memcpy(entry.binDigits, binDigits, std::size(binDigits));
+	memcpy(entry.gfxDigits, gfxDigits, std::size(gfxDigits));
 
 	entry.fixPrecision = fixPrecision; // Pulled from fixpoint.hpp
 
@@ -181,8 +176,8 @@ void opt_Pop() {
 	OptStackEntry entry = stack.top();
 	stack.pop();
 
-	opt_B(entry.binary);
-	opt_G(entry.gbgfx);
+	opt_B(entry.binDigits);
+	opt_G(entry.gfxDigits);
 	opt_P(entry.fillByte);
 	opt_Q(entry.fixPrecision);
 	opt_R(entry.maxRecursionDepth);

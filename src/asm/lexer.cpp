@@ -611,7 +611,7 @@ static bool isMacroChar(char c) {
 // forward declarations for readBracketedMacroArgNum
 static int peek();
 static void shiftChar();
-static uint32_t readNumber(int radix, uint32_t baseValue);
+static uint32_t readDecimalNumber(int initial);
 static bool startsIdentifier(int c);
 static bool continuesIdentifier(int c);
 
@@ -637,7 +637,7 @@ static uint32_t readBracketedMacroArgNum() {
 	}
 
 	if (c >= '0' && c <= '9') {
-		uint32_t n = readNumber(10, 0);
+		uint32_t n = readDecimalNumber(0);
 		if (n > INT32_MAX) {
 			error("Number in bracketed macro argument is too large\n");
 			return 0;
@@ -1021,26 +1021,6 @@ static std::string readAnonLabelRef(char c) {
 	return sym_MakeAnonLabelName(n, c == '-');
 }
 
-static uint32_t readNumber(int radix, uint32_t baseValue) {
-	uint32_t value = baseValue;
-
-	for (;; shiftChar()) {
-		int c = peek();
-
-		if (c == '_') {
-			continue;
-		} else if (c < '0' || c > '0' + radix - 1) {
-			break;
-		}
-		if (value > (UINT32_MAX - (c - '0')) / radix) {
-			warning(WARNING_LARGE_CONSTANT, "Integer constant is too large\n");
-		}
-		value = value * radix + (c - '0');
-	}
-
-	return value;
-}
-
 static uint32_t readFractionalPart(uint32_t integer) {
 	uint32_t value = 0, divisor = 1;
 	uint8_t precision = 0;
@@ -1106,21 +1086,64 @@ static uint32_t readFractionalPart(uint32_t integer) {
 }
 
 char binDigits[2];
+char gfxDigits[4];
+
+static bool isValidDigit(char c) {
+	return (c >= '0' && c <= '9') || (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || c == '.'
+	       || c == '#' || c == '@';
+}
+
+static bool checkDigitErrors(char const *digits, size_t n, char const *type) {
+	for (size_t i = 0; i < n; i++) {
+		char c = digits[i];
+
+		if (!isValidDigit(c)) {
+			error("Invalid digit for %s constant %s\n", type, printChar(c));
+			return false;
+		}
+
+		if (c >= '0' && c < n + '0' && c != i + '0') {
+			error("Changed digit for %s constant %s\n", type, printChar(c));
+			return false;
+		}
+
+		for (size_t j = i + 1; j < n; j++) {
+			if (c == digits[j]) {
+				error("Repeated digit for %s constant %s\n", type, printChar(c));
+				return false;
+			}
+		}
+	}
+
+	return true;
+}
+
+void lexer_SetBinDigits(char const digits[2]) {
+	if (size_t n = std::size(binDigits); checkDigitErrors(digits, n, "binary")) {
+		memcpy(binDigits, digits, n);
+	}
+}
+
+void lexer_SetGfxDigits(char const digits[4]) {
+	if (size_t n = std::size(gfxDigits); checkDigitErrors(digits, n, "graphics")) {
+		memcpy(gfxDigits, digits, n);
+	}
+}
 
 static uint32_t readBinaryNumber() {
 	uint32_t value = 0;
+	bool empty = true;
 
 	for (;; shiftChar()) {
 		int c = peek();
 		int bit;
 
-		// Check for '_' after digits in case one of the digits is '_'
-		if (c == binDigits[0]) {
-			bit = 0;
-		} else if (c == binDigits[1]) {
-			bit = 1;
-		} else if (c == '_') {
+		if (c == '_' && !empty) {
 			continue;
+		} else if (c == '0' || c == binDigits[0]) {
+			bit = 0;
+		} else if (c == '1' || c == binDigits[1]) {
+			bit = 1;
 		} else {
 			break;
 		}
@@ -1128,6 +1151,72 @@ static uint32_t readBinaryNumber() {
 			warning(WARNING_LARGE_CONSTANT, "Integer constant is too large\n");
 		}
 		value = value * 2 + bit;
+
+		empty = false;
+	}
+
+	if (empty) {
+		error("Invalid integer constant, no digits after '%%'\n");
+	}
+
+	return value;
+}
+
+static uint32_t readOctalNumber() {
+	uint32_t value = 0;
+	bool empty = true;
+
+	for (;; shiftChar()) {
+		int c = peek();
+
+		if (c == '_' && !empty) {
+			continue;
+		} else if (c >= '0' && c <= '7') {
+			c = c - '0';
+		} else {
+			break;
+		}
+
+		if (value > (UINT32_MAX - c) / 8) {
+			warning(WARNING_LARGE_CONSTANT, "Integer constant is too large\n");
+		}
+		value = value * 8 + c;
+
+		empty = false;
+	}
+
+	if (empty) {
+		error("Invalid integer constant, no digits after '&'\n");
+	}
+
+	return value;
+}
+
+static uint32_t readDecimalNumber(int initial) {
+	uint32_t value = initial ? initial - '0' : 0;
+	bool empty = !initial;
+
+	for (;; shiftChar()) {
+		int c = peek();
+
+		if (c == '_' && !empty) {
+			continue;
+		} else if (c >= '0' && c <= '9') {
+			c = c - '0';
+		} else {
+			break;
+		}
+
+		if (value > (UINT32_MAX - c) / 10) {
+			warning(WARNING_LARGE_CONSTANT, "Integer constant is too large\n");
+		}
+		value = value * 10 + c;
+
+		empty = false;
+	}
+
+	if (empty) {
+		error("Invalid integer constant, no digits\n");
 	}
 
 	return value;
@@ -1140,14 +1229,14 @@ static uint32_t readHexNumber() {
 	for (;; shiftChar()) {
 		int c = peek();
 
-		if (c >= 'a' && c <= 'f') {
+		if (c == '_' && !empty) {
+			continue;
+		} else if (c >= 'a' && c <= 'f') {
 			c = c - 'a' + 10;
 		} else if (c >= 'A' && c <= 'F') {
 			c = c - 'A' + 10;
 		} else if (c >= '0' && c <= '9') {
 			c = c - '0';
-		} else if (c == '_' && !empty) {
-			continue;
 		} else {
 			break;
 		}
@@ -1167,8 +1256,6 @@ static uint32_t readHexNumber() {
 	return value;
 }
 
-char gfxDigits[4];
-
 static uint32_t readGfxConstant() {
 	uint32_t bitPlaneLower = 0, bitPlaneUpper = 0;
 	uint8_t width = 0;
@@ -1177,17 +1264,16 @@ static uint32_t readGfxConstant() {
 		int c = peek();
 		uint32_t pixel;
 
-		// Check for '_' after digits in case one of the digits is '_'
-		if (c == gfxDigits[0]) {
-			pixel = 0;
-		} else if (c == gfxDigits[1]) {
-			pixel = 1;
-		} else if (c == gfxDigits[2]) {
-			pixel = 2;
-		} else if (c == gfxDigits[3]) {
-			pixel = 3;
-		} else if (c == '_' && width > 0) {
+		if (c == '_' && width > 0) {
 			continue;
+		} else if (c == '0' || c == gfxDigits[0]) {
+			pixel = 0;
+		} else if (c == '1' || c == gfxDigits[1]) {
+			pixel = 1;
+		} else if (c == '2' || c == gfxDigits[2]) {
+			pixel = 2;
+		} else if (c == '3' || c == gfxDigits[3]) {
+			pixel = 3;
 		} else {
 			break;
 		}
@@ -1217,11 +1303,11 @@ static uint32_t readGfxConstant() {
 
 static bool startsIdentifier(int c) {
 	// Anonymous labels internally start with '!'
-	return (c <= 'Z' && c >= 'A') || (c <= 'z' && c >= 'a') || c == '.' || c == '_';
+	return (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || c == '.' || c == '_';
 }
 
 static bool continuesIdentifier(int c) {
-	return startsIdentifier(c) || (c <= '9' && c >= '0') || c == '#' || c == '$' || c == '@';
+	return startsIdentifier(c) || (c >= '0' && c <= '9') || c == '#' || c == '$' || c == '@';
 }
 
 static Token readIdentifier(char firstChar, bool raw) {
@@ -1838,7 +1924,7 @@ static Token yylex_NORMAL() {
 			case 'o':
 			case 'O':
 				shiftChar();
-				return Token(T_(NUMBER), readNumber(8, 0));
+				return Token(T_(NUMBER), readOctalNumber());
 			case 'b':
 			case 'B':
 				shiftChar();
@@ -1857,7 +1943,7 @@ static Token yylex_NORMAL() {
 		case '7':
 		case '8':
 		case '9': {
-			uint32_t n = readNumber(10, c - '0');
+			uint32_t n = readDecimalNumber(c);
 
 			if (peek() == '.') {
 				shiftChar();
@@ -1875,7 +1961,7 @@ static Token yylex_NORMAL() {
 				shiftChar();
 				return Token(T_(OP_LOGICAND));
 			} else if (c >= '0' && c <= '7') {
-				return Token(T_(NUMBER), readNumber(8, 0));
+				return Token(T_(NUMBER), readOctalNumber());
 			}
 			return Token(T_(OP_AND));
 
@@ -1884,7 +1970,7 @@ static Token yylex_NORMAL() {
 			if (c == '=') {
 				shiftChar();
 				return Token(T_(POP_MODEQ));
-			} else if (c == binDigits[0] || c == binDigits[1]) {
+			} else if (c == '0' || c == '1' || c == binDigits[0] || c == binDigits[1]) {
 				return Token(T_(NUMBER), readBinaryNumber());
 			}
 			return Token(T_(OP_MOD));
