@@ -32,24 +32,34 @@ error: builtin-overwrite.asm(37) -> builtin-overwrite.asm::tickle(6):
     Built-in symbol '__ISO_8601_UTC__' cannot be purged
 error: builtin-overwrite.asm(37) -> builtin-overwrite.asm::tickle(9):
     '__ISO_8601_UTC__' already defined at <builtin>
+    (should it be {interpolated} to define its contents ""1989-04-21T12:34:56Z""?)
 error: builtin-overwrite.asm(37) -> builtin-overwrite.asm::tickle(10):
     '__ISO_8601_UTC__' already defined at <builtin>
+    (should it be {interpolated} to define its contents ""1989-04-21T12:34:56Z""?)
 error: builtin-overwrite.asm(37) -> builtin-overwrite.asm::tickle(13):
     '__ISO_8601_UTC__' already defined as constant at <builtin>
+    (should it be {interpolated} to define its contents ""1989-04-21T12:34:56Z""?)
 error: builtin-overwrite.asm(37) -> builtin-overwrite.asm::tickle(14):
     '__ISO_8601_UTC__' already defined as constant at <builtin>
+    (should it be {interpolated} to define its contents ""1989-04-21T12:34:56Z""?)
 error: builtin-overwrite.asm(37) -> builtin-overwrite.asm::tickle(17):
     '__ISO_8601_UTC__' already defined at <builtin>
+    (should it be {interpolated} to define its contents ""1989-04-21T12:34:56Z""?)
 error: builtin-overwrite.asm(37) -> builtin-overwrite.asm::tickle(18):
     '__ISO_8601_UTC__' already defined at <builtin>
+    (should it be {interpolated} to define its contents ""1989-04-21T12:34:56Z""?)
 error: builtin-overwrite.asm(37) -> builtin-overwrite.asm::tickle(21):
     '__ISO_8601_UTC__' already defined as constant at <builtin>
+    (should it be {interpolated} to define its contents ""1989-04-21T12:34:56Z""?)
 error: builtin-overwrite.asm(37) -> builtin-overwrite.asm::tickle(22):
     '__ISO_8601_UTC__' already defined as constant at <builtin>
+    (should it be {interpolated} to define its contents ""1989-04-21T12:34:56Z""?)
 error: builtin-overwrite.asm(37) -> builtin-overwrite.asm::tickle(25):
     '__ISO_8601_UTC__' already defined as non-EQU at <builtin>
+    (should it be {interpolated} to define its contents ""1989-04-21T12:34:56Z""?)
 error: builtin-overwrite.asm(37) -> builtin-overwrite.asm::tickle(26):
     '__ISO_8601_UTC__' already defined as non-EQU at <builtin>
+    (should it be {interpolated} to define its contents ""1989-04-21T12:34:56Z""?)
 error: builtin-overwrite.asm(37) -> builtin-overwrite.asm::tickle(29):
     Built-in symbol '__ISO_8601_UTC__' cannot be redefined
 error: builtin-overwrite.asm(37) -> builtin-overwrite.asm::tickle(30):

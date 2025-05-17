@@ -1,3 +1,11 @@
 error: def.asm(23):
     'constant' already defined at def.asm(10)
-error: Assembly aborted (1 error)!
+error: def.asm(35):
+    'mac' already defined as non-EQU at def.asm(32)
+error: def.asm(38):
+    'name' already defined at def.asm(37)
+    (should it be {interpolated} to define its contents "constant2"?)
+error: def.asm(42):
+    'name' already defined at def.asm(40)
+    (should it be {interpolated} to define its contents "mac2"?)
+error: Assembly aborted (4 errors)!
