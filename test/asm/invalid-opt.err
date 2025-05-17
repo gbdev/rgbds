@@ -3,21 +3,29 @@ error: invalid-opt.asm(1):
 error: invalid-opt.asm(2):
     Must specify exactly 4 characters for option 'g'
 error: invalid-opt.asm(3):
-    Invalid argument for option 'p'
+    Invalid digit for binary constant '_'
 error: invalid-opt.asm(4):
-    Invalid argument for option 'p'
+    Invalid digit for binary constant '1'
 error: invalid-opt.asm(5):
-    Invalid argument for option 'Q'
+    Invalid digit for graphics constant '_'
 error: invalid-opt.asm(6):
-    Invalid argument for option 'Q'
+    Invalid digit for graphics constant '$'
 error: invalid-opt.asm(7):
-    Argument for option 'Q' must be between 1 and 31
+    Invalid argument for option 'p'
 error: invalid-opt.asm(8):
-    Argument to 'r' is out of range ("99999999999999999999999999")
+    Invalid argument for option 'p'
 error: invalid-opt.asm(9):
-    Must specify an argument for option 'W'
+    Invalid argument for option 'Q'
 error: invalid-opt.asm(10):
-    syntax error, unexpected end of line, expecting string
+    Invalid argument for option 'Q'
 error: invalid-opt.asm(11):
+    Argument for option 'Q' must be between 1 and 31
+error: invalid-opt.asm(12):
+    Argument to 'r' is out of range ("99999999999999999999999999")
+error: invalid-opt.asm(13):
+    Must specify an argument for option 'W'
+error: invalid-opt.asm(14):
+    syntax error, unexpected end of line, expecting string
+error: invalid-opt.asm(15):
     No entries in the option stack
-error: Assembly aborted (11 errors)!
+error: Assembly aborted (15 errors)!

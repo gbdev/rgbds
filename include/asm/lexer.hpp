@@ -118,17 +118,8 @@ struct LexerState {
 extern char binDigits[2];
 extern char gfxDigits[4];
 
-static inline void lexer_SetBinDigits(char const digits[2]) {
-	binDigits[0] = digits[0];
-	binDigits[1] = digits[1];
-}
-
-static inline void lexer_SetGfxDigits(char const digits[4]) {
-	gfxDigits[0] = digits[0];
-	gfxDigits[1] = digits[1];
-	gfxDigits[2] = digits[2];
-	gfxDigits[3] = digits[3];
-}
+void lexer_SetBinDigits(char const digits[2]);
+void lexer_SetGfxDigits(char const digits[4]);
 
 bool lexer_AtTopLevel();
 void lexer_RestartRept(uint32_t lineNo);
