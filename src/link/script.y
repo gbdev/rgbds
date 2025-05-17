@@ -251,10 +251,16 @@ yy::parser::symbol_type yylex() {
 	if (c == EOF) {
 		// Basically yywrap().
 		if (lexerStack.size() != 1) {
-			lexerStack.pop_back();
-			return yylex();
+			if (!atEof) {
+				// Inject a newline at EOF to simplify parsing.
+				atEof = true;
+				return yy::parser::make_newline();
+			} else {
+				lexerStack.pop_back();
+				return yylex();
+			}
 		} else if (!atEof) {
-			// Inject a newline at EOF, to avoid errors for files that don't end with one.
+			// Inject a newline at EOF to simplify parsing.
 			atEof = true;
 			return yy::parser::make_newline();
 		} else {

@@ -262,6 +262,16 @@ tryDiff "$test"/out.err "$outtemp"
 tryCmpRomSize "$gbtemp" 65536
 evaluateTest
 
+test="script-include"
+startTest
+"$RGBASM" -o "$otemp" "$test"/a.asm
+"$RGBASM" -o "$gbtemp2" "$test"/b.asm
+continueTest
+rgblinkQuiet -o "$gbtemp" -l "$test"/script.link "$otemp" "$gbtemp2" 2>"$outtemp"
+tryDiff "$test"/out.err "$outtemp"
+tryCmpRom "$test"/ref.out.bin
+evaluateTest
+
 test="sdcc/good"
 startTest
 "$RGBASM" -o "$otemp" "$test"/a.asm
