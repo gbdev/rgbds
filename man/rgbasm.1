@@ -51,8 +51,12 @@ is invalid because it could also be
 The arguments are as follows:
 .Bl -tag -width Ds
 .It Fl b Ar chars , Fl \-binary-digits Ar chars
-Change the two characters used for binary constants.
-The defaults are 01.
+Set two custom digit characters used for binary constants as alternatives to 0 and 1.
+Valid characters are numbers (although the values of 0 and 1 cannot be changed), letters,
+.Sq \&. ,
+.Sq # ,
+or
+.Sq @ .
 .It Fl D Ar name Ns Oo = Ns Ar value Oc , Fl \-define Ar name Ns Oo = Ns Ar value Oc
 Add a string symbol to the compiled source code.
 This is equivalent to
@@ -65,7 +69,12 @@ is not specified.
 .It Fl E , Fl \-export-all
 Export all labels, including unreferenced and local labels.
 .It Fl g Ar chars , Fl \-gfx-chars Ar chars
-Change the four characters used for gfx constants.
+Set four custom digit characters used for graphics constants as alternatives to 0123.
+Valid characters are numbers (although the values of 0123 cannot be changed), letters,
+.Sq \&. ,
+.Sq # ,
+or
+.Sq @ .
 The defaults are 0123.
 .It Fl h , Fl \-help
 Print help text for the program and exit.
