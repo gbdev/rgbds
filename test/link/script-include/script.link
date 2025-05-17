@@ -1,0 +1,2 @@
+include "script-include/a.inc"
+include "script-include/b.inc"
