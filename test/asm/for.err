@@ -6,6 +6,7 @@ warning: for.asm(20): [-Wbackwards-for]
     FOR goes backwards from 1 to 2 by -1
 error: for.asm(46):
     's' already defined as constant at for.asm(39)
+    (should it be {interpolated} to define its contents "x"?)
 error: for.asm(48) -> for.asm::REPT~4(54):
     'v' already defined as constant at for.asm(48) -> for.asm::REPT~4(52)
 FATAL: for.asm(48) -> for.asm::REPT~4(54):
