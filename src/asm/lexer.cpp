@@ -1102,7 +1102,7 @@ static bool checkDigitErrors(char const *digits, size_t n, char const *type) {
 			return false;
 		}
 
-		if (c >= '0' && c < n + '0' && c != i + '0') {
+		if (c >= '0' && c < static_cast<char>(n + '0') && c != static_cast<char>(i + '0')) {
 			error("Changed digit for %s constant %s\n", type, printChar(c));
 			return false;
 		}
