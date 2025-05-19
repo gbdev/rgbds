@@ -136,9 +136,8 @@ struct CaseInsensitive {
 	}
 };
 
-// This map lists all RGBASM keywords which `yylex_NORMAL` lexes as identifiers
-// (see `startsIdentifier` and `continuesIdentifier` below). All non-identifier
-// tokens are lexed separately.
+// This map lists all RGBASM keywords which `yylex_NORMAL` lexes as identifiers.
+// All non-identifier tokens are lexed separately.
 static std::unordered_map<std::string, int, CaseInsensitive, CaseInsensitive> keywordDict = {
     {"ADC",           T_(SM83_ADC)         },
     {"ADD",           T_(SM83_ADD)         },
@@ -612,8 +611,6 @@ static bool isMacroChar(char c) {
 static int peek();
 static void shiftChar();
 static uint32_t readNumber(int radix, uint32_t baseValue);
-static bool startsIdentifier(int c);
-static bool continuesIdentifier(int c);
 
 static uint32_t readBracketedMacroArgNum() {
 	bool disableMacroArgs = lexerState->disableMacroArgs;
@@ -1214,15 +1211,6 @@ static uint32_t readGfxConstant() {
 }
 
 // Functions to read identifiers and keywords
-
-static bool startsIdentifier(int c) {
-	// Anonymous labels internally start with '!'
-	return (c <= 'Z' && c >= 'A') || (c <= 'z' && c >= 'a') || c == '.' || c == '_';
-}
-
-static bool continuesIdentifier(int c) {
-	return startsIdentifier(c) || (c <= '9' && c >= '0') || c == '#' || c == '$' || c == '@';
-}
 
 static Token readIdentifier(char firstChar, bool raw) {
 	std::string identifier(1, firstChar);

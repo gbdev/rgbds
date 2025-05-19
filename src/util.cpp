@@ -6,6 +6,15 @@
 #include <stdint.h>
 #include <stdio.h>
 
+bool startsIdentifier(int c) {
+	// This returns false for anonymous labels, which internally start with a '!'
+	return (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || c == '.' || c == '_';
+}
+
+bool continuesIdentifier(int c) {
+	return startsIdentifier(c) || (c >= '0' && c <= '9') || c == '#' || c == '$' || c == '@';
+}
+
 char const *printChar(int c) {
 	// "'A'" + '\0': 4 bytes
 	// "'\\n'" + '\0': 5 bytes

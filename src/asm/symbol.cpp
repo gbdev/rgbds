@@ -2,6 +2,7 @@
 
 #include "asm/symbol.hpp"
 
+#include <algorithm>
 #include <inttypes.h>
 #include <stdio.h>
 #include <unordered_map>
@@ -9,6 +10,7 @@
 
 #include "error.hpp"
 #include "helpers.hpp" // assume
+#include "util.hpp"
 #include "version.hpp"
 
 #include "asm/fstack.hpp"
@@ -130,6 +132,11 @@ static void updateSymbolFilename(Symbol &sym) {
 	}
 }
 
+static bool isValidIdentifier(std::string const &s) {
+	return !s.empty() && startsIdentifier(s[0])
+	       && std::all_of(s.begin() + 1, s.end(), [](char c) { return continuesIdentifier(c); });
+}
+
 static void alreadyDefinedError(Symbol const &sym, char const *asType) {
 	if (sym.isBuiltin && !sym_FindScopedValidSymbol(sym.name)) {
 		// `DEF()` would return false, so we should not claim the symbol is already defined
@@ -142,11 +149,13 @@ static void alreadyDefinedError(Symbol const &sym, char const *asType) {
 		fputs(" at ", stderr);
 		dumpFilename(sym);
 		if (sym.type == SYM_EQUS) {
-			fprintf(
-			    stderr,
-			    "    (should it be {interpolated} to define its contents \"%s\"?)\n",
-			    sym.getEqus()->c_str()
-			);
+			if (std::string const &contents = *sym.getEqus(); isValidIdentifier(contents)) {
+				fprintf(
+				    stderr,
+				    "    (should it be {interpolated} to define its contents \"%s\"?)\n",
+				    contents.c_str()
+				);
+			}
 		}
 	}
 }
