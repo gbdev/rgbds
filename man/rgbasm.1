@@ -51,8 +51,15 @@ is invalid because it could also be
 The arguments are as follows:
 .Bl -tag -width Ds
 .It Fl b Ar chars , Fl \-binary-digits Ar chars
-Set two custom digit characters used for binary constants as alternatives to 0 and 1.
-Valid characters are numbers (although the values of 0 and 1 cannot be changed), letters,
+Allow two characters to be used for binary constants in addition to the default
+.Sq 0
+and
+.Sq 1 .
+Valid characters are numbers other than
+.Sq 0
+and
+.Sq 1 ,
+letters,
 .Sq \&. ,
 .Sq # ,
 or
@@ -69,8 +76,17 @@ is not specified.
 .It Fl E , Fl \-export-all
 Export all labels, including unreferenced and local labels.
 .It Fl g Ar chars , Fl \-gfx-chars Ar chars
-Set four custom digit characters used for graphics constants as alternatives to 0123.
-Valid characters are numbers (although the values of 0123 cannot be changed), letters,
+Allow four characters to be used for graphics constants in addition to the default
+.Sq 0 ,
+.Sq 1 ,
+.Sq 2 ,
+and
+.Sq 3 .
+Valid characters are numbers other than
+.Sq 0
+to
+.Sq 3 ,
+letters,
 .Sq \&. ,
 .Sq # ,
 or
