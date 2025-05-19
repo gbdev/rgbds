@@ -28,3 +28,15 @@ redef string equs "there"
 
 redef constant equ 6*9
 	println constant
+
+macro mac
+endm
+
+redef mac equ 42
+
+def name equs "constant2"
+def name equ 1337
+
+redef name equs "mac2"
+macro name
+endm
