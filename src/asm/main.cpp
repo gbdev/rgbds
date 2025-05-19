@@ -22,10 +22,11 @@
 #include "asm/symbol.hpp"
 #include "asm/warning.hpp"
 
-FILE *dependFile = nullptr;            // -M
-bool generatedMissingIncludes = false; // -MG
-bool generatePhonyDeps = false;        // -MP
-std::string targetFileName;            // -MQ, -MT
+FILE *dependFile = nullptr;                // -M
+bool continueAfterMissingIncludes = false; // -MC
+bool generatedMissingIncludes = false;     // -MG
+bool generatePhonyDeps = false;            // -MP
+std::string targetFileName;                // -MQ, -MT
 bool failedOnMissingInclude = false;
 bool verbose = false; // -v
 bool warnings = true; // -w
@@ -68,6 +69,7 @@ static option const longopts[] = {
     {"gfx-chars",       required_argument, nullptr,  'g'},
     {"include",         required_argument, nullptr,  'I'},
     {"dependfile",      required_argument, nullptr,  'M'},
+    {"MC",              no_argument,       &depType, 'C'},
     {"MG",              no_argument,       &depType, 'G'},
     {"help",            no_argument,       nullptr,  'h'},
     {"MP",              no_argument,       &depType, 'P'},
@@ -91,7 +93,7 @@ static option const longopts[] = {
 static void printUsage() {
 	fputs(
 	    "Usage: rgbasm [-EhVvw] [-b chars] [-D name[=value]] [-g chars] [-I path]\n"
-	    "              [-M depend_file] [-MG] [-MP] [-MT target_file] [-MQ target_file]\n"
+	    "              [-M depend_file] [-MC] [-MG] [-MP] [-MT target_file] [-MQ target_file]\n"
 	    "              [-o out_file] [-P include_file] [-p pad_value] [-Q precision]\n"
 	    "              [-r depth] [-s features:state_file] [-W warning] [-X max_errors]\n"
 	    "              <file>\n"
@@ -351,6 +353,10 @@ int main(int argc, char *argv[]) {
 		// Long-only options
 		case 0:
 			switch (depType) {
+			case 'C':
+				continueAfterMissingIncludes = true;
+				break;
+
 			case 'G':
 				generatedMissingIncludes = true;
 				break;
