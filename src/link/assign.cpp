@@ -371,6 +371,9 @@ void assign_AssignSections() {
 
 	initFreeSpace();
 
+	// Check if we need to do smart linking and discard any sections
+	sect_PerformSmartLink();
+
 	// Generate linked lists of sections to assign
 	nbSectionsToAssign = 0;
 	sect_ForEach(categorizeSection);
