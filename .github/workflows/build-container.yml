@@ -38,6 +38,7 @@ jobs:
           sed -i "2i LABEL org.opencontainers.image.description=\"RGBDS container image for the release version $TAG_NAME\"" Dockerfile
           docker build . --tag ghcr.io/gbdev/rgbds:$TAG_NAME
           docker push ghcr.io/gbdev/rgbds:$TAG_NAME
+          docker push ghcr.io/gbdev/rgbds:latest
 
       - name: Delete untagged container images
         if: github.repository_owner == 'gbdev'
