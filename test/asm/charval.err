@@ -1,0 +1,11 @@
+error: charval.asm(19):
+    CHARVAL: No character mapping for "abc"
+error: charval.asm(20):
+    CHARVAL: No character mapping for "cd"
+error: charval.asm(21):
+    CHARVAL: No character mapping for "xyz"
+warning: charval.asm(22): [-Wbuiltin-args]
+    CHARVAL: Index starts at 0
+warning: charval.asm(23): [-Wbuiltin-args]
+    CHARVAL: Index 10 is past the end of the character mapping
+error: Assembly aborted (3 errors)!

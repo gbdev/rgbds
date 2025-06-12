@@ -189,7 +189,7 @@ bool charmap_HasChar(std::string const &mapping) {
 	return charmap.nodes[nodeIdx].isTerminal();
 }
 
-size_t charmap_CharSize(std::string const &mapping) {
+static CharmapNode const *charmapEntry(std::string const &mapping) {
 	Charmap const &charmap = *currentCharmap;
 	size_t nodeIdx = 0;
 
@@ -197,12 +197,24 @@ size_t charmap_CharSize(std::string const &mapping) {
 		nodeIdx = charmap.nodes[nodeIdx].next[static_cast<uint8_t>(c)];
 
 		if (!nodeIdx) {
-			return 0;
+			return nullptr;
 		}
 	}
 
-	CharmapNode const &node = charmap.nodes[nodeIdx];
-	return node.isTerminal() ? node.value.size() : 0;
+	return &charmap.nodes[nodeIdx];
+}
+
+size_t charmap_CharSize(std::string const &mapping) {
+	CharmapNode const *node = charmapEntry(mapping);
+	return node && node->isTerminal() ? node->value.size() : 0;
+}
+
+std::optional<int32_t> charmap_CharValue(std::string const &mapping, size_t idx) {
+	if (CharmapNode const *node = charmapEntry(mapping);
+	    node && node->isTerminal() && idx < node->value.size()) {
+		return node->value[idx];
+	}
+	return std::nullopt;
 }
 
 std::vector<int32_t> charmap_Convert(std::string const &input) {
