@@ -433,12 +433,12 @@ diff_mark:
 	  %empty // OK
 	| OP_ADD {
 		::error(
-			"syntax error, unexpected + at the beginning of the line (is it a leftover diff mark?)\n"
+		    "syntax error, unexpected + at the beginning of the line (is it a leftover diff mark?)\n"
 		);
 	}
 	| OP_SUB {
 		::error(
-			"syntax error, unexpected - at the beginning of the line (is it a leftover diff mark?)\n"
+		    "syntax error, unexpected - at the beginning of the line (is it a leftover diff mark?)\n"
 		);
 	}
 ;
@@ -703,9 +703,9 @@ align_spec:
 			$$.alignment = $$.alignOfs = 0;
 		} else if ($3 <= -(1 << $1) || $3 >= 1 << $1) {
 			::error(
-				"The absolute alignment offset (%" PRIu32 ") must be less than alignment size (%d)\n",
-				static_cast<uint32_t>($3 < 0 ? -$3 : $3),
-				1 << $1
+			    "The absolute alignment offset (%" PRIu32 ") must be less than alignment size (%d)\n",
+			    static_cast<uint32_t>($3 < 0 ? -$3 : $3),
+			    1 << $1
 			);
 			$$.alignment = $$.alignOfs = 0;
 		} else {
@@ -1572,7 +1572,7 @@ relocexpr_no_str:
 	| OP_CHARSIZE LPAREN string RPAREN {
 		size_t charSize = charmap_CharSize($3);
 		if (charSize == 0) {
-			::error("CHARSIZE: No character mapping for \"%s\"\n", $3.c_str());
+			warning(WARNING_BUILTIN_ARG, "CHARSIZE: No character mapping for \"%s\"\n", $3.c_str());
 		}
 		$$.makeNumber(charSize);
 	}
@@ -1648,9 +1648,9 @@ string_literal:
 		bool unique;
 		$$ = charmap_Reverse($3, unique);
 		if (!unique) {
-			::error("REVCHAR: Multiple character mappings to values\n");
+			warning(WARNING_BUILTIN_ARG, "REVCHAR: Multiple character mappings to values\n");
 		} else if ($$.empty()) {
-			::error("REVCHAR: No character mapping to values\n");
+			warning(WARNING_BUILTIN_ARG, "REVCHAR: No character mapping to values\n");
 		}
 	}
 	| OP_STRCAT LPAREN RPAREN {

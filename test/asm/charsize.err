@@ -1,9 +1,8 @@
-error: charsize.asm(17):
+warning: charsize.asm(17): [-Wbuiltin-args]
     CHARSIZE: No character mapping for ""
-error: charsize.asm(18):
+warning: charsize.asm(18): [-Wbuiltin-args]
     CHARSIZE: No character mapping for "hello world"
-error: charsize.asm(19):
+warning: charsize.asm(19): [-Wbuiltin-args]
     CHARSIZE: No character mapping for "abcdef"
-error: charsize.asm(20):
+warning: charsize.asm(20): [-Wbuiltin-args]
     CHARSIZE: No character mapping for "é"
-error: Assembly aborted (4 errors)!
