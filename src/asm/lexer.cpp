@@ -1774,12 +1774,17 @@ static Token yylex_NORMAL() {
 
 			// Handle ambiguous 1- or 2-char tokens
 
-		case '+': // Either += or ADD
-			if (peek() == '=') {
+		case '+': // Either +=, ADD, or CAT
+			switch (peek()) {
+			case '=':
 				shiftChar();
 				return Token(T_(POP_ADDEQ));
+			case '+':
+				shiftChar();
+				return Token(T_(OP_CAT));
+			default:
+				return Token(T_(OP_ADD));
 			}
-			return Token(T_(OP_ADD));
 
 		case '-': // Either -= or SUB
 			if (peek() == '=') {

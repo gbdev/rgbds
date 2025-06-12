@@ -548,7 +548,7 @@ There are a number of escape sequences you can use within a string:
 .El
 .Pp
 Multi-line strings are contained in triple quotes
-.Pq Ql \&"\&"\&"for instance\&"\&"\&" .
+.Pq Ql \&"\&"\&"for instance""" .
 Escape sequences work the same way in multi-line strings; however, literal newline characters will be included as-is, without needing to escape them with
 .Ql \er
 or
@@ -560,9 +560,18 @@ Inside them, backslashes and braces are treated like regular characters, so they
 For example, the raw string
 .Ql #"\et\e1{s}\e"
 is equivalent to the regular string
-.Ql "\e\et\e\e1\e{s}\e\e" .
+.Ql \&"\e\et\e\e1\e{s}\e\e" .
 (Note that this prevents raw strings from including the double quote character.)
 Raw strings also may be contained in triple quotes for them to be multi-line, so they can include literal newline or quote characters (although still not three quotes in a row).
+.Pp
+You can use the
+.Sq ++
+operator to concatenate two strings.
+.Ql \&"str" ++ \&"ing"
+is equivalent to
+.Ql \&"string" ,
+or to
+.Ql STRCAT("str", \&"ing") .
 .Pp
 The following functions operate on string expressions, and return strings themselves.
 .Bl -column "STRSLICE(str, start, stop)"

@@ -125,6 +125,9 @@
 %token OP_MUL "*" OP_DIV "/" OP_MOD "%"
 %token OP_EXP "**"
 
+// String operators
+%token OP_CAT "++"
+
 // Comparison operators
 %token OP_LOGICEQU "==" OP_LOGICNE "!="
 %token OP_LOGICLT "<" OP_LOGICGT ">"
@@ -147,6 +150,7 @@
 %left OP_AND OP_OR OP_XOR
 %left OP_SHL OP_SHR OP_USHR
 %left OP_MUL OP_DIV OP_MOD
+%left OP_CAT
 %precedence NEG // applies to unary OP_LOGICNOT, OP_ADD, OP_SUB, OP_NOT
 %right OP_EXP
 
@@ -1612,6 +1616,10 @@ precision_arg:
 string_literal:
 	STRING {
 		$$ = std::move($1);
+	}
+	| string OP_CAT string {
+		$$ = std::move($1);
+		$$.append($3);
 	}
 	| OP_STRSLICE LPAREN string COMMA iconst COMMA iconst RPAREN {
 		size_t len = strlenUTF8($3, false);
