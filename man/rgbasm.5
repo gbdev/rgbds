@@ -599,14 +599,21 @@ The following functions operate on string expressions, but return integers.
 .It Fn CHARLEN str Ta Returns the number of charmap entries in Ar str No with the current charmap .
 .It Fn CHARCMP str1 str2 Ta Compares Ar str1 No and Ar str2 No according to their charmap entry values with the current charmap. Returns -1 if Ar str1 No is lower than Ar str2 Ns , 1 if Ar str1 No is greater than Ar str2 Ns , or 0 if they match.
 .It Fn CHARSIZE char Ta Returns how many values are in the charmap entry for Ar char No with the current charmap.
+.It Fn CHARVAL char idx Ta Returns the value at Ar idx No of the charmap entry for Ar char Ns .
 .El
 .Pp
-Note that the first character of a string is at index 0, and the last is at index -1.
+Note that indexes count starting from 0 at the beginning, or from -1 at the end.
+The characters of a string are counted by
+.Ql STRLEN ;
+the charmap entries of a string are counted by
+.Ql CHARLEN ;
+and the values of a charmap entry are counted by
+.Ql CHARSIZE .
 .Pp
-The following legacy functions are similar to other functions that operate on string expressions, but for historical reasons, they count characters starting from
+The following legacy functions are similar to other functions that operate on string expressions, but for historical reasons, they count starting from
 .Em position 1 ,
 not from index 0!
-(Position -1 still counts from the last character.)
+(Position -1 still counts from the end.)
 .Bl -column "STRSUB(str, pos, len)"
 .It Sy Name Ta Sy Operation
 .It Fn STRSUB str pos len Ta Returns a substring of Ar str No starting at Ar pos No and Ar len No characters long. If Ar len No is not specified, the substring continues to the end of Ar str No .

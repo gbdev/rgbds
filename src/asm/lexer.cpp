@@ -259,6 +259,7 @@ static std::unordered_map<std::string, int, CaseInsensitive, CaseInsensitive> ke
     {"CHARLEN",       T_(OP_CHARLEN)       },
     {"CHARSIZE",      T_(OP_CHARSIZE)      },
     {"CHARSUB",       T_(OP_CHARSUB)       },
+    {"CHARVAL",       T_(OP_CHARVAL)       },
     {"INCHARMAP",     T_(OP_INCHARMAP)     },
     {"REVCHAR",       T_(OP_REVCHAR)       },
 

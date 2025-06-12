@@ -283,6 +283,7 @@
 %token OP_CHARLEN "CHARLEN"
 %token OP_CHARSIZE "CHARSIZE"
 %token OP_CHARSUB "CHARSUB"
+%token OP_CHARVAL "CHARVAL"
 %token OP_COS "COS"
 %token OP_DEF "DEF"
 %token OP_FDIV "FDIV"
@@ -1575,6 +1576,24 @@ relocexpr_no_str:
 			::error("CHARSIZE: No character mapping for \"%s\"\n", $3.c_str());
 		}
 		$$.makeNumber(charSize);
+	}
+	| OP_CHARVAL LPAREN string COMMA iconst RPAREN {
+		if (size_t len = charmap_CharSize($3); len != 0) {
+			uint32_t idx = adjustNegativeIndex($5, len, "CHARVAL");
+			if (std::optional<int32_t> val = charmap_CharValue($3, idx); val.has_value()) {
+				$$.makeNumber(*val);
+			} else {
+				warning(
+				    WARNING_BUILTIN_ARG,
+				    "CHARVAL: Index %" PRIu32 " is past the end of the character mapping\n",
+				    idx
+				);
+				$$.makeNumber(0);
+			}
+		} else {
+			::error("CHARVAL: No character mapping for \"%s\"\n", $3.c_str());
+			$$.makeNumber(0);
+		}
 	}
 	| LPAREN relocexpr RPAREN {
 		$$ = std::move($2);
