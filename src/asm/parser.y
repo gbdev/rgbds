@@ -438,12 +438,12 @@ diff_mark:
 	  %empty // OK
 	| OP_ADD {
 		::error(
-			"syntax error, unexpected + at the beginning of the line (is it a leftover diff mark?)\n"
+		    "syntax error, unexpected + at the beginning of the line (is it a leftover diff mark?)\n"
 		);
 	}
 	| OP_SUB {
 		::error(
-			"syntax error, unexpected - at the beginning of the line (is it a leftover diff mark?)\n"
+		    "syntax error, unexpected - at the beginning of the line (is it a leftover diff mark?)\n"
 		);
 	}
 ;
@@ -708,9 +708,9 @@ align_spec:
 			$$.alignment = $$.alignOfs = 0;
 		} else if ($3 <= -(1 << $1) || $3 >= 1 << $1) {
 			::error(
-				"The absolute alignment offset (%" PRIu32 ") must be less than alignment size (%d)\n",
-				static_cast<uint32_t>($3 < 0 ? -$3 : $3),
-				1 << $1
+			    "The absolute alignment offset (%" PRIu32 ") must be less than alignment size (%d)\n",
+			    static_cast<uint32_t>($3 < 0 ? -$3 : $3),
+			    1 << $1
 			);
 			$$.alignment = $$.alignOfs = 0;
 		} else {

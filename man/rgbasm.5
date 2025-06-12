@@ -583,7 +583,7 @@ in uppercase.
 .It Fn STRLWR str Ta Returns Ar str No with all ASCII letters
 .Pq Ql A-Z
 in lowercase.
-.It Fn STRSLICE str start stop Ta Returns a substring of Ar str No starting at Ar start No and ending at Ar stop No (exclusive). If Ar stop No is not specified, the substring continues to the end of Ar str Ns .
+.It Fn STRSLICE str start stop Ta Returns a substring of Ar str No starting at Ar start No and ending at Ar stop No (exclusive). If Ar stop No is not specified, the substring continues to the end of Ar str .
 .It Fn STRRPL str old new Ta Returns Ar str No with each non-overlapping occurrence of the substring Ar old No replaced with Ar new .
 .It Fn STRFMT fmt args... Ta Returns the string Ar fmt No with each
 .Ql %spec
@@ -604,11 +604,11 @@ The following functions operate on string expressions, but return integers.
 .It Fn STRCMP str1 str2 Ta Compares Ar str1 No and Ar str2 No according to ASCII ordering of their characters. Returns -1 if Ar str1 No is lower than Ar str2 Ns , 1 if Ar str1 No is greater than Ar str2 Ns , or 0 if they match.
 .It Fn STRFIND str sub Ta Returns the first index of Ar sub No in Ar str Ns , or -1 if it's not present.
 .It Fn STRRFIND str sub Ta Returns the last index of Ar sub No in Ar str Ns , or -1 if it's not present.
-.It Fn INCHARMAP str Ta Returns 1 if Ar str No has an entry in the current charmap, or 0 otherwise .
-.It Fn CHARLEN str Ta Returns the number of charmap entries in Ar str No with the current charmap .
+.It Fn INCHARMAP str Ta Returns 1 if Ar str No has an entry in the current charmap, or 0 otherwise.
+.It Fn CHARLEN str Ta Returns the number of charmap entries in Ar str No with the current charmap.
 .It Fn CHARCMP str1 str2 Ta Compares Ar str1 No and Ar str2 No according to their charmap entry values with the current charmap. Returns -1 if Ar str1 No is lower than Ar str2 Ns , 1 if Ar str1 No is greater than Ar str2 Ns , or 0 if they match.
 .It Fn CHARSIZE char Ta Returns how many values are in the charmap entry for Ar char No with the current charmap.
-.It Fn CHARVAL char idx Ta Returns the value at Ar idx No of the charmap entry for Ar char Ns .
+.It Fn CHARVAL char idx Ta Returns the value at Ar idx No of the charmap entry for Ar char .
 .El
 .Pp
 Note that indexes count starting from 0 at the beginning, or from -1 at the end.
