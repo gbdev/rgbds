@@ -9,10 +9,10 @@ set(common_src
     )
 
 find_package(BISON 3.0.0 REQUIRED)
-set(BISON_FLAGS "-Wall -Dparse.lac=full -Dlr.type=ielr")
+set(BISON_FLAGS "-Wall -Dlr.type=ielr")
 # Set some optimization flags on versions that support them
 if(BISON_VERSION VERSION_GREATER_EQUAL "3.5")
-  set(BISON_FLAGS "${BISON_FLAGS} -Dapi.token.raw=true")
+  set(BISON_FLAGS "${BISON_FLAGS} -Dparse.lac=full -Dapi.token.raw=true")
 endif()
 if(BISON_VERSION VERSION_GREATER_EQUAL "3.6")
   set(BISON_FLAGS "${BISON_FLAGS} -Dparse.error=detailed")
