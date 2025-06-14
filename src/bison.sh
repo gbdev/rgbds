@@ -12,11 +12,11 @@ if [ "$BISON_MAJOR" -lt 3 ]; then
 	exit 1
 fi
 
-BISON_FLAGS="-Wall -Dparse.lac=full -Dlr.type=ielr"
+BISON_FLAGS="-Wall -Dlr.type=ielr"
 
 # Set some optimization flags on versions that support them
 if [ "$BISON_MAJOR" -ge 4 ] || [ "$BISON_MAJOR" -eq 3 ] && [ "$BISON_MINOR" -ge 5 ]; then
-	BISON_FLAGS="$BISON_FLAGS -Dapi.token.raw=true"
+	BISON_FLAGS="$BISON_FLAGS -Dparse.lac=full -Dapi.token.raw=true"
 fi
 if [ "$BISON_MAJOR" -ge 4 ] || [ "$BISON_MAJOR" -eq 3 ] && [ "$BISON_MINOR" -ge 6 ]; then
 	BISON_FLAGS="$BISON_FLAGS -Dparse.error=detailed"
