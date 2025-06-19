@@ -422,38 +422,73 @@ void reverse() {
 	}
 	png_set_write_fn(png, &pngFile, writePng, flushPng);
 
+	int pngColorType = options.palettes.empty() ? PNG_COLOR_TYPE_GRAY
+	                   : palettes.size() == 1   ? PNG_COLOR_TYPE_PALETTE
+	                                            : PNG_COLOR_TYPE_RGB_ALPHA;
+	int pngDepth = options.palettes.empty() ? options.bitDepth : 8;
+
 	png_set_IHDR(
 	    png,
 	    pngInfo,
 	    width * 8,
 	    height * 8,
-	    8,
-	    PNG_COLOR_TYPE_RGB_ALPHA,
+	    pngDepth,
+	    pngColorType,
 	    PNG_INTERLACE_NONE,
 	    PNG_COMPRESSION_TYPE_DEFAULT,
 	    PNG_FILTER_TYPE_DEFAULT
 	);
+
+	if (pngColorType != PNG_COLOR_TYPE_GRAY) {
+		png_color_8 sbitChunk;
+		sbitChunk.red = 5;
+		sbitChunk.green = 5;
+		sbitChunk.blue = 5;
+		if (pngColorType == PNG_COLOR_TYPE_RGB_ALPHA) {
+			sbitChunk.alpha = 1;
+		}
+		png_set_sBIT(png, pngInfo, &sbitChunk);
+	}
+
+	if (pngColorType == PNG_COLOR_TYPE_PALETTE) {
+		assume(palettes.size() == 1);
+		png_color pngPalette[4] = {};
+		png_byte pngTrans[4] = {};
+		int nbPngColors = 0, nbPngTrans = 0;
+		for (auto const &color : palettes[0]) {
+			if (!color.has_value()) {
+				continue;
+			}
+			pngPalette[nbPngColors].red = color->red;
+			pngPalette[nbPngColors].green = color->green;
+			pngPalette[nbPngColors].blue = color->blue;
+			pngTrans[nbPngColors] = color->alpha;
+			++nbPngColors;
+			if (color->alpha < 255) {
+				nbPngTrans = nbPngColors;
+			}
+		}
+		png_set_PLTE(png, pngInfo, pngPalette, nbPngColors);
+		if (nbPngTrans > 0) {
+			png_set_tRNS(png, pngInfo, pngTrans, nbPngTrans, nullptr);
+		}
+	}
+
 	png_write_info(png, pngInfo);
 
-	png_color_8 sbitChunk;
-	sbitChunk.red = 5;
-	sbitChunk.green = 5;
-	sbitChunk.blue = 5;
-	sbitChunk.alpha = 1;
-	png_set_sBIT(png, pngInfo, &sbitChunk);
-
-	constexpr uint8_t SIZEOF_TILE = 4 * 8; // 4 bytes/pixel (RGBA @ 8 bits/channel) * 8 pixels/tile
-	size_t const SIZEOF_ROW = width * SIZEOF_TILE;
-	std::vector<uint8_t> tileRow(8 * SIZEOF_ROW, 0xFF); // Data for 8 rows of pixels
+	// N bits/pixel * 8 pixels/tile row / 8 bits/byte = N bytes/tile row
+	uint8_t const bytesPerTileRow = pngColorType == PNG_COLOR_TYPE_RGB_ALPHA ? 32 : pngDepth;
+	size_t const bytesPerRow = width * bytesPerTileRow;
+	std::vector<uint8_t> tileRow(8 * bytesPerRow, 0xFF); // Data for 8 rows of pixels
 	uint8_t * const rowPtrs[8] = {
-	    &tileRow.data()[0 * SIZEOF_ROW],
-	    &tileRow.data()[1 * SIZEOF_ROW],
-	    &tileRow.data()[2 * SIZEOF_ROW],
-	    &tileRow.data()[3 * SIZEOF_ROW],
-	    &tileRow.data()[4 * SIZEOF_ROW],
-	    &tileRow.data()[5 * SIZEOF_ROW],
-	    &tileRow.data()[6 * SIZEOF_ROW],
-	    &tileRow.data()[7 * SIZEOF_ROW],
+	    &tileRow.data()[0 * bytesPerRow],
+	    &tileRow.data()[1 * bytesPerRow],
+	    &tileRow.data()[2 * bytesPerRow],
+	    &tileRow.data()[3 * bytesPerRow],
+	    &tileRow.data()[4 * bytesPerRow],
+	    &tileRow.data()[5 * bytesPerRow],
+	    &tileRow.data()[6 * bytesPerRow],
+	    &tileRow.data()[7 * bytesPerRow],
 	};
 
 	for (size_t ty = 0; ty < height; ++ty) {
@@ -486,18 +521,35 @@ void reverse() {
 					bitplane0 = flipTable[bitplane0];
 					bitplane1 = flipTable[bitplane1];
 				}
-				uint8_t *ptr = &rowPtrs[y][tx * SIZEOF_TILE];
+
+				uint8_t *ptr = &rowPtrs[y][tx * bytesPerTileRow];
+				uint16_t gray = 0;
 				for (uint8_t x = 0; x < 8; ++x) {
 					uint8_t bit0 = bitplane0 & 0x80, bit1 = bitplane1 & 0x80;
-					Rgba const &pixel = *palette[bit0 >> 7 | bit1 >> 6];
-					*ptr++ = pixel.red;
-					*ptr++ = pixel.green;
-					*ptr++ = pixel.blue;
-					*ptr++ = pixel.alpha;
+					uint8_t colorID = bit0 >> 7 | bit1 >> 6;
+					Rgba const &pixel = *palette[colorID];
+
+					if (pngColorType == PNG_COLOR_TYPE_GRAY) {
+						gray = gray << pngDepth | (pixel.red & ((1 << pngDepth) - 1));
+					} else if (pngColorType == PNG_COLOR_TYPE_PALETTE) {
+						*ptr++ = palID * 4 + colorID;
+					} else {
+						*ptr++ = pixel.red;
+						*ptr++ = pixel.green;
+						*ptr++ = pixel.blue;
+						*ptr++ = pixel.alpha;
+					}
 
 					// Shift the pixel out
 					bitplane0 <<= 1;
 					bitplane1 <<= 1;
+				}
+
+				if (pngDepth == 1) {
+					*ptr = gray;
+				} else if (pngDepth == 2) {
+					*ptr++ = gray >> 8;
+					*ptr = gray & 0xff;
 				}
 			}
 		}
