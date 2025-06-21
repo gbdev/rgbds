@@ -800,10 +800,31 @@ int main(int argc, char *argv[]) {
 
 		if (options.verbosity >= Options::VERB_VVVVVV) {
 			putc('\n', stderr);
+			// clang-format off: vertically align values
 			static std::array<uint16_t, 21> gfx{
-			    0x1FE, 0x3FF, 0x399, 0x399, 0x3FF, 0x3FF, 0x381, 0x3C3, 0x1FE, 0x078, 0x1FE,
-			    0x3FF, 0x3FF, 0x3FF, 0x37B, 0x37B, 0x0FC, 0x0CC, 0x1CE, 0x1CE, 0x1CE,
+			    0b0111111110,
+			    0b1111111111,
+			    0b1110011001,
+			    0b1110011001,
+			    0b1111111111,
+			    0b1111111111,
+			    0b1110000001,
+			    0b1111000011,
+			    0b0111111110,
+			    0b0001111000,
+			    0b0111111110,
+			    0b1111111111,
+			    0b1111111111,
+			    0b1111111111,
+			    0b1101111011,
+			    0b1101111011,
+			    0b0011111100,
+			    0b0011001100,
+			    0b0111001110,
+			    0b0111001110,
+			    0b0111001110,
 			};
+			// clang-format on
 			static std::array<char const *, 3> textbox{
 			    "  ,----------------------------------------.",
 			    "  | Augh, dimensional interference again?! |",
