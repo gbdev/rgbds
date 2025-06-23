@@ -22,7 +22,7 @@ AttributeMacros:
   - format_
   - attr_
 BinPackArguments: false
-BinPackParameters: false
+BinPackParameters: OnePerLine
 BitFieldColonSpacing: Both
 BreakAfterAttributes: Always
 BreakBeforeBinaryOperators: NonAssignment

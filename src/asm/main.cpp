@@ -406,8 +406,10 @@ int main(int argc, char *argv[]) {
 
 	if (dependFile) {
 		if (targetFileName.empty()) {
-			errx("Dependency files can only be created if a target file is specified with either "
-			     "-o, -MQ or -MT");
+			errx(
+			    "Dependency files can only be created if a target file is specified with either "
+			    "-o, -MQ or -MT"
+			);
 		}
 
 		fprintf(dependFile, "%s: %s\n", targetFileName.c_str(), mainFileName.c_str());

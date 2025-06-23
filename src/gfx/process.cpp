@@ -1269,8 +1269,10 @@ continue_visiting_tiles:;
 
 		// I currently cannot figure out useful semantics for this combination of flags.
 		if (!options.inputTileset.empty()) {
-			fatal("Input tilesets are not supported without `-u`\nPlease consider explaining your "
-			      "use case to RGBDS' developers!");
+			fatal(
+			    "Input tilesets are not supported without `-u`\nPlease consider explaining your "
+			    "use case to RGBDS' developers!"
+			);
 		}
 
 		if (!options.output.empty()) {

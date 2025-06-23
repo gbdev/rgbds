@@ -225,8 +225,9 @@ public:
 
 	// Computes the "relative size" of a set of proto-palettes on this palette
 	template<typename Iter>
-	auto combinedVolume(Iter &&begin, Iter const &end, std::vector<ProtoPalette> const &protoPals)
-	    const {
+	auto combinedVolume(
+	    Iter &&begin, Iter const &end, std::vector<ProtoPalette> const &protoPals
+	) const {
 		auto &colors = uniqueColors();
 		addUniqueColors(colors, std::forward<Iter>(begin), end, protoPals);
 		return colors.size();
@@ -299,7 +300,7 @@ static void decant(
 				break;
 			}
 			auto attrs = from.begin();
-			std::advance(attrs, (iter - processed.begin()));
+			std::advance(attrs, iter - processed.begin());
 
 			// Build up the "component"...
 			colors.clear();

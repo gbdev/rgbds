@@ -256,8 +256,10 @@ void reverse() {
 			}
 		}
 	} else if (options.palSpecType == Options::EMBEDDED) {
-		warning("An embedded palette was requested, but no palette file was specified; ignoring "
-		        "request.");
+		warning(
+		    "An embedded palette was requested, but no palette file was specified; ignoring "
+		    "request."
+		);
 	} else if (options.palSpecType == Options::EXPLICIT) {
 		palettes = std::move(options.palSpec); // We won't be using it again.
 	}
