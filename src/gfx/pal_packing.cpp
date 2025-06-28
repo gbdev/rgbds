@@ -299,7 +299,7 @@ static void decant(
 				break;
 			}
 			auto attrs = from.begin();
-			std::advance(attrs, (iter - processed.begin()));
+			std::advance(attrs, iter - processed.begin());
 
 			// Build up the "component"...
 			colors.clear();

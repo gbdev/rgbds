@@ -28,6 +28,27 @@ static void skipWhitespace(Str const &str, size_t &pos) {
 	pos = std::min(str.find_first_not_of(" \t"sv, pos), str.length());
 }
 
+static constexpr uint8_t nibble(char c) {
+	if (c >= 'a') {
+		assume(c <= 'f');
+		return c - 'a' + 10;
+	} else if (c >= 'A') {
+		assume(c <= 'F');
+		return c - 'A' + 10;
+	} else {
+		assume(c >= '0' && c <= '9');
+		return c - '0';
+	}
+}
+
+static constexpr uint8_t toHex(char c1, char c2) {
+	return nibble(c1) * 16 + nibble(c2);
+}
+
+static constexpr uint8_t singleToHex(char c) {
+	return toHex(c, c);
+}
+
 void parseInlinePalSpec(char const * const rawArg) {
 	// List of #rrggbb/#rgb colors (or #none); comma-separated.
 	// Palettes are separated by colons.
@@ -594,4 +615,62 @@ void parseExternalPalSpec(char const *arg) {
 	}
 
 	std::get<1> (*iter)(file);
+}
+
+void parseDmgPalSpec(char const * const rawArg) {
+	// Two hex digit DMG palette spec
+
+	std::string_view arg(rawArg);
+
+	if (arg.length() != 2
+	    || arg.find_first_not_of("0123456789ABCDEFabcdef"sv) != std::string_view::npos) {
+		error("Unknown DMG palette specification \"%s\"", rawArg);
+		return;
+	}
+
+	options.palSpecDmg = toHex(arg[0], arg[1]);
+
+	// Map gray shades to their DMG color indexes for fast lookup by `Rgba::grayIndex`
+	for (uint8_t i = 0; i < 4; ++i) {
+		options.dmgColors[options.dmgValue(i)] = i;
+	}
+
+	// Validate that DMG palette spec does not have conflicting colors
+	for (uint8_t i = 0; i < 4; ++i) {
+		for (uint8_t j = 0; j < 4; ++j) {
+			if (i != j && options.dmgValue(i) == options.dmgValue(j)) {
+				error("DMG palette specification maps two gray shades to the same color index");
+				return;
+			}
+		}
+	}
+}
+
+void parseBackgroundPalSpec(char const *arg) {
+	if (strcasecmp(arg, "transparent") == 0) {
+		options.bgColor = Rgba(0x00, 0x00, 0x00, 0x00);
+		return;
+	}
+
+	if (arg[0] != '#') {
+		error("Background color specification must be `#rgb`, `#rrggbb`, or `transparent`");
+		return;
+	}
+
+	size_t size = strspn(&arg[1], "0123456789ABCDEFabcdef");
+	switch (size) {
+	case 3:
+		options.bgColor = Rgba(singleToHex(arg[1]), singleToHex(arg[2]), singleToHex(arg[3]), 0xFF);
+		break;
+	case 6:
+		options.bgColor =
+		    Rgba(toHex(arg[1], arg[2]), toHex(arg[3], arg[4]), toHex(arg[5], arg[6]), 0xFF);
+		break;
+	default:
+		error("Unknown background color specification \"%s\"", arg);
+	}
+
+	if (arg[size + 1] != '\0') {
+		error("Unexpected text \"%s\" after background color specification", &arg[size + 1]);
+	}
 }

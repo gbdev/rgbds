@@ -29,8 +29,10 @@ struct Options {
 		NO_SPEC,
 		EXPLICIT,
 		EMBEDDED,
+		DMG,
 	} palSpecType = NO_SPEC; // -c
 	std::vector<std::array<std::optional<Rgba>, 4>> palSpec{};
+	uint8_t palSpecDmg = 0;
 	uint8_t bitDepth = 2;       // -d
 	std::string inputTileset{}; // -i
 	struct {
@@ -65,6 +67,12 @@ struct Options {
 
 	mutable bool hasTransparentPixels = false;
 	uint8_t maxOpaqueColors() const { return nbColorsPerPal - hasTransparentPixels; }
+
+	uint8_t dmgColors[4] = {};
+	uint8_t dmgValue(uint8_t i) const {
+		assume(i < 4);
+		return (palSpecDmg >> (2 * i)) & 0b11;
+	}
 };
 
 extern Options options;
@@ -118,28 +126,5 @@ static constexpr auto flipTable = ([]() constexpr {
 	}
 	return table;
 })();
-
-// Parsing helpers.
-
-static constexpr uint8_t nibble(char c) {
-	if (c >= 'a') {
-		assume(c <= 'f');
-		return c - 'a' + 10;
-	} else if (c >= 'A') {
-		assume(c <= 'F');
-		return c - 'A' + 10;
-	} else {
-		assume(c >= '0' && c <= '9');
-		return c - '0';
-	}
-}
-
-static constexpr uint8_t toHex(char c1, char c2) {
-	return nibble(c1) * 16 + nibble(c2);
-}
-
-static constexpr uint8_t singleToHex(char c) {
-	return toHex(c, c);
-}
 
 #endif // RGBDS_GFX_MAIN_HPP

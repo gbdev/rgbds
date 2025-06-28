@@ -16,7 +16,6 @@
 
 #include "extern/getopt.hpp"
 #include "file.hpp"
-#include "helpers.hpp" // assume
 #include "platform.hpp"
 #include "version.hpp"
 
@@ -354,7 +353,6 @@ static char *parseArgv(int argc, char *argv[]) {
 	for (int ch; (ch = musl_getopt_long_only(argc, argv, optstring, longopts, nullptr)) != -1;) {
 		char *arg = musl_optarg; // Make a copy for scanning
 		uint16_t number;
-		size_t size;
 		switch (ch) {
 		case 'A':
 			localOptions.autoAttrmap = true;
@@ -367,41 +365,7 @@ static char *parseArgv(int argc, char *argv[]) {
 			options.attrmap = musl_optarg;
 			break;
 		case 'B':
-			if (strcasecmp(musl_optarg, "transparent") == 0) {
-				options.bgColor = Rgba(0x00, 0x00, 0x00, 0x00);
-				break;
-			}
-			if (musl_optarg[0] != '#') {
-				error("Background color specification must be `#rgb`, `#rrggbb`, or `transparent`");
-				break;
-			}
-			size = strspn(&musl_optarg[1], "0123456789ABCDEFabcdef");
-			switch (size) {
-			case 3:
-				options.bgColor = Rgba(
-				    singleToHex(musl_optarg[1]),
-				    singleToHex(musl_optarg[2]),
-				    singleToHex(musl_optarg[3]),
-				    0xFF
-				);
-				break;
-			case 6:
-				options.bgColor = Rgba(
-				    toHex(musl_optarg[1], musl_optarg[2]),
-				    toHex(musl_optarg[3], musl_optarg[4]),
-				    toHex(musl_optarg[5], musl_optarg[6]),
-				    0xFF
-				);
-				break;
-			default:
-				error("Unknown background color specification \"%s\"", musl_optarg);
-			}
-			if (musl_optarg[size + 1] != '\0') {
-				error(
-				    "Unexpected text \"%s\" after background color specification",
-				    &musl_optarg[size + 1]
-				);
-			}
+			parseBackgroundPalSpec(musl_optarg);
 			break;
 		case 'b':
 			number = parseNumber(arg, "Bank 0 base tile ID", 0);
@@ -442,18 +406,18 @@ static char *parseArgv(int argc, char *argv[]) {
 			options.useColorCurve = true;
 			break;
 		case 'c':
+			localOptions.externalPalSpec = nullptr; // Allow overriding a previous pal spec
 			if (musl_optarg[0] == '#') {
 				options.palSpecType = Options::EXPLICIT;
 				parseInlinePalSpec(musl_optarg);
 			} else if (strcasecmp(musl_optarg, "embedded") == 0) {
 				// Use PLTE, error out if missing
 				options.palSpecType = Options::EMBEDDED;
+			} else if (strncasecmp(musl_optarg, "dmg=", literal_strlen("dmg=")) == 0) {
+				options.palSpecType = Options::DMG;
+				parseDmgPalSpec(&musl_optarg[literal_strlen("dmg=")]);
 			} else {
 				options.palSpecType = Options::EXPLICIT;
-				// Can't parse the file yet, as "flat" color collections need to know the palette
-				// size to be split; thus, we defer that.
-				// If a following `-c` overrides a previous one, the `fmt` part of an overridden
-				// external palette spec will not be validated, but I guess that's okay.
 				localOptions.externalPalSpec = musl_optarg;
 			}
 			break;
@@ -877,6 +841,8 @@ int main(int argc, char *argv[]) {
 				return "Explicit";
 			case Options::EMBEDDED:
 				return "Embedded";
+			case Options::DMG:
+				return "DMG";
 			}
 			return "???";
 		}());

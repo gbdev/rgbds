@@ -586,8 +586,10 @@ static std::tuple<DefaultInitVec<size_t>, std::vector<Palette>>
 	}
 
 	// "Sort" colors in the generated palettes, see the man page for the flowchart
-	auto [embPalSize, embPalRGB, embPalAlphaSize, embPalAlpha] = png.getEmbeddedPal();
-	if (embPalRGB != nullptr) {
+	if (options.palSpecType == Options::DMG) {
+		sortGrayscale(palettes, png.getColors().raw());
+	} else if (auto [embPalSize, embPalRGB, embPalAlphaSize, embPalAlpha] = png.getEmbeddedPal();
+	           embPalRGB != nullptr) {
 		sortIndexed(palettes, embPalSize, embPalRGB, embPalAlphaSize, embPalAlpha);
 	} else if (png.isSuitableForGrayscale()) {
 		sortGrayscale(palettes, png.getColors().raw());
@@ -1139,6 +1141,18 @@ void process() {
 	}
 	// LCOV_EXCL_STOP
 
+	if (options.palSpecType == Options::DMG) {
+		if (options.hasTransparentPixels) {
+			fatal(
+			    "Image contains transparent pixels, not compatible with a DMG palette specification"
+			);
+		}
+		if (!png.isSuitableForGrayscale()) {
+			fatal("Image contains too many or non-gray colors, not compatible with a DMG palette "
+			      "specification");
+		}
+	}
+
 	// Now, iterate through the tiles, generating proto-palettes as we go
 	// We do this unconditionally because this performs the image validation (which we want to
 	// perform even if no output is requested), and because it's necessary to generate any
@@ -1248,9 +1262,10 @@ continue_visiting_tiles:;
 	if (options.palSpecType == Options::EMBEDDED) {
 		generatePalSpec(png);
 	}
-	auto [mappings, palettes] = options.palSpecType == Options::NO_SPEC
-	                                ? generatePalettes(protoPalettes, png)
-	                                : makePalsAsSpecified(protoPalettes);
+	auto [mappings, palettes] =
+	    options.palSpecType == Options::NO_SPEC || options.palSpecType == Options::DMG
+	        ? generatePalettes(protoPalettes, png)
+	        : makePalsAsSpecified(protoPalettes);
 	outputPalettes(palettes);
 
 	// If deduplication is not happening, we just need to output the tile data and/or maps as-is
