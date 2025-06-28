@@ -126,18 +126,18 @@ void fstk_SetPreIncludeFile(std::string const &path) {
 	// LCOV_EXCL_STOP
 }
 
-static void printDep(std::string const &path) {
-	if (dependFile) {
-		fprintf(dependFile, "%s: %s\n", targetFileName.c_str(), path.c_str());
-		if (generatePhonyDeps) {
-			fprintf(dependFile, "%s:\n", path.c_str());
-		}
-	}
-}
-
 static bool isValidFilePath(std::string const &path) {
 	struct stat statBuf;
 	return stat(path.c_str(), &statBuf) == 0 && !S_ISDIR(statBuf.st_mode); // Reject directories
+}
+
+static void printDep(std::string const &path) {
+	if (dependFile) {
+		fprintf(dependFile, "%s: %s\n", targetFileName.c_str(), path.c_str());
+		if (generatePhonyDeps && isValidFilePath(path)) {
+			fprintf(dependFile, "%s:\n", path.c_str());
+		}
+	}
 }
 
 std::optional<std::string> fstk_FindFile(std::string const &path) {
