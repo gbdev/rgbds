@@ -636,9 +636,9 @@ void parseDmgPalSpec(char const * const rawArg) {
 	}
 
 	// Validate that DMG palette spec does not have conflicting colors
-	for (uint8_t i = 0; i < 4; ++i) {
-		for (uint8_t j = 0; j < 4; ++j) {
-			if (i != j && options.dmgValue(i) == options.dmgValue(j)) {
+	for (uint8_t i = 0; i < 3; ++i) {
+		for (uint8_t j = i + 1; j < 4; ++j) {
+			if (options.dmgValue(i) == options.dmgValue(j)) {
 				error("DMG palette specification maps two gray shades to the same color index");
 				return;
 			}
