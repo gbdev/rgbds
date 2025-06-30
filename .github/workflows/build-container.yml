@@ -37,6 +37,7 @@ jobs:
           TAG_NAME=${GITHUB_REF#refs/tags/}
           sed -i "2i LABEL org.opencontainers.image.description=\"RGBDS container image for the release version $TAG_NAME\"" Dockerfile
           docker build . --tag ghcr.io/gbdev/rgbds:$TAG_NAME
+          docker tag ghcr.io/gbdev/rgbds:$TAG_NAME ghcr.io/gbdev/rgbds:latest
           docker push ghcr.io/gbdev/rgbds:$TAG_NAME
           docker push ghcr.io/gbdev/rgbds:latest
 
