@@ -195,10 +195,13 @@ void reverse() {
 	    Options::VERB_INTERM, "Reversed image dimensions: %zux%zu tiles\n", width, height
 	);
 
-	std::vector<std::array<std::optional<Rgba>, 4>> palettes{
-	    {Rgba(0xFFFFFFFF), Rgba(0xAAAAAAFF), Rgba(0x555555FF), Rgba(0x000000FF)}
+	Rgba const grayColors[4] = {
+	    Rgba(0xFFFFFFFF), Rgba(0xAAAAAAFF), Rgba(0x555555FF), Rgba(0x000000FF)
 	};
-	// If a palette file is used as input, it overrides the default colors.
+	std::vector<std::array<std::optional<Rgba>, 4>> palettes{
+	    {grayColors[0], grayColors[1], grayColors[2], grayColors[3]}
+	};
+	// If a palette file or palette spec is used as input, it overrides the default colors.
 	if (!options.palettes.empty()) {
 		File file;
 		if (!file.open(options.palettes, std::ios::in | std::ios::binary)) {
@@ -254,6 +257,10 @@ void reverse() {
 				}
 				putc('\n', stderr);
 			}
+		}
+	} else if (options.palSpecType == Options::DMG) {
+		for (size_t i = 0; i < palettes[0].size(); ++i) {
+			palettes[0][i] = grayColors[options.dmgValue(i)];
 		}
 	} else if (options.palSpecType == Options::EMBEDDED) {
 		warning("An embedded palette was requested, but no palette file was specified; ignoring "
