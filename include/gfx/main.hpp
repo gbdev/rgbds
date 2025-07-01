@@ -40,6 +40,8 @@ struct Options {
 		uint16_t top;
 		uint16_t width;
 		uint16_t height;
+		uint32_t right() const { return left + width * 8; }
+		uint32_t bottom() const { return top + height * 8; }
 	} inputSlice{0, 0, 0, 0};                          // -L (margins in clockwise order, like CSS)
 	std::array<uint16_t, 2> maxNbTiles{UINT16_MAX, 0}; // -N
 	uint16_t nbPalettes = 8;                           // -n

@@ -226,6 +226,30 @@ public:
 		if (options.inputSlice.height == 0 && height % 8 != 0) {
 			fatal("Image height (%" PRIu32 " pixels) is not a multiple of 8!", height);
 		}
+		if (options.inputSlice.right() > width || options.inputSlice.bottom() > height) {
+			error(
+			    "Image slice ((%" PRIu16 ", %" PRIu16 ") to (%" PRIu32 ", %" PRIu32
+			    ")) is outside the image bounds (%" PRIu32 "x%" PRIu32 ")!",
+			    options.inputSlice.left,
+			    options.inputSlice.top,
+			    options.inputSlice.right(),
+			    options.inputSlice.bottom(),
+			    width,
+			    height
+			);
+			if (options.inputSlice.width % 8 == 0 && options.inputSlice.height % 8 == 0) {
+				fprintf(
+				    stderr,
+				    "note: Did you mean the slice \"%" PRIu32 ",%" PRIu32 ":%" PRId32 ",%" PRId32
+				    "\"? (width and height are in tiles, not pixels!)\n",
+				    options.inputSlice.left,
+				    options.inputSlice.top,
+				    options.inputSlice.width / 8,
+				    options.inputSlice.height / 8
+				);
+			}
+			giveUp();
+		}
 
 		pixels.resize(static_cast<size_t>(width) * static_cast<size_t>(height));
 

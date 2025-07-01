@@ -863,7 +863,7 @@ int main(int argc, char *argv[]) {
 		}
 		fprintf(
 		    stderr,
-		    "\tInput image slice: %" PRIu32 "x%" PRIu32 " pixels starting at (%" PRId32 ", %" PRId32
+		    "\tInput image slice: %" PRIu16 "x%" PRIu16 " pixels starting at (%" PRIu16 ", %" PRIu16
 		    ")\n",
 		    options.inputSlice.width,
 		    options.inputSlice.height,
