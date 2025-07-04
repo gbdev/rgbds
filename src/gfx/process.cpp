@@ -928,9 +928,9 @@ static void outputUnoptimizedMaps(
 			(*tilemapOutput)
 			    ->sputc((attr.isBackgroundTile() ? 0 : tileID) + options.baseTileIDs[bank]);
 		}
-		uint8_t palID = attr.getPalID(mappings);
+		uint8_t palID = attr.getPalID(mappings) + options.basePalID;
 		if (attrmapOutput.has_value()) {
-			(*attrmapOutput)->sputc((palID & 7) | bank << 3); // The other flags are all 0
+			(*attrmapOutput)->sputc((palID & 0b111) | bank << 3); // The other flags are all 0
 		}
 		if (palmapOutput.has_value()) {
 			(*palmapOutput)->sputc(palID);
@@ -1112,7 +1112,7 @@ static void outputAttrmap(
 	for (AttrmapEntry const &entry : attrmap) {
 		uint8_t attr = entry.xFlip << 5 | entry.yFlip << 6;
 		attr |= entry.bank << 3;
-		attr |= entry.getPalID(mappings) & 7;
+		attr |= (entry.getPalID(mappings) + options.basePalID) & 0b111;
 		output->sputc(attr);
 	}
 }
@@ -1128,7 +1128,7 @@ static void outputPalmap(
 	}
 
 	for (AttrmapEntry const &entry : attrmap) {
-		output->sputc(entry.getPalID(mappings));
+		output->sputc(entry.getPalID(mappings) + options.basePalID);
 	}
 }
 

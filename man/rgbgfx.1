@@ -18,6 +18,7 @@
 .Op Fl d Ar depth
 .Op Fl i Ar input_tiles
 .Op Fl L Ar slice
+.Op Fl l Ar base_pal
 .Op Fl N Ar nb_tiles
 .Op Fl n Ar nb_pals
 .Op Fl o Ar out_file
@@ -261,6 +262,11 @@ The first number pair specifies the X and Y coordinates of the top-left pixel th
 The second number pair specifies how many tiles to process horizontally and vertically, respectively.
 .Pp
 .Fl L Sy is ignored in reverse mode , No no padding is inserted .
+.It Fl l Ar base_pal , Fl \-base-palette Ar base_pal
+Set the base ID for attribute map and palette map output.
+.Ar base_pal
+should be a number between 0 and 255.
+It defaults to 0.
 .It Fl m , Fl \-mirror-tiles
 Deduplicate tiles that are horizontally and/or vertically symmetrical mirror images of each other.
 Only one of each unique tile will be saved in the tile data file, with mirror images counting as duplicates.
