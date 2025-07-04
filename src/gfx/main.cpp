@@ -113,7 +113,7 @@ void Options::verbosePrint(uint8_t level, char const *fmt, ...) const {
 }
 
 // Short options
-static char const *optstring = "-Aa:B:b:Cc:d:hi:L:mN:n:Oo:Pp:Qq:r:s:Tt:U:uVvXx:YZ";
+static char const *optstring = "-Aa:B:b:Cc:d:hi:L:l:mN:n:Oo:Pp:Qq:r:s:Tt:U:uVvXx:YZ";
 
 // Equivalent long options
 // Please keep in the same order as short opts.
@@ -133,6 +133,7 @@ static option const longopts[] = {
     {"help",             no_argument,       nullptr, 'h'},
     {"input-tileset",    required_argument, nullptr, 'i'},
     {"slice",            required_argument, nullptr, 'L'},
+    {"base-palette",     required_argument, nullptr, 'l'},
     {"mirror-tiles",     no_argument,       nullptr, 'm'},
     {"nb-tiles",         required_argument, nullptr, 'N'},
     {"nb-palettes",      required_argument, nullptr, 'n'},
@@ -162,9 +163,9 @@ static void printUsage() {
 	fputs(
 	    "Usage: rgbgfx [-r stride] [-ChmOuVXYZ] [-v [-v ...]] [-a <attr_map> | -A]\n"
 	    "       [-b <base_ids>] [-c <colors>] [-d <depth>] [-i <tileset_file>]\n"
-	    "       [-L <slice>] [-N <nb_tiles>] [-n <nb_pals>] [-o <out_file>]\n"
-	    "       [-p <pal_file> | -P] [-q <pal_map> | -Q] [-s <nb_colors>]\n"
-	    "       [-t <tile_map> | -T] [-x <nb_tiles>] <file>\n"
+	    "       [-L <slice>] [-l <base_pal>] [-N <nb_tiles>] [-n <nb_pals>]\n"
+	    "       [-o <out_file>] [-p <pal_file> | -P] [-q <pal_map> | -Q]\n"
+	    "       [-s <nb_colors>] [-t <tile_map> | -T] [-x <nb_tiles>] <file>\n"
 	    "Useful options:\n"
 	    "    -m, --mirror-tiles    optimize out mirrored tiles\n"
 	    "    -o, --output <path>   output the tile data to this path\n"
@@ -479,6 +480,16 @@ static char *parseArgv(int argc, char *argv[]) {
 			}
 			if (*arg != '\0') {
 				error("Unexpected extra characters after slice spec in \"%s\"", musl_optarg);
+			}
+			break;
+		case 'l':
+			number = parseNumber(arg, "Base palette ID", 0);
+			if (*arg != '\0') {
+				error("Base palette ID must be a valid number, not \"%s\"", musl_optarg);
+			} else if (number >= 256) {
+				error("Base palette ID must be below 256");
+			} else {
+				options.basePalID = number;
 			}
 			break;
 		case 'm':
@@ -876,6 +887,7 @@ int main(int argc, char *argv[]) {
 		    options.baseTileIDs[0],
 		    options.baseTileIDs[1]
 		);
+		fprintf(stderr, "\tBase palette ID: %" PRIu8 "\n", options.basePalID);
 		fprintf(
 		    stderr,
 		    "\tMaximum %" PRIu16 " tiles in bank 0, %" PRIu16 " in bank 1\n",

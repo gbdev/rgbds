@@ -289,10 +289,10 @@ void reverse() {
 			uint8_t attr = (*attrmap)[index];
 			size_t tx = index % width, ty = index / width;
 
-			if ((attr & 0b111) > palettes.size()) {
+			if (uint8_t palID = (attr & 0b111) - options.basePalID; palID > palettes.size()) {
 				error(
 				    "Attribute map references palette #%u at (%zu, %zu), but there are only %zu!",
-				    attr & 0b111,
+				    palID,
 				    tx,
 				    ty,
 				    palettes.size()
@@ -356,7 +356,7 @@ void reverse() {
 				size_t tx = index % width, ty = index / width;
 				uint8_t tileID = (*tilemap)[index];
 				uint8_t attr = (*attrmap)[index];
-				bool bank = attr & 0x08;
+				bool bank = attr & 0b1000;
 
 				if (uint8_t tileOfs = tileID - options.baseTileIDs[bank];
 				    tileOfs >= options.maxNbTiles[bank]) {
@@ -511,7 +511,7 @@ void reverse() {
 			            : index;
 			// This should have been enforced by the earlier checking.
 			assume(tileOfs < nbTiles + options.trim);
-			size_t palID = palmap ? (*palmap)[index] : attribute & 0b111;
+			size_t palID = (palmap ? (*palmap)[index] : attribute & 0b111) - options.basePalID;
 			assume(palID < palettes.size()); // Should be ensured on data read
 
 			// We do not have data for tiles trimmed with `-x`, so assume they are "blank"
