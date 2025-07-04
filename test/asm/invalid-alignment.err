@@ -1,5 +1,5 @@
 error: invalid-alignment.asm(9):
-    Section's fixed address fails required alignment (PC = $4000)
+    Section is misaligned (at PC = $4000, expected ALIGN[16, 0], got ALIGN[16, 16384])
 error: invalid-alignment.asm(11):
     Alignment must be between 0 and 16, not 20
 error: invalid-alignment.asm(13):

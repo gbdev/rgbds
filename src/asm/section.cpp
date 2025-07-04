@@ -572,18 +572,28 @@ void sect_AlignPC(uint8_t alignment, uint16_t offset) {
 	uint32_t alignSize = 1 << alignment; // Size of an aligned "block"
 
 	if (sect->org != UINT32_MAX) {
-		if ((sect->org + curOffset - offset) % alignSize) {
+		if (uint32_t actualOffset = (sect->org + curOffset) % alignSize; actualOffset != offset) {
 			error(
-			    "Section's fixed address fails required alignment (PC = $%04" PRIx32 ")\n",
-			    sect->org + curOffset
+			    "Section is misaligned (at PC = $%04" PRIx32 ", expected ALIGN[%" PRIu32
+			    ", %" PRIu32 "], got ALIGN[%" PRIu32 ", %" PRIu32 "])\n",
+			    sect->org + curOffset,
+			    alignment,
+			    offset,
+			    alignment,
+			    actualOffset
 			);
 		}
-	} else if (sect->align != 0
-	           && (((sect->alignOfs + curOffset) % (1u << sect->align)) - offset) % alignSize) {
+	} else if (uint32_t actualOffset =
+	               ((sect->alignOfs + curOffset) % (1u << sect->align)) % alignSize;
+	           sect->align != 0 && actualOffset != offset) {
 		error(
-		    "Section's alignment fails required alignment (offset from section start = $%04" PRIx32
-		    ")\n",
-		    curOffset
+		    "Section is misaligned ($%04" PRIx32 " bytes into the section, expected ALIGN[%" PRIu32
+		    ", %" PRIu32 "], got ALIGN[%" PRIu32 ", %" PRIu32 "])\n",
+		    curOffset,
+		    alignment,
+		    offset,
+		    alignment,
+		    actualOffset
 		);
 	} else if (alignment >= 16) {
 		// Treat an alignment large enough as fixing the address.
