@@ -356,6 +356,36 @@ because $16384$ turns = $16384 tau$ radians = $32768 pi$ radians, and $sin ( 327
 .EQ
 delim off
 .EN
+.Ss % operator behavior with negative dividend or divisor
+Changed in 0.5.0.
+.Pp
+Instead of having the same sign as the dividend (a remainder operation),
+.Ql %
+has the same sign as the divisor (a modulo operation).
+.Pp
+For example, previously we had:
+.Bl -bullet -offset indent
+.It
+.Ql 13 % 10 == 3
+.It
+.Ql -13 % 10 == -3
+.It
+.Ql 13 % -10 == 3
+.It
+.Ql -13 % -10 == -3
+.El
+.Pp
+Instead, now we have:
+.Bl -bullet -offset indent
+.It
+.Ql 13 % 10 == 3
+.It
+.Ql -13 % 10 == 7
+.It
+.Ql 13 % -10 == -7
+.It
+.Ql -13 % -10 == -3
+.El
 .Ss ** operator associativity
 Changed in 0.9.0.
 .Pp
