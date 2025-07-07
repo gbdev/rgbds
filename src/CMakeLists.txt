@@ -48,6 +48,7 @@ set(rgbasm_src
     "asm/symbol.cpp"
     "asm/warning.cpp"
     "extern/utf8decoder.cpp"
+    "diagnostics.cpp"
     "linkdefs.cpp"
     "opmath.cpp"
     "util.cpp"

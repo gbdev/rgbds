@@ -28,7 +28,6 @@ bool generatePhonyDeps = false;        // -MP
 std::string targetFileName;            // -MQ, -MT
 bool failedOnMissingInclude = false;
 bool verbose = false; // -v
-bool warnings = true; // -w
 
 // Escapes Make-special chars from a string
 static std::string make_escape(std::string &str) {
@@ -330,7 +329,7 @@ int main(int argc, char *argv[]) {
 			break;
 
 		case 'w':
-			warnings = false;
+			warnings.state.warningsEnabled = false;
 			break;
 
 			unsigned long maxValue;

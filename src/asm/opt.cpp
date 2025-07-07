@@ -18,9 +18,8 @@ struct OptStackEntry {
 	char gfxDigits[4];
 	uint8_t fixPrecision;
 	uint8_t fillByte;
-	bool warningsAreErrors;
 	size_t maxRecursionDepth;
-	Diagnostics warningStates;
+	DiagnosticsState<WarningID> warningStates;
 };
 
 static std::stack<OptStackEntry> stack;
@@ -47,7 +46,9 @@ void opt_R(size_t newDepth) {
 }
 
 void opt_W(char const *flag) {
-	processWarningFlag(flag);
+	if (warnings.processWarningFlag(flag) == "numeric-string") {
+		warning(WARNING_OBSOLETE, "Warning flag \"numeric-string\" is deprecated\n");
+	}
 }
 
 void opt_Parse(char const *s) {
@@ -158,9 +159,7 @@ void opt_Push() {
 
 	entry.fillByte = fillByte; // Pulled from section.hpp
 
-	// Both of these pulled from warning.hpp
-	entry.warningsAreErrors = warningsAreErrors;
-	entry.warningStates = warningStates;
+	entry.warningStates = warnings.state; // Pulled from warning.hpp
 
 	entry.maxRecursionDepth = maxRecursionDepth; // Pulled from fstack.h
 
@@ -182,9 +181,8 @@ void opt_Pop() {
 	opt_Q(entry.fixPrecision);
 	opt_R(entry.maxRecursionDepth);
 
-	// opt_W does not apply a whole warning state; it processes one flag string
-	warningsAreErrors = entry.warningsAreErrors;
-	warningStates = entry.warningStates;
+	// `opt_W` does not apply a whole warning state; it processes one flag string
+	warnings.state = entry.warningStates;
 }
 
 void opt_CheckStack() {

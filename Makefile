@@ -66,6 +66,7 @@ rgbasm_obj := \
 	src/asm/warning.o \
 	src/extern/getopt.o \
 	src/extern/utf8decoder.o \
+	src/diagnostics.o \
 	src/error.o \
 	src/linkdefs.o \
 	src/opmath.o \

@@ -3,7 +3,16 @@
 #ifndef RGBDS_ASM_WARNING_HPP
 #define RGBDS_ASM_WARNING_HPP
 
+#include "diagnostics.hpp"
+
 extern unsigned int nbErrors, maxErrors;
+
+enum WarningLevel {
+	LEVEL_DEFAULT,    // Warnings that are enabled by default
+	LEVEL_ALL,        // Warnings that probably indicate an error
+	LEVEL_EXTRA,      // Warnings that are less likely to indicate an error
+	LEVEL_EVERYTHING, // Literally every warning
+};
 
 enum WarningID {
 	WARNING_ASSERT,               // Assertions
@@ -43,24 +52,7 @@ enum WarningID {
 	NB_WARNINGS,
 };
 
-enum WarningAbled { WARNING_DEFAULT, WARNING_ENABLED, WARNING_DISABLED };
-
-struct WarningState {
-	WarningAbled state;
-	WarningAbled error;
-
-	void update(WarningState other);
-};
-
-struct Diagnostics {
-	WarningState flagStates[NB_WARNINGS];
-	WarningState metaStates[NB_WARNINGS];
-};
-
-extern Diagnostics warningStates;
-extern bool warningsAreErrors;
-
-void processWarningFlag(char const *flag);
+extern Diagnostics<WarningLevel, WarningID> warnings;
 
 // Used to warn the user about problems that don't prevent the generation of
 // valid code.
