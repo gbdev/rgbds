@@ -21,20 +21,17 @@ int32_t op_modulo(int32_t dividend, int32_t divisor) {
 }
 
 int32_t op_exponent(int32_t base, uint32_t power) {
-	int32_t result = 1;
+	uint32_t result = 1;
 
-	for (;;) {
+	for (uint32_t ubase = base; power; power /= 2) {
 		if (power % 2) {
-			result *= base;
+			result = static_cast<uint64_t>(result) * ubase;
 		}
-		power /= 2;
-		if (!power) {
-			break;
-		}
-		base *= base;
+		ubase = static_cast<uint64_t>(ubase) * ubase;
 	}
 
-	return result;
+	// Avoid arithmetic overflow runtime error
+	return result <= INT32_MAX ? result : -static_cast<int32_t>(~result) - 1;
 }
 
 int32_t op_shift_left(int32_t value, int32_t amount) {
