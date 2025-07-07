@@ -80,21 +80,19 @@ static const struct {
     {WARNING_UNMAPPED_CHAR_1,  WARNING_UNMAPPED_CHAR_2,  1},
 };
 
-enum WarningBehavior { DISABLED, ENABLED, ERROR };
-
-static WarningBehavior getWarningBehavior(WarningID id) {
+WarningBehavior Diagnostics::getWarningBehavior(WarningID id) const {
 	// Check if warnings are globally disabled
-	if (!warningStates.warningsEnabled) {
+	if (!warningsEnabled) {
 		return WarningBehavior::DISABLED;
 	}
 
 	// Get the state of this warning flag
-	WarningState const &flagState = warningStates.flagStates[id];
-	WarningState const &metaState = warningStates.metaStates[id];
+	WarningState const &flagState = flagStates[id];
+	WarningState const &metaState = metaStates[id];
 
 	// If subsequent checks determine that the warning flag is enabled, this checks whether it has
 	// -Werror without -Wno-error=<flag> or -Wno-error=<meta>, which makes it into an error
-	bool warningIsError = warningStates.warningsAreErrors && flagState.error != WARNING_DISABLED
+	bool warningIsError = warningsAreErrors && flagState.error != WARNING_DISABLED
 	                      && metaState.error != WARNING_DISABLED;
 	WarningBehavior enabledBehavior =
 	    warningIsError ? WarningBehavior::ERROR : WarningBehavior::ENABLED;
@@ -130,17 +128,17 @@ static WarningBehavior getWarningBehavior(WarningID id) {
 	return WarningBehavior::DISABLED;
 }
 
-void processWarningFlag(char const *flag) {
+void Diagnostics::processWarningFlag(char const *flag) {
 	std::string rootFlag = flag;
 
 	// Check for `-Werror` or `-Wno-error` to return early
 	if (rootFlag == "error") {
 		// `-Werror` promotes warnings to errors
-		warningStates.warningsAreErrors = true;
+		warningsAreErrors = true;
 		return;
 	} else if (rootFlag == "no-error") {
 		// `-Wno-error` disables promotion of warnings to errors
-		warningStates.warningsAreErrors = false;
+		warningsAreErrors = false;
 		return;
 	}
 
@@ -247,7 +245,7 @@ void processWarningFlag(char const *flag) {
 
 			// Set the first <param> to enabled/error, and disable the rest
 			for (uint8_t ofs = 0; ofs < maxParam; ofs++) {
-				WarningState &warning = warningStates.flagStates[baseID + ofs];
+				WarningState &warning = flagStates[baseID + ofs];
 				if (ofs < param) {
 					warning.update(state);
 				} else {
@@ -266,7 +264,7 @@ void processWarningFlag(char const *flag) {
 				// Set each of the warning flags that meets this level
 				for (WarningID id : EnumSeq(NB_WARNINGS)) {
 					if (metaWarning.level >= warningFlags[id].level) {
-						warningStates.metaStates[id].update(state);
+						metaStates[id].update(state);
 					}
 				}
 				return;
@@ -276,7 +274,7 @@ void processWarningFlag(char const *flag) {
 		// Try to match the flag against a "normal" flag
 		for (WarningID id : EnumSeq(NB_PLAIN_WARNINGS)) {
 			if (rootFlag == warningFlags[id].name) {
-				warningStates.flagStates[id].update(state);
+				flagStates[id].update(state);
 				return;
 			}
 		}
@@ -333,7 +331,7 @@ void warning(WarningID id, char const *fmt, ...) {
 
 	va_start(args, fmt);
 
-	switch (getWarningBehavior(id)) {
+	switch (warningStates.getWarningBehavior(id)) {
 	case WarningBehavior::DISABLED:
 		break;
 

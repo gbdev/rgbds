@@ -46,7 +46,7 @@ void opt_R(size_t newDepth) {
 }
 
 void opt_W(char const *flag) {
-	processWarningFlag(flag);
+	warningStates.processWarningFlag(flag);
 }
 
 void opt_Parse(char const *s) {
