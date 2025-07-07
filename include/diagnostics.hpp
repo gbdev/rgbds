@@ -47,8 +47,8 @@ struct Diagnostics {
 	bool warningsEnabled = true;
 	bool warningsAreErrors = false;
 
-	std::vector<WarningFlag<L>> warningFlags;
 	std::vector<WarningFlag<L>> metaWarnings;
+	std::vector<WarningFlag<L>> warningFlags;
 	std::vector<ParamWarning<W>> paramWarnings;
 
 	WarningBehavior getWarningBehavior(W id) const;
