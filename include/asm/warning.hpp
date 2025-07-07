@@ -52,7 +52,7 @@ enum WarningID {
 	NB_WARNINGS,
 };
 
-extern Diagnostics<WarningLevel, WarningID> warningStates;
+extern Diagnostics<WarningLevel, WarningID> warnings;
 
 // Used to warn the user about problems that don't prevent the generation of
 // valid code.

@@ -21,13 +21,13 @@ unsigned int nbErrors = 0;
 unsigned int maxErrors = 0;
 
 // clang-format off: nested initializers
-Diagnostics<WarningLevel, WarningID> warningStates(
-    {
+Diagnostics<WarningLevel, WarningID> warnings = {
+    .metaWarnings = {
         {"all",                  LEVEL_ALL       },
         {"extra",                LEVEL_EXTRA     },
         {"everything",           LEVEL_EVERYTHING},
     },
-    {
+    .warningFlags = {
         {"assert",               LEVEL_DEFAULT   },
         {"backwards-for",        LEVEL_ALL       },
         {"builtin-args",         LEVEL_ALL       },
@@ -55,13 +55,14 @@ Diagnostics<WarningLevel, WarningID> warningStates(
         {"unmapped-char",        LEVEL_DEFAULT   },
         {"unmapped-char",        LEVEL_ALL       },
     },
-    {
+    .paramWarnings = {
         {WARNING_NUMERIC_STRING_1, WARNING_NUMERIC_STRING_2, 1},
         {WARNING_PURGE_1,          WARNING_PURGE_2,          1},
         {WARNING_TRUNCATION_1,     WARNING_TRUNCATION_2,     2},
         {WARNING_UNMAPPED_CHAR_1,  WARNING_UNMAPPED_CHAR_2,  1},
-    }
-);
+    },
+    .state = DiagnosticsState<WarningID>(),
+};
 // clang-format on
 
 void printDiag(
@@ -107,12 +108,12 @@ void fatalerror(char const *fmt, ...) {
 }
 
 void warning(WarningID id, char const *fmt, ...) {
-	char const *flag = warningStates.warningFlags[id].name;
+	char const *flag = warnings.warningFlags[id].name;
 	va_list args;
 
 	va_start(args, fmt);
 
-	switch (warningStates.getWarningBehavior(id)) {
+	switch (warnings.getWarningBehavior(id)) {
 	case WarningBehavior::DISABLED:
 		break;
 

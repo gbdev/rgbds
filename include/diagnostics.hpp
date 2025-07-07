@@ -43,25 +43,20 @@ struct ParamWarning {
 	uint8_t defaultLevel;
 };
 
-template<typename L, typename W>
-struct Diagnostics {
+template<typename W>
+struct DiagnosticsState {
 	WarningState flagStates[W::NB_WARNINGS];
 	WarningState metaStates[W::NB_WARNINGS];
-	bool warningsEnabled;
-	bool warningsAreErrors;
+	bool warningsEnabled = true;
+	bool warningsAreErrors = false;
+};
 
+template<typename L, typename W>
+struct Diagnostics {
 	std::vector<WarningFlag<L>> metaWarnings;
 	std::vector<WarningFlag<L>> warningFlags;
 	std::vector<ParamWarning<W>> paramWarnings;
-
-	Diagnostics() = default;
-	Diagnostics(
-	    std::vector<WarningFlag<L>> metas,
-	    std::vector<WarningFlag<L>> warnings,
-	    std::vector<ParamWarning<W>> params
-	)
-	    : flagStates{}, metaStates{}, warningsEnabled(true), warningsAreErrors(false),
-	      metaWarnings(metas), warningFlags(warnings), paramWarnings(params) {}
+	DiagnosticsState<W> state;
 
 	WarningBehavior getWarningBehavior(W id) const;
 	std::string processWarningFlag(char const *flag);
@@ -70,17 +65,17 @@ struct Diagnostics {
 template<typename L, typename W>
 WarningBehavior Diagnostics<L, W>::getWarningBehavior(W id) const {
 	// Check if warnings are globally disabled
-	if (!warningsEnabled) {
+	if (!state.warningsEnabled) {
 		return WarningBehavior::DISABLED;
 	}
 
 	// Get the state of this warning flag
-	WarningState const &flagState = flagStates[id];
-	WarningState const &metaState = metaStates[id];
+	WarningState const &flagState = state.flagStates[id];
+	WarningState const &metaState = state.metaStates[id];
 
 	// If subsequent checks determine that the warning flag is enabled, this checks whether it has
 	// -Werror without -Wno-error=<flag> or -Wno-error=<meta>, which makes it into an error
-	bool warningIsError = warningsAreErrors && flagState.error != WARNING_DISABLED
+	bool warningIsError = state.warningsAreErrors && flagState.error != WARNING_DISABLED
 	                      && metaState.error != WARNING_DISABLED;
 	WarningBehavior enabledBehavior =
 	    warningIsError ? WarningBehavior::ERROR : WarningBehavior::ENABLED;
@@ -123,15 +118,15 @@ std::string Diagnostics<L, W>::processWarningFlag(char const *flag) {
 	// Check for `-Werror` or `-Wno-error` to return early
 	if (rootFlag == "error") {
 		// `-Werror` promotes warnings to errors
-		warningsAreErrors = true;
+		state.warningsAreErrors = true;
 		return rootFlag;
 	} else if (rootFlag == "no-error") {
 		// `-Wno-error` disables promotion of warnings to errors
-		warningsAreErrors = false;
+		state.warningsAreErrors = false;
 		return rootFlag;
 	}
 
-	auto [state, param] = getInitialWarningState(rootFlag);
+	auto [flagState, param] = getInitialWarningState(rootFlag);
 
 	// Try to match the flag against a parametric warning
 	// If there was an equals sign, it will have set `param`; if not, `param` will be 0, which
@@ -164,9 +159,9 @@ std::string Diagnostics<L, W>::processWarningFlag(char const *flag) {
 
 			// Set the first <param> to enabled/error, and disable the rest
 			for (uint8_t ofs = 0; ofs < maxParam; ofs++) {
-				WarningState &warning = flagStates[baseID + ofs];
+				WarningState &warning = state.flagStates[baseID + ofs];
 				if (ofs < *param) {
-					warning.update(state);
+					warning.update(flagState);
 				} else {
 					warning.state = WARNING_DISABLED;
 				}
@@ -183,7 +178,7 @@ std::string Diagnostics<L, W>::processWarningFlag(char const *flag) {
 				// Set each of the warning flags that meets this level
 				for (W id : EnumSeq(W::NB_WARNINGS)) {
 					if (metaWarning.level >= warningFlags[id].level) {
-						metaStates[id].update(state);
+						state.metaStates[id].update(flagState);
 					}
 				}
 				return rootFlag;
@@ -193,7 +188,7 @@ std::string Diagnostics<L, W>::processWarningFlag(char const *flag) {
 		// Try to match the flag against a "normal" flag
 		for (W id : EnumSeq(W::NB_PLAIN_WARNINGS)) {
 			if (rootFlag == warningFlags[id].name) {
-				flagStates[id].update(state);
+				state.flagStates[id].update(flagState);
 				return rootFlag;
 			}
 		}

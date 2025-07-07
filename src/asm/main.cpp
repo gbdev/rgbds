@@ -329,7 +329,7 @@ int main(int argc, char *argv[]) {
 			break;
 
 		case 'w':
-			warningStates.warningsEnabled = false;
+			warnings.state.warningsEnabled = false;
 			break;
 
 			unsigned long maxValue;
