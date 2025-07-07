@@ -19,7 +19,7 @@ struct OptStackEntry {
 	uint8_t fixPrecision;
 	uint8_t fillByte;
 	size_t maxRecursionDepth;
-	Diagnostics<WarningID> warningStates;
+	Diagnostics<WarningLevel, WarningID> warningStates;
 };
 
 static std::stack<OptStackEntry> stack;

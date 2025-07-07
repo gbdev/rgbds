@@ -25,16 +25,10 @@ struct WarningState {
 	void update(WarningState other);
 };
 
-enum WarningLevel {
-	LEVEL_DEFAULT,    // Warnings that are enabled by default
-	LEVEL_ALL,        // Warnings that probably indicate an error
-	LEVEL_EXTRA,      // Warnings that are less likely to indicate an error
-	LEVEL_EVERYTHING, // Literally every warning
-};
-
+template<typename L>
 struct WarningFlag {
 	char const *name;
-	WarningLevel level;
+	L level;
 };
 
 enum WarningBehavior { DISABLED, ENABLED, ERROR };
@@ -46,22 +40,23 @@ struct ParamWarning {
 	uint8_t defaultLevel;
 };
 
-template<typename W>
+template<typename L, typename W>
 struct Diagnostics {
 	WarningState flagStates[W::NB_WARNINGS];
 	WarningState metaStates[W::NB_WARNINGS];
 	bool warningsEnabled = true;
 	bool warningsAreErrors = false;
 
-	std::vector<WarningFlag> warningFlags;
+	std::vector<WarningFlag<L>> warningFlags;
+	std::vector<WarningFlag<L>> metaWarnings;
 	std::vector<ParamWarning<W>> paramWarnings;
 
 	WarningBehavior getWarningBehavior(W id) const;
 	std::string processWarningFlag(char const *flag);
 };
 
-template<typename W>
-WarningBehavior Diagnostics<W>::getWarningBehavior(W id) const {
+template<typename L, typename W>
+WarningBehavior Diagnostics<L, W>::getWarningBehavior(W id) const {
 	// Check if warnings are globally disabled
 	if (!warningsEnabled) {
 		return WarningBehavior::DISABLED;
@@ -101,7 +96,7 @@ WarningBehavior Diagnostics<W>::getWarningBehavior(W id) const {
 	}
 
 	// If no meta flag is specified, check the default state of this warning flag
-	if (warningFlags[id].level == LEVEL_DEFAULT) { // enabled by default
+	if (warningFlags[id].level == L::LEVEL_DEFAULT) { // enabled by default
 		return enabledBehavior;
 	}
 
@@ -109,8 +104,8 @@ WarningBehavior Diagnostics<W>::getWarningBehavior(W id) const {
 	return WarningBehavior::DISABLED;
 }
 
-template<typename W>
-std::string Diagnostics<W>::processWarningFlag(char const *flag) {
+template<typename L, typename W>
+std::string Diagnostics<L, W>::processWarningFlag(char const *flag) {
 	std::string rootFlag = flag;
 
 	// Check for `-Werror` or `-Wno-error` to return early
@@ -236,13 +231,8 @@ std::string Diagnostics<W>::processWarningFlag(char const *flag) {
 
 	// Try to match against a non-parametric warning, unless there was an equals sign
 	if (!hasParam) {
-		static WarningFlag const metaWarnings[] = {
-		    {"all",        LEVEL_ALL       },
-		    {"extra",      LEVEL_EXTRA     },
-		    {"everything", LEVEL_EVERYTHING},
-		};
 		// Try to match against a "meta" warning
-		for (WarningFlag const &metaWarning : metaWarnings) {
+		for (WarningFlag<L> const &metaWarning : metaWarnings) {
 			if (rootFlag == metaWarning.name) {
 				// Set each of the warning flags that meets this level
 				for (W id : EnumSeq(W::NB_WARNINGS)) {

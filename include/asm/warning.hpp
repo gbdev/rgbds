@@ -7,6 +7,13 @@
 
 extern unsigned int nbErrors, maxErrors;
 
+enum WarningLevel {
+	LEVEL_DEFAULT,    // Warnings that are enabled by default
+	LEVEL_ALL,        // Warnings that probably indicate an error
+	LEVEL_EXTRA,      // Warnings that are less likely to indicate an error
+	LEVEL_EVERYTHING, // Literally every warning
+};
+
 enum WarningID {
 	WARNING_ASSERT,               // Assertions
 	WARNING_BACKWARDS_FOR,        // `FOR` loop with backwards range
@@ -45,7 +52,7 @@ enum WarningID {
 	NB_WARNINGS,
 };
 
-extern Diagnostics<WarningID> warningStates;
+extern Diagnostics<WarningLevel, WarningID> warningStates;
 
 // Used to warn the user about problems that don't prevent the generation of
 // valid code.
