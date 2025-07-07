@@ -3,6 +3,8 @@
 #ifndef RGBDS_ASM_WARNING_HPP
 #define RGBDS_ASM_WARNING_HPP
 
+#include "diagnostics.hpp"
+
 extern unsigned int nbErrors, maxErrors;
 
 enum WarningID {
@@ -41,15 +43,6 @@ enum WarningID {
 	WARNING_UNMAPPED_CHAR_2,
 
 	NB_WARNINGS,
-};
-
-enum WarningAbled { WARNING_DEFAULT, WARNING_ENABLED, WARNING_DISABLED };
-
-struct WarningState {
-	WarningAbled state;
-	WarningAbled error;
-
-	void update(WarningState other);
 };
 
 struct Diagnostics {

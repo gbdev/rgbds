@@ -131,15 +131,6 @@ static WarningBehavior getWarningBehavior(WarningID id) {
 	return WarningBehavior::DISABLED;
 }
 
-void WarningState::update(WarningState other) {
-	if (other.state != WARNING_DEFAULT) {
-		state = other.state;
-	}
-	if (other.error != WARNING_DEFAULT) {
-		error = other.error;
-	}
-}
-
 void processWarningFlag(char const *flag) {
 	std::string rootFlag = flag;
 
