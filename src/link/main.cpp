@@ -135,7 +135,7 @@ void fatal(FileStackNode const *where, uint32_t lineNo, char const *fmt, ...) {
 }
 
 // Short options
-static char const *optstring = "dhl:m:Mn:O:o:p:S:tVvWwx";
+static char const *optstring = "dhl:m:Mn:O:o:p:S:tVvwx";
 
 // Equivalent long options
 // Please keep in the same order as short opts.

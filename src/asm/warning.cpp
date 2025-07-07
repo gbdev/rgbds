@@ -21,7 +21,6 @@ unsigned int nbErrors = 0;
 unsigned int maxErrors = 0;
 
 Diagnostics warningStates;
-bool warningsAreErrors;
 
 enum WarningLevel {
 	LEVEL_DEFAULT,    // Warnings that are enabled by default
@@ -85,7 +84,7 @@ enum WarningBehavior { DISABLED, ENABLED, ERROR };
 
 static WarningBehavior getWarningBehavior(WarningID id) {
 	// Check if warnings are globally disabled
-	if (!warnings) {
+	if (!warningStates.warningsEnabled) {
 		return WarningBehavior::DISABLED;
 	}
 
@@ -95,7 +94,7 @@ static WarningBehavior getWarningBehavior(WarningID id) {
 
 	// If subsequent checks determine that the warning flag is enabled, this checks whether it has
 	// -Werror without -Wno-error=<flag> or -Wno-error=<meta>, which makes it into an error
-	bool warningIsError = warningsAreErrors && flagState.error != WARNING_DISABLED
+	bool warningIsError = warningStates.warningsAreErrors && flagState.error != WARNING_DISABLED
 	                      && metaState.error != WARNING_DISABLED;
 	WarningBehavior enabledBehavior =
 	    warningIsError ? WarningBehavior::ERROR : WarningBehavior::ENABLED;
@@ -137,11 +136,11 @@ void processWarningFlag(char const *flag) {
 	// Check for `-Werror` or `-Wno-error` to return early
 	if (rootFlag == "error") {
 		// `-Werror` promotes warnings to errors
-		warningsAreErrors = true;
+		warningStates.warningsAreErrors = true;
 		return;
 	} else if (rootFlag == "no-error") {
 		// `-Wno-error` disables promotion of warnings to errors
-		warningsAreErrors = false;
+		warningStates.warningsAreErrors = false;
 		return;
 	}
 

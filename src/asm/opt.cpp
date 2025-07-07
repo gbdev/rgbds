@@ -18,7 +18,6 @@ struct OptStackEntry {
 	char gfxDigits[4];
 	uint8_t fixPrecision;
 	uint8_t fillByte;
-	bool warningsAreErrors;
 	size_t maxRecursionDepth;
 	Diagnostics warningStates;
 };
@@ -158,9 +157,7 @@ void opt_Push() {
 
 	entry.fillByte = fillByte; // Pulled from section.hpp
 
-	// Both of these pulled from warning.hpp
-	entry.warningsAreErrors = warningsAreErrors;
-	entry.warningStates = warningStates;
+	entry.warningStates = warningStates; // Pulled from warning.hpp
 
 	entry.maxRecursionDepth = maxRecursionDepth; // Pulled from fstack.h
 
@@ -182,8 +179,7 @@ void opt_Pop() {
 	opt_Q(entry.fixPrecision);
 	opt_R(entry.maxRecursionDepth);
 
-	// opt_W does not apply a whole warning state; it processes one flag string
-	warningsAreErrors = entry.warningsAreErrors;
+	// `opt_W` does not apply a whole warning state; it processes one flag string
 	warningStates = entry.warningStates;
 }
 

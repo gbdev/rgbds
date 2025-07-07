@@ -48,10 +48,11 @@ enum WarningID {
 struct Diagnostics {
 	WarningState flagStates[NB_WARNINGS];
 	WarningState metaStates[NB_WARNINGS];
+	bool warningsEnabled = true;
+	bool warningsAreErrors = false;
 };
 
 extern Diagnostics warningStates;
-extern bool warningsAreErrors;
 
 void processWarningFlag(char const *flag);
 

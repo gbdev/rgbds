@@ -7,7 +7,6 @@
 #include <string>
 
 extern bool verbose;
-extern bool warnings; // True to enable warnings, false to disable them.
 
 extern FILE *dependFile;
 extern std::string targetFileName;
