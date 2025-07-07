@@ -45,19 +45,7 @@ enum WarningID {
 	NB_WARNINGS,
 };
 
-enum WarningBehavior { DISABLED, ENABLED, ERROR };
-
-struct Diagnostics {
-	WarningState flagStates[NB_WARNINGS];
-	WarningState metaStates[NB_WARNINGS];
-	bool warningsEnabled = true;
-	bool warningsAreErrors = false;
-
-	WarningBehavior getWarningBehavior(WarningID id) const;
-	void processWarningFlag(char const *flag);
-};
-
-extern Diagnostics warningStates;
+extern Diagnostics<WarningID> warningStates;
 
 // Used to warn the user about problems that don't prevent the generation of
 // valid code.
