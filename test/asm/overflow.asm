@@ -34,6 +34,12 @@ def x = x << 1
 	dl -1 << 1
 	print_x
 
+def x = 2 ** 31
+	print_x
+
+def x = 5 ** 29
+	print_x
+
 def x = 4294967295
 def x = 4294967296
 
