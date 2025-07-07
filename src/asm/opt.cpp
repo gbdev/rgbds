@@ -46,7 +46,9 @@ void opt_R(size_t newDepth) {
 }
 
 void opt_W(char const *flag) {
-	warningStates.processWarningFlag(flag);
+	if (warningStates.processWarningFlag(flag) == "numeric-string") {
+		warning(WARNING_OBSOLETE, "Warning flag \"numeric-string\" is deprecated\n");
+	}
 }
 
 void opt_Parse(char const *s) {

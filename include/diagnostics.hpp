@@ -53,16 +53,11 @@ struct Diagnostics {
 	bool warningsEnabled = true;
 	bool warningsAreErrors = false;
 
-	std::vector<WarningFlag> metaWarnings{
-	    {"all",        LEVEL_ALL       },
-	    {"extra",      LEVEL_EXTRA     },
-	    {"everything", LEVEL_EVERYTHING},
-	};
 	std::vector<WarningFlag> warningFlags;
 	std::vector<ParamWarning<W>> paramWarnings;
 
 	WarningBehavior getWarningBehavior(W id) const;
-	void processWarningFlag(char const *flag);
+	std::string processWarningFlag(char const *flag);
 };
 
 template<typename W>
@@ -115,18 +110,18 @@ WarningBehavior Diagnostics<W>::getWarningBehavior(W id) const {
 }
 
 template<typename W>
-void Diagnostics<W>::processWarningFlag(char const *flag) {
+std::string Diagnostics<W>::processWarningFlag(char const *flag) {
 	std::string rootFlag = flag;
 
 	// Check for `-Werror` or `-Wno-error` to return early
 	if (rootFlag == "error") {
 		// `-Werror` promotes warnings to errors
 		warningsAreErrors = true;
-		return;
+		return rootFlag;
 	} else if (rootFlag == "no-error") {
 		// `-Wno-error` disables promotion of warnings to errors
 		warningsAreErrors = false;
-		return;
+		return rootFlag;
 	}
 
 	// Check for prefixes that affect what the flag does
@@ -235,12 +230,17 @@ void Diagnostics<W>::processWarningFlag(char const *flag) {
 					warning.state = WARNING_DISABLED;
 				}
 			}
-			return;
+			return rootFlag;
 		}
 	}
 
 	// Try to match against a non-parametric warning, unless there was an equals sign
 	if (!hasParam) {
+		static WarningFlag const metaWarnings[] = {
+		    {"all",        LEVEL_ALL       },
+		    {"extra",      LEVEL_EXTRA     },
+		    {"everything", LEVEL_EVERYTHING},
+		};
 		// Try to match against a "meta" warning
 		for (WarningFlag const &metaWarning : metaWarnings) {
 			if (rootFlag == metaWarning.name) {
@@ -250,7 +250,7 @@ void Diagnostics<W>::processWarningFlag(char const *flag) {
 						metaStates[id].update(state);
 					}
 				}
-				return;
+				return rootFlag;
 			}
 		}
 
@@ -258,12 +258,13 @@ void Diagnostics<W>::processWarningFlag(char const *flag) {
 		for (W id : EnumSeq(W::NB_PLAIN_WARNINGS)) {
 			if (rootFlag == warningFlags[id].name) {
 				flagStates[id].update(state);
-				return;
+				return rootFlag;
 			}
 		}
 	}
 
 	warnx("Unknown warning flag \"%s\"", flag);
+	return rootFlag;
 }
 
 #endif // RGBDS_DIAGNOSTICS_HPP
