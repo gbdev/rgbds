@@ -583,30 +583,33 @@ void sect_AlignPC(uint8_t alignment, uint16_t offset) {
 			    actualOffset
 			);
 		}
-	} else if (uint32_t actualOffset =
-	               ((sect->alignOfs + curOffset) % (1u << sect->align)) % alignSize;
-	           sect->align != 0 && actualOffset != offset) {
-		error(
-		    "Section is misaligned ($%04" PRIx32 " bytes into the section, expected ALIGN[%" PRIu32
-		    ", %" PRIu32 "], got ALIGN[%" PRIu32 ", %" PRIu32 "])\n",
-		    curOffset,
-		    alignment,
-		    offset,
-		    alignment,
-		    actualOffset
-		);
-	} else if (alignment >= 16) {
-		// Treat an alignment large enough as fixing the address.
-		// Note that this also ensures that a section's alignment never becomes 16 or greater.
-		if (alignment > 16) {
-			error("Alignment must be between 0 and 16, not %u\n", alignment);
+	} else {
+		if (uint32_t actualOffset = (sect->alignOfs + curOffset) % alignSize,
+		    sectAlignSize = 1 << sect->align;
+		    sect->align != 0 && actualOffset % sectAlignSize != offset % sectAlignSize) {
+			error(
+			    "Section is misaligned ($%04" PRIx32
+			    " bytes into the section, expected ALIGN[%" PRIu32 ", %" PRIu32
+			    "], got ALIGN[%" PRIu32 ", %" PRIu32 "])\n",
+			    curOffset,
+			    alignment,
+			    offset,
+			    alignment,
+			    actualOffset
+			);
+		} else if (alignment >= 16) {
+			// Treat an alignment large enough as fixing the address.
+			// Note that this also ensures that a section's alignment never becomes 16 or greater.
+			if (alignment > 16) {
+				error("Alignment must be between 0 and 16, not %u\n", alignment);
+			}
+			sect->align = 0; // Reset the alignment, since we're fixing the address.
+			sect->org = offset - curOffset;
+		} else if (alignment > sect->align) {
+			sect->align = alignment;
+			// We need `(sect->alignOfs + curOffset) % alignSize == offset`
+			sect->alignOfs = (offset - curOffset) % alignSize;
 		}
-		sect->align = 0; // Reset the alignment, since we're fixing the address.
-		sect->org = offset - curOffset;
-	} else if (alignment > sect->align) {
-		sect->align = alignment;
-		// We need `(sect->alignOfs + curOffset) % alignSize == offset`
-		sect->alignOfs = (offset - curOffset) % alignSize;
 	}
 }
 
