@@ -44,12 +44,21 @@ template<typename L, typename W>
 struct Diagnostics {
 	WarningState flagStates[W::NB_WARNINGS];
 	WarningState metaStates[W::NB_WARNINGS];
-	bool warningsEnabled = true;
-	bool warningsAreErrors = false;
+	bool warningsEnabled;
+	bool warningsAreErrors;
 
 	std::vector<WarningFlag<L>> metaWarnings;
 	std::vector<WarningFlag<L>> warningFlags;
 	std::vector<ParamWarning<W>> paramWarnings;
+
+	Diagnostics() = default;
+	Diagnostics(
+	    std::vector<WarningFlag<L>> metaWarnings,
+	    std::vector<WarningFlag<L>> warningFlags,
+	    std::vector<ParamWarning<W>> paramWarnings
+	)
+	    : flagStates{}, metaStates{}, warningsEnabled(true), warningsAreErrors(false),
+	      metaWarnings(metaWarnings), warningFlags(warningFlags), paramWarnings(paramWarnings) {}
 
 	WarningBehavior getWarningBehavior(W id) const;
 	std::string processWarningFlag(char const *flag);
