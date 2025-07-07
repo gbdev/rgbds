@@ -20,42 +20,44 @@
 unsigned int nbErrors = 0;
 unsigned int maxErrors = 0;
 
+// clang-format off: nested initializers
 Diagnostics<WarningID> warningStates{
-	.warningFlags = {
-		{"assert",               LEVEL_DEFAULT   },
-		{"backwards-for",        LEVEL_ALL       },
-		{"builtin-args",         LEVEL_ALL       },
-		{"charmap-redef",        LEVEL_ALL       },
-		{"div",                  LEVEL_EVERYTHING},
-		{"empty-data-directive", LEVEL_ALL       },
-		{"empty-macro-arg",      LEVEL_EXTRA     },
-		{"empty-strrpl",         LEVEL_ALL       },
-		{"large-constant",       LEVEL_ALL       },
-		{"macro-shift",          LEVEL_EXTRA     },
-		{"nested-comment",       LEVEL_DEFAULT   },
-		{"obsolete",             LEVEL_DEFAULT   },
-		{"shift",                LEVEL_EVERYTHING},
-		{"shift-amount",         LEVEL_EVERYTHING},
-		{"unmatched-directive",  LEVEL_EXTRA     },
-		{"unterminated-load",    LEVEL_EXTRA     },
-		{"user",                 LEVEL_DEFAULT   },
-		// Parametric warnings
-		{"numeric-string",       LEVEL_EVERYTHING},
-		{"numeric-string",       LEVEL_EVERYTHING},
-		{"purge",                LEVEL_DEFAULT   },
-		{"purge",                LEVEL_ALL       },
-		{"truncation",           LEVEL_DEFAULT   },
-		{"truncation",           LEVEL_EXTRA     },
-		{"unmapped-char",        LEVEL_DEFAULT   },
-		{"unmapped-char",        LEVEL_ALL       },
-	},
-	.paramWarnings = {
-		{WARNING_NUMERIC_STRING_1, WARNING_NUMERIC_STRING_2, 1},
-		{WARNING_PURGE_1,          WARNING_PURGE_2,          1},
-		{WARNING_TRUNCATION_1,     WARNING_TRUNCATION_2,     2},
-		{WARNING_UNMAPPED_CHAR_1,  WARNING_UNMAPPED_CHAR_2,  1},
-	},
+    .warningFlags = {
+        {"assert",               LEVEL_DEFAULT},
+        {"backwards-for",        LEVEL_ALL},
+        {"builtin-args",         LEVEL_ALL},
+        {"charmap-redef",        LEVEL_ALL},
+        {"div",                  LEVEL_EVERYTHING},
+        {"empty-data-directive", LEVEL_ALL},
+        {"empty-macro-arg",      LEVEL_EXTRA},
+        {"empty-strrpl",         LEVEL_ALL},
+        {"large-constant",       LEVEL_ALL},
+        {"macro-shift",          LEVEL_EXTRA},
+        {"nested-comment",       LEVEL_DEFAULT},
+        {"obsolete",             LEVEL_DEFAULT},
+        {"shift",                LEVEL_EVERYTHING},
+        {"shift-amount",         LEVEL_EVERYTHING},
+        {"unmatched-directive",  LEVEL_EXTRA},
+        {"unterminated-load",    LEVEL_EXTRA},
+        {"user",                 LEVEL_DEFAULT},
+        // Parametric warnings
+        {"numeric-string",       LEVEL_EVERYTHING},
+        {"numeric-string",       LEVEL_EVERYTHING},
+        {"purge",                LEVEL_DEFAULT},
+        {"purge",                LEVEL_ALL},
+        {"truncation",           LEVEL_DEFAULT},
+        {"truncation",           LEVEL_EXTRA},
+        {"unmapped-char",        LEVEL_DEFAULT},
+        {"unmapped-char",        LEVEL_ALL},
+    },
+    .paramWarnings = {
+        {WARNING_NUMERIC_STRING_1, WARNING_NUMERIC_STRING_2, 1},
+        {WARNING_PURGE_1,          WARNING_PURGE_2,          1},
+        {WARNING_TRUNCATION_1,     WARNING_TRUNCATION_2,     2},
+        {WARNING_UNMAPPED_CHAR_1,  WARNING_UNMAPPED_CHAR_2,  1},
+    },
 };
+// clang-format on
 
 void printDiag(
     char const *fmt, va_list args, char const *type, char const *flagfmt, char const *flag

@@ -8,8 +8,8 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string>
 #include <string.h>
+#include <string>
 #include <vector>
 
 #include "error.hpp"
@@ -206,10 +206,6 @@ void Diagnostics<W>::processWarningFlag(char const *flag) {
 		assume(paramWarning.defaultLevel <= maxParam);
 
 		if (rootFlag == warningFlags[baseID].name) { // Match!
-			/*if (rootFlag == "numeric-string") {
-				warning(WARNING_OBSOLETE, "Warning flag \"numeric-string\" is deprecated\n");
-			}*/
-
 			// If making the warning an error but param is 0, set to the maximum
 			// This accommodates `-Werror=<flag>`, but also `-Werror=<flag>=0`, which is
 			// thus filtered out by the caller.
