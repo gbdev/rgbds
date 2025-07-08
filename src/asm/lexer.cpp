@@ -108,10 +108,10 @@ using namespace std::literals;
 
 struct Token {
 	int type;
-	Either<uint32_t, std::string> value;
+	std::variant<std::monostate, uint32_t, std::string> value;
 
-	Token() : type(T_(NUMBER)), value() {}
-	Token(int type_) : type(type_), value() {}
+	Token() : type(T_(NUMBER)), value(std::monostate{}) {}
+	Token(int type_) : type(type_), value(std::monostate{}) {}
 	Token(int type_, uint32_t value_) : type(type_), value(value_) {}
 	Token(int type_, std::string const &value_) : type(type_), value(value_) {}
 	Token(int type_, std::string &&value_) : type(type_), value(value_) {}
@@ -489,8 +489,8 @@ void LexerState::setViewAsNextState(char const *name, ContentSpan const &span, u
 }
 
 void lexer_RestartRept(uint32_t lineNo) {
-	if (lexerState->content.holds<ViewedContent>()) {
-		lexerState->content.get<ViewedContent>().offset = 0;
+	if (std::holds_alternative<ViewedContent>(lexerState->content)) {
+		std::get<ViewedContent>(lexerState->content).offset = 0;
 	}
 	lexerState->clear(lineNo);
 }
@@ -755,13 +755,13 @@ int LexerState::peekChar() {
 		}
 	}
 
-	if (content.holds<ViewedContent>()) {
-		auto &view = content.get<ViewedContent>();
+	if (std::holds_alternative<ViewedContent>(content)) {
+		auto &view = std::get<ViewedContent>(content);
 		if (view.offset < view.span.size) {
 			return static_cast<uint8_t>(view.span.ptr[view.offset]);
 		}
 	} else {
-		auto &cbuf = content.get<BufferedContent>();
+		auto &cbuf = std::get<BufferedContent>(content);
 		if (cbuf.size == 0) {
 			cbuf.refill();
 		}
@@ -791,13 +791,13 @@ int LexerState::peekCharAhead() {
 		distance -= exp.size() - exp.offset;
 	}
 
-	if (content.holds<ViewedContent>()) {
-		auto &view = content.get<ViewedContent>();
+	if (std::holds_alternative<ViewedContent>(content)) {
+		auto &view = std::get<ViewedContent>(content);
 		if (view.offset + distance < view.span.size) {
 			return static_cast<uint8_t>(view.span.ptr[view.offset + distance]);
 		}
 	} else {
-		auto &cbuf = content.get<BufferedContent>();
+		auto &cbuf = std::get<BufferedContent>(content);
 		assume(distance < std::size(cbuf.buf));
 		if (cbuf.size <= distance) {
 			cbuf.refill();
@@ -882,10 +882,10 @@ static void shiftChar() {
 			}
 		} else {
 			// Advance within the file contents
-			if (lexerState->content.holds<ViewedContent>()) {
-				lexerState->content.get<ViewedContent>().offset++;
+			if (std::holds_alternative<ViewedContent>(lexerState->content)) {
+				std::get<ViewedContent>(lexerState->content).offset++;
 			} else {
-				lexerState->content.get<BufferedContent>().advance();
+				std::get<BufferedContent>(lexerState->content).advance();
 			}
 		}
 		return;
@@ -2030,12 +2030,12 @@ static Token yylex_NORMAL() {
 				}
 
 				// `token` is either a `SYMBOL` or a `LOCAL`, and both have a `std::string` value.
-				assume(token.value.holds<std::string>());
+				assume(std::holds_alternative<std::string>(token.value));
 
 				// Raw symbols and local symbols cannot be string expansions
 				if (!raw && token.type == T_(SYMBOL) && lexerState->expandStrings) {
 					// Attempt string expansion
-					Symbol const *sym = sym_FindExactSymbol(token.value.get<std::string>());
+					Symbol const *sym = sym_FindExactSymbol(std::get<std::string>(token.value));
 
 					if (sym && sym->type == SYM_EQUS) {
 						std::shared_ptr<std::string> str = sym->getEqus();
@@ -2449,21 +2449,17 @@ yy::parser::symbol_type yylex() {
 
 	// Captures end at their buffer's boundary no matter what
 	if (token.type == T_(YYEOF) && !lexerState->capturing) {
-		// Doing `token = Token(T_(EOB));` here would be valid but redundant, because YYEOF and EOB
-		// both have the same empty value. Furthermore, g++ 11.4.0 was giving a false-positive
-		// '-Wmaybe-uninitialized' warning for `Token::value.Either<...>::_tag` that way.
-		// (This was on a developer's local machine; GitHub Actions CI's g++ was not warning.)
 		token.type = T_(EOB);
 	}
 	lexerState->lastToken = token.type;
 	lexerState->atLineStart = token.type == T_(NEWLINE) || token.type == T_(EOB);
 
-	if (token.value.holds<uint32_t>()) {
-		return yy::parser::symbol_type(token.type, token.value.get<uint32_t>());
-	} else if (token.value.holds<std::string>()) {
-		return yy::parser::symbol_type(token.type, token.value.get<std::string>());
+	if (std::holds_alternative<uint32_t>(token.value)) {
+		return yy::parser::symbol_type(token.type, std::get<uint32_t>(token.value));
+	} else if (std::holds_alternative<std::string>(token.value)) {
+		return yy::parser::symbol_type(token.type, std::get<std::string>(token.value));
 	} else {
-		assume(token.value.empty());
+		assume(std::holds_alternative<std::monostate>(token.value));
 		return yy::parser::symbol_type(token.type);
 	}
 }
@@ -2479,8 +2475,9 @@ static Capture startCapture() {
 	lexerState->captureSize = 0;
 
 	uint32_t lineNo = lexer_GetLineNo();
-	if (lexerState->content.holds<ViewedContent>() && lexerState->expansions.empty()) {
-		auto &view = lexerState->content.get<ViewedContent>();
+	if (std::holds_alternative<ViewedContent>(lexerState->content)
+	    && lexerState->expansions.empty()) {
+		auto &view = std::get<ViewedContent>(lexerState->content);
 		return {
 		    .lineNo = lineNo, .span = {.ptr = view.makeSharedContentPtr(), .size = 0}
 		};

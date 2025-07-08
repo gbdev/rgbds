@@ -6,9 +6,9 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <string>
+#include <variant>
 #include <vector>
 
-#include "either.hpp"
 #include "linkdefs.hpp"
 
 // Variables related to CLI options
@@ -39,7 +39,8 @@ extern bool disablePadding;
 
 struct FileStackNode {
 	FileStackNodeType type;
-	Either<
+	std::variant<
+	    std::monostate,        // Default constructed; `.type` and `.data` must be set manually
 	    std::vector<uint32_t>, // NODE_REPT
 	    std::string            // NODE_FILE, NODE_MACRO
 	    >
@@ -50,11 +51,11 @@ struct FileStackNode {
 	uint32_t lineNo;
 
 	// REPT iteration counts since last named node, in reverse depth order
-	std::vector<uint32_t> &iters() { return data.get<std::vector<uint32_t>>(); }
-	std::vector<uint32_t> const &iters() const { return data.get<std::vector<uint32_t>>(); }
+	std::vector<uint32_t> &iters() { return std::get<std::vector<uint32_t>>(data); }
+	std::vector<uint32_t> const &iters() const { return std::get<std::vector<uint32_t>>(data); }
 	// File name for files, file::macro name for macros
-	std::string &name() { return data.get<std::string>(); }
-	std::string const &name() const { return data.get<std::string>(); }
+	std::string &name() { return std::get<std::string>(data); }
+	std::string const &name() const { return std::get<std::string>(data); }
 
 	std::string const &dump(uint32_t curLineNo) const;
 };

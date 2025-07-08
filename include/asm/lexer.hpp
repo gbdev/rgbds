@@ -8,9 +8,9 @@
 #include <optional>
 #include <stdint.h>
 #include <string>
+#include <variant>
 #include <vector>
 
-#include "either.hpp"
 #include "platform.hpp" // SSIZE_MAX
 
 // This value is a compromise between `LexerState` allocation performance when `mmap` works, and
@@ -97,7 +97,7 @@ struct LexerState {
 	bool expandStrings;
 	std::deque<Expansion> expansions; // Front is the innermost current expansion
 
-	Either<ViewedContent, BufferedContent> content;
+	std::variant<std::monostate, ViewedContent, BufferedContent> content;
 
 	~LexerState();
 

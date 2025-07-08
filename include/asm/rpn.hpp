@@ -5,15 +5,15 @@
 
 #include <stdint.h>
 #include <string>
+#include <variant>
 #include <vector>
 
-#include "either.hpp"
 #include "linkdefs.hpp"
 
 struct Symbol;
 
 struct Expression {
-	Either<
+	std::variant<
 	    int32_t,    // If the expression's value is known, it's here
 	    std::string // Why the expression is not known, if it isn't
 	    >
@@ -22,8 +22,8 @@ struct Expression {
 	std::vector<uint8_t> rpn{}; // Bytes serializing the RPN expression
 	uint32_t rpnPatchSize = 0;  // Size the expression will take in the object file
 
-	bool isKnown() const { return data.holds<int32_t>(); }
-	int32_t value() const { return data.get<int32_t>(); }
+	bool isKnown() const { return std::holds_alternative<int32_t>(data); }
+	int32_t value() const { return std::get<int32_t>(data); }
 
 	int32_t getConstVal() const;
 	Symbol const *symbolOf() const;

@@ -10,15 +10,15 @@
 #include <streambuf>
 #include <string.h>
 #include <string>
+#include <variant>
 
-#include "either.hpp"
 #include "helpers.hpp" // assume
 #include "platform.hpp"
 
-#include "gfx/main.hpp"
+#include "gfx/warning.hpp"
 
 class File {
-	Either<std::streambuf *, std::filebuf> _file;
+	std::variant<std::streambuf *, std::filebuf> _file;
 
 public:
 	File() : _file(nullptr) {}
@@ -27,8 +27,7 @@ public:
 	// Returns `nullptr` on error, and a non-null pointer otherwise.
 	File *open(std::string const &path, std::ios_base::openmode mode) {
 		if (path != "-") {
-			_file.emplace<std::filebuf>();
-			return _file.get<std::filebuf>().open(path, mode) ? this : nullptr;
+			return _file.emplace<std::filebuf>().open(path, mode) ? this : nullptr;
 		} else if (mode & std::ios_base::in) {
 			assume(!(mode & std::ios_base::out));
 			_file.emplace<std::streambuf *>(std::cin.rdbuf());
@@ -46,8 +45,8 @@ public:
 		return this;
 	}
 	std::streambuf &operator*() {
-		return _file.holds<std::filebuf>() ? _file.get<std::filebuf>()
-		                                   : *_file.get<std::streambuf *>();
+		return std::holds_alternative<std::filebuf>(_file) ? std::get<std::filebuf>(_file)
+		                                                   : *std::get<std::streambuf *>(_file);
 	}
 	std::streambuf const &operator*() const {
 		// The non-`const` version does not perform any modifications, so it's okay.
@@ -60,9 +59,9 @@ public:
 	}
 
 	char const *c_str(std::string const &path) const {
-		return _file.holds<std::filebuf>()                         ? path.c_str()
-		       : _file.get<std::streambuf *>() == std::cin.rdbuf() ? "<stdin>"
-		                                                           : "<stdout>";
+		return std::holds_alternative<std::filebuf>(_file)             ? path.c_str()
+		       : std::get<std::streambuf *>(_file) == std::cin.rdbuf() ? "<stdin>"
+		                                                               : "<stdout>";
 	}
 };
 

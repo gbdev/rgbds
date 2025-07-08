@@ -10,16 +10,16 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <string>
+#include <variant>
 #include <vector>
 
-#include "either.hpp"
 #include "linkdefs.hpp"
 
 #include "asm/lexer.hpp"
 
 struct FileStackNode {
 	FileStackNodeType type;
-	Either<
+	std::variant<
 	    std::vector<uint32_t>, // NODE_REPT
 	    std::string            // NODE_FILE, NODE_MACRO
 	    >
@@ -34,13 +34,13 @@ struct FileStackNode {
 	uint32_t ID = UINT32_MAX;
 
 	// REPT iteration counts since last named node, in reverse depth order
-	std::vector<uint32_t> &iters() { return data.get<std::vector<uint32_t>>(); }
-	std::vector<uint32_t> const &iters() const { return data.get<std::vector<uint32_t>>(); }
+	std::vector<uint32_t> &iters() { return std::get<std::vector<uint32_t>>(data); }
+	std::vector<uint32_t> const &iters() const { return std::get<std::vector<uint32_t>>(data); }
 	// File name for files, file::macro name for macros
-	std::string &name() { return data.get<std::string>(); }
-	std::string const &name() const { return data.get<std::string>(); }
+	std::string &name() { return std::get<std::string>(data); }
+	std::string const &name() const { return std::get<std::string>(data); }
 
-	FileStackNode(FileStackNodeType type_, Either<std::vector<uint32_t>, std::string> data_)
+	FileStackNode(FileStackNodeType type_, std::variant<std::vector<uint32_t>, std::string> data_)
 	    : type(type_), data(data_) {}
 
 	std::string const &dump(uint32_t curLineNo) const;
