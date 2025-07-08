@@ -11,8 +11,8 @@ struct FileStackNode;
 void warning(FileStackNode const *where, uint32_t lineNo, char const *fmt, ...);
 [[gnu::format(printf, 3, 4)]]
 void error(FileStackNode const *where, uint32_t lineNo, char const *fmt, ...);
-[[gnu::format(printf, 3, 4)]]
-void errorNoNewline(FileStackNode const *where, uint32_t lineNo, char const *fmt, ...);
+[[gnu::format(printf, 1, 2)]]
+void errorNoDump(char const *fmt, ...);
 [[gnu::format(printf, 2, 3)]]
 void argErr(char flag, char const *fmt, ...);
 [[gnu::format(printf, 3, 4), noreturn]]

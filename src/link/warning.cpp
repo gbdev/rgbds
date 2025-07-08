@@ -39,7 +39,7 @@ void error(FileStackNode const *where, uint32_t lineNo, char const *fmt, ...) {
 	}
 }
 
-void errorNoNewline(FileStackNode const *where, uint32_t lineNo, char const *fmt, ...) {
+void errorNoDump(FileStackNode const *where, uint32_t lineNo, char const *fmt, ...) {
 	va_list args;
 	fputs("error: ", stderr);
 	if (where) {

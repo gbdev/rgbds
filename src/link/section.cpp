@@ -24,7 +24,7 @@ void sect_ForEach(void (*callback)(Section &)) {
 static void checkAgainstFixedAddress(Section const &target, Section const &other, uint16_t org) {
 	if (target.isAddressFixed) {
 		if (target.org != org) {
-			errorNoNewline(
+			errorNoDump(
 			    "Section \"%s\" is defined with address $%04" PRIx16 " at ",
 			    target.name.c_str(),
 			    target.org
@@ -37,7 +37,7 @@ static void checkAgainstFixedAddress(Section const &target, Section const &other
 		}
 	} else if (target.isAlignFixed) {
 		if ((org - target.alignOfs) & target.alignMask) {
-			errorNoNewline(
+			errorNoDump(
 			    "Section \"%s\" is defined with %d-byte alignment (offset %" PRIu16 ") at ",
 			    target.name.c_str(),
 			    target.alignMask + 1,
@@ -55,7 +55,7 @@ static void checkAgainstFixedAddress(Section const &target, Section const &other
 static bool checkAgainstFixedAlign(Section const &target, Section const &other, int32_t ofs) {
 	if (target.isAddressFixed) {
 		if ((target.org - ofs) & other.alignMask) {
-			errorNoNewline(
+			errorNoDump(
 			    "Section \"%s\" is defined with address $%04" PRIx16 " at ",
 			    target.name.c_str(),
 			    target.org
@@ -74,7 +74,7 @@ static bool checkAgainstFixedAlign(Section const &target, Section const &other, 
 		return false;
 	} else if (target.isAlignFixed
 	           && (other.alignMask & target.alignOfs) != (target.alignMask & ofs)) {
-		errorNoNewline(
+		errorNoDump(
 		    "Section \"%s\" is defined with %d-byte alignment (offset %" PRIu16 ") at ",
 		    target.name.c_str(),
 		    target.alignMask + 1,
@@ -129,7 +129,7 @@ static void checkFragmentCompat(Section &target, Section &other) {
 
 static void mergeSections(Section &target, std::unique_ptr<Section> &&other) {
 	if (target.modifier != other->modifier) {
-		errorNoNewline(
+		errorNoDump(
 		    "Section \"%s\" is defined as SECTION %s at ",
 		    target.name.c_str(),
 		    sectionModNames[target.modifier]
@@ -140,14 +140,14 @@ static void mergeSections(Section &target, std::unique_ptr<Section> &&other) {
 		putc('\n', stderr);
 		exit(1);
 	} else if (other->modifier == SECTION_NORMAL) {
-		errorNoNewline("Section \"%s\" is defined at ", target.name.c_str());
+		errorNoDump("Section \"%s\" is defined at ", target.name.c_str());
 		target.src->dump(target.lineNo);
 		fputs(", but also at ", stderr);
 		other->src->dump(other->lineNo);
 		putc('\n', stderr);
 		exit(1);
 	} else if (target.type != other->type) {
-		errorNoNewline(
+		errorNoDump(
 		    "Section \"%s\" is defined with type %s at ",
 		    target.name.c_str(),
 		    sectionTypeInfo[target.type].name.c_str()
@@ -164,7 +164,7 @@ static void mergeSections(Section &target, std::unique_ptr<Section> &&other) {
 			target.isBankFixed = true;
 			target.bank = other->bank;
 		} else if (target.bank != other->bank) {
-			errorNoNewline(
+			errorNoDump(
 			    "Section \"%s\" is defined with bank %" PRIu32 " at ",
 			    target.name.c_str(),
 			    target.bank

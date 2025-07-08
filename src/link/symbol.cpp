@@ -37,7 +37,7 @@ void sym_AddSymbol(Symbol &symbol) {
 
 	// Check if the symbol already exists with a different value
 	if (other && !(symValue && otherValue && *symValue == *otherValue)) {
-		errorNoNewline("\"%s\" is defined as ", symbol.name.c_str());
+		errorNoDump("\"%s\" is defined as ", symbol.name.c_str());
 		if (symValue) {
 			fprintf(stderr, "%" PRId32, *symValue);
 		} else {
