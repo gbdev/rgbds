@@ -15,8 +15,6 @@
 #include "helpers.hpp" // assume
 #include "platform.hpp"
 
-#include "gfx/warning.hpp"
-
 class File {
 	std::variant<std::streambuf *, std::filebuf> _file;
 
@@ -32,11 +30,7 @@ public:
 			assume(!(mode & std::ios_base::out));
 			_file.emplace<std::streambuf *>(std::cin.rdbuf());
 			if (setmode(STDIN_FILENO, (mode & std::ios_base::binary) ? O_BINARY : O_TEXT) == -1) {
-				fatal(
-				    "Failed to set stdin to %s mode: %s",
-				    mode & std::ios_base::binary ? "binary" : "text",
-				    strerror(errno)
-				);
+				return nullptr;
 			}
 		} else {
 			assume(mode & std::ios_base::out);
