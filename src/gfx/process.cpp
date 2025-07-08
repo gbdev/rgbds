@@ -15,7 +15,6 @@
 #include <utility>
 #include <vector>
 
-#include "defaultinitvec.hpp"
 #include "error.hpp"
 #include "file.hpp"
 #include "helpers.hpp"
@@ -76,7 +75,7 @@ class Png {
 
 	// These are cached for speed
 	uint32_t width, height;
-	DefaultInitVec<Rgba> pixels;
+	std::vector<Rgba> pixels;
 	ImagePalette colors;
 	int colorType;
 	int nbColors;
@@ -357,7 +356,7 @@ public:
 
 		size_t nbRowBytes = png_get_rowbytes(png, info);
 		assume(nbRowBytes != 0);
-		DefaultInitVec<png_byte> row(nbRowBytes);
+		std::vector<png_byte> row(nbRowBytes);
 		// Holds known-conflicting color pairs to avoid warning about them twice.
 		// We don't need to worry about transitivity, as ImagePalette slots are immutable once
 		// assigned, and conflicts always occur between that and another color.
@@ -546,7 +545,7 @@ struct AttrmapEntry {
 	static constexpr size_t background = static_cast<size_t>(-2);
 
 	bool isBackgroundTile() const { return protoPaletteID == background; }
-	size_t getPalID(DefaultInitVec<size_t> const &mappings) const {
+	size_t getPalID(std::vector<size_t> const &mappings) const {
 		return mappings[isBackgroundTile() || protoPaletteID == transparent ? 0 : protoPaletteID];
 	}
 };
@@ -575,7 +574,7 @@ static void generatePalSpec(Png const &png) {
 	}
 }
 
-static std::tuple<DefaultInitVec<size_t>, std::vector<Palette>>
+static std::tuple<std::vector<size_t>, std::vector<Palette>>
     generatePalettes(std::vector<ProtoPalette> const &protoPalettes, Png const &png) {
 	// Run a "pagination" problem solver
 	auto [mappings, nbPalettes] = overloadAndRemove(protoPalettes);
@@ -625,7 +624,7 @@ static std::tuple<DefaultInitVec<size_t>, std::vector<Palette>>
 	return {mappings, palettes};
 }
 
-static std::tuple<DefaultInitVec<size_t>, std::vector<Palette>>
+static std::tuple<std::vector<size_t>, std::vector<Palette>>
     makePalsAsSpecified(std::vector<ProtoPalette> const &protoPalettes) {
 	// Convert the palette spec to actual palettes
 	std::vector<Palette> palettes(options.palSpec.size());
@@ -648,7 +647,7 @@ static std::tuple<DefaultInitVec<size_t>, std::vector<Palette>>
 	};
 
 	// Iterate through proto-palettes, and try mapping them to the specified palettes
-	DefaultInitVec<size_t> mappings(protoPalettes.size());
+	std::vector<size_t> mappings(protoPalettes.size());
 	bool bad = false;
 	for (size_t i = 0; i < protoPalettes.size(); ++i) {
 		ProtoPalette const &protoPal = protoPalettes[i];
@@ -857,9 +856,9 @@ struct std::hash<TileData> {
 
 static void outputUnoptimizedTileData(
     Png const &png,
-    DefaultInitVec<AttrmapEntry> const &attrmap,
+    std::vector<AttrmapEntry> const &attrmap,
     std::vector<Palette> const &palettes,
-    DefaultInitVec<size_t> const &mappings
+    std::vector<size_t> const &mappings
 ) {
 	File output;
 	if (!output.open(options.output, std::ios_base::out | std::ios_base::binary)) {
@@ -900,7 +899,7 @@ static void outputUnoptimizedTileData(
 }
 
 static void outputUnoptimizedMaps(
-    DefaultInitVec<AttrmapEntry> const &attrmap, DefaultInitVec<size_t> const &mappings
+    std::vector<AttrmapEntry> const &attrmap, std::vector<size_t> const &mappings
 ) {
 	std::optional<File> tilemapOutput, attrmapOutput, palmapOutput;
 	auto autoOpenPath = [](std::string const &path, std::optional<File> &file) {
@@ -983,9 +982,9 @@ struct UniqueTiles {
 // twice)
 static UniqueTiles dedupTiles(
     Png const &png,
-    DefaultInitVec<AttrmapEntry> &attrmap,
+    std::vector<AttrmapEntry> &attrmap,
     std::vector<Palette> const &palettes,
-    DefaultInitVec<size_t> const &mappings
+    std::vector<size_t> const &mappings
 ) {
 	// Iterate throughout the image, generating tile data as we go
 	// (We don't need the full tile data to be able to dedup tiles, but we don't lose anything
@@ -1088,7 +1087,7 @@ static void outputTileData(UniqueTiles const &tiles) {
 	}
 }
 
-static void outputTilemap(DefaultInitVec<AttrmapEntry> const &attrmap) {
+static void outputTilemap(std::vector<AttrmapEntry> const &attrmap) {
 	File output;
 	if (!output.open(options.tilemap, std::ios_base::out | std::ios_base::binary)) {
 		// LCOV_EXCL_START
@@ -1101,9 +1100,8 @@ static void outputTilemap(DefaultInitVec<AttrmapEntry> const &attrmap) {
 	}
 }
 
-static void outputAttrmap(
-    DefaultInitVec<AttrmapEntry> const &attrmap, DefaultInitVec<size_t> const &mappings
-) {
+static void
+    outputAttrmap(std::vector<AttrmapEntry> const &attrmap, std::vector<size_t> const &mappings) {
 	File output;
 	if (!output.open(options.attrmap, std::ios_base::out | std::ios_base::binary)) {
 		// LCOV_EXCL_START
@@ -1119,9 +1117,8 @@ static void outputAttrmap(
 	}
 }
 
-static void outputPalmap(
-    DefaultInitVec<AttrmapEntry> const &attrmap, DefaultInitVec<size_t> const &mappings
-) {
+static void
+    outputPalmap(std::vector<AttrmapEntry> const &attrmap, std::vector<size_t> const &mappings) {
 	File output;
 	if (!output.open(options.palmap, std::ios_base::out | std::ios_base::binary)) {
 		// LCOV_EXCL_START
@@ -1184,7 +1181,7 @@ void process() {
 	// perform even if no output is requested), and because it's necessary to generate any
 	// output (with the exception of an un-duplicated tilemap, but that's an acceptable loss.)
 	std::vector<ProtoPalette> protoPalettes;
-	DefaultInitVec<AttrmapEntry> attrmap{};
+	std::vector<AttrmapEntry> attrmap{};
 
 	for (auto tile : png.visitAsTiles()) {
 		AttrmapEntry &attrs = attrmap.emplace_back();

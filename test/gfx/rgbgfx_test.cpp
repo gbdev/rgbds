@@ -14,8 +14,6 @@
 #include <string>
 #include <vector>
 
-#include "defaultinitvec.hpp" // Reused from RGBDS
-
 #include "gfx/rgba.hpp" // Reused from RGBGFX
 
 // For `execProg` (Windows and POSIX spawn child processes differently)
@@ -90,7 +88,7 @@ class Png {
 
 	// These are cached for speed
 	uint32_t width, height;
-	DefaultInitVec<Rgba> pixels;
+	std::vector<Rgba> pixels;
 	int colorType;
 	int nbColors;
 	png_colorp embeddedPal = nullptr;
@@ -239,7 +237,7 @@ public:
 
 		size_t nbRowBytes = png_get_rowbytes(png, info);
 		assert(nbRowBytes != 0);
-		DefaultInitVec<png_byte> row(nbRowBytes);
+		std::vector<png_byte> row(nbRowBytes);
 
 		if (interlaceType == PNG_INTERLACE_NONE) {
 			for (png_uint_32 y = 0; y < height; ++y) {
