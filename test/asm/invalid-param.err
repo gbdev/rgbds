@@ -1,0 +1,5 @@
+warning: Invalid parameter 99 for warning flag "truncation"; capping at maximum 2
+warning: invalid-param.asm(2): [-Wtruncation]
+    Expression must be 8-bit; use LOW() to force 8-bit
+warning: invalid-param.asm(3): [-Wtruncation]
+    Expression must be 8-bit; use LOW() to force 8-bit

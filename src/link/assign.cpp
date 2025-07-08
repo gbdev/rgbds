@@ -392,7 +392,7 @@ void assign_AssignSections() {
 	// Overlaying requires only fully-constrained sections
 	verbosePrint("Assigning other sections...\n");
 	if (overlayFileName) {
-		fprintf(stderr, "FATAL: All sections must be fixed when using an overlay file");
+		fputs("FATAL: All sections must be fixed when using an overlay file", stderr);
 		uint8_t nbSections = 0;
 		for (int8_t constraints = BANK_CONSTRAINED | ALIGN_CONSTRAINED; constraints >= 0;
 		     constraints--) {

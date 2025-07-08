@@ -552,7 +552,7 @@ void out_WriteState(std::string name, std::vector<StateFeature> const &features)
 	for (StateFeature feature : features) {
 		fprintf(file, "\n; %s\n", dumpHeadings[feature]);
 		if (!dumpFuncs[feature](file)) {
-			fprintf(file, "; No values\n");
+			fputs("; No values\n", file);
 		}
 	}
 }

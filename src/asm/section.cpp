@@ -256,10 +256,10 @@ static void mergeSections(
 			break;
 
 		case SECTION_NORMAL:
-			errorNoNewline("Section already defined previously at ");
-			sect.src->dump(sect.fileLine);
-			putc('\n', stderr);
-			nbSectErrors++;
+			sectError([&]() {
+				fputs("Section already defined previously at ", stderr);
+				sect.src->dump(sect.fileLine);
+			});
 			break;
 		}
 	}

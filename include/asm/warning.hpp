@@ -3,6 +3,8 @@
 #ifndef RGBDS_ASM_WARNING_HPP
 #define RGBDS_ASM_WARNING_HPP
 
+#include <functional>
+
 #include "diagnostics.hpp"
 
 extern unsigned int nbErrors, maxErrors;
@@ -78,7 +80,6 @@ void error(char const *fmt, ...);
 // affect the following code. The code will fail to assemble but the user will
 // get a list of all errors at the end, making it easier to fix all of them at
 // once.
-[[gnu::format(printf, 1, 2)]]
-void errorNoNewline(char const *fmt, ...);
+void error(std::function<void()> callback);
 
 #endif // RGBDS_ASM_WARNING_HPP

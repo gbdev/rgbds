@@ -1,6 +1,9 @@
 ; no digits
 def x = $
 def x = `
+def x = 0b
+def x = 0o
+def x = 0x
 
 ; too large
 def x = 9_876_543_210

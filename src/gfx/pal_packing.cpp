@@ -551,7 +551,7 @@ std::tuple<std::vector<size_t>, size_t>
 	// LCOV_EXCL_START
 	if (options.verbosity >= Options::VERB_INTERM) {
 		for (auto &&assignment : assignments) {
-			fprintf(stderr, "{ ");
+			fputs("{ ", stderr);
 			for (auto &&attrs : assignment) {
 				fprintf(stderr, "[%zu] ", attrs.protoPalIndex);
 				for (auto &&colorIndex : protoPalettes[attrs.protoPalIndex]) {
@@ -570,7 +570,7 @@ std::tuple<std::vector<size_t>, size_t>
 	// LCOV_EXCL_START
 	if (options.verbosity >= Options::VERB_INTERM) {
 		for (auto &&assignment : assignments) {
-			fprintf(stderr, "{ ");
+			fputs("{ ", stderr);
 			for (auto &&attrs : assignment) {
 				fprintf(stderr, "[%zu] ", attrs.protoPalIndex);
 				for (auto &&colorIndex : protoPalettes[attrs.protoPalIndex]) {

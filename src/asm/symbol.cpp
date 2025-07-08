@@ -115,11 +115,10 @@ static void dumpFilename(Symbol const &sym) {
 	fputs(" at ", stderr);
 	if (sym.src) {
 		sym.src->dump(sym.fileLine);
-		putc('\n', stderr);
 	} else if (sym.isBuiltin) {
-		fputs("<builtin>\n", stderr);
+		fputs("<builtin>", stderr);
 	} else {
-		fputs("<command-line>\n", stderr);
+		fputs("<command-line>", stderr);
 	}
 }
 
@@ -144,20 +143,22 @@ static void alreadyDefinedError(Symbol const &sym, char const *asType) {
 		// `DEF()` would return false, so we should not claim the symbol is already defined
 		error("'%s' is reserved for a built-in symbol", sym.name.c_str());
 	} else {
-		errorNoNewline("'%s' already defined", sym.name.c_str());
-		if (asType) {
-			fprintf(stderr, " as %s", asType);
-		}
-		dumpFilename(sym);
-		if (sym.type == SYM_EQUS) {
-			if (std::string const &contents = *sym.getEqus(); isValidIdentifier(contents)) {
-				fprintf(
-				    stderr,
-				    "    (should it be {interpolated} to define its contents \"%s\"?)\n",
-				    contents.c_str()
-				);
+		error([&]() {
+			fprintf(stderr, "'%s' already defined", sym.name.c_str());
+			if (asType) {
+				fprintf(stderr, " as %s", asType);
 			}
-		}
+			dumpFilename(sym);
+			if (sym.type == SYM_EQUS) {
+				if (std::string const &contents = *sym.getEqus(); isValidIdentifier(contents)) {
+					fprintf(
+					    stderr,
+					    "\n    (should it be {interpolated} to define its contents \"%s\"?)",
+					    contents.c_str()
+					);
+				}
+			}
+		});
 	}
 }
 
@@ -372,8 +373,10 @@ static Symbol *createNonrelocSymbol(std::string const &symName, bool numeric) {
 		return nullptr; // Don't allow overriding the symbol, that'd be bad!
 	} else if (!numeric) {
 		// The symbol has already been referenced, but it's not allowed
-		errorNoNewline("'%s' already referenced", symName.c_str());
-		dumpFilename(*sym);
+		error([&]() {
+			fprintf(stderr, "'%s' already referenced", symName.c_str());
+			dumpFilename(*sym);
+		});
 		return nullptr; // Don't allow overriding the symbol, that'd be bad!
 	}
 
@@ -438,8 +441,10 @@ Symbol *sym_RedefString(std::string const &symName, std::shared_ptr<std::string>
 		if (sym->isDefined()) {
 			alreadyDefinedError(*sym, "non-EQUS");
 		} else {
-			errorNoNewline("'%s' already referenced", symName.c_str());
-			dumpFilename(*sym);
+			error([&]() {
+				fprintf(stderr, "'%s' already referenced", symName.c_str());
+				dumpFilename(*sym);
+			});
 		}
 		return nullptr;
 	} else if (sym->isBuiltin) {

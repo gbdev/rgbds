@@ -78,13 +78,7 @@ static void printDiag(
 	lexer_DumpStringExpansions();
 }
 
-void error(char const *fmt, ...) {
-	va_list args;
-
-	va_start(args, fmt);
-	printDiag(fmt, args, "error", ":", nullptr);
-	va_end(args);
-
+static void incrementErrors() {
 	// This intentionally makes 0 act as "unlimited" (or at least "limited to sizeof(unsigned)")
 	nbErrors++;
 	if (nbErrors == maxErrors) {
@@ -97,26 +91,25 @@ void error(char const *fmt, ...) {
 	}
 }
 
-void errorNoNewline(char const *fmt, ...) {
+void error(char const *fmt, ...) {
 	va_list args;
 
+	va_start(args, fmt);
+	printDiag(fmt, args, "error", ":", nullptr);
+	va_end(args);
+
+	incrementErrors();
+}
+
+void error(std::function<void()> callback) {
 	fputs("error: ", stderr);
 	fstk_DumpCurrent();
 	fputs(":\n    ", stderr);
-	va_start(args, fmt);
-	vfprintf(stderr, fmt, args);
-	va_end(args);
+	callback();
+	putc('\n', stderr);
+	lexer_DumpStringExpansions();
 
-	// This intentionally makes 0 act as "unlimited" (or at least "limited to sizeof(unsigned)")
-	nbErrors++;
-	if (nbErrors == maxErrors) {
-		errx(
-		    "The maximum of %u error%s was reached (configure with \"-X/--max-errors\"); assembly "
-		    "aborted!",
-		    maxErrors,
-		    maxErrors == 1 ? "" : "s"
-		);
-	}
+	incrementErrors();
 }
 
 [[noreturn]]

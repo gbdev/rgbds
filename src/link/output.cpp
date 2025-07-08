@@ -480,9 +480,9 @@ static void writeMapBank(SortedSections const &sectList, SectionType type, uint3
 				if (sect->nextu) {
 					// Announce the following "piece"
 					if (sect->nextu->modifier == SECTION_UNION) {
-						fprintf(mapFile, "\t         ; Next union\n");
+						fputs("\t         ; Next union\n", mapFile);
 					} else if (sect->nextu->modifier == SECTION_FRAGMENT) {
-						fprintf(mapFile, "\t         ; Next fragment\n");
+						fputs("\t         ; Next fragment\n", mapFile);
 					}
 				}
 			}
