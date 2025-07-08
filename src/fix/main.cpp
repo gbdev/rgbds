@@ -12,6 +12,7 @@
 #include <string.h>
 #include <vector>
 
+#include "error.hpp"
 #include "extern/getopt.hpp"
 #include "helpers.hpp"
 #include "platform.hpp"
@@ -509,7 +510,7 @@ static MbcType parseMBC(char const *name) {
 			// Handle timer, which also requires battery
 			if (features & TIMER) {
 				if (!(features & BATTERY)) {
-					fprintf(stderr, "warning: MBC3+TIMER implies BATTERY\n");
+					warnx("MBC3+TIMER implies BATTERY");
 				}
 				features &= ~(TIMER | BATTERY); // Reset those bits
 				mbc = MBC3_TIMER_BATTERY;
@@ -571,9 +572,7 @@ static MbcType parseMBC(char const *name) {
 
 		case TPP1:
 			if (features & RAM) {
-				fprintf(
-				    stderr, "warning: TPP1 requests RAM implicitly if given a non-zero RAM size"
-				);
+				warnx("TPP1 requests RAM implicitly if given a non-zero RAM size");
 			}
 			if (features & BATTERY) {
 				mbc |= 0x08;
@@ -864,7 +863,7 @@ static void overwriteByte(uint8_t *rom0, uint16_t addr, uint8_t fixedByte, char 
 	uint8_t origByte = rom0[addr];
 
 	if (!overwriteRom && origByte != 0 && origByte != fixedByte) {
-		fprintf(stderr, "warning: Overwrote a non-zero byte in the %s\n", areaName);
+		warnx("Overwrote a non-zero byte in the %s", areaName);
 	}
 
 	rom0[addr] = fixedByte;
@@ -878,7 +877,7 @@ static void overwriteBytes(
 			uint8_t origByte = rom0[i + startAddr];
 
 			if (origByte != 0 && origByte != fixed[i]) {
-				fprintf(stderr, "warning: Overwrote a non-zero byte in the %s\n", areaName);
+				warnx("Overwrote a non-zero byte in the %s", areaName);
 				break;
 			}
 		}
@@ -990,11 +989,7 @@ static void
 	if (oldLicensee != UNSPECIFIED) {
 		overwriteByte(rom0, 0x14B, oldLicensee, "old licensee code");
 	} else if (sgb && rom0[0x14B] != 0x33) {
-		fprintf(
-		    stderr,
-		    "warning: SGB compatibility enabled, but old licensee was 0x%02x, not 0x33\n",
-		    rom0[0x14B]
-		);
+		warnx("SGB compatibility enabled, but old licensee was 0x%02x, not 0x33", rom0[0x14B]);
 	}
 
 	if (romVersion != UNSPECIFIED) {
@@ -1349,7 +1344,7 @@ int main(int argc, char *argv[]) {
 			model = ch == 'c' ? BOTH : CGB;
 			if (titleLen > 15) {
 				titleLen = 15;
-				fprintf(stderr, "warning: Truncating title \"%s\" to 15 chars\n", title);
+				warnx("Truncating title \"%s\" to 15 chars", title);
 			}
 			break;
 
@@ -1360,7 +1355,7 @@ int main(int argc, char *argv[]) {
 #define OVERRIDE_SPEC(cur, bad, curFlag, badFlag) \
 	case STR(cur)[0]: \
 		if (fixSpec & badFlag) { \
-			fprintf(stderr, "warning: '" STR(cur) "' overriding '" STR(bad) "' in fix spec\n"); \
+			warnx("'" STR(cur) "' overriding '" STR(bad) "' in fix spec"); \
 		} \
 		fixSpec = (fixSpec & ~badFlag) | curFlag; \
 		break
@@ -1374,7 +1369,7 @@ int main(int argc, char *argv[]) {
 #undef overrideSpecs
 
 				default:
-					fprintf(stderr, "warning: Ignoring '%c' in fix spec\n", *musl_optarg);
+					warnx("Ignoring '%c' in fix spec", *musl_optarg);
 				}
 				musl_optarg++;
 			}
@@ -1391,12 +1386,12 @@ int main(int argc, char *argv[]) {
 			len = strlen(gameID);
 			if (len > 4) {
 				len = 4;
-				fprintf(stderr, "warning: Truncating game ID \"%s\" to 4 chars\n", gameID);
+				warnx("Truncating game ID \"%s\" to 4 chars", gameID);
 			}
 			gameIDLen = len;
 			if (titleLen > 11) {
 				titleLen = 11;
-				fprintf(stderr, "warning: Truncating title \"%s\" to 11 chars\n", title);
+				warnx("Truncating title \"%s\" to 11 chars", title);
 			}
 			break;
 
@@ -1409,9 +1404,7 @@ int main(int argc, char *argv[]) {
 			len = strlen(newLicensee);
 			if (len > 2) {
 				len = 2;
-				fprintf(
-				    stderr, "warning: Truncating new licensee \"%s\" to 2 chars\n", newLicensee
-				);
+				warnx("Truncating new licensee \"%s\" to 2 chars", newLicensee);
 			}
 			newLicenseeLen = len;
 			break;
@@ -1438,11 +1431,7 @@ int main(int argc, char *argv[]) {
 			} else if (cartridgeType == MBC_BAD_RANGE) {
 				report("error: Specified MBC ID out of range 0-255: %s\n", musl_optarg);
 			} else if (cartridgeType == ROM_RAM || cartridgeType == ROM_RAM_BATTERY) {
-				fprintf(
-				    stderr,
-				    "warning: MBC \"%s\" is under-specified and poorly supported\n",
-				    musl_optarg
-				);
+				warnx("MBC \"%s\" is under-specified and poorly supported", musl_optarg);
 			}
 			break;
 
@@ -1477,7 +1466,7 @@ int main(int argc, char *argv[]) {
 
 			if (len > maxLen) {
 				len = maxLen;
-				fprintf(stderr, "warning: Truncating title \"%s\" to %u chars\n", title, maxLen);
+				warnx("Truncating title \"%s\" to %u chars", title, maxLen);
 			}
 			titleLen = len;
 			break;
@@ -1502,52 +1491,30 @@ int main(int argc, char *argv[]) {
 	}
 
 	if ((cartridgeType & 0xFF00) == TPP1 && !japanese) {
-		fprintf(
-		    stderr,
-		    "warning: TPP1 overwrites region flag for its identification code, ignoring `-j`\n"
-		);
+		warnx("TPP1 overwrites region flag for its identification code, ignoring `-j`");
 	}
 
 	// Check that RAM size is correct for "standard" mappers
 	if (ramSize != UNSPECIFIED && (cartridgeType & 0xFF00) == 0) {
 		if (cartridgeType == ROM_RAM || cartridgeType == ROM_RAM_BATTERY) {
 			if (ramSize != 1) {
-				fprintf(
-				    stderr,
-				    "warning: MBC \"%s\" should have 2 KiB of RAM (-r 1)\n",
-				    mbcName(cartridgeType)
-				);
+				warnx("MBC \"%s\" should have 2 KiB of RAM (-r 1)", mbcName(cartridgeType));
 			}
 		} else if (hasRAM(cartridgeType)) {
 			if (!ramSize) {
-				fprintf(
-				    stderr,
-				    "warning: MBC \"%s\" has RAM, but RAM size was set to 0\n",
-				    mbcName(cartridgeType)
-				);
+				warnx("MBC \"%s\" has RAM, but RAM size was set to 0", mbcName(cartridgeType));
 			} else if (ramSize == 1) {
-				fprintf(
-				    stderr,
-				    "warning: RAM size 1 (2 KiB) was specified for MBC \"%s\"\n",
-				    mbcName(cartridgeType)
-				);
+				warnx("RAM size 1 (2 KiB) was specified for MBC \"%s\"", mbcName(cartridgeType));
 			}
 		} else if (ramSize) {
-			fprintf(
-			    stderr,
-			    "warning: MBC \"%s\" has no RAM, but RAM size was set to %u\n",
-			    mbcName(cartridgeType),
-			    ramSize
+			warnx(
+			    "MBC \"%s\" has no RAM, but RAM size was set to %u", mbcName(cartridgeType), ramSize
 			);
 		}
 	}
 
 	if (sgb && oldLicensee != UNSPECIFIED && oldLicensee != 0x33) {
-		fprintf(
-		    stderr,
-		    "warning: SGB compatibility enabled, but old licensee is 0x%02x, not 0x33\n",
-		    oldLicensee
-		);
+		warnx("SGB compatibility enabled, but old licensee is 0x%02x, not 0x33", oldLicensee);
 	}
 
 	argv += musl_optind;

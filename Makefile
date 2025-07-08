@@ -95,7 +95,8 @@ src/link/main.o: src/link/script.hpp
 
 rgbfix_obj := \
 	src/fix/main.o \
-	src/extern/getopt.o
+	src/extern/getopt.o \
+	src/error.o
 
 rgbgfx_obj := \
 	src/gfx/main.o \

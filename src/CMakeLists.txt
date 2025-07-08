@@ -77,6 +77,7 @@ set(rgblink_src
 set(rgbfix_src
     "fix/main.cpp"
     "extern/getopt.cpp"
+    "error.cpp"
     )
 
 set(rgbgfx_src
