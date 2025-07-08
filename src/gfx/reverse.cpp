@@ -12,7 +12,6 @@
 #include <string.h>
 #include <vector>
 
-#include "defaultinitvec.hpp"
 #include "error.hpp"
 #include "file.hpp"
 #include "helpers.hpp" // assume
@@ -20,12 +19,12 @@
 #include "gfx/main.hpp"
 #include "gfx/warning.hpp"
 
-static DefaultInitVec<uint8_t> readInto(std::string const &path) {
+static std::vector<uint8_t> readInto(std::string const &path) {
 	File file;
 	if (!file.open(path, std::ios::in | std::ios::binary)) {
 		fatal("Failed to open \"%s\": %s", file.c_str(path), strerror(errno));
 	}
-	DefaultInitVec<uint8_t> data(128 * 16); // Begin with some room pre-allocated
+	std::vector<uint8_t> data(128 * 16); // Begin with some room pre-allocated
 
 	size_t curSize = 0;
 	for (;;) {
@@ -143,7 +142,7 @@ void reverse() {
 	size_t const nbTiles = tiles.size() / tileSize;
 	options.verbosePrint(Options::VERB_INTERM, "Read %zu tiles.\n", nbTiles);
 	size_t mapSize = nbTiles + options.trim; // Image size in tiles
-	std::optional<DefaultInitVec<uint8_t>> tilemap;
+	std::optional<std::vector<uint8_t>> tilemap;
 	if (!options.tilemap.empty()) {
 		tilemap = readInto(options.tilemap);
 		mapSize = tilemap->size();
@@ -271,7 +270,7 @@ void reverse() {
 		palettes = std::move(options.palSpec); // We won't be using it again.
 	}
 
-	std::optional<DefaultInitVec<uint8_t>> attrmap;
+	std::optional<std::vector<uint8_t>> attrmap;
 	uint16_t nbTilesInBank[2] = {0, 0}; // Only used if there is an attrmap.
 	if (!options.attrmap.empty()) {
 		attrmap = readInto(options.attrmap);
@@ -393,7 +392,7 @@ void reverse() {
 		requireZeroErrors();
 	}
 
-	std::optional<DefaultInitVec<uint8_t>> palmap;
+	std::optional<std::vector<uint8_t>> palmap;
 	if (!options.palmap.empty()) {
 		palmap = readInto(options.palmap);
 		if (palmap->size() != mapSize) {

@@ -349,7 +349,7 @@ static void decant(
 	);
 }
 
-std::tuple<DefaultInitVec<size_t>, size_t>
+std::tuple<std::vector<size_t>, size_t>
     overloadAndRemove(std::vector<ProtoPalette> const &protoPalettes) {
 	options.verbosePrint(
 	    Options::VERB_LOG_ACT, "Paginating palettes using \"overload-and-remove\" strategy...\n"
@@ -361,8 +361,8 @@ std::tuple<DefaultInitVec<size_t>, size_t>
 		ProtoPalette const &rhs = protoPalettes[right];
 		return lhs.size() > rhs.size(); // We want the proto-pals to be sorted *largest first*!
 	};
-	DefaultInitVec<size_t> sortedProtoPalIDs(protoPalettes.size());
-	sortedProtoPalIDs.clear();
+	std::vector<size_t> sortedProtoPalIDs;
+	sortedProtoPalIDs.reserve(protoPalettes.size());
 	for (size_t i = 0; i < protoPalettes.size(); ++i) {
 		sortedProtoPalIDs.insert(
 		    std::lower_bound(RANGE(sortedProtoPalIDs), i, indexOfLargestProtoPalFirst), i
@@ -582,7 +582,7 @@ std::tuple<DefaultInitVec<size_t>, size_t>
 	}
 	// LCOV_EXCL_STOP
 
-	DefaultInitVec<size_t> mappings(protoPalettes.size());
+	std::vector<size_t> mappings(protoPalettes.size());
 	for (size_t i = 0; i < assignments.size(); ++i) {
 		for (ProtoPalAttrs const &attrs : assignments[i]) {
 			mappings[attrs.protoPalIndex] = i;
