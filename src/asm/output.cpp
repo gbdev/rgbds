@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <deque>
+#include <errno.h>
 #include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -324,7 +325,9 @@ void out_WriteObject() {
 		file = stdout;
 	}
 	if (!file) {
-		err("Failed to open object file '%s'", objectFileName.c_str()); // LCOV_EXCL_LINE
+		// LCOV_EXCL_START
+		errx("Failed to open object file '%s': %s", objectFileName.c_str(), strerror(errno));
+		// LCOV_EXCL_STOP
 	}
 	Defer closeFile{[&] { fclose(file); }};
 
@@ -524,7 +527,9 @@ void out_WriteState(std::string name, std::vector<StateFeature> const &features)
 		file = stdout;
 	}
 	if (!file) {
-		err("Failed to open state file '%s'", name.c_str()); // LCOV_EXCL_LINE
+		// LCOV_EXCL_START
+		errx("Failed to open state file '%s': %s", name.c_str(), strerror(errno));
+		// LCOV_EXCL_STOP
 	}
 	Defer closeFile{[&] { fclose(file); }};
 

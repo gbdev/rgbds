@@ -3,6 +3,7 @@
 #include "asm/symbol.hpp"
 
 #include <algorithm>
+#include <errno.h>
 #include <inttypes.h>
 #include <stdio.h>
 #include <unordered_map>
@@ -666,7 +667,7 @@ void sym_Init(time_t now) {
 
 	// LCOV_EXCL_START
 	if (now == static_cast<time_t>(-1)) {
-		warn("Failed to determine current time");
+		warnx("Failed to determine current time: %s", strerror(errno));
 		// Fall back by pretending we are at the Epoch
 		now = 0;
 	}

@@ -47,8 +47,28 @@ set(rgbasm_src
     "asm/section.cpp"
     "asm/symbol.cpp"
     "asm/warning.cpp"
+    "extern/getopt.cpp"
     "extern/utf8decoder.cpp"
     "diagnostics.cpp"
+    "error.cpp"
+    "linkdefs.cpp"
+    "opmath.cpp"
+    "util.cpp"
+    )
+
+set(rgblink_src
+    "${BISON_LINKER_SCRIPT_PARSER_OUTPUT_SOURCE}"
+    "link/assign.cpp"
+    "link/main.cpp"
+    "link/object.cpp"
+    "link/output.cpp"
+    "link/patch.cpp"
+    "link/sdas_obj.cpp"
+    "link/section.cpp"
+    "link/symbol.cpp"
+    "extern/getopt.cpp"
+    "extern/utf8decoder.cpp"
+    "error.cpp"
     "linkdefs.cpp"
     "opmath.cpp"
     "util.cpp"
@@ -56,6 +76,7 @@ set(rgbasm_src
 
 set(rgbfix_src
     "fix/main.cpp"
+    "extern/getopt.cpp"
     )
 
 set(rgbgfx_src
@@ -69,22 +90,6 @@ set(rgbgfx_src
     "gfx/rgba.cpp"
     "extern/getopt.cpp"
     "error.cpp"
-    )
-
-set(rgblink_src
-    "${BISON_LINKER_SCRIPT_PARSER_OUTPUT_SOURCE}"
-    "link/assign.cpp"
-    "link/main.cpp"
-    "link/object.cpp"
-    "link/output.cpp"
-    "link/patch.cpp"
-    "link/sdas_obj.cpp"
-    "link/section.cpp"
-    "link/symbol.cpp"
-    "extern/utf8decoder.cpp"
-    "linkdefs.cpp"
-    "opmath.cpp"
-    "util.cpp"
     )
 
 foreach(PROG "asm" "fix" "gfx" "link")

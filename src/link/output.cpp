@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <deque>
+#include <errno.h>
 #include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -211,7 +212,7 @@ static void writeROM() {
 			outputFile = stdout;
 		}
 		if (!outputFile) {
-			err("Failed to open output file \"%s\"", outputFileName);
+			errx("Failed to open output file \"%s\": %s", outputFileName, strerror(errno));
 		}
 	}
 	Defer closeOutputFile{[&] {
@@ -229,7 +230,7 @@ static void writeROM() {
 			overlayFile = stdin;
 		}
 		if (!overlayFile) {
-			err("Failed to open overlay file \"%s\"", overlayFileName);
+			errx("Failed to open overlay file \"%s\": %s", overlayFileName, strerror(errno));
 		}
 	}
 	Defer closeOverlayFile{[&] {
@@ -572,7 +573,7 @@ static void writeSym() {
 		symFile = stdout;
 	}
 	if (!symFile) {
-		err("Failed to open sym file \"%s\"", symFileName);
+		errx("Failed to open sym file \"%s\": %s", symFileName, strerror(errno));
 	}
 	Defer closeSymFile{[&] { fclose(symFile); }};
 
@@ -623,7 +624,7 @@ static void writeMap() {
 		mapFile = stdout;
 	}
 	if (!mapFile) {
-		err("Failed to open map file \"%s\"", mapFileName);
+		errx("Failed to open map file \"%s\": %s", mapFileName, strerror(errno));
 	}
 	Defer closeMapFile{[&] { fclose(mapFile); }};
 

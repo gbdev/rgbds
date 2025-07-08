@@ -14,6 +14,7 @@
 #include <string_view>
 #include <vector>
 
+#include "error.hpp"
 #include "extern/getopt.hpp"
 #include "file.hpp"
 #include "platform.hpp"
@@ -51,16 +52,6 @@ void requireZeroErrors() {
 	}
 }
 
-void warning(char const *fmt, ...) {
-	va_list ap;
-
-	fputs("warning: ", stderr);
-	va_start(ap, fmt);
-	vfprintf(stderr, fmt, ap);
-	va_end(ap);
-	putc('\n', stderr);
-}
-
 void error(char const *fmt, ...) {
 	va_list ap;
 
@@ -69,14 +60,6 @@ void error(char const *fmt, ...) {
 	vfprintf(stderr, fmt, ap);
 	va_end(ap);
 	putc('\n', stderr);
-
-	if (nbErrors != std::numeric_limits<decltype(nbErrors)>::max()) {
-		nbErrors++;
-	}
-}
-
-void errorMessage(char const *msg) {
-	fprintf(stderr, "error: %s\n", msg);
 
 	if (nbErrors != std::numeric_limits<decltype(nbErrors)>::max()) {
 		nbErrors++;
@@ -361,7 +344,7 @@ static char *parseArgv(int argc, char *argv[]) {
 		case 'a':
 			localOptions.autoAttrmap = false;
 			if (!options.attrmap.empty()) {
-				warning("Overriding attrmap file %s", options.attrmap.c_str());
+				warnx("Overriding attrmap file %s", options.attrmap.c_str());
 			}
 			options.attrmap = musl_optarg;
 			break;
@@ -438,7 +421,7 @@ static char *parseArgv(int argc, char *argv[]) {
 			// LCOV_EXCL_STOP
 		case 'i':
 			if (!options.inputTileset.empty()) {
-				warning("Overriding input tileset file %s", options.inputTileset.c_str());
+				warnx("Overriding input tileset file %s", options.inputTileset.c_str());
 			}
 			options.inputTileset = musl_optarg;
 			break;
@@ -548,7 +531,7 @@ static char *parseArgv(int argc, char *argv[]) {
 			break;
 		case 'o':
 			if (!options.output.empty()) {
-				warning("Overriding tile data file %s", options.output.c_str());
+				warnx("Overriding tile data file %s", options.output.c_str());
 			}
 			options.output = musl_optarg;
 			break;
@@ -558,7 +541,7 @@ static char *parseArgv(int argc, char *argv[]) {
 		case 'p':
 			localOptions.autoPalettes = false;
 			if (!options.palettes.empty()) {
-				warning("Overriding palettes file %s", options.palettes.c_str());
+				warnx("Overriding palettes file %s", options.palettes.c_str());
 			}
 			options.palettes = musl_optarg;
 			break;
@@ -568,7 +551,7 @@ static char *parseArgv(int argc, char *argv[]) {
 		case 'q':
 			localOptions.autoPalmap = false;
 			if (!options.palmap.empty()) {
-				warning("Overriding palette map file %s", options.palmap.c_str());
+				warnx("Overriding palette map file %s", options.palmap.c_str());
 			}
 			options.palmap = musl_optarg;
 			break;
@@ -596,7 +579,7 @@ static char *parseArgv(int argc, char *argv[]) {
 		case 't':
 			localOptions.autoTilemap = false;
 			if (!options.tilemap.empty()) {
-				warning("Overriding tilemap file %s", options.tilemap.c_str());
+				warnx("Overriding tilemap file %s", options.tilemap.c_str());
 			}
 			options.tilemap = musl_optarg;
 			break;

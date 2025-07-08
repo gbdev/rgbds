@@ -3,6 +3,7 @@
 #include "asm/main.hpp"
 
 #include <algorithm>
+#include <errno.h>
 #include <limits.h>
 #include <memory>
 #include <stdlib.h>
@@ -198,7 +199,9 @@ int main(int argc, char *argv[]) {
 				dependFileName = "<stdout>";
 			}
 			if (dependFile == nullptr) {
-				err("Failed to open dependfile \"%s\"", dependFileName); // LCOV_EXCL_LINE
+				// LCOV_EXCL_START
+				errx("Failed to open dependfile \"%s\": %s", dependFileName, strerror(errno));
+				// LCOV_EXCL_STOP
 			}
 			break;
 

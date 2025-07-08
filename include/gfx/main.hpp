@@ -85,16 +85,9 @@ extern Options options;
 void giveUp();
 // If any error has been emitted thus far, calls `giveUp()`.
 void requireZeroErrors();
-// Prints a warning, and does not change the error count
-[[gnu::format(printf, 1, 2)]]
-void warning(char const *fmt, ...);
 // Prints an error, and increments the error count
 [[gnu::format(printf, 1, 2)]]
 void error(char const *fmt, ...);
-// Prints an error, and increments the error count
-// Does not take format arguments so `format_` and `-Wformat-security` won't complain about
-// calling `errorMessage(msg)`.
-void errorMessage(char const *msg);
 // Prints a fatal error, increments the error count, and gives up
 [[gnu::format(printf, 1, 2), noreturn]]
 void fatal(char const *fmt, ...);
