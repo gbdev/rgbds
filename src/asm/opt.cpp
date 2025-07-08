@@ -47,7 +47,7 @@ void opt_R(size_t newDepth) {
 
 void opt_W(char const *flag) {
 	if (warnings.processWarningFlag(flag) == "numeric-string") {
-		warning(WARNING_OBSOLETE, "Warning flag \"numeric-string\" is deprecated\n");
+		warning(WARNING_OBSOLETE, "Warning flag \"numeric-string\" is deprecated");
 	}
 }
 
@@ -57,7 +57,7 @@ void opt_Parse(char const *s) {
 		if (strlen(&s[1]) == 2) {
 			opt_B(&s[1]);
 		} else {
-			error("Must specify exactly 2 characters for option 'b'\n");
+			error("Must specify exactly 2 characters for option 'b'");
 		}
 		break;
 
@@ -65,7 +65,7 @@ void opt_Parse(char const *s) {
 		if (strlen(&s[1]) == 4) {
 			opt_G(&s[1]);
 		} else {
-			error("Must specify exactly 4 characters for option 'g'\n");
+			error("Must specify exactly 4 characters for option 'g'");
 		}
 		break;
 
@@ -76,14 +76,14 @@ void opt_Parse(char const *s) {
 
 			result = sscanf(&s[1], "%x", &padByte);
 			if (result != 1) {
-				error("Invalid argument for option 'p'\n");
+				error("Invalid argument for option 'p'");
 			} else if (padByte > 0xFF) {
-				error("Argument for option 'p' must be between 0 and 0xFF\n");
+				error("Argument for option 'p' must be between 0 and 0xFF");
 			} else {
 				opt_P(padByte);
 			}
 		} else {
-			error("Invalid argument for option 'p'\n");
+			error("Invalid argument for option 'p'");
 		}
 		break;
 
@@ -99,14 +99,14 @@ void opt_Parse(char const *s) {
 
 			result = sscanf(precisionArg, "%u", &precision);
 			if (result != 1) {
-				error("Invalid argument for option 'Q'\n");
+				error("Invalid argument for option 'Q'");
 			} else if (precision < 1 || precision > 31) {
-				error("Argument for option 'Q' must be between 1 and 31\n");
+				error("Argument for option 'Q' must be between 1 and 31");
 			} else {
 				opt_Q(precision);
 			}
 		} else {
-			error("Invalid argument for option 'Q'\n");
+			error("Invalid argument for option 'Q'");
 		}
 		break;
 
@@ -117,7 +117,7 @@ void opt_Parse(char const *s) {
 		}
 
 		if (s[0] == '\0') {
-			error("Missing argument to option 'r'\n");
+			error("Missing argument to option 'r'");
 			break;
 		}
 
@@ -125,9 +125,9 @@ void opt_Parse(char const *s) {
 		unsigned long newDepth = strtoul(s, &endptr, 10);
 
 		if (*endptr != '\0') {
-			error("Invalid argument to option 'r' (\"%s\")\n", s);
+			error("Invalid argument to option 'r' (\"%s\")", s);
 		} else if (errno == ERANGE) {
-			error("Argument to 'r' is out of range (\"%s\")\n", s);
+			error("Argument to 'r' is out of range (\"%s\")", s);
 		} else {
 			opt_R(newDepth);
 		}
@@ -138,12 +138,12 @@ void opt_Parse(char const *s) {
 		if (strlen(&s[1]) > 0) {
 			opt_W(&s[1]);
 		} else {
-			error("Must specify an argument for option 'W'\n");
+			error("Must specify an argument for option 'W'");
 		}
 		break;
 
 	default:
-		error("Unknown option '%c'\n", s[0]);
+		error("Unknown option '%c'", s[0]);
 		break;
 	}
 }
@@ -168,7 +168,7 @@ void opt_Push() {
 
 void opt_Pop() {
 	if (stack.empty()) {
-		error("No entries in the option stack\n");
+		error("No entries in the option stack");
 		return;
 	}
 
@@ -187,6 +187,6 @@ void opt_Pop() {
 
 void opt_CheckStack() {
 	if (!stack.empty()) {
-		warning(WARNING_UNMATCHED_DIRECTIVE, "`PUSHO` without corresponding `POPO`\n");
+		warning(WARNING_UNMATCHED_DIRECTIVE, "`PUSHO` without corresponding `POPO`");
 	}
 }

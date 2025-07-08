@@ -162,19 +162,19 @@ void FormatSpec::appendString(std::string &str, std::string const &value) const 
 	}
 
 	if (sign) {
-		error("Formatting string with sign flag '%c'\n", sign);
+		error("Formatting string with sign flag '%c'", sign);
 	}
 	if (padZero) {
-		error("Formatting string with padding flag '0'\n");
+		error("Formatting string with padding flag '0'");
 	}
 	if (hasFrac) {
-		error("Formatting string with fractional width\n");
+		error("Formatting string with fractional width");
 	}
 	if (hasPrec) {
-		error("Formatting string with fractional precision\n");
+		error("Formatting string with fractional precision");
 	}
 	if (useType != 's') {
-		error("Formatting string as type '%c'\n", useType);
+		error("Formatting string as type '%c'", useType);
 	}
 
 	std::string useValue = exact ? escapeString(value) : value;
@@ -203,16 +203,16 @@ void FormatSpec::appendNumber(std::string &str, uint32_t value) const {
 
 	if (useType != 'X' && useType != 'x' && useType != 'b' && useType != 'o' && useType != 'f'
 	    && useExact) {
-		error("Formatting type '%c' with exact flag '#'\n", useType);
+		error("Formatting type '%c' with exact flag '#'", useType);
 	}
 	if (useType != 'f' && hasFrac) {
-		error("Formatting type '%c' with fractional width\n", useType);
+		error("Formatting type '%c' with fractional width", useType);
 	}
 	if (useType != 'f' && hasPrec) {
-		error("Formatting type '%c' with fractional precision\n", useType);
+		error("Formatting type '%c' with fractional precision", useType);
 	}
 	if (useType == 's') {
-		error("Formatting number as type 's'\n");
+		error("Formatting number as type 's'");
 	}
 
 	char signChar = sign; // 0 or ' ' or '+'
@@ -254,7 +254,7 @@ void FormatSpec::appendNumber(std::string &str, uint32_t value) const {
 		// Default fractional width (C++'s is 6 for "%f"; here 5 is enough for Q16.16)
 		size_t useFracWidth = hasFrac ? fracWidth : 5;
 		if (useFracWidth > 255) {
-			error("Fractional width %zu too long, limiting to 255\n", useFracWidth);
+			error("Fractional width %zu too long, limiting to 255", useFracWidth);
 			useFracWidth = 255;
 		}
 
@@ -262,7 +262,7 @@ void FormatSpec::appendNumber(std::string &str, uint32_t value) const {
 		size_t usePrec = hasPrec ? precision : defaultPrec;
 		if (usePrec < 1 || usePrec > 31) {
 			error(
-			    "Fixed-point constant precision %zu invalid, defaulting to %zu\n",
+			    "Fixed-point constant precision %zu invalid, defaulting to %zu",
 			    usePrec,
 			    defaultPrec
 			);

@@ -73,7 +73,7 @@ static uint32_t getSectIDIfAny(Section *sect) {
 	}
 
 	// Every section that exists should be in `sectionMap`
-	fatalerror("Unknown section '%s'\n", sect->name.c_str()); // LCOV_EXCL_LINE
+	fatalerror("Unknown section '%s'", sect->name.c_str()); // LCOV_EXCL_LINE
 }
 
 static void writePatch(Patch const &patch, FILE *file) {

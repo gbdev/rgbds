@@ -55,7 +55,7 @@ static bool requireSection() {
 		return true;
 	}
 
-	error("Cannot output data outside of a SECTION\n");
+	error("Cannot output data outside of a SECTION");
 	return false;
 }
 
@@ -72,7 +72,7 @@ static bool requireCodeSection() {
 	}
 
 	error(
-	    "Section '%s' cannot contain code or data (not ROM0 or ROMX)\n",
+	    "Section '%s' cannot contain code or data (not ROM0 or ROMX)",
 	    currentSection->name.c_str()
 	);
 	return false;
@@ -82,8 +82,7 @@ void sect_CheckSizes() {
 	for (Section const &sect : sectionList) {
 		if (uint32_t maxSize = sectionTypeInfo[sect.type].size; sect.size > maxSize) {
 			error(
-			    "Section '%s' grew too big (max size = 0x%" PRIX32 " bytes, reached 0x%" PRIX32
-			    ")\n",
+			    "Section '%s' grew too big (max size = 0x%" PRIX32 " bytes, reached 0x%" PRIX32 ")",
 			    sect.name.c_str(),
 			    maxSize,
 			    sect.size
@@ -113,18 +112,18 @@ static unsigned int mergeSectUnion(
 	// Unionized sections only need "compatible" constraints, and they end up with the strictest
 	// combination of both.
 	if (sect_HasData(type)) {
-		sectError("Cannot declare ROM sections as UNION\n");
+		sectError("Cannot declare ROM sections as UNION");
 	}
 
 	if (org != UINT32_MAX) {
 		// If both are fixed, they must be the same
 		if (sect.org != UINT32_MAX && sect.org != org) {
 			sectError(
-			    "Section already declared as fixed at different address $%04" PRIx32 "\n", sect.org
+			    "Section already declared as fixed at different address $%04" PRIx32, sect.org
 			);
 		} else if (sect.align != 0 && (mask(sect.align) & (org - sect.alignOfs))) {
 			sectError(
-			    "Section already declared as aligned to %u bytes (offset %" PRIu16 ")\n",
+			    "Section already declared as aligned to %u bytes (offset %" PRIu16 ")",
 			    1U << sect.align,
 			    sect.alignOfs
 			);
@@ -138,15 +137,14 @@ static unsigned int mergeSectUnion(
 		if (sect.org != UINT32_MAX) {
 			if ((sect.org - alignOffset) & mask(alignment)) {
 				sectError(
-				    "Section already declared as fixed at incompatible address $%04" PRIx32 "\n",
+				    "Section already declared as fixed at incompatible address $%04" PRIx32,
 				    sect.org
 				);
 			}
 			// Check if alignment offsets are compatible
 		} else if ((alignOffset & mask(sect.align)) != (sect.alignOfs & mask(alignment))) {
 			sectError(
-			    "Section already declared with incompatible %u"
-			    "-byte alignment (offset %" PRIu16 ")\n",
+			    "Section already declared with incompatible %u-byte alignment (offset %" PRIu16 ")",
 			    1U << sect.align,
 			    sect.alignOfs
 			);
@@ -174,12 +172,12 @@ static unsigned int
 		// If both are fixed, they must be the same
 		if (sect.org != UINT32_MAX && sect.org != curOrg) {
 			sectError(
-			    "Section already declared as fixed at incompatible address $%04" PRIx32 "\n",
+			    "Section already declared as fixed at incompatible address $%04" PRIx32,
 			    sect.org
 			);
 		} else if (sect.align != 0 && (mask(sect.align) & (curOrg - sect.alignOfs))) {
 			sectError(
-			    "Section already declared as aligned to %u bytes (offset %" PRIu16 ")\n",
+			    "Section already declared as aligned to %u bytes (offset %" PRIu16 ")",
 			    1U << sect.align,
 			    sect.alignOfs
 			);
@@ -199,15 +197,14 @@ static unsigned int
 		if (sect.org != UINT32_MAX) {
 			if ((sect.org - curOfs) & mask(alignment)) {
 				sectError(
-				    "Section already declared as fixed at incompatible address $%04" PRIx32 "\n",
+				    "Section already declared as fixed at incompatible address $%04" PRIx32,
 				    sect.org
 				);
 			}
 			// Check if alignment offsets are compatible
 		} else if ((curOfs & mask(sect.align)) != (sect.alignOfs & mask(alignment))) {
 			sectError(
-			    "Section already declared with incompatible %u"
-			    "-byte alignment (offset %" PRIu16 ")\n",
+			    "Section already declared with incompatible %u-byte alignment (offset %" PRIu16 ")",
 			    1U << sect.align,
 			    sect.alignOfs
 			);
@@ -234,12 +231,12 @@ static void mergeSections(
 
 	if (type != sect.type) {
 		sectError(
-		    "Section already exists but with type %s\n", sectionTypeInfo[sect.type].name.c_str()
+		    "Section already exists but with type %s", sectionTypeInfo[sect.type].name.c_str()
 		);
 	}
 
 	if (sect.modifier != mod) {
-		sectError("Section already declared as SECTION %s\n", sectionModNames[sect.modifier]);
+		sectError("Section already declared as SECTION %s", sectionModNames[sect.modifier]);
 	} else {
 		switch (mod) {
 		case SECTION_UNION:
@@ -256,21 +253,22 @@ static void mergeSections(
 			}
 			// If both specify a bank, it must be the same one
 			else if (bank != UINT32_MAX && sect.bank != bank) {
-				sectError("Section already declared with different bank %" PRIu32 "\n", sect.bank);
+				sectError("Section already declared with different bank %" PRIu32, sect.bank);
 			}
 			break;
 
 		case SECTION_NORMAL:
-			sectError("Section already defined previously at ");
+			errorNoNewline("Section already defined previously at ");
 			sect.src->dump(sect.fileLine);
 			putc('\n', stderr);
+			nbSectErrors++;
 			break;
 		}
 	}
 
 	if (nbSectErrors) {
 		fatalerror(
-		    "Cannot create section \"%s\" (%u error%s)\n",
+		    "Cannot create section \"%s\" (%u error%s)",
 		    sect.name.c_str(),
 		    nbSectErrors,
 		    nbSectErrors == 1 ? "" : "s"
@@ -332,11 +330,11 @@ static Section *getSection(
 	if (bank != UINT32_MAX) {
 		if (type != SECTTYPE_ROMX && type != SECTTYPE_VRAM && type != SECTTYPE_SRAM
 		    && type != SECTTYPE_WRAMX) {
-			error("BANK only allowed for ROMX, WRAMX, SRAM, or VRAM sections\n");
+			error("BANK only allowed for ROMX, WRAMX, SRAM, or VRAM sections");
 		} else if (bank < sectionTypeInfo[type].firstBank
 		           || bank > sectionTypeInfo[type].lastBank) {
 			error(
-			    "%s bank value $%04" PRIx32 " out of range ($%04" PRIx32 " to $%04" PRIx32 ")\n",
+			    "%s bank value $%04" PRIx32 " out of range ($%04" PRIx32 " to $%04" PRIx32 ")",
 			    sectionTypeInfo[type].name.c_str(),
 			    bank,
 			    sectionTypeInfo[type].firstBank,
@@ -350,7 +348,7 @@ static Section *getSection(
 
 	if (alignOffset >= 1 << alignment) {
 		error(
-		    "Alignment offset (%" PRIu16 ") must be smaller than alignment size (%u)\n",
+		    "Alignment offset (%" PRIu16 ") must be smaller than alignment size (%u)",
 		    alignOffset,
 		    1U << alignment
 		);
@@ -361,7 +359,7 @@ static Section *getSection(
 		if (org < sectionTypeInfo[type].startAddr || org > endaddr(type)) {
 			error(
 			    "Section \"%s\"'s fixed address $%04" PRIx32 " is outside of range [$%04" PRIx16
-			    "; $%04" PRIx16 "]\n",
+			    "; $%04" PRIx16 "]",
 			    name.c_str(),
 			    org,
 			    sectionTypeInfo[type].startAddr,
@@ -372,7 +370,7 @@ static Section *getSection(
 
 	if (alignment != 0) {
 		if (alignment > 16) {
-			error("Alignment must be between 0 and 16, not %u\n", alignment);
+			error("Alignment must be between 0 and 16, not %u", alignment);
 			alignment = 16;
 		}
 		// It doesn't make sense to have both alignment and org set
@@ -380,12 +378,12 @@ static Section *getSection(
 
 		if (org != UINT32_MAX) {
 			if ((org - alignOffset) & mask) {
-				error("Section \"%s\"'s fixed address doesn't match its alignment\n", name.c_str());
+				error("Section \"%s\"'s fixed address doesn't match its alignment", name.c_str());
 			}
 			alignment = 0; // Ignore it if it's satisfied
 		} else if (sectionTypeInfo[type].startAddr & mask) {
 			error(
-			    "Section \"%s\"'s alignment cannot be attained in %s\n",
+			    "Section \"%s\"'s alignment cannot be attained in %s",
 			    name.c_str(),
 			    sectionTypeInfo[type].name.c_str()
 			);
@@ -415,7 +413,7 @@ static Section *getSection(
 // Set the current section
 static void changeSection() {
 	if (!currentUnionStack.empty()) {
-		fatalerror("Cannot change the section within a UNION\n");
+		fatalerror("Cannot change the section within a UNION");
 	}
 
 	sym_ResetCurrentLabelScopes();
@@ -452,7 +450,7 @@ void sect_NewSection(
 ) {
 	for (SectionStackEntry &entry : sectionStack) {
 		if (entry.section && entry.section->name == name) {
-			fatalerror("Section '%s' is already on the stack\n", name.c_str());
+			fatalerror("Section '%s' is already on the stack", name.c_str());
 		}
 	}
 
@@ -486,7 +484,7 @@ void sect_SetLoadSection(
 	}
 
 	if (sect_HasData(type)) {
-		error("`LOAD` blocks cannot create a ROM section\n");
+		error("`LOAD` blocks cannot create a ROM section");
 		return;
 	}
 
@@ -506,12 +504,12 @@ void sect_SetLoadSection(
 void sect_EndLoadSection(char const *cause) {
 	if (cause) {
 		warning(
-		    WARNING_UNTERMINATED_LOAD, "`LOAD` block without `ENDL` terminated by `%s`\n", cause
+		    WARNING_UNTERMINATED_LOAD, "`LOAD` block without `ENDL` terminated by `%s`", cause
 		);
 	}
 
 	if (!currentLoadSection) {
-		error("Found `ENDL` outside of a `LOAD` block\n");
+		error("Found `ENDL` outside of a `LOAD` block");
 		return;
 	}
 
@@ -524,7 +522,7 @@ void sect_EndLoadSection(char const *cause) {
 
 void sect_CheckLoadClosed() {
 	if (currentLoadSection) {
-		warning(WARNING_UNTERMINATED_LOAD, "`LOAD` block without `ENDL` terminated by EOF\n");
+		warning(WARNING_UNTERMINATED_LOAD, "`LOAD` block without `ENDL` terminated by EOF");
 	}
 }
 
@@ -575,7 +573,7 @@ void sect_AlignPC(uint8_t alignment, uint16_t offset) {
 		if (uint32_t actualOffset = (sect->org + curOffset) % alignSize; actualOffset != offset) {
 			error(
 			    "Section is misaligned (at PC = $%04" PRIx32 ", expected ALIGN[%" PRIu32
-			    ", %" PRIu32 "], got ALIGN[%" PRIu32 ", %" PRIu32 "])\n",
+			    ", %" PRIu32 "], got ALIGN[%" PRIu32 ", %" PRIu32 "])",
 			    sect->org + curOffset,
 			    alignment,
 			    offset,
@@ -590,7 +588,7 @@ void sect_AlignPC(uint8_t alignment, uint16_t offset) {
 			error(
 			    "Section is misaligned ($%04" PRIx32
 			    " bytes into the section, expected ALIGN[%" PRIu32 ", %" PRIu32
-			    "], got ALIGN[%" PRIu32 ", %" PRIu32 "])\n",
+			    "], got ALIGN[%" PRIu32 ", %" PRIu32 "])",
 			    curOffset,
 			    alignment,
 			    offset,
@@ -601,7 +599,7 @@ void sect_AlignPC(uint8_t alignment, uint16_t offset) {
 			// Treat an alignment large enough as fixing the address.
 			// Note that this also ensures that a section's alignment never becomes 16 or greater.
 			if (alignment > 16) {
-				error("Alignment must be between 0 and 16, not %u\n", alignment);
+				error("Alignment must be between 0 and 16, not %u", alignment);
 			}
 			sect->align = 0; // Reset the alignment, since we're fixing the address.
 			sect->org = offset - curOffset;
@@ -615,7 +613,7 @@ void sect_AlignPC(uint8_t alignment, uint16_t offset) {
 
 static void growSection(uint32_t growth) {
 	if (growth > 0 && curOffset > UINT32_MAX - growth) {
-		fatalerror("Section size would overflow internal counter\n");
+		fatalerror("Section size would overflow internal counter");
 	}
 	curOffset += growth;
 	if (uint32_t outOffset = sect_GetOutputOffset(); outOffset > currentSection->size) {
@@ -656,11 +654,11 @@ void sect_StartUnion() {
 	// your own peril! ^^
 
 	if (!currentSection) {
-		error("UNIONs must be inside a SECTION\n");
+		error("UNIONs must be inside a SECTION");
 		return;
 	}
 	if (sect_HasData(currentSection->type)) {
-		error("Cannot use UNION inside of ROM0 or ROMX sections\n");
+		error("Cannot use UNION inside of ROM0 or ROMX sections");
 		return;
 	}
 
@@ -679,7 +677,7 @@ static void endUnionMember() {
 
 void sect_NextUnionMember() {
 	if (currentUnionStack.empty()) {
-		error("Found NEXTU outside of a UNION construct\n");
+		error("Found NEXTU outside of a UNION construct");
 		return;
 	}
 	endUnionMember();
@@ -687,7 +685,7 @@ void sect_NextUnionMember() {
 
 void sect_EndUnion() {
 	if (currentUnionStack.empty()) {
-		error("Found ENDU outside of a UNION construct\n");
+		error("Found ENDU outside of a UNION construct");
 		return;
 	}
 	endUnionMember();
@@ -697,7 +695,7 @@ void sect_EndUnion() {
 
 void sect_CheckUnionClosed() {
 	if (!currentUnionStack.empty()) {
-		error("Unterminated UNION construct\n");
+		error("Unterminated UNION construct");
 	}
 }
 
@@ -767,7 +765,7 @@ void sect_Skip(uint32_t skip, bool ds) {
 		if (!ds) {
 			warning(
 			    WARNING_EMPTY_DATA_DIRECTIVE,
-			    "%s directive without data in ROM\n",
+			    "%s directive without data in ROM",
 			    (skip == 4)   ? "DL"
 			    : (skip == 2) ? "DW"
 			                  : "DB"
@@ -862,7 +860,7 @@ void sect_PCRelByte(Expression const &expr, uint32_t pcShift) {
 		if (offset < -128 || offset > 127) {
 			error(
 			    "JR target must be between -128 and 127 bytes away, not %" PRId16
-			    "; use JP instead\n",
+			    "; use JP instead",
 			    offset
 			);
 			writeByte(0);
@@ -875,7 +873,7 @@ void sect_PCRelByte(Expression const &expr, uint32_t pcShift) {
 // Output a binary file
 void sect_BinaryFile(std::string const &name, int32_t startPos) {
 	if (startPos < 0) {
-		error("Start position cannot be negative (%" PRId32 ")\n", startPos);
+		error("Start position cannot be negative (%" PRId32 ")", startPos);
 		startPos = 0;
 	}
 	if (!requireCodeSection()) {
@@ -895,7 +893,7 @@ void sect_BinaryFile(std::string const &name, int32_t startPos) {
 			// LCOV_EXCL_STOP
 			failedOnMissingInclude = true;
 		} else {
-			error("Error opening INCBIN file '%s': %s\n", name.c_str(), strerror(errno));
+			error("Error opening INCBIN file '%s': %s", name.c_str(), strerror(errno));
 		}
 		return;
 	}
@@ -903,7 +901,7 @@ void sect_BinaryFile(std::string const &name, int32_t startPos) {
 
 	if (fseek(file, 0, SEEK_END) != -1) {
 		if (startPos > ftell(file)) {
-			error("Specified start position is greater than length of file '%s'\n", name.c_str());
+			error("Specified start position is greater than length of file '%s'", name.c_str());
 			return;
 		}
 		// The file is seekable; skip to the specified start position
@@ -911,14 +909,14 @@ void sect_BinaryFile(std::string const &name, int32_t startPos) {
 	} else {
 		if (errno != ESPIPE) {
 			error(
-			    "Error determining size of INCBIN file '%s': %s\n", name.c_str(), strerror(errno)
+			    "Error determining size of INCBIN file '%s': %s", name.c_str(), strerror(errno)
 			);
 		}
 		// The file isn't seekable, so we'll just skip bytes one at a time
 		while (startPos--) {
 			if (fgetc(file) == EOF) {
 				error(
-				    "Specified start position is greater than length of file '%s'\n", name.c_str()
+				    "Specified start position is greater than length of file '%s'", name.c_str()
 				);
 				return;
 			}
@@ -930,18 +928,18 @@ void sect_BinaryFile(std::string const &name, int32_t startPos) {
 	}
 
 	if (ferror(file)) {
-		error("Error reading INCBIN file '%s': %s\n", name.c_str(), strerror(errno));
+		error("Error reading INCBIN file '%s': %s", name.c_str(), strerror(errno));
 	}
 }
 
 // Output a slice of a binary file
 void sect_BinaryFileSlice(std::string const &name, int32_t startPos, int32_t length) {
 	if (startPos < 0) {
-		error("Start position cannot be negative (%" PRId32 ")\n", startPos);
+		error("Start position cannot be negative (%" PRId32 ")", startPos);
 		startPos = 0;
 	}
 	if (length < 0) {
-		error("Number of bytes to read cannot be negative (%" PRId32 ")\n", length);
+		error("Number of bytes to read cannot be negative (%" PRId32 ")", length);
 		length = 0;
 	}
 	if (!requireCodeSection()) {
@@ -964,7 +962,7 @@ void sect_BinaryFileSlice(std::string const &name, int32_t startPos, int32_t len
 			// LCOV_EXCL_STOP
 			failedOnMissingInclude = true;
 		} else {
-			error("Error opening INCBIN file '%s': %s\n", name.c_str(), strerror(errno));
+			error("Error opening INCBIN file '%s': %s", name.c_str(), strerror(errno));
 		}
 		return;
 	}
@@ -972,12 +970,12 @@ void sect_BinaryFileSlice(std::string const &name, int32_t startPos, int32_t len
 
 	if (fseek(file, 0, SEEK_END) != -1) {
 		if (int32_t fsize = ftell(file); startPos > fsize) {
-			error("Specified start position is greater than length of file '%s'\n", name.c_str());
+			error("Specified start position is greater than length of file '%s'", name.c_str());
 			return;
 		} else if (startPos + length > fsize) {
 			error(
 			    "Specified range in INCBIN file '%s' is out of bounds (%" PRIu32 " + %" PRIu32
-			    " > %" PRIu32 ")\n",
+			    " > %" PRIu32 ")",
 			    name.c_str(),
 			    startPos,
 			    length,
@@ -990,14 +988,14 @@ void sect_BinaryFileSlice(std::string const &name, int32_t startPos, int32_t len
 	} else {
 		if (errno != ESPIPE) {
 			error(
-			    "Error determining size of INCBIN file '%s': %s\n", name.c_str(), strerror(errno)
+			    "Error determining size of INCBIN file '%s': %s", name.c_str(), strerror(errno)
 			);
 		}
 		// The file isn't seekable, so we'll just skip bytes one at a time
 		while (startPos--) {
 			if (fgetc(file) == EOF) {
 				error(
-				    "Specified start position is greater than length of file '%s'\n", name.c_str()
+				    "Specified start position is greater than length of file '%s'", name.c_str()
 				);
 				return;
 			}
@@ -1008,10 +1006,10 @@ void sect_BinaryFileSlice(std::string const &name, int32_t startPos, int32_t len
 		if (int byte = fgetc(file); byte != EOF) {
 			writeByte(byte);
 		} else if (ferror(file)) {
-			error("Error reading INCBIN file '%s': %s\n", name.c_str(), strerror(errno));
+			error("Error reading INCBIN file '%s': %s", name.c_str(), strerror(errno));
 		} else {
 			error(
-			    "Premature end of INCBIN file '%s' (%" PRId32 " bytes left to read)\n",
+			    "Premature end of INCBIN file '%s' (%" PRId32 " bytes left to read)",
 			    name.c_str(),
 			    length + 1
 			);
@@ -1039,7 +1037,7 @@ void sect_PushSection() {
 
 void sect_PopSection() {
 	if (sectionStack.empty()) {
-		fatalerror("No entries in the section stack\n");
+		fatalerror("No entries in the section stack");
 	}
 
 	if (currentLoadSection) {
@@ -1060,17 +1058,17 @@ void sect_PopSection() {
 
 void sect_CheckStack() {
 	if (!sectionStack.empty()) {
-		warning(WARNING_UNMATCHED_DIRECTIVE, "`PUSHS` without corresponding `POPS`\n");
+		warning(WARNING_UNMATCHED_DIRECTIVE, "`PUSHS` without corresponding `POPS`");
 	}
 }
 
 void sect_EndSection() {
 	if (!currentSection) {
-		fatalerror("Cannot end the section outside of a SECTION\n");
+		fatalerror("Cannot end the section outside of a SECTION");
 	}
 
 	if (!currentUnionStack.empty()) {
-		fatalerror("Cannot end the section within a UNION\n");
+		fatalerror("Cannot end the section within a UNION");
 	}
 
 	if (currentLoadSection) {
