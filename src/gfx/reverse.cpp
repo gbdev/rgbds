@@ -13,10 +13,12 @@
 #include <vector>
 
 #include "defaultinitvec.hpp"
+#include "error.hpp"
 #include "file.hpp"
 #include "helpers.hpp" // assume
 
 #include "gfx/main.hpp"
+#include "gfx/warning.hpp"
 
 static DefaultInitVec<uint8_t> readInto(std::string const &path) {
 	File file;
@@ -59,7 +61,7 @@ static void pngError(png_structp png, char const *msg) {
 }
 
 static void pngWarning(png_structp png, char const *msg) {
-	warning(
+	warnx(
 	    "While writing reversed image (\"%s\"): %s",
 	    static_cast<char const *>(png_get_error_ptr(png)),
 	    msg
@@ -106,19 +108,19 @@ void reverse() {
 	}
 
 	if (options.allowDedup && options.tilemap.empty()) {
-		warning("Tile deduplication is enabled, but no tilemap is provided?");
+		warnx("Tile deduplication is enabled, but no tilemap is provided?");
 	}
 
 	if (options.useColorCurve) {
-		warning("The color curve is not yet supported in reverse mode...");
+		warnx("The color curve is not yet supported in reverse mode...");
 	}
 
 	if (options.inputSlice.left != 0 || options.inputSlice.top != 0
 	    || options.inputSlice.height != 0) {
-		warning("\"Sliced-off\" pixels are ignored in reverse mode");
+		warnx("\"Sliced-off\" pixels are ignored in reverse mode");
 	}
 	if (options.inputSlice.width != 0 && options.inputSlice.width != options.reversedWidth * 8) {
-		warning(
+		warnx(
 		    "Specified input slice width (%" PRIu16
 		    ") doesn't match provided reversing width (%" PRIu16 " * 8)",
 		    options.inputSlice.width,
@@ -152,7 +154,7 @@ void reverse() {
 		fatal("Cannot generate empty image");
 	}
 	if (mapSize > options.maxNbTiles[0] + options.maxNbTiles[1]) {
-		warning(
+		warnx(
 		    "Total number of tiles (%zu) is more than the limit of %" PRIu16 " + %" PRIu16,
 		    mapSize,
 		    options.maxNbTiles[0],
@@ -234,7 +236,7 @@ void reverse() {
 		} while (nbRead != 0);
 
 		if (palettes.size() > options.nbPalettes) {
-			warning(
+			warnx(
 			    "Read %zu palettes, more than the specified limit of %" PRIu16,
 			    palettes.size(),
 			    options.nbPalettes
@@ -242,7 +244,7 @@ void reverse() {
 		}
 
 		if (options.palSpecType == Options::EXPLICIT && palettes != options.palSpec) {
-			warning("Colors in the palette file do not match those specified with `-c`!");
+			warnx("Colors in the palette file do not match those specified with `-c`!");
 			// This spacing aligns "...versus with `-c`" above the column of `-c` palettes
 			fputs("Colors specified in the palette file:         ...versus with `-c`:\n", stderr);
 			for (size_t i = 0; i < palettes.size() && i < options.palSpec.size(); ++i) {
@@ -263,8 +265,8 @@ void reverse() {
 			palettes[0][i] = grayColors[options.dmgValue(i)];
 		}
 	} else if (options.palSpecType == Options::EMBEDDED) {
-		warning("An embedded palette was requested, but no palette file was specified; ignoring "
-		        "request.");
+		warnx("An embedded palette was requested, but no palette file was specified; ignoring "
+		      "request.");
 	} else if (options.palSpecType == Options::EXPLICIT) {
 		palettes = std::move(options.palSpec); // We won't be using it again.
 	}
@@ -303,7 +305,7 @@ void reverse() {
 
 			if (!tilemap) {
 				if (bank) {
-					warning(
+					warnx(
 					    "Attribute map assigns tile at (%zu, %zu) to bank 1, but no tilemap "
 					    "specified; "
 					    "ignoring the bank bit",

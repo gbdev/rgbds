@@ -59,11 +59,4 @@ struct FileStackNode {
 	std::string const &dump(uint32_t curLineNo) const;
 };
 
-[[gnu::format(printf, 3, 4)]]
-void warning(FileStackNode const *where, uint32_t lineNo, char const *fmt, ...);
-[[gnu::format(printf, 3, 4)]]
-void error(FileStackNode const *where, uint32_t lineNo, char const *fmt, ...);
-[[gnu::format(printf, 3, 4), noreturn]]
-void fatal(FileStackNode const *where, uint32_t lineNo, char const *fmt, ...);
-
 #endif // RGBDS_LINK_MAIN_HPP

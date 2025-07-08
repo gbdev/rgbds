@@ -86,14 +86,14 @@ void charmap_New(std::string const &name, std::string const *baseName) {
 
 	if (baseName != nullptr) {
 		if (auto search = charmapMap.find(*baseName); search == charmapMap.end()) {
-			error("Base charmap '%s' doesn't exist\n", baseName->c_str());
+			error("Base charmap '%s' doesn't exist", baseName->c_str());
 		} else {
 			baseIdx = search->second;
 		}
 	}
 
 	if (charmapMap.find(name) != charmapMap.end()) {
-		error("Charmap '%s' already exists\n", name.c_str());
+		error("Charmap '%s' already exists", name.c_str());
 		return;
 	}
 
@@ -114,7 +114,7 @@ void charmap_New(std::string const &name, std::string const *baseName) {
 
 void charmap_Set(std::string const &name) {
 	if (auto search = charmapMap.find(name); search == charmapMap.end()) {
-		error("Charmap '%s' doesn't exist\n", name.c_str());
+		error("Charmap '%s' doesn't exist", name.c_str());
 	} else {
 		currentCharmap = &charmapList[search->second];
 	}
@@ -126,7 +126,7 @@ void charmap_Push() {
 
 void charmap_Pop() {
 	if (charmapStack.empty()) {
-		error("No entries in the charmap stack\n");
+		error("No entries in the charmap stack");
 		return;
 	}
 
@@ -136,13 +136,13 @@ void charmap_Pop() {
 
 void charmap_CheckStack() {
 	if (!charmapStack.empty()) {
-		warning(WARNING_UNMATCHED_DIRECTIVE, "`PUSHC` without corresponding `POPC`\n");
+		warning(WARNING_UNMATCHED_DIRECTIVE, "`PUSHC` without corresponding `POPC`");
 	}
 }
 
 void charmap_Add(std::string const &mapping, std::vector<int32_t> &&value) {
 	if (mapping.empty()) {
-		error("Cannot map an empty string\n");
+		error("Cannot map an empty string");
 		return;
 	}
 
@@ -168,7 +168,7 @@ void charmap_Add(std::string const &mapping, std::vector<int32_t> &&value) {
 	CharmapNode &node = charmap.nodes[nodeIdx];
 
 	if (node.isTerminal()) {
-		warning(WARNING_CHARMAP_REDEF, "Overriding charmap mapping\n");
+		warning(WARNING_CHARMAP_REDEF, "Overriding charmap mapping");
 	}
 
 	std::swap(node.value, value);
@@ -268,7 +268,7 @@ size_t charmap_ConvertNext(std::string_view &input, std::vector<int32_t> *output
 		// This will write the codepoint's value to `output`, little-endian
 		for (uint32_t state = 0, codepoint = 0; inputIdx + codepointLen < input.length();) {
 			if (decode(&state, &codepoint, input[inputIdx + codepointLen]) == 1) {
-				error("Input string is not valid UTF-8\n");
+				error("Input string is not valid UTF-8");
 				codepointLen = 1;
 				break;
 			}
@@ -286,11 +286,11 @@ size_t charmap_ConvertNext(std::string_view &input, std::vector<int32_t> *output
 
 		// Warn if this character is not mapped but any others are
 		if (int firstChar = input[inputIdx]; charmap.nodes.size() > 1) {
-			warning(WARNING_UNMAPPED_CHAR_1, "Unmapped character %s\n", printChar(firstChar));
+			warning(WARNING_UNMAPPED_CHAR_1, "Unmapped character %s", printChar(firstChar));
 		} else if (charmap.name != DEFAULT_CHARMAP_NAME) {
 			warning(
 			    WARNING_UNMAPPED_CHAR_2,
-			    "Unmapped character %s not in " DEFAULT_CHARMAP_NAME " charmap\n",
+			    "Unmapped character %s not in " DEFAULT_CHARMAP_NAME " charmap",
 			    printChar(firstChar)
 			);
 		}

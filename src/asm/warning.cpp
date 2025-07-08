@@ -65,7 +65,7 @@ Diagnostics<WarningLevel, WarningID> warnings = {
 };
 // clang-format on
 
-void printDiag(
+static void printDiag(
     char const *fmt, va_list args, char const *type, char const *flagfmt, char const *flag
 ) {
 	fputs(type, stderr);
@@ -74,6 +74,7 @@ void printDiag(
 	fprintf(stderr, flagfmt, flag);
 	fputs("\n    ", stderr);
 	vfprintf(stderr, fmt, args);
+	putc('\n', stderr);
 	lexer_DumpStringExpansions();
 }
 
@@ -82,6 +83,28 @@ void error(char const *fmt, ...) {
 
 	va_start(args, fmt);
 	printDiag(fmt, args, "error", ":", nullptr);
+	va_end(args);
+
+	// This intentionally makes 0 act as "unlimited" (or at least "limited to sizeof(unsigned)")
+	nbErrors++;
+	if (nbErrors == maxErrors) {
+		errx(
+		    "The maximum of %u error%s was reached (configure with \"-X/--max-errors\"); assembly "
+		    "aborted!",
+		    maxErrors,
+		    maxErrors == 1 ? "" : "s"
+		);
+	}
+}
+
+void errorNoNewline(char const *fmt, ...) {
+	va_list args;
+
+	fputs("error: ", stderr);
+	fstk_DumpCurrent();
+	fputs(":\n    ", stderr);
+	va_start(args, fmt);
+	vfprintf(stderr, fmt, args);
 	va_end(args);
 
 	// This intentionally makes 0 act as "unlimited" (or at least "limited to sizeof(unsigned)")

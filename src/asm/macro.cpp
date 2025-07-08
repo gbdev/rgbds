@@ -52,7 +52,7 @@ std::shared_ptr<std::string> MacroArgs::getAllArgs() const {
 
 void MacroArgs::appendArg(std::shared_ptr<std::string> arg) {
 	if (arg->empty()) {
-		warning(WARNING_EMPTY_MACRO_ARG, "Empty macro argument\n");
+		warning(WARNING_EMPTY_MACRO_ARG, "Empty macro argument");
 	}
 	args.push_back(arg);
 }
@@ -60,10 +60,10 @@ void MacroArgs::appendArg(std::shared_ptr<std::string> arg) {
 void MacroArgs::shiftArgs(int32_t count) {
 	if (size_t nbArgs = args.size();
 	    count > 0 && (static_cast<uint32_t>(count) > nbArgs || shift > nbArgs - count)) {
-		warning(WARNING_MACRO_SHIFT, "Cannot shift macro arguments past their end\n");
+		warning(WARNING_MACRO_SHIFT, "Cannot shift macro arguments past their end");
 		shift = nbArgs;
 	} else if (count < 0 && shift < static_cast<uint32_t>(-count)) {
-		warning(WARNING_MACRO_SHIFT, "Cannot shift macro arguments past their beginning\n");
+		warning(WARNING_MACRO_SHIFT, "Cannot shift macro arguments past their beginning");
 		shift = 0;
 	} else {
 		shift += count;

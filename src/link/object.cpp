@@ -24,6 +24,7 @@
 #include "link/sdas_obj.hpp"
 #include "link/section.hpp"
 #include "link/symbol.hpp"
+#include "link/warning.hpp"
 
 static std::deque<std::vector<Symbol>> symbolLists;
 static std::vector<std::vector<FileStackNode>> nodes;
@@ -445,7 +446,7 @@ void obj_ReadFile(char const *fileName, unsigned int fileID) {
 		file = stdin;
 	}
 	if (!file) {
-		err("Failed to open file \"%s\"", fileName);
+		errx("Failed to open file \"%s\": %s", fileName, strerror(errno));
 	}
 	Defer closeFile{[&] { fclose(file); }};
 

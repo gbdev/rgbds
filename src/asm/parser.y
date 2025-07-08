@@ -438,12 +438,12 @@ diff_mark:
 	  %empty // OK
 	| OP_ADD {
 		::error(
-		    "syntax error, unexpected + at the beginning of the line (is it a leftover diff mark?)\n"
+		    "syntax error, unexpected + at the beginning of the line (is it a leftover diff mark?)"
 		);
 	}
 	| OP_SUB {
 		::error(
-		    "syntax error, unexpected - at the beginning of the line (is it a leftover diff mark?)\n"
+		    "syntax error, unexpected - at the beginning of the line (is it a leftover diff mark?)"
 		);
 	}
 ;
@@ -488,11 +488,11 @@ if:
 elif:
 	POP_ELIF iconst NEWLINE {
 		if (lexer_GetIFDepth() == 0) {
-			fatalerror("Found ELIF outside of an IF construct\n");
+			fatalerror("Found ELIF outside of an IF construct");
 		}
 		if (lexer_RanIFBlock()) {
 			if (lexer_ReachedELSEBlock()) {
-				fatalerror("Found ELIF after an ELSE block\n");
+				fatalerror("Found ELIF after an ELSE block");
 			}
 			lexer_SetMode(LEXER_SKIP_TO_ENDC);
 		} else if ($2) {
@@ -506,11 +506,11 @@ elif:
 else:
 	POP_ELSE NEWLINE {
 		if (lexer_GetIFDepth() == 0) {
-			fatalerror("Found ELSE outside of an IF construct\n");
+			fatalerror("Found ELSE outside of an IF construct");
 		}
 		if (lexer_RanIFBlock()) {
 			if (lexer_ReachedELSEBlock()) {
-				fatalerror("Found ELSE after an ELSE block\n");
+				fatalerror("Found ELSE after an ELSE block");
 			}
 			lexer_SetMode(LEXER_SKIP_TO_ENDC);
 		} else {
@@ -695,7 +695,7 @@ align:
 align_spec:
 	uconst {
 		if ($1 > 16) {
-			::error("Alignment must be between 0 and 16, not %u\n", $1);
+			::error("Alignment must be between 0 and 16, not %u", $1);
 			$$.alignment = $$.alignOfs = 0;
 		} else {
 			$$.alignment = $1;
@@ -704,11 +704,11 @@ align_spec:
 	}
 	| uconst COMMA iconst {
 		if ($1 > 16) {
-			::error("Alignment must be between 0 and 16, not %u\n", $1);
+			::error("Alignment must be between 0 and 16, not %u", $1);
 			$$.alignment = $$.alignOfs = 0;
 		} else if ($3 <= -(1 << $1) || $3 >= 1 << $1) {
 			::error(
-			    "The absolute alignment offset (%" PRIu32 ") must be less than alignment size (%d)\n",
+			    "The absolute alignment offset (%" PRIu32 ") must be less than alignment size (%d)",
 			    static_cast<uint32_t>($3 < 0 ? -$3 : $3),
 			    1 << $1
 			);
@@ -779,13 +779,13 @@ endsection:
 
 fail:
 	POP_FAIL string {
-		fatalerror("%s\n", $2.c_str());
+		fatalerror("%s", $2.c_str());
 	}
 ;
 
 warn:
 	POP_WARN string {
-		warning(WARNING_USER, "%s\n", $2.c_str());
+		warning(WARNING_USER, "%s", $2.c_str());
 	}
 ;
 
@@ -836,7 +836,7 @@ shift:
 		if (MacroArgs *macroArgs = fstk_GetCurrentMacroArgs(); macroArgs) {
 			macroArgs->shiftArgs($2);
 		} else {
-			::error("Cannot shift macro arguments outside of a macro\n");
+			::error("Cannot shift macro arguments outside of a macro");
 		}
 	}
 ;
@@ -1577,7 +1577,7 @@ relocexpr_no_str:
 	| OP_CHARSIZE LPAREN string RPAREN {
 		size_t charSize = charmap_CharSize($3);
 		if (charSize == 0) {
-			::error("CHARSIZE: No character mapping for \"%s\"\n", $3.c_str());
+			::error("CHARSIZE: No character mapping for \"%s\"", $3.c_str());
 		}
 		$$.makeNumber(charSize);
 	}
@@ -1589,13 +1589,13 @@ relocexpr_no_str:
 			} else {
 				warning(
 				    WARNING_BUILTIN_ARG,
-				    "CHARVAL: Index %" PRIu32 " is past the end of the character mapping\n",
+				    "CHARVAL: Index %" PRIu32 " is past the end of the character mapping",
 				    idx
 				);
 				$$.makeNumber(0);
 			}
 		} else {
-			::error("CHARVAL: No character mapping for \"%s\"\n", $3.c_str());
+			::error("CHARVAL: No character mapping for \"%s\"", $3.c_str());
 			$$.makeNumber(0);
 		}
 	}
@@ -1608,7 +1608,7 @@ uconst:
 	iconst {
 		$$ = $1;
 		if ($$ < 0) {
-			fatalerror("Constant must not be negative: %d\n", $$);
+			fatalerror("Constant must not be negative: %d", $$);
 		}
 	}
 ;
@@ -1626,7 +1626,7 @@ precision_arg:
 	| COMMA iconst {
 		$$ = $2;
 		if ($$ < 1 || $$ > 31) {
-			::error("Fixed-point precision must be between 1 and 31, not %" PRId32 "\n", $$);
+			::error("Fixed-point precision must be between 1 and 31, not %" PRId32, $$);
 			$$ = fix_Precision();
 		}
 	}
@@ -1675,9 +1675,9 @@ string_literal:
 		bool unique;
 		$$ = charmap_Reverse($3, unique);
 		if (!unique) {
-			::error("REVCHAR: Multiple character mappings to values\n");
+			::error("REVCHAR: Multiple character mappings to values");
 		} else if ($$.empty()) {
-			::error("REVCHAR: No character mapping to values\n");
+			::error("REVCHAR: No character mapping to values");
 		}
 	}
 	| OP_STRCAT LPAREN RPAREN {
@@ -1705,15 +1705,15 @@ string_literal:
 
 		if (!sym) {
 			if (sym_IsPurgedScoped($3)) {
-				fatalerror("Unknown symbol \"%s\"; it was purged\n", $3.c_str());
+				fatalerror("Unknown symbol \"%s\"; it was purged", $3.c_str());
 			} else {
-				fatalerror("Unknown symbol \"%s\"\n", $3.c_str());
+				fatalerror("Unknown symbol \"%s\"", $3.c_str());
 			}
 		}
 		Section const *section = sym->getSection();
 
 		if (!section) {
-			fatalerror("\"%s\" does not belong to any section\n", sym->name.c_str());
+			fatalerror("\"%s\" does not belong to any section", sym->name.c_str());
 		}
 		// Section names are capped by rgbasm's maximum string length,
 		// so this currently can't overflow.
@@ -1729,7 +1729,7 @@ string:
 		if (Symbol *sym = sym_FindScopedSymbol($1); sym && sym->type == SYM_EQUS) {
 			$$ = *sym->getEqus();
 		} else {
-			::error("'%s' is not a string symbol\n", $1.c_str());
+			::error("'%s' is not a string symbol", $1.c_str());
 		}
 	}
 ;
@@ -1833,7 +1833,7 @@ sect_org:
 	| LBRACK uconst RBRACK {
 		$$ = $2;
 		if ($$ < 0 || $$ > 0xFFFF) {
-			::error("Address $%x is not 16-bit\n", $$);
+			::error("Address $%x is not 16-bit", $$);
 			$$ = -1;
 		}
 	}
@@ -2088,7 +2088,7 @@ sm83_ldh:
 		if ($4.makeCheckHRAM()) {
 			warning(
 			    WARNING_OBSOLETE,
-			    "LDH is deprecated with values from $00 to $FF; use $FF00 to $FFFF\n"
+			    "LDH is deprecated with values from $00 to $FF; use $FF00 to $FFFF"
 			);
 		}
 
@@ -2099,7 +2099,7 @@ sm83_ldh:
 		if ($2.makeCheckHRAM()) {
 			warning(
 			    WARNING_OBSOLETE,
-			    "LDH is deprecated with values from $00 to $FF; use $FF00 to $FFFF\n"
+			    "LDH is deprecated with values from $00 to $FF; use $FF00 to $FFFF"
 			);
 		}
 
@@ -2126,7 +2126,7 @@ ff00_c_ind:
 	LBRACK relocexpr OP_ADD MODE_C RBRACK {
 		// This has to use `relocexpr`, not `iconst`, to avoid a shift/reduce conflict
 		if ($2.getConstVal() != 0xFF00) {
-			::error("Base value must be equal to $FF00 for $FF00+C\n");
+			::error("Base value must be equal to $FF00 for $FF00+C");
 		}
 	}
 ;
@@ -2148,7 +2148,7 @@ sm83_ld_hl:
 		sect_RelByte($5, 1);
 	}
 	| SM83_LD MODE_HL COMMA MODE_SP {
-		::error("LD HL, SP is not a valid instruction; use LD HL, SP + 0\n");
+		::error("LD HL, SP is not a valid instruction; use LD HL, SP + 0");
 	}
 	| SM83_LD MODE_HL COMMA reloc_16bit {
 		sect_ConstByte(0x01 | (REG_HL << 4));
@@ -2156,7 +2156,7 @@ sm83_ld_hl:
 	}
 	| SM83_LD MODE_HL COMMA reg_tt_no_af {
 		::error(
-		    "LD HL, %s is not a valid instruction; use LD H, %s and LD L, %s\n",
+		    "LD HL, %s is not a valid instruction; use LD H, %s and LD L, %s",
 		    reg_tt_names[$4],
 		    reg_tt_high_names[$4],
 		    reg_tt_low_names[$4]
@@ -2169,7 +2169,7 @@ sm83_ld_sp:
 		sect_ConstByte(0xF9);
 	}
 	| SM83_LD MODE_SP COMMA reg_bc_or_de {
-		::error("LD SP, %s is not a valid instruction\n", reg_tt_names[$4]);
+		::error("LD SP, %s is not a valid instruction", reg_tt_names[$4]);
 	}
 	| SM83_LD MODE_SP COMMA reloc_16bit {
 		sect_ConstByte(0x01 | (REG_SP << 4));
@@ -2193,7 +2193,7 @@ sm83_ld_c_ind:
 		sect_ConstByte(0xE2);
 	}
 	| SM83_LD c_ind COMMA MODE_A {
-		warning(WARNING_OBSOLETE, "LD [C], A is deprecated; use LDH [C], A\n");
+		warning(WARNING_OBSOLETE, "LD [C], A is deprecated; use LDH [C], A");
 		sect_ConstByte(0xE2);
 	}
 ;
@@ -2211,7 +2211,7 @@ sm83_ld_r_no_a:
 	}
 	| SM83_LD reg_r_no_a COMMA reg_r {
 		if ($2 == REG_HL_IND && $4 == REG_HL_IND) {
-			::error("LD [HL], [HL] is not a valid instruction\n");
+			::error("LD [HL], [HL] is not a valid instruction");
 		} else {
 			sect_ConstByte(0x40 | ($2 << 3) | $4);
 		}
@@ -2230,7 +2230,7 @@ sm83_ld_a:
 		sect_ConstByte(0xF2);
 	}
 	| SM83_LD reg_a COMMA c_ind {
-		warning(WARNING_OBSOLETE, "LD A, [C] is deprecated; use LDH A, [C]\n");
+		warning(WARNING_OBSOLETE, "LD A, [C] is deprecated; use LDH A, [C]");
 		sect_ConstByte(0xF2);
 	}
 	| SM83_LD reg_a COMMA reg_rr {
@@ -2249,7 +2249,7 @@ sm83_ld_ss:
 	}
 	| SM83_LD reg_bc_or_de COMMA reg_tt_no_af {
 		::error(
-		    "LD %s, %s is not a valid instruction; use LD %s, %s and LD %s, %s\n",
+		    "LD %s, %s is not a valid instruction; use LD %s, %s and LD %s, %s",
 		    reg_tt_names[$2],
 		    reg_tt_names[$4],
 		    reg_tt_high_names[$2],
@@ -2644,7 +2644,7 @@ hl_ind_dec:
 /******************** Semantic actions ********************/
 
 void yy::parser::error(std::string const &str) {
-	::error("%s\n", str.c_str());
+	::error("%s", str.c_str());
 }
 
 static uint32_t strToNum(std::vector<int32_t> const &s) {
@@ -2656,7 +2656,7 @@ static uint32_t strToNum(std::vector<int32_t> const &s) {
 		return static_cast<uint32_t>(s[0]);
 	}
 
-	warning(WARNING_OBSOLETE, "Treating multi-unit strings as numbers is deprecated\n");
+	warning(WARNING_OBSOLETE, "Treating multi-unit strings as numbers is deprecated");
 
 	for (int32_t v : s) {
 		if (!checkNBit(v, 8, "All character units")) {
@@ -2675,7 +2675,7 @@ static uint32_t strToNum(std::vector<int32_t> const &s) {
 }
 
 static void errorInvalidUTF8Byte(uint8_t byte, char const *functionName) {
-	error("%s: Invalid UTF-8 byte 0x%02hhX\n", functionName, byte);
+	error("%s: Invalid UTF-8 byte 0x%02hhX", functionName, byte);
 }
 
 static size_t strlenUTF8(std::string const &str, bool printErrors) {
@@ -2702,7 +2702,7 @@ static size_t strlenUTF8(std::string const &str, bool printErrors) {
 	// Check for partial code point.
 	if (state != 0) {
 		if (printErrors) {
-			error("STRLEN: Incomplete UTF-8 character\n");
+			error("STRLEN: Incomplete UTF-8 character");
 		}
 		len++;
 	}
@@ -2736,7 +2736,7 @@ static std::string strsliceUTF8(std::string const &str, uint32_t start, uint32_t
 	if (!ptr[index] && start > curIdx) {
 		warning(
 		    WARNING_BUILTIN_ARG,
-		    "STRSLICE: Start index %" PRIu32 " is past the end of the string\n",
+		    "STRSLICE: Start index %" PRIu32 " is past the end of the string",
 		    start
 		);
 	}
@@ -2759,14 +2759,14 @@ static std::string strsliceUTF8(std::string const &str, uint32_t start, uint32_t
 
 	// Check for partial code point.
 	if (state != 0) {
-		error("STRSLICE: Incomplete UTF-8 character\n");
+		error("STRSLICE: Incomplete UTF-8 character");
 		curIdx++;
 	}
 
 	if (curIdx < stop) {
 		warning(
 		    WARNING_BUILTIN_ARG,
-		    "STRSLICE: Stop index %" PRIu32 " is past the end of the string\n",
+		    "STRSLICE: Stop index %" PRIu32 " is past the end of the string",
 		    stop
 		);
 	}
@@ -2799,7 +2799,7 @@ static std::string strsubUTF8(std::string const &str, uint32_t pos, uint32_t len
 	// "Length too big" warning below if the length is nonzero.
 	if (!ptr[index] && pos > curPos) {
 		warning(
-		    WARNING_BUILTIN_ARG, "STRSUB: Position %" PRIu32 " is past the end of the string\n", pos
+		    WARNING_BUILTIN_ARG, "STRSUB: Position %" PRIu32 " is past the end of the string", pos
 		);
 	}
 
@@ -2822,12 +2822,12 @@ static std::string strsubUTF8(std::string const &str, uint32_t pos, uint32_t len
 
 	// Check for partial code point.
 	if (state != 0) {
-		error("STRSUB: Incomplete UTF-8 character\n");
+		error("STRSUB: Incomplete UTF-8 character");
 		curLen++;
 	}
 
 	if (curLen < len) {
-		warning(WARNING_BUILTIN_ARG, "STRSUB: Length too big: %" PRIu32 "\n", len);
+		warning(WARNING_BUILTIN_ARG, "STRSUB: Length too big: %" PRIu32, len);
 	}
 
 	return std::string(ptr + startIndex, ptr + index);
@@ -2856,7 +2856,7 @@ static std::string strcharUTF8(std::string const &str, uint32_t idx) {
 	if (!charmap_ConvertNext(view, nullptr)) {
 		warning(
 		    WARNING_BUILTIN_ARG,
-		    "STRCHAR: Index %" PRIu32 " is past the end of the string\n",
+		    "STRCHAR: Index %" PRIu32 " is past the end of the string",
 		    idx
 		);
 	}
@@ -2879,7 +2879,7 @@ static std::string charsubUTF8(std::string const &str, uint32_t pos) {
 	if (!charmap_ConvertNext(view, nullptr)) {
 		warning(
 		    WARNING_BUILTIN_ARG,
-		    "CHARSUB: Position %" PRIu32 " is past the end of the string\n",
+		    "CHARSUB: Position %" PRIu32 " is past the end of the string",
 		    pos
 		);
 	}
@@ -2922,7 +2922,7 @@ static uint32_t adjustNegativeIndex(int32_t idx, size_t len, char const *functio
 		idx += len;
 	}
 	if (idx < 0) {
-		warning(WARNING_BUILTIN_ARG, "%s: Index starts at 0\n", functionName);
+		warning(WARNING_BUILTIN_ARG, "%s: Index starts at 0", functionName);
 		idx = 0;
 	}
 	return static_cast<uint32_t>(idx);
@@ -2935,7 +2935,7 @@ static uint32_t adjustNegativePos(int32_t pos, size_t len, char const *functionN
 		pos += len + 1;
 	}
 	if (pos < 1) {
-		warning(WARNING_BUILTIN_ARG, "%s: Position starts at 1\n", functionName);
+		warning(WARNING_BUILTIN_ARG, "%s: Position starts at 1", functionName);
 		pos = 1;
 	}
 	return static_cast<uint32_t>(pos);
@@ -2943,7 +2943,7 @@ static uint32_t adjustNegativePos(int32_t pos, size_t len, char const *functionN
 
 static std::string strrpl(std::string_view str, std::string const &old, std::string const &rep) {
 	if (old.empty()) {
-		warning(WARNING_EMPTY_STRRPL, "STRRPL: Cannot replace an empty string\n");
+		warning(WARNING_EMPTY_STRRPL, "STRRPL: Cannot replace an empty string");
 		return std::string(str);
 	}
 
@@ -2994,13 +2994,13 @@ static std::string
 		}
 
 		if (fmt.isEmpty()) {
-			error("STRFMT: Illegal '%%' at end of format string\n");
+			error("STRFMT: Illegal '%%' at end of format string");
 			str += '%';
 			break;
 		}
 
 		if (!fmt.isValid()) {
-			error("STRFMT: Invalid format spec for argument %zu\n", argIndex + 1);
+			error("STRFMT: Invalid format spec for argument %zu", argIndex + 1);
 			str += '%';
 		} else if (argIndex >= args.size()) {
 			// Will warn after formatting is done.
@@ -3015,10 +3015,10 @@ static std::string
 	}
 
 	if (argIndex < args.size()) {
-		error("STRFMT: %zu unformatted argument(s)\n", args.size() - argIndex);
+		error("STRFMT: %zu unformatted argument(s)", args.size() - argIndex);
 	} else if (argIndex > args.size()) {
 		error(
-		    "STRFMT: Not enough arguments for format spec, got: %zu, need: %zu\n",
+		    "STRFMT: Not enough arguments for format spec, got: %zu, need: %zu",
 		    args.size(),
 		    argIndex
 		);
@@ -3041,12 +3041,12 @@ static void compoundAssignment(std::string const &symName, RPNCommand op, int32_
 static void failAssert(AssertionType type) {
 	switch (type) {
 	case ASSERT_FATAL:
-		fatalerror("Assertion failed\n");
+		fatalerror("Assertion failed");
 	case ASSERT_ERROR:
-		error("Assertion failed\n");
+		error("Assertion failed");
 		break;
 	case ASSERT_WARN:
-		warning(WARNING_ASSERT, "Assertion failed\n");
+		warning(WARNING_ASSERT, "Assertion failed");
 		break;
 	}
 }
@@ -3054,12 +3054,12 @@ static void failAssert(AssertionType type) {
 static void failAssertMsg(AssertionType type, std::string const &message) {
 	switch (type) {
 	case ASSERT_FATAL:
-		fatalerror("Assertion failed: %s\n", message.c_str());
+		fatalerror("Assertion failed: %s", message.c_str());
 	case ASSERT_ERROR:
-		error("Assertion failed: %s\n", message.c_str());
+		error("Assertion failed: %s", message.c_str());
 		break;
 	case ASSERT_WARN:
-		warning(WARNING_ASSERT, "Assertion failed: %s\n", message.c_str());
+		warning(WARNING_ASSERT, "Assertion failed: %s", message.c_str());
 		break;
 	}
 }

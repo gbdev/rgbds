@@ -14,6 +14,7 @@
 #include "link/main.hpp"
 #include "link/section.hpp"
 #include "link/symbol.hpp"
+#include "link/warning.hpp"
 
 std::deque<Assertion> assertions;
 

@@ -10,6 +10,8 @@
 #include "error.hpp"
 #include "helpers.hpp"
 
+#include "link/warning.hpp"
+
 std::vector<std::unique_ptr<Section>> sectionList;
 std::unordered_map<std::string, size_t> sectionMap; // Indexes into `sectionList`
 
@@ -22,9 +24,8 @@ void sect_ForEach(void (*callback)(Section &)) {
 static void checkAgainstFixedAddress(Section const &target, Section const &other, uint16_t org) {
 	if (target.isAddressFixed) {
 		if (target.org != org) {
-			fprintf(
-			    stderr,
-			    "error: Section \"%s\" is defined with address $%04" PRIx16 " at ",
+			errorNoDump(
+			    "Section \"%s\" is defined with address $%04" PRIx16 " at ",
 			    target.name.c_str(),
 			    target.org
 			);
@@ -36,9 +37,8 @@ static void checkAgainstFixedAddress(Section const &target, Section const &other
 		}
 	} else if (target.isAlignFixed) {
 		if ((org - target.alignOfs) & target.alignMask) {
-			fprintf(
-			    stderr,
-			    "error: Section \"%s\" is defined with %d-byte alignment (offset %" PRIu16 ") at ",
+			errorNoDump(
+			    "Section \"%s\" is defined with %d-byte alignment (offset %" PRIu16 ") at ",
 			    target.name.c_str(),
 			    target.alignMask + 1,
 			    target.alignOfs
@@ -55,9 +55,8 @@ static void checkAgainstFixedAddress(Section const &target, Section const &other
 static bool checkAgainstFixedAlign(Section const &target, Section const &other, int32_t ofs) {
 	if (target.isAddressFixed) {
 		if ((target.org - ofs) & other.alignMask) {
-			fprintf(
-			    stderr,
-			    "error: Section \"%s\" is defined with address $%04" PRIx16 " at ",
+			errorNoDump(
+			    "Section \"%s\" is defined with address $%04" PRIx16 " at ",
 			    target.name.c_str(),
 			    target.org
 			);
@@ -75,9 +74,8 @@ static bool checkAgainstFixedAlign(Section const &target, Section const &other, 
 		return false;
 	} else if (target.isAlignFixed
 	           && (other.alignMask & target.alignOfs) != (target.alignMask & ofs)) {
-		fprintf(
-		    stderr,
-		    "error: Section \"%s\" is defined with %d-byte alignment (offset %" PRIu16 ") at ",
+		errorNoDump(
+		    "Section \"%s\" is defined with %d-byte alignment (offset %" PRIu16 ") at ",
 		    target.name.c_str(),
 		    target.alignMask + 1,
 		    target.alignOfs
@@ -131,9 +129,8 @@ static void checkFragmentCompat(Section &target, Section &other) {
 
 static void mergeSections(Section &target, std::unique_ptr<Section> &&other) {
 	if (target.modifier != other->modifier) {
-		fprintf(
-		    stderr,
-		    "error: Section \"%s\" is defined as SECTION %s at ",
+		errorNoDump(
+		    "Section \"%s\" is defined as SECTION %s at ",
 		    target.name.c_str(),
 		    sectionModNames[target.modifier]
 		);
@@ -143,16 +140,15 @@ static void mergeSections(Section &target, std::unique_ptr<Section> &&other) {
 		putc('\n', stderr);
 		exit(1);
 	} else if (other->modifier == SECTION_NORMAL) {
-		fprintf(stderr, "error: Section \"%s\" is defined at ", target.name.c_str());
+		errorNoDump("Section \"%s\" is defined at ", target.name.c_str());
 		target.src->dump(target.lineNo);
 		fputs(", but also at ", stderr);
 		other->src->dump(other->lineNo);
 		putc('\n', stderr);
 		exit(1);
 	} else if (target.type != other->type) {
-		fprintf(
-		    stderr,
-		    "error: Section \"%s\" is defined with type %s at ",
+		errorNoDump(
+		    "Section \"%s\" is defined with type %s at ",
 		    target.name.c_str(),
 		    sectionTypeInfo[target.type].name.c_str()
 		);
@@ -168,9 +164,8 @@ static void mergeSections(Section &target, std::unique_ptr<Section> &&other) {
 			target.isBankFixed = true;
 			target.bank = other->bank;
 		} else if (target.bank != other->bank) {
-			fprintf(
-			    stderr,
-			    "error: Section \"%s\" is defined with bank %" PRIu32 " at ",
+			errorNoDump(
+			    "Section \"%s\" is defined with bank %" PRIu32 " at ",
 			    target.name.c_str(),
 			    target.bank
 			);

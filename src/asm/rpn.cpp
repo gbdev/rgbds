@@ -39,7 +39,7 @@ uint8_t *Expression::reserveSpace(uint32_t size, uint32_t patchSize) {
 
 int32_t Expression::getConstVal() const {
 	if (!isKnown()) {
-		error("Expected constant expression: %s\n", data.get<std::string>().c_str());
+		error("Expected constant expression: %s", data.get<std::string>().c_str());
 		return 0;
 	}
 	return value();
@@ -73,10 +73,10 @@ void Expression::makeNumber(uint32_t value) {
 void Expression::makeSymbol(std::string const &symName) {
 	clear();
 	if (Symbol *sym = sym_FindScopedSymbol(symName); sym_IsPC(sym) && !sect_GetSymbolSection()) {
-		error("PC has no value outside of a section\n");
+		error("PC has no value outside of a section");
 		data = 0;
 	} else if (sym && !sym->isNumeric() && !sym->isLabel()) {
-		error("'%s' is not a numeric symbol\n", symName.c_str());
+		error("'%s' is not a numeric symbol", symName.c_str());
 		data = 0;
 	} else if (!sym || !sym->isConstant()) {
 		isSymbol = true;
@@ -103,7 +103,7 @@ void Expression::makeBankSymbol(std::string const &symName) {
 	if (Symbol const *sym = sym_FindScopedSymbol(symName); sym_IsPC(sym)) {
 		// The @ symbol is treated differently.
 		if (!currentSection) {
-			error("PC has no bank outside of a section\n");
+			error("PC has no bank outside of a section");
 			data = 1;
 		} else if (currentSection->bank == UINT32_MAX) {
 			data = "Current section's bank is not known";
@@ -114,7 +114,7 @@ void Expression::makeBankSymbol(std::string const &symName) {
 		}
 		return;
 	} else if (sym && !sym->isLabel()) {
-		error("BANK argument must be a label\n");
+		error("BANK argument must be a label");
 		data = 1;
 	} else {
 		sym = sym_Ref(symName);
@@ -394,43 +394,37 @@ void Expression::makeBinaryOp(RPNCommand op, Expression &&src1, Expression const
 			break;
 		case RPN_SHL:
 			if (rval < 0) {
-				warning(
-				    WARNING_SHIFT_AMOUNT, "Shifting left by negative amount %" PRId32 "\n", rval
-				);
+				warning(WARNING_SHIFT_AMOUNT, "Shifting left by negative amount %" PRId32, rval);
 			}
 
 			if (rval >= 32) {
-				warning(WARNING_SHIFT_AMOUNT, "Shifting left by large amount %" PRId32 "\n", rval);
+				warning(WARNING_SHIFT_AMOUNT, "Shifting left by large amount %" PRId32, rval);
 			}
 
 			data = op_shift_left(lval, rval);
 			break;
 		case RPN_SHR:
 			if (lval < 0) {
-				warning(WARNING_SHIFT, "Shifting right negative value %" PRId32 "\n", lval);
+				warning(WARNING_SHIFT, "Shifting right negative value %" PRId32, lval);
 			}
 
 			if (rval < 0) {
-				warning(
-				    WARNING_SHIFT_AMOUNT, "Shifting right by negative amount %" PRId32 "\n", rval
-				);
+				warning(WARNING_SHIFT_AMOUNT, "Shifting right by negative amount %" PRId32, rval);
 			}
 
 			if (rval >= 32) {
-				warning(WARNING_SHIFT_AMOUNT, "Shifting right by large amount %" PRId32 "\n", rval);
+				warning(WARNING_SHIFT_AMOUNT, "Shifting right by large amount %" PRId32, rval);
 			}
 
 			data = op_shift_right(lval, rval);
 			break;
 		case RPN_USHR:
 			if (rval < 0) {
-				warning(
-				    WARNING_SHIFT_AMOUNT, "Shifting right by negative amount %" PRId32 "\n", rval
-				);
+				warning(WARNING_SHIFT_AMOUNT, "Shifting right by negative amount %" PRId32, rval);
 			}
 
 			if (rval >= 32) {
-				warning(WARNING_SHIFT_AMOUNT, "Shifting right by large amount %" PRId32 "\n", rval);
+				warning(WARNING_SHIFT_AMOUNT, "Shifting right by large amount %" PRId32, rval);
 			}
 
 			data = op_shift_right_unsigned(lval, rval);
@@ -440,13 +434,13 @@ void Expression::makeBinaryOp(RPNCommand op, Expression &&src1, Expression const
 			break;
 		case RPN_DIV:
 			if (rval == 0) {
-				fatalerror("Division by zero\n");
+				fatalerror("Division by zero");
 			}
 
 			if (lval == INT32_MIN && rval == -1) {
 				warning(
 				    WARNING_DIV,
-				    "Division of %" PRId32 " by -1 yields %" PRId32 "\n",
+				    "Division of %" PRId32 " by -1 yields %" PRId32,
 				    INT32_MIN,
 				    INT32_MIN
 				);
@@ -457,7 +451,7 @@ void Expression::makeBinaryOp(RPNCommand op, Expression &&src1, Expression const
 			break;
 		case RPN_MOD:
 			if (rval == 0) {
-				fatalerror("Modulo by zero\n");
+				fatalerror("Modulo by zero");
 			}
 
 			if (lval == INT32_MIN && rval == -1) {
@@ -468,7 +462,7 @@ void Expression::makeBinaryOp(RPNCommand op, Expression &&src1, Expression const
 			break;
 		case RPN_EXP:
 			if (rval < 0) {
-				fatalerror("Exponentiation by negative power\n");
+				fatalerror("Exponentiation by negative power");
 			}
 
 			data = op_exponent(lval, rval);
@@ -551,7 +545,7 @@ bool Expression::makeCheckHRAM() {
 		// That range is valid, but deprecated
 		return true;
 	} else {
-		error("Source address $%" PRIx32 " not between $FF00 to $FFFF\n", val);
+		error("Source address $%" PRIx32 " not between $FF00 to $FFFF", val);
 	}
 	return false;
 }
@@ -561,7 +555,7 @@ void Expression::makeCheckRST() {
 		*reserveSpace(1) = RPN_RST;
 	} else if (int32_t val = value(); val & ~0x38) {
 		// A valid RST address must be masked with 0x38
-		error("Invalid address $%" PRIx32 " for RST\n", val);
+		error("Invalid address $%" PRIx32 " for RST", val);
 	}
 }
 
@@ -575,7 +569,7 @@ void Expression::makeCheckBitIndex(uint8_t mask) {
 	} else if (int32_t val = value(); val & ~0x07) {
 		// A valid bit index must be masked with 0x07
 		static char const *instructions[4] = {"instruction", "BIT", "RES", "SET"};
-		error("Invalid bit index %" PRId32 " for %s\n", val, instructions[mask >> 6]);
+		error("Invalid bit index %" PRId32 " for %s", val, instructions[mask >> 6]);
 	}
 }
 
@@ -593,20 +587,20 @@ bool checkNBit(int32_t v, uint8_t n, char const *name) {
 	if (v < -(1 << n) || v >= 1 << n) {
 		warning(
 		    WARNING_TRUNCATION_1,
-		    n == 8 && !name ? "%s must be %u-bit; use LOW() to force 8-bit\n"
-		                    : "%s must be %u-bit\n",
+		    "%s must be %u-bit%s",
 		    name ? name : "Expression",
-		    n
+		    n,
+		    n == 8 && !name ? "; use LOW() to force 8-bit" : ""
 		);
 		return false;
 	}
 	if (v < -(1 << (n - 1))) {
 		warning(
 		    WARNING_TRUNCATION_2,
-		    n == 8 && !name ? "%s must be %u-bit; use LOW() to force 8-bit\n"
-		                    : "%s must be %u-bit\n",
+		    "%s must be %u-bit%s",
 		    name ? name : "Expression",
-		    n
+		    n,
+		    n == 8 && !name ? "; use LOW() to force 8-bit" : ""
 		);
 		return false;
 	}

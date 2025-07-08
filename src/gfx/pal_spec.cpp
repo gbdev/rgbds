@@ -16,10 +16,12 @@
 #include <string_view>
 #include <tuple>
 
+#include "error.hpp"
 #include "helpers.hpp"
 #include "platform.hpp"
 
 #include "gfx/main.hpp"
+#include "gfx/warning.hpp"
 
 using namespace std::string_view_literals;
 
@@ -60,7 +62,7 @@ void parseInlinePalSpec(char const * const rawArg) {
 		assume(ofs <= arg.length());
 		assume(len <= arg.length());
 
-		errorMessage(msg);
+		error("%s", msg); // `format_` and `-Wformat-security` would complain about `error(msg);`
 		fprintf(
 		    stderr,
 		    "In inline palette spec: %s\n"
@@ -286,7 +288,7 @@ static void parsePSPFile(std::filebuf &file) {
 
 	if (uint16_t nbPalColors = options.nbColorsPerPal * options.nbPalettes;
 	    *nbColors > nbPalColors) {
-		warning(
+		warnx(
 		    "PSP file contains %" PRIu16 " colors, but there can only be %" PRIu16
 		    "; ignoring extra",
 		    *nbColors,
@@ -368,7 +370,7 @@ static void parseGPLFile(std::filebuf &file) {
 	}
 
 	if (nbColors > maxNbColors) {
-		warning(
+		warnx(
 		    "GPL file contains %" PRIu16 " colors, but there can only be %" PRIu16
 		    "; ignoring extra",
 		    nbColors,
@@ -416,7 +418,7 @@ static void parseHEXFile(std::filebuf &file) {
 	}
 
 	if (nbColors > maxNbColors) {
-		warning(
+		warnx(
 		    "HEX file contains %" PRIu16 " colors, but there can only be %" PRIu16
 		    "; ignoring extra",
 		    nbColors,
@@ -445,7 +447,7 @@ static void parseACTFile(std::filebuf &file) {
 
 	if (uint16_t nbPalColors = options.nbColorsPerPal * options.nbPalettes;
 	    nbColors > nbPalColors) {
-		warning(
+		warnx(
 		    "ACT file contains %" PRIu16 " colors, but there can only be %" PRIu16
 		    "; ignoring extra",
 		    nbColors,
@@ -499,7 +501,7 @@ static void parseACOFile(std::filebuf &file) {
 
 	if (uint16_t nbPalColors = options.nbColorsPerPal * options.nbPalettes;
 	    nbColors > nbPalColors) {
-		warning(
+		warnx(
 		    "ACO file contains %" PRIu16 " colors, but there can only be %" PRIu16
 		    "; ignoring extra",
 		    nbColors,

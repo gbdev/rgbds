@@ -16,6 +16,7 @@
 #include <vector>
 
 #include "defaultinitvec.hpp"
+#include "error.hpp"
 #include "file.hpp"
 #include "helpers.hpp"
 #include "itertools.hpp"
@@ -24,6 +25,7 @@
 #include "gfx/pal_packing.hpp"
 #include "gfx/pal_sorting.hpp"
 #include "gfx/proto_palette.hpp"
+#include "gfx/warning.hpp"
 
 static bool isBgColorTransparent() {
 	return options.bgColor.has_value() && options.bgColor->isTransparent();
@@ -92,7 +94,7 @@ class Png {
 	static void handleWarning(png_structp png, char const *msg) {
 		Png *self = reinterpret_cast<Png *>(png_get_error_ptr(png));
 
-		warning("In input image (\"%s\"): %s", self->c_str(), msg);
+		warnx("In input image (\"%s\"): %s", self->c_str(), msg);
 	}
 
 	static void readData(png_structp png, png_bytep data, size_t length) {
@@ -385,7 +387,7 @@ public:
 				    std::tuple conflicting{color.toCSS(), other->toCSS()};
 				    // Do not report combinations twice
 				    if (std::find(RANGE(conflicts), conflicting) == conflicts.end()) {
-					    warning(
+					    warnx(
 					        "Fusing colors #%08x and #%08x into Game Boy color $%04x [first seen "
 					        "at x: %" PRIu32 ", y: %" PRIu32 "]",
 					        std::get<0>(conflicting),

@@ -19,6 +19,7 @@
 #include "link/output.hpp"
 #include "link/section.hpp"
 #include "link/symbol.hpp"
+#include "link/warning.hpp"
 
 struct MemoryLocation {
 	uint16_t address;

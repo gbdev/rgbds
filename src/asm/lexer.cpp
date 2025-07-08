@@ -384,7 +384,7 @@ void lexer_IncIFDepth() {
 
 void lexer_DecIFDepth() {
 	if (lexerState->ifStack.empty()) {
-		fatalerror("Found ENDC outside of an IF construct\n");
+		fatalerror("Found ENDC outside of an IF construct");
 	}
 
 	lexerState->ifStack.pop_front();
@@ -423,7 +423,7 @@ bool LexerState::setFileAsNextState(std::string const &filePath, bool updateStat
 		struct stat statBuf;
 		if (stat(filePath.c_str(), &statBuf) != 0) {
 			// LCOV_EXCL_START
-			error("Failed to stat file \"%s\": %s\n", filePath.c_str(), strerror(errno));
+			error("Failed to stat file \"%s\": %s", filePath.c_str(), strerror(errno));
 			return false;
 			// LCOV_EXCL_STOP
 		}
@@ -432,7 +432,7 @@ bool LexerState::setFileAsNextState(std::string const &filePath, bool updateStat
 		int fd = open(path.c_str(), O_RDONLY);
 		if (fd < 0) {
 			// LCOV_EXCL_START
-			error("Failed to open file \"%s\": %s\n", path.c_str(), strerror(errno));
+			error("Failed to open file \"%s\": %s", path.c_str(), strerror(errno));
 			return false;
 			// LCOV_EXCL_STOP
 		}
@@ -565,7 +565,7 @@ size_t BufferedContent::readMore(size_t startIndex, size_t nbChars) {
 
 	if (nbReadChars == -1) {
 		// LCOV_EXCL_START
-		fatalerror("Error while reading \"%s\": %s\n", lexerState->path.c_str(), strerror(errno));
+		fatalerror("Error while reading \"%s\": %s", lexerState->path.c_str(), strerror(errno));
 		// LCOV_EXCL_STOP
 	}
 
@@ -600,7 +600,7 @@ static void beginExpansion(std::shared_ptr<std::string> str, std::optional<std::
 
 void lexer_CheckRecursionDepth() {
 	if (lexerState->expansions.size() > maxRecursionDepth + 1) {
-		fatalerror("Recursion limit (%zu) exceeded\n", maxRecursionDepth);
+		fatalerror("Recursion limit (%zu) exceeded", maxRecursionDepth);
 	}
 }
 
@@ -637,7 +637,7 @@ static uint32_t readBracketedMacroArgNum() {
 	if (c >= '0' && c <= '9') {
 		uint32_t n = readDecimalNumber(0);
 		if (n > INT32_MAX) {
-			error("Number in bracketed macro argument is too large\n");
+			error("Number in bracketed macro argument is too large");
 			return 0;
 		}
 		num = negative ? -n : static_cast<int32_t>(n);
@@ -646,7 +646,7 @@ static uint32_t readBracketedMacroArgNum() {
 			shiftChar();
 			c = peek();
 			if (!startsIdentifier(c)) {
-				error("Empty raw symbol in bracketed macro argument\n");
+				error("Empty raw symbol in bracketed macro argument");
 				return 0;
 			}
 		}
@@ -662,14 +662,14 @@ static uint32_t readBracketedMacroArgNum() {
 
 		if (!sym) {
 			if (sym_IsPurgedScoped(symName)) {
-				error("Bracketed symbol \"%s\" does not exist; it was purged\n", symName.c_str());
+				error("Bracketed symbol \"%s\" does not exist; it was purged", symName.c_str());
 			} else {
-				error("Bracketed symbol \"%s\" does not exist\n", symName.c_str());
+				error("Bracketed symbol \"%s\" does not exist", symName.c_str());
 			}
 			num = 0;
 			symbolError = true;
 		} else if (!sym->isNumeric()) {
-			error("Bracketed symbol \"%s\" is not numeric\n", symName.c_str());
+			error("Bracketed symbol \"%s\" is not numeric", symName.c_str());
 			num = 0;
 			symbolError = true;
 		} else {
@@ -682,13 +682,13 @@ static uint32_t readBracketedMacroArgNum() {
 	c = peek();
 	shiftChar();
 	if (c != '>') {
-		error("Invalid character in bracketed macro argument %s\n", printChar(c));
+		error("Invalid character in bracketed macro argument %s", printChar(c));
 		return 0;
 	} else if (empty) {
-		error("Empty bracketed macro argument\n");
+		error("Empty bracketed macro argument");
 		return 0;
 	} else if (num == 0 && !symbolError) {
-		error("Invalid bracketed macro argument '\\<0>'\n");
+		error("Invalid bracketed macro argument '\\<0>'");
 		return 0;
 	} else {
 		return num;
@@ -699,13 +699,13 @@ static std::shared_ptr<std::string> readMacroArg(char name) {
 	if (name == '@') {
 		auto str = fstk_GetUniqueIDStr();
 		if (!str) {
-			error("'\\@' cannot be used outside of a macro or REPT/FOR block\n");
+			error("'\\@' cannot be used outside of a macro or REPT/FOR block");
 		}
 		return str;
 	} else if (name == '#') {
 		MacroArgs *macroArgs = fstk_GetCurrentMacroArgs();
 		if (!macroArgs) {
-			error("'\\#' cannot be used outside of a macro\n");
+			error("'\\#' cannot be used outside of a macro");
 			return nullptr;
 		}
 
@@ -721,13 +721,13 @@ static std::shared_ptr<std::string> readMacroArg(char name) {
 
 		MacroArgs *macroArgs = fstk_GetCurrentMacroArgs();
 		if (!macroArgs) {
-			error("'\\<%" PRIu32 ">' cannot be used outside of a macro\n", num);
+			error("'\\<%" PRIu32 ">' cannot be used outside of a macro", num);
 			return nullptr;
 		}
 
 		auto str = macroArgs->getArg(num);
 		if (!str) {
-			error("Macro argument '\\<%" PRId32 ">' not defined\n", num);
+			error("Macro argument '\\<%" PRId32 ">' not defined", num);
 		}
 		return str;
 	} else {
@@ -735,13 +735,13 @@ static std::shared_ptr<std::string> readMacroArg(char name) {
 
 		MacroArgs *macroArgs = fstk_GetCurrentMacroArgs();
 		if (!macroArgs) {
-			error("'\\%c' cannot be used outside of a macro\n", name);
+			error("'\\%c' cannot be used outside of a macro", name);
 			return nullptr;
 		}
 
 		auto str = macroArgs->getArg(name - '0');
 		if (!str) {
-			error("Macro argument '\\%c' not defined\n", name);
+			error("Macro argument '\\%c' not defined", name);
 		}
 		return str;
 	}
@@ -945,7 +945,7 @@ static void discardBlockComment() {
 
 		switch (c) {
 		case EOF:
-			error("Unterminated block comment\n");
+			error("Unterminated block comment");
 			return;
 		case '\r':
 			handleCRLF(c);
@@ -957,7 +957,7 @@ static void discardBlockComment() {
 			continue;
 		case '/':
 			if (peek() == '*') {
-				warning(WARNING_NESTED_COMMENT, "/* in block comment\n");
+				warning(WARNING_NESTED_COMMENT, "/* in block comment");
 			}
 			continue;
 		case '*':
@@ -999,7 +999,7 @@ static void discardLineContinuation() {
 		} else if (c == ';') {
 			discardComment();
 		} else {
-			error("Begun line continuation, but encountered character %s\n", printChar(c));
+			error("Begun line continuation, but encountered character %s", printChar(c));
 			break;
 		}
 	}
@@ -1041,7 +1041,7 @@ static uint32_t readFractionalPart(uint32_t integer) {
 				break;
 			}
 			if (divisor > (UINT32_MAX - (c - '0')) / 10) {
-				warning(WARNING_LARGE_CONSTANT, "Precision of fixed-point constant is too large\n");
+				warning(WARNING_LARGE_CONSTANT, "Precision of fixed-point constant is too large");
 				// Discard any additional digits
 				shiftChar();
 				while (c = peek(), (c >= '0' && c <= '9') || c == '_') {
@@ -1064,16 +1064,16 @@ static uint32_t readFractionalPart(uint32_t integer) {
 
 	if (precision == 0) {
 		if (state >= READFRACTIONALPART_PRECISION) {
-			error("Invalid fixed-point constant, no significant digits after 'q'\n");
+			error("Invalid fixed-point constant, no significant digits after 'q'");
 		}
 		precision = fixPrecision;
 	} else if (precision > 31) {
-		error("Fixed-point constant precision must be between 1 and 31\n");
+		error("Fixed-point constant precision must be between 1 and 31");
 		precision = fixPrecision;
 	}
 
 	if (integer >= (1ULL << (32 - precision))) {
-		warning(WARNING_LARGE_CONSTANT, "Magnitude of fixed-point constant is too large\n");
+		warning(WARNING_LARGE_CONSTANT, "Magnitude of fixed-point constant is too large");
 	}
 
 	// Cast to unsigned avoids undefined overflow behavior
@@ -1096,18 +1096,18 @@ static bool checkDigitErrors(char const *digits, size_t n, char const *type) {
 		char c = digits[i];
 
 		if (!isValidDigit(c)) {
-			error("Invalid digit for %s constant %s\n", type, printChar(c));
+			error("Invalid digit for %s constant %s", type, printChar(c));
 			return false;
 		}
 
 		if (c >= '0' && c < static_cast<char>(n + '0') && c != static_cast<char>(i + '0')) {
-			error("Changed digit for %s constant %s\n", type, printChar(c));
+			error("Changed digit for %s constant %s", type, printChar(c));
 			return false;
 		}
 
 		for (size_t j = i + 1; j < n; j++) {
 			if (c == digits[j]) {
-				error("Repeated digit for %s constant %s\n", type, printChar(c));
+				error("Repeated digit for %s constant %s", type, printChar(c));
 				return false;
 			}
 		}
@@ -1146,7 +1146,7 @@ static uint32_t readBinaryNumber() {
 			break;
 		}
 		if (value > (UINT32_MAX - bit) / 2) {
-			warning(WARNING_LARGE_CONSTANT, "Integer constant is too large\n");
+			warning(WARNING_LARGE_CONSTANT, "Integer constant is too large");
 		}
 		value = value * 2 + bit;
 
@@ -1154,7 +1154,7 @@ static uint32_t readBinaryNumber() {
 	}
 
 	if (empty) {
-		error("Invalid integer constant, no digits after '%%'\n");
+		error("Invalid integer constant, no digits after '%%'");
 	}
 
 	return value;
@@ -1176,7 +1176,7 @@ static uint32_t readOctalNumber() {
 		}
 
 		if (value > (UINT32_MAX - c) / 8) {
-			warning(WARNING_LARGE_CONSTANT, "Integer constant is too large\n");
+			warning(WARNING_LARGE_CONSTANT, "Integer constant is too large");
 		}
 		value = value * 8 + c;
 
@@ -1184,7 +1184,7 @@ static uint32_t readOctalNumber() {
 	}
 
 	if (empty) {
-		error("Invalid integer constant, no digits after '&'\n");
+		error("Invalid integer constant, no digits after '&'");
 	}
 
 	return value;
@@ -1206,7 +1206,7 @@ static uint32_t readDecimalNumber(int initial) {
 		}
 
 		if (value > (UINT32_MAX - c) / 10) {
-			warning(WARNING_LARGE_CONSTANT, "Integer constant is too large\n");
+			warning(WARNING_LARGE_CONSTANT, "Integer constant is too large");
 		}
 		value = value * 10 + c;
 
@@ -1214,7 +1214,7 @@ static uint32_t readDecimalNumber(int initial) {
 	}
 
 	if (empty) {
-		error("Invalid integer constant, no digits\n");
+		error("Invalid integer constant, no digits");
 	}
 
 	return value;
@@ -1240,7 +1240,7 @@ static uint32_t readHexNumber() {
 		}
 
 		if (value > (UINT32_MAX - c) / 16) {
-			warning(WARNING_LARGE_CONSTANT, "Integer constant is too large\n");
+			warning(WARNING_LARGE_CONSTANT, "Integer constant is too large");
 		}
 		value = value * 16 + c;
 
@@ -1248,7 +1248,7 @@ static uint32_t readHexNumber() {
 	}
 
 	if (empty) {
-		error("Invalid integer constant, no digits after '$'\n");
+		error("Invalid integer constant, no digits after '$'");
 	}
 
 	return value;
@@ -1286,11 +1286,10 @@ static uint32_t readGfxConstant() {
 	}
 
 	if (width == 0) {
-		error("Invalid graphics constant, no digits after '`'\n");
+		error("Invalid graphics constant, no digits after '`'");
 	} else if (width == 9) {
 		warning(
-		    WARNING_LARGE_CONSTANT,
-		    "Graphics constant is too long, only first 8 pixels considered\n"
+		    WARNING_LARGE_CONSTANT, "Graphics constant is too long, only first 8 pixels considered"
 		);
 	}
 
@@ -1320,7 +1319,7 @@ static Token readIdentifier(char firstChar, bool raw) {
 	if (!raw) {
 		if (auto search = keywordDict.find(identifier); search != keywordDict.end()) {
 			if (search == ldio) {
-				warning(WARNING_OBSOLETE, "LDIO is deprecated; use LDH\n");
+				warning(WARNING_OBSOLETE, "LDIO is deprecated; use LDH");
 			}
 			return Token(search->second);
 		}
@@ -1338,7 +1337,7 @@ static Token readIdentifier(char firstChar, bool raw) {
 
 static std::shared_ptr<std::string> readInterpolation(size_t depth) {
 	if (depth > maxRecursionDepth) {
-		fatalerror("Recursion limit (%zu) exceeded\n", maxRecursionDepth);
+		fatalerror("Recursion limit (%zu) exceeded", maxRecursionDepth);
 	}
 
 	std::string fmtBuf;
@@ -1360,7 +1359,7 @@ static std::shared_ptr<std::string> readInterpolation(size_t depth) {
 			}
 			continue; // Restart, reading from the new buffer
 		} else if (c == EOF || c == '\r' || c == '\n' || c == '"') {
-			error("Missing }\n");
+			error("Missing }");
 			break;
 		} else if (c == '}') {
 			shiftChar();
@@ -1372,7 +1371,7 @@ static std::shared_ptr<std::string> readInterpolation(size_t depth) {
 			}
 			fmt.finishCharacters();
 			if (!fmt.isValid()) {
-				error("Invalid format spec '%s'\n", fmtBuf.c_str());
+				error("Invalid format spec '%s'", fmtBuf.c_str());
 			}
 			fmtBuf.clear(); // Now that format has been set, restart at beginning of string
 		} else {
@@ -1391,7 +1390,7 @@ static std::shared_ptr<std::string> readInterpolation(size_t depth) {
 		// Don't allow symbols that alias keywords without a '#' prefix.
 		error(
 		    "Interpolated symbol \"%s\" is a reserved keyword; add a '#' prefix to use it as a raw "
-		    "symbol\n",
+		    "symbol",
 		    fmtBuf.c_str()
 		);
 		return nullptr;
@@ -1401,9 +1400,9 @@ static std::shared_ptr<std::string> readInterpolation(size_t depth) {
 
 	if (!sym || !sym->isDefined()) {
 		if (sym_IsPurgedScoped(fmtBuf)) {
-			error("Interpolated symbol \"%s\" does not exist; it was purged\n", fmtBuf.c_str());
+			error("Interpolated symbol \"%s\" does not exist; it was purged", fmtBuf.c_str());
 		} else {
-			error("Interpolated symbol \"%s\" does not exist\n", fmtBuf.c_str());
+			error("Interpolated symbol \"%s\" does not exist", fmtBuf.c_str());
 		}
 	} else if (sym->type == SYM_EQUS) {
 		auto buf = std::make_shared<std::string>();
@@ -1414,7 +1413,7 @@ static std::shared_ptr<std::string> readInterpolation(size_t depth) {
 		fmt.appendNumber(*buf, sym->getConstantValue());
 		return buf;
 	} else {
-		error("Interpolated symbol \"%s\" is not a numeric or string symbol\n", fmtBuf.c_str());
+		error("Interpolated symbol \"%s\" is not a numeric or string symbol", fmtBuf.c_str());
 	}
 	return nullptr;
 }
@@ -1472,7 +1471,7 @@ static std::string readString(bool raw) {
 
 		// '\r', '\n' or EOF ends a single-line string early
 		if (c == EOF || (!multiline && (c == '\r' || c == '\n'))) {
-			error("Unterminated string\n");
+			error("Unterminated string");
 			return str;
 		}
 
@@ -1560,12 +1559,12 @@ static std::string readString(bool raw) {
 				continue; // Do not copy an additional character
 
 			case EOF: // Can't really print that one
-				error("Illegal character escape at end of input\n");
+				error("Illegal character escape at end of input");
 				c = '\\';
 				break;
 
 			default:
-				error("Illegal character escape %s\n", printChar(c));
+				error("Illegal character escape %s", printChar(c));
 				shiftChar();
 				break;
 			}
@@ -1616,7 +1615,7 @@ static void appendStringLiteral(std::string &str, bool raw) {
 
 		// '\r', '\n' or EOF ends a single-line string early
 		if (c == EOF || (!multiline && (c == '\r' || c == '\n'))) {
-			error("Unterminated string\n");
+			error("Unterminated string");
 			return;
 		}
 
@@ -1697,12 +1696,12 @@ static void appendStringLiteral(std::string &str, bool raw) {
 			}
 
 			case EOF: // Can't really print that one
-				error("Illegal character escape at end of input\n");
+				error("Illegal character escape at end of input");
 				c = '\\';
 				break;
 
 			default:
-				error("Illegal character escape %s\n", printChar(c));
+				error("Illegal character escape %s", printChar(c));
 				shiftChar();
 				break;
 			}
@@ -2077,9 +2076,9 @@ static Token yylex_NORMAL() {
 						garbage += ", ";
 						garbage += printChar(c);
 					}
-					error("Unknown characters %s\n", garbage.c_str());
+					error("Unknown characters %s", garbage.c_str());
 				} else {
-					error("Unknown character %s\n", printChar(c));
+					error("Unknown character %s", printChar(c));
 				}
 			}
 		}
@@ -2203,7 +2202,7 @@ backslash:
 				continue;
 
 			case EOF: // Can't really print that one
-				error("Illegal character escape at end of input\n");
+				error("Illegal character escape at end of input");
 				c = '\\';
 				break;
 
@@ -2211,7 +2210,7 @@ backslash:
 				// '\#', and '\0'-'\9' should not occur here.
 
 			default:
-				error("Illegal character escape %s\n", printChar(c));
+				error("Illegal character escape %s", printChar(c));
 				break;
 			}
 			[[fallthrough]];
@@ -2293,7 +2292,7 @@ static Token skipIfBlock(bool toEndc) {
 				case T_(POP_ELIF):
 					if (lexer_ReachedELSEBlock()) {
 						// This should be redundant, as the parser handles this error first.
-						fatalerror("Found ELIF after an ELSE block\n"); // LCOV_EXCL_LINE
+						fatalerror("Found ELIF after an ELSE block"); // LCOV_EXCL_LINE
 					}
 					if (!toEndc && lexer_GetIFDepth() == startingDepth) {
 						return token;
@@ -2302,7 +2301,7 @@ static Token skipIfBlock(bool toEndc) {
 
 				case T_(POP_ELSE):
 					if (lexer_ReachedELSEBlock()) {
-						fatalerror("Found ELSE after an ELSE block\n");
+						fatalerror("Found ELSE after an ELSE block");
 					}
 					lexer_ReachELSEBlock();
 					if (!toEndc && lexer_GetIFDepth() == startingDepth) {
@@ -2552,7 +2551,7 @@ Capture lexer_CaptureRept() {
 		// Just consume characters until EOL or EOF
 		for (;; c = nextChar()) {
 			if (c == EOF) {
-				error("Unterminated REPT/FOR block\n");
+				error("Unterminated REPT/FOR block");
 				endCapture(capture);
 				capture.span.ptr = nullptr; // Indicates that it reached EOF before an ENDR
 				return capture;
@@ -2595,7 +2594,7 @@ Capture lexer_CaptureMacro() {
 		// Just consume characters until EOL or EOF
 		for (;; c = nextChar()) {
 			if (c == EOF) {
-				error("Unterminated macro definition\n");
+				error("Unterminated macro definition");
 				endCapture(capture);
 				capture.span.ptr = nullptr; // Indicates that it reached EOF before an ENDM
 				return capture;

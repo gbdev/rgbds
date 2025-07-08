@@ -14,6 +14,7 @@
 #include <string_view>
 #include <vector>
 
+#include "error.hpp"
 #include "extern/getopt.hpp"
 #include "file.hpp"
 #include "platform.hpp"
@@ -22,6 +23,7 @@
 #include "gfx/pal_spec.hpp"
 #include "gfx/process.hpp"
 #include "gfx/reverse.hpp"
+#include "gfx/warning.hpp"
 
 using namespace std::literals::string_view_literals;
 
@@ -36,69 +38,6 @@ static struct LocalOptions {
 	bool groupOutputs;
 	bool reverse;
 } localOptions;
-
-static uintmax_t nbErrors;
-
-[[noreturn]]
-void giveUp() {
-	fprintf(stderr, "Conversion aborted after %ju error%s\n", nbErrors, nbErrors == 1 ? "" : "s");
-	exit(1);
-}
-
-void requireZeroErrors() {
-	if (nbErrors != 0) {
-		giveUp();
-	}
-}
-
-void warning(char const *fmt, ...) {
-	va_list ap;
-
-	fputs("warning: ", stderr);
-	va_start(ap, fmt);
-	vfprintf(stderr, fmt, ap);
-	va_end(ap);
-	putc('\n', stderr);
-}
-
-void error(char const *fmt, ...) {
-	va_list ap;
-
-	fputs("error: ", stderr);
-	va_start(ap, fmt);
-	vfprintf(stderr, fmt, ap);
-	va_end(ap);
-	putc('\n', stderr);
-
-	if (nbErrors != std::numeric_limits<decltype(nbErrors)>::max()) {
-		nbErrors++;
-	}
-}
-
-void errorMessage(char const *msg) {
-	fprintf(stderr, "error: %s\n", msg);
-
-	if (nbErrors != std::numeric_limits<decltype(nbErrors)>::max()) {
-		nbErrors++;
-	}
-}
-
-[[noreturn]]
-void fatal(char const *fmt, ...) {
-	va_list ap;
-
-	fputs("FATAL: ", stderr);
-	va_start(ap, fmt);
-	vfprintf(stderr, fmt, ap);
-	va_end(ap);
-	putc('\n', stderr);
-
-	if (nbErrors != std::numeric_limits<decltype(nbErrors)>::max()) {
-		nbErrors++;
-	}
-
-	giveUp();
-}
 
 void Options::verbosePrint(uint8_t level, char const *fmt, ...) const {
 	// LCOV_EXCL_START
@@ -179,6 +118,19 @@ static void printUsage() {
 }
 // LCOV_EXCL_STOP
 
+[[gnu::format(printf, 1, 2), noreturn]]
+static void fatalWithUsage(char const *fmt, ...) {
+	va_list ap;
+	fputs("FATAL: ", stderr);
+	va_start(ap, fmt);
+	vfprintf(stderr, fmt, ap);
+	va_end(ap);
+	putc('\n', stderr);
+
+	printUsage();
+	exit(1);
+}
+
 // Parses a number at the beginning of a string, moving the pointer to skip the parsed characters.
 // Returns the provided errVal on error.
 static uint16_t parseNumber(char *&string, char const *errPrefix, uint16_t errVal = UINT16_MAX) {
@@ -256,19 +208,13 @@ static void skipWhitespace(char *&arg) {
 
 static void registerInput(char const *arg) {
 	if (!options.input.empty()) {
-		fprintf(
-		    stderr,
-		    "FATAL: input image specified more than once! (first \"%s\", then "
-		    "\"%s\")\n",
+		fatalWithUsage(
+		    "Input image specified more than once! (first \"%s\", then \"%s\")",
 		    options.input.c_str(),
 		    arg
 		);
-		printUsage();
-		exit(1);
 	} else if (arg[0] == '\0') { // Empty input path
-		fprintf(stderr, "FATAL: input image path cannot be empty\n");
-		printUsage();
-		exit(1);
+		fatalWithUsage("Input image path cannot be empty");
 	} else {
 		options.input = arg;
 	}
@@ -361,7 +307,7 @@ static char *parseArgv(int argc, char *argv[]) {
 		case 'a':
 			localOptions.autoAttrmap = false;
 			if (!options.attrmap.empty()) {
-				warning("Overriding attrmap file %s", options.attrmap.c_str());
+				warnx("Overriding attrmap file %s", options.attrmap.c_str());
 			}
 			options.attrmap = musl_optarg;
 			break;
@@ -438,7 +384,7 @@ static char *parseArgv(int argc, char *argv[]) {
 			// LCOV_EXCL_STOP
 		case 'i':
 			if (!options.inputTileset.empty()) {
-				warning("Overriding input tileset file %s", options.inputTileset.c_str());
+				warnx("Overriding input tileset file %s", options.inputTileset.c_str());
 			}
 			options.inputTileset = musl_optarg;
 			break;
@@ -548,7 +494,7 @@ static char *parseArgv(int argc, char *argv[]) {
 			break;
 		case 'o':
 			if (!options.output.empty()) {
-				warning("Overriding tile data file %s", options.output.c_str());
+				warnx("Overriding tile data file %s", options.output.c_str());
 			}
 			options.output = musl_optarg;
 			break;
@@ -558,7 +504,7 @@ static char *parseArgv(int argc, char *argv[]) {
 		case 'p':
 			localOptions.autoPalettes = false;
 			if (!options.palettes.empty()) {
-				warning("Overriding palettes file %s", options.palettes.c_str());
+				warnx("Overriding palettes file %s", options.palettes.c_str());
 			}
 			options.palettes = musl_optarg;
 			break;
@@ -568,7 +514,7 @@ static char *parseArgv(int argc, char *argv[]) {
 		case 'q':
 			localOptions.autoPalmap = false;
 			if (!options.palmap.empty()) {
-				warning("Overriding palette map file %s", options.palmap.c_str());
+				warnx("Overriding palette map file %s", options.palmap.c_str());
 			}
 			options.palmap = musl_optarg;
 			break;
@@ -596,7 +542,7 @@ static char *parseArgv(int argc, char *argv[]) {
 		case 't':
 			localOptions.autoTilemap = false;
 			if (!options.tilemap.empty()) {
-				warning("Overriding tilemap file %s", options.tilemap.c_str());
+				warnx("Overriding tilemap file %s", options.tilemap.c_str());
 			}
 			options.tilemap = musl_optarg;
 			break;
@@ -728,13 +674,10 @@ int main(int argc, char *argv[]) {
 		if (autoOptEnabled) {
 			auto &image = localOptions.groupOutputs ? options.output : options.input;
 			if (image.empty()) {
-				fprintf(
-				    stderr,
-				    "FATAL: No %s specified\n",
+				fatalWithUsage(
+				    "No %s specified",
 				    localOptions.groupOutputs ? "output tile data file" : "input image"
 				);
-				printUsage();
-				exit(1);
 			}
 
 			// Manual implementation of std::filesystem::path.replace_extension().
@@ -921,9 +864,7 @@ int main(int argc, char *argv[]) {
 	           && !localOptions.reverse) {
 		processPalettes();
 	} else {
-		fputs("FATAL: No input image specified\n", stderr);
-		printUsage();
-		exit(1);
+		fatalWithUsage("No input image specified");
 	}
 
 	requireZeroErrors();

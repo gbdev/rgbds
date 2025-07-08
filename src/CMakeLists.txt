@@ -47,28 +47,13 @@ set(rgbasm_src
     "asm/section.cpp"
     "asm/symbol.cpp"
     "asm/warning.cpp"
+    "extern/getopt.cpp"
     "extern/utf8decoder.cpp"
     "diagnostics.cpp"
+    "error.cpp"
     "linkdefs.cpp"
     "opmath.cpp"
     "util.cpp"
-    )
-
-set(rgbfix_src
-    "fix/main.cpp"
-    )
-
-set(rgbgfx_src
-    "gfx/main.cpp"
-    "gfx/pal_packing.cpp"
-    "gfx/pal_sorting.cpp"
-    "gfx/pal_spec.cpp"
-    "gfx/process.cpp"
-    "gfx/proto_palette.cpp"
-    "gfx/reverse.cpp"
-    "gfx/rgba.cpp"
-    "extern/getopt.cpp"
-    "error.cpp"
     )
 
 set(rgblink_src
@@ -81,10 +66,33 @@ set(rgblink_src
     "link/sdas_obj.cpp"
     "link/section.cpp"
     "link/symbol.cpp"
+    "link/warning.cpp"
+    "extern/getopt.cpp"
     "extern/utf8decoder.cpp"
+    "error.cpp"
     "linkdefs.cpp"
     "opmath.cpp"
     "util.cpp"
+    )
+
+set(rgbfix_src
+    "fix/main.cpp"
+    "extern/getopt.cpp"
+    "error.cpp"
+    )
+
+set(rgbgfx_src
+    "gfx/main.cpp"
+    "gfx/pal_packing.cpp"
+    "gfx/pal_sorting.cpp"
+    "gfx/pal_spec.cpp"
+    "gfx/process.cpp"
+    "gfx/proto_palette.cpp"
+    "gfx/reverse.cpp"
+    "gfx/rgba.cpp"
+    "gfx/warning.cpp"
+    "extern/getopt.cpp"
+    "error.cpp"
     )
 
 foreach(PROG "asm" "fix" "gfx" "link")

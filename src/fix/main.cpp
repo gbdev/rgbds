@@ -12,6 +12,7 @@
 #include <string.h>
 #include <vector>
 
+#include "error.hpp"
 #include "extern/getopt.hpp"
 #include "helpers.hpp"
 #include "platform.hpp"
@@ -77,17 +78,32 @@ static void printUsage() {
 }
 // LCOV_EXCL_STOP
 
-static uint8_t nbErrors;
+static uint32_t nbErrors;
 
 [[gnu::format(printf, 1, 2)]]
-static void report(char const *fmt, ...) {
+static void error(char const *fmt, ...) {
 	va_list ap;
-
+	fputs("error: ", stderr);
 	va_start(ap, fmt);
 	vfprintf(stderr, fmt, ap);
 	va_end(ap);
+	putc('\n', stderr);
 
-	if (nbErrors != UINT8_MAX) {
+	if (nbErrors != UINT32_MAX) {
+		nbErrors++;
+	}
+}
+
+[[gnu::format(printf, 1, 2)]]
+static void fatal(char const *fmt, ...) {
+	va_list ap;
+	fputs("FATAL: ", stderr);
+	va_start(ap, fmt);
+	vfprintf(stderr, fmt, ap);
+	va_end(ap);
+	putc('\n', stderr);
+
+	if (nbErrors != UINT32_MAX) {
 		nbErrors++;
 	}
 }
@@ -164,6 +180,7 @@ enum MbcType {
 };
 
 static void printAcceptedMBCNames() {
+	fputs("Accepted MBC names:\n", stderr);
 	fputs("\tROM ($00) [aka ROM_ONLY]\n", stderr);
 	fputs("\tMBC1 ($01), MBC1+RAM ($02), MBC1+RAM+BATTERY ($03)\n", stderr);
 	fputs("\tMBC2 ($05), MBC2+BATTERY ($06)\n", stderr);
@@ -212,7 +229,6 @@ static bool readMBCSlice(char const *&name, char const *expected) {
 
 static MbcType parseMBC(char const *name) {
 	if (!strcasecmp(name, "help")) {
-		fputs("Accepted MBC names:\n", stderr);
 		printAcceptedMBCNames();
 		exit(0);
 	}
@@ -343,12 +359,12 @@ static MbcType parseMBC(char const *name) {
 				unsigned long val = strtoul(ptr, &endptr, 10);
 
 				if (endptr == ptr) {
-					report("error: Failed to parse TPP1 major revision number\n");
+					error("Failed to parse TPP1 major revision number");
 					return MBC_BAD_TPP1;
 				}
 				ptr = endptr;
 				if (val != 1) {
-					report("error: RGBFIX only supports TPP1 version 1.0\n");
+					error("RGBFIX only supports TPP1 version 1.0");
 					return MBC_BAD_TPP1;
 				}
 				tpp1Rev[0] = val;
@@ -356,12 +372,12 @@ static MbcType parseMBC(char const *name) {
 				// Minor
 				val = strtoul(ptr, &endptr, 10);
 				if (endptr == ptr) {
-					report("error: Failed to parse TPP1 minor revision number\n");
+					error("Failed to parse TPP1 minor revision number");
 					return MBC_BAD_TPP1;
 				}
 				ptr = endptr;
 				if (val > 0xFF) {
-					report("error: TPP1 minor revision number must be 8-bit\n");
+					error("TPP1 minor revision number must be 8-bit");
 					return MBC_BAD_TPP1;
 				}
 				tpp1Rev[1] = val;
@@ -509,7 +525,7 @@ static MbcType parseMBC(char const *name) {
 			// Handle timer, which also requires battery
 			if (features & TIMER) {
 				if (!(features & BATTERY)) {
-					fprintf(stderr, "warning: MBC3+TIMER implies BATTERY\n");
+					warnx("MBC3+TIMER implies BATTERY");
 				}
 				features &= ~(TIMER | BATTERY); // Reset those bits
 				mbc = MBC3_TIMER_BATTERY;
@@ -571,9 +587,7 @@ static MbcType parseMBC(char const *name) {
 
 		case TPP1:
 			if (features & RAM) {
-				fprintf(
-				    stderr, "warning: TPP1 requests RAM implicitly if given a non-zero RAM size"
-				);
+				warnx("TPP1 requests RAM implicitly if given a non-zero RAM size");
 			}
 			if (features & BATTERY) {
 				mbc |= 0x08;
@@ -864,7 +878,7 @@ static void overwriteByte(uint8_t *rom0, uint16_t addr, uint8_t fixedByte, char 
 	uint8_t origByte = rom0[addr];
 
 	if (!overwriteRom && origByte != 0 && origByte != fixedByte) {
-		fprintf(stderr, "warning: Overwrote a non-zero byte in the %s\n", areaName);
+		warnx("Overwrote a non-zero byte in the %s", areaName);
 	}
 
 	rom0[addr] = fixedByte;
@@ -878,7 +892,7 @@ static void overwriteBytes(
 			uint8_t origByte = rom0[i + startAddr];
 
 			if (origByte != 0 && origByte != fixed[i]) {
-				fprintf(stderr, "warning: Overwrote a non-zero byte in the %s\n", areaName);
+				warnx("Overwrote a non-zero byte in the %s", areaName);
 				break;
 			}
 		}
@@ -902,12 +916,12 @@ static void
 
 	if (rom0Len == -1) {
 		// LCOV_EXCL_START
-		report("FATAL: Failed to read \"%s\"'s header: %s\n", name, strerror(errno));
+		fatal("Failed to read \"%s\"'s header: %s", name, strerror(errno));
 		return;
 		// LCOV_EXCL_STOP
 	} else if (rom0Len < headerSize) {
-		report(
-		    "FATAL: \"%s\" too short, expected at least %jd ($%jx) bytes, got only %jd\n",
+		fatal(
+		    "\"%s\" too short, expected at least %jd ($%jx) bytes, got only %jd",
 		    name,
 		    static_cast<intmax_t>(headerSize),
 		    static_cast<intmax_t>(headerSize),
@@ -990,11 +1004,7 @@ static void
 	if (oldLicensee != UNSPECIFIED) {
 		overwriteByte(rom0, 0x14B, oldLicensee, "old licensee code");
 	} else if (sgb && rom0[0x14B] != 0x33) {
-		fprintf(
-		    stderr,
-		    "warning: SGB compatibility enabled, but old licensee was 0x%02x, not 0x33\n",
-		    rom0[0x14B]
-		);
+		warnx("SGB compatibility enabled, but old licensee was 0x%02x, not 0x33", rom0[0x14B]);
 	}
 
 	if (romVersion != UNSPECIFIED) {
@@ -1019,7 +1029,7 @@ static void
 	// Handle ROMX
 	if (input == output) {
 		if (fileSize >= 0x10000 * BANK_SIZE) {
-			report("FATAL: \"%s\" has more than 65536 banks\n", name);
+			fatal("\"%s\" has more than 65536 banks", name);
 			return;
 		}
 		// This should be guaranteed from the size cap...
@@ -1041,7 +1051,7 @@ static void
 				    0x10000 * BANK_SIZE <= SSIZE_MAX, "Max input file size too large for OS"
 				);
 				if (nbBanks == 0x10000) {
-					report("FATAL: \"%s\" has more than 65536 banks\n", name);
+					fatal("\"%s\" has more than 65536 banks", name);
 					return;
 				}
 				nbBanks++;
@@ -1143,7 +1153,7 @@ static void
 	if (input == output) {
 		if (lseek(output, 0, SEEK_SET) == static_cast<off_t>(-1)) {
 			// LCOV_EXCL_START
-			report("FATAL: Failed to rewind \"%s\": %s\n", name, strerror(errno));
+			fatal("Failed to rewind \"%s\": %s", name, strerror(errno));
 			return;
 			// LCOV_EXCL_STOP
 		}
@@ -1157,13 +1167,13 @@ static void
 
 	if (writeLen == -1) {
 		// LCOV_EXCL_START
-		report("FATAL: Failed to write \"%s\"'s ROM0: %s\n", name, strerror(errno));
+		fatal("Failed to write \"%s\"'s ROM0: %s", name, strerror(errno));
 		return;
 		// LCOV_EXCL_STOP
 	} else if (writeLen < rom0Len) {
 		// LCOV_EXCL_START
-		report(
-		    "FATAL: Could only write %jd of \"%s\"'s %jd ROM0 bytes\n",
+		fatal(
+		    "Could only write %jd of \"%s\"'s %jd ROM0 bytes",
 		    static_cast<intmax_t>(writeLen),
 		    name,
 		    static_cast<intmax_t>(rom0Len)
@@ -1179,13 +1189,13 @@ static void
 		writeLen = writeBytes(output, romx.data(), totalRomxLen);
 		if (writeLen == -1) {
 			// LCOV_EXCL_START
-			report("FATAL: Failed to write \"%s\"'s ROMX: %s\n", name, strerror(errno));
+			fatal("Failed to write \"%s\"'s ROMX: %s", name, strerror(errno));
 			return;
 			// LCOV_EXCL_STOP
 		} else if (static_cast<size_t>(writeLen) < totalRomxLen) {
 			// LCOV_EXCL_START
-			report(
-			    "FATAL: Could only write %jd of \"%s\"'s %zu ROMX bytes\n",
+			fatal(
+			    "Could only write %jd of \"%s\"'s %zu ROMX bytes",
 			    static_cast<intmax_t>(writeLen),
 			    name,
 			    totalRomxLen
@@ -1200,7 +1210,7 @@ static void
 		if (input == output) {
 			if (lseek(output, 0, SEEK_END) == static_cast<off_t>(-1)) {
 				// LCOV_EXCL_START
-				report("FATAL: Failed to seek to end of \"%s\": %s\n", name, strerror(errno));
+				fatal("Failed to seek to end of \"%s\": %s", name, strerror(errno));
 				return;
 				// LCOV_EXCL_STOP
 			}
@@ -1217,7 +1227,7 @@ static void
 			// so it's fine to cast to `size_t`
 			if (static_cast<size_t>(ret) != thisLen) {
 				// LCOV_EXCL_START
-				report("FATAL: Failed to write \"%s\"'s padding: %s\n", name, strerror(errno));
+				fatal("Failed to write \"%s\"'s padding: %s", name, strerror(errno));
 				break;
 				// LCOV_EXCL_STOP
 			}
@@ -1243,9 +1253,7 @@ static bool processFilename(char const *name, char const *outputName) {
 		} else {
 			output = open(outputName, O_WRONLY | O_BINARY | O_CREAT, 0600);
 			if (output == -1) {
-				report(
-				    "FATAL: Failed to open \"%s\" for writing: %s\n", outputName, strerror(errno)
-				);
+				fatal("Failed to open \"%s\" for writing: %s", outputName, strerror(errno));
 				return true;
 			}
 			openedOutput = true;
@@ -1268,26 +1276,23 @@ static bool processFilename(char const *name, char const *outputName) {
 		// Thus, we're going to hope that either the `open` fails, or it succeeds but IO
 		// operations may fail, all of which we handle.
 		if (int input = open(name, (outputName ? O_RDONLY : O_RDWR) | O_BINARY); input == -1) {
-			report("FATAL: Failed to open \"%s\" for reading+writing: %s\n", name, strerror(errno));
+			fatal("Failed to open \"%s\" for reading+writing: %s", name, strerror(errno));
 		} else {
 			Defer closeInput{[&] { close(input); }};
 			struct stat stat;
 			if (fstat(input, &stat) == -1) {
 				// LCOV_EXCL_START
-				report("FATAL: Failed to stat \"%s\": %s\n", name, strerror(errno));
+				fatal("Failed to stat \"%s\": %s", name, strerror(errno));
 				// LCOV_EXCL_STOP
 			} else if (!S_ISREG(stat.st_mode)) { // We do not support FIFOs or symlinks
 				// LCOV_EXCL_START
-				report(
-				    "FATAL: \"%s\" is not a regular file, and thus cannot be modified in-place\n",
-				    name
-				);
+				fatal("\"%s\" is not a regular file, and thus cannot be modified in-place", name);
 				// LCOV_EXCL_STOP
 			} else if (stat.st_size < 0x150) {
 				// This check is in theory redundant with the one in `processFile`, but it
 				// prevents passing a file size of 0, which usually indicates pipes
-				report(
-				    "FATAL: \"%s\" too short, expected at least 336 ($150) bytes, got only %jd\n",
+				fatal(
+				    "\"%s\" too short, expected at least 336 ($150) bytes, got only %jd",
 				    name,
 				    static_cast<intmax_t>(stat.st_size)
 				);
@@ -1314,7 +1319,7 @@ static bool processFilename(char const *name, char const *outputName) {
 
 static void parseByte(uint16_t &output, char name) {
 	if (musl_optarg[0] == 0) {
-		report("error: Argument to option '%c' may not be empty\n", name);
+		error("Argument to option '%c' may not be empty", name);
 	} else {
 		char *endptr;
 		unsigned long value;
@@ -1325,11 +1330,9 @@ static void parseByte(uint16_t &output, char name) {
 			value = strtoul(musl_optarg, &endptr, 0);
 		}
 		if (*endptr) {
-			report(
-			    "error: Expected number as argument to option '%c', got %s\n", name, musl_optarg
-			);
+			error("Expected number as argument to option '%c', got %s", name, musl_optarg);
 		} else if (value > 0xFF) {
-			report("error: Argument to option '%c' is larger than 255: %lu\n", name, value);
+			error("Argument to option '%c' is larger than 255: %lu", name, value);
 		} else {
 			output = value;
 		}
@@ -1349,7 +1352,7 @@ int main(int argc, char *argv[]) {
 			model = ch == 'c' ? BOTH : CGB;
 			if (titleLen > 15) {
 				titleLen = 15;
-				fprintf(stderr, "warning: Truncating title \"%s\" to 15 chars\n", title);
+				warnx("Truncating title \"%s\" to 15 chars", title);
 			}
 			break;
 
@@ -1360,7 +1363,7 @@ int main(int argc, char *argv[]) {
 #define OVERRIDE_SPEC(cur, bad, curFlag, badFlag) \
 	case STR(cur)[0]: \
 		if (fixSpec & badFlag) { \
-			fprintf(stderr, "warning: '" STR(cur) "' overriding '" STR(bad) "' in fix spec\n"); \
+			warnx("'" STR(cur) "' overriding '" STR(bad) "' in fix spec"); \
 		} \
 		fixSpec = (fixSpec & ~badFlag) | curFlag; \
 		break
@@ -1374,7 +1377,7 @@ int main(int argc, char *argv[]) {
 #undef overrideSpecs
 
 				default:
-					fprintf(stderr, "warning: Ignoring '%c' in fix spec\n", *musl_optarg);
+					warnx("Ignoring '%c' in fix spec", *musl_optarg);
 				}
 				musl_optarg++;
 			}
@@ -1391,12 +1394,12 @@ int main(int argc, char *argv[]) {
 			len = strlen(gameID);
 			if (len > 4) {
 				len = 4;
-				fprintf(stderr, "warning: Truncating game ID \"%s\" to 4 chars\n", gameID);
+				warnx("Truncating game ID \"%s\" to 4 chars", gameID);
 			}
 			gameIDLen = len;
 			if (titleLen > 11) {
 				titleLen = 11;
-				fprintf(stderr, "warning: Truncating title \"%s\" to 11 chars\n", title);
+				warnx("Truncating title \"%s\" to 11 chars", title);
 			}
 			break;
 
@@ -1409,9 +1412,7 @@ int main(int argc, char *argv[]) {
 			len = strlen(newLicensee);
 			if (len > 2) {
 				len = 2;
-				fprintf(
-				    stderr, "warning: Truncating new licensee \"%s\" to 2 chars\n", newLicensee
-				);
+				warnx("Truncating new licensee \"%s\" to 2 chars", newLicensee);
 			}
 			newLicenseeLen = len;
 			break;
@@ -1427,22 +1428,15 @@ int main(int argc, char *argv[]) {
 		case 'm':
 			cartridgeType = parseMBC(musl_optarg);
 			if (cartridgeType == MBC_BAD) {
-				report("error: Unknown MBC \"%s\"\nAccepted MBC names:\n", musl_optarg);
+				error("Unknown MBC \"%s\"", musl_optarg);
 				printAcceptedMBCNames();
 			} else if (cartridgeType == MBC_WRONG_FEATURES) {
-				report(
-				    "error: Features incompatible with MBC (\"%s\")\nAccepted combinations:\n",
-				    musl_optarg
-				);
+				error("Features incompatible with MBC (\"%s\")", musl_optarg);
 				printAcceptedMBCNames();
 			} else if (cartridgeType == MBC_BAD_RANGE) {
-				report("error: Specified MBC ID out of range 0-255: %s\n", musl_optarg);
+				error("Specified MBC ID out of range 0-255: %s", musl_optarg);
 			} else if (cartridgeType == ROM_RAM || cartridgeType == ROM_RAM_BATTERY) {
-				fprintf(
-				    stderr,
-				    "warning: MBC \"%s\" is under-specified and poorly supported\n",
-				    musl_optarg
-				);
+				warnx("MBC \"%s\" is under-specified and poorly supported", musl_optarg);
 			}
 			break;
 
@@ -1477,7 +1471,7 @@ int main(int argc, char *argv[]) {
 
 			if (len > maxLen) {
 				len = maxLen;
-				fprintf(stderr, "warning: Truncating title \"%s\" to %u chars\n", title, maxLen);
+				warnx("Truncating title \"%s\" to %u chars", title, maxLen);
 			}
 			titleLen = len;
 			break;
@@ -1502,52 +1496,30 @@ int main(int argc, char *argv[]) {
 	}
 
 	if ((cartridgeType & 0xFF00) == TPP1 && !japanese) {
-		fprintf(
-		    stderr,
-		    "warning: TPP1 overwrites region flag for its identification code, ignoring `-j`\n"
-		);
+		warnx("TPP1 overwrites region flag for its identification code, ignoring `-j`");
 	}
 
 	// Check that RAM size is correct for "standard" mappers
 	if (ramSize != UNSPECIFIED && (cartridgeType & 0xFF00) == 0) {
 		if (cartridgeType == ROM_RAM || cartridgeType == ROM_RAM_BATTERY) {
 			if (ramSize != 1) {
-				fprintf(
-				    stderr,
-				    "warning: MBC \"%s\" should have 2 KiB of RAM (-r 1)\n",
-				    mbcName(cartridgeType)
-				);
+				warnx("MBC \"%s\" should have 2 KiB of RAM (-r 1)", mbcName(cartridgeType));
 			}
 		} else if (hasRAM(cartridgeType)) {
 			if (!ramSize) {
-				fprintf(
-				    stderr,
-				    "warning: MBC \"%s\" has RAM, but RAM size was set to 0\n",
-				    mbcName(cartridgeType)
-				);
+				warnx("MBC \"%s\" has RAM, but RAM size was set to 0", mbcName(cartridgeType));
 			} else if (ramSize == 1) {
-				fprintf(
-				    stderr,
-				    "warning: RAM size 1 (2 KiB) was specified for MBC \"%s\"\n",
-				    mbcName(cartridgeType)
-				);
+				warnx("RAM size 1 (2 KiB) was specified for MBC \"%s\"", mbcName(cartridgeType));
 			}
 		} else if (ramSize) {
-			fprintf(
-			    stderr,
-			    "warning: MBC \"%s\" has no RAM, but RAM size was set to %u\n",
-			    mbcName(cartridgeType),
-			    ramSize
+			warnx(
+			    "MBC \"%s\" has no RAM, but RAM size was set to %u", mbcName(cartridgeType), ramSize
 			);
 		}
 	}
 
 	if (sgb && oldLicensee != UNSPECIFIED && oldLicensee != 0x33) {
-		fprintf(
-		    stderr,
-		    "warning: SGB compatibility enabled, but old licensee is 0x%02x, not 0x33\n",
-		    oldLicensee
-		);
+		warnx("SGB compatibility enabled, but old licensee is 0x%02x, not 0x33", oldLicensee);
 	}
 
 	argv += musl_optind;
@@ -1563,19 +1535,14 @@ int main(int argc, char *argv[]) {
 			logoFile = stdin;
 		}
 		if (!logoFile) {
-			fprintf(
-			    stderr,
-			    "FATAL: Failed to open \"%s\" for reading: %s\n",
-			    logoFilename,
-			    strerror(errno)
-			);
+			fatal("Failed to open \"%s\" for reading: %s", logoFilename, strerror(errno));
 			exit(1);
 		}
 		Defer closeLogo{[&] { fclose(logoFile); }};
 		uint8_t logoBpp[sizeof(logo)];
 		if (size_t nbRead = fread(logoBpp, 1, sizeof(logoBpp), logoFile);
 		    nbRead != sizeof(logo) || fgetc(logoFile) != EOF || ferror(logoFile)) {
-			fprintf(stderr, "FATAL: \"%s\" is not %zu bytes\n", logoFilename, sizeof(logo));
+			fatal("\"%s\" is not %zu bytes", logoFilename, sizeof(logo));
 			exit(1);
 		}
 		auto highs = [&logoBpp](size_t i) {
@@ -1605,15 +1572,13 @@ int main(int argc, char *argv[]) {
 	}
 
 	if (!*argv) {
-		fputs(
-		    "FATAL: Please specify an input file (pass `-` to read from standard input)\n", stderr
-		);
+		fatal("Please specify an input file (pass `-` to read from standard input)");
 		printUsage();
 		exit(1);
 	}
 
 	if (outputFilename && argc != musl_optind + 1) {
-		fputs("FATAL: If `-o` is set then only a single input file may be specified\n", stderr);
+		fatal("If `-o` is set then only a single input file may be specified");
 		printUsage();
 		exit(1);
 	}

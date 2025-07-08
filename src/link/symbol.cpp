@@ -11,6 +11,7 @@
 
 #include "link/main.hpp"
 #include "link/section.hpp"
+#include "link/warning.hpp"
 
 std::unordered_map<std::string, Symbol *> symbols;
 std::unordered_map<std::string, std::vector<Symbol *>> localSymbols;
@@ -36,7 +37,7 @@ void sym_AddSymbol(Symbol &symbol) {
 
 	// Check if the symbol already exists with a different value
 	if (other && !(symValue && otherValue && *symValue == *otherValue)) {
-		fprintf(stderr, "error: \"%s\" is defined as ", symbol.name.c_str());
+		errorNoDump("\"%s\" is defined as ", symbol.name.c_str());
 		if (symValue) {
 			fprintf(stderr, "%" PRId32, *symValue);
 		} else {

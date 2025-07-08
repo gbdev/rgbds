@@ -160,7 +160,7 @@ bool yywrap() {
 
 	if (ifDepth != 0) {
 		fatalerror(
-		    "Ended block with %" PRIu32 " unterminated IF construct%s\n",
+		    "Ended block with %" PRIu32 " unterminated IF construct%s",
 		    ifDepth,
 		    ifDepth == 1 ? "" : "s"
 		);
@@ -188,7 +188,7 @@ bool yywrap() {
 
 			// This error message will refer to the current iteration
 			if (sym->type != SYM_VAR) {
-				fatalerror("Failed to update FOR symbol value\n");
+				fatalerror("Failed to update FOR symbol value");
 			}
 		}
 		// Advance to the next iteration
@@ -211,7 +211,7 @@ bool yywrap() {
 
 static void checkRecursionDepth() {
 	if (contextStack.size() > maxRecursionDepth) {
-		fatalerror("Recursion limit (%zu) exceeded\n", maxRecursionDepth);
+		fatalerror("Recursion limit (%zu) exceeded", maxRecursionDepth);
 	}
 }
 
@@ -317,13 +317,13 @@ void fstk_RunInclude(std::string const &path, bool preInclude) {
 			// LCOV_EXCL_STOP
 			failedOnMissingInclude = true;
 		} else {
-			error("Unable to open included file '%s': %s\n", path.c_str(), strerror(errno));
+			error("Unable to open included file '%s': %s", path.c_str(), strerror(errno));
 		}
 		return;
 	}
 
 	if (!newFileContext(*fullPath, false)) {
-		fatalerror("Failed to set up lexer for file include\n"); // LCOV_EXCL_LINE
+		fatalerror("Failed to set up lexer for file include"); // LCOV_EXCL_LINE
 	}
 }
 
@@ -332,14 +332,14 @@ void fstk_RunMacro(std::string const &macroName, std::shared_ptr<MacroArgs> macr
 
 	if (!macro) {
 		if (sym_IsPurgedExact(macroName)) {
-			error("Macro \"%s\" not defined; it was purged\n", macroName.c_str());
+			error("Macro \"%s\" not defined; it was purged", macroName.c_str());
 		} else {
-			error("Macro \"%s\" not defined\n", macroName.c_str());
+			error("Macro \"%s\" not defined", macroName.c_str());
 		}
 		return;
 	}
 	if (macro->type != SYM_MACRO) {
-		error("\"%s\" is not a macro\n", macroName.c_str());
+		error("\"%s\" is not a macro", macroName.c_str());
 		return;
 	}
 
@@ -372,13 +372,11 @@ void fstk_RunFor(
 	} else if (step < 0 && stop < start) {
 		count = (static_cast<int64_t>(start) - stop - 1) / -static_cast<int64_t>(step) + 1;
 	} else if (step == 0) {
-		error("FOR cannot have a step value of 0\n");
+		error("FOR cannot have a step value of 0");
 	}
 
 	if ((step > 0 && start > stop) || (step < 0 && start < stop)) {
-		warning(
-		    WARNING_BACKWARDS_FOR, "FOR goes backwards from %d to %d by %d\n", start, stop, step
-		);
+		warning(WARNING_BACKWARDS_FOR, "FOR goes backwards from %d to %d by %d", start, stop, step);
 	}
 
 	if (count == 0) {
@@ -394,7 +392,7 @@ void fstk_RunFor(
 
 bool fstk_Break() {
 	if (contextStack.top().fileInfo->type != NODE_REPT) {
-		error("BREAK can only be used inside a REPT/FOR block\n");
+		error("BREAK can only be used inside a REPT/FOR block");
 		return false;
 	}
 
@@ -404,14 +402,14 @@ bool fstk_Break() {
 
 void fstk_NewRecursionDepth(size_t newDepth) {
 	if (contextStack.size() > newDepth + 1) {
-		fatalerror("Recursion limit (%zu) exceeded\n", newDepth);
+		fatalerror("Recursion limit (%zu) exceeded", newDepth);
 	}
 	maxRecursionDepth = newDepth;
 }
 
 void fstk_Init(std::string const &mainPath, size_t maxDepth) {
 	if (!newFileContext(mainPath, true)) {
-		fatalerror("Failed to open main file\n");
+		fatalerror("Failed to open main file");
 	}
 
 	maxRecursionDepth = maxDepth;
