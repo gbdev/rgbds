@@ -308,7 +308,7 @@ void sdobj_ReadFile(FileStackNode const &where, FILE *file, std::vector<Symbol> 
 			getToken(nullptr, "'A' line is too short");
 			tmp = parseNumber(where, lineNo, token, numberType);
 			if (tmp & (1 << AREA_PAGING)) {
-				fatal(&where, lineNo, "Internal error: paging is not supported");
+				fatal(&where, lineNo, "Paging is not supported");
 			}
 			curSection->isAddressFixed = tmp & (1 << AREA_ISABS);
 			curSection->isBankFixed = curSection->isAddressFixed;
@@ -431,9 +431,8 @@ void sdobj_ReadFile(FileStackNode const &where, FILE *file, std::vector<Symbol> 
 					    || (symbolSection && !symbolSection->isAddressFixed)) {
 						sym_AddSymbol(symbol); // This will error out
 					} else if (otherValue != symbolValue) {
-						fprintf(
-						    stderr,
-						    "error: \"%s\" is defined as %" PRId32 " at ",
+						errorNoNewline(
+						    "\"%s\" is defined as %" PRId32 " at ",
 						    symbol.name.c_str(),
 						    symbolValue
 						);

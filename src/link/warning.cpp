@@ -39,6 +39,22 @@ void error(FileStackNode const *where, uint32_t lineNo, char const *fmt, ...) {
 	}
 }
 
+void errorNoNewline(FileStackNode const *where, uint32_t lineNo, char const *fmt, ...) {
+	va_list args;
+	fputs("error: ", stderr);
+	if (where) {
+		where->dump(lineNo);
+		fputs(": ", stderr);
+	}
+	va_start(args, fmt);
+	vfprintf(stderr, fmt, args);
+	va_end(args);
+
+	if (nbErrors != UINT32_MAX) {
+		nbErrors++;
+	}
+}
+
 void argErr(char flag, char const *fmt, ...) {
 	va_list args;
 	fprintf(stderr, "error: Invalid argument for option '%c': ", flag);
