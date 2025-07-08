@@ -106,6 +106,7 @@ rgbgfx_obj := \
 	src/gfx/proto_palette.o \
 	src/gfx/reverse.o \
 	src/gfx/rgba.o \
+	src/gfx/warning.o \
 	src/extern/getopt.o \
 	src/error.o
 

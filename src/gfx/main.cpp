@@ -23,6 +23,7 @@
 #include "gfx/pal_spec.hpp"
 #include "gfx/process.hpp"
 #include "gfx/reverse.hpp"
+#include "gfx/warning.hpp"
 
 using namespace std::literals::string_view_literals;
 
@@ -37,51 +38,6 @@ static struct LocalOptions {
 	bool groupOutputs;
 	bool reverse;
 } localOptions;
-
-static uintmax_t nbErrors;
-
-[[noreturn]]
-void giveUp() {
-	fprintf(stderr, "Conversion aborted after %ju error%s\n", nbErrors, nbErrors == 1 ? "" : "s");
-	exit(1);
-}
-
-void requireZeroErrors() {
-	if (nbErrors != 0) {
-		giveUp();
-	}
-}
-
-void error(char const *fmt, ...) {
-	va_list ap;
-
-	fputs("error: ", stderr);
-	va_start(ap, fmt);
-	vfprintf(stderr, fmt, ap);
-	va_end(ap);
-	putc('\n', stderr);
-
-	if (nbErrors != std::numeric_limits<decltype(nbErrors)>::max()) {
-		nbErrors++;
-	}
-}
-
-[[noreturn]]
-void fatal(char const *fmt, ...) {
-	va_list ap;
-
-	fputs("FATAL: ", stderr);
-	va_start(ap, fmt);
-	vfprintf(stderr, fmt, ap);
-	va_end(ap);
-	putc('\n', stderr);
-
-	if (nbErrors != std::numeric_limits<decltype(nbErrors)>::max()) {
-		nbErrors++;
-	}
-
-	giveUp();
-}
 
 void Options::verbosePrint(uint8_t level, char const *fmt, ...) const {
 	// LCOV_EXCL_START

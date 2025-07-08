@@ -18,6 +18,7 @@
 #include "helpers.hpp" // assume
 
 #include "gfx/main.hpp"
+#include "gfx/warning.hpp"
 
 static DefaultInitVec<uint8_t> readInto(std::string const &path) {
 	File file;

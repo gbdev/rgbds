@@ -88,6 +88,7 @@ set(rgbgfx_src
     "gfx/proto_palette.cpp"
     "gfx/reverse.cpp"
     "gfx/rgba.cpp"
+    "gfx/warning.cpp"
     "extern/getopt.cpp"
     "error.cpp"
     )

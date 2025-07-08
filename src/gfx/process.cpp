@@ -25,6 +25,7 @@
 #include "gfx/pal_packing.hpp"
 #include "gfx/pal_sorting.hpp"
 #include "gfx/proto_palette.hpp"
+#include "gfx/warning.hpp"
 
 static bool isBgColorTransparent() {
 	return options.bgColor.has_value() && options.bgColor->isTransparent();

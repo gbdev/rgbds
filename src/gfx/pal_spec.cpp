@@ -21,6 +21,7 @@
 #include "platform.hpp"
 
 #include "gfx/main.hpp"
+#include "gfx/warning.hpp"
 
 using namespace std::string_view_literals;
 
