@@ -102,6 +102,7 @@ void error(FileStackNode const *where, uint32_t lineNo, char const *fmt, ...) {
 	}
 }
 
+[[gnu::format(printf, 2, 3)]]
 void argErr(char flag, char const *fmt, ...) {
 	va_list args;
 
@@ -234,7 +235,13 @@ static void parseScrambleSpec(char const *spec) {
 		// Find the next non-blank char after the region name's end
 		spec += regionNameLen + strspn(&spec[regionNameLen], " \t");
 		if (*spec != '\0' && *spec != ',' && *spec != '=') {
-			argErr('S', "Unexpected '%c' after region name \"%.*s\"", regionNameFmtLen, regionName);
+			argErr(
+			    'S',
+			    "Unexpected '%c' after region name \"%.*s\"",
+			    *spec,
+			    regionNameFmtLen,
+			    regionName
+			);
 			// Skip to next ',' or '=' (or NUL) and keep parsing
 			spec += 1 + strcspn(&spec[1], ",=");
 		}
@@ -378,11 +385,7 @@ int main(int argc, char *argv[]) {
 			char *endptr;
 			unsigned long value = strtoul(musl_optarg, &endptr, 0);
 
-			if (musl_optarg[0] == '\0' || *endptr != '\0') {
-				argErr('p', "");
-				value = 0xFF;
-			}
-			if (value > 0xFF) {
+			if (musl_optarg[0] == '\0' || *endptr != '\0' || value > 0xFF) {
 				argErr('p', "Argument for 'p' must be a byte (between 0 and 0xFF)");
 				value = 0xFF;
 			}
