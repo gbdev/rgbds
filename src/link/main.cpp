@@ -385,11 +385,7 @@ int main(int argc, char *argv[]) {
 			char *endptr;
 			unsigned long value = strtoul(musl_optarg, &endptr, 0);
 
-			if (musl_optarg[0] == '\0' || *endptr != '\0') {
-				argErr('p', "");
-				value = 0xFF;
-			}
-			if (value > 0xFF) {
+			if (musl_optarg[0] == '\0' || *endptr != '\0' || value > 0xFF) {
 				argErr('p', "Argument for 'p' must be a byte (between 0 and 0xFF)");
 				value = 0xFF;
 			}
