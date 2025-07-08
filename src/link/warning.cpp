@@ -39,13 +39,9 @@ void error(FileStackNode const *where, uint32_t lineNo, char const *fmt, ...) {
 	}
 }
 
-void errorNoDump(FileStackNode const *where, uint32_t lineNo, char const *fmt, ...) {
+void errorNoDump(char const *fmt, ...) {
 	va_list args;
 	fputs("error: ", stderr);
-	if (where) {
-		where->dump(lineNo);
-		fputs(": ", stderr);
-	}
 	va_start(args, fmt);
 	vfprintf(stderr, fmt, args);
 	va_end(args);
