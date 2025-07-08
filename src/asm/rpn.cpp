@@ -587,18 +587,20 @@ bool checkNBit(int32_t v, uint8_t n, char const *name) {
 	if (v < -(1 << n) || v >= 1 << n) {
 		warning(
 		    WARNING_TRUNCATION_1,
-		    n == 8 && !name ? "%s must be %u-bit; use LOW() to force 8-bit" : "%s must be %u-bit",
+		    "%s must be %u-bit%s",
 		    name ? name : "Expression",
-		    n
+		    n,
+		    n == 8 && !name ? "; use LOW() to force 8-bit" : ""
 		);
 		return false;
 	}
 	if (v < -(1 << (n - 1))) {
 		warning(
 		    WARNING_TRUNCATION_2,
-		    n == 8 && !name ? "%s must be %u-bit; use LOW() to force 8-bit" : "%s must be %u-bit",
+		    "%s must be %u-bit%s",
 		    name ? name : "Expression",
-		    n
+		    n,
+		    n == 8 && !name ? "; use LOW() to force 8-bit" : ""
 		);
 		return false;
 	}
