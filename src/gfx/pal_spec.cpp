@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <charconv>
+#include <errno.h>
 #include <fstream>
 #include <inttypes.h>
 #include <limits.h>
@@ -612,7 +613,7 @@ void parseExternalPalSpec(char const *arg) {
 	std::filebuf file;
 	// Some parsers read the file in text mode, others in binary mode
 	if (!file.open(path, std::ios::in | std::get<2>(*iter))) {
-		error("Failed to open palette file \"%s\"", path);
+		fatal("Failed to open palette file \"%s\": %s", path, strerror(errno));
 		return;
 	}
 
