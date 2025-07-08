@@ -230,8 +230,8 @@ static int32_t computeRPNExpr(Patch const &patch, std::vector<Symbol> const &fil
 				);
 				isError = true;
 				value = 1;
-			} else if (symbol->data.holds<Label>()) {
-				value = symbol->data.get<Label>().section->bank;
+			} else if (std::holds_alternative<Label>(symbol->data)) {
+				value = std::get<Label>(symbol->data).section->bank;
 			} else {
 				error(
 				    patch.src,
@@ -420,11 +420,11 @@ static int32_t computeRPNExpr(Patch const &patch, std::vector<Symbol> const &fil
 					);
 					sym_DumpLocalAliasedSymbols(fileSymbols[value].name);
 					isError = true;
-				} else if (symbol->data.holds<Label>()) {
-					Label const &label = symbol->data.get<Label>();
+				} else if (std::holds_alternative<Label>(symbol->data)) {
+					Label const &label = std::get<Label>(symbol->data);
 					value = label.section->org + label.offset;
 				} else {
-					value = symbol->data.get<int32_t>();
+					value = std::get<int32_t>(symbol->data);
 				}
 			}
 			break;

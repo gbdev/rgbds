@@ -46,7 +46,7 @@ bool disablePadding; // -x
 FILE *linkerScript;
 
 std::string const &FileStackNode::dump(uint32_t curLineNo) const {
-	if (data.holds<std::vector<uint32_t>>()) {
+	if (std::holds_alternative<std::vector<uint32_t>>(data)) {
 		assume(parent); // REPT nodes use their parent's name
 		std::string const &lastName = parent->dump(lineNo);
 		fputs(" -> ", stderr);

@@ -7,9 +7,9 @@
 %code requires {
 	#include <stdint.h>
 	#include <string>
+	#include <variant>
 	#include <vector>
 
-	#include "either.hpp"
 	#include "linkdefs.hpp"
 
 	#include "asm/lexer.hpp"
@@ -30,7 +30,7 @@
 
 	struct StrFmtArgList {
 		std::string format;
-		std::vector<Either<uint32_t, std::string>> args;
+		std::vector<std::variant<uint32_t, std::string>> args;
 	};
 }
 
@@ -74,7 +74,7 @@
 	static uint32_t adjustNegativePos(int32_t pos, size_t len, char const *functionName);
 	static std::string strrpl(std::string_view str, std::string const &old, std::string const &rep);
 	static std::string strfmt(
-	    std::string const &spec, std::vector<Either<uint32_t, std::string>> const &args
+	    std::string const &spec, std::vector<std::variant<uint32_t, std::string>> const &args
 	);
 	static void compoundAssignment(std::string const &symName, RPNCommand op, int32_t constValue);
 	static void failAssert(AssertionType type);
@@ -2964,7 +2964,7 @@ static std::string strrpl(std::string_view str, std::string const &old, std::str
 }
 
 static std::string
-    strfmt(std::string const &spec, std::vector<Either<uint32_t, std::string>> const &args) {
+    strfmt(std::string const &spec, std::vector<std::variant<uint32_t, std::string>> const &args) {
 	std::string str;
 	size_t argIndex = 0;
 
@@ -3005,10 +3005,10 @@ static std::string
 		} else if (argIndex >= args.size()) {
 			// Will warn after formatting is done.
 			str += '%';
-		} else if (args[argIndex].holds<uint32_t>()) {
-			fmt.appendNumber(str, args[argIndex].get<uint32_t>());
+		} else if (std::holds_alternative<uint32_t>(args[argIndex])) {
+			fmt.appendNumber(str, std::get<uint32_t>(args[argIndex]));
 		} else {
-			fmt.appendString(str, args[argIndex].get<std::string>());
+			fmt.appendString(str, std::get<std::string>(args[argIndex]));
 		}
 
 		argIndex++;

@@ -468,7 +468,7 @@ void obj_ReadFile(char const *fileName, unsigned int fileID) {
 		// object file. It's better than nothing.
 		nodes[fileID].push_back({
 		    .type = NODE_FILE,
-		    .data = Either<std::vector<uint32_t>, std::string>(fileName),
+		    .data = std::variant<std::monostate, std::vector<uint32_t>, std::string>(fileName),
 		    .parent = nullptr,
 		    .lineNo = 0,
 		});
@@ -533,8 +533,8 @@ void obj_ReadFile(char const *fileName, unsigned int fileID) {
 		readSymbol(file, symbol, fileName, nodes[fileID]);
 
 		sym_AddSymbol(symbol);
-		if (symbol.data.holds<Label>()) {
-			nbSymPerSect[symbol.data.get<Label>().sectionID]++;
+		if (std::holds_alternative<Label>(symbol.data)) {
+			nbSymPerSect[std::get<Label>(symbol.data).sectionID]++;
 		}
 	}
 
@@ -574,8 +574,8 @@ void obj_ReadFile(char const *fileName, unsigned int fileID) {
 
 	// Give symbols' section pointers to their sections
 	for (uint32_t i = 0; i < nbSymbols; i++) {
-		if (fileSymbols[i].data.holds<Label>()) {
-			Label &label = fileSymbols[i].data.get<Label>();
+		if (std::holds_alternative<Label>(fileSymbols[i].data)) {
+			Label &label = std::get<Label>(fileSymbols[i].data);
 			label.section = fileSections[label.sectionID].get();
 			// Give the section a pointer to the symbol as well
 			linkSymToSect(fileSymbols[i], *label.section);
@@ -591,8 +591,8 @@ void obj_ReadFile(char const *fileName, unsigned int fileID) {
 	// This has to run **after** all the `sect_AddSection()` calls,
 	// so that `sect_GetSection()` will work
 	for (uint32_t i = 0; i < nbSymbols; i++) {
-		if (fileSymbols[i].data.holds<Label>()) {
-			Label &label = fileSymbols[i].data.get<Label>();
+		if (std::holds_alternative<Label>(fileSymbols[i].data)) {
+			Label &label = std::get<Label>(fileSymbols[i].data);
 			if (Section *section = label.section; section->modifier != SECTION_NORMAL) {
 				if (section->modifier == SECTION_FRAGMENT) {
 					// Add the fragment's offset to the symbol's

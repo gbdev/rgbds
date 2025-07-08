@@ -31,9 +31,11 @@ void sym_AddSymbol(Symbol &symbol) {
 	}
 
 	Symbol *other = sym_GetSymbol(symbol.name);
-	int32_t *symValue = symbol.data.holds<int32_t>() ? &symbol.data.get<int32_t>() : nullptr;
-	int32_t *otherValue =
-	    other && other->data.holds<int32_t>() ? &other->data.get<int32_t>() : nullptr;
+	int32_t *symValue =
+	    std::holds_alternative<int32_t>(symbol.data) ? &std::get<int32_t>(symbol.data) : nullptr;
+	int32_t *otherValue = other && std::holds_alternative<int32_t>(other->data)
+	                          ? &std::get<int32_t>(other->data)
+	                          : nullptr;
 
 	// Check if the symbol already exists with a different value
 	if (other && !(symValue && otherValue && *symValue == *otherValue)) {
@@ -85,7 +87,7 @@ void sym_DumpLocalAliasedSymbols(std::string const &name) {
 		fprintf(
 		    stderr,
 		    "    A %s with that name is defined but not exported at ",
-		    local->data.holds<Label>() ? "label" : "constant"
+		    std::holds_alternative<Label>(local->data) ? "label" : "constant"
 		);
 		assume(local->src);
 		local->src->dump(local->lineNo);

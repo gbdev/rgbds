@@ -7,8 +7,8 @@
 
 #include <stdint.h>
 #include <string>
+#include <variant>
 
-#include "either.hpp"
 #include "linkdefs.hpp"
 
 struct FileStackNode;
@@ -27,14 +27,14 @@ struct Symbol {
 	ExportLevel type;
 	FileStackNode const *src;
 	int32_t lineNo;
-	Either<
+	std::variant<
 	    int32_t, // Constants just have a numeric value
 	    Label    // Label values refer to an offset within a specific section
 	    >
 	    data;
 
-	Label &label() { return data.get<Label>(); }
-	Label const &label() const { return data.get<Label>(); }
+	Label &label() { return std::get<Label>(data); }
+	Label const &label() const { return std::get<Label>(data); }
 };
 
 void sym_ForEach(void (*callback)(Symbol &));
