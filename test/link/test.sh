@@ -252,6 +252,14 @@ rgblinkQuiet -o "$gbtemp" "$otemp" "$gbtemp2" 2>"$outtemp"
 tryDiff "$test"/out.err "$outtemp"
 evaluateTest
 
+test="scramble-invalid"
+startTest
+"$RGBASM" -o "$otemp" "$test"/a.asm
+continueTest
+rgblinkQuiet -o "$gbtemp" -S "romx := 4" "$otemp" 2>"$outtemp"
+tryDiff "$test"/out.err "$outtemp"
+evaluateTest
+
 test="scramble-romx"
 startTest
 "$RGBASM" -o "$otemp" "$test"/a.asm
