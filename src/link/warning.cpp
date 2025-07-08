@@ -3,6 +3,7 @@
 #include "link/warning.hpp"
 
 #include <inttypes.h>
+#include <stdarg.h>
 
 #include "link/main.hpp"
 
