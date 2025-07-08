@@ -118,6 +118,19 @@ static void printUsage() {
 }
 // LCOV_EXCL_STOP
 
+[[gnu::format(printf, 1, 2), noreturn]]
+static void fatalWithUsage(char const *fmt, ...) {
+	va_list ap;
+	fputs("FATAL: ", stderr);
+	va_start(ap, fmt);
+	vfprintf(stderr, fmt, ap);
+	va_end(ap);
+	putc('\n', stderr);
+
+	printUsage();
+	exit(1);
+}
+
 enum ScrambledRegion {
 	SCRAMBLE_ROMX,
 	SCRAMBLE_SRAM,
@@ -354,11 +367,7 @@ int main(int argc, char *argv[]) {
 
 	// If no input files were specified, the user must have screwed up
 	if (curArgIndex == argc) {
-		fputs(
-		    "FATAL: Please specify an input file (pass `-` to read from standard input)\n", stderr
-		);
-		printUsage();
-		exit(1);
+		fatalWithUsage("Please specify an input file (pass `-` to read from standard input)");
 	}
 
 	// Patch the size array depending on command-line options

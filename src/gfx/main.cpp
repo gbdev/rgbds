@@ -118,6 +118,19 @@ static void printUsage() {
 }
 // LCOV_EXCL_STOP
 
+[[gnu::format(printf, 1, 2), noreturn]]
+static void fatalWithUsage(char const *fmt, ...) {
+	va_list ap;
+	fputs("FATAL: ", stderr);
+	va_start(ap, fmt);
+	vfprintf(stderr, fmt, ap);
+	va_end(ap);
+	putc('\n', stderr);
+
+	printUsage();
+	exit(1);
+}
+
 // Parses a number at the beginning of a string, moving the pointer to skip the parsed characters.
 // Returns the provided errVal on error.
 static uint16_t parseNumber(char *&string, char const *errPrefix, uint16_t errVal = UINT16_MAX) {
@@ -195,19 +208,13 @@ static void skipWhitespace(char *&arg) {
 
 static void registerInput(char const *arg) {
 	if (!options.input.empty()) {
-		fprintf(
-		    stderr,
-		    "FATAL: input image specified more than once! (first \"%s\", then "
-		    "\"%s\")\n",
+		fatalWithUsage(
+		    "Input image specified more than once! (first \"%s\", then \"%s\")",
 		    options.input.c_str(),
 		    arg
 		);
-		printUsage();
-		exit(1);
 	} else if (arg[0] == '\0') { // Empty input path
-		fprintf(stderr, "FATAL: input image path cannot be empty\n");
-		printUsage();
-		exit(1);
+		fatalWithUsage("Input image path cannot be empty");
 	} else {
 		options.input = arg;
 	}
@@ -667,13 +674,10 @@ int main(int argc, char *argv[]) {
 		if (autoOptEnabled) {
 			auto &image = localOptions.groupOutputs ? options.output : options.input;
 			if (image.empty()) {
-				fprintf(
-				    stderr,
-				    "FATAL: No %s specified\n",
+				fatalWithUsage(
+				    "No %s specified",
 				    localOptions.groupOutputs ? "output tile data file" : "input image"
 				);
-				printUsage();
-				exit(1);
 			}
 
 			// Manual implementation of std::filesystem::path.replace_extension().
@@ -860,9 +864,7 @@ int main(int argc, char *argv[]) {
 	           && !localOptions.reverse) {
 		processPalettes();
 	} else {
-		fputs("FATAL: No input image specified\n", stderr);
-		printUsage();
-		exit(1);
+		fatalWithUsage("No input image specified");
 	}
 
 	requireZeroErrors();

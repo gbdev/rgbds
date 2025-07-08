@@ -6,6 +6,7 @@
 #include <errno.h>
 #include <limits.h>
 #include <memory>
+#include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
@@ -109,6 +110,19 @@ static void printUsage() {
 	);
 }
 // LCOV_EXCL_STOP
+
+[[gnu::format(printf, 1, 2), noreturn]]
+static void fatalWithUsage(char const *fmt, ...) {
+	va_list ap;
+	fputs("FATAL: ", stderr);
+	va_start(ap, fmt);
+	vfprintf(stderr, fmt, ap);
+	va_end(ap);
+	putc('\n', stderr);
+
+	printUsage();
+	exit(1);
+}
 
 int main(int argc, char *argv[]) {
 	time_t now = time(nullptr);
@@ -389,15 +403,9 @@ int main(int argc, char *argv[]) {
 	}
 
 	if (argc == musl_optind) {
-		fputs(
-		    "FATAL: Please specify an input file (pass `-` to read from standard input)\n", stderr
-		);
-		printUsage();
-		exit(1);
+		fatalWithUsage("Please specify an input file (pass `-` to read from standard input)");
 	} else if (argc != musl_optind + 1) {
-		fputs("FATAL: More than one input file specified\n", stderr);
-		printUsage();
-		exit(1);
+		fatalWithUsage("More than one input file specified");
 	}
 
 	std::string mainFileName = argv[musl_optind];
