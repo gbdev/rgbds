@@ -84,6 +84,7 @@ rgblink_obj := \
 	src/link/sdas_obj.o \
 	src/link/section.o \
 	src/link/symbol.o \
+	src/link/warning.o \
 	src/extern/getopt.o \
 	src/extern/utf8decoder.o \
 	src/error.o \

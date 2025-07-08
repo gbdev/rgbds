@@ -17,6 +17,7 @@
 #include "link/main.hpp"
 #include "link/section.hpp"
 #include "link/symbol.hpp"
+#include "link/warning.hpp"
 
 enum NumberType {
 	HEX = 16, // X

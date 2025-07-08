@@ -66,6 +66,7 @@ set(rgblink_src
     "link/sdas_obj.cpp"
     "link/section.cpp"
     "link/symbol.cpp"
+    "link/warning.cpp"
     "extern/getopt.cpp"
     "extern/utf8decoder.cpp"
     "error.cpp"

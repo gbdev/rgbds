@@ -24,6 +24,7 @@
 #include "link/sdas_obj.hpp"
 #include "link/section.hpp"
 #include "link/symbol.hpp"
+#include "link/warning.hpp"
 
 static std::deque<std::vector<Symbol>> symbolLists;
 static std::vector<std::vector<FileStackNode>> nodes;

@@ -23,6 +23,7 @@
 #include "link/patch.hpp"
 #include "link/section.hpp"
 #include "link/symbol.hpp"
+#include "link/warning.hpp"
 
 bool isDmgMode;               // -d
 char const *linkerScriptName; // -l
@@ -43,8 +44,6 @@ bool isWRAM0Mode;    // -w
 bool disablePadding; // -x
 
 FILE *linkerScript;
-
-static uint32_t nbErrors = 0;
 
 std::string const &FileStackNode::dump(uint32_t curLineNo) const {
 	if (data.holds<std::vector<uint32_t>>()) {
@@ -67,72 +66,6 @@ std::string const &FileStackNode::dump(uint32_t curLineNo) const {
 		fprintf(stderr, "(%" PRIu32 ")", curLineNo);
 		return nodeName;
 	}
-}
-
-void printDiag(
-    char const *fmt, va_list args, char const *type, FileStackNode const *where, uint32_t lineNo
-) {
-	fputs(type, stderr);
-	fputs(": ", stderr);
-	if (where) {
-		where->dump(lineNo);
-		fputs(": ", stderr);
-	}
-	vfprintf(stderr, fmt, args);
-	putc('\n', stderr);
-}
-
-void warning(FileStackNode const *where, uint32_t lineNo, char const *fmt, ...) {
-	va_list args;
-
-	va_start(args, fmt);
-	printDiag(fmt, args, "warning", where, lineNo);
-	va_end(args);
-}
-
-void error(FileStackNode const *where, uint32_t lineNo, char const *fmt, ...) {
-	va_list args;
-
-	va_start(args, fmt);
-	printDiag(fmt, args, "error", where, lineNo);
-	va_end(args);
-
-	if (nbErrors != UINT32_MAX) {
-		nbErrors++;
-	}
-}
-
-[[gnu::format(printf, 2, 3)]]
-void argErr(char flag, char const *fmt, ...) {
-	va_list args;
-
-	fprintf(stderr, "error: Invalid argument for option '%c': ", flag);
-	va_start(args, fmt);
-	vfprintf(stderr, fmt, args);
-	va_end(args);
-	putc('\n', stderr);
-
-	if (nbErrors != UINT32_MAX) {
-		nbErrors++;
-	}
-}
-
-[[noreturn]]
-void fatal(FileStackNode const *where, uint32_t lineNo, char const *fmt, ...) {
-	va_list args;
-
-	va_start(args, fmt);
-	printDiag(fmt, args, "FATAL", where, lineNo);
-	va_end(args);
-
-	if (nbErrors != UINT32_MAX) {
-		nbErrors++;
-	}
-
-	fprintf(
-	    stderr, "Linking aborted after %" PRIu32 " error%s\n", nbErrors, nbErrors == 1 ? "" : "s"
-	);
-	exit(1);
 }
 
 // Short options
@@ -327,14 +260,6 @@ next: // Can't `continue` a `for` loop with this nontrivial iteration logic
 	}
 }
 
-[[noreturn]]
-void reportErrors() {
-	fprintf(
-	    stderr, "Linking failed with %" PRIu32 " error%s\n", nbErrors, nbErrors == 1 ? "" : "s"
-	);
-	exit(1);
-}
-
 int main(int argc, char *argv[]) {
 	// Parse options
 	for (int ch; (ch = musl_getopt_long_only(argc, argv, optstring, longopts, nullptr)) != -1;) {
@@ -461,23 +386,17 @@ int main(int argc, char *argv[]) {
 		script_ProcessScript(linkerScriptName);
 
 		// If the linker script produced any errors, some sections may be in an invalid state
-		if (nbErrors != 0) {
-			reportErrors();
-		}
+		requireZeroErrors();
 	}
 
 	// then process them,
 	sect_DoSanityChecks();
-	if (nbErrors != 0) {
-		reportErrors();
-	}
+	requireZeroErrors();
 	assign_AssignSections();
 	patch_CheckAssertions();
 
 	// and finally output the result.
 	patch_ApplyPatches();
-	if (nbErrors != 0) {
-		reportErrors();
-	}
+	requireZeroErrors();
 	out_WriteFiles();
 }

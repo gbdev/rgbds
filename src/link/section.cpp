@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 
 #include "link/section.hpp"
+#include "link/warning.hpp"
 
 #include <inttypes.h>
 #include <stdlib.h>

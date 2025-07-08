@@ -30,6 +30,7 @@
 
 	#include "link/main.hpp"
 	#include "link/section.hpp"
+	#include "link/warning.hpp"
 
 	using namespace std::literals;
 

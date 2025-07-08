@@ -21,6 +21,7 @@
 #include "link/main.hpp"
 #include "link/section.hpp"
 #include "link/symbol.hpp"
+#include "link/warning.hpp"
 
 static constexpr size_t BANK_SIZE = 0x4000;
 
