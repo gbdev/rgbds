@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 
 #include "link/section.hpp"
-#include "link/warning.hpp"
 
 #include <inttypes.h>
 #include <stdlib.h>
@@ -10,6 +9,8 @@
 
 #include "error.hpp"
 #include "helpers.hpp"
+
+#include "link/warning.hpp"
 
 std::vector<std::unique_ptr<Section>> sectionList;
 std::unordered_map<std::string, size_t> sectionMap; // Indexes into `sectionList`

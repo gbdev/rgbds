@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: MIT
 
+#include "link/warning.hpp"
+
 #include <inttypes.h>
 
 #include "link/main.hpp"
-#include "link/warning.hpp"
 
 static uint32_t nbErrors = 0;
 

@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 
 #include "link/symbol.hpp"
-#include "link/warning.hpp"
 
 #include <inttypes.h>
 #include <stdlib.h>
@@ -12,6 +11,7 @@
 
 #include "link/main.hpp"
 #include "link/section.hpp"
+#include "link/warning.hpp"
 
 std::unordered_map<std::string, Symbol *> symbols;
 std::unordered_map<std::string, std::vector<Symbol *>> localSymbols;
