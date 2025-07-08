@@ -1,5 +1,5 @@
 error: Features incompatible with MBC ("mbc1+multirumble")
-Accepted combinations:
+Accepted MBC names:
 	ROM ($00) [aka ROM_ONLY]
 	MBC1 ($01), MBC1+RAM ($02), MBC1+RAM+BATTERY ($03)
 	MBC2 ($05), MBC2+BATTERY ($06)
