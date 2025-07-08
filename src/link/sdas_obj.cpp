@@ -432,9 +432,7 @@ void sdobj_ReadFile(FileStackNode const &where, FILE *file, std::vector<Symbol> 
 						sym_AddSymbol(symbol); // This will error out
 					} else if (otherValue != symbolValue) {
 						errorNoNewline(
-						    "\"%s\" is defined as %" PRId32 " at ",
-						    symbol.name.c_str(),
-						    symbolValue
+						    "\"%s\" is defined as %" PRId32 " at ", symbol.name.c_str(), symbolValue
 						);
 						symbol.src->dump(symbol.lineNo);
 						fprintf(stderr, ", but as %" PRId32 " at ", otherValue);

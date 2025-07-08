@@ -394,9 +394,7 @@ void Expression::makeBinaryOp(RPNCommand op, Expression &&src1, Expression const
 			break;
 		case RPN_SHL:
 			if (rval < 0) {
-				warning(
-				    WARNING_SHIFT_AMOUNT, "Shifting left by negative amount %" PRId32, rval
-				);
+				warning(WARNING_SHIFT_AMOUNT, "Shifting left by negative amount %" PRId32, rval);
 			}
 
 			if (rval >= 32) {
@@ -411,9 +409,7 @@ void Expression::makeBinaryOp(RPNCommand op, Expression &&src1, Expression const
 			}
 
 			if (rval < 0) {
-				warning(
-				    WARNING_SHIFT_AMOUNT, "Shifting right by negative amount %" PRId32, rval
-				);
+				warning(WARNING_SHIFT_AMOUNT, "Shifting right by negative amount %" PRId32, rval);
 			}
 
 			if (rval >= 32) {
@@ -424,9 +420,7 @@ void Expression::makeBinaryOp(RPNCommand op, Expression &&src1, Expression const
 			break;
 		case RPN_USHR:
 			if (rval < 0) {
-				warning(
-				    WARNING_SHIFT_AMOUNT, "Shifting right by negative amount %" PRId32, rval
-				);
+				warning(WARNING_SHIFT_AMOUNT, "Shifting right by negative amount %" PRId32, rval);
 			}
 
 			if (rval >= 32) {
@@ -593,8 +587,7 @@ bool checkNBit(int32_t v, uint8_t n, char const *name) {
 	if (v < -(1 << n) || v >= 1 << n) {
 		warning(
 		    WARNING_TRUNCATION_1,
-		    n == 8 && !name ? "%s must be %u-bit; use LOW() to force 8-bit"
-		                    : "%s must be %u-bit",
+		    n == 8 && !name ? "%s must be %u-bit; use LOW() to force 8-bit" : "%s must be %u-bit",
 		    name ? name : "Expression",
 		    n
 		);
@@ -603,8 +596,7 @@ bool checkNBit(int32_t v, uint8_t n, char const *name) {
 	if (v < -(1 << (n - 1))) {
 		warning(
 		    WARNING_TRUNCATION_2,
-		    n == 8 && !name ? "%s must be %u-bit; use LOW() to force 8-bit"
-		                    : "%s must be %u-bit",
+		    n == 8 && !name ? "%s must be %u-bit; use LOW() to force 8-bit" : "%s must be %u-bit",
 		    name ? name : "Expression",
 		    n
 		);

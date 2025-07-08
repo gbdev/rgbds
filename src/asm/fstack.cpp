@@ -376,9 +376,7 @@ void fstk_RunFor(
 	}
 
 	if ((step > 0 && start > stop) || (step < 0 && start < stop)) {
-		warning(
-		    WARNING_BACKWARDS_FOR, "FOR goes backwards from %d to %d by %d", start, stop, step
-		);
+		warning(WARNING_BACKWARDS_FOR, "FOR goes backwards from %d to %d by %d", start, stop, step);
 	}
 
 	if (count == 0) {

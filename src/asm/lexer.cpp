@@ -1289,8 +1289,7 @@ static uint32_t readGfxConstant() {
 		error("Invalid graphics constant, no digits after '`'");
 	} else if (width == 9) {
 		warning(
-		    WARNING_LARGE_CONSTANT,
-		    "Graphics constant is too long, only first 8 pixels considered"
+		    WARNING_LARGE_CONSTANT, "Graphics constant is too long, only first 8 pixels considered"
 		);
 	}
 

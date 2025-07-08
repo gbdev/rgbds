@@ -72,8 +72,7 @@ static bool requireCodeSection() {
 	}
 
 	error(
-	    "Section '%s' cannot contain code or data (not ROM0 or ROMX)",
-	    currentSection->name.c_str()
+	    "Section '%s' cannot contain code or data (not ROM0 or ROMX)", currentSection->name.c_str()
 	);
 	return false;
 }
@@ -172,8 +171,7 @@ static unsigned int
 		// If both are fixed, they must be the same
 		if (sect.org != UINT32_MAX && sect.org != curOrg) {
 			sectError(
-			    "Section already declared as fixed at incompatible address $%04" PRIx32,
-			    sect.org
+			    "Section already declared as fixed at incompatible address $%04" PRIx32, sect.org
 			);
 		} else if (sect.align != 0 && (mask(sect.align) & (curOrg - sect.alignOfs))) {
 			sectError(
@@ -503,9 +501,7 @@ void sect_SetLoadSection(
 
 void sect_EndLoadSection(char const *cause) {
 	if (cause) {
-		warning(
-		    WARNING_UNTERMINATED_LOAD, "`LOAD` block without `ENDL` terminated by `%s`", cause
-		);
+		warning(WARNING_UNTERMINATED_LOAD, "`LOAD` block without `ENDL` terminated by `%s`", cause);
 	}
 
 	if (!currentLoadSection) {
@@ -908,16 +904,12 @@ void sect_BinaryFile(std::string const &name, int32_t startPos) {
 		fseek(file, startPos, SEEK_SET);
 	} else {
 		if (errno != ESPIPE) {
-			error(
-			    "Error determining size of INCBIN file '%s': %s", name.c_str(), strerror(errno)
-			);
+			error("Error determining size of INCBIN file '%s': %s", name.c_str(), strerror(errno));
 		}
 		// The file isn't seekable, so we'll just skip bytes one at a time
 		while (startPos--) {
 			if (fgetc(file) == EOF) {
-				error(
-				    "Specified start position is greater than length of file '%s'", name.c_str()
-				);
+				error("Specified start position is greater than length of file '%s'", name.c_str());
 				return;
 			}
 		}
@@ -987,16 +979,12 @@ void sect_BinaryFileSlice(std::string const &name, int32_t startPos, int32_t len
 		fseek(file, startPos, SEEK_SET);
 	} else {
 		if (errno != ESPIPE) {
-			error(
-			    "Error determining size of INCBIN file '%s': %s", name.c_str(), strerror(errno)
-			);
+			error("Error determining size of INCBIN file '%s': %s", name.c_str(), strerror(errno));
 		}
 		// The file isn't seekable, so we'll just skip bytes one at a time
 		while (startPos--) {
 			if (fgetc(file) == EOF) {
-				error(
-				    "Specified start position is greater than length of file '%s'", name.c_str()
-				);
+				error("Specified start position is greater than length of file '%s'", name.c_str());
 				return;
 			}
 		}
