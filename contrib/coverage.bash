@@ -2,7 +2,6 @@
 set -e
 
 # Build RGBDS with gcov support
-
 make coverage -j
 
 # Run the tests
@@ -15,13 +14,20 @@ popd
 gcov src/**/*.cpp
 mkdir -p coverage
 
-# Generate coverage report
-lcov -c --no-external -d . -o coverage/coverage.info --ignore-errors format,inconsistent,unsupported
-genhtml -f -s -o coverage/ coverage/coverage.info --ignore-errors category,corrupt,inconsistent
+# Check whether running from coverage.yml workflow
+if [ "$1" != "false" ]; then
+  # Generate coverage report
+  lcov -c --no-external -d . -o coverage/coverage.info --ignore-errors format,inconsistent,unsupported
+  genhtml -f -s -o coverage/ coverage/coverage.info --ignore-errors category,corrupt,inconsistent
 
-# Open report in web browser
-if [ "$(uname)" == "Darwin" ]; then
-  open coverage/index.html
+  # Open report in web browser
+  if [ "$(uname)" == "Darwin" ]; then
+    open coverage/index.html
+  else
+    xdg-open coverage/index.html
+  fi
 else
-  xdg-open coverage/index.html
+  # Generate coverage report
+  lcov -c --no-external -d . -o coverage/coverage.info
+  genhtml -f -s -o coverage/ coverage/coverage.info
 fi
