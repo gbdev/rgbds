@@ -10,7 +10,7 @@
 .Nd Game Boy graphics converter
 .Sh SYNOPSIS
 .Nm
-.Op Fl CmhOuVXYZ
+.Op Fl CmhOuVwXYZ
 .Op Fl v Op Fl v No ...
 .Op Fl a Ar attrmap | Fl A
 .Op Fl b Ar base_ids
@@ -27,6 +27,7 @@
 .Op Fl r Ar width
 .Op Fl s Ar nb_colors
 .Op Fl t Ar tilemap | Fl T
+.Op Fl W Ar warning
 .Op Fl x Ar quantity
 .Ar file
 .Sh DESCRIPTION
@@ -393,6 +394,17 @@ Some internal debug printing is enabled.
 The verbosity level does not go past 6.
 .Pp
 Note that verbose output is only intended to be consumed by humans, and may change without notice between RGBDS releases; relying on those for scripts is not advised.
+.It Fl W Ar warning , Fl \-warning Ar warning
+Set warning flag
+.Ar warning .
+A warning message will be printed if
+.Ar warning
+is an unknown warning flag.
+See the
+.Sx DIAGNOSTICS
+section for a list of warnings.
+.It Fl w
+Disable all warning output, even when turned into errors.
 .It Fl X , Fl \-mirror-x
 Deduplicate tiles that are horizontally symmetrical mirror images of each other across the X axis.
 Implies
@@ -707,6 +719,68 @@ assume that tiles were not deduplicated, and should be laid out in the order the
 .It attribute map Ta Without an attribute map,
 .Nm
 assumes that no tiles were mirrored.
+.El
+.Sh DIAGNOSTICS
+Warnings are diagnostic messages that indicate possibly erroneous behavior that does not necessarily compromise the conversion process.
+The following options alter the way warnings are processed.
+.Bl -tag -width Ds
+.It Fl Werror
+Make all warnings into errors.
+This can be negated as
+.Fl Wno-error
+to prevent turning all warnings into errors.
+.It Fl Werror=
+Make the specified warning or meta warning into an error.
+A warning's name is appended
+.Pq example: Fl Werror=embedded ,
+and this warning is implicitly enabled and turned into an error.
+This can be negated as
+.Fl Wno-error=
+to prevent turning a specified warning into an error, even if
+.Fl Werror
+is in effect.
+.El
+.Pp
+The following warnings are
+.Dq meta
+warnings, that enable a collection of other warnings.
+If a specific warning is toggled via a meta flag and a specific one, the more specific one takes priority.
+The position on the command-line acts as a tie breaker, the last one taking effect.
+.Bl -tag -width Ds
+.It Fl Wall
+This enables warnings that are likely to indicate an error or undesired behavior, and that can easily be fixed.
+.It Fl Weverything
+Enables literally every warning.
+.El
+.Pp
+The following warnings are actual warning flags; with each description, the corresponding warning flag is included.
+Note that each of these flag also has a negation (for example,
+.Fl Wtrim-nonempty
+enables the warning that
+.Fl Wno-trim-nonempty
+disables; and
+.Fl Wall
+enables every warning that
+.Fl Wno-all
+disables).
+Only the non-default flag is listed here.
+Ignoring the
+.Dq no-
+prefix, entries are listed alphabetically.
+.Bl -tag -width Ds
+.It Fl Wembedded
+Warn when a generated palette is sorted according to the input PNG's embedded palette but
+.Fl c Cm embedded
+was not provided.
+This warning is enabled by
+.Fl Weverything .
+.It Fl Wtrim-nonempty
+Warn when
+.Fl x
+trims a nonempty tile.
+An "empty" tile uses entirely color 0 of its palette.
+This warning is enabled by
+.Fl Wall .
 .El
 .Sh EXAMPLES
 The following will only validate the
