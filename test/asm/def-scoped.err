@@ -4,4 +4,4 @@ error: def-scoped.asm(13):
     syntax error, unexpected local label, expecting symbol
 error: def-scoped.asm(16):
     syntax error, unexpected local label, expecting symbol
-error: Assembly aborted (3 errors)!
+Assembly aborted with 3 errors!

@@ -109,7 +109,7 @@ struct LexerState {
 	}
 
 	void setAsCurrentState();
-	bool setFileAsNextState(std::string const &filePath, bool updateStateNow);
+	void setFileAsNextState(std::string const &filePath, bool updateStateNow);
 	void setViewAsNextState(char const *name, ContentSpan const &span, uint32_t lineNo_);
 
 	void clear(uint32_t lineNo_);

@@ -10,4 +10,4 @@ error: bracketed-macro-args.asm(33) -> bracketed-macro-args.asm::bad(30):
     Macro argument '\<2>' not defined
 error: bracketed-macro-args.asm(39) -> bracketed-macro-args.asm::toolong(36):
     Bracketed symbol "abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz" does not exist
-error: Assembly aborted (6 errors)!
+Assembly aborted with 6 errors!

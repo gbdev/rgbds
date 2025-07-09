@@ -6,4 +6,4 @@ error: lexer-hack.asm(27):
     Macro "undef" not defined
 error: lexer-hack.asm(28):
     Macro "undef" not defined
-error: Assembly aborted (4 errors)!
+Assembly aborted with 4 errors!

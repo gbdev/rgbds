@@ -1,1 +1,2 @@
-error: Unable to place "v1" (VRAM section) anywhere
+FATAL: Unable to place "v1" (VRAM section) anywhere
+Linking aborted with 1 error

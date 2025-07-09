@@ -8,4 +8,4 @@ error: def.asm(38):
 error: def.asm(42):
     'name' already defined at def.asm(40)
     (should it be {interpolated} to define its contents "mac2"?)
-error: Assembly aborted (4 errors)!
+Assembly aborted with 4 errors!

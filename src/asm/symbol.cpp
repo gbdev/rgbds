@@ -9,7 +9,7 @@
 #include <unordered_map>
 #include <unordered_set>
 
-#include "error.hpp"
+#include "diagnostics.hpp"
 #include "helpers.hpp" // assume
 #include "util.hpp"
 #include "version.hpp"
@@ -217,12 +217,12 @@ static bool isAutoScoped(std::string const &symName) {
 
 	// Check for nothing after the dot
 	if (dotPos == symName.length() - 1) {
-		fatalerror("'%s' is a nonsensical reference to an empty local label", symName.c_str());
+		fatal("'%s' is a nonsensical reference to an empty local label", symName.c_str());
 	}
 
 	// Check for more than one dot
 	if (symName.find('.', dotPos + 1) != std::string::npos) {
-		fatalerror("'%s' is a nonsensical reference to a nested local label", symName.c_str());
+		fatal("'%s' is a nonsensical reference to a nested local label", symName.c_str());
 	}
 
 	// Check for already-qualified local label
@@ -232,7 +232,7 @@ static bool isAutoScoped(std::string const &symName) {
 
 	// Check for unqualifiable local label
 	if (!globalScope) {
-		fatalerror("Unqualified local label '%s' in main scope", symName.c_str());
+		fatal("Unqualified local label '%s' in main scope", symName.c_str());
 	}
 
 	return true;

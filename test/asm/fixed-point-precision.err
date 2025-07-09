@@ -2,4 +2,4 @@ error: fixed-point-precision.asm(22):
     Fixed-point constant precision must be between 1 and 31
 error: fixed-point-precision.asm(23):
     Fixed-point constant precision 0 invalid, defaulting to 16
-error: Assembly aborted (2 errors)!
+Assembly aborted with 2 errors!

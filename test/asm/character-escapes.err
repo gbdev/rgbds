@@ -4,4 +4,4 @@ error: character-escapes.asm(10) -> character-escapes.asm::m(7):
     Invalid character in bracketed macro argument '\'
 error: character-escapes.asm(10) -> character-escapes.asm::m(8):
     Invalid character in bracketed macro argument '\t'
-error: Assembly aborted (3 errors)!
+Assembly aborted with 3 errors!

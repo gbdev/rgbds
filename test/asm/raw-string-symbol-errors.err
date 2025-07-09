@@ -24,4 +24,4 @@ error: raw-string-symbol-errors.asm(27):
     's' was already purged
 error: raw-string-symbol-errors.asm(29):
     's' is not a string symbol
-error: Assembly aborted (11 errors)!
+Assembly aborted with 11 errors!

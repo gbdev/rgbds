@@ -10,7 +10,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "error.hpp"
+#include "diagnostics.hpp"
 #include "helpers.hpp"
 #include "linkdefs.hpp"
 #include "platform.hpp" // S_ISDIR (stat macro)
@@ -72,12 +72,13 @@ std::string const &FileStackNode::dump(uint32_t curLineNo) const {
 	}
 }
 
-void fstk_DumpCurrent() {
+bool fstk_DumpCurrent() {
 	if (lexer_AtTopLevel()) {
-		fputs("at top level", stderr);
-		return;
+		return false;
 	}
+	assume(!contextStack.empty());
 	contextStack.top().fileInfo->dump(lexer_GetLineNo());
+	return true;
 }
 
 std::shared_ptr<FileStackNode> fstk_GetFileStack() {
@@ -159,7 +160,7 @@ bool yywrap() {
 	uint32_t ifDepth = lexer_GetIFDepth();
 
 	if (ifDepth != 0) {
-		fatalerror(
+		fatal(
 		    "Ended block with %" PRIu32 " unterminated IF construct%s",
 		    ifDepth,
 		    ifDepth == 1 ? "" : "s"
@@ -188,7 +189,7 @@ bool yywrap() {
 
 			// This error message will refer to the current iteration
 			if (sym->type != SYM_VAR) {
-				fatalerror("Failed to update FOR symbol value");
+				fatal("Failed to update FOR symbol value");
 			}
 		}
 		// Advance to the next iteration
@@ -211,11 +212,11 @@ bool yywrap() {
 
 static void checkRecursionDepth() {
 	if (contextStack.size() > maxRecursionDepth) {
-		fatalerror("Recursion limit (%zu) exceeded", maxRecursionDepth);
+		fatal("Recursion limit (%zu) exceeded", maxRecursionDepth);
 	}
 }
 
-static bool newFileContext(std::string const &filePath, bool updateStateNow) {
+static void newFileContext(std::string const &filePath, bool updateStateNow) {
 	checkRecursionDepth();
 
 	std::shared_ptr<std::string> uniqueIDStr = nullptr;
@@ -237,7 +238,7 @@ static bool newFileContext(std::string const &filePath, bool updateStateNow) {
 	    .macroArgs = macroArgs,
 	});
 
-	return context.lexerState.setFileAsNextState(filePath, updateStateNow);
+	context.lexerState.setFileAsNextState(filePath, updateStateNow);
 }
 
 static void newMacroContext(Symbol const &macro, std::shared_ptr<MacroArgs> macroArgs) {
@@ -322,9 +323,7 @@ void fstk_RunInclude(std::string const &path, bool preInclude) {
 		return;
 	}
 
-	if (!newFileContext(*fullPath, false)) {
-		fatalerror("Failed to set up lexer for file include"); // LCOV_EXCL_LINE
-	}
+	newFileContext(*fullPath, false);
 }
 
 void fstk_RunMacro(std::string const &macroName, std::shared_ptr<MacroArgs> macroArgs) {
@@ -402,15 +401,13 @@ bool fstk_Break() {
 
 void fstk_NewRecursionDepth(size_t newDepth) {
 	if (contextStack.size() > newDepth + 1) {
-		fatalerror("Recursion limit (%zu) exceeded", newDepth);
+		fatal("Recursion limit (%zu) exceeded", newDepth);
 	}
 	maxRecursionDepth = newDepth;
 }
 
 void fstk_Init(std::string const &mainPath, size_t maxDepth) {
-	if (!newFileContext(mainPath, true)) {
-		fatalerror("Failed to open main file");
-	}
+	newFileContext(mainPath, true);
 
 	maxRecursionDepth = maxDepth;
 

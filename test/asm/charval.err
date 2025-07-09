@@ -8,4 +8,4 @@ warning: charval.asm(22): [-Wbuiltin-args]
     CHARVAL: Index starts at 0
 warning: charval.asm(23): [-Wbuiltin-args]
     CHARVAL: Index 10 is past the end of the character mapping
-error: Assembly aborted (3 errors)!
+Assembly aborted with 3 errors!

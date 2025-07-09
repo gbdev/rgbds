@@ -15,7 +15,7 @@
 #include <utility>
 #include <vector>
 
-#include "error.hpp"
+#include "diagnostics.hpp"
 #include "file.hpp"
 #include "helpers.hpp"
 #include "itertools.hpp"

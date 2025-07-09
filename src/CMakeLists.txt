@@ -3,8 +3,8 @@
 configure_file(version.cpp _version.cpp ESCAPE_QUOTES)
 
 set(common_src
-    "error.cpp"
     "extern/getopt.cpp"
+    "diagnostics.cpp"
     "_version.cpp"
     )
 
@@ -47,10 +47,7 @@ set(rgbasm_src
     "asm/section.cpp"
     "asm/symbol.cpp"
     "asm/warning.cpp"
-    "extern/getopt.cpp"
     "extern/utf8decoder.cpp"
-    "diagnostics.cpp"
-    "error.cpp"
     "linkdefs.cpp"
     "opmath.cpp"
     "util.cpp"
@@ -67,9 +64,7 @@ set(rgblink_src
     "link/section.cpp"
     "link/symbol.cpp"
     "link/warning.cpp"
-    "extern/getopt.cpp"
     "extern/utf8decoder.cpp"
-    "error.cpp"
     "linkdefs.cpp"
     "opmath.cpp"
     "util.cpp"
@@ -77,8 +72,6 @@ set(rgblink_src
 
 set(rgbfix_src
     "fix/main.cpp"
-    "extern/getopt.cpp"
-    "error.cpp"
     )
 
 set(rgbgfx_src
@@ -91,8 +84,6 @@ set(rgbgfx_src
     "gfx/reverse.cpp"
     "gfx/rgba.cpp"
     "gfx/warning.cpp"
-    "extern/getopt.cpp"
-    "error.cpp"
     )
 
 foreach(PROG "asm" "fix" "gfx" "link")

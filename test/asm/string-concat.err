@@ -2,4 +2,4 @@ error: string-concat.asm(25):
     syntax error, unexpected ++
 error: string-concat.asm(26):
     syntax error, unexpected ++, expecting ] or + or -
-error: Assembly aborted (2 errors)!
+Assembly aborted with 2 errors!

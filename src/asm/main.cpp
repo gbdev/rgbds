@@ -11,7 +11,7 @@
 #include <string.h>
 #include <time.h>
 
-#include "error.hpp"
+#include "diagnostics.hpp"
 #include "extern/getopt.hpp"
 #include "helpers.hpp"
 #include "parser.hpp"
@@ -164,7 +164,7 @@ int main(int argc, char *argv[]) {
 			if (strlen(musl_optarg) == 2) {
 				opt_B(musl_optarg);
 			} else {
-				errx("Must specify exactly 2 characters for option 'b'");
+				fatal("Must specify exactly 2 characters for option 'b'");
 			}
 			break;
 
@@ -187,7 +187,7 @@ int main(int argc, char *argv[]) {
 			if (strlen(musl_optarg) == 4) {
 				opt_G(musl_optarg);
 			} else {
-				errx("Must specify exactly 4 characters for option 'g'");
+				fatal("Must specify exactly 4 characters for option 'g'");
 			}
 			break;
 
@@ -214,7 +214,7 @@ int main(int argc, char *argv[]) {
 			}
 			if (dependFile == nullptr) {
 				// LCOV_EXCL_START
-				errx("Failed to open dependfile \"%s\": %s", dependFileName, strerror(errno));
+				fatal("Failed to open dependfile \"%s\": %s", dependFileName, strerror(errno));
 				// LCOV_EXCL_STOP
 			}
 			break;
@@ -232,11 +232,11 @@ int main(int argc, char *argv[]) {
 			padByte = strtoul(musl_optarg, &endptr, 0);
 
 			if (musl_optarg[0] == '\0' || *endptr != '\0') {
-				errx("Invalid argument for option 'p'");
+				fatal("Invalid argument for option 'p'");
 			}
 
 			if (padByte > 0xFF) {
-				errx("Argument for option 'p' must be between 0 and 0xFF");
+				fatal("Argument for option 'p' must be between 0 and 0xFF");
 			}
 
 			opt_P(padByte);
@@ -252,11 +252,11 @@ int main(int argc, char *argv[]) {
 			precision = strtoul(precisionArg, &endptr, 0);
 
 			if (musl_optarg[0] == '\0' || *endptr != '\0') {
-				errx("Invalid argument for option 'Q'");
+				fatal("Invalid argument for option 'Q'");
 			}
 
 			if (precision < 1 || precision > 31) {
-				errx("Argument for option 'Q' must be between 1 and 31");
+				fatal("Argument for option 'Q' must be between 1 and 31");
 			}
 
 			opt_Q(precision);
@@ -266,7 +266,7 @@ int main(int argc, char *argv[]) {
 			maxDepth = strtoul(musl_optarg, &endptr, 0);
 
 			if (musl_optarg[0] == '\0' || *endptr != '\0') {
-				errx("Invalid argument for option 'r'");
+				fatal("Invalid argument for option 'r'");
 			}
 			break;
 
@@ -274,7 +274,7 @@ int main(int argc, char *argv[]) {
 			// Split "<features>:<name>" so `musl_optarg` is "<features>" and `name` is "<name>"
 			char *name = strchr(musl_optarg, ':');
 			if (!name) {
-				errx("Invalid argument for option 's'");
+				fatal("Invalid argument for option 's'");
 			}
 			*name++ = '\0';
 
@@ -293,7 +293,7 @@ int main(int argc, char *argv[]) {
 				}
 				// A feature must be specified
 				if (*feature == '\0') {
-					errx("Empty feature for option 's'");
+					fatal("Empty feature for option 's'");
 				}
 				// Parse the `feature` and update the `features` list
 				if (!strcasecmp(feature, "all")) {
@@ -309,7 +309,7 @@ int main(int argc, char *argv[]) {
 					                     : !strcasecmp(feature, "macro") ? STATE_MACRO
 					                                                     : NB_STATE_FEATURES;
 					if (value == NB_STATE_FEATURES) {
-						errx("Invalid feature for option 's': \"%s\"", feature);
+						fatal("Invalid feature for option 's': \"%s\"", feature);
 					} else if (std::find(RANGE(features), value) != features.end()) {
 						warnx("Ignoring duplicate feature for option 's': \"%s\"", feature);
 					} else {
@@ -354,11 +354,11 @@ int main(int argc, char *argv[]) {
 			maxValue = strtoul(musl_optarg, &endptr, 0);
 
 			if (musl_optarg[0] == '\0' || *endptr != '\0') {
-				errx("Invalid argument for option 'X'");
+				fatal("Invalid argument for option 'X'");
 			}
 
 			if (maxValue > UINT_MAX) {
-				errx("Argument for option 'X' must be between 0 and %u", UINT_MAX);
+				fatal("Argument for option 'X' must be between 0 and %u", UINT_MAX);
 			}
 
 			maxErrors = maxValue;
@@ -416,8 +416,8 @@ int main(int argc, char *argv[]) {
 
 	if (dependFile) {
 		if (targetFileName.empty()) {
-			errx("Dependency files can only be created if a target file is specified with either "
-			     "-o, -MQ or -MT");
+			fatal("Dependency files can only be created if a target file is specified with either "
+			      "-o, -MQ or -MT");
 		}
 
 		fprintf(dependFile, "%s: %s\n", targetFileName.c_str(), mainFileName.c_str());
@@ -444,7 +444,8 @@ int main(int argc, char *argv[]) {
 	}
 
 	if (nbErrors != 0) {
-		errx("Assembly aborted (%u error%s)!", nbErrors, nbErrors == 1 ? "" : "s");
+		fprintf(stderr, "Assembly aborted with %u error%s!\n", nbErrors, nbErrors == 1 ? "" : "s");
+		exit(1);
 	}
 
 	// If parse aborted due to missing an include, and `-MG` was given, exit normally

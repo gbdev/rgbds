@@ -2,4 +2,4 @@ error: union-in-rom.asm(2):
     Cannot use UNION inside of ROM0 or ROMX sections
 error: union-in-rom.asm(3):
     Found ENDU outside of a UNION construct
-error: Assembly aborted (2 errors)!
+Assembly aborted with 2 errors!

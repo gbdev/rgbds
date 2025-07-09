@@ -13,9 +13,11 @@
 #include <string>
 #include <vector>
 
-#include "error.hpp"
 #include "helpers.hpp"
 #include "itertools.hpp"
+
+[[gnu::format(printf, 1, 2)]]
+void warnx(char const *fmt, ...);
 
 enum WarningAbled { WARNING_DEFAULT, WARNING_ENABLED, WARNING_DISABLED };
 

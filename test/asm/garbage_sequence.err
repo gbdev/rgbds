@@ -8,4 +8,4 @@ error: garbage_sequence.asm(3):
     Unknown character '#'
 error: garbage_sequence.asm(3):
     Unknown characters '#', '?', '?'
-error: Assembly aborted (5 errors)!
+Assembly aborted with 5 errors!

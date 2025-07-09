@@ -4,4 +4,4 @@ warning: line-continuation.asm(6) -> line-continuation.asm::spam(4): [-Wuser]
     spam
 error: line-continuation.asm(14):
     Label "foo" created outside of a SECTION
-error: Assembly aborted (2 errors)!
+Assembly aborted with 2 errors!

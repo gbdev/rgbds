@@ -4,4 +4,4 @@ error: macro-args-outside-macro.asm(2):
     '\<2>' cannot be used outside of a macro
 error: macro-args-outside-macro.asm(3):
     '\#' cannot be used outside of a macro
-error: Assembly aborted (3 errors)!
+Assembly aborted with 3 errors!

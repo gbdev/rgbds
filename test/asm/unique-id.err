@@ -29,4 +29,4 @@ error: unique-id.asm(15):
 while expanding symbol "warn_unique"
 warning: unique-id.asm(15): [-Wuser]
     !
-error: Assembly aborted (3 errors)!
+Assembly aborted with 3 errors!

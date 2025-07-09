@@ -20,4 +20,4 @@ error: bank.asm(22) -> bank.asm::def_sect(8):
     Expected constant expression: "Label_u12"'s bank is not known
 error: bank.asm(26):
     BANK argument must be a label
-error: Assembly aborted (11 errors)!
+Assembly aborted with 11 errors!

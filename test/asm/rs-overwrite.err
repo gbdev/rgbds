@@ -8,4 +8,4 @@ error: rs-overwrite.asm(16):
     '_RS' already defined as non-EQU at rs-overwrite.asm(13)
 error: rs-overwrite.asm(19):
     '_RS' already defined as non-EQUS at rs-overwrite.asm(13)
-error: Assembly aborted (5 errors)!
+Assembly aborted with 5 errors!

@@ -6,4 +6,4 @@ error: string-literal-macro-arg.asm(11):
     Unterminated string
 error: string-literal-macro-arg.asm(11) -> string-literal-macro-arg.asm::mac(4):
     Unterminated string
-error: Assembly aborted (4 errors)!
+Assembly aborted with 4 errors!

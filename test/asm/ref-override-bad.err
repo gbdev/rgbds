@@ -2,4 +2,4 @@ error: ref-override-bad.asm(8):
     'X' already referenced at ref-override-bad.asm(7)
 error: ref-override-bad.asm(13):
     'Y' already referenced at ref-override-bad.asm(10)
-error: Assembly aborted (2 errors)!
+Assembly aborted with 2 errors!

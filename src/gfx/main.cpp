@@ -14,7 +14,7 @@
 #include <string_view>
 #include <vector>
 
-#include "error.hpp"
+#include "diagnostics.hpp"
 #include "extern/getopt.hpp"
 #include "file.hpp"
 #include "platform.hpp"

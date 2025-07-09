@@ -14,4 +14,4 @@ error: null-outside-string.asm(7):
     Begun line continuation, but encountered character 'X'
 error: null-outside-string.asm(7):
     syntax error, unexpected symbol
-error: Assembly aborted (8 errors)!
+Assembly aborted with 8 errors!

@@ -50,7 +50,7 @@ extern size_t maxRecursionDepth;
 
 struct MacroArgs;
 
-void fstk_DumpCurrent();
+bool fstk_DumpCurrent();
 std::shared_ptr<FileStackNode> fstk_GetFileStack();
 std::shared_ptr<std::string> fstk_GetUniqueIDStr();
 MacroArgs *fstk_GetCurrentMacroArgs();

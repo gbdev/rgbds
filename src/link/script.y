@@ -150,8 +150,6 @@ optional:
 
 #define scriptError(context, fmt, ...) \
 	::error( \
-	    nullptr, \
-	    0, \
 	    "%s(%" PRIu32 "): " fmt, \
 	    context.path.c_str(), \
 	    context.lineNo __VA_OPT__(, ) __VA_ARGS__ \
@@ -746,7 +744,7 @@ void script_ProcessScript(char const *path) {
 	auto &newContext = lexerStack.emplace_back(std::string(path));
 
 	if (!newContext.file.open(newContext.path, std::ios_base::in)) {
-		error(nullptr, 0, "Failed to open linker script \"%s\"", newContext.path.c_str());
+		error("Failed to open linker script \"%s\"", newContext.path.c_str());
 		lexerStack.clear();
 	} else {
 		yy::parser linkerScriptParser;

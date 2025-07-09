@@ -28,4 +28,4 @@ error: invalid-format.asm(17):
     Formatting type 'd' with fractional width
 error: invalid-format.asm(18):
     Formatting type 'd' with fractional precision
-error: Assembly aborted (15 errors)!
+Assembly aborted with 15 errors!

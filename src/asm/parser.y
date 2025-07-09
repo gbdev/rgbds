@@ -488,11 +488,11 @@ if:
 elif:
 	POP_ELIF iconst NEWLINE {
 		if (lexer_GetIFDepth() == 0) {
-			fatalerror("Found ELIF outside of an IF construct");
+			fatal("Found ELIF outside of an IF construct");
 		}
 		if (lexer_RanIFBlock()) {
 			if (lexer_ReachedELSEBlock()) {
-				fatalerror("Found ELIF after an ELSE block");
+				fatal("Found ELIF after an ELSE block");
 			}
 			lexer_SetMode(LEXER_SKIP_TO_ENDC);
 		} else if ($2) {
@@ -506,11 +506,11 @@ elif:
 else:
 	POP_ELSE NEWLINE {
 		if (lexer_GetIFDepth() == 0) {
-			fatalerror("Found ELSE outside of an IF construct");
+			fatal("Found ELSE outside of an IF construct");
 		}
 		if (lexer_RanIFBlock()) {
 			if (lexer_ReachedELSEBlock()) {
-				fatalerror("Found ELSE after an ELSE block");
+				fatal("Found ELSE after an ELSE block");
 			}
 			lexer_SetMode(LEXER_SKIP_TO_ENDC);
 		} else {
@@ -779,7 +779,7 @@ endsection:
 
 fail:
 	POP_FAIL string {
-		fatalerror("%s", $2.c_str());
+		fatal("%s", $2.c_str());
 	}
 ;
 
@@ -1608,7 +1608,7 @@ uconst:
 	iconst {
 		$$ = $1;
 		if ($$ < 0) {
-			fatalerror("Constant must not be negative: %d", $$);
+			fatal("Constant must not be negative: %d", $$);
 		}
 	}
 ;
@@ -1705,15 +1705,15 @@ string_literal:
 
 		if (!sym) {
 			if (sym_IsPurgedScoped($3)) {
-				fatalerror("Unknown symbol \"%s\"; it was purged", $3.c_str());
+				fatal("Unknown symbol \"%s\"; it was purged", $3.c_str());
 			} else {
-				fatalerror("Unknown symbol \"%s\"", $3.c_str());
+				fatal("Unknown symbol \"%s\"", $3.c_str());
 			}
 		}
 		Section const *section = sym->getSection();
 
 		if (!section) {
-			fatalerror("\"%s\" does not belong to any section", sym->name.c_str());
+			fatal("\"%s\" does not belong to any section", sym->name.c_str());
 		}
 		// Section names are capped by rgbasm's maximum string length,
 		// so this currently can't overflow.
@@ -3041,7 +3041,7 @@ static void compoundAssignment(std::string const &symName, RPNCommand op, int32_
 static void failAssert(AssertionType type) {
 	switch (type) {
 	case ASSERT_FATAL:
-		fatalerror("Assertion failed");
+		fatal("Assertion failed");
 	case ASSERT_ERROR:
 		error("Assertion failed");
 		break;
@@ -3054,7 +3054,7 @@ static void failAssert(AssertionType type) {
 static void failAssertMsg(AssertionType type, std::string const &message) {
 	switch (type) {
 	case ASSERT_FATAL:
-		fatalerror("Assertion failed: %s", message.c_str());
+		fatal("Assertion failed: %s", message.c_str());
 	case ASSERT_ERROR:
 		error("Assertion failed: %s", message.c_str());
 		break;

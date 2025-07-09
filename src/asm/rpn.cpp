@@ -434,7 +434,7 @@ void Expression::makeBinaryOp(RPNCommand op, Expression &&src1, Expression const
 			break;
 		case RPN_DIV:
 			if (rval == 0) {
-				fatalerror("Division by zero");
+				fatal("Division by zero");
 			}
 
 			if (lval == INT32_MIN && rval == -1) {
@@ -451,7 +451,7 @@ void Expression::makeBinaryOp(RPNCommand op, Expression &&src1, Expression const
 			break;
 		case RPN_MOD:
 			if (rval == 0) {
-				fatalerror("Modulo by zero");
+				fatal("Modulo by zero");
 			}
 
 			if (lval == INT32_MIN && rval == -1) {
@@ -462,7 +462,7 @@ void Expression::makeBinaryOp(RPNCommand op, Expression &&src1, Expression const
 			break;
 		case RPN_EXP:
 			if (rval < 0) {
-				fatalerror("Exponentiation by negative power");
+				fatal("Exponentiation by negative power");
 			}
 
 			data = op_exponent(lval, rval);

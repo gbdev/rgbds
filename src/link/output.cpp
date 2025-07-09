@@ -11,7 +11,7 @@
 #include <string.h>
 #include <vector>
 
-#include "error.hpp"
+#include "diagnostics.hpp"
 #include "extern/utf8decoder.hpp"
 #include "helpers.hpp"
 #include "linkdefs.hpp"
@@ -71,7 +71,7 @@ void out_AddSection(Section const &section) {
 	uint32_t minNbBanks = targetBank + 1;
 
 	if (minNbBanks > maxNbBanks[section.type]) {
-		errx(
+		fatal(
 		    "Section \"%s\" has an invalid bank range (%" PRIu32 " > %" PRIu32 ")",
 		    section.name.c_str(),
 		    section.bank,
@@ -213,7 +213,7 @@ static void writeROM() {
 			outputFile = stdout;
 		}
 		if (!outputFile) {
-			errx("Failed to open output file \"%s\": %s", outputFileName, strerror(errno));
+			fatal("Failed to open output file \"%s\": %s", outputFileName, strerror(errno));
 		}
 	}
 	Defer closeOutputFile{[&] {
@@ -231,7 +231,7 @@ static void writeROM() {
 			overlayFile = stdin;
 		}
 		if (!overlayFile) {
-			errx("Failed to open overlay file \"%s\": %s", overlayFileName, strerror(errno));
+			fatal("Failed to open overlay file \"%s\": %s", overlayFileName, strerror(errno));
 		}
 	}
 	Defer closeOverlayFile{[&] {
@@ -574,7 +574,7 @@ static void writeSym() {
 		symFile = stdout;
 	}
 	if (!symFile) {
-		errx("Failed to open sym file \"%s\": %s", symFileName, strerror(errno));
+		fatal("Failed to open sym file \"%s\": %s", symFileName, strerror(errno));
 	}
 	Defer closeSymFile{[&] { fclose(symFile); }};
 
@@ -625,7 +625,7 @@ static void writeMap() {
 		mapFile = stdout;
 	}
 	if (!mapFile) {
-		errx("Failed to open map file \"%s\": %s", mapFileName, strerror(errno));
+		fatal("Failed to open map file \"%s\": %s", mapFileName, strerror(errno));
 	}
 	Defer closeMapFile{[&] { fclose(mapFile); }};
 

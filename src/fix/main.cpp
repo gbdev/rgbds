@@ -12,7 +12,7 @@
 #include <string.h>
 #include <vector>
 
-#include "error.hpp"
+#include "diagnostics.hpp"
 #include "extern/getopt.hpp"
 #include "helpers.hpp"
 #include "platform.hpp"

@@ -23,4 +23,4 @@ while expanding symbol "2147483648"
 error: negative-macro-args.asm(21) -> negative-macro-args.asm::mac(18):
     Number in bracketed macro argument is too large
 while expanding symbol "4294967295"
-error: Assembly aborted (11 errors)!
+Assembly aborted with 11 errors!
