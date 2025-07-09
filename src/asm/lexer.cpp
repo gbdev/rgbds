@@ -2287,61 +2287,10 @@ static Token skipIfBlock(bool toEndc) {
 
 	Defer reenableExpansions = scopedDisableExpansions();
 
-	for (;;) {
-		if (atLineStart) {
-			int c;
-
-			for (;; shiftChar()) {
-				c = peek();
-				if (!isWhitespace(c)) {
-					break;
-				}
-			}
-
-			if (startsIdentifier(c)) {
-				shiftChar();
-				switch (Token token = readIdentifier(c, false); token.type) {
-				case T_(POP_IF):
-					lexer_IncIFDepth();
-					break;
-
-				case T_(POP_ELIF):
-					if (lexer_ReachedELSEBlock()) {
-						// This should be redundant, as the parser handles this error first.
-						fatal("Found ELIF after an ELSE block"); // LCOV_EXCL_LINE
-					}
-					if (!toEndc && lexer_GetIFDepth() == startingDepth) {
-						return token;
-					}
-					break;
-
-				case T_(POP_ELSE):
-					if (lexer_ReachedELSEBlock()) {
-						fatal("Found ELSE after an ELSE block");
-					}
-					lexer_ReachELSEBlock();
-					if (!toEndc && lexer_GetIFDepth() == startingDepth) {
-						return token;
-					}
-					break;
-
-				case T_(POP_ENDC):
-					if (lexer_GetIFDepth() == startingDepth) {
-						return token;
-					}
-					lexer_DecIFDepth();
-					break;
-
-				default:
-					break;
-				}
-			}
-			atLineStart = false;
-		}
-
+	for (int c;; atLineStart = false) {
 		// Read chars until EOL
-		do {
-			int c = nextChar();
+		while (!atLineStart) {
+			c = nextChar();
 
 			if (c == EOF) {
 				return Token(T_(YYEOF));
@@ -2357,7 +2306,55 @@ static Token skipIfBlock(bool toEndc) {
 				// Do this both on line continuations and plain EOLs
 				nextLine();
 			}
-		} while (!atLineStart);
+		}
+
+		// Skip leading whitespace
+		for (;; shiftChar()) {
+			c = peek();
+			if (!isWhitespace(c)) {
+				break;
+			}
+		}
+
+		if (!startsIdentifier(c)) {
+			continue;
+		}
+		shiftChar();
+		switch (Token token = readIdentifier(c, false); token.type) {
+		case T_(POP_IF):
+			lexer_IncIFDepth();
+			break;
+
+		case T_(POP_ELIF):
+			if (lexer_ReachedELSEBlock()) {
+				// This should be redundant, as the parser handles this error first.
+				fatal("Found ELIF after an ELSE block"); // LCOV_EXCL_LINE
+			}
+			if (!toEndc && lexer_GetIFDepth() == startingDepth) {
+				return token;
+			}
+			break;
+
+		case T_(POP_ELSE):
+			if (lexer_ReachedELSEBlock()) {
+				fatal("Found ELSE after an ELSE block");
+			}
+			lexer_ReachELSEBlock();
+			if (!toEndc && lexer_GetIFDepth() == startingDepth) {
+				return token;
+			}
+			break;
+
+		case T_(POP_ENDC):
+			if (lexer_GetIFDepth() == startingDepth) {
+				return token;
+			}
+			lexer_DecIFDepth();
+			break;
+
+		default:
+			break;
+		}
 	}
 }
 
@@ -2378,50 +2375,10 @@ static Token yylex_SKIP_TO_ENDR() {
 
 	Defer reenableExpansions = scopedDisableExpansions();
 
-	for (;;) {
-		if (atLineStart) {
-			int c;
-
-			for (;;) {
-				c = peek();
-				if (!isWhitespace(c)) {
-					break;
-				}
-				shiftChar();
-			}
-
-			if (startsIdentifier(c)) {
-				shiftChar();
-				switch (readIdentifier(c, false).type) {
-				case T_(POP_FOR):
-				case T_(POP_REPT):
-					depth++;
-					break;
-
-				case T_(POP_ENDR):
-					depth--;
-					// `lexer_CaptureRept` has already guaranteed that the `ENDR`s are balanced
-					assume(depth > 0);
-					break;
-
-				case T_(POP_IF):
-					lexer_IncIFDepth();
-					break;
-
-				case T_(POP_ENDC):
-					lexer_DecIFDepth();
-					break;
-
-				default:
-					break;
-				}
-			}
-			atLineStart = false;
-		}
-
+	for (int c;; atLineStart = false) {
 		// Read chars until EOL
-		do {
-			int c = nextChar();
+		while (!atLineStart) {
+			c = nextChar();
 
 			if (c == EOF) {
 				return Token(T_(YYEOF));
@@ -2437,7 +2394,44 @@ static Token yylex_SKIP_TO_ENDR() {
 				// Do this both on line continuations and plain EOLs
 				nextLine();
 			}
-		} while (!atLineStart);
+		}
+
+		// Skip whitespace
+		for (;;) {
+			c = peek();
+			if (!isWhitespace(c)) {
+				break;
+			}
+			shiftChar();
+		}
+
+		if (!startsIdentifier(c)) {
+			continue;
+		}
+		shiftChar();
+		switch (readIdentifier(c, false).type) {
+		case T_(POP_FOR):
+		case T_(POP_REPT):
+			depth++;
+			break;
+
+		case T_(POP_ENDR):
+			depth--;
+			// `lexer_CaptureRept` has already guaranteed that the `ENDR`s are balanced
+			assume(depth > 0);
+			break;
+
+		case T_(POP_IF):
+			lexer_IncIFDepth();
+			break;
+
+		case T_(POP_ENDC):
+			lexer_DecIFDepth();
+			break;
+
+		default:
+			break;
+		}
 	}
 }
 
