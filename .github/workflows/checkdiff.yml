@@ -1,4 +1,4 @@
-name: Code coverage checking
+name: Diff completeness check
 on: pull_request
 
 jobs:

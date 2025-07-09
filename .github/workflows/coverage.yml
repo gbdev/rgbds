@@ -1,0 +1,30 @@
+name: Code coverage report
+on:
+  - push
+  - pull_request
+
+jobs:
+  coverage:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+      - name: Install deps
+        shell: bash
+        run: |
+          ./.github/scripts/install_deps.sh ubuntu
+      - name: Install LCOV
+        run: |
+          sudo apt-get install lcov
+      - name: Install test dependency dependencies
+        shell: bash
+        run: |
+          test/fetch-test-deps.sh --get-deps ubuntu
+      - name: Generate coverage report
+        run: |
+          contrib/coverage.bash false
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage
