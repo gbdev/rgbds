@@ -22,4 +22,4 @@ error: invalid-numbers.asm(16):
     Invalid fixed-point constant, no significant digits after 'q'
 error: invalid-numbers.asm(19):
     Fixed-point constant precision must be between 1 and 31
-error: Assembly aborted (7 errors)!
+Assembly aborted with 7 errors!

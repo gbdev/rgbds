@@ -18,4 +18,4 @@ error: multiple-charmaps.asm(108) -> multiple-charmaps.asm::set_(15):
     Charmap 'map5' doesn't exist
 error: multiple-charmaps.asm(110) -> multiple-charmaps.asm::pop_(30):
     No entries in the charmap stack
-error: Assembly aborted (3 errors)!
+Assembly aborted with 3 errors!

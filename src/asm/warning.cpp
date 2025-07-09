@@ -9,7 +9,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "error.hpp"
+#include "diagnostics.hpp"
 #include "helpers.hpp"
 #include "itertools.hpp"
 
@@ -70,9 +70,10 @@ static void printDiag(
 ) {
 	fputs(type, stderr);
 	fputs(": ", stderr);
-	fstk_DumpCurrent();
-	fprintf(stderr, flagfmt, flag);
-	fputs("\n    ", stderr);
+	if (fstk_DumpCurrent()) {
+		fprintf(stderr, flagfmt, flag);
+		fputs("\n    ", stderr);
+	}
 	vfprintf(stderr, fmt, args);
 	putc('\n', stderr);
 	lexer_DumpStringExpansions();
@@ -82,12 +83,14 @@ static void incrementErrors() {
 	// This intentionally makes 0 act as "unlimited" (or at least "limited to sizeof(unsigned)")
 	nbErrors++;
 	if (nbErrors == maxErrors) {
-		errx(
-		    "The maximum of %u error%s was reached (configure with \"-X/--max-errors\"); assembly "
-		    "aborted!",
-		    maxErrors,
-		    maxErrors == 1 ? "" : "s"
+		fprintf(
+		    stderr,
+		    "Assembly aborted after the maximum of %u error%s! (configure with "
+		    "'-X/--max-errors')\n",
+		    nbErrors,
+		    nbErrors == 1 ? "" : "s"
 		);
+		exit(1);
 	}
 }
 
@@ -103,8 +106,9 @@ void error(char const *fmt, ...) {
 
 void error(std::function<void()> callback) {
 	fputs("error: ", stderr);
-	fstk_DumpCurrent();
-	fputs(":\n    ", stderr);
+	if (fstk_DumpCurrent()) {
+		fputs(":\n    ", stderr);
+	}
 	callback();
 	putc('\n', stderr);
 	lexer_DumpStringExpansions();
@@ -113,7 +117,7 @@ void error(std::function<void()> callback) {
 }
 
 [[noreturn]]
-void fatalerror(char const *fmt, ...) {
+void fatal(char const *fmt, ...) {
 	va_list args;
 
 	va_start(args, fmt);

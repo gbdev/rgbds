@@ -4,4 +4,4 @@ error: nested-macrodef.asm(26) -> nested-macrodef.asm::outer(24):
     Unterminated macro definition
 error: nested-macrodef.asm(27):
     Macro "inner" not defined
-error: Assembly aborted (2 errors)!
+Assembly aborted with 2 errors!

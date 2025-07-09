@@ -6,4 +6,4 @@ error: invalid-union.asm(3):
     UNIONs must be inside a SECTION
 error: invalid-union.asm(7):
     Unterminated UNION construct
-error: Assembly aborted (4 errors)!
+Assembly aborted with 4 errors!

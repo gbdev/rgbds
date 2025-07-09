@@ -4,4 +4,4 @@ warning: rept-shift.asm(15) -> rept-shift.asm::m(11): [-Wmacro-shift]
     Cannot shift macro arguments past their end
 error: rept-shift.asm(15) -> rept-shift.asm::m(12):
     Macro argument '\1' not defined
-error: Assembly aborted (1 error)!
+Assembly aborted with 1 error!

@@ -13,7 +13,7 @@
 #include <string.h>
 #include <vector>
 
-#include "error.hpp"
+#include "diagnostics.hpp"
 #include "helpers.hpp"
 #include "linkdefs.hpp"
 #include "platform.hpp"
@@ -37,7 +37,7 @@ static std::vector<std::vector<FileStackNode>> nodes;
 		FILE *tmpFile = file; \
 		type tmpVal = func(tmpFile); \
 		if (tmpVal == (errval)) { \
-			errx(__VA_ARGS__, feof(tmpFile) ? "Unexpected end of file" : strerror(errno)); \
+			fatal(__VA_ARGS__, feof(tmpFile) ? "Unexpected end of file" : strerror(errno)); \
 		} \
 		var = static_cast<vartype>(tmpVal); \
 	} while (0)
@@ -78,7 +78,7 @@ static int64_t readLong(FILE *file) {
 		std::string &tmpVal = var; \
 		for (int tmpByte = getc(tmpFile); tmpByte != '\0'; tmpByte = getc(tmpFile)) { \
 			if (tmpByte == EOF) { \
-				errx(__VA_ARGS__, feof(tmpFile) ? "Unexpected end of file" : strerror(errno)); \
+				fatal(__VA_ARGS__, feof(tmpFile) ? "Unexpected end of file" : strerror(errno)); \
 			} else { \
 				tmpVal.push_back(tmpByte); \
 			} \
@@ -136,8 +136,6 @@ static void readFileStackNode(
 		}
 		if (!node.parent) {
 			fatal(
-			    nullptr,
-			    0,
 			    "%s is not a valid object file: root node (#%" PRIu32 ") may not be REPT",
 			    fileName,
 			    nodeID
@@ -275,7 +273,7 @@ static void readPatch(
 	size_t nbElementsRead = fread(patch.rpnExpression.data(), 1, rpnSize, file);
 
 	if (nbElementsRead != rpnSize) {
-		errx(
+		fatal(
 		    "%s: Cannot read \"%s\"'s patch #%" PRIu32 "'s RPN expression: %s",
 		    fileName,
 		    sectName.c_str(),
@@ -314,7 +312,7 @@ static void readSection(
 	);
 	tryReadLong(tmp, file, "%s: Cannot read \"%s\"'s' size: %s", fileName, section.name.c_str());
 	if (tmp < 0 || tmp > UINT16_MAX) {
-		errx("\"%s\"'s section size ($%" PRIx32 ") is invalid", section.name.c_str(), tmp);
+		fatal("\"%s\"'s section size ($%" PRIx32 ") is invalid", section.name.c_str(), tmp);
 	}
 	section.size = tmp;
 	section.offset = 0;
@@ -322,7 +320,7 @@ static void readSection(
 	    uint8_t, byte, file, "%s: Cannot read \"%s\"'s type: %s", fileName, section.name.c_str()
 	);
 	if (uint8_t type = byte & 0x3F; type >= SECTTYPE_INVALID) {
-		errx("\"%s\" has unknown section type 0x%02x", section.name.c_str(), type);
+		fatal("\"%s\" has unknown section type 0x%02x", section.name.c_str(), type);
 	} else {
 		section.type = SectionType(type);
 	}
@@ -336,7 +334,7 @@ static void readSection(
 	tryReadLong(tmp, file, "%s: Cannot read \"%s\"'s org: %s", fileName, section.name.c_str());
 	section.isAddressFixed = tmp >= 0;
 	if (tmp > UINT16_MAX) {
-		error(nullptr, 0, "\"%s\"'s org is too large ($%" PRIx32 ")", section.name.c_str(), tmp);
+		error("\"%s\"'s org is too large ($%" PRIx32 ")", section.name.c_str(), tmp);
 		tmp = UINT16_MAX;
 	}
 	section.org = tmp;
@@ -360,13 +358,7 @@ static void readSection(
 	    tmp, file, "%s: Cannot read \"%s\"'s alignment offset: %s", fileName, section.name.c_str()
 	);
 	if (tmp > UINT16_MAX) {
-		error(
-		    nullptr,
-		    0,
-		    "\"%s\"'s alignment offset is too large ($%" PRIx32 ")",
-		    section.name.c_str(),
-		    tmp
-		);
+		error("\"%s\"'s alignment offset is too large ($%" PRIx32 ")", section.name.c_str(), tmp);
 		tmp = UINT16_MAX;
 	}
 	section.alignOfs = tmp;
@@ -376,7 +368,7 @@ static void readSection(
 			section.data.resize(section.size);
 			if (size_t nbRead = fread(section.data.data(), 1, section.size, file);
 			    nbRead != section.size) {
-				errx(
+				fatal(
 				    "%s: Cannot read \"%s\"'s data: %s",
 				    fileName,
 				    section.name.c_str(),
@@ -446,7 +438,7 @@ void obj_ReadFile(char const *fileName, unsigned int fileID) {
 		file = stdin;
 	}
 	if (!file) {
-		errx("Failed to open file \"%s\": %s", fileName, strerror(errno));
+		fatal("Failed to open file \"%s\": %s", fileName, strerror(errno));
 	}
 	Defer closeFile{[&] { fclose(file); }};
 
@@ -457,7 +449,7 @@ void obj_ReadFile(char const *fileName, unsigned int fileID) {
 	ungetc(c, file); // Guaranteed to work
 	switch (c) {
 	case EOF:
-		fatal(nullptr, 0, "File \"%s\" is empty!", fileName);
+		fatal("File \"%s\" is empty!", fileName);
 
 	case 'R':
 		break;
@@ -484,7 +476,7 @@ void obj_ReadFile(char const *fileName, unsigned int fileID) {
 
 	if (fscanf(file, RGBDS_OBJECT_VERSION_STRING "%n", &matchedElems) == 1
 	    && matchedElems != literal_strlen(RGBDS_OBJECT_VERSION_STRING)) {
-		errx("%s: Not a RGBDS object file", fileName);
+		fatal("%s: Not a RGBDS object file", fileName);
 	}
 
 	verbosePrint("Reading object file %s\n", fileName);
@@ -493,7 +485,7 @@ void obj_ReadFile(char const *fileName, unsigned int fileID) {
 
 	tryReadLong(revNum, file, "%s: Cannot read revision number: %s", fileName);
 	if (revNum != RGBDS_OBJECT_REV) {
-		errx(
+		fatal(
 		    "%s: Unsupported object file for rgblink %s; try rebuilding \"%s\"%s"
 		    " (expected revision %d, got %d)",
 		    fileName,

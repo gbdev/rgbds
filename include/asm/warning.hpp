@@ -67,7 +67,7 @@ void warning(WarningID id, char const *fmt, ...);
 // It is also used when the assembler goes into an invalid state (for example,
 // when it fails to allocate memory).
 [[gnu::format(printf, 1, 2), noreturn]]
-void fatalerror(char const *fmt, ...);
+void fatal(char const *fmt, ...);
 
 // Used for errors that make it impossible to assemble correctly, but don't
 // affect the following code. The code will fail to assemble but the user will

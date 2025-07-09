@@ -6,4 +6,4 @@ error: error-recovery.asm(5) -> error-recovery.asm::REPT~2(7):
     syntax error, unexpected symbol
 error: error-recovery.asm(5) -> error-recovery.asm::REPT~3(7):
     syntax error, unexpected symbol
-error: Assembly aborted (4 errors)!
+Assembly aborted with 4 errors!

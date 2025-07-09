@@ -9,7 +9,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "error.hpp"
+#include "diagnostics.hpp"
 #include "extern/getopt.hpp"
 #include "helpers.hpp" // assume
 #include "itertools.hpp"

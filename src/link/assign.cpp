@@ -9,7 +9,7 @@
 #include <string.h>
 #include <vector>
 
-#include "error.hpp"
+#include "diagnostics.hpp"
 #include "helpers.hpp"
 #include "itertools.hpp"
 #include "linkdefs.hpp"
@@ -299,7 +299,7 @@ static void placeSection(Section &section) {
 
 	// If a section failed to go to several places, nothing we can report
 	if (!section.isBankFixed || !section.isAddressFixed) {
-		errx(
+		fatal(
 		    "Unable to place \"%s\" (%s section) %s",
 		    section.name.c_str(),
 		    sectionTypeInfo[section.type].name.c_str(),
@@ -308,7 +308,7 @@ static void placeSection(Section &section) {
 	}
 	// If the section just can't fit the bank, report that
 	else if (section.org + section.size > endaddr(section.type) + 1) {
-		errx(
+		fatal(
 		    "Unable to place \"%s\" (%s section) %s: section runs past end of region ($%04x > "
 		    "$%04x)",
 		    section.name.c_str(),
@@ -320,7 +320,7 @@ static void placeSection(Section &section) {
 	}
 	// Otherwise there is overlap with another section
 	else {
-		errx(
+		fatal(
 		    "Unable to place \"%s\" (%s section) %s: section overlaps with \"%s\"",
 		    section.name.c_str(),
 		    sectionTypeInfo[section.type].name.c_str(),

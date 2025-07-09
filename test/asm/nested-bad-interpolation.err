@@ -14,4 +14,4 @@ error: nested-bad-interpolation.asm(3):
     Interpolated symbol "" does not exist
 warning: nested-bad-interpolation.asm(3): [-Wobsolete]
     Treating multi-unit strings as numbers is deprecated
-error: Assembly aborted (6 errors)!
+Assembly aborted with 6 errors!

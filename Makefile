@@ -49,7 +49,12 @@ BASE_REF := origin/master
 
 all: rgbasm rgblink rgbfix rgbgfx
 
+common_obj := \
+	src/extern/getopt.o \
+	src/diagnostics.o
+
 rgbasm_obj := \
+	${common_obj} \
 	src/asm/charmap.o \
 	src/asm/fixpoint.o \
 	src/asm/format.o \
@@ -64,10 +69,7 @@ rgbasm_obj := \
 	src/asm/section.o \
 	src/asm/symbol.o \
 	src/asm/warning.o \
-	src/extern/getopt.o \
 	src/extern/utf8decoder.o \
-	src/diagnostics.o \
-	src/error.o \
 	src/linkdefs.o \
 	src/opmath.o \
 	src/util.o
@@ -75,6 +77,7 @@ rgbasm_obj := \
 src/asm/lexer.o src/asm/main.o: src/asm/parser.hpp
 
 rgblink_obj := \
+	${common_obj} \
 	src/link/assign.o \
 	src/link/main.o \
 	src/link/object.o \
@@ -85,9 +88,7 @@ rgblink_obj := \
 	src/link/section.o \
 	src/link/symbol.o \
 	src/link/warning.o \
-	src/extern/getopt.o \
 	src/extern/utf8decoder.o \
-	src/error.o \
 	src/linkdefs.o \
 	src/opmath.o \
 	src/util.o
@@ -95,11 +96,11 @@ rgblink_obj := \
 src/link/main.o: src/link/script.hpp
 
 rgbfix_obj := \
-	src/fix/main.o \
-	src/extern/getopt.o \
-	src/error.o
+	${common_obj} \
+	src/fix/main.o
 
 rgbgfx_obj := \
+	${common_obj} \
 	src/gfx/main.o \
 	src/gfx/pal_packing.o \
 	src/gfx/pal_sorting.o \
@@ -108,9 +109,7 @@ rgbgfx_obj := \
 	src/gfx/proto_palette.o \
 	src/gfx/reverse.o \
 	src/gfx/rgba.o \
-	src/gfx/warning.o \
-	src/extern/getopt.o \
-	src/error.o
+	src/gfx/warning.o
 
 rgbasm: ${rgbasm_obj}
 	$Q${CXX} ${REALLDFLAGS} -o $@ ${rgbasm_obj} ${REALCXXFLAGS} src/version.cpp -lm

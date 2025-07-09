@@ -1,5 +1,14 @@
 #include "diagnostics.hpp"
 
+void warnx(char const *fmt, ...) {
+	va_list ap;
+	fputs("warning: ", stderr);
+	va_start(ap, fmt);
+	vfprintf(stderr, fmt, ap);
+	va_end(ap);
+	putc('\n', stderr);
+}
+
 void WarningState::update(WarningState other) {
 	if (other.state != WARNING_DEFAULT) {
 		state = other.state;

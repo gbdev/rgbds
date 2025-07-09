@@ -6,4 +6,4 @@ error: charsize.asm(19):
     CHARSIZE: No character mapping for "abcdef"
 error: charsize.asm(20):
     CHARSIZE: No character mapping for "é"
-error: Assembly aborted (4 errors)!
+Assembly aborted with 4 errors!

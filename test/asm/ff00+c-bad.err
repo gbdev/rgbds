@@ -4,4 +4,4 @@ error: ff00+c-bad.asm(9):
     Expected constant expression: 'xyz' is not constant at assembly time
 error: ff00+c-bad.asm(9):
     Base value must be equal to $FF00 for $FF00+C
-error: Assembly aborted (3 errors)!
+Assembly aborted with 3 errors!

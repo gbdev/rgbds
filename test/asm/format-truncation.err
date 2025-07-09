@@ -2,4 +2,4 @@ error: format-truncation.asm(9):
     Fractional width 260 too long, limiting to 255
 error: format-truncation.asm(15):
     Fractional width 260 too long, limiting to 255
-error: Assembly aborted (2 errors)!
+Assembly aborted with 2 errors!

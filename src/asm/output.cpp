@@ -11,7 +11,7 @@
 #include <string.h>
 #include <string>
 
-#include "error.hpp"
+#include "diagnostics.hpp"
 #include "helpers.hpp" // assume, Defer
 #include "platform.hpp"
 
@@ -73,7 +73,7 @@ static uint32_t getSectIDIfAny(Section *sect) {
 	}
 
 	// Every section that exists should be in `sectionMap`
-	fatalerror("Unknown section '%s'", sect->name.c_str()); // LCOV_EXCL_LINE
+	fatal("Unknown section '%s'", sect->name.c_str()); // LCOV_EXCL_LINE
 }
 
 static void writePatch(Patch const &patch, FILE *file) {
@@ -326,7 +326,7 @@ void out_WriteObject() {
 	}
 	if (!file) {
 		// LCOV_EXCL_START
-		errx("Failed to open object file '%s': %s", objectFileName.c_str(), strerror(errno));
+		fatal("Failed to open object file '%s': %s", objectFileName.c_str(), strerror(errno));
 		// LCOV_EXCL_STOP
 	}
 	Defer closeFile{[&] { fclose(file); }};
@@ -528,7 +528,7 @@ void out_WriteState(std::string name, std::vector<StateFeature> const &features)
 	}
 	if (!file) {
 		// LCOV_EXCL_START
-		errx("Failed to open state file '%s': %s", name.c_str(), strerror(errno));
+		fatal("Failed to open state file '%s': %s", name.c_str(), strerror(errno));
 		// LCOV_EXCL_STOP
 	}
 	Defer closeFile{[&] { fclose(file); }};

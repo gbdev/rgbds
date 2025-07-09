@@ -7,7 +7,7 @@
 #include <string.h>
 #include <unordered_map>
 
-#include "error.hpp"
+#include "diagnostics.hpp"
 #include "helpers.hpp"
 
 #include "link/warning.hpp"
@@ -219,7 +219,7 @@ void sect_AddSection(std::unique_ptr<Section> &&section) {
 	if (Section *target = sect_GetSection(section->name); target) {
 		mergeSections(*target, std::move(section));
 	} else if (section->modifier == SECTION_UNION && sect_HasData(section->type)) {
-		errx(
+		fatal(
 		    "Section \"%s\" is of type %s, which cannot be unionized",
 		    section->name.c_str(),
 		    sectionTypeInfo[section->type].name.c_str()
@@ -242,10 +242,7 @@ static void doSanityChecks(Section &section) {
 		// This is trapped early in RGBDS objects (because then the format is not parseable),
 		// which leaves SDAS objects.
 		error(
-		    nullptr,
-		    0,
-		    "Section \"%s\" has not been assigned a type by a linker script",
-		    section.name.c_str()
+		    "Section \"%s\" has not been assigned a type by a linker script", section.name.c_str()
 		);
 		return;
 	}
@@ -253,8 +250,6 @@ static void doSanityChecks(Section &section) {
 	if (is32kMode && section.type == SECTTYPE_ROMX) {
 		if (section.isBankFixed && section.bank != 1) {
 			error(
-			    nullptr,
-			    0,
 			    "Section \"%s\" has type ROMX, which must be in bank 1 (if any) with option `-t`",
 			    section.name.c_str()
 			);
@@ -265,8 +260,6 @@ static void doSanityChecks(Section &section) {
 	if (isWRAM0Mode && section.type == SECTTYPE_WRAMX) {
 		if (section.isBankFixed && section.bank != 1) {
 			error(
-			    nullptr,
-			    0,
 			    "Section \"%s\" has type WRAMX, which must be in bank 1 with options `-w` or `-d`",
 			    section.name.c_str()
 			);
@@ -276,8 +269,6 @@ static void doSanityChecks(Section &section) {
 	}
 	if (isDmgMode && section.type == SECTTYPE_VRAM && section.bank == 1) {
 		error(
-		    nullptr,
-		    0,
 		    "Section \"%s\" has type VRAM, which must be in bank 0 with option `-d`",
 		    section.name.c_str()
 		);
@@ -292,8 +283,6 @@ static void doSanityChecks(Section &section) {
 	// Too large an alignment may not be satisfiable
 	if (section.isAlignFixed && (section.alignMask & sectionTypeInfo[section.type].startAddr)) {
 		error(
-		    nullptr,
-		    0,
 		    "Section \"%s\" has type %s, which cannot be aligned to $%04x bytes",
 		    section.name.c_str(),
 		    sectionTypeInfo[section.type].name.c_str(),
@@ -306,8 +295,6 @@ static void doSanityChecks(Section &section) {
 
 	if (section.isBankFixed && section.bank < minbank && section.bank > maxbank) {
 		error(
-		    nullptr,
-		    0,
 		    minbank == maxbank
 		        ? "Cannot place section \"%s\" in bank %" PRIu32 ", it must be %" PRIu32
 		        : "Cannot place section \"%s\" in bank %" PRIu32 ", it must be between %" PRIu32
@@ -322,8 +309,6 @@ static void doSanityChecks(Section &section) {
 	// Check if section has a chance to be placed
 	if (section.size > sectionTypeInfo[section.type].size) {
 		error(
-		    nullptr,
-		    0,
 		    "Section \"%s\" is bigger than the max size for that type: $%" PRIx16 " > $%" PRIx16,
 		    section.name.c_str(),
 		    section.size,
@@ -343,8 +328,6 @@ static void doSanityChecks(Section &section) {
 		if (section.isAlignFixed) {
 			if ((section.org & section.alignMask) != section.alignOfs) {
 				error(
-				    nullptr,
-				    0,
 				    "Section \"%s\"'s fixed address doesn't match its alignment",
 				    section.name.c_str()
 				);
@@ -356,8 +339,6 @@ static void doSanityChecks(Section &section) {
 		if (section.org < sectionTypeInfo[section.type].startAddr
 		    || section.org > endaddr(section.type)) {
 			error(
-			    nullptr,
-			    0,
 			    "Section \"%s\"'s fixed address $%04" PRIx16 " is outside of range [$%04" PRIx16
 			    "; $%04" PRIx16 "]",
 			    section.name.c_str(),
@@ -369,8 +350,6 @@ static void doSanityChecks(Section &section) {
 
 		if (section.org + section.size > endaddr(section.type) + 1) {
 			error(
-			    nullptr,
-			    0,
 			    "Section \"%s\"'s end address $%04x is greater than last address $%04x",
 			    section.name.c_str(),
 			    section.org + section.size,

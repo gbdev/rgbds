@@ -10,4 +10,4 @@ error: non-numeric-symbol.asm(10):
     'mac' is not a numeric symbol
 error: non-numeric-symbol.asm(11):
     'mac' is not a numeric symbol
-error: Assembly aborted (6 errors)!
+Assembly aborted with 6 errors!

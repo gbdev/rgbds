@@ -30,4 +30,4 @@ error: builtin-reserved.asm(29):
     '.' is reserved for a built-in symbol
 error: builtin-reserved.asm(32):
     "." has no value outside of a label scope
-error: Assembly aborted (16 errors)!
+Assembly aborted with 16 errors!

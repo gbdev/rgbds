@@ -265,7 +265,7 @@ static void mergeSections(
 	}
 
 	if (nbSectErrors) {
-		fatalerror(
+		fatal(
 		    "Cannot create section \"%s\" (%u error%s)",
 		    sect.name.c_str(),
 		    nbSectErrors,
@@ -411,7 +411,7 @@ static Section *getSection(
 // Set the current section
 static void changeSection() {
 	if (!currentUnionStack.empty()) {
-		fatalerror("Cannot change the section within a UNION");
+		fatal("Cannot change the section within a UNION");
 	}
 
 	sym_ResetCurrentLabelScopes();
@@ -448,7 +448,7 @@ void sect_NewSection(
 ) {
 	for (SectionStackEntry &entry : sectionStack) {
 		if (entry.section && entry.section->name == name) {
-			fatalerror("Section '%s' is already on the stack", name.c_str());
+			fatal("Section '%s' is already on the stack", name.c_str());
 		}
 	}
 
@@ -609,7 +609,7 @@ void sect_AlignPC(uint8_t alignment, uint16_t offset) {
 
 static void growSection(uint32_t growth) {
 	if (growth > 0 && curOffset > UINT32_MAX - growth) {
-		fatalerror("Section size would overflow internal counter");
+		fatal("Section size would overflow internal counter");
 	}
 	curOffset += growth;
 	if (uint32_t outOffset = sect_GetOutputOffset(); outOffset > currentSection->size) {
@@ -1025,7 +1025,7 @@ void sect_PushSection() {
 
 void sect_PopSection() {
 	if (sectionStack.empty()) {
-		fatalerror("No entries in the section stack");
+		fatal("No entries in the section stack");
 	}
 
 	if (currentLoadSection) {
@@ -1052,11 +1052,11 @@ void sect_CheckStack() {
 
 void sect_EndSection() {
 	if (!currentSection) {
-		fatalerror("Cannot end the section outside of a SECTION");
+		fatal("Cannot end the section outside of a SECTION");
 	}
 
 	if (!currentUnionStack.empty()) {
-		fatalerror("Cannot end the section within a UNION");
+		fatal("Cannot end the section within a UNION");
 	}
 
 	if (currentLoadSection) {

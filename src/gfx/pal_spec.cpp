@@ -17,7 +17,7 @@
 #include <string_view>
 #include <tuple>
 
-#include "error.hpp"
+#include "diagnostics.hpp"
 #include "helpers.hpp"
 #include "platform.hpp"
 

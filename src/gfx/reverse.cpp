@@ -12,7 +12,7 @@
 #include <string.h>
 #include <vector>
 
-#include "error.hpp"
+#include "diagnostics.hpp"
 #include "file.hpp"
 #include "helpers.hpp" // assume
 

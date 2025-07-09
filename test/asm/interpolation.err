@@ -6,4 +6,4 @@ error: interpolation.asm(29):
     Interpolated symbol "foo" is not a numeric or string symbol
 error: interpolation.asm(32):
     Interpolated symbol "xor" is a reserved keyword; add a '#' prefix to use it as a raw symbol
-error: Assembly aborted (4 errors)!
+Assembly aborted with 4 errors!

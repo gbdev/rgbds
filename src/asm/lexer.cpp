@@ -384,7 +384,7 @@ void lexer_IncIFDepth() {
 
 void lexer_DecIFDepth() {
 	if (lexerState->ifStack.empty()) {
-		fatalerror("Found ENDC outside of an IF construct");
+		fatal("Found ENDC outside of an IF construct");
 	}
 
 	lexerState->ifStack.pop_front();
@@ -410,7 +410,7 @@ void LexerState::setAsCurrentState() {
 	lexerState = this;
 }
 
-bool LexerState::setFileAsNextState(std::string const &filePath, bool updateStateNow) {
+void LexerState::setFileAsNextState(std::string const &filePath, bool updateStateNow) {
 	if (filePath == "-") {
 		path = "<stdin>";
 		content.emplace<BufferedContent>(STDIN_FILENO);
@@ -423,8 +423,7 @@ bool LexerState::setFileAsNextState(std::string const &filePath, bool updateStat
 		struct stat statBuf;
 		if (stat(filePath.c_str(), &statBuf) != 0) {
 			// LCOV_EXCL_START
-			error("Failed to stat file \"%s\": %s", filePath.c_str(), strerror(errno));
-			return false;
+			fatal("Failed to stat file \"%s\": %s", filePath.c_str(), strerror(errno));
 			// LCOV_EXCL_STOP
 		}
 		path = filePath;
@@ -432,8 +431,7 @@ bool LexerState::setFileAsNextState(std::string const &filePath, bool updateStat
 		int fd = open(path.c_str(), O_RDONLY);
 		if (fd < 0) {
 			// LCOV_EXCL_START
-			error("Failed to open file \"%s\": %s", path.c_str(), strerror(errno));
-			return false;
+			fatal("Failed to open file \"%s\": %s", path.c_str(), strerror(errno));
 			// LCOV_EXCL_STOP
 		}
 
@@ -478,7 +476,6 @@ bool LexerState::setFileAsNextState(std::string const &filePath, bool updateStat
 	} else {
 		lexerStateEOL = this;
 	}
-	return true;
 }
 
 void LexerState::setViewAsNextState(char const *name, ContentSpan const &span, uint32_t lineNo_) {
@@ -565,7 +562,7 @@ size_t BufferedContent::readMore(size_t startIndex, size_t nbChars) {
 
 	if (nbReadChars == -1) {
 		// LCOV_EXCL_START
-		fatalerror("Error while reading \"%s\": %s", lexerState->path.c_str(), strerror(errno));
+		fatal("Error while reading \"%s\": %s", lexerState->path.c_str(), strerror(errno));
 		// LCOV_EXCL_STOP
 	}
 
@@ -600,7 +597,7 @@ static void beginExpansion(std::shared_ptr<std::string> str, std::optional<std::
 
 void lexer_CheckRecursionDepth() {
 	if (lexerState->expansions.size() > maxRecursionDepth + 1) {
-		fatalerror("Recursion limit (%zu) exceeded", maxRecursionDepth);
+		fatal("Recursion limit (%zu) exceeded", maxRecursionDepth);
 	}
 }
 
@@ -1337,7 +1334,7 @@ static Token readIdentifier(char firstChar, bool raw) {
 
 static std::shared_ptr<std::string> readInterpolation(size_t depth) {
 	if (depth > maxRecursionDepth) {
-		fatalerror("Recursion limit (%zu) exceeded", maxRecursionDepth);
+		fatal("Recursion limit (%zu) exceeded", maxRecursionDepth);
 	}
 
 	std::string fmtBuf;
@@ -2292,7 +2289,7 @@ static Token skipIfBlock(bool toEndc) {
 				case T_(POP_ELIF):
 					if (lexer_ReachedELSEBlock()) {
 						// This should be redundant, as the parser handles this error first.
-						fatalerror("Found ELIF after an ELSE block"); // LCOV_EXCL_LINE
+						fatal("Found ELIF after an ELSE block"); // LCOV_EXCL_LINE
 					}
 					if (!toEndc && lexer_GetIFDepth() == startingDepth) {
 						return token;
@@ -2301,7 +2298,7 @@ static Token skipIfBlock(bool toEndc) {
 
 				case T_(POP_ELSE):
 					if (lexer_ReachedELSEBlock()) {
-						fatalerror("Found ELSE after an ELSE block");
+						fatal("Found ELSE after an ELSE block");
 					}
 					lexer_ReachELSEBlock();
 					if (!toEndc && lexer_GetIFDepth() == startingDepth) {

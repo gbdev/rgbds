@@ -14,4 +14,4 @@ error: undefined-builtins.asm(18):
     _NARG has no value outside of a macro
 error: undefined-builtins.asm(19):
     Interpolated symbol "_NARG" does not exist
-error: Assembly aborted (8 errors)!
+Assembly aborted with 8 errors!

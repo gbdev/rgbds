@@ -58,4 +58,4 @@ error: invalid-utf-8-strings.asm(54):
     STRSUB: Incomplete UTF-8 character
 error: invalid-utf-8-strings.asm(57):
     STRSLICE: Incomplete UTF-8 character
-error: Assembly aborted (30 errors)!
+Assembly aborted with 30 errors!

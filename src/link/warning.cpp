@@ -10,10 +10,9 @@
 static uint32_t nbErrors = 0;
 
 static void printDiag(
-    char const *fmt, va_list args, char const *type, FileStackNode const *where, uint32_t lineNo
+    FileStackNode const *where, uint32_t lineNo, char const *fmt, va_list args, char const *type
 ) {
-	fputs(type, stderr);
-	fputs(": ", stderr);
+	fprintf(stderr, "%s: ", type);
 	if (where) {
 		where->dump(lineNo);
 		fputs(": ", stderr);
@@ -22,22 +21,54 @@ static void printDiag(
 	putc('\n', stderr);
 }
 
+static void incrementErrors() {
+	if (nbErrors != UINT32_MAX) {
+		nbErrors++;
+	}
+}
+
+[[noreturn]]
+static void abortLinking(char const *verb) {
+	fprintf(
+	    stderr,
+	    "Linking %s with %" PRIu32 " error%s\n",
+	    verb ? verb : "aborted",
+	    nbErrors,
+	    nbErrors == 1 ? "" : "s"
+	);
+	exit(1);
+}
+
 void warning(FileStackNode const *where, uint32_t lineNo, char const *fmt, ...) {
 	va_list args;
 	va_start(args, fmt);
-	printDiag(fmt, args, "warning", where, lineNo);
+	printDiag(where, lineNo, fmt, args, "warning");
+	va_end(args);
+}
+
+void warning(char const *fmt, ...) {
+	va_list args;
+	va_start(args, fmt);
+	printDiag(nullptr, 0, fmt, args, "warning");
 	va_end(args);
 }
 
 void error(FileStackNode const *where, uint32_t lineNo, char const *fmt, ...) {
 	va_list args;
 	va_start(args, fmt);
-	printDiag(fmt, args, "error", where, lineNo);
+	printDiag(where, lineNo, fmt, args, "error");
 	va_end(args);
 
-	if (nbErrors != UINT32_MAX) {
-		nbErrors++;
-	}
+	incrementErrors();
+}
+
+void error(char const *fmt, ...) {
+	va_list args;
+	va_start(args, fmt);
+	printDiag(nullptr, 0, fmt, args, "error");
+	va_end(args);
+
+	incrementErrors();
 }
 
 void errorNoDump(char const *fmt, ...) {
@@ -47,9 +78,7 @@ void errorNoDump(char const *fmt, ...) {
 	vfprintf(stderr, fmt, args);
 	va_end(args);
 
-	if (nbErrors != UINT32_MAX) {
-		nbErrors++;
-	}
+	incrementErrors();
 }
 
 void argErr(char flag, char const *fmt, ...) {
@@ -60,33 +89,33 @@ void argErr(char flag, char const *fmt, ...) {
 	va_end(args);
 	putc('\n', stderr);
 
-	if (nbErrors != UINT32_MAX) {
-		nbErrors++;
-	}
+	incrementErrors();
 }
 
 [[noreturn]]
 void fatal(FileStackNode const *where, uint32_t lineNo, char const *fmt, ...) {
 	va_list args;
 	va_start(args, fmt);
-	printDiag(fmt, args, "FATAL", where, lineNo);
+	printDiag(where, lineNo, fmt, args, "FATAL");
 	va_end(args);
 
-	if (nbErrors != UINT32_MAX) {
-		nbErrors++;
-	}
+	incrementErrors();
+	abortLinking(nullptr);
+}
 
-	fprintf(
-	    stderr, "Linking aborted after %" PRIu32 " error%s\n", nbErrors, nbErrors == 1 ? "" : "s"
-	);
-	exit(1);
+[[noreturn]]
+void fatal(char const *fmt, ...) {
+	va_list args;
+	va_start(args, fmt);
+	printDiag(nullptr, 0, fmt, args, "FATAL");
+	va_end(args);
+
+	incrementErrors();
+	abortLinking(nullptr);
 }
 
 void requireZeroErrors() {
 	if (nbErrors != 0) {
-		fprintf(
-		    stderr, "Linking failed with %" PRIu32 " error%s\n", nbErrors, nbErrors == 1 ? "" : "s"
-		);
-		exit(1);
+		abortLinking("failed");
 	}
 }
