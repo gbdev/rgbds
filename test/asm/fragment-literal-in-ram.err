@@ -1,0 +1,2 @@
+FATAL: fragment-literal-in-ram.asm(6):
+    Section 'RAM' cannot contain fragment literals (not ROM0 or ROMX)

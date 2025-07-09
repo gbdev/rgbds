@@ -104,4 +104,6 @@ void sect_PushSection();
 void sect_PopSection();
 void sect_CheckStack();
 
+std::string sect_PushSectionFragmentLiteral();
+
 #endif // RGBDS_ASM_SECTION_HPP

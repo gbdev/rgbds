@@ -1112,6 +1112,120 @@ first, followed by the one from
 and the one from
 .Ql bar.o
 last.
+.Ss Fragment literals
+Fragment literals are useful for short blocks of code or data that are only referenced once.
+They are section fragments created by surrounding instructions or directives with
+.Ql [[
+double brackets
+.Ql ]] ,
+without a separate
+.Ic SECTION FRAGMENT
+declaration.
+.Pp
+The content of a fragment literal becomes a
+.Ic SECTION FRAGMENT ,
+sharing the same name and bank as its parent ROM section, but without any other constraints.
+The parent section also becomes a
+.Ic FRAGMENT
+if it was not one already, so that it can be merged with its fragment literals.
+RGBLINK merges the fragments in no particular order.
+.Pp
+A fragment literal can take the place of any 16-bit integer constant
+.Ql n16
+from the
+.Xr gbz80 7
+documentation, as well as a
+.Ic DW
+item.
+The fragment literal then evaluates to its starting address.
+For example, you can
+.Ic CALL
+or
+.Ic JP
+to a fragment literal.
+.Pp
+This code using named labels:
+.Bd -literal -offset indent
+DataTable:
+    dw First
+    dw Second
+    dw Third
+First:  db 1
+Second: db 4
+Third:  db 9
+Routine:
+    push hl
+    ld hl, Left
+    jr z, .got_it
+    ld hl, Right
+\&.got_it
+    call .print
+    pop hl
+    ret
+\&.print:
+    ld de, $1003
+    ld bc, STARTOF(VRAM)
+    jp Print
+Left:  db "left\e0"
+Right: db "right\e0"
+.Ed
+.Pp
+is equivalent to this code using fragment literals:
+.Bd -literal -offset indent
+DataTable:
+    dw [[ db 1 ]]
+    dw [[ db 4 ]]
+    dw [[ db 9 ]]
+Routine:
+    push hl
+    ld hl, [[ db "left\e0" ]]
+    jr z, .got_it
+    ld hl, [[ db "right\e0" ]]
+\&.got_it
+    call [[
+        ld de, $1003
+        ld bc, STARTOF(VRAM)
+        jp Print
+    ]]
+    pop hl
+    ret
+.Ed
+.Pp
+The difference is that the example using fragment literals does not declare a particular order for its pieces.
+.Pp
+Fragment literals can be arbitrarily nested, so extreme use cases are
+.Em technically
+possible.
+This code using named labels:
+.Bd -literal -offset indent
+dw FortyTwo
+FortyTwo:
+    call Sub1
+    jr Sub2
+Sub1:
+    ld a, [Twenty]
+    ret
+Twenty: db 20
+Sub2:
+    jp Sub3
+Sub3:
+    call Sub1
+    inc a
+    add a
+    ret
+.Ed
+.Pp
+is equivalent to this code using fragment literals:
+.Bd -literal -offset indent
+dw [[
+    call [[
+        Sub1: ld a, [ [[db 20]] ] :: ret
+    ]]
+    jr [[
+        jp [[ call Sub1 :: inc a :: add a :: ret ]]
+    ]]
+]]
+.Ed
 .Sh SYMBOLS
 RGBDS supports several types of symbols:
 .Bl -hang

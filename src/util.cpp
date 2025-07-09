@@ -7,7 +7,8 @@
 #include <stdio.h>
 
 bool startsIdentifier(int c) {
-	// This returns false for anonymous labels, which internally start with a '!'
+	// This returns false for anonymous labels, which internally start with a '!',
+	// and for section fragment literal labels, which internally start with a '$'.
 	return (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || c == '.' || c == '_';
 }
 
