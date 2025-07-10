@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 
-// UTF-8 decoder: http://bjoern.hoehrmann.de/utf-8/decoder/dfa/
+// This implementation was taken from
+// http://bjoern.hoehrmann.de/utf-8/decoder/dfa/
+// and modified for RGBDS.
 
 #include "extern/utf8decoder.hpp"
 
@@ -33,10 +35,8 @@ static uint8_t const utf8d[] = {
 };
 
 uint32_t decode(uint32_t *state, uint32_t *codep, uint8_t byte) {
-	uint32_t type = utf8d[byte];
-
-	*codep = (*state != 0) ? (byte & 0x3FU) | (*codep << 6) : (0xFF >> type) & (byte);
-
-	*state = utf8d[256 + *state * 16 + type];
+	uint8_t type = utf8d[byte];
+	*codep = *state != 0 ? (byte & 0b111111) | (*codep << 6) : byte & (0xFF >> type);
+	*state = utf8d[0x100 + *state * 0x10 + type];
 	return *state;
 }

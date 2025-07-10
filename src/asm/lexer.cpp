@@ -1735,6 +1735,23 @@ static bool isGarbageCharacter(int c) {
 	       && (c == '\0' || !strchr("; \t~[](),+-*/|^=!<>:&%`\"\r\n\\", c));
 }
 
+static void reportGarbageCharacters(int c) {
+	// '#' can be garbage if it doesn't start a raw string or identifier
+	assume(isGarbageCharacter(c) || c == '#');
+	if (isGarbageCharacter(peek())) {
+		// At least two characters are garbage; group them into one error report
+		std::string garbage = printChar(c);
+		while (isGarbageCharacter(peek())) {
+			c = nextChar();
+			garbage += ", ";
+			garbage += printChar(c);
+		}
+		error("Unknown characters %s", garbage.c_str());
+	} else {
+		error("Unknown character %s", printChar(c));
+	}
+}
+
 static Token yylex_NORMAL() {
 	if (int nextToken = lexerState->nextToken; nextToken) {
 		lexerState->nextToken = 0;
@@ -2083,19 +2100,7 @@ static Token yylex_NORMAL() {
 
 			// Do not report weird characters when capturing, it'll be done later
 			if (!lexerState->capturing) {
-				assume(isGarbageCharacter(c) || c == '#');
-				if (isGarbageCharacter(peek())) {
-					// At least two characters are garbage; group them into one error report
-					std::string garbage = printChar(c);
-					while (isGarbageCharacter(peek())) {
-						c = nextChar();
-						garbage += ", ";
-						garbage += printChar(c);
-					}
-					error("Unknown characters %s", garbage.c_str());
-				} else {
-					error("Unknown character %s", printChar(c));
-				}
+				reportGarbageCharacters(c);
 			}
 		}
 		lexerState->atLineStart = false;
