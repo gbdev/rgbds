@@ -48,9 +48,10 @@ local args=(
 	'*'{-D,--define}'+[Define a string symbol]:name + value (default 1):'
 	'(-g --gfx-chars)'{-g,--gfx-chars}'+[Change chars for gfx constants]:chars spec:'
 	'(-I --include)'{-I,--include}'+[Add an include directory]:include path:_files -/'
-	'(-M --dependfile)'{-M,--dependfile}"+[Write deps in make format]:output file:_files -g '*.{d,mk}'"
-	-MG'[Assume missing files should be generated]'
-	-MP'[Add phony targets to all deps]'
+	'(-M --dependfile)'{-M,--dependfile}"+[Write dependencies in Makefile format]:output file:_files -g '*.{d,mk}'"
+	-MC'[Continue after missing dependencies]'
+	-MG'[Assume missing dependencies should be generated]'
+	-MP'[Add phony targets to all dependencies]'
 	'*'-MT"+[Add a target to the rules]:target:_files -g '*.{d,mk,o}'"
 	'*'-MQ"+[Add a target to the rules]:target:_files -g '*.{d,mk,o}'"
 	'(-o --output)'{-o,--output}'+[Output file]:output file:_files'

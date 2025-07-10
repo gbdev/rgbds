@@ -312,7 +312,7 @@ void fstk_RunInclude(std::string const &path, bool preInclude) {
 	if (!fullPath) {
 		if (generatedMissingIncludes && !preInclude) {
 			// LCOV_EXCL_START
-			if (verbose) {
+			if (verbose && !continueAfterMissingIncludes) {
 				printf("Aborting (-MG) on INCLUDE file '%s' (%s)\n", path.c_str(), strerror(errno));
 			}
 			// LCOV_EXCL_STOP

@@ -14,6 +14,7 @@
 .Op Fl g Ar chars
 .Op Fl I Ar path
 .Op Fl M Ar depend_file
+.Op Fl MC
 .Op Fl MG
 .Op Fl MP
 .Op Fl MT Ar target_file
@@ -114,6 +115,17 @@ Write
 .Xr make 1
 dependencies to
 .Ar depend_file .
+.It Fl MC
+To be used in conjunction with
+.Fl MG .
+This makes
+.Nm
+continue processing after a non-existent dependency file, instead of exiting.
+Note that this is
+.Em not
+recommended if any non-existent dependencies would have influenced subsequent processing, e.g. by causing an
+.Ic IF
+condition to take a different branch.
 .It Fl MG
 To be used in conjunction with
 .Fl M .
@@ -126,8 +138,10 @@ or
 .Ic INCBIN
 is attempted on a non-existent file, it is added as a dependency, then
 .Nm
-exits normally instead of erroring out.
-This feature is used in automatic updating of makefiles.
+exits normally or continues processing (depending on whether
+.Fl MC
+was enabled) instead of erroring out.
+This feature is used in automatic updating of Makefiles.
 .It Fl MP
 When enabled, this causes a phony target to be added for each dependency other than the main file.
 This prevents
@@ -269,7 +283,7 @@ Enables literally every warning.
 .El
 .Pp
 The following warnings are actual warning flags; with each description, the corresponding warning flag is included.
-Note that each of these flag also has a negation (for example,
+Note that each of these flags also has a negation (for example,
 .Fl Wcharmap-redef
 enables the warning that
 .Fl Wno-charmap-redef
