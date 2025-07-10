@@ -2708,26 +2708,26 @@ static void errorInvalidUTF8Byte(uint8_t byte, char const *functionName) {
 static size_t strlenUTF8(std::string const &str, bool printErrors) {
 	char const *ptr = str.c_str();
 	size_t len = 0;
-	uint32_t state = 0;
+	uint32_t state = UTF8_ACCEPT;
 
 	for (uint32_t codepoint = 0; *ptr; ptr++) {
 		uint8_t byte = *ptr;
 
 		switch (decode(&state, &codepoint, byte)) {
-		case 1:
+		case UTF8_REJECT:
 			if (printErrors) {
 				errorInvalidUTF8Byte(byte, "STRLEN");
 			}
-			state = 0;
+			state = UTF8_ACCEPT;
 			// fallthrough
-		case 0:
+		case UTF8_ACCEPT:
 			len++;
 			break;
 		}
 	}
 
 	// Check for partial code point.
-	if (state != 0) {
+	if (state != UTF8_ACCEPT) {
 		if (printErrors) {
 			error("STRLEN: Incomplete UTF-8 character");
 		}
@@ -2740,18 +2740,18 @@ static size_t strlenUTF8(std::string const &str, bool printErrors) {
 static std::string strsliceUTF8(std::string const &str, uint32_t start, uint32_t stop) {
 	char const *ptr = str.c_str();
 	size_t index = 0;
-	uint32_t state = 0;
+	uint32_t state = UTF8_ACCEPT;
 	uint32_t codepoint = 0;
 	uint32_t curIdx = 0;
 
 	// Advance to starting index in source string.
 	while (ptr[index] && curIdx < start) {
 		switch (decode(&state, &codepoint, ptr[index])) {
-		case 1:
+		case UTF8_REJECT:
 			errorInvalidUTF8Byte(ptr[index], "STRSLICE");
-			state = 0;
+			state = UTF8_ACCEPT;
 			// fallthrough
-		case 0:
+		case UTF8_ACCEPT:
 			curIdx++;
 			break;
 		}
@@ -2773,11 +2773,11 @@ static std::string strsliceUTF8(std::string const &str, uint32_t start, uint32_t
 	// Advance to ending index in source string.
 	while (ptr[index] && curIdx < stop) {
 		switch (decode(&state, &codepoint, ptr[index])) {
-		case 1:
+		case UTF8_REJECT:
 			errorInvalidUTF8Byte(ptr[index], "STRSLICE");
-			state = 0;
+			state = UTF8_ACCEPT;
 			// fallthrough
-		case 0:
+		case UTF8_ACCEPT:
 			curIdx++;
 			break;
 		}
@@ -2785,7 +2785,7 @@ static std::string strsliceUTF8(std::string const &str, uint32_t start, uint32_t
 	}
 
 	// Check for partial code point.
-	if (state != 0) {
+	if (state != UTF8_ACCEPT) {
 		error("STRSLICE: Incomplete UTF-8 character");
 		curIdx++;
 	}
@@ -2804,18 +2804,18 @@ static std::string strsliceUTF8(std::string const &str, uint32_t start, uint32_t
 static std::string strsubUTF8(std::string const &str, uint32_t pos, uint32_t len) {
 	char const *ptr = str.c_str();
 	size_t index = 0;
-	uint32_t state = 0;
+	uint32_t state = UTF8_ACCEPT;
 	uint32_t codepoint = 0;
 	uint32_t curPos = 1;
 
 	// Advance to starting position in source string.
 	while (ptr[index] && curPos < pos) {
 		switch (decode(&state, &codepoint, ptr[index])) {
-		case 1:
+		case UTF8_REJECT:
 			errorInvalidUTF8Byte(ptr[index], "STRSUB");
-			state = 0;
+			state = UTF8_ACCEPT;
 			// fallthrough
-		case 0:
+		case UTF8_ACCEPT:
 			curPos++;
 			break;
 		}
@@ -2836,11 +2836,11 @@ static std::string strsubUTF8(std::string const &str, uint32_t pos, uint32_t len
 	// Compute the result length in bytes.
 	while (ptr[index] && curLen < len) {
 		switch (decode(&state, &codepoint, ptr[index])) {
-		case 1:
+		case UTF8_REJECT:
 			errorInvalidUTF8Byte(ptr[index], "STRSUB");
-			state = 0;
+			state = UTF8_ACCEPT;
 			// fallthrough
-		case 0:
+		case UTF8_ACCEPT:
 			curLen++;
 			break;
 		}
@@ -2848,7 +2848,7 @@ static std::string strsubUTF8(std::string const &str, uint32_t pos, uint32_t len
 	}
 
 	// Check for partial code point.
-	if (state != 0) {
+	if (state != UTF8_ACCEPT) {
 		error("STRSUB: Incomplete UTF-8 character");
 		curLen++;
 	}
