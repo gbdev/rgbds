@@ -52,7 +52,7 @@ void Options::verbosePrint(uint8_t level, char const *fmt, ...) const {
 }
 
 // Short options
-static char const *optstring = "-Aa:B:b:Cc:d:hi:L:l:mN:n:Oo:Pp:Qq:r:s:Tt:U:uVvXx:YZ";
+static char const *optstring = "-Aa:B:b:Cc:d:hi:L:l:mN:n:Oo:Pp:Qq:r:s:Tt:U:uVvW:wXx:YZ";
 
 // Equivalent long options
 // Please keep in the same order as short opts.
@@ -90,6 +90,7 @@ static option const longopts[] = {
     {"unique-tiles",     no_argument,       nullptr, 'u'},
     {"version",          no_argument,       nullptr, 'V'},
     {"verbose",          no_argument,       nullptr, 'v'},
+    {"warning",          required_argument, nullptr, 'W'},
     {"mirror-x",         no_argument,       nullptr, 'X'},
     {"trim-end",         required_argument, nullptr, 'x'},
     {"mirror-y",         no_argument,       nullptr, 'Y'},
@@ -558,6 +559,12 @@ static char *parseArgv(int argc, char *argv[]) {
 			}
 			break;
 			// LCOV_EXCL_STOP
+		case 'W':
+			warnings.processWarningFlag(musl_optarg);
+			break;
+		case 'w':
+			warnings.state.warningsEnabled = false;
+			break;
 		case 'x':
 			options.trim = parseNumber(arg, "Number of tiles to trim", 0);
 			if (*arg != '\0') {

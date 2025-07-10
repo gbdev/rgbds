@@ -36,6 +36,7 @@ _rgbgfx_completions() {
 		[s]="palette-size:unk"
 		[t]="tilemap:glob-*.tilemap"
 		[T]="auto-tilemap:normal"
+		[W]="warning:warning"
 		[x]="trim-end:unk"
 	)
 	# Parse command-line up to current word
@@ -151,6 +152,14 @@ _rgbgfx_completions() {
 	COMPREPLY=()
 	case "$state" in
 		unk) # Return with no replies: no idea what to complete!
+			;;
+		warning)
+			mapfile -t COMPREPLY < <(compgen -W "
+				embedded
+				trim-nonempty
+				all
+				everything
+				error" -P "${cur_word:0:$optlen}" -- "${cur_word:$optlen}")
 			;;
 		normal) # Acts like a glob...
 			state="glob-*.png"

@@ -1,0 +1,3 @@
+error: [-Werror=embedded]
+    Sorting palette colors by PNG's embedded PLTE chunk without '-c/--colors embedded'
+Conversion aborted after 1 error

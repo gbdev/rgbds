@@ -615,6 +615,10 @@ static std::tuple<std::vector<size_t>, std::vector<Palette>>
 		sortGrayscale(palettes, png.getColors().raw());
 	} else if (auto [embPalSize, embPalRGB, embPalAlphaSize, embPalAlpha] = png.getEmbeddedPal();
 	           embPalRGB != nullptr) {
+		warning(
+		    WARNING_EMBEDDED,
+		    "Sorting palette colors by PNG's embedded PLTE chunk without '-c/--colors embedded'"
+		);
 		sortIndexed(palettes, embPalSize, embPalRGB, embPalAlphaSize, embPalAlpha);
 	} else if (png.isSuitableForGrayscale()) {
 		sortGrayscale(palettes, png.getColors().raw());
@@ -870,32 +874,41 @@ static void outputUnoptimizedTileData(
 	uint16_t widthTiles = options.inputSlice.width ? options.inputSlice.width : png.getWidth() / 8;
 	uint16_t heightTiles =
 	    options.inputSlice.height ? options.inputSlice.height : png.getHeight() / 8;
-	uint64_t remainingTiles = widthTiles * heightTiles;
-	if (remainingTiles <= options.trim) {
-		return;
-	}
-	remainingTiles -= options.trim;
+	uint64_t nbTiles = widthTiles * heightTiles;
+	uint64_t nbKeptTiles = nbTiles > options.trim ? nbTiles - options.trim : 0;
+	uint64_t tileIdx = 0;
 
 	for (auto [tile, attr] : zip(png.visitAsTiles(), attrmap)) {
 		// Do not emit fully-background tiles.
 		if (!attr.isBackgroundTile()) {
 			// If the tile is fully transparent, this defaults to palette 0.
 			Palette const &palette = palettes[attr.getPalID(mappings)];
+
+			bool empty = true;
 			for (uint32_t y = 0; y < 8; ++y) {
 				uint16_t bitplanes = TileData::rowBitplanes(tile, palette, y);
-				output->sputc(bitplanes & 0xFF);
-				if (options.bitDepth == 2) {
-					output->sputc(bitplanes >> 8);
+				if (bitplanes != 0) {
+					empty = false;
+				}
+				if (tileIdx < nbKeptTiles) {
+					output->sputc(bitplanes & 0xFF);
+					if (options.bitDepth == 2) {
+						output->sputc(bitplanes >> 8);
+					}
 				}
 			}
-		}
 
-		--remainingTiles;
-		if (remainingTiles == 0) {
-			break;
+			if (!empty && tileIdx >= nbKeptTiles) {
+				warning(
+				    WARNING_TRIM_NONEMPTY,
+				    "Trimming a nonempty tile (configure with '-x/--trim-end'"
+				);
+				break; // Don't repeat the warning for subsequent tiles
+			}
 		}
+		++tileIdx;
 	}
-	assume(remainingTiles == 0);
+	assume(nbKeptTiles <= tileIdx && tileIdx <= nbTiles);
 }
 
 static void outputUnoptimizedMaps(

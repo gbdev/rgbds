@@ -9,6 +9,20 @@ _depths() {
 	_describe 'bit depth' depths
 }
 
+_rgbgfx_warnings() {
+	local warnings=(
+		'error:Turn all warnings into errors'
+
+		'all:Enable most warning messages'
+		'everything:Enable literally everything'
+
+		'embedded:Warn when using embedded PLTE without "-c embedded"'
+		'trim-nonempty:Warn when "-x" trims nonempty tiles'
+	)
+	# TODO: handle `no-` and `error=` somehow?
+	_describe warning warnings
+}
+
 local args=(
 	# Arguments are listed here in the same order as in the manual, except for the version and help
 	'(- : * options)'{-V,--version}'[Print version number and exit]'
@@ -23,6 +37,7 @@ local args=(
 	'(-t --tilemap -T --auto-tilemap)'{-T,--auto-tilemap}'[Shortcut for -t <file>.tilemap]'
 	'(-u --unique-tiles)'{-u,--unique-tiles}'[Eliminate redundant tiles]'
 	{-v,--verbose}'[Enable verbose output]'
+	-w'[Disable all warnings]'
 	'(-X --mirror-x)'{-X,--mirror-x}'[Eliminate horizontally mirrored tiles from output]'
 	'(-Y --mirror-y)'{-Y,--mirror-y}'[Eliminate vertically mirrored tiles from output]'
 	'(-Z --columns)'{-Z,--columns}'[Read the image in column-major order]'
@@ -42,6 +57,7 @@ local args=(
 	'(-r --reverse)'{-r,--reverse}'+[Yield an image from binary data]:image width (in tiles):'
 	'(-s --palette-size)'{-s,--palette-size}'+[Limit palette size]:palette size:'
 	'(-t --tilemap -T --auto-tilemap)'{-t,--tilemap}'+[Generate a map of tile indices]:tilemap file:_files'
+	'(-W --warning)'{-W,--warning}'+[Toggle warning flags]:warning flag:_rgbgfx_warnings'
 	'(-x --trim-end)'{-x,--trim-end}'+[Trim end of output by this many tiles]:tile count:'
 
 	":input png file:_files -g '*.png'"
