@@ -122,49 +122,49 @@ static ssize_t getPlacement(Section const &section, MemoryLocation &location) {
 
 		if (spaceIdx < bankMem.size()) {
 			location.address = bankMem[spaceIdx].address;
+		}
 
-			// Process locations in that bank
-			while (spaceIdx < bankMem.size()) {
-				// If that location is OK, return it
-				if (isLocationSuitable(section, bankMem[spaceIdx], location)) {
-					return spaceIdx;
-				}
-
-				// Go to the next *possible* location
-				if (section.isAddressFixed) {
-					// If the address is fixed, there can be only
-					// one candidate block per bank; if we already
-					// reached it, give up.
-					if (location.address < section.org) {
-						location.address = section.org;
-					} else {
-						break; // Try again in next bank
-					}
-				} else if (section.isAlignFixed) {
-					// Move to next aligned location
-					// Move back to alignment boundary
-					location.address -= section.alignOfs;
-					// Ensure we're there (e.g. on first check)
-					location.address &= ~section.alignMask;
-					// Go to next align boundary and add offset
-					location.address += section.alignMask + 1 + section.alignOfs;
-				} else {
-					// Any location is fine, so, next free block
-					spaceIdx++;
-					if (spaceIdx < bankMem.size()) {
-						location.address = bankMem[spaceIdx].address;
-					}
-				}
-
-				// If that location is past the current block's end,
-				// go forwards until that is no longer the case.
-				while (spaceIdx < bankMem.size()
-				       && location.address >= bankMem[spaceIdx].address + bankMem[spaceIdx].size) {
-					spaceIdx++;
-				}
-
-				// Try again with the new location/free space combo
+		// Process locations in that bank
+		while (spaceIdx < bankMem.size()) {
+			// If that location is OK, return it
+			if (isLocationSuitable(section, bankMem[spaceIdx], location)) {
+				return spaceIdx;
 			}
+
+			// Go to the next *possible* location
+			if (section.isAddressFixed) {
+				// If the address is fixed, there can be only
+				// one candidate block per bank; if we already
+				// reached it, give up.
+				if (location.address < section.org) {
+					location.address = section.org;
+				} else {
+					break; // Try again in next bank
+				}
+			} else if (section.isAlignFixed) {
+				// Move to next aligned location
+				// Move back to alignment boundary
+				location.address -= section.alignOfs;
+				// Ensure we're there (e.g. on first check)
+				location.address &= ~section.alignMask;
+				// Go to next align boundary and add offset
+				location.address += section.alignMask + 1 + section.alignOfs;
+			} else {
+				// Any location is fine, so, next free block
+				spaceIdx++;
+				if (spaceIdx < bankMem.size()) {
+					location.address = bankMem[spaceIdx].address;
+				}
+			}
+
+			// If that location is past the current block's end,
+			// go forwards until that is no longer the case.
+			while (spaceIdx < bankMem.size()
+			       && location.address >= bankMem[spaceIdx].address + bankMem[spaceIdx].size) {
+				spaceIdx++;
+			}
+
+			// Try again with the new location/free space combo
 		}
 
 		// Try again in the next bank, if one is available.
@@ -208,22 +208,22 @@ static ssize_t getPlacement(Section const &section, MemoryLocation &location) {
 // Places a section in a suitable location, or error out if it fails to.
 // Due to the implemented algorithm, this should be called with sections of decreasing size!
 static void placeSection(Section &section) {
-	MemoryLocation location;
-
 	// Specially handle 0-byte SECTIONs, as they can't overlap anything
 	if (section.size == 0) {
 		// Unless the SECTION's address was fixed, the starting address
 		// is fine for any alignment, as checked in sect_DoSanityChecks.
-		location.address =
-		    section.isAddressFixed ? section.org : sectionTypeInfo[section.type].startAddr;
-		location.bank =
-		    section.isBankFixed ? section.bank : sectionTypeInfo[section.type].firstBank;
+		MemoryLocation location = {
+		    .address =
+		        section.isAddressFixed ? section.org : sectionTypeInfo[section.type].startAddr,
+		    .bank = section.isBankFixed ? section.bank : sectionTypeInfo[section.type].firstBank,
+		};
 		assignSection(section, location);
 		return;
 	}
 
 	// Place section using first-fit decreasing algorithm
 	// https://en.wikipedia.org/wiki/Bin_packing_problem#First-fit_algorithm
+	MemoryLocation location;
 	if (ssize_t spaceIdx = getPlacement(section, location); spaceIdx != -1) {
 		std::deque<FreeSpace> &bankMem =
 		    memory[section.type][location.bank - sectionTypeInfo[section.type].firstBank];

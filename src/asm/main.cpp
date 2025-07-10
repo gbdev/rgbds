@@ -124,6 +124,51 @@ static void fatalWithUsage(char const *fmt, ...) {
 	exit(1);
 }
 
+// Parse a comma-separated string of '-s/--state' features
+static std::vector<StateFeature> parseStateFeatures(char *str) {
+	std::vector<StateFeature> features;
+	for (char *feature = str; feature;) {
+		// Split "<feature>,<rest>" so `feature` is "<feature>" and `next` is "<rest>"
+		char *next = strchr(feature, ',');
+		if (next) {
+			*next++ = '\0';
+		}
+		// Trim whitespace from the beginning of `feature`...
+		feature += strspn(feature, " \t");
+		// ...and from the end
+		if (char *end = strpbrk(feature, " \t"); end) {
+			*end = '\0';
+		}
+		// A feature must be specified
+		if (*feature == '\0') {
+			fatal("Empty feature for option 's'");
+		}
+		// Parse the `feature` and update the `features` list
+		if (!strcasecmp(feature, "all")) {
+			if (!features.empty()) {
+				warnx("Redundant feature before \"%s\" for option 's'", feature);
+			}
+			features.assign({STATE_EQU, STATE_VAR, STATE_EQUS, STATE_CHAR, STATE_MACRO});
+		} else {
+			StateFeature value = !strcasecmp(feature, "equ")     ? STATE_EQU
+			                     : !strcasecmp(feature, "var")   ? STATE_VAR
+			                     : !strcasecmp(feature, "equs")  ? STATE_EQUS
+			                     : !strcasecmp(feature, "char")  ? STATE_CHAR
+			                     : !strcasecmp(feature, "macro") ? STATE_MACRO
+			                                                     : NB_STATE_FEATURES;
+			if (value == NB_STATE_FEATURES) {
+				fatal("Invalid feature for option 's': \"%s\"", feature);
+			} else if (std::find(RANGE(features), value) != features.end()) {
+				warnx("Ignoring duplicate feature for option 's': \"%s\"", feature);
+			} else {
+				features.push_back(value);
+			}
+		}
+		feature = next;
+	}
+	return features;
+}
+
 int main(int argc, char *argv[]) {
 	time_t now = time(nullptr);
 	// Support SOURCE_DATE_EPOCH for reproducible builds
@@ -278,46 +323,7 @@ int main(int argc, char *argv[]) {
 			}
 			*name++ = '\0';
 
-			std::vector<StateFeature> features;
-			for (char *feature = musl_optarg; feature;) {
-				// Split "<feature>,<rest>" so `feature` is "<feature>" and `next` is "<rest>"
-				char *next = strchr(feature, ',');
-				if (next) {
-					*next++ = '\0';
-				}
-				// Trim whitespace from the beginning of `feature`...
-				feature += strspn(feature, " \t");
-				// ...and from the end
-				if (char *end = strpbrk(feature, " \t"); end) {
-					*end = '\0';
-				}
-				// A feature must be specified
-				if (*feature == '\0') {
-					fatal("Empty feature for option 's'");
-				}
-				// Parse the `feature` and update the `features` list
-				if (!strcasecmp(feature, "all")) {
-					if (!features.empty()) {
-						warnx("Redundant feature before \"%s\" for option 's'", feature);
-					}
-					features.assign({STATE_EQU, STATE_VAR, STATE_EQUS, STATE_CHAR, STATE_MACRO});
-				} else {
-					StateFeature value = !strcasecmp(feature, "equ")     ? STATE_EQU
-					                     : !strcasecmp(feature, "var")   ? STATE_VAR
-					                     : !strcasecmp(feature, "equs")  ? STATE_EQUS
-					                     : !strcasecmp(feature, "char")  ? STATE_CHAR
-					                     : !strcasecmp(feature, "macro") ? STATE_MACRO
-					                                                     : NB_STATE_FEATURES;
-					if (value == NB_STATE_FEATURES) {
-						fatal("Invalid feature for option 's': \"%s\"", feature);
-					} else if (std::find(RANGE(features), value) != features.end()) {
-						warnx("Ignoring duplicate feature for option 's': \"%s\"", feature);
-					} else {
-						features.push_back(value);
-					}
-				}
-				feature = next;
-			}
+			std::vector<StateFeature> features = parseStateFeatures(musl_optarg);
 
 			if (stateFileSpecs.find(name) != stateFileSpecs.end()) {
 				warnx("Overriding state filename %s", name);

@@ -168,7 +168,6 @@ static uint8_t getNextFillByte() {
 	return padValue;
 }
 
-// Write a ROM bank's sections, ordered by increasing address, to the output file.
 static void
     writeBank(std::deque<Section const *> *bankSections, uint16_t baseOffset, uint16_t size) {
 	uint16_t offset = 0;
@@ -202,7 +201,6 @@ static void
 	}
 }
 
-// Writes a ROM file to the output.
 static void writeROM() {
 	if (outputFileName) {
 		if (strcmp(outputFileName, "-")) {
@@ -263,9 +261,7 @@ static void writeROM() {
 	}
 }
 
-// Prints a symbol's name to a file, assuming that the first character is legal.
-// Illegal characters are UTF-8-decoded (errors are replaced by U+FFFD) and emitted as '\u'/'\U'.
-static void printSymName(std::string const &name, FILE *file) {
+static void writeSymName(std::string const &name, FILE *file) {
 	for (char const *ptr = name.c_str(); *ptr != '\0';) {
 		char c = *ptr;
 
@@ -274,7 +270,7 @@ static void printSymName(std::string const &name, FILE *file) {
 			putc(c, file);
 			++ptr;
 		} else {
-			// Output illegal characters using Unicode escapes
+			// Output illegal characters using Unicode escapes ('\u' or '\U')
 			// Decode the UTF-8 codepoint; or at least attempt to
 			uint32_t state = 0, codepoint;
 
@@ -323,27 +319,26 @@ static bool compareSymbols(SortedSymbol const &sym1, SortedSymbol const &sym2) {
 	return sym1_name < sym2_name;
 }
 
-// Write a bank's contents to the sym file
-static void writeSymBank(SortedSections const &bankSections, SectionType type, uint32_t bank) {
-#define forEachSortedSection(sect, ...) \
-	do { \
-		for (auto it = bankSections.zeroLenSections.begin(); \
-		     it != bankSections.zeroLenSections.end(); \
-		     it++) { \
-			for (Section const *sect = *it; sect; sect = sect->nextu.get()) { \
-				__VA_ARGS__ \
-			} \
-		} \
-		for (auto it = bankSections.sections.begin(); it != bankSections.sections.end(); it++) { \
-			for (Section const *sect = *it; sect; sect = sect->nextu.get()) { \
-				__VA_ARGS__ \
-			} \
-		} \
-	} while (0)
+template<typename F>
+static void forEachSortedSection(SortedSections const &bankSections, F callback) {
+	for (Section const *sect : bankSections.zeroLenSections) {
+		for (; sect; sect = sect->nextu.get()) {
+			callback(*sect);
+		}
+	}
+	for (Section const *sect : bankSections.sections) {
+		for (; sect; sect = sect->nextu.get()) {
+			callback(*sect);
+		}
+	}
+}
 
+static void writeSymBank(SortedSections const &bankSections, SectionType type, uint32_t bank) {
 	uint32_t nbSymbols = 0;
 
-	forEachSortedSection(sect, { nbSymbols += sect->symbols.size(); });
+	forEachSortedSection(bankSections, [&](Section const &sect) {
+		nbSymbols += sect.symbols.size();
+	});
 
 	if (!nbSymbols) {
 		return;
@@ -353,28 +348,27 @@ static void writeSymBank(SortedSections const &bankSections, SectionType type, u
 
 	symList.reserve(nbSymbols);
 
-	forEachSortedSection(sect, {
-		for (Symbol const *sym : sect->symbols) {
+	forEachSortedSection(bankSections, [&](Section const &sect) {
+		for (Symbol const *sym : sect.symbols) {
 			// Don't output symbols that begin with an illegal character
-			if (!sym->name.empty() && startsIdentifier(sym->name[0])) {
-				uint16_t addr = static_cast<uint16_t>(sym->label().offset + sect->org);
-				uint16_t parentAddr = addr;
-				if (auto pos = sym->name.find('.'); pos != std::string::npos) {
-					std::string parentName = sym->name.substr(0, pos);
-					if (Symbol const *parentSym = sym_GetSymbol(parentName);
-					    parentSym && std::holds_alternative<Label>(parentSym->data)) {
-						auto const &parentLabel = parentSym->label();
-						assume(parentLabel.section != nullptr);
-						parentAddr =
-						    static_cast<uint16_t>(parentLabel.offset + parentLabel.section->org);
-					}
-				}
-				symList.push_back({.sym = sym, .addr = addr, .parentAddr = parentAddr});
+			if (sym->name.empty() || !startsIdentifier(sym->name[0])) {
+				continue;
 			}
+			uint16_t addr = static_cast<uint16_t>(sym->label().offset + sect.org);
+			uint16_t parentAddr = addr;
+			if (auto pos = sym->name.find('.'); pos != std::string::npos) {
+				std::string parentName = sym->name.substr(0, pos);
+				if (Symbol const *parentSym = sym_GetSymbol(parentName);
+				    parentSym && std::holds_alternative<Label>(parentSym->data)) {
+					auto const &parentLabel = parentSym->label();
+					assume(parentLabel.section != nullptr);
+					parentAddr =
+					    static_cast<uint16_t>(parentLabel.offset + parentLabel.section->org);
+				}
+			}
+			symList.push_back({.sym = sym, .addr = addr, .parentAddr = parentAddr});
 		}
 	});
-
-#undef forEachSortedSection
 
 	std::stable_sort(RANGE(symList), compareSymbols);
 
@@ -382,7 +376,7 @@ static void writeSymBank(SortedSections const &bankSections, SectionType type, u
 
 	for (SortedSymbol &sym : symList) {
 		fprintf(symFile, "%02" PRIx32 ":%04" PRIx16 " ", symBank, sym.addr);
-		printSymName(sym.sym->name, symFile);
+		writeSymName(sym.sym->name, symFile);
 		putc('\n', symFile);
 	}
 }
@@ -402,8 +396,7 @@ static void writeEmptySpace(uint16_t begin, uint16_t end) {
 	}
 }
 
-// Prints a section's name to a file.
-static void printSectionName(std::string const &name, FILE *file) {
+static void writeSectionName(std::string const &name, FILE *file) {
 	for (char c : name) {
 		// Escape characters that need escaping
 		switch (c) {
@@ -427,7 +420,47 @@ static void printSectionName(std::string const &name, FILE *file) {
 	}
 }
 
-// Write a bank's contents to the map file
+template<typename F>
+uint16_t forEachSection(SortedSections const &sectList, F callback) {
+	uint16_t used = 0;
+	auto section = sectList.sections.begin();
+	auto zeroLenSection = sectList.zeroLenSections.begin();
+	while (section != sectList.sections.end() || zeroLenSection != sectList.zeroLenSections.end()) {
+		// Pick the lowest section by address out of the two
+		auto &pickedSection = section == sectList.sections.end()                 ? zeroLenSection
+		                      : zeroLenSection == sectList.zeroLenSections.end() ? section
+		                      : (*section)->org < (*zeroLenSection)->org         ? section
+		                                                                         : zeroLenSection;
+		used += (*pickedSection)->size;
+		callback(**pickedSection);
+		pickedSection++;
+	}
+	return used;
+}
+
+static void writeMapSymbols(Section const *sect) {
+	for (uint16_t org = sect->org; sect; sect = sect->nextu.get()) {
+		for (Symbol *sym : sect->symbols) {
+			// Don't output symbols that begin with an illegal character
+			if (sym->name.empty() || !startsIdentifier(sym->name[0])) {
+				continue;
+			}
+			// Space matches "\tSECTION: $xxxx ..."
+			fprintf(mapFile, "\t         $%04" PRIx32 " = ", sym->label().offset + org);
+			writeSymName(sym->name, mapFile);
+			putc('\n', mapFile);
+		}
+
+		// Announce the following "piece"
+		if (SectionModifier mod = sect->nextu ? sect->nextu->modifier : SECTION_NORMAL;
+		    mod == SECTION_UNION) {
+			fputs("\t         ; Next union\n", mapFile);
+		} else if (mod == SECTION_FRAGMENT) {
+			fputs("\t         ; Next fragment\n", mapFile);
+		}
+	}
+}
+
 static void writeMapBank(SortedSections const &sectList, SectionType type, uint32_t bank) {
 	fprintf(
 	    mapFile,
@@ -436,60 +469,27 @@ static void writeMapBank(SortedSections const &sectList, SectionType type, uint3
 	    bank + sectionTypeInfo[type].firstBank
 	);
 
-	uint16_t used = 0;
-	auto section = sectList.sections.begin();
-	auto zeroLenSection = sectList.zeroLenSections.begin();
 	uint16_t prevEndAddr = sectionTypeInfo[type].startAddr;
+	uint16_t used = forEachSection(sectList, [&](Section const &sect) {
+		assume(sect.offset == 0);
 
-	while (section != sectList.sections.end() || zeroLenSection != sectList.zeroLenSections.end()) {
-		// Pick the lowest section by address out of the two
-		auto &pickedSection = section == sectList.sections.end()                 ? zeroLenSection
-		                      : zeroLenSection == sectList.zeroLenSections.end() ? section
-		                      : (*section)->org < (*zeroLenSection)->org         ? section
-		                                                                         : zeroLenSection;
-		Section const *sect = *pickedSection;
+		writeEmptySpace(prevEndAddr, sect.org);
 
-		used += sect->size;
-		assume(sect->offset == 0);
+		prevEndAddr = sect.org + sect.size;
 
-		writeEmptySpace(prevEndAddr, sect->org);
-
-		prevEndAddr = sect->org + sect->size;
-
-		fprintf(mapFile, "\tSECTION: $%04" PRIx16, sect->org);
-		if (sect->size != 0) {
+		fprintf(mapFile, "\tSECTION: $%04" PRIx16, sect.org);
+		if (sect.size != 0) {
 			fprintf(mapFile, "-$%04x", prevEndAddr - 1);
 		}
-		fprintf(mapFile, " ($%04" PRIx16 " byte%s) [\"", sect->size, sect->size == 1 ? "" : "s");
-		printSectionName(sect->name, mapFile);
+		fprintf(mapFile, " ($%04" PRIx16 " byte%s) [\"", sect.size, sect.size == 1 ? "" : "s");
+		writeSectionName(sect.name, mapFile);
 		fputs("\"]\n", mapFile);
 
 		if (!noSymInMap) {
 			// Also print symbols in the following "pieces"
-			for (uint16_t org = sect->org; sect; sect = sect->nextu.get()) {
-				for (Symbol *sym : sect->symbols) {
-					// Don't output symbols that begin with an illegal character
-					if (!sym->name.empty() && startsIdentifier(sym->name[0])) {
-						// Space matches "\tSECTION: $xxxx ..."
-						fprintf(mapFile, "\t         $%04" PRIx32 " = ", sym->label().offset + org);
-						printSymName(sym->name, mapFile);
-						putc('\n', mapFile);
-					}
-				}
-
-				if (sect->nextu) {
-					// Announce the following "piece"
-					if (sect->nextu->modifier == SECTION_UNION) {
-						fputs("\t         ; Next union\n", mapFile);
-					} else if (sect->nextu->modifier == SECTION_FRAGMENT) {
-						fputs("\t         ; Next fragment\n", mapFile);
-					}
-				}
-			}
+			writeMapSymbols(&sect);
 		}
-
-		pickedSection++;
-	}
+	});
 
 	if (used == 0) {
 		fputs("\tEMPTY\n", mapFile);
@@ -504,7 +504,6 @@ static void writeMapBank(SortedSections const &sectList, SectionType type, uint3
 	}
 }
 
-// Write the total used and free space by section type to the map file
 static void writeMapSummary() {
 	fputs("SUMMARY:\n", mapFile);
 
@@ -525,24 +524,7 @@ static void writeMapSummary() {
 		uint32_t usedTotal = 0;
 
 		for (uint32_t bank = 0; bank < nbBanks; bank++) {
-			uint16_t used = 0;
-			auto &sectList = sections[type][bank];
-			auto section = sectList.sections.begin();
-			auto zeroLenSection = sectList.zeroLenSections.begin();
-
-			while (section != sectList.sections.end()
-			       || zeroLenSection != sectList.zeroLenSections.end()) {
-				// Pick the lowest section by address out of the two
-				auto &pickedSection = section == sectList.sections.end() ? zeroLenSection
-				                      : zeroLenSection == sectList.zeroLenSections.end() ? section
-				                      : (*section)->org < (*zeroLenSection)->org         ? section
-				                                                                 : zeroLenSection;
-
-				used += (*pickedSection)->size;
-				pickedSection++;
-			}
-
-			usedTotal += used;
+			usedTotal += forEachSection(sections[type][bank], [](Section const &) {});
 		}
 
 		fprintf(
@@ -560,7 +542,6 @@ static void writeMapSummary() {
 	}
 }
 
-// Writes the sym file, if applicable.
 static void writeSym() {
 	if (!symFileName) {
 		return;
@@ -606,12 +587,11 @@ static void writeSym() {
 		int32_t val = std::get<int32_t>(sym->data);
 		int width = val < 0x100 ? 2 : val < 0x10000 ? 4 : 8;
 		fprintf(symFile, "%0*" PRIx32 " ", width, val);
-		printSymName(sym->name, symFile);
+		writeSymName(sym->name, symFile);
 		putc('\n', symFile);
 	}
 }
 
-// Writes the map file, if applicable.
 static void writeMap() {
 	if (!mapFileName) {
 		return;

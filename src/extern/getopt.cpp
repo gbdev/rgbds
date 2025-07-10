@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-// This implementation was taken from musl and modified for RGBDS
+// This implementation was taken from musl and modified for RGBDS.
 
 #include "extern/getopt.hpp"
 

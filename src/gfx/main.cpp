@@ -594,6 +594,143 @@ static char *parseArgv(int argc, char *argv[]) {
 	return nullptr; // Done processing this argv
 }
 
+static void verboseOutputConfig() {
+	fprintf(stderr, "rgbgfx %s\n", get_package_version_string());
+
+	if (options.verbosity >= Options::VERB_VVVVVV) {
+		putc('\n', stderr);
+		// clang-format off: vertically align values
+		static std::array<uint16_t, 21> gfx{
+		    0b0111111110,
+		    0b1111111111,
+		    0b1110011001,
+		    0b1110011001,
+		    0b1111111111,
+		    0b1111111111,
+		    0b1110000001,
+		    0b1111000011,
+		    0b0111111110,
+		    0b0001111000,
+		    0b0111111110,
+		    0b1111111111,
+		    0b1111111111,
+		    0b1111111111,
+		    0b1101111011,
+		    0b1101111011,
+		    0b0011111100,
+		    0b0011001100,
+		    0b0111001110,
+		    0b0111001110,
+		    0b0111001110,
+		};
+		// clang-format on
+		static std::array<char const *, 3> textbox{
+		    "  ,----------------------------------------.",
+		    "  | Augh, dimensional interference again?! |",
+		    "  `----------------------------------------'",
+		};
+		for (size_t i = 0; i < gfx.size(); ++i) {
+			uint16_t row = gfx[i];
+			for (uint8_t _ = 0; _ < 10; ++_) {
+				unsigned char c = row & 1 ? '0' : ' ';
+				putc(c, stderr);
+				// Double the pixel horizontally, otherwise the aspect ratio looks wrong
+				putc(c, stderr);
+				row >>= 1;
+			}
+			if (i < textbox.size()) {
+				fputs(textbox[i], stderr);
+			}
+			putc('\n', stderr);
+		}
+		putc('\n', stderr);
+	}
+
+	fputs("Options:\n", stderr);
+	if (options.columnMajor) {
+		fputs("\tVisit image in column-major order\n", stderr);
+	}
+	if (options.allowDedup) {
+		fputs("\tAllow deduplicating tiles\n", stderr);
+	}
+	if (options.allowMirroringX) {
+		fputs("\tAllow deduplicating horizontally mirrored tiles\n", stderr);
+	}
+	if (options.allowMirroringY) {
+		fputs("\tAllow deduplicating vertically mirrored tiles\n", stderr);
+	}
+	if (options.useColorCurve) {
+		fputs("\tUse color curve\n", stderr);
+	}
+	fprintf(stderr, "\tBit depth: %" PRIu8 "bpp\n", options.bitDepth);
+	if (options.trim != 0) {
+		fprintf(stderr, "\tTrim the last %" PRIu64 " tiles\n", options.trim);
+	}
+	fprintf(stderr, "\tMaximum %" PRIu16 " palettes\n", options.nbPalettes);
+	fprintf(stderr, "\tPalettes contain %" PRIu8 " colors\n", options.nbColorsPerPal);
+	fprintf(stderr, "\t%s palette spec\n", [] {
+		switch (options.palSpecType) {
+		case Options::NO_SPEC:
+			return "No";
+		case Options::EXPLICIT:
+			return "Explicit";
+		case Options::EMBEDDED:
+			return "Embedded";
+		case Options::DMG:
+			return "DMG";
+		}
+		return "???";
+	}());
+	if (options.palSpecType == Options::EXPLICIT) {
+		fputs("\t[\n", stderr);
+		for (auto const &pal : options.palSpec) {
+			fputs("\t\t", stderr);
+			for (auto &color : pal) {
+				if (color) {
+					fprintf(stderr, "#%06x, ", color->toCSS() >> 8);
+				} else {
+					fputs("#none, ", stderr);
+				}
+			}
+			putc('\n', stderr);
+		}
+		fputs("\t]\n", stderr);
+	}
+	fprintf(
+	    stderr,
+	    "\tInput image slice: %" PRIu16 "x%" PRIu16 " pixels starting at (%" PRIu16 ", %" PRIu16
+	    ")\n",
+	    options.inputSlice.width,
+	    options.inputSlice.height,
+	    options.inputSlice.left,
+	    options.inputSlice.top
+	);
+	fprintf(
+	    stderr,
+	    "\tBase tile IDs: [%" PRIu8 ", %" PRIu8 "]\n",
+	    options.baseTileIDs[0],
+	    options.baseTileIDs[1]
+	);
+	fprintf(stderr, "\tBase palette ID: %" PRIu8 "\n", options.basePalID);
+	fprintf(
+	    stderr,
+	    "\tMaximum %" PRIu16 " tiles in bank 0, %" PRIu16 " in bank 1\n",
+	    options.maxNbTiles[0],
+	    options.maxNbTiles[1]
+	);
+	auto printPath = [](char const *name, std::string const &path) {
+		if (!path.empty()) {
+			fprintf(stderr, "\t%s: %s\n", name, path.c_str());
+		}
+	};
+	printPath("Input image", options.input);
+	printPath("Output tile data", options.output);
+	printPath("Output tilemap", options.tilemap);
+	printPath("Output attrmap", options.attrmap);
+	printPath("Output palettes", options.palettes);
+	fputs("Ready.\n", stderr);
+}
+
 int main(int argc, char *argv[]) {
 	struct AtFileStackEntry {
 		int parentInd;            // Saved offset into parent argv
@@ -714,140 +851,7 @@ int main(int argc, char *argv[]) {
 
 	// LCOV_EXCL_START
 	if (options.verbosity >= Options::VERB_CFG) {
-		fprintf(stderr, "rgbgfx %s\n", get_package_version_string());
-
-		if (options.verbosity >= Options::VERB_VVVVVV) {
-			putc('\n', stderr);
-			// clang-format off: vertically align values
-			static std::array<uint16_t, 21> gfx{
-			    0b0111111110,
-			    0b1111111111,
-			    0b1110011001,
-			    0b1110011001,
-			    0b1111111111,
-			    0b1111111111,
-			    0b1110000001,
-			    0b1111000011,
-			    0b0111111110,
-			    0b0001111000,
-			    0b0111111110,
-			    0b1111111111,
-			    0b1111111111,
-			    0b1111111111,
-			    0b1101111011,
-			    0b1101111011,
-			    0b0011111100,
-			    0b0011001100,
-			    0b0111001110,
-			    0b0111001110,
-			    0b0111001110,
-			};
-			// clang-format on
-			static std::array<char const *, 3> textbox{
-			    "  ,----------------------------------------.",
-			    "  | Augh, dimensional interference again?! |",
-			    "  `----------------------------------------'",
-			};
-			for (size_t i = 0; i < gfx.size(); ++i) {
-				uint16_t row = gfx[i];
-				for (uint8_t _ = 0; _ < 10; ++_) {
-					unsigned char c = row & 1 ? '0' : ' ';
-					putc(c, stderr);
-					// Double the pixel horizontally, otherwise the aspect ratio looks wrong
-					putc(c, stderr);
-					row >>= 1;
-				}
-				if (i < textbox.size()) {
-					fputs(textbox[i], stderr);
-				}
-				putc('\n', stderr);
-			}
-			putc('\n', stderr);
-		}
-
-		fputs("Options:\n", stderr);
-		if (options.columnMajor) {
-			fputs("\tVisit image in column-major order\n", stderr);
-		}
-		if (options.allowDedup) {
-			fputs("\tAllow deduplicating tiles\n", stderr);
-		}
-		if (options.allowMirroringX) {
-			fputs("\tAllow deduplicating horizontally mirrored tiles\n", stderr);
-		}
-		if (options.allowMirroringY) {
-			fputs("\tAllow deduplicating vertically mirrored tiles\n", stderr);
-		}
-		if (options.useColorCurve) {
-			fputs("\tUse color curve\n", stderr);
-		}
-		fprintf(stderr, "\tBit depth: %" PRIu8 "bpp\n", options.bitDepth);
-		if (options.trim != 0) {
-			fprintf(stderr, "\tTrim the last %" PRIu64 " tiles\n", options.trim);
-		}
-		fprintf(stderr, "\tMaximum %" PRIu16 " palettes\n", options.nbPalettes);
-		fprintf(stderr, "\tPalettes contain %" PRIu8 " colors\n", options.nbColorsPerPal);
-		fprintf(stderr, "\t%s palette spec\n", [] {
-			switch (options.palSpecType) {
-			case Options::NO_SPEC:
-				return "No";
-			case Options::EXPLICIT:
-				return "Explicit";
-			case Options::EMBEDDED:
-				return "Embedded";
-			case Options::DMG:
-				return "DMG";
-			}
-			return "???";
-		}());
-		if (options.palSpecType == Options::EXPLICIT) {
-			fputs("\t[\n", stderr);
-			for (auto const &pal : options.palSpec) {
-				fputs("\t\t", stderr);
-				for (auto &color : pal) {
-					if (color) {
-						fprintf(stderr, "#%06x, ", color->toCSS() >> 8);
-					} else {
-						fputs("#none, ", stderr);
-					}
-				}
-				putc('\n', stderr);
-			}
-			fputs("\t]\n", stderr);
-		}
-		fprintf(
-		    stderr,
-		    "\tInput image slice: %" PRIu16 "x%" PRIu16 " pixels starting at (%" PRIu16 ", %" PRIu16
-		    ")\n",
-		    options.inputSlice.width,
-		    options.inputSlice.height,
-		    options.inputSlice.left,
-		    options.inputSlice.top
-		);
-		fprintf(
-		    stderr,
-		    "\tBase tile IDs: [%" PRIu8 ", %" PRIu8 "]\n",
-		    options.baseTileIDs[0],
-		    options.baseTileIDs[1]
-		);
-		fprintf(stderr, "\tBase palette ID: %" PRIu8 "\n", options.basePalID);
-		fprintf(
-		    stderr,
-		    "\tMaximum %" PRIu16 " tiles in bank 0, %" PRIu16 " in bank 1\n",
-		    options.maxNbTiles[0],
-		    options.maxNbTiles[1]
-		);
-		auto printPath = [](char const *name, std::string const &path) {
-			if (!path.empty()) {
-				fprintf(stderr, "\t%s: %s\n", name, path.c_str());
-			}
-		};
-		printPath("Input image", options.input);
-		printPath("Output tile data", options.output);
-		printPath("Output tilemap", options.tilemap);
-		printPath("Output attrmap", options.attrmap);
-		printPath("Output palettes", options.palettes);
-		fputs("Ready.\n", stderr);
+		verboseOutputConfig();
 	}
 	// LCOV_EXCL_STOP
 

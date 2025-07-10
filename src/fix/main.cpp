@@ -461,10 +461,7 @@ static MbcType parseMBC(char const *name) {
 					break;
 				case 'A':
 				case 'a':
-					if (*ptr != 'M' && *ptr != 'm') {
-						return MBC_BAD;
-					}
-					ptr++;
+					tryReadSlice("M");
 					features |= RAM;
 					break;
 				default:
