@@ -272,11 +272,11 @@ static void writeSymName(std::string const &name, FILE *file) {
 		} else {
 			// Output illegal characters using Unicode escapes ('\u' or '\U')
 			// Decode the UTF-8 codepoint; or at least attempt to
-			uint32_t state = 0, codepoint;
+			uint32_t state = UTF8_ACCEPT, codepoint;
 
 			do {
 				decode(&state, &codepoint, *ptr);
-				if (state == 1) {
+				if (state == UTF8_REJECT) {
 					// This sequence was invalid; emit a U+FFFD, and recover
 					codepoint = 0xFFFD;
 					// Skip continuation bytes
@@ -287,7 +287,7 @@ static void writeSymName(std::string const &name, FILE *file) {
 					break;
 				}
 				++ptr;
-			} while (state != 0);
+			} while (state != UTF8_ACCEPT);
 
 			fprintf(file, codepoint <= 0xFFFF ? "\\u%04" PRIx32 : "\\U%08" PRIx32, codepoint);
 		}
