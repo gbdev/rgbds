@@ -1296,10 +1296,11 @@ continue_visiting_tiles:;
 		uint32_t const nbTilesH = png.getHeight() / 8, nbTilesW = png.getWidth() / 8;
 
 		// Check the tile count
-		if (nbTilesW * nbTilesH > options.maxNbTiles[0] + options.maxNbTiles[1]) {
+		if (uint32_t nbTiles = nbTilesW * nbTilesH;
+		    nbTiles > options.maxNbTiles[0] + options.maxNbTiles[1]) {
 			fatal(
 			    "Image contains %" PRIu32 " tiles, exceeding the limit of %" PRIu16 " + %" PRIu16,
-			    nbTilesW * nbTilesH,
+			    nbTiles,
 			    options.maxNbTiles[0],
 			    options.maxNbTiles[1]
 			);
@@ -1328,10 +1329,11 @@ continue_visiting_tiles:;
 		options.verbosePrint(Options::VERB_LOG_ACT, "Deduplicating tiles...\n");
 		UniqueTiles tiles = dedupTiles(png, attrmap, palettes, mappings);
 
-		if (tiles.size() > options.maxNbTiles[0] + options.maxNbTiles[1]) {
+		if (size_t nbTiles = tiles.size();
+		    nbTiles > options.maxNbTiles[0] + options.maxNbTiles[1]) {
 			fatal(
 			    "Image contains %zu tiles, exceeding the limit of %" PRIu16 " + %" PRIu16,
-			    tiles.size(),
+			    nbTiles,
 			    options.maxNbTiles[0],
 			    options.maxNbTiles[1]
 			);

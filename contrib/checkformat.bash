@@ -11,5 +11,5 @@ if ! git diff-index --quiet HEAD --; then
 	git diff-index --name-only HEAD --
 	echo
 	git diff HEAD --
-	return 1
+	exit 1
 fi
