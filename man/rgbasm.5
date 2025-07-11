@@ -280,7 +280,7 @@ There are a number of numeric formats.
 .It Binary Ta Li % , 0b , 0B Ta 01
 .It Fixed-point Ta none Ta 01234.56789
 .It Precise fixed-point Ta none Ta 12.34q8
-.It Character constant Ta none Ta \(dqABYZ\(dq
+.It Character constant Ta none Ta 'ABYZ'
 .It Game Boy graphics Ta Li \` Ta 0123
 .El
 .Pp
@@ -293,11 +293,14 @@ or
 The "character constant" form yields the value the character maps to in the current charmap.
 For example, by default
 .Pq refer to Xr ascii 7
-.Sq \(dqA\(dq
+.Sq 'A'
 yields 65.
+A character constant must represent a single value, so it cannot include multiple characters, or characters which map to multiple values.
 See
 .Sx Character maps
-for information on charmaps.
+for information on charmaps, and
+.Sx String expressions
+for information on escape characters allowed in character constants.
 .Pp
 The last one, Game Boy graphics, is quite interesting and useful.
 After the backtick, 8 digits between 0 and 3 are expected, corresponding to pixel values.
@@ -538,7 +541,8 @@ There are a number of escape sequences you can use within a string:
 .Bl -column -offset indent "Sequence"
 .It Sy Sequence Ta Sy Meaning
 .It Ql \e\e Ta Backslash Pq escapes the escape character itself
-.It Ql \e" Ta Double quote Pq does not terminate the string
+.It Ql \e" Ta Double quote Pq does not terminate a string
+.It Ql \e' Ta Single quote Pq does not terminate a character literal
 .It Ql \e{ Ta Open curly brace Pq does not start interpolation
 .It Ql \e} Ta Close curly brace Pq does not end interpolation
 .It Ql \en Ta Newline Pq ASCII $0A

@@ -1,0 +1,15 @@
+warning: character-literals.asm(31) -> character-literals.asm::char(13): [-Wunmapped-char]
+    Unmapped character '?'
+error: character-literals.asm(32) -> character-literals.asm::char(13):
+    Character literals must be a single charmap unit
+error: character-literals.asm(33) -> character-literals.asm::char(13):
+    Character literals must be a single charmap unit
+warning: character-literals.asm(34) -> character-literals.asm::char(13): [-Wunmapped-char]
+    Unmapped character '\n'
+warning: character-literals.asm(34) -> character-literals.asm::char(13): [-Wunmapped-char]
+    Unmapped character '\r'
+warning: character-literals.asm(34) -> character-literals.asm::char(13): [-Wunmapped-char]
+    Unmapped character '\t'
+error: character-literals.asm(34) -> character-literals.asm::char(13):
+    Character literals must be a single charmap unit
+Assembly aborted with 3 errors!
