@@ -241,11 +241,8 @@ static void placeSection(Section &section) {
 		} else if (!noLeftSpace && !noRightSpace) {
 			// The free space is split in two
 			// Append the new space after the original one
-			bankMem.insert(
-			    bankMem.begin() + spaceIdx + 1,
-			    {.address = sectionEnd,
-			     .size = static_cast<uint16_t>(freeSpace.address + freeSpace.size - sectionEnd)}
-			);
+			uint16_t size = static_cast<uint16_t>(freeSpace.address + freeSpace.size - sectionEnd);
+			bankMem.insert(bankMem.begin() + spaceIdx + 1, {.address = sectionEnd, .size = size});
 			// **`freeSpace` cannot be reused from this point on, because `bankMem.insert`
 			// invalidates all references to itself!**
 
