@@ -14,20 +14,18 @@ popd
 gcov src/**/*.cpp
 mkdir -p coverage
 
+# Generate coverage report, excluding Bison-generated files
+COVERAGE_INFO=coverage/coverage.info
+lcov -c --no-external -d . -o "$COVERAGE_INFO"
+lcov -r "$COVERAGE_INFO" src/asm/parser.{hpp,cpp} src/link/script.{hpp,cpp} -o "$COVERAGE_INFO"
+genhtml --dark-mode -f -s -o coverage/ "$COVERAGE_INFO"
+
 # Check whether running from coverage.yml workflow
 if [ "$1" != "false" ]; then
-  # Generate coverage report
-  lcov -c --no-external -d . -o coverage/coverage.info --ignore-errors format,inconsistent,unsupported
-  genhtml -f -s -o coverage/ coverage/coverage.info --ignore-errors category,corrupt,inconsistent
-
   # Open report in web browser
   if [ "$(uname)" == "Darwin" ]; then
     open coverage/index.html
   else
     xdg-open coverage/index.html
   fi
-else
-  # Generate coverage report
-  lcov -c --no-external -d . -o coverage/coverage.info
-  genhtml -f -s -o coverage/ coverage/coverage.info
 fi
