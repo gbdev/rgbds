@@ -880,31 +880,33 @@ static void outputUnoptimizedTileData(
 
 	for (auto [tile, attr] : zip(png.visitAsTiles(), attrmap)) {
 		// Do not emit fully-background tiles.
-		if (!attr.isBackgroundTile()) {
-			// If the tile is fully transparent, this defaults to palette 0.
-			Palette const &palette = palettes[attr.getPalID(mappings)];
+		if (attr.isBackgroundTile()) {
+			++tileIdx;
+			continue;
+		}
 
-			bool empty = true;
-			for (uint32_t y = 0; y < 8; ++y) {
-				uint16_t bitplanes = TileData::rowBitplanes(tile, palette, y);
-				if (bitplanes != 0) {
-					empty = false;
-				}
-				if (tileIdx < nbKeptTiles) {
-					output->sputc(bitplanes & 0xFF);
-					if (options.bitDepth == 2) {
-						output->sputc(bitplanes >> 8);
-					}
+		// If the tile is fully transparent, this defaults to palette 0.
+		Palette const &palette = palettes[attr.getPalID(mappings)];
+
+		bool empty = true;
+		for (uint32_t y = 0; y < 8; ++y) {
+			uint16_t bitplanes = TileData::rowBitplanes(tile, palette, y);
+			if (bitplanes != 0) {
+				empty = false;
+			}
+			if (tileIdx < nbKeptTiles) {
+				output->sputc(bitplanes & 0xFF);
+				if (options.bitDepth == 2) {
+					output->sputc(bitplanes >> 8);
 				}
 			}
+		}
 
-			if (!empty && tileIdx >= nbKeptTiles) {
-				warning(
-				    WARNING_TRIM_NONEMPTY,
-				    "Trimming a nonempty tile (configure with '-x/--trim-end'"
-				);
-				break; // Don't repeat the warning for subsequent tiles
-			}
+		if (!empty && tileIdx >= nbKeptTiles) {
+			warning(
+			    WARNING_TRIM_NONEMPTY, "Trimming a nonempty tile (configure with '-x/--trim-end')"
+			);
+			break; // Don't repeat the warning for subsequent tiles
 		}
 		++tileIdx;
 	}

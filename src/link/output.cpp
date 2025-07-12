@@ -263,34 +263,31 @@ static void writeROM() {
 
 static void writeSymName(std::string const &name, FILE *file) {
 	for (char const *ptr = name.c_str(); *ptr != '\0';) {
-		char c = *ptr;
-
-		if (continuesIdentifier(c)) {
-			// Output legal ASCII characters as-is
+		// Output legal ASCII characters as-is
+		if (char c = *ptr; continuesIdentifier(c)) {
 			putc(c, file);
 			++ptr;
-		} else {
-			// Output illegal characters using Unicode escapes ('\u' or '\U')
-			// Decode the UTF-8 codepoint; or at least attempt to
-			uint32_t state = UTF8_ACCEPT, codepoint;
-
-			do {
-				decode(&state, &codepoint, *ptr);
-				if (state == UTF8_REJECT) {
-					// This sequence was invalid; emit a U+FFFD, and recover
-					codepoint = 0xFFFD;
-					// Skip continuation bytes
-					// A NUL byte does not qualify, so we're good
-					while ((*ptr & 0xC0) == 0x80) {
-						++ptr;
-					}
-					break;
-				}
-				++ptr;
-			} while (state != UTF8_ACCEPT);
-
-			fprintf(file, codepoint <= 0xFFFF ? "\\u%04" PRIx32 : "\\U%08" PRIx32, codepoint);
+			continue;
 		}
+
+		// Output illegal characters using Unicode escapes ('\u' or '\U')
+		// Decode the UTF-8 codepoint; or at least attempt to
+		uint32_t state = UTF8_ACCEPT, codepoint;
+		do {
+			decode(&state, &codepoint, *ptr);
+			if (state == UTF8_REJECT) {
+				// This sequence was invalid; emit a U+FFFD, and recover
+				codepoint = 0xFFFD;
+				// Skip continuation bytes
+				// A NUL byte does not qualify, so we're good
+				while ((*ptr & 0xC0) == 0x80) {
+					++ptr;
+				}
+				break;
+			}
+			++ptr;
+		} while (state != UTF8_ACCEPT);
+		fprintf(file, codepoint <= 0xFFFF ? "\\u%04" PRIx32 : "\\U%08" PRIx32, codepoint);
 	}
 }
 
