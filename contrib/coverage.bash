@@ -20,7 +20,7 @@ COVERAGE_INFO=coverage/coverage.info
 if [ "$1" != "false" ]; then
   # Generate coverage report
   lcov -c --no-external -d . -o $COVERAGE_INFO --ignore-errors format,inconsistent,unsupported
-  lcov -r $COVERAGE_INFO -o $COVERAGE_INFO src/asm/parser.{hpp,cpp} src/link/script.{hpp,cpp} \
+  lcov -r $COVERAGE_INFO src/asm/parser.{hpp,cpp} src/link/script.{hpp,cpp} -o $COVERAGE_INFO \
        --ignore-errors format,inconsistent,unsupported
   genhtml -f -s -o coverage/ $COVERAGE_INFO --ignore-errors category,corrupt,inconsistent
 
@@ -34,6 +34,6 @@ else
   # Generate coverage report
   lcov -c --no-external -d . -o $COVERAGE_INFO
   echo "Removing some files:" src/asm/parser.{hpp,cpp} src/link/script.{hpp,cpp}
-  lcov -v -r $COVERAGE_INFO -o $COVERAGE_INFO src/asm/parser.{hpp,cpp} src/link/script.{hpp,cpp}
+  lcov -v -r $COVERAGE_INFO src/asm/parser.{hpp,cpp} src/link/script.{hpp,cpp} -o $COVERAGE_INFO
   genhtml -f -s -o coverage/ $COVERAGE_INFO
 fi
