@@ -33,6 +33,7 @@ if [ "$1" != "false" ]; then
 else
   # Generate coverage report
   lcov -c --no-external -d . -o $COVERAGE_INFO
-  lcov -r $COVERAGE_INFO -o $COVERAGE_INFO src/asm/parser.{hpp,cpp} src/link/script.{hpp,cpp}
+  echo "Removing some files:" src/asm/parser.{hpp,cpp} src/link/script.{hpp,cpp}
+  lcov -v -r $COVERAGE_INFO -o $COVERAGE_INFO src/asm/parser.{hpp,cpp} src/link/script.{hpp,cpp}
   genhtml -f -s -o coverage/ $COVERAGE_INFO
 fi
