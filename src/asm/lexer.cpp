@@ -1452,14 +1452,11 @@ static void appendExpandedString(std::string &str, std::string const &expanded) 
 	}
 }
 
-static void appendCharInLiteral(std::string &str, int c, bool rawString) {
+static void appendCharInLiteral(std::string &str, int c) {
 	bool rawMode = lexerState->mode == LEXER_RAW;
 
 	switch (c) {
 	case '\\': // Character escape or macro arg
-		if (rawString) {
-			break;
-		}
 		c = peek();
 		switch (c) {
 		// Character escape
@@ -1545,9 +1542,6 @@ static void appendCharInLiteral(std::string &str, int c, bool rawString) {
 		break;
 
 	case '{': // Symbol interpolation
-		if (rawString) {
-			break;
-		}
 		// We'll be exiting the string scope, so re-enable expansions
 		// (Not interpolations, since they're handled by the function itself...)
 		lexerState->disableMacroArgs = false;
@@ -1637,7 +1631,11 @@ static void readString(std::string &str, bool rawString) {
 		}
 
 		// Append the character or handle special ones
-		appendCharInLiteral(str, c, rawString);
+		if (rawString) {
+			str += c;
+		} else {
+			appendCharInLiteral(str, c);
+		}
 	}
 }
 
