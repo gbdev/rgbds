@@ -1953,62 +1953,61 @@ static Token yylex_NORMAL() {
 			bool raw = c == '#';
 			if (raw && startsIdentifier(peek())) {
 				c = nextChar();
+			} else if (!startsIdentifier(c)) {
+				// Do not report weird characters when capturing, it'll be done later
+				if (!lexerState->capturing) {
+					reportGarbageCharacters(c);
+				}
+				break;
 			}
 
-			if (startsIdentifier(c)) {
-				Token token = readIdentifier(c, raw);
+			Token token = readIdentifier(c, raw);
 
-				// An ELIF after a taken IF needs to not evaluate its condition
-				if (token.type == T_(POP_ELIF) && lexerState->lastToken == T_(NEWLINE)
-				    && lexer_GetIFDepth() > 0 && lexer_RanIFBlock() && !lexer_ReachedELSEBlock()) {
-					return yylex_SKIP_TO_ENDC();
-				}
+			// An ELIF after a taken IF needs to not evaluate its condition
+			if (token.type == T_(POP_ELIF) && lexerState->lastToken == T_(NEWLINE)
+			    && lexer_GetIFDepth() > 0 && lexer_RanIFBlock() && !lexer_ReachedELSEBlock()) {
+				return yylex_SKIP_TO_ENDC();
+			}
 
-				// If a keyword, don't try to expand
-				if (token.type != T_(SYMBOL) && token.type != T_(LOCAL)) {
-					return token;
-				}
-
-				// `token` is either a `SYMBOL` or a `LOCAL`, and both have a `std::string` value.
-				assume(std::holds_alternative<std::string>(token.value));
-
-				// Raw symbols and local symbols cannot be string expansions
-				if (!raw && token.type == T_(SYMBOL) && lexerState->expandStrings) {
-					// Attempt string expansion
-					Symbol const *sym = sym_FindExactSymbol(std::get<std::string>(token.value));
-
-					if (sym && sym->type == SYM_EQUS) {
-						std::shared_ptr<std::string> str = sym->getEqus();
-
-						assume(str);
-						beginExpansion(str, sym->name);
-						continue; // Restart, reading from the new buffer
-					}
-				}
-
-				// This is a "lexer hack"! We need it to distinguish between label definitions
-				// (which start with `LABEL`) and macro invocations (which start with `SYMBOL`).
-				//
-				// If we had one `IDENTIFIER` token, the parser would need to perform "lookahead"
-				// to determine which rule applies. But since macros need to enter "raw" mode to
-				// parse their arguments, which may not even be valid tokens in "normal" mode, we
-				// cannot use lookahead to check for the presence of a `COLON`.
-				//
-				// Instead, we have separate `SYMBOL` and `LABEL` tokens, lexing as a `LABEL` if a
-				// ':' character *immediately* follows the identifier. Thus, at the beginning of a
-				// line, "Label:" and "mac:" are treated as label definitions, but "Label :" and
-				// "mac :" are treated as macro invocations.
-				if (token.type == T_(SYMBOL) && peek() == ':') {
-					token.type = T_(LABEL);
-				}
-
+			// If a keyword, don't try to expand
+			if (token.type != T_(SYMBOL) && token.type != T_(LOCAL)) {
 				return token;
 			}
 
-			// Do not report weird characters when capturing, it'll be done later
-			if (!lexerState->capturing) {
-				reportGarbageCharacters(c);
+			// `token` is either a `SYMBOL` or a `LOCAL`, and both have a `std::string` value.
+			assume(std::holds_alternative<std::string>(token.value));
+
+			// Raw symbols and local symbols cannot be string expansions
+			if (!raw && token.type == T_(SYMBOL) && lexerState->expandStrings) {
+				// Attempt string expansion
+				Symbol const *sym = sym_FindExactSymbol(std::get<std::string>(token.value));
+
+				if (sym && sym->type == SYM_EQUS) {
+					std::shared_ptr<std::string> str = sym->getEqus();
+
+					assume(str);
+					beginExpansion(str, sym->name);
+					continue; // Restart, reading from the new buffer
+				}
 			}
+
+			// This is a "lexer hack"! We need it to distinguish between label definitions
+			// (which start with `LABEL`) and macro invocations (which start with `SYMBOL`).
+			//
+			// If we had one `IDENTIFIER` token, the parser would need to perform "lookahead"
+			// to determine which rule applies. But since macros need to enter "raw" mode to
+			// parse their arguments, which may not even be valid tokens in "normal" mode, we
+			// cannot use lookahead to check for the presence of a `COLON`.
+			//
+			// Instead, we have separate `SYMBOL` and `LABEL` tokens, lexing as a `LABEL` if a
+			// ':' character *immediately* follows the identifier. Thus, at the beginning of a
+			// line, "Label:" and "mac:" are treated as label definitions, but "Label :" and
+			// "mac :" are treated as macro invocations.
+			if (token.type == T_(SYMBOL) && peek() == ':') {
+				token.type = T_(LABEL);
+			}
+
+			return token;
 		}
 		lexerState->atLineStart = false;
 	}
