@@ -329,11 +329,7 @@ int main(int argc, char *argv[]) {
 			if (stateFileSpecs.find(name) != stateFileSpecs.end()) {
 				warnx("Overriding state filename %s", name);
 			}
-			// LCOV_EXCL_START
-			if (verbose) {
-				printf("State filename %s\n", name);
-			}
-			// LCOV_EXCL_STOP
+			verbosePrint("State filename %s\n", name); // LCOV_EXCL_LINE
 			stateFileSpecs.emplace(name, std::move(features));
 			break;
 		}
@@ -421,9 +417,7 @@ int main(int argc, char *argv[]) {
 
 	std::string mainFileName = argv[musl_optind];
 
-	if (verbose) {
-		printf("Assembling %s\n", mainFileName.c_str()); // LCOV_EXCL_LINE
-	}
+	verbosePrint("Assembling %s\n", mainFileName.c_str()); // LCOV_EXCL_LINE
 
 	if (dependFile) {
 		if (targetFileName.empty()) {

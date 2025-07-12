@@ -374,11 +374,7 @@ void out_SetFileName(std::string const &name) {
 		warnx("Overriding output filename %s", objectFileName.c_str());
 	}
 	objectFileName = name;
-	// LCOV_EXCL_START
-	if (verbose) {
-		printf("Output filename %s\n", objectFileName.c_str());
-	}
-	// LCOV_EXCL_STOP
+	verbosePrint("Output filename %s\n", objectFileName.c_str()); // LCOV_EXCL_LINE
 }
 
 static void dumpString(std::string const &escape, FILE *file) {

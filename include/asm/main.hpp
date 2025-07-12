@@ -8,6 +8,13 @@
 
 extern bool verbose;
 
+#define verbosePrint(...) \
+	do { \
+		if (verbose) { \
+			fprintf(stderr, __VA_ARGS__); \
+		} \
+	} while (0)
+
 extern FILE *dependFile;
 extern std::string targetFileName;
 extern bool continueAfterMissingIncludes;

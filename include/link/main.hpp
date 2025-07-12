@@ -29,7 +29,6 @@ extern bool beVerbose;
 extern bool isWRAM0Mode;
 extern bool disablePadding;
 
-// Helper macro for printing verbose-mode messages
 #define verbosePrint(...) \
 	do { \
 		if (beVerbose) { \

@@ -82,9 +82,7 @@ static char *mapFile(int fd, std::string const &path, size_t size) {
 		// The implementation may not support MAP_PRIVATE; try again with MAP_SHARED
 		// instead, offering, I believe, weaker guarantees about external modifications to
 		// the file while reading it. That's still better than not opening it at all, though.
-		if (verbose) {
-			printf("mmap(%s, MAP_PRIVATE) failed, retrying with MAP_SHARED\n", path.c_str());
-		}
+		verbosePrint("mmap(%s, MAP_PRIVATE) failed, retrying with MAP_SHARED\n", path.c_str());
 		mappingAddr = mmap(nullptr, size, PROT_READ, MAP_SHARED, fd, 0);
 	}
 	// LCOV_EXCL_STOP
@@ -415,11 +413,7 @@ void LexerState::setFileAsNextState(std::string const &filePath, bool updateStat
 	if (filePath == "-") {
 		path = "<stdin>";
 		content.emplace<BufferedContent>(STDIN_FILENO);
-		// LCOV_EXCL_START
-		if (verbose) {
-			printf("Opening stdin\n");
-		}
-		// LCOV_EXCL_STOP
+		verbosePrint("Opening stdin\n"); // LCOV_EXCL_LINE
 	} else {
 		struct stat statBuf;
 		if (stat(filePath.c_str(), &statBuf) != 0) {
@@ -445,11 +439,7 @@ void LexerState::setFileAsNextState(std::string const &filePath, bool updateStat
 				content.emplace<ViewedContent>(
 				    std::shared_ptr<char[]>(mappingAddr, FileUnmapDeleter(size)), size
 				);
-				// LCOV_EXCL_START
-				if (verbose) {
-					printf("File \"%s\" is mmap()ped\n", path.c_str());
-				}
-				// LCOV_EXCL_STOP
+				verbosePrint("File \"%s\" is mmap()ped\n", path.c_str()); // LCOV_EXCL_LINE
 				isMmapped = true;
 			}
 		}
@@ -458,14 +448,12 @@ void LexerState::setFileAsNextState(std::string const &filePath, bool updateStat
 			// Sometimes mmap() fails or isn't available, so have a fallback
 			content.emplace<BufferedContent>(fd);
 			// LCOV_EXCL_START
-			if (verbose) {
-				if (statBuf.st_size == 0) {
-					printf("File \"%s\" is empty\n", path.c_str());
-				} else {
-					printf(
-					    "File \"%s\" is opened; errno reports: %s\n", path.c_str(), strerror(errno)
-					);
-				}
+			if (statBuf.st_size == 0) {
+				verbosePrint("File \"%s\" is empty\n", path.c_str());
+			} else {
+				verbosePrint(
+				    "File \"%s\" is opened; errno reports: %s\n", path.c_str(), strerror(errno)
+				);
 			}
 			// LCOV_EXCL_STOP
 		}

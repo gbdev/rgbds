@@ -120,11 +120,7 @@ void fstk_SetPreIncludeFile(std::string const &path) {
 		warnx("Overriding pre-included filename %s", preIncludeName.c_str());
 	}
 	preIncludeName = path;
-	// LCOV_EXCL_START
-	if (verbose) {
-		printf("Pre-included filename %s\n", preIncludeName.c_str());
-	}
-	// LCOV_EXCL_STOP
+	verbosePrint("Pre-included filename %s\n", preIncludeName.c_str()); // LCOV_EXCL_LINE
 }
 
 static bool isValidFilePath(std::string const &path) {
@@ -312,8 +308,10 @@ void fstk_RunInclude(std::string const &path, bool preInclude) {
 	if (!fullPath) {
 		if (generatedMissingIncludes && !preInclude) {
 			// LCOV_EXCL_START
-			if (verbose && !continueAfterMissingIncludes) {
-				printf("Aborting (-MG) on INCLUDE file '%s' (%s)\n", path.c_str(), strerror(errno));
+			if (!continueAfterMissingIncludes) {
+				verbosePrint(
+				    "Aborting (-MG) on INCLUDE file '%s' (%s)\n", path.c_str(), strerror(errno)
+				);
 			}
 			// LCOV_EXCL_STOP
 			failedOnMissingInclude = true;
