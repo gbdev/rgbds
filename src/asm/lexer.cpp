@@ -1563,77 +1563,27 @@ static void appendCharInLiteral(std::string &str, int c, bool rawString) {
 	str += c; // Copy the character
 }
 
-static std::string readString(bool raw) {
+static void readString(std::string &str, bool rawString) {
 	Defer reenableExpansions = scopedDisableExpansions();
+
+	bool rawMode = lexerState->mode == LEXER_RAW;
 
 	// We reach this function after reading a single quote, but we also support triple quotes
 	bool multiline = false;
-	if (peek() == '"') {
-		shiftChar();
-		if (peek() == '"') {
-			// """ begins a multi-line string
-			shiftChar();
-			multiline = true;
-		} else {
-			// "" is an empty string, skip the loop
-			return ""s;
-		}
-	}
-
-	for (std::string str = ""s;;) {
-		int c = peek();
-
-		// '\r', '\n' or EOF ends a single-line string early
-		if (c == EOF || (!multiline && (c == '\r' || c == '\n'))) {
-			error("Unterminated string");
-			return str;
-		}
-
-		// We'll be staying in the string, so we can safely consume the char
-		shiftChar();
-
-		// Handle '\r' or '\n' (in multiline strings only, already handled above otherwise)
-		if (c == '\r' || c == '\n') {
-			handleCRLF(c);
-			nextLine();
-			c = '\n';
-		}
-
-		// Return the string if it's terminated
-		if (c == '"') {
-			if (!multiline) {
-				return str;
-			}
-			// Only """ ends a multi-line string
-			if (peek() == '"') {
-				shiftChar();
-				if (peek() == '"') {
-					shiftChar();
-					return str;
-				}
-				str += c;
-			}
-		}
-
-		// Append the character or handle special ones
-		appendCharInLiteral(str, c, raw);
-	}
-}
-
-static void appendStringLiteral(std::string &str, bool raw) {
-	// This is essentially a modified `readString`
-	Defer reenableExpansions = scopedDisableExpansions();
-
-	// We reach this function after reading a single quote, but we also support triple quotes
-	bool multiline = false;
-	str += '"';
-	if (peek() == '"') {
+	if (rawMode) {
 		str += '"';
+	}
+	if (peek() == '"') {
 		shiftChar();
+		if (rawMode) {
+			str += '"';
+		}
 		if (peek() == '"') {
 			// """ begins a multi-line string
-			str += '"';
 			shiftChar();
+			if (rawMode) {
+				str += '"';
+			}
 			multiline = true;
 		} else {
 			// "" is an empty string, skip the loop
@@ -1657,30 +1607,37 @@ static void appendStringLiteral(std::string &str, bool raw) {
 		if (c == '\r' || c == '\n') {
 			handleCRLF(c);
 			nextLine();
-			c = '\n';
+			str += '\n';
+			continue;
 		}
 
 		// Close the string and return if it's terminated
 		if (c == '"') {
-			if (multiline) {
-				// Only """ ends a multi-line string
-				str += c;
-				if (peek() != '"') {
-					continue;
+			if (!multiline) {
+				if (rawMode) {
+					str += c;
 				}
-				shiftChar();
-				str += c;
-				if (peek() != '"') {
-					continue;
-				}
-				shiftChar();
+				return;
 			}
-			str += c;
+			// Only """ ends a multi-line string
+			if (peek() != '"') {
+				str += c;
+				continue;
+			}
+			shiftChar();
+			if (peek() != '"') {
+				str += "\"\"";
+				continue;
+			}
+			shiftChar();
+			if (rawMode) {
+				str += "\"\"\"";
+			}
 			return;
 		}
 
 		// Append the character or handle special ones
-		appendCharInLiteral(str, c, raw);
+		appendCharInLiteral(str, c, rawString);
 	}
 }
 
@@ -1968,8 +1925,11 @@ static Token yylex_NORMAL() {
 
 			// Handle strings
 
-		case '"':
-			return Token(T_(STRING), readString(false));
+		case '"': {
+			std::string str;
+			readString(str, false);
+			return Token(T_(STRING), str);
+		}
 
 			// Handle newlines and EOF
 
@@ -1995,7 +1955,9 @@ static Token yylex_NORMAL() {
 		case '#':
 			if (peek() == '"') {
 				shiftChar();
-				return Token(T_(STRING), readString(true));
+				std::string str;
+				readString(str, true);
+				return Token(T_(STRING), str);
 			}
 			[[fallthrough]];
 
@@ -2067,7 +2029,7 @@ static Token yylex_NORMAL() {
 }
 
 static Token yylex_RAW() {
-	// This is essentially a highly modified `appendStringLiteral`
+	// This is essentially a highly modified `readString`
 	std::string str;
 	size_t parenDepth = 0;
 	int c;
@@ -2097,7 +2059,7 @@ static Token yylex_RAW() {
 		switch (c) {
 		case '"': // String literals inside macro args
 			shiftChar();
-			appendStringLiteral(str, false);
+			readString(str, false);
 			break;
 
 		case '#': // Raw string literals inside macro args
@@ -2105,7 +2067,7 @@ static Token yylex_RAW() {
 			shiftChar();
 			if (peek() == '"') {
 				shiftChar();
-				appendStringLiteral(str, true);
+				readString(str, true);
 			}
 			break;
 
