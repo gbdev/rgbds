@@ -14,26 +14,18 @@ popd
 gcov src/**/*.cpp
 mkdir -p coverage
 
+# Generate coverage report
 COVERAGE_INFO=coverage/coverage.info
+lcov -c --no-external -d . -o $COVERAGE_INFO
+lcov -v -r $COVERAGE_INFO src/asm/parser.{hpp,cpp} src/link/script.{hpp,cpp} -o $COVERAGE_INFO
+genhtml -f -s -o coverage/ $COVERAGE_INFO
 
 # Check whether running from coverage.yml workflow
 if [ "$1" != "false" ]; then
-  # Generate coverage report
-  lcov -c --no-external -d . -o $COVERAGE_INFO --ignore-errors format,inconsistent,unsupported
-  lcov -r $COVERAGE_INFO src/asm/parser.{hpp,cpp} src/link/script.{hpp,cpp} -o $COVERAGE_INFO \
-       --ignore-errors format,inconsistent,unsupported
-  genhtml -f -s -o coverage/ $COVERAGE_INFO --ignore-errors category,corrupt,inconsistent
-
   # Open report in web browser
   if [ "$(uname)" == "Darwin" ]; then
     open coverage/index.html
   else
     xdg-open coverage/index.html
   fi
-else
-  # Generate coverage report
-  lcov -c --no-external -d . -o $COVERAGE_INFO
-  echo "Removing some files:" src/asm/parser.{hpp,cpp} src/link/script.{hpp,cpp}
-  lcov -v -r $COVERAGE_INFO src/asm/parser.{hpp,cpp} src/link/script.{hpp,cpp} -o $COVERAGE_INFO
-  genhtml -f -s -o coverage/ $COVERAGE_INFO
 fi
