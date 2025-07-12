@@ -1416,8 +1416,13 @@ static std::shared_ptr<std::string> readInterpolation(size_t depth) {
 	return nullptr;
 }
 
-static void appendEscapedString(std::string &str, std::string const &escape) {
-	for (char c : escape) {
+static void appendExpandedString(std::string &str, std::string const &expanded) {
+	if (lexerState->mode != LEXER_RAW) {
+		str.append(expanded);
+		return;
+	}
+
+	for (char c : expanded) {
 		// Escape characters that need escaping
 		switch (c) {
 		case '\n':
@@ -1445,6 +1450,117 @@ static void appendEscapedString(std::string &str, std::string const &escape) {
 			break;
 		}
 	}
+}
+
+static void appendCharInLiteral(std::string &str, int c, bool rawString) {
+	bool rawMode = lexerState->mode == LEXER_RAW;
+
+	switch (c) {
+	case '\\': // Character escape or macro arg
+		if (rawString) {
+			break;
+		}
+		c = peek();
+		switch (c) {
+		// Character escape
+		case '\\':
+		case '"':
+		case '{':
+		case '}':
+			if (rawMode) {
+				str += '\\';
+			}
+			shiftChar();
+			break;
+		case 'n':
+			if (rawMode) {
+				str += '\\';
+			} else {
+				c = '\n';
+			}
+			shiftChar();
+			break;
+		case 'r':
+			if (rawMode) {
+				str += '\\';
+			} else {
+				c = '\r';
+			}
+			shiftChar();
+			break;
+		case 't':
+			if (rawMode) {
+				str += '\\';
+			} else {
+				c = '\t';
+			}
+			shiftChar();
+			break;
+		case '0':
+			if (rawMode) {
+				str += '\\';
+			} else {
+				c = '\0';
+			}
+			shiftChar();
+			break;
+
+		// Line continuation
+		case ' ':
+		case '\t':
+		case '\r':
+		case '\n':
+			discardLineContinuation();
+			return; // Do not copy the character
+
+		// Macro arg
+		case '@':
+		case '#':
+		case '1':
+		case '2':
+		case '3':
+		case '4':
+		case '5':
+		case '6':
+		case '7':
+		case '8':
+		case '9':
+		case '<':
+			shiftChar();
+			if (auto arg = readMacroArg(c); arg) {
+				appendExpandedString(str, *arg);
+			}
+			return; // Do not copy an additional character
+
+		case EOF: // Can't really print that one
+			error("Illegal character escape at end of input");
+			c = '\\';
+			break;
+
+		default:
+			error("Illegal character escape %s", printChar(c));
+			shiftChar();
+			break;
+		}
+		break;
+
+	case '{': // Symbol interpolation
+		if (rawString) {
+			break;
+		}
+		// We'll be exiting the string scope, so re-enable expansions
+		// (Not interpolations, since they're handled by the function itself...)
+		lexerState->disableMacroArgs = false;
+		if (auto interpolation = readInterpolation(0); interpolation) {
+			appendExpandedString(str, *interpolation);
+		}
+		lexerState->disableMacroArgs = true;
+		return; // Do not copy an additional character
+
+		// Regular characters will just get copied
+	}
+
+	str += c; // Copy the character
 }
 
 static std::string readString(bool raw) {
@@ -1483,112 +1599,29 @@ static std::string readString(bool raw) {
 			c = '\n';
 		}
 
-		switch (c) {
-		case '"':
-			if (multiline) {
-				// Only """ ends a multi-line string
-				if (peek() != '"') {
-					break;
+		// Return the string if it's terminated
+		if (c == '"') {
+			if (!multiline) {
+				return str;
+			}
+			// Only """ ends a multi-line string
+			if (peek() == '"') {
+				shiftChar();
+				if (peek() == '"') {
+					shiftChar();
+					return str;
 				}
-				shiftChar();
-				if (peek() != '"') {
-					str += '"';
-					break;
-				}
-				shiftChar();
+				str += c;
 			}
-			return str;
-
-		case '\\': // Character escape or macro arg
-			if (raw) {
-				break;
-			}
-			c = peek();
-			switch (c) {
-			case '\\':
-			case '"':
-			case '{':
-			case '}':
-				// Return that character unchanged
-				shiftChar();
-				break;
-			case 'n':
-				c = '\n';
-				shiftChar();
-				break;
-			case 'r':
-				c = '\r';
-				shiftChar();
-				break;
-			case 't':
-				c = '\t';
-				shiftChar();
-				break;
-			case '0':
-				c = '\0';
-				shiftChar();
-				break;
-
-			// Line continuation
-			case ' ':
-			case '\t':
-			case '\r':
-			case '\n':
-				discardLineContinuation();
-				continue;
-
-			// Macro arg
-			case '@':
-			case '#':
-			case '1':
-			case '2':
-			case '3':
-			case '4':
-			case '5':
-			case '6':
-			case '7':
-			case '8':
-			case '9':
-			case '<':
-				shiftChar();
-				if (auto arg = readMacroArg(c); arg) {
-					str.append(*arg);
-				}
-				continue; // Do not copy an additional character
-
-			case EOF: // Can't really print that one
-				error("Illegal character escape at end of input");
-				c = '\\';
-				break;
-
-			default:
-				error("Illegal character escape %s", printChar(c));
-				shiftChar();
-				break;
-			}
-			break;
-
-		case '{': // Symbol interpolation
-			if (raw) {
-				break;
-			}
-			// We'll be exiting the string scope, so re-enable expansions
-			// (Not interpolations, since they're handled by the function itself...)
-			lexerState->disableMacroArgs = false;
-			if (auto interpolation = readInterpolation(0); interpolation) {
-				str.append(*interpolation);
-			}
-			lexerState->disableMacroArgs = true;
-			continue; // Do not copy an additional character
-
-			// Regular characters will just get copied
 		}
 
-		str += c;
+		// Append the character or handle special ones
+		appendCharInLiteral(str, c, raw);
 	}
 }
 
 static void appendStringLiteral(std::string &str, bool raw) {
+	// This is essentially a modified `readString`
 	Defer reenableExpansions = scopedDisableExpansions();
 
 	// We reach this function after reading a single quote, but we also support triple quotes
@@ -1627,101 +1660,27 @@ static void appendStringLiteral(std::string &str, bool raw) {
 			c = '\n';
 		}
 
-		switch (c) {
-		case '"':
+		// Close the string and return if it's terminated
+		if (c == '"') {
 			if (multiline) {
 				// Only """ ends a multi-line string
+				str += c;
 				if (peek() != '"') {
-					break;
+					continue;
 				}
-				str += '"';
 				shiftChar();
+				str += c;
 				if (peek() != '"') {
-					break;
+					continue;
 				}
-				str += '"';
 				shiftChar();
 			}
-			str += '"';
+			str += c;
 			return;
-
-		case '\\': // Character escape or macro arg
-			if (raw) {
-				break;
-			}
-			c = peek();
-			switch (c) {
-			// Character escape
-			case '\\':
-			case '"':
-			case '{':
-			case '}':
-			case 'n':
-			case 'r':
-			case 't':
-			case '0':
-				// Return that character unchanged
-				str += '\\';
-				shiftChar();
-				break;
-
-			// Line continuation
-			case ' ':
-			case '\t':
-			case '\r':
-			case '\n':
-				discardLineContinuation();
-				continue;
-
-			// Macro arg
-			case '@':
-			case '#':
-			case '1':
-			case '2':
-			case '3':
-			case '4':
-			case '5':
-			case '6':
-			case '7':
-			case '8':
-			case '9':
-			case '<': {
-				shiftChar();
-				if (auto arg = readMacroArg(c); arg) {
-					appendEscapedString(str, *arg);
-				}
-				continue; // Do not copy an additional character
-			}
-
-			case EOF: // Can't really print that one
-				error("Illegal character escape at end of input");
-				c = '\\';
-				break;
-
-			default:
-				error("Illegal character escape %s", printChar(c));
-				shiftChar();
-				break;
-			}
-			break;
-
-		case '{': // Symbol interpolation
-			if (raw) {
-				break;
-			}
-			// We'll be exiting the string scope, so re-enable expansions
-			// (Not interpolations, since they're handled by the function itself...)
-			lexerState->disableMacroArgs = false;
-			if (auto interpolation = readInterpolation(0); interpolation) {
-				appendEscapedString(str, *interpolation);
-			}
-			lexerState->disableMacroArgs = true;
-			continue; // Do not copy an additional character
-
-			// Regular characters will just get copied
 		}
 
-		str += c;
+		// Append the character or handle special ones
+		appendCharInLiteral(str, c, raw);
 	}
 }
 
@@ -2108,7 +2067,7 @@ static Token yylex_NORMAL() {
 }
 
 static Token yylex_RAW() {
-	// This is essentially a modified `appendStringLiteral`
+	// This is essentially a highly modified `appendStringLiteral`
 	std::string str;
 	size_t parenDepth = 0;
 	int c;

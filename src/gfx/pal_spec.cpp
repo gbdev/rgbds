@@ -224,7 +224,7 @@ static bool readLine(std::filebuf &file, std::string &buffer) {
 template<typename U> // Should be uint*_t
 static std::optional<U> parseDec(std::string const &str, size_t &n) {
 	uintmax_t value = 0;
-	auto result = std::from_chars(str.data() + n, str.data() + str.size(), value);
+	auto result = std::from_chars(str.data() + n, str.data() + str.length(), value);
 	if (static_cast<bool>(result.ec)) {
 		return std::nullopt;
 	}
