@@ -1546,17 +1546,16 @@ static void readString(std::string &str, bool rawString) {
 		if (rawMode) {
 			str += '"';
 		}
-		if (peek() == '"') {
-			// """ begins a multi-line string
-			shiftChar();
-			if (rawMode) {
-				str += '"';
-			}
-			multiline = true;
-		} else {
+		if (peek() != '"') {
 			// "" is an empty string, skip the loop
 			return;
 		}
+		// """ begins a multi-line string
+		shiftChar();
+		if (rawMode) {
+			str += '"';
+		}
+		multiline = true;
 	}
 
 	for (;;) {
