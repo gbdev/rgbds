@@ -293,27 +293,17 @@ static void writeSymName(std::string const &name, FILE *file) {
 
 // Comparator function for `std::stable_sort` to sort symbols
 static bool compareSymbols(SortedSymbol const &sym1, SortedSymbol const &sym2) {
-	// First, sort by address
-	if (sym1.addr != sym2.addr) {
-		return sym1.addr < sym2.addr;
-	}
-
-	// Second, sort by locality (global before local)
 	std::string const &sym1_name = sym1.sym->name;
 	std::string const &sym2_name = sym2.sym->name;
 	bool sym1_local = sym1_name.find('.') != std::string::npos;
 	bool sym2_local = sym2_name.find('.') != std::string::npos;
-	if (sym1_local != sym2_local) {
-		return sym1_local < sym2_local;
-	}
 
+	// First, sort by address
+	// Second, sort by locality (global before local)
 	// Third, sort by parent address
-	if (sym1.parentAddr != sym2.parentAddr) {
-		return sym1.parentAddr < sym2.parentAddr;
-	}
-
 	// Fourth, sort by name
-	return sym1_name < sym2_name;
+	return std::tie(sym1.addr, sym1_local, sym1.parentAddr, sym1_name)
+	       < std::tie(sym2.addr, sym2_local, sym2.parentAddr, sym2_name);
 }
 
 template<typename F>
@@ -577,8 +567,8 @@ static void writeSym() {
 	});
 	// Numeric constants are ordered by value, then by name
 	std::sort(RANGE(constants), [](Symbol *sym1, Symbol *sym2) -> bool {
-		int32_t val1 = std::get<int32_t>(sym1->data), val2 = std::get<int32_t>(sym2->data);
-		return val1 != val2 ? val1 < val2 : sym1->name < sym2->name;
+		return std::tie(std::get<int32_t>(sym1->data), sym1->name)
+		       < std::tie(std::get<int32_t>(sym2->data), sym2->name);
 	});
 	for (Symbol *sym : constants) {
 		int32_t val = std::get<int32_t>(sym->data);

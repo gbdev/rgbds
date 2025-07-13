@@ -405,6 +405,11 @@ static void dumpString(std::string const &escape, FILE *file) {
 	}
 }
 
+// Symbols are ordered by file, then by definition order
+static bool compareSymbols(Symbol const *sym1, Symbol const *sym2) {
+	return sym1->defIndex < sym2->defIndex;
+}
+
 static bool dumpEquConstants(FILE *file) {
 	static std::vector<Symbol *> equConstants; // `static` so `sym_ForEach` callback can see it
 	equConstants.clear();
@@ -414,10 +419,7 @@ static bool dumpEquConstants(FILE *file) {
 			equConstants.push_back(&sym);
 		}
 	});
-	// Constants are ordered by file, then by definition order
-	std::sort(RANGE(equConstants), [](Symbol *sym1, Symbol *sym2) -> bool {
-		return sym1->defIndex < sym2->defIndex;
-	});
+	std::sort(RANGE(equConstants), compareSymbols);
 
 	for (Symbol const *sym : equConstants) {
 		uint32_t value = static_cast<uint32_t>(sym->getOutputValue());
@@ -436,10 +438,7 @@ static bool dumpVariables(FILE *file) {
 			variables.push_back(&sym);
 		}
 	});
-	// Variables are ordered by file, then by definition order
-	std::sort(RANGE(variables), [](Symbol *sym1, Symbol *sym2) -> bool {
-		return sym1->defIndex < sym2->defIndex;
-	});
+	std::sort(RANGE(variables), compareSymbols);
 
 	for (Symbol const *sym : variables) {
 		uint32_t value = static_cast<uint32_t>(sym->getOutputValue());
@@ -458,10 +457,7 @@ static bool dumpEqusConstants(FILE *file) {
 			equsConstants.push_back(&sym);
 		}
 	});
-	// Constants are ordered by file, then by definition order
-	std::sort(RANGE(equsConstants), [](Symbol *sym1, Symbol *sym2) -> bool {
-		return sym1->defIndex < sym2->defIndex;
-	});
+	std::sort(RANGE(equsConstants), compareSymbols);
 
 	for (Symbol const *sym : equsConstants) {
 		fprintf(file, "def %s equs \"", sym->name.c_str());
@@ -500,10 +496,7 @@ static bool dumpMacros(FILE *file) {
 			macros.push_back(&sym);
 		}
 	});
-	// Macros are ordered by file, then by definition order
-	std::sort(RANGE(macros), [](Symbol *sym1, Symbol *sym2) -> bool {
-		return sym1->defIndex < sym2->defIndex;
-	});
+	std::sort(RANGE(macros), compareSymbols);
 
 	for (Symbol const *sym : macros) {
 		auto const &body = sym->getMacro();

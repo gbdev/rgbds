@@ -75,6 +75,7 @@ void sortRgb(std::vector<Palette> &palettes) {
 	options.verbosePrint(Options::VERB_LOG_ACT, "Sorting palettes by luminance...\n");
 
 	for (Palette &pal : palettes) {
+		// Sort from lightest to darkest
 		std::sort(RANGE(pal), [](uint16_t lhs, uint16_t rhs) {
 			return luminance(lhs) > luminance(rhs);
 		});
