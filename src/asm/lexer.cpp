@@ -1451,37 +1451,26 @@ static void appendCharInLiteral(std::string &str, int c) {
 			if (rawMode) {
 				str += '\\';
 			}
+			str += c;
 			shiftChar();
 			break;
 		case 'n':
-			if (rawMode) {
-				str += '\\';
-			} else {
-				c = '\n';
-			}
+			str += rawMode ? "\\n" : "\n";
 			shiftChar();
 			break;
 		case 'r':
-			if (rawMode) {
-				str += '\\';
-			} else {
-				c = '\r';
-			}
+			str += rawMode ? "\\r" : "\r";
 			shiftChar();
 			break;
 		case 't':
-			if (rawMode) {
-				str += '\\';
-			} else {
-				c = '\t';
-			}
+			str += rawMode ? "\\t" : "\t";
 			shiftChar();
 			break;
 		case '0':
 			if (rawMode) {
-				str += '\\';
+				str += "\\0";
 			} else {
-				c = '\0';
+				str += '\0';
 			}
 			shiftChar();
 			break;
@@ -1492,7 +1481,7 @@ static void appendCharInLiteral(std::string &str, int c) {
 		case '\r':
 		case '\n':
 			discardLineContinuation();
-			return; // Do not copy the character
+			break;
 
 		// Macro arg
 		case '@':
@@ -1511,15 +1500,16 @@ static void appendCharInLiteral(std::string &str, int c) {
 			if (auto arg = readMacroArg(c); arg) {
 				appendExpandedString(str, *arg);
 			}
-			return; // Do not copy an additional character
+			break;
 
 		case EOF: // Can't really print that one
 			error("Illegal character escape at end of input");
-			c = '\\';
+			str += '\\';
 			break;
 
 		default:
 			error("Illegal character escape %s", printChar(c));
+			str += c;
 			shiftChar();
 			break;
 		}
@@ -1533,12 +1523,12 @@ static void appendCharInLiteral(std::string &str, int c) {
 			appendExpandedString(str, *interpolation);
 		}
 		lexerState->disableMacroArgs = true;
-		return; // Do not copy an additional character
+		break;
 
-		// Regular characters will just get copied
+	default: // Regular characters will just get copied
+		str += c;
+		break;
 	}
-
-	str += c; // Copy the character
 }
 
 static void readString(std::string &str, bool rawString) {
