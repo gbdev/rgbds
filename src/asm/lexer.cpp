@@ -1328,17 +1328,16 @@ static std::shared_ptr<std::string> readInterpolation(size_t depth) {
 
 	std::string fmtBuf;
 	FormatSpec fmt{};
-	bool disableInterpolation = lexerState->disableInterpolation;
 
 	// In a context where `lexerState->disableInterpolation` is true, `peek` will expand
 	// nested interpolations itself, which can lead to stack overflow. This lets
 	// `readInterpolation` handle its own nested expansions, increasing `depth` each time.
+	bool disableInterpolation = lexerState->disableInterpolation;
 	lexerState->disableInterpolation = true;
 
-	for (;;) {
-		int c = peek();
-
-		if (c == '{') { // Nested interpolation
+	// Reset `lexerState->disableInterpolation` when exiting this loop
+	for (Defer reset{[&] { lexerState->disableInterpolation = disableInterpolation; }};;) {
+		if (int c = peek(); c == '{') { // Nested interpolation
 			shiftChar();
 			if (auto str = readInterpolation(depth + 1); str) {
 				beginExpansion(str, *str);
@@ -1365,9 +1364,6 @@ static std::shared_ptr<std::string> readInterpolation(size_t depth) {
 			fmtBuf += c;
 		}
 	}
-
-	// Don't return before `lexerState->disableInterpolation` is reset!
-	lexerState->disableInterpolation = disableInterpolation;
 
 	if (fmtBuf.starts_with('#')) {
 		// Skip a '#' raw symbol prefix, but after expanding any nested interpolations.
