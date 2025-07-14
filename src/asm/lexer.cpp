@@ -1976,7 +1976,7 @@ static Token yylex_NORMAL() {
 				}
 			}
 
-			// We need it to distinguish between label definitions (which start with `LABEL`) and
+			// We need to distinguish between label definitions (which start with `LABEL`) and
 			// macro invocations (which start with `SYMBOL`).
 			//
 			// If we had one `IDENTIFIER` token, the parser would need to perform "lookahead" to

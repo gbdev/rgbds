@@ -1,0 +1,13 @@
+error: lex-label.asm(1):
+    syntax error, unexpected label, expecting symbol
+error: lex-label.asm(3):
+    syntax error, unexpected label, expecting symbol
+error: lex-label.asm(4):
+    syntax error, unexpected ENDM
+error: lex-label.asm(6):
+    syntax error, unexpected label, expecting symbol
+error: lex-label.asm(7):
+    syntax error, unexpected ENDR
+error: lex-label.asm(9):
+    syntax error, unexpected label, expecting symbol
+Assembly aborted with 6 errors!
