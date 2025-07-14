@@ -1976,18 +1976,20 @@ static Token yylex_NORMAL() {
 				}
 			}
 
-			// This is a "lexer hack"! We need it to distinguish between label definitions
-			// (which start with `LABEL`) and macro invocations (which start with `SYMBOL`).
+			// We need it to distinguish between label definitions (which start with `LABEL`) and
+			// macro invocations (which start with `SYMBOL`).
 			//
-			// If we had one `IDENTIFIER` token, the parser would need to perform "lookahead"
-			// to determine which rule applies. But since macros need to enter "raw" mode to
-			// parse their arguments, which may not even be valid tokens in "normal" mode, we
-			// cannot use lookahead to check for the presence of a `COLON`.
+			// If we had one `IDENTIFIER` token, the parser would need to perform "lookahead" to
+			// determine which rule applies. But since macros need to enter "raw" mode to parse
+			// their arguments, which may not even be valid tokens in "normal" mode, we cannot use
+			// lookahead to check for the presence of a `COLON`.
 			//
-			// Instead, we have separate `SYMBOL` and `LABEL` tokens, lexing as a `LABEL` if a
-			// ':' character *immediately* follows the identifier. Thus, at the beginning of a
-			// line, "Label:" and "mac:" are treated as label definitions, but "Label :" and
-			// "mac :" are treated as macro invocations.
+			// Instead, we have separate `SYMBOL` and `LABEL` tokens, lexing as a `LABEL` if a ':'
+			// character *immediately* follows the identifier. Thus, "Label:" and "mac:" are treated
+			// as label definitions, but "Label :" and "mac :" are treated as macro invocations.
+			//
+			// The alternative would be a "lexer hack" like C, where identifiers would lex as a
+			// `SYMBOL` if they are already defined, otherwise as a `LABEL`.
 			if (token.type == T_(SYMBOL) && peek() == ':') {
 				token.type = T_(LABEL);
 			}
