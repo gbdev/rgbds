@@ -2418,9 +2418,8 @@ Capture lexer_CaptureRept() {
 	Defer reenableExpansions = scopedDisableExpansions();
 
 	size_t depth = 0;
-	int c = EOF;
 
-	for (;;) {
+	for (int c;;) {
 		nextLine();
 		// We're at line start, so attempt to match a `REPT` or `ENDR` token
 		do { // Discard initial whitespace
@@ -2471,27 +2470,19 @@ Capture lexer_CaptureMacro() {
 
 	Defer reenableExpansions = scopedDisableExpansions();
 
-	int c = EOF;
-
-	for (;;) {
+	for (int c;;) {
 		nextLine();
 		// We're at line start, so attempt to match an `ENDM` token
 		do { // Discard initial whitespace
 			c = nextChar();
 		} while (isWhitespace(c));
 		// Now, try to match `ENDM` as a **whole** keyword
-		if (startsIdentifier(c)) {
-			switch (readIdentifier(c, false).type) {
-			case T_(POP_ENDM):
-				endCapture(capture);
-				// The ENDM has been captured, but we don't want it!
-				// We know we have read exactly "ENDM", not e.g. an EQUS
-				capture.span.size -= literal_strlen("ENDM");
-				return capture;
-
-			default:
-				break;
-			}
+		if (startsIdentifier(c) && readIdentifier(c, false).type == T_(POP_ENDM)) {
+			endCapture(capture);
+			// The ENDM has been captured, but we don't want it!
+			// We know we have read exactly "ENDM", not e.g. an EQUS
+			capture.span.size -= literal_strlen("ENDM");
+			return capture;
 		}
 
 		// Just consume characters until EOL or EOF
