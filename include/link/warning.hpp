@@ -5,15 +5,19 @@
 
 #include <stdint.h>
 
+#define warningAt(where, ...) warning(where.src, where.lineNo, __VA_ARGS__)
+#define errorAt(where, ...)   error(where.src, where.lineNo, __VA_ARGS__)
+#define fatalAt(where, ...)   fatal(where.src, where.lineNo, __VA_ARGS__)
+
 struct FileStackNode;
 
 [[gnu::format(printf, 3, 4)]]
-void warning(FileStackNode const *where, uint32_t lineNo, char const *fmt, ...);
+void warning(FileStackNode const *src, uint32_t lineNo, char const *fmt, ...);
 [[gnu::format(printf, 1, 2)]]
 void warning(char const *fmt, ...);
 
 [[gnu::format(printf, 3, 4)]]
-void error(FileStackNode const *where, uint32_t lineNo, char const *fmt, ...);
+void error(FileStackNode const *src, uint32_t lineNo, char const *fmt, ...);
 [[gnu::format(printf, 1, 2)]]
 void error(char const *fmt, ...);
 [[gnu::format(printf, 1, 2)]]
@@ -22,7 +26,7 @@ void errorNoDump(char const *fmt, ...);
 void argErr(char flag, char const *fmt, ...);
 
 [[gnu::format(printf, 3, 4), noreturn]]
-void fatal(FileStackNode const *where, uint32_t lineNo, char const *fmt, ...);
+void fatal(FileStackNode const *src, uint32_t lineNo, char const *fmt, ...);
 [[gnu::format(printf, 1, 2), noreturn]]
 void fatal(char const *fmt, ...);
 

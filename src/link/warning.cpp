@@ -10,11 +10,11 @@
 static uint32_t nbErrors = 0;
 
 static void printDiag(
-    FileStackNode const *where, uint32_t lineNo, char const *fmt, va_list args, char const *type
+    FileStackNode const *src, uint32_t lineNo, char const *fmt, va_list args, char const *type
 ) {
 	fprintf(stderr, "%s: ", type);
-	if (where) {
-		where->dump(lineNo);
+	if (src) {
+		src->dump(lineNo);
 		fputs(": ", stderr);
 	}
 	vfprintf(stderr, fmt, args);
@@ -39,10 +39,10 @@ static void abortLinking(char const *verb) {
 	exit(1);
 }
 
-void warning(FileStackNode const *where, uint32_t lineNo, char const *fmt, ...) {
+void warning(FileStackNode const *src, uint32_t lineNo, char const *fmt, ...) {
 	va_list args;
 	va_start(args, fmt);
-	printDiag(where, lineNo, fmt, args, "warning");
+	printDiag(src, lineNo, fmt, args, "warning");
 	va_end(args);
 }
 
@@ -53,10 +53,10 @@ void warning(char const *fmt, ...) {
 	va_end(args);
 }
 
-void error(FileStackNode const *where, uint32_t lineNo, char const *fmt, ...) {
+void error(FileStackNode const *src, uint32_t lineNo, char const *fmt, ...) {
 	va_list args;
 	va_start(args, fmt);
-	printDiag(where, lineNo, fmt, args, "error");
+	printDiag(src, lineNo, fmt, args, "error");
 	va_end(args);
 
 	incrementErrors();
@@ -93,10 +93,10 @@ void argErr(char flag, char const *fmt, ...) {
 }
 
 [[noreturn]]
-void fatal(FileStackNode const *where, uint32_t lineNo, char const *fmt, ...) {
+void fatal(FileStackNode const *src, uint32_t lineNo, char const *fmt, ...) {
 	va_list args;
 	va_start(args, fmt);
-	printDiag(where, lineNo, fmt, args, "FATAL");
+	printDiag(src, lineNo, fmt, args, "FATAL");
 	va_end(args);
 
 	incrementErrors();
