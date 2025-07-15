@@ -2706,12 +2706,12 @@ static void errorInvalidUTF8Byte(uint8_t byte, char const *functionName) {
 }
 
 static size_t strlenUTF8(std::string const &str, bool printErrors) {
-	char const *ptr = str.c_str();
 	size_t len = 0;
 	uint32_t state = UTF8_ACCEPT;
+	uint32_t codepoint = 0;
 
-	for (uint32_t codepoint = 0; *ptr; ptr++) {
-		uint8_t byte = *ptr;
+	for (char c : str) {
+		uint8_t byte = static_cast<uint8_t>(c);
 
 		switch (decode(&state, &codepoint, byte)) {
 		case UTF8_REJECT:
@@ -2738,17 +2738,17 @@ static size_t strlenUTF8(std::string const &str, bool printErrors) {
 }
 
 static std::string strsliceUTF8(std::string const &str, uint32_t start, uint32_t stop) {
-	char const *ptr = str.c_str();
+	size_t strLen = str.length();
 	size_t index = 0;
 	uint32_t state = UTF8_ACCEPT;
 	uint32_t codepoint = 0;
 	uint32_t curIdx = 0;
 
 	// Advance to starting index in source string.
-	while (ptr[index] && curIdx < start) {
-		switch (decode(&state, &codepoint, ptr[index])) {
+	while (index < strLen && curIdx < start) {
+		switch (decode(&state, &codepoint, str[index])) {
 		case UTF8_REJECT:
-			errorInvalidUTF8Byte(ptr[index], "STRSLICE");
+			errorInvalidUTF8Byte(str[index], "STRSLICE");
 			state = UTF8_ACCEPT;
 			// fallthrough
 		case UTF8_ACCEPT:
@@ -2760,7 +2760,7 @@ static std::string strsliceUTF8(std::string const &str, uint32_t start, uint32_t
 
 	// An index 1 past the end of the string is allowed, but will trigger the
 	// "Length too big" warning below if the length is nonzero.
-	if (!ptr[index] && start > curIdx) {
+	if (index >= strLen && start > curIdx) {
 		warning(
 		    WARNING_BUILTIN_ARG,
 		    "STRSLICE: Start index %" PRIu32 " is past the end of the string",
@@ -2771,10 +2771,10 @@ static std::string strsliceUTF8(std::string const &str, uint32_t start, uint32_t
 	size_t startIndex = index;
 
 	// Advance to ending index in source string.
-	while (ptr[index] && curIdx < stop) {
-		switch (decode(&state, &codepoint, ptr[index])) {
+	while (index < strLen && curIdx < stop) {
+		switch (decode(&state, &codepoint, str[index])) {
 		case UTF8_REJECT:
-			errorInvalidUTF8Byte(ptr[index], "STRSLICE");
+			errorInvalidUTF8Byte(str[index], "STRSLICE");
 			state = UTF8_ACCEPT;
 			// fallthrough
 		case UTF8_ACCEPT:
@@ -2798,21 +2798,21 @@ static std::string strsliceUTF8(std::string const &str, uint32_t start, uint32_t
 		);
 	}
 
-	return std::string(ptr + startIndex, ptr + index);
+	return str.substr(startIndex, index - startIndex);
 }
 
 static std::string strsubUTF8(std::string const &str, uint32_t pos, uint32_t len) {
-	char const *ptr = str.c_str();
+	size_t strLen = str.length();
 	size_t index = 0;
 	uint32_t state = UTF8_ACCEPT;
 	uint32_t codepoint = 0;
 	uint32_t curPos = 1;
 
 	// Advance to starting position in source string.
-	while (ptr[index] && curPos < pos) {
-		switch (decode(&state, &codepoint, ptr[index])) {
+	while (index < strLen && curPos < pos) {
+		switch (decode(&state, &codepoint, str[index])) {
 		case UTF8_REJECT:
-			errorInvalidUTF8Byte(ptr[index], "STRSUB");
+			errorInvalidUTF8Byte(str[index], "STRSUB");
 			state = UTF8_ACCEPT;
 			// fallthrough
 		case UTF8_ACCEPT:
@@ -2824,7 +2824,7 @@ static std::string strsubUTF8(std::string const &str, uint32_t pos, uint32_t len
 
 	// A position 1 past the end of the string is allowed, but will trigger the
 	// "Length too big" warning below if the length is nonzero.
-	if (!ptr[index] && pos > curPos) {
+	if (index >= strLen && pos > curPos) {
 		warning(
 		    WARNING_BUILTIN_ARG, "STRSUB: Position %" PRIu32 " is past the end of the string", pos
 		);
@@ -2834,10 +2834,10 @@ static std::string strsubUTF8(std::string const &str, uint32_t pos, uint32_t len
 	uint32_t curLen = 0;
 
 	// Compute the result length in bytes.
-	while (ptr[index] && curLen < len) {
-		switch (decode(&state, &codepoint, ptr[index])) {
+	while (index < strLen && curLen < len) {
+		switch (decode(&state, &codepoint, str[index])) {
 		case UTF8_REJECT:
-			errorInvalidUTF8Byte(ptr[index], "STRSUB");
+			errorInvalidUTF8Byte(str[index], "STRSUB");
 			state = UTF8_ACCEPT;
 			// fallthrough
 		case UTF8_ACCEPT:
@@ -2857,7 +2857,7 @@ static std::string strsubUTF8(std::string const &str, uint32_t pos, uint32_t len
 		warning(WARNING_BUILTIN_ARG, "STRSUB: Length too big: %" PRIu32, len);
 	}
 
-	return std::string(ptr + startIndex, ptr + index);
+	return str.substr(startIndex, index - startIndex);
 }
 
 static size_t charlenUTF8(std::string const &str) {
