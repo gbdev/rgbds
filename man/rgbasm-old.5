@@ -99,6 +99,23 @@ in RAM sections, allowing labeled space allocations to overlap.
 .Pp
 Instead, use
 .Ic UNION .
+.Ss Section-local charmaps
+Deprecated in 0.3.9, removed in 0.4.0.
+.Pp
+Defining a
+.Ic CHARMAP
+inside a
+.Ic SECTION
+when the current global charmap was the
+.Sq main
+one used to only define that character mapping within that
+.Ic SECTION .
+.Pp
+Instead, use
+.Ic PUSHC
+and
+.Ic POPC
+and switch to a different character mapping for that section.
 .Ss __FILE__ and __LINE__
 Deprecated in 0.6.0, removed in 0.7.0.
 .Pp
@@ -301,6 +318,11 @@ Supported in ASMotor, removed in RGBDS.
 .Pp
 Instead, use
 .Ql LD HL, SP + e8 .
+.Ss OPT z
+Deprecated in 0.4.0, removed in 0.5.0.
+.Pp
+Instead, use
+.Ic OPT p .
 .Ss rgbasm -i
 Deprecated in 0.6.0, removed in 0.8.0.
 .Pp
