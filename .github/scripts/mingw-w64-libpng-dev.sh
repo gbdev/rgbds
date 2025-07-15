@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-pngver=1.6.45
+pngver=1.6.49
 arch="$1"
 
 ## Grab sources and check them
