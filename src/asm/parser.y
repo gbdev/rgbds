@@ -339,6 +339,7 @@
 // Literals
 %token <int32_t> NUMBER "number"
 %token <std::string> STRING "string"
+%token <std::string> CHARACTER "character"
 %token <std::string> SYMBOL "symbol"
 %token <std::string> LABEL "label"
 %token <std::string> LOCAL "local label"
@@ -1414,6 +1415,15 @@ relocexpr:
 relocexpr_no_str:
 	NUMBER {
 		$$.makeNumber($1);
+	}
+	| CHARACTER {
+		std::vector<int32_t> output = charmap_Convert($1);
+		if (output.size() == 1) {
+			$$.makeNumber(static_cast<uint32_t>(output[0]));
+		} else {
+			::error("Character literals must be a single charmap unit");
+			$$.makeNumber(0);
+		}
 	}
 	| OP_LOGICNOT relocexpr %prec NEG {
 		$$.makeUnaryOp(RPN_LOGNOT, std::move($2));

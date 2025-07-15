@@ -293,7 +293,7 @@ yy::parser::symbol_type yylex() {
 					c = '\r';
 				} else if (c == 't') {
 					c = '\t';
-				} else if (c != '\\' && c != '"') {
+				} else if (c != '\\' && c != '"' && c != '\'') {
 					scriptError(context, "Cannot escape character %s", printChar(c));
 				}
 				context.file.sbumpc();
