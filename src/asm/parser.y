@@ -284,6 +284,7 @@
 %token OP_ATAN2 "ATAN2"
 %token OP_BANK "BANK"
 %token OP_BITWIDTH "BITWIDTH"
+%token OP_BYTELEN "BYTELEN"
 %token OP_CEIL "CEIL"
 %token OP_CHARCMP "CHARCMP"
 %token OP_CHARLEN "CHARLEN"
@@ -307,6 +308,7 @@
 %token OP_SIN "SIN"
 %token OP_SIZEOF "SIZEOF"
 %token OP_STARTOF "STARTOF"
+%token OP_STRBYTE "STRBYTE"
 %token OP_STRCAT "STRCAT"
 %token OP_STRCHAR "STRCHAR"
 %token OP_STRCMP "STRCMP"
@@ -1592,6 +1594,9 @@ relocexpr_no_str:
 	| OP_STRLEN LPAREN string RPAREN {
 		$$.makeNumber(strlenUTF8($3, true));
 	}
+	| OP_BYTELEN LPAREN string RPAREN {
+		$$.makeNumber($3.length());
+	}
 	| OP_CHARLEN LPAREN string RPAREN {
 		$$.makeNumber(charlenUTF8($3));
 	}
@@ -1623,6 +1628,20 @@ relocexpr_no_str:
 			}
 		} else {
 			::error("CHARVAL: No character mapping for \"%s\"", $3.c_str());
+			$$.makeNumber(0);
+		}
+	}
+	| OP_STRBYTE LPAREN string COMMA iconst RPAREN {
+		size_t len = $3.length();
+		uint32_t idx = adjustNegativeIndex($5, len, "STRBYTE");
+		if (idx < len) {
+			$$.makeNumber(static_cast<uint8_t>($3[idx]));
+		} else {
+			warning(
+			    WARNING_BUILTIN_ARG,
+			    "STRBYTE: Index %" PRIu32 " is past the end of the string",
+			    idx
+			);
 			$$.makeNumber(0);
 		}
 	}

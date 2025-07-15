@@ -1,0 +1,4 @@
+warning: bytelen-strbyte.asm(35): [-Wbuiltin-args]
+    STRBYTE: Index starts at 0
+warning: bytelen-strbyte.asm(36): [-Wbuiltin-args]
+    STRBYTE: Index 10 is past the end of the string
