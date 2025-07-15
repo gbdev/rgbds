@@ -138,53 +138,56 @@ std::string Diagnostics<L, W>::processWarningFlag(char const *flag) {
 		uint8_t maxParam = paramWarning.lastID - baseID + 1;
 		assume(paramWarning.defaultLevel <= maxParam);
 
-		if (rootFlag == warningFlags[baseID].name) { // Match!
-			// If making the warning an error but param is 0, set to the maximum
-			// This accommodates `-Werror=<flag>`, but also `-Werror=<flag>=0`, which is
-			// thus filtered out by the caller.
-			// A param of 0 makes sense for disabling everything, but neither for
-			// enabling nor "erroring". Use the default for those.
-			if (!param.has_value() || *param == 0) {
-				param = paramWarning.defaultLevel;
-			} else if (*param > maxParam) {
-				if (*param != 255) { // Don't warn if already capped
-					warnx(
-					    "Invalid parameter %" PRIu8
-					    " for warning flag \"%s\"; capping at maximum %" PRIu8,
-					    *param,
-					    rootFlag.c_str(),
-					    maxParam
-					);
-				}
-				*param = maxParam;
-			}
-
-			// Set the first <param> to enabled/error, and disable the rest
-			for (uint8_t ofs = 0; ofs < maxParam; ofs++) {
-				WarningState &warning = state.flagStates[baseID + ofs];
-				if (ofs < *param) {
-					warning.update(flagState);
-				} else {
-					warning.state = WARNING_DISABLED;
-				}
-			}
-			return rootFlag;
+		if (rootFlag != warningFlags[baseID].name) {
+			continue;
 		}
+
+		// If making the warning an error but param is 0, set to the maximum
+		// This accommodates `-Werror=<flag>`, but also `-Werror=<flag>=0`, which is
+		// thus filtered out by the caller.
+		// A param of 0 makes sense for disabling everything, but neither for
+		// enabling nor "erroring". Use the default for those.
+		if (!param.has_value() || *param == 0) {
+			param = paramWarning.defaultLevel;
+		} else if (*param > maxParam) {
+			if (*param != 255) { // Don't warn if already capped
+				warnx(
+				    "Invalid parameter %" PRIu8
+				    " for warning flag \"%s\"; capping at maximum %" PRIu8,
+				    *param,
+				    rootFlag.c_str(),
+				    maxParam
+				);
+			}
+			*param = maxParam;
+		}
+
+		// Set the first <param> to enabled/error, and disable the rest
+		for (uint8_t ofs = 0; ofs < maxParam; ofs++) {
+			if (WarningState &warning = state.flagStates[baseID + ofs]; ofs < *param) {
+				warning.update(flagState);
+			} else {
+				warning.state = WARNING_DISABLED;
+			}
+		}
+		return rootFlag;
 	}
 
 	// Try to match against a non-parametric warning, unless there was an equals sign
 	if (!param.has_value()) {
 		// Try to match against a "meta" warning
 		for (WarningFlag<L> const &metaWarning : metaWarnings) {
-			if (rootFlag == metaWarning.name) {
-				// Set each of the warning flags that meets this level
-				for (W id : EnumSeq(W::NB_WARNINGS)) {
-					if (metaWarning.level >= warningFlags[id].level) {
-						state.metaStates[id].update(flagState);
-					}
-				}
-				return rootFlag;
+			if (rootFlag != metaWarning.name) {
+				continue;
 			}
+
+			// Set each of the warning flags that meets this level
+			for (W id : EnumSeq(W::NB_WARNINGS)) {
+				if (metaWarning.level >= warningFlags[id].level) {
+					state.metaStates[id].update(flagState);
+				}
+			}
+			return rootFlag;
 		}
 
 		// Try to match the flag against a "normal" flag

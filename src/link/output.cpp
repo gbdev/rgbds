@@ -348,9 +348,8 @@ static void writeSymBank(SortedSections const &bankSections, SectionType type, u
 				if (Symbol const *parentSym = sym_GetSymbol(parentName);
 				    parentSym && std::holds_alternative<Label>(parentSym->data)) {
 					auto const &parentLabel = parentSym->label();
-					assume(parentLabel.section != nullptr);
-					parentAddr =
-					    static_cast<uint16_t>(parentLabel.offset + parentLabel.section->org);
+					Section const &parentSection = *parentLabel.section;
+					parentAddr = static_cast<uint16_t>(parentLabel.offset + parentSection.org);
 				}
 			}
 			symList.push_back({.sym = sym, .addr = addr, .parentAddr = parentAddr});

@@ -58,13 +58,24 @@
 
 %token YYEOF 0 "end of file"
 %token newline "end of line"
+
 %token COMMA ","
+
+// Keywords
 %token ORG "ORG"
-       FLOATING "FLOATING"
-       INCLUDE "INCLUDE"
-       ALIGN "ALIGN"
-       DS "DS"
-       OPTIONAL "OPTIONAL"
+%token FLOATING "FLOATING"
+%token INCLUDE "INCLUDE"
+%token ALIGN "ALIGN"
+%token DS "DS"
+%token OPTIONAL "OPTIONAL"
+
+// Literals
+%token <std::string> string;
+%token <uint32_t> number;
+%token <SectionType> sect_type;
+
+%type <bool> optional;
+
 %code {
 	static std::array keywords{
 		Keyword{"ORG"sv,      yy::parser::make_ORG},
@@ -75,11 +86,6 @@
 		Keyword{"OPTIONAL"sv, yy::parser::make_OPTIONAL},
 	};
 }
-%token <std::string> string;
-%token <uint32_t> number;
-%token <SectionType> sect_type;
-
-%type <bool> optional;
 
 %%
 

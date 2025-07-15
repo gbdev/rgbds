@@ -149,14 +149,15 @@ static void alreadyDefinedError(Symbol const &sym, char const *asType) {
 				fprintf(stderr, " as %s", asType);
 			}
 			dumpFilename(sym);
-			if (sym.type == SYM_EQUS) {
-				if (std::string const &contents = *sym.getEqus(); isValidIdentifier(contents)) {
-					fprintf(
-					    stderr,
-					    "\n    (should it be {interpolated} to define its contents \"%s\"?)",
-					    contents.c_str()
-					);
-				}
+			if (sym.type != SYM_EQUS) {
+				return;
+			}
+			if (std::string const &contents = *sym.getEqus(); isValidIdentifier(contents)) {
+				fprintf(
+				    stderr,
+				    "\n    (should it be {interpolated} to define its contents \"%s\"?)",
+				    contents.c_str()
+				);
 			}
 		});
 	}
