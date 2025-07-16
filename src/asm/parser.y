@@ -354,7 +354,6 @@
 %type <Expression> relocexpr_no_str
 %type <Expression> reloc_3bit
 %type <Expression> reloc_8bit
-%type <Expression> reloc_8bit_offset
 %type <Expression> reloc_16bit
 
 // Constant numbers
@@ -403,6 +402,7 @@
 %type <Expression> op_a_n
 %type <int32_t> op_a_r
 %type <Expression> op_mem_ind
+%type <Expression> op_sp_offset
 
 // Data types used only in specific contexts
 %type <AlignmentSpec> align_spec
@@ -1355,17 +1355,6 @@ reloc_8bit:
 	}
 ;
 
-reloc_8bit_offset:
-	OP_ADD relocexpr {
-		$$ = std::move($2);
-		$$.checkNBit(8);
-	}
-	| OP_SUB relocexpr {
-		$$.makeUnaryOp(RPN_NEG, std::move($2));
-		$$.checkNBit(8);
-	}
-;
-
 reloc_16bit:
 	relocexpr {
 		$$ = std::move($1);
@@ -2199,12 +2188,9 @@ sm83_ld:
 ;
 
 sm83_ld_hl:
-	SM83_LD MODE_HL COMMA MODE_SP reloc_8bit_offset {
+	SM83_LD MODE_HL COMMA MODE_SP op_sp_offset {
 		sect_ConstByte(0xF8);
 		sect_RelByte($5, 1);
-	}
-	| SM83_LD MODE_HL COMMA MODE_SP {
-		::error("LD HL, SP is not a valid instruction; use LD HL, SP + 0");
 	}
 	| SM83_LD MODE_HL COMMA reloc_16bit {
 		sect_ConstByte(0x01 | (REG_HL << 4));
@@ -2546,6 +2532,20 @@ op_a_n:
 	}
 	| MODE_A COMMA reloc_8bit {
 		$$ = std::move($3);
+	}
+;
+
+op_sp_offset:
+	OP_ADD relocexpr {
+		$$ = std::move($2);
+		$$.checkNBit(8);
+	}
+	| OP_SUB relocexpr {
+		$$.makeUnaryOp(RPN_NEG, std::move($2));
+		$$.checkNBit(8);
+	}
+	| %empty {
+		::error("LD HL, SP is not a valid instruction; use LD HL, SP + 0");
 	}
 ;
 
