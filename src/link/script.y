@@ -221,6 +221,48 @@ static bool isBinDigit(int c) {
 	return c >= '0' && c <= '1';
 }
 
+static yy::parser::symbol_type parseBinNumber(char const *prefix) {
+	auto &context = lexerStack.back();
+	auto c = context.file.sgetc();
+	if (!isBinDigit(c)) {
+		scriptError(context, "No binary digits found after '%s'", prefix);
+		return yy::parser::make_number(0);
+	}
+
+	uint32_t number = c - '0';
+	context.file.sbumpc();
+	for (c = context.file.sgetc(); isBinDigit(c) || c == '_'; c = context.file.sgetc()) {
+		if (c != '_') {
+			number = number * 2 + (c - '0');
+		}
+		context.file.sbumpc();
+	}
+	return yy::parser::make_number(number);
+}
+
+static bool isOctDigit(int c) {
+	return c >= '0' && c <= '7';
+}
+
+static yy::parser::symbol_type parseOctNumber(char const *prefix) {
+	auto &context = lexerStack.back();
+	auto c = context.file.sgetc();
+	if (!isOctDigit(c)) {
+		scriptError(context, "No octal digits found after '%s'", prefix);
+		return yy::parser::make_number(0);
+	}
+
+	uint32_t number = c - '0';
+	context.file.sbumpc();
+	for (c = context.file.sgetc(); isOctDigit(c) || c == '_'; c = context.file.sgetc()) {
+		if (c != '_') {
+			number = number * 8 + (c - '0');
+		}
+		context.file.sbumpc();
+	}
+	return yy::parser::make_number(number);
+}
+
 static bool isHexDigit(int c) {
 	return (c >= '0' && c <= '9') || (c >= 'A' && c <= 'F') || (c >= 'a' && c <= 'f');
 }
@@ -235,6 +277,25 @@ static uint8_t parseHexDigit(int c) {
 	} else {
 		unreachable_(); // LCOV_EXCL_LINE
 	}
+}
+
+static yy::parser::symbol_type parseHexNumber(char const *prefix) {
+	auto &context = lexerStack.back();
+	auto c = context.file.sgetc();
+	if (!isHexDigit(c)) {
+		scriptError(context, "No hexadecimal digits found after '%s'", prefix);
+		return yy::parser::make_number(0);
+	}
+
+	uint32_t number = parseHexDigit(c);
+	context.file.sbumpc();
+	for (c = context.file.sgetc(); isHexDigit(c) || c == '_'; c = context.file.sgetc()) {
+		if (c != '_') {
+			number = number * 16 + parseHexDigit(c);
+		}
+		context.file.sbumpc();
+	}
+	return yy::parser::make_number(number);
 }
 
 yy::parser::symbol_type yylex() {
@@ -312,37 +373,40 @@ yy::parser::symbol_type yylex() {
 
 		return yy::parser::make_string(std::move(str));
 	} else if (c == '$') {
-		c = context.file.sgetc();
-		if (!isHexDigit(c)) {
-			scriptError(context, "No hexadecimal digits found after '$'");
-			return yy::parser::make_number(0);
-		}
-
-		uint32_t number = parseHexDigit(c);
-		context.file.sbumpc();
-		for (c = context.file.sgetc(); isHexDigit(c); c = context.file.sgetc()) {
-			number = number * 16 + parseHexDigit(c);
-			context.file.sbumpc();
-		}
-		return yy::parser::make_number(number);
+		return parseHexNumber("$");
 	} else if (c == '%') {
-		c = context.file.sgetc();
-		if (!isBinDigit(c)) {
-			scriptError(context, "No binary digits found after '%%'");
-			return yy::parser::make_number(0);
+		return parseBinNumber("%");
+	} else if (c == '&') {
+		return parseOctNumber("&");
+	} else if (isDecDigit(c)) {
+		if (c == '0') {
+			switch (context.file.sgetc()) {
+			case 'x':
+				context.file.sbumpc();
+				return parseHexNumber("0x");
+			case 'X':
+				context.file.sbumpc();
+				return parseHexNumber("0X");
+			case 'o':
+				context.file.sbumpc();
+				return parseOctNumber("0o");
+			case 'O':
+				context.file.sbumpc();
+				return parseOctNumber("0O");
+			case 'b':
+				context.file.sbumpc();
+				return parseBinNumber("0b");
+			case 'B':
+				context.file.sbumpc();
+				return parseBinNumber("0B");
+			}
 		}
 
 		uint32_t number = c - '0';
-		context.file.sbumpc();
-		for (c = context.file.sgetc(); isBinDigit(c); c = context.file.sgetc()) {
-			number = number * 2 + (c - '0');
-			context.file.sbumpc();
-		}
-		return yy::parser::make_number(number);
-	} else if (isDecDigit(c)) {
-		uint32_t number = c - '0';
-		for (c = context.file.sgetc(); isDecDigit(c); c = context.file.sgetc()) {
-			number = number * 10 + (c - '0');
+		for (c = context.file.sgetc(); isDecDigit(c) || c == '_'; c = context.file.sgetc()) {
+			if (c != '_') {
+				number = number * 10 + (c - '0');
+			}
 			context.file.sbumpc();
 		}
 		return yy::parser::make_number(number);

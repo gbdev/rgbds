@@ -24,18 +24,20 @@ They are simply ignored.
 .Pp
 Keywords are composed of letters and digits (but they can't start with a digit); they are all case-insensitive.
 .Pp
-Numbers can be written in decimal format, or in binary using the
-.Ql %
-prefix, or in hexadecimal using the
-.Ql $
-prefix (hexadecimal digits are case-insensitive).
-Note that unlike
-.Xr rgbasm 5 ,
-an octal
-.Ql &
-prefix is not supported, nor are
-.Ql _
-digit separators.
+Numbers can be written in a number of formats.
+.Bl -column -offset indent "Hexadecimal" "Possible prefixes"
+.It Sy Format type Ta Sy Possible prefixes Ta Sy Accepted characters
+.It Decimal Ta none Ta 0123456789
+.It Hexadecimal Ta Li $ , 0x , 0X Ta 0123456789ABCDEF
+.It Octal Ta Li & , 0o , 0O Ta 01234567
+.It Binary Ta Li % , 0b , 0B Ta 01
+.El
+.Pp
+Underscores are also accepted in numbers, except at the beginning of one.
+This can be useful for grouping digits, like
+.Ql 1_234
+or
+.Ql $ff_80 .
 .Pp
 Strings begin with a double quote, and end at the next (non-escaped) double quote.
 Strings must not contain literal newline characters.
