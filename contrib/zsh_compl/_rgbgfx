@@ -19,7 +19,6 @@ _rgbgfx_warnings() {
 		'embedded:Warn when using embedded PLTE without "-c embedded"'
 		'trim-nonempty:Warn when "-x" trims nonempty tiles'
 	)
-	# TODO: handle `no-` and `error=` somehow?
 	_describe warning warnings
 }
 

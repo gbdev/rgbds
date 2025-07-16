@@ -30,8 +30,6 @@ _rgbasm_warnings() {
 		'unterminated-load:Warn on LOAD without ENDL'
 		'user:Warn when executing the WARN built-in'
 	)
-	# TODO: handle `no-` and `error=` somehow?
-	# TODO: handle `=0|1|2` levels for `numeric-string`, `purge`, `truncation`, and `unmapped-char`?
 	_describe warning warnings
 }
 
