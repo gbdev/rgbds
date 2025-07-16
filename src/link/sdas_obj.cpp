@@ -212,6 +212,7 @@ void sdobj_ReadFile(FileStackNode const &src, FILE *file, std::vector<Symbol> &f
 		fatalAt(where, "Unknown endianness type '%c'", line[0]);
 	}
 
+	// TODO: support 32-bit addresses ("XL4") as of SDCC 4.4.0
 	static constexpr uint8_t ADDR_SIZE = 3;
 
 	if (line[1] != '0' + ADDR_SIZE) {
