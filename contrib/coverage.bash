@@ -7,7 +7,11 @@ make coverage -j
 # Run the tests
 pushd test
 ./fetch-test-deps.sh
-./run-tests.sh
+if [[ $# -eq 0 ]]; then
+  ./run-tests.sh
+else
+  ./run-tests.sh --os "$1"
+fi
 popd
 
 # Generate coverage logs
@@ -21,7 +25,7 @@ lcov -r "$COVERAGE_INFO" src/asm/parser.{hpp,cpp} src/link/script.{hpp,cpp} -o "
 genhtml --dark-mode -f -s -o coverage/ "$COVERAGE_INFO"
 
 # Check whether running from coverage.yml workflow
-if [ "$1" != "false" ]; then
+if [ "$1" != "ubuntu-ci" ]; then
   # Open report in web browser
   if [ "$(uname)" == "Darwin" ]; then
     open coverage/index.html

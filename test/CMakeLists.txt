@@ -9,6 +9,9 @@ endif()
 if(NOT USE_EXTERNAL_TESTS)
   set(ONLY_INTERNAL "--only-internal")
 endif()
+if(DEFINED OS)
+  set(OS_NAME "--os" "${OS}")
+endif()
 
 add_executable(randtilegen gfx/randtilegen.cpp)
 add_executable(rgbgfx_test gfx/rgbgfx_test.cpp)
@@ -31,6 +34,6 @@ foreach(TARGET randtilegen rgbgfx_test)
 endforeach()
 
 add_test(NAME all
-         COMMAND ./run-tests.sh ${ONLY_FREE} ${ONLY_INTERNAL}
+         COMMAND ./run-tests.sh ${ONLY_FREE} ${ONLY_INTERNAL} ${OS_NAME}
          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 )
