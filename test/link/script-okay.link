@@ -1,0 +1,8 @@
+ROM0
+	"ROM0"
+	"\\\"\'\n\r\t\0"
+ROMX 1
+	"ROM1"
+ROMX 2
+	"ROM2 1K"
+	"ROM2 1"

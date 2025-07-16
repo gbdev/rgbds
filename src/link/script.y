@@ -386,6 +386,8 @@ static yy::parser::symbol_type parseString() {
 				c = '\r';
 			} else if (c == 't') {
 				c = '\t';
+			} else if (c == '0') {
+				c = '\0';
 			} else if (c != '\\' && c != '"' && c != '\'') {
 				scriptError(context, "Cannot escape character %s", printChar(c));
 			}
