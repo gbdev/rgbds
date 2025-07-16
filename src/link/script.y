@@ -306,7 +306,9 @@ yy::parser::symbol_type yylex() {
 			}
 			str.push_back(c);
 		}
-		context.file.sbumpc(); // Consume the closing quote.
+		if (c == '"') {
+			context.file.sbumpc();
+		}
 
 		return yy::parser::make_string(std::move(str));
 	} else if (c == '$') {

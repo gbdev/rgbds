@@ -1,2 +1,4 @@
 error: script-unterminated-string.link(2): Unterminated string
-Linking failed with 1 error
+error: script-unterminated-string.link(4): Unterminated string
+error: script-unterminated-string.link(5): Unterminated string
+Linking failed with 3 errors

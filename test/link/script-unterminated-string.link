@@ -1,2 +1,5 @@
 rom0
 	"ROM0
+romx 2
+	"ROM2 1K
+	"ROM2 1
