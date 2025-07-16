@@ -17,9 +17,9 @@
 	#include <algorithm>
 	#include <array>
 	#include <bit>
+	#include <ctype.h>
 	#include <fstream>
 	#include <inttypes.h>
-	#include <locale>
 	#include <stdio.h>
 	#include <string_view>
 	#include <vector>
@@ -209,16 +209,98 @@ static bool isNewline(int c) {
 	return c == '\r' || c == '\n';
 }
 
+static yy::parser::symbol_type yywrap() {
+	if (lexerStack.size() != 1) {
+		if (!atEof) {
+			// Inject a newline at EOF to simplify parsing.
+			atEof = true;
+			return yy::parser::make_newline();
+		}
+		lexerStack.pop_back();
+		return yylex();
+	}
+	if (!atEof) {
+		// Inject a newline at EOF to simplify parsing.
+		atEof = true;
+		return yy::parser::make_newline();
+	}
+	return yy::parser::make_YYEOF();
+}
+
 static bool isIdentChar(int c) {
 	return (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9');
+}
+
+static std::string readIdent(int c) {
+	auto &context = lexerStack.back();
+	std::string ident;
+	ident.push_back(c);
+	for (c = context.file.sgetc(); isIdentChar(c); c = context.file.snextc()) {
+		ident.push_back(c);
+	}
+	return ident;
 }
 
 static bool isDecDigit(int c) {
 	return c >= '0' && c <= '9';
 }
 
+static yy::parser::symbol_type parseDecNumber(int c) {
+	auto &context = lexerStack.back();
+	uint32_t number = c - '0';
+	for (c = context.file.sgetc(); isDecDigit(c) || c == '_'; c = context.file.sgetc()) {
+		if (c != '_') {
+			number = number * 10 + (c - '0');
+		}
+		context.file.sbumpc();
+	}
+	return yy::parser::make_number(number);
+}
+
 static bool isBinDigit(int c) {
 	return c >= '0' && c <= '1';
+}
+
+static yy::parser::symbol_type parseBinNumber(char const *prefix) {
+	auto &context = lexerStack.back();
+	auto c = context.file.sgetc();
+	if (!isBinDigit(c)) {
+		scriptError(context, "No binary digits found after '%s'", prefix);
+		return yy::parser::make_number(0);
+	}
+
+	uint32_t number = c - '0';
+	context.file.sbumpc();
+	for (c = context.file.sgetc(); isBinDigit(c) || c == '_'; c = context.file.sgetc()) {
+		if (c != '_') {
+			number = number * 2 + (c - '0');
+		}
+		context.file.sbumpc();
+	}
+	return yy::parser::make_number(number);
+}
+
+static bool isOctDigit(int c) {
+	return c >= '0' && c <= '7';
+}
+
+static yy::parser::symbol_type parseOctNumber(char const *prefix) {
+	auto &context = lexerStack.back();
+	auto c = context.file.sgetc();
+	if (!isOctDigit(c)) {
+		scriptError(context, "No octal digits found after '%s'", prefix);
+		return yy::parser::make_number(0);
+	}
+
+	uint32_t number = c - '0';
+	context.file.sbumpc();
+	for (c = context.file.sgetc(); isOctDigit(c) || c == '_'; c = context.file.sgetc()) {
+		if (c != '_') {
+			number = number * 8 + (c - '0');
+		}
+		context.file.sbumpc();
+	}
+	return yy::parser::make_number(number);
 }
 
 static bool isHexDigit(int c) {
@@ -235,6 +317,88 @@ static uint8_t parseHexDigit(int c) {
 	} else {
 		unreachable_(); // LCOV_EXCL_LINE
 	}
+}
+
+static yy::parser::symbol_type parseHexNumber(char const *prefix) {
+	auto &context = lexerStack.back();
+	auto c = context.file.sgetc();
+	if (!isHexDigit(c)) {
+		scriptError(context, "No hexadecimal digits found after '%s'", prefix);
+		return yy::parser::make_number(0);
+	}
+
+	uint32_t number = parseHexDigit(c);
+	context.file.sbumpc();
+	for (c = context.file.sgetc(); isHexDigit(c) || c == '_'; c = context.file.sgetc()) {
+		if (c != '_') {
+			number = number * 16 + parseHexDigit(c);
+		}
+		context.file.sbumpc();
+	}
+	return yy::parser::make_number(number);
+}
+
+static yy::parser::symbol_type parseNumber(int c) {
+	auto &context = lexerStack.back();
+	if (c == '0') {
+		switch (context.file.sgetc()) {
+		case 'x':
+			context.file.sbumpc();
+			return parseHexNumber("0x");
+		case 'X':
+			context.file.sbumpc();
+			return parseHexNumber("0X");
+		case 'o':
+			context.file.sbumpc();
+			return parseOctNumber("0o");
+		case 'O':
+			context.file.sbumpc();
+			return parseOctNumber("0O");
+		case 'b':
+			context.file.sbumpc();
+			return parseBinNumber("0b");
+		case 'B':
+			context.file.sbumpc();
+			return parseBinNumber("0B");
+		}
+	}
+	return parseDecNumber(c);
+}
+
+static yy::parser::symbol_type parseString() {
+	auto &context = lexerStack.back();
+	auto c = context.file.sgetc();
+	std::string str;
+	for (; c != '"'; c = context.file.sgetc()) {
+		if (c == EOF || isNewline(c)) {
+			scriptError(context, "Unterminated string");
+			break;
+		}
+		context.file.sbumpc();
+		if (c == '\\') {
+			c = context.file.sgetc();
+			if (c == EOF || isNewline(c)) {
+				scriptError(context, "Unterminated string");
+				break;
+			} else if (c == 'n') {
+				c = '\n';
+			} else if (c == 'r') {
+				c = '\r';
+			} else if (c == 't') {
+				c = '\t';
+			} else if (c == '0') {
+				c = '\0';
+			} else if (c != '\\' && c != '"' && c != '\'') {
+				scriptError(context, "Cannot escape character %s", printChar(c));
+			}
+			context.file.sbumpc();
+		}
+		str.push_back(c);
+	}
+	if (c == '"') {
+		context.file.sbumpc();
+	}
+	return yy::parser::make_string(std::move(str));
 }
 
 yy::parser::symbol_type yylex() {
@@ -254,23 +418,7 @@ yy::parser::symbol_type yylex() {
 
 	// Alright, what token should we return?
 	if (c == EOF) {
-		// Basically yywrap().
-		if (lexerStack.size() != 1) {
-			if (!atEof) {
-				// Inject a newline at EOF to simplify parsing.
-				atEof = true;
-				return yy::parser::make_newline();
-			} else {
-				lexerStack.pop_back();
-				return yylex();
-			}
-		} else if (!atEof) {
-			// Inject a newline at EOF to simplify parsing.
-			atEof = true;
-			return yy::parser::make_newline();
-		} else {
-			return yy::parser::make_YYEOF();
-		}
+		return yywrap();
 	} else if (c == ',') {
 		return yy::parser::make_COMMA();
 	} else if (isNewline(c)) {
@@ -280,85 +428,21 @@ yy::parser::symbol_type yylex() {
 		}
 		return yy::parser::make_newline();
 	} else if (c == '"') {
-		std::string str;
-
-		for (c = context.file.sgetc(); c != '"'; c = context.file.sgetc()) {
-			if (c == EOF || isNewline(c)) {
-				scriptError(context, "Unterminated string");
-				break;
-			}
-			context.file.sbumpc();
-			if (c == '\\') {
-				c = context.file.sgetc();
-				if (c == EOF || isNewline(c)) {
-					scriptError(context, "Unterminated string");
-					break;
-				} else if (c == 'n') {
-					c = '\n';
-				} else if (c == 'r') {
-					c = '\r';
-				} else if (c == 't') {
-					c = '\t';
-				} else if (c != '\\' && c != '"' && c != '\'') {
-					scriptError(context, "Cannot escape character %s", printChar(c));
-				}
-				context.file.sbumpc();
-			}
-			str.push_back(c);
-		}
-		if (c == '"') {
-			context.file.sbumpc();
-		}
-
-		return yy::parser::make_string(std::move(str));
+		return parseString();
 	} else if (c == '$') {
-		c = context.file.sgetc();
-		if (!isHexDigit(c)) {
-			scriptError(context, "No hexadecimal digits found after '$'");
-			return yy::parser::make_number(0);
-		}
-
-		uint32_t number = parseHexDigit(c);
-		context.file.sbumpc();
-		for (c = context.file.sgetc(); isHexDigit(c); c = context.file.sgetc()) {
-			number = number * 16 + parseHexDigit(c);
-			context.file.sbumpc();
-		}
-		return yy::parser::make_number(number);
+		return parseHexNumber("$");
 	} else if (c == '%') {
-		c = context.file.sgetc();
-		if (!isBinDigit(c)) {
-			scriptError(context, "No binary digits found after '%%'");
-			return yy::parser::make_number(0);
-		}
-
-		uint32_t number = c - '0';
-		context.file.sbumpc();
-		for (c = context.file.sgetc(); isBinDigit(c); c = context.file.sgetc()) {
-			number = number * 2 + (c - '0');
-			context.file.sbumpc();
-		}
-		return yy::parser::make_number(number);
+		return parseBinNumber("%");
+	} else if (c == '&') {
+		return parseOctNumber("&");
 	} else if (isDecDigit(c)) {
-		uint32_t number = c - '0';
-		for (c = context.file.sgetc(); isDecDigit(c); c = context.file.sgetc()) {
-			number = number * 10 + (c - '0');
-			context.file.sbumpc();
-		}
-		return yy::parser::make_number(number);
+		return parseNumber(c);
 	} else if (isIdentChar(c)) { // Note that we match these *after* digit characters!
-		std::string ident;
-		auto strUpperCmp = [](char cmp, char ref) {
-			// `locale::classic()` yields the "C" locale.
-			assume(!std::use_facet<std::ctype<char>>(std::locale::classic())
-			            .is(std::ctype_base::lower, ref));
-			return std::use_facet<std::ctype<char>>(std::locale::classic()).toupper(cmp) == ref;
-		};
+		std::string ident = readIdent(c);
 
-		ident.push_back(c);
-		for (c = context.file.sgetc(); isIdentChar(c); c = context.file.snextc()) {
-			ident.push_back(c);
-		}
+		auto strUpperCmp = [](char cmp, char ref) {
+			return toupper(cmp) == ref;
+		};
 
 		for (SectionType type : EnumSeq(SECTTYPE_INVALID)) {
 			if (std::equal(RANGE(ident), RANGE(sectionTypeInfo[type].name), strUpperCmp)) {

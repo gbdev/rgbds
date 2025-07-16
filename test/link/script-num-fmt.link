@@ -1,5 +1,9 @@
 ROM0
-	org 42
-	org %101010
-	org $2A
+	org 4_2
+	org %10_10_10
+	org &52_
+	org $2A_
+	org 0b101_010
+	org 0o5_2
+	org 0x2_A
 	org 41 ; Error!
