@@ -17,9 +17,9 @@
 	#include <algorithm>
 	#include <array>
 	#include <bit>
+	#include <ctype.h>
 	#include <fstream>
 	#include <inttypes.h>
-	#include <locale>
 	#include <stdio.h>
 	#include <string_view>
 	#include <vector>
@@ -349,10 +349,7 @@ yy::parser::symbol_type yylex() {
 	} else if (isIdentChar(c)) { // Note that we match these *after* digit characters!
 		std::string ident;
 		auto strUpperCmp = [](char cmp, char ref) {
-			// `locale::classic()` yields the "C" locale.
-			assume(!std::use_facet<std::ctype<char>>(std::locale::classic())
-			            .is(std::ctype_base::lower, ref));
-			return std::use_facet<std::ctype<char>>(std::locale::classic()).toupper(cmp) == ref;
+			return toupper(cmp) == ref;
 		};
 
 		ident.push_back(c);
