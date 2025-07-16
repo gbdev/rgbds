@@ -1,22 +1,17 @@
 #!/bin/bash
 set -euo pipefail
 
-pngver=1.6.49
+pngver=1.6.50
 arch="$1"
 
 ## Grab sources and check them
 
 wget http://downloads.sourceforge.net/project/libpng/libpng16/$pngver/libpng-$pngver.tar.xz
-wget http://downloads.sourceforge.net/project/apng/libpng/libpng16/libpng-$pngver-apng.patch.gz
-sha256sum -c .github/scripts/mingw-w64-libpng-dev.sha256sums
+echo 4df396518620a7aa3651443e87d1b2862e4e88cad135a8b93423e01706232307 libpng-$pngver.tar.xz | sha256sum -c -
 
 ## Extract sources and patch them
 
 tar -xf libpng-$pngver.tar.xz
-gunzip libpng-$pngver-apng.patch.gz
-
-# Patch in apng support
-env -C libpng-$pngver patch -p0 ../libpng-$pngver-apng.patch
 
 ## Start building!
 
