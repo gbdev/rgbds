@@ -69,7 +69,7 @@ jobs:
       - name: Run tests
         shell: bash
         run: |
-          CXX=${{ matrix.cxx }} test/run-tests.sh
+          CXX=${{ matrix.cxx }} test/run-tests.sh --os ${{ matrix.os }}
 
   macos-static:
     runs-on: macos-14
@@ -121,7 +121,7 @@ jobs:
       - name: Run tests
         shell: bash
         run: |
-          test/run-tests.sh
+          test/run-tests.sh --os macos
 
   windows:
     strategy:
@@ -212,7 +212,7 @@ jobs:
         run: |
           cp bins/* .
           cp bins/*.dll test/gfx
-          test/run-tests.sh
+          test/run-tests.sh --os ${{ matrix.os }}
 
   windows-mingw-build:
     strategy:
@@ -319,7 +319,7 @@ jobs:
       - name: Run tests
         shell: bash
         run: |
-          test/run-tests.sh
+          test/run-tests.sh --os ${{ matrix.os }}
 
   cygwin:
     strategy:
@@ -382,7 +382,7 @@ jobs:
               git \
               png
           run: | # FreeBSD `c++` compiler does not support `make develop` sanitizers ASan or UBSan
-            cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER=c++ -DUSE_EXTERNAL_TESTS=OFF
+            cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER=c++ -DUSE_EXTERNAL_TESTS=OFF -DOS=bsd
             cmake --build build -j4 --verbose
             cmake --install build --verbose
             cmake --build build --target test

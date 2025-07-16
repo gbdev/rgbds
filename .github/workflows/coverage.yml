@@ -22,7 +22,7 @@ jobs:
           test/fetch-test-deps.sh --get-deps ubuntu
       - name: Generate coverage report
         run: |
-          contrib/coverage.bash false
+          contrib/coverage.bash ubuntu-ci
       - name: Upload coverage report
         uses: actions/upload-artifact@v4
         with:

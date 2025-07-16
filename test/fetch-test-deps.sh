@@ -91,7 +91,7 @@ case "$actionname" in
 
 		action() { # owner repo shallow-since commit
 			if [ ! -d "$2" ]; then
-				git clone "https://github.com/$1/$2.git" --shallow-since="$3" --single-branch
+				git clone "https://github.com/$1/$2.git" --recursive --shallow-since="$3" --single-branch
 			fi
 			pushd "$2"
 			git checkout -f "$4"
@@ -111,6 +111,7 @@ if "$nonfree"; then
 	action pret  pokered          2025-06-29 1e997474be15950eb3176864b346b96504760e67
 	action zladx LADX-Disassembly 2025-05-30 f685f6aaff2f2e0e36d1856d4ed8fd58f833a1f2
 fi
-action AntonioND ucity   2025-05-30 83e5c697cbd9e10a0bc72b02bcb6146c35e2c328
-action pinobatch libbet  2025-05-20 bb6cfc026644aa1034eee6d9c49bb4705601c9f6
-action LIJI32    SameBoy 2025-06-28 33d237706e18d92fb79e3fd7313d5181d8a806cd
+action AntonioND ucity          2025-05-30 83e5c697cbd9e10a0bc72b02bcb6146c35e2c328
+action pinobatch libbet         2025-05-20 bb6cfc026644aa1034eee6d9c49bb4705601c9f6
+action LIJI32    SameBoy        2025-06-28 33d237706e18d92fb79e3fd7313d5181d8a806cd
+action ISSOtm    gb-starter-kit 2025-06-13 3cce3215b0bcb559a5cf4ca5916e2d817d53ff29

@@ -1,6 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+export LC_ALL=C
+
+# Game Boy release date, 1989-04-21T12:34:56Z (for reproducible test results)
+export SOURCE_DATE_EPOCH=609165296
+
 cd "$(dirname "$0")"
 
 usage() {
@@ -20,6 +25,7 @@ nonfree=true
 internal=true
 external=true
 installedrgbds=false
+osname=
 FETCH_TEST_DEPS="fetch-test-deps.sh"
 RGBDS_PATH="RGBDS=../../"
 while [[ $# -gt 0 ]]; do
@@ -42,6 +48,10 @@ while [[ $# -gt 0 ]]; do
 		--installed-rgbds)
 			installedrgbds=true
 			RGBDS_PATH=
+			;;
+		--os)
+			shift
+			osname="$1"
 			;;
 		--)
 			break
@@ -122,3 +132,8 @@ fi
 test_downstream AntonioND ucity   all      ucity.gbc d2f4a7db48ee208b1bd69a78bd492a1c9ac4a030
 test_downstream pinobatch libbet  all      libbet.gb f117089aa056600e2d404bbcbac96b016fc64611
 test_downstream LIJI32    SameBoy bootroms build/bin/BootROMs/cgb_boot.bin 113903775a9d34b798c2f8076672da6626815a91
+# gb-starter kit make fails on Windows: https://github.com/ISSOtm/gb-starter-kit/issues/1
+# gb-starter-kit fails with macOS/BSD make: https://github.com/ISSOtm/gb-starter-kit/issues/29
+if [[ "${osname%-*}" != "windows" && "${osname%-*}" != "macos" && "${osname%-*}" != "bsd" ]]; then
+	test_downstream ISSOtm gb-starter-kit all bin/boilerplate.gb b4f130169ba73284e0d0e71b53e7baa4eca2f7fe
+fi
