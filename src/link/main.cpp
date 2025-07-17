@@ -69,7 +69,7 @@ std::string const &FileStackNode::dump(uint32_t curLineNo) const {
 }
 
 // Short options
-static char const *optstring = "dhl:m:Mn:O:o:p:S:tVvwx";
+static char const *optstring = "dhl:m:Mn:O:o:p:S:tVvW:wx";
 
 // Equivalent long options
 // Please keep in the same order as short opts.
@@ -92,6 +92,7 @@ static option const longopts[] = {
     {"tiny",          no_argument,       nullptr, 't'},
     {"version",       no_argument,       nullptr, 'V'},
     {"verbose",       no_argument,       nullptr, 'v'},
+    {"warning",       required_argument, nullptr, 'W'},
     {"wramx",         no_argument,       nullptr, 'w'},
     {"nopad",         no_argument,       nullptr, 'x'},
     {nullptr,         no_argument,       nullptr, 0  }
@@ -347,6 +348,9 @@ int main(int argc, char *argv[]) {
 			beVerbose = true;
 			break;
 			// LCOV_EXCL_STOP
+		case 'W':
+			warnings.processWarningFlag(musl_optarg);
+			break;
 		case 'w':
 			isWRAM0Mode = true;
 			break;

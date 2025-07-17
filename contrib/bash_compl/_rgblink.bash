@@ -21,6 +21,7 @@ _rgblink_completions() {
 		[O]="overlay:glob-*.gb *.gbc *.sgb"
 		[o]="output:glob-*.gb *.gbc *.sgb"
 		[p]="pad:unk"
+		[W]="warning:warning"
 	)
 	# Parse command-line up to current word
 	local opt_ena=true
@@ -135,6 +136,18 @@ _rgblink_completions() {
 	COMPREPLY=()
 	case "$state" in
 		unk) # Return with no replies: no idea what to complete!
+			;;
+		warning)
+			mapfile -t COMPREPLY < <(compgen -W "
+				assert
+				div
+				obsolete
+				shift
+				shift-amount
+				truncation
+				all
+				everything
+				error" -P "${cur_word:0:$optlen}" -- "${cur_word:$optlen}")
 			;;
 		normal) # Acts like a glob...
 			state="glob-*.o *.obj"

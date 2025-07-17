@@ -16,6 +16,7 @@
 .Op Fl o Ar out_file
 .Op Fl p Ar pad_value
 .Op Fl S Ar spec
+.Op Fl W Ar warning
 .Ar
 .Sh DESCRIPTION
 The
@@ -114,6 +115,15 @@ Useful for ROMs that fit in 32 KiB.
 Print the version of the program and exit.
 .It Fl v , Fl \-verbose
 Verbose: enable printing more information to standard error.
+.It Fl W Ar warning , Fl \-warning Ar warning
+Set warning flag
+.Ar warning .
+A warning message will be printed if
+.Ar warning
+is an unknown warning flag.
+See the
+.Sx DIAGNOSTICS
+section for a list of warnings.
 .It Fl w , Fl \-wramx
 Expand the WRAM0 section size from 4 KiB to the full 8 KiB assigned to WRAM.
 WRAMX sections that are fixed to a bank other than 1 become errors, other WRAMX sections are treated as WRAM0.
@@ -176,6 +186,84 @@ as
 .Ic WRAMX
 sections will be treated as
 .Ic WRAM0 .
+.Sh DIAGNOSTICS
+Warnings are diagnostic messages that indicate possibly erroneous behavior that does not necessarily compromise the linking process.
+The following options alter the way warnings are processed.
+.Bl -tag -width Ds
+.It Fl Werror
+Make all warnings into errors.
+This can be negated as
+.Fl Wno-error
+to prevent turning all warnings into errors.
+.It Fl Werror=
+Make the specified warning or meta warning into an error.
+A warning's name is appended
+.Pq example: Fl Werror=assert ,
+and this warning is implicitly enabled and turned into an error.
+This can be negated as
+.Fl Wno-error=
+to prevent turning a specified warning into an error, even if
+.Fl Werror
+is in effect.
+.El
+.Pp
+The following warnings are
+.Dq meta
+warnings, that enable a collection of other warnings.
+If a specific warning is toggled via a meta flag and a specific one, the more specific one takes priority.
+The position on the command-line acts as a tie breaker, the last one taking effect.
+.Bl -tag -width Ds
+.It Fl Wall
+This enables warnings that are likely to indicate an error or undesired behavior, and that can easily be fixed.
+.It Fl Weverything
+Enables literally every warning.
+.El
+.Pp
+The following warnings are actual warning flags; with each description, the corresponding warning flag is included.
+Note that each of these flag also has a negation (for example,
+.Fl Wobsolete
+enables the warning that
+.Fl Wno-obsolete
+disables; and
+.Fl Wall
+enables every warning that
+.Fl Wno-all
+disables).
+Only the non-default flag is listed here.
+Ignoring the
+.Dq no-
+prefix, entries are listed alphabetically.
+.Bl -tag -width Ds
+.It Fl Wno-assert
+Warn when
+.Ic WARN Ns No -type
+assertions fail. (See
+.Dq Aborting the assembly process
+in
+.Xr rgbasm 5
+for
+.Ic ASSERT ) .
+.It Fl Wdiv
+Warn when dividing the smallest negative integer (-2**31) by -1, which yields itself due to integer overflow.
+This warning is enabled by
+.Fl Wall .
+.It Fl Wno-obsolete
+Warn when obsolete features are encountered, which have been deprecated and may later be removed.
+.It Fl Wshift
+Warn when shifting right a negative value.
+Use a division by 2**N instead.
+This warning is enabled by
+.Fl Wall .
+.It Fl Wshift-amount
+Warn when a shift's operand is negative or greater than 32.
+This warning is enabled by
+.Fl Wall .
+.It Fl Wno-truncation
+Warn when an implicit truncation (for example,
+.Ic db
+to an 8-bit value) loses some bits.
+This occurs when an N-bit value is 2**N or greater, or less than -2**N.
+.El
 .Sh EXAMPLES
 All you need for a basic ROM is an object file, which can be made into a ROM image like so:
 .Pp
