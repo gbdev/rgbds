@@ -152,6 +152,7 @@ jobs:
           key: ${{ matrix.arch }}-${{ hashFiles('zlib/**', 'libpng/**') }}
       - name: Build zlib
         if: steps.cache.outputs.cache-hit != 'true'
+        shell: bash
         run: | # BUILD_SHARED_LIBS causes the output DLL to be correctly called `zlib1.dll`
           cmake -S zlib -B zbuild -A ${{ matrix.platform }} -Wno-dev -DCMAKE_INSTALL_PREFIX=install_dir -DBUILD_SHARED_LIBS=ON
           cmake --build zbuild --config Release -j
