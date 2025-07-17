@@ -1,5 +1,22 @@
 #compdef rgblink
 
+_rgblink_warnings() {
+	local warnings=(
+		'error:Turn all warnings into errors'
+
+		'all:Enable most warning messages'
+		'everything:Enable literally everything'
+
+		'assert:Warn when WARN-type asserts fail'
+		'div:Warn when dividing the smallest int by -1'
+		'obsolete:Warn when using deprecated features'
+		'shift:Warn when shifting negative values'
+		'shift-amount:Warn when a shift'\''s operand is negative or \> 32'
+		'truncation:Warn when implicit truncation loses bits'
+	)
+	_describe warning warnings
+}
+
 local args=(
 	# Arguments are listed here in the same order as in the manual, except for the version and help
 	'(- : * options)'{-V,--version}'[Print version number and exit]'
@@ -19,6 +36,7 @@ local args=(
 	'(-o --output)'{-o,--output}"+[Write ROM image to this file]:rom file:_files -g '*.{gb,sgb,gbc}'"
 	'(-p --pad-value)'{-p,--pad-value}'+[Set padding byte]:padding byte:'
 	'(-S --scramble)'{-s,--scramble}'+[Activate scrambling]:scramble spec'
+	'(-W --warning)'{-W,--warning}'+[Toggle warning flags]:warning flag:_rgblink_warnings'
 
 	'*'":object files:_files -g '*.o'"
 )

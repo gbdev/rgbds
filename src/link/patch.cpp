@@ -33,6 +33,25 @@ static void pushRPN(int32_t value, bool comesFromError) {
 // has popped any values with the error flag set.
 static bool isError = false;
 
+#define diagnosticAt(patch, id, ...) \
+	do { \
+		bool errorDiag = warnings.getWarningBehavior(id) == WarningBehavior::ERROR; \
+		if (!isError || !errorDiag) { \
+			warningAt(patch, id, __VA_ARGS__); \
+		} \
+		if (errorDiag) { \
+			isError = true; \
+		} \
+	} while (0)
+
+#define firstErrorAt(...) \
+	do { \
+		if (!isError) { \
+			errorAt(__VA_ARGS__); \
+			isError = true; \
+		} \
+	} while (0)
+
 static int32_t popRPN(Patch const &patch) {
 	if (rpnStack.empty()) {
 		fatalAt(patch, "Internal error, RPN stack empty");
@@ -98,23 +117,26 @@ static int32_t computeRPNExpr(Patch const &patch, std::vector<Symbol> const &fil
 		case RPN_DIV:
 			value = popRPN(patch);
 			if (value == 0) {
-				if (!isError) {
-					errorAt(patch, "Division by 0");
-					isError = true;
-				}
+				firstErrorAt(patch, "Division by 0");
 				popRPN(patch);
-				value = INT32_MAX;
+				value = 0;
+			} else if (int32_t lval = popRPN(patch); lval == INT32_MIN && value == -1) {
+				diagnosticAt(
+				    patch,
+				    WARNING_DIV,
+				    "Division of %" PRId32 " by -1 yields %" PRId32,
+				    INT32_MIN,
+				    INT32_MIN
+				);
+				value = INT32_MIN;
 			} else {
-				value = op_divide(popRPN(patch), value);
+				value = op_divide(lval, value);
 			}
 			break;
 		case RPN_MOD:
 			value = popRPN(patch);
 			if (value == 0) {
-				if (!isError) {
-					errorAt(patch, "Modulo by 0");
-					isError = true;
-				}
+				firstErrorAt(patch, "Modulo by 0");
 				popRPN(patch);
 				value = 0;
 			} else {
@@ -127,10 +149,7 @@ static int32_t computeRPNExpr(Patch const &patch, std::vector<Symbol> const &fil
 		case RPN_EXP:
 			value = popRPN(patch);
 			if (value < 0) {
-				if (!isError) {
-					errorAt(patch, "Exponent by negative value %" PRId32, value);
-					isError = true;
-				}
+				firstErrorAt(patch, "Exponent by negative value %" PRId32, value);
 				popRPN(patch);
 				value = 0;
 			} else {
@@ -204,14 +223,49 @@ static int32_t computeRPNExpr(Patch const &patch, std::vector<Symbol> const &fil
 
 		case RPN_SHL:
 			value = popRPN(patch);
+			if (value < 0) {
+				diagnosticAt(
+				    patch, WARNING_SHIFT_AMOUNT, "Shifting left by negative amount %" PRId32, value
+				);
+			}
+			if (value >= 32) {
+				diagnosticAt(
+				    patch, WARNING_SHIFT_AMOUNT, "Shifting left by large amount %" PRId32, value
+				);
+			}
 			value = op_shift_left(popRPN(patch), value);
 			break;
-		case RPN_SHR:
+		case RPN_SHR: {
 			value = popRPN(patch);
-			value = op_shift_right(popRPN(patch), value);
+			int32_t lval = popRPN(patch);
+			if (lval < 0) {
+				diagnosticAt(patch, WARNING_SHIFT, "Shifting right negative value %" PRId32, lval);
+			}
+			if (value < 0) {
+				diagnosticAt(
+				    patch, WARNING_SHIFT_AMOUNT, "Shifting right by negative amount %" PRId32, value
+				);
+			}
+			if (value >= 32) {
+				diagnosticAt(
+				    patch, WARNING_SHIFT_AMOUNT, "Shifting right by large amount %" PRId32, value
+				);
+			}
+			value = op_shift_right(lval, value);
 			break;
+		}
 		case RPN_USHR:
 			value = popRPN(patch);
+			if (value < 0) {
+				diagnosticAt(
+				    patch, WARNING_SHIFT_AMOUNT, "Shifting right by negative amount %" PRId32, value
+				);
+			}
+			if (value >= 32) {
+				diagnosticAt(
+				    patch, WARNING_SHIFT_AMOUNT, "Shifting right by large amount %" PRId32, value
+				);
+			}
 			value = op_shift_right_unsigned(popRPN(patch), value);
 			break;
 
@@ -324,14 +378,13 @@ static int32_t computeRPNExpr(Patch const &patch, std::vector<Symbol> const &fil
 		case RPN_HRAM:
 			value = popRPN(patch);
 			if (value < 0 || (value > 0xFF && value < 0xFF00) || value > 0xFFFF) {
-				if (!isError) {
-					errorAt(patch, "Address $%" PRIx32 " for LDH is not in HRAM range", value);
-					isError = true;
-				}
+				firstErrorAt(patch, "Address $%" PRIx32 " for LDH is not in HRAM range", value);
 				value = 0;
 			} else if (value >= 0 && value <= 0xFF) {
 				warningAt(
-				    patch, "LDH is deprecated with values from $00 to $FF; use $FF00 to $FFFF"
+				    patch,
+				    WARNING_OBSOLETE,
+				    "LDH is deprecated with values from $00 to $FF; use $FF00 to $FFFF"
 				);
 			}
 			value &= 0xFF;
@@ -341,10 +394,7 @@ static int32_t computeRPNExpr(Patch const &patch, std::vector<Symbol> const &fil
 			value = popRPN(patch);
 			// Acceptable values are 0x00, 0x08, 0x10, ..., 0x38
 			if (value & ~0x38) {
-				if (!isError) {
-					errorAt(patch, "Value $%" PRIx32 " is not a RST vector", value);
-					isError = true;
-				}
+				firstErrorAt(patch, "Value $%" PRIx32 " is not a RST vector", value);
 				value = 0;
 			}
 			value |= 0xC7;
@@ -355,10 +405,7 @@ static int32_t computeRPNExpr(Patch const &patch, std::vector<Symbol> const &fil
 			int32_t mask = getRPNByte(expression, size, patch);
 			// Acceptable values are 0 to 7
 			if (value & ~0x07) {
-				if (!isError) {
-					errorAt(patch, "Value $%" PRIx32 " is not a bit index", value);
-					isError = true;
-				}
+				firstErrorAt(patch, "Value $%" PRIx32 " is not a bit index", value);
 				value = 0;
 			}
 			value = mask | (value << 3);
@@ -437,6 +484,7 @@ void patch_CheckAssertions() {
 			case ASSERT_WARN:
 				warningAt(
 				    assert.patch,
+				    WARNING_ASSERT,
 				    "%s",
 				    !assert.message.empty() ? assert.message.c_str() : "assert failure"
 				);
@@ -486,8 +534,8 @@ static void applyFilePatches(Section &section, Section &dataSection) {
 			uint16_t address = patch.pcSection->org + patch.pcOffset + 2;
 			int16_t jumpOffset = value - address;
 
-			if (!isError && (jumpOffset < -128 || jumpOffset > 127)) {
-				errorAt(
+			if (jumpOffset < -128 || jumpOffset > 127) {
+				firstErrorAt(
 				    patch,
 				    "JR target must be between -128 and 127 bytes away, not %" PRId16
 				    "; use JP instead",
@@ -497,12 +545,13 @@ static void applyFilePatches(Section &section, Section &dataSection) {
 			dataSection.data[offset] = jumpOffset & 0xFF;
 		} else {
 			// Patch a certain number of bytes
-			if (!isError && (value < type.min || value > type.max)) {
-				errorAt(
+			if (value < type.min || value > type.max) {
+				diagnosticAt(
 				    patch,
-				    "Value %" PRId32 "%s is not %u-bit",
+				    WARNING_TRUNCATION,
+				    "Value $%" PRIx32 "%s is not %u-bit",
 				    value,
-				    value < 0 ? " (maybe negative?)" : "",
+				    value < 0 ? " (may be negative?)" : "",
 				    type.size * 8U
 				);
 			}

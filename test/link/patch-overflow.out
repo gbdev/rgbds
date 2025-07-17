@@ -1,3 +1,4 @@
-error: patch-overflow.asm(3): Value 81920 is not 16-bit
-error: patch-overflow.asm(2): Value 16384 is not 8-bit
-Linking failed with 2 errors
+warning: patch-overflow.asm(3): [-Wtruncation]
+    Value $14000 is not 16-bit
+warning: patch-overflow.asm(2): [-Wtruncation]
+    Value $4000 is not 8-bit
