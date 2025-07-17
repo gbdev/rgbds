@@ -1520,6 +1520,12 @@ relocexpr_no_str:
 	| OP_STARTOF LPAREN sect_type RPAREN {
 		$$.makeStartOfSectionType($3);
 	}
+	| OP_SIZEOF LPAREN MODE_R8 RPAREN {
+		$$.makeNumber(1);
+	}
+	| OP_SIZEOF LPAREN MODE_R16 RPAREN {
+		$$.makeNumber(2);
+	}
 	| OP_DEF {
 		lexer_ToggleStringExpansion(false);
 	} LPAREN scoped_sym RPAREN {
@@ -2550,6 +2556,29 @@ op_sp_offset:
 ;
 
 // Registers and condition codes.
+
+MODE_R8:
+	  MODE_A
+	| MODE_B
+	| MODE_C
+	| MODE_D
+	| MODE_E
+	| MODE_H
+	| MODE_L
+	| LBRACK MODE_BC RBRACK
+	| LBRACK MODE_DE RBRACK
+	| LBRACK MODE_HL RBRACK
+	| hl_ind_inc
+	| hl_ind_dec
+;
+
+MODE_R16:
+	  MODE_AF
+	| MODE_BC
+	| MODE_DE
+	| MODE_HL
+	| MODE_SP
+;
 
 MODE_A:
 	  TOKEN_A
