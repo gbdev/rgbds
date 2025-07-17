@@ -692,7 +692,7 @@ static void verboseOutputConfig() {
 		fputs("\t[\n", stderr);
 		for (auto const &pal : options.palSpec) {
 			fputs("\t\t", stderr);
-			for (auto &color : pal) {
+			for (auto const &color : pal) {
 				if (color) {
 					fprintf(stderr, "#%06x, ", color->toCSS() >> 8);
 				} else {
@@ -757,14 +757,14 @@ int main(int argc, char *argv[]) {
 			// We need to allocate a new arg pool for each at-file, so as not to invalidate pointers
 			// previous at-files may have generated to their own arg pools.
 			// But for the same reason, the arg pool must also outlive the at-file's stack entry!
-			auto &argPool = argPools.emplace_back();
+			std::vector<char> &argPool = argPools.emplace_back();
 
 			// Copy `argv[0]` for error reporting, and because option parsing skips it
 			AtFileStackEntry &stackEntry =
 			    atFileStack.emplace_back(musl_optind, std::vector{atFileName});
 			// It would be nice to compute the char pointers on the fly, but reallocs don't allow
 			// that; so we must compute the offsets after the pool is fixed
-			auto offsets = readAtFile(&musl_optarg[1], argPool);
+			std::vector<size_t> offsets = readAtFile(&musl_optarg[1], argPool);
 			stackEntry.argv.reserve(offsets.size() + 2); // Avoid a bunch of reallocs
 			for (size_t ofs : offsets) {
 				stackEntry.argv.push_back(&argPool.data()[ofs]);
@@ -797,7 +797,7 @@ int main(int argc, char *argv[]) {
 			curArgc = argc;
 			curArgv = argv;
 		} else {
-			auto &vec = atFileStack.back().argv;
+			std::vector<char *> &vec = atFileStack.back().argv;
 			curArgc = vec.size();
 			curArgv = vec.data();
 		}
@@ -816,7 +816,7 @@ int main(int argc, char *argv[]) {
 
 	auto autoOutPath = [](bool autoOptEnabled, std::string &path, char const *extension) {
 		if (autoOptEnabled) {
-			auto &image = localOptions.groupOutputs ? options.output : options.input;
+			std::string &image = localOptions.groupOutputs ? options.output : options.input;
 			if (image.empty()) {
 				fatalWithUsage(
 				    "No %s specified",

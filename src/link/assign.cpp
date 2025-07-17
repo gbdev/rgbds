@@ -351,9 +351,9 @@ static void categorizeSection(Section &section) {
 	}
 
 	std::deque<Section *> &sections = unassignedSections[constraints];
-	auto pos = sections.begin();
 
 	// Insert section while keeping the list sorted by decreasing size
+	auto pos = sections.begin();
 	while (pos != sections.end() && (*pos)->size > section.size) {
 		pos++;
 	}

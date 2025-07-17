@@ -18,7 +18,7 @@ void sortIndexed(
 	options.verbosePrint(Options::VERB_LOG_ACT, "Sorting palettes using embedded palette...\n");
 
 	auto pngToRgb = [&palRGB, &palAlphaSize, &palAlpha](int index) {
-		auto const &c = palRGB[index];
+		png_color const &c = palRGB[index];
 		return Rgba(
 		    c.red, c.green, c.blue, palAlpha && index < palAlphaSize ? palAlpha[index] : 0xFF
 		);

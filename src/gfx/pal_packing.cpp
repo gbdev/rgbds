@@ -178,7 +178,7 @@ public:
 	// Returns the number of distinct colors
 	size_t volume() const { return uniqueColors().size(); }
 	bool canFit(ProtoPalette const &protoPal) const {
-		auto &colors = uniqueColors();
+		std::unordered_set<uint16_t> &colors = uniqueColors();
 		colors.insert(RANGE(protoPal));
 		return colors.size() <= options.maxOpaqueColors();
 	}
@@ -206,7 +206,8 @@ public:
 
 		uint32_t relSize = 0;
 		for (uint16_t color : protoPal) {
-			auto multiplicity = // How many of our proto-palettes does this color also belong to?
+			// How many of our proto-palettes does this color also belong to?
+			uint32_t multiplicity =
 			    std::count_if(RANGE(*this), [this, &color](ProtoPalAttrs const &attrs) {
 				    ProtoPalette const &pal = (*_protoPals)[attrs.protoPalIndex];
 				    return std::find(RANGE(pal), color) != pal.end();
@@ -225,20 +226,35 @@ public:
 
 	// Computes the "relative size" of a set of proto-palettes on this palette
 	template<typename Iter>
-	auto combinedVolume(Iter &&begin, Iter const &end, std::vector<ProtoPalette> const &protoPals)
+	size_t combinedVolume(Iter &&begin, Iter const &end, std::vector<ProtoPalette> const &protoPals)
 	    const {
-		auto &colors = uniqueColors();
+		std::unordered_set<uint16_t> &colors = uniqueColors();
 		addUniqueColors(colors, std::forward<Iter>(begin), end, protoPals);
 		return colors.size();
 	}
 	// Computes the "relative size" of a set of colors on this palette
 	template<typename Iter>
-	auto combinedVolume(Iter &&begin, Iter &&end) const {
-		auto &colors = uniqueColors();
+	size_t combinedVolume(Iter &&begin, Iter &&end) const {
+		std::unordered_set<uint16_t> &colors = uniqueColors();
 		colors.insert(std::forward<Iter>(begin), std::forward<Iter>(end));
 		return colors.size();
 	}
 };
+
+static void verboseOutputAssignments(
+    std::vector<AssignedProtos> const &assignments, std::vector<ProtoPalette> const &protoPalettes
+) {
+	for (AssignedProtos const &assignment : assignments) {
+		fputs("{ ", stderr);
+		for (ProtoPalAttrs const &attrs : assignment) {
+			fprintf(stderr, "[%zu] ", attrs.protoPalIndex);
+			for (uint16_t colorIndex : protoPalettes[attrs.protoPalIndex]) {
+				fprintf(stderr, "%04" PRIx16 ", ", colorIndex);
+			}
+		}
+		fprintf(stderr, "} (volume = %zu)\n", assignment.volume());
+	}
+}
 
 static void decant(
     std::vector<AssignedProtos> &assignments, std::vector<ProtoPalette> const &protoPalettes
@@ -423,7 +439,7 @@ std::tuple<std::vector<size_t>, size_t>
 			    attrs.protoPalIndex,
 			    bestPalIndex
 			);
-			auto &bestPal = assignments[bestPalIndex];
+			AssignedProtos &bestPal = assignments[bestPalIndex];
 			// Add the color to that palette
 			bestPal.assign(std::move(attrs));
 
@@ -550,16 +566,7 @@ std::tuple<std::vector<size_t>, size_t>
 
 	// LCOV_EXCL_START
 	if (options.verbosity >= Options::VERB_INTERM) {
-		for (auto &&assignment : assignments) {
-			fputs("{ ", stderr);
-			for (auto &&attrs : assignment) {
-				fprintf(stderr, "[%zu] ", attrs.protoPalIndex);
-				for (auto &&colorIndex : protoPalettes[attrs.protoPalIndex]) {
-					fprintf(stderr, "%04" PRIx16 ", ", colorIndex);
-				}
-			}
-			fprintf(stderr, "} (volume = %zu)\n", assignment.volume());
-		}
+		verboseOutputAssignments(assignments, protoPalettes);
 	}
 	// LCOV_EXCL_STOP
 
@@ -569,16 +576,7 @@ std::tuple<std::vector<size_t>, size_t>
 
 	// LCOV_EXCL_START
 	if (options.verbosity >= Options::VERB_INTERM) {
-		for (auto &&assignment : assignments) {
-			fputs("{ ", stderr);
-			for (auto &&attrs : assignment) {
-				fprintf(stderr, "[%zu] ", attrs.protoPalIndex);
-				for (auto &&colorIndex : protoPalettes[attrs.protoPalIndex]) {
-					fprintf(stderr, "%04" PRIx16 ", ", colorIndex);
-				}
-			}
-			fprintf(stderr, "} (volume = %zu)\n", assignment.volume());
-		}
+		verboseOutputAssignments(assignments, protoPalettes);
 	}
 	// LCOV_EXCL_STOP
 

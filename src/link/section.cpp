@@ -16,7 +16,7 @@ std::vector<std::unique_ptr<Section>> sectionList;
 std::unordered_map<std::string, size_t> sectionMap; // Indexes into `sectionList`
 
 void sect_ForEach(void (*callback)(Section &)) {
-	for (auto &ptr : sectionList) {
+	for (std::unique_ptr<Section> &ptr : sectionList) {
 		callback(*ptr);
 	}
 }

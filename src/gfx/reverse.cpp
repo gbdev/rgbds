@@ -68,12 +68,12 @@ static void pngWarning(png_structp png, char const *msg) {
 }
 
 static void writePng(png_structp png, png_bytep data, size_t length) {
-	auto &pngFile = *static_cast<File *>(png_get_io_ptr(png));
+	File &pngFile = *static_cast<File *>(png_get_io_ptr(png));
 	pngFile->sputn(reinterpret_cast<char *>(data), length);
 }
 
 static void flushPng(png_structp png) {
-	auto &pngFile = *static_cast<File *>(png_get_io_ptr(png));
+	File &pngFile = *static_cast<File *>(png_get_io_ptr(png));
 	pngFile->pubsync();
 }
 
@@ -128,7 +128,7 @@ void reverse() {
 	}
 
 	options.verbosePrint(Options::VERB_LOG_ACT, "Reading tiles...\n");
-	auto const tiles = readInto(options.output);
+	std::vector<uint8_t> const tiles = readInto(options.output);
 	uint8_t tileSize = 8 * options.bitDepth;
 	if (tiles.size() % tileSize != 0) {
 		fatal(

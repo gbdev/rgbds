@@ -86,12 +86,12 @@ void out_AddSection(Section const &section) {
 	std::deque<Section const *> &bankSections =
 	    section.size ? sections[section.type][targetBank].sections
 	                 : sections[section.type][targetBank].zeroLenSections;
-	auto pos = bankSections.begin();
 
+	// Insert section while keeping the list sorted by increasing org
+	auto pos = bankSections.begin();
 	while (pos != bankSections.end() && (*pos)->org < section.org) {
 		pos++;
 	}
-
 	bankSections.insert(pos, &section);
 }
 
@@ -347,7 +347,7 @@ static void writeSymBank(SortedSections const &bankSections, SectionType type, u
 				std::string parentName = sym->name.substr(0, pos);
 				if (Symbol const *parentSym = sym_GetSymbol(parentName);
 				    parentSym && std::holds_alternative<Label>(parentSym->data)) {
-					auto const &parentLabel = parentSym->label();
+					Label const &parentLabel = parentSym->label();
 					Section const &parentSection = *parentLabel.section;
 					parentAddr = static_cast<uint16_t>(parentLabel.offset + parentSection.org);
 				}
