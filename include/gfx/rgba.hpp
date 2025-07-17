@@ -33,7 +33,9 @@ struct Rgba {
 	// Returns this RGBA as a 32-bit number that can be printed in hex (`%08x`) to yield its CSS
 	// representation
 	uint32_t toCSS() const {
-		auto shl = [](uint8_t val, unsigned shift) { return static_cast<uint32_t>(val) << shift; };
+		constexpr auto shl = [](uint8_t val, unsigned shift) {
+			return static_cast<uint32_t>(val) << shift;
+		};
 		return shl(red, 24) | shl(green, 16) | shl(blue, 8) | shl(alpha, 0);
 	}
 

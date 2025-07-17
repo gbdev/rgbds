@@ -22,7 +22,7 @@ class EnumSeq {
 			return *this;
 		}
 
-		auto operator*() const { return _value; }
+		T operator*() const { return _value; }
 
 		bool operator==(Iterator const &rhs) const { return _value == rhs._value; }
 	};

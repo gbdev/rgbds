@@ -26,6 +26,8 @@
 
 using namespace std::string_view_literals;
 
+static char const *hexDigits = "0123456789ABCDEFabcdef";
+
 template<typename Str> // Should be std::string or std::string_view
 static void skipWhitespace(Str const &str, size_t &pos) {
 	pos = std::min(str.find_first_not_of(" \t"sv, pos), str.length());
@@ -70,10 +72,10 @@ void parseInlinePalSpec(char const * const rawArg) {
 		    "                        ",
 		    rawArg
 		);
-		for (auto i = ofs; i; --i) {
+		for (size_t i = ofs; i; --i) {
 			putc(' ', stderr);
 		}
-		for (auto i = len; i; --i) {
+		for (size_t i = len; i; --i) {
 			putc('^', stderr);
 		}
 		putc('\n', stderr);
@@ -93,7 +95,7 @@ void parseInlinePalSpec(char const * const rawArg) {
 			color = {};
 			n += literal_strlen("none");
 		} else {
-			auto pos = std::min(arg.find_first_not_of("0123456789ABCDEFabcdef"sv, n), arg.length());
+			size_t pos = std::min(arg.find_first_not_of(hexDigits, n), arg.length());
 			switch (pos - n) {
 			case 3:
 				color = Rgba(
@@ -196,7 +198,7 @@ static T readLE(U const *bytes) {
 static bool readLine(std::filebuf &file, std::string &buffer) {
 	assume(buffer.empty());
 	for (;;) {
-		auto c = file.sbumpc();
+		int c = file.sbumpc();
 		if (c == std::filebuf::traits_type::eof()) {
 			return !buffer.empty();
 		}
@@ -396,8 +398,7 @@ static void parseHEXFile(std::filebuf &file) {
 			continue;
 		}
 
-		if (line.length() != 6
-		    || line.find_first_not_of("0123456789ABCDEFabcdef"sv) != std::string::npos) {
+		if (line.length() != 6 || line.find_first_not_of(hexDigits) != std::string::npos) {
 			error(
 			    "Failed to parse color #%d (\"%s\"): invalid \"rrggbb\" line",
 			    nbColors + 1,
@@ -432,7 +433,7 @@ static void parseACTFile(std::filebuf &file) {
 	// https://www.adobe.com/devnet-apps/photoshop/fileformatashtml/#50577411_pgfId-1070626
 
 	std::array<char, 772> buf{};
-	auto len = file.sgetn(buf.data(), buf.size());
+	size_t len = file.sgetn(buf.data(), buf.size());
 
 	uint16_t nbColors = 256;
 	if (len == 772) {
@@ -555,8 +556,7 @@ static void parseGBCFile(std::filebuf &file) {
 
 	for (;;) {
 		char buf[2 * 4];
-		auto len = file.sgetn(buf, sizeof(buf));
-		if (len == 0) {
+		if (size_t len = file.sgetn(buf, sizeof(buf)); len == 0) {
 			break;
 		} else if (len != sizeof(buf)) {
 			error(
@@ -625,8 +625,7 @@ void parseDmgPalSpec(char const * const rawArg) {
 
 	std::string_view arg(rawArg);
 
-	if (arg.length() != 2
-	    || arg.find_first_not_of("0123456789ABCDEFabcdef"sv) != std::string_view::npos) {
+	if (arg.length() != 2 || arg.find_first_not_of(hexDigits) != std::string_view::npos) {
 		error("Unknown DMG palette specification \"%s\"", rawArg);
 		return;
 	}
@@ -660,7 +659,7 @@ void parseBackgroundPalSpec(char const *arg) {
 		return;
 	}
 
-	size_t size = strspn(&arg[1], "0123456789ABCDEFabcdef");
+	size_t size = strspn(&arg[1], hexDigits);
 	switch (size) {
 	case 3:
 		options.bgColor = Rgba(singleToHex(arg[1]), singleToHex(arg[2]), singleToHex(arg[3]), 0xFF);

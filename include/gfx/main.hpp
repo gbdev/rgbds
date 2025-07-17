@@ -110,7 +110,7 @@ struct Palette {
 };
 
 // Flipping tends to happen fairly often, so take a bite out of dcache to speed it up
-static constexpr auto flipTable = ([]() constexpr {
+static std::array<uint16_t, 256> flipTable = ([]() constexpr {
 	std::array<uint16_t, 256> table{};
 	for (uint16_t i = 0; i < table.size(); i++) {
 		// To flip all the bits, we'll flip both nibbles, then each nibble half, etc.

@@ -857,7 +857,7 @@ void sdobj_ReadFile(FileStackNode const &src, FILE *file, std::vector<Symbol> &f
 
 		// RAM sections can have a size, but don't get any data (they shouldn't have any)
 		if (section->type != SECTTYPE_INVALID) {
-			auto const &typeInfo = sectionTypeInfo[section->type];
+			SectionTypeInfo const &typeInfo = sectionTypeInfo[section->type];
 			// Otherwise, how would the type already be known at this point?
 			assume(section->isAddressFixed);
 

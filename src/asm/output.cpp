@@ -499,7 +499,7 @@ static bool dumpMacros(FILE *file) {
 	std::sort(RANGE(macros), compareSymbols);
 
 	for (Symbol const *sym : macros) {
-		auto const &body = sym->getMacro();
+		ContentSpan const &body = sym->getMacro();
 		fprintf(file, "macro %s\n", sym->name.c_str());
 		fwrite(body.ptr.get(), 1, body.size, file);
 		fputs("endm\n", file);

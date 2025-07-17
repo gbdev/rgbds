@@ -133,7 +133,7 @@ std::string Diagnostics<L, W>::processWarningFlag(char const *flag) {
 	// Try to match the flag against a parametric warning
 	// If there was an equals sign, it will have set `param`; if not, `param` will be 0, which
 	// applies to all levels
-	for (auto const &paramWarning : paramWarnings) {
+	for (ParamWarning<W> const &paramWarning : paramWarnings) {
 		W baseID = paramWarning.firstID;
 		uint8_t maxParam = paramWarning.lastID - baseID + 1;
 		assume(paramWarning.defaultLevel <= maxParam);

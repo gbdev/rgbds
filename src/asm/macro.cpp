@@ -37,7 +37,7 @@ std::shared_ptr<std::string> MacroArgs::getAllArgs() const {
 	str->reserve(len + 1); // 1 for comma
 
 	for (uint32_t i = shift; i < nbArgs; i++) {
-		auto const &arg = args[i];
+		std::shared_ptr<std::string> const &arg = args[i];
 
 		str->append(*arg);
 

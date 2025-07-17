@@ -685,7 +685,7 @@ static uint32_t readBracketedMacroArgNum() {
 
 static std::shared_ptr<std::string> readMacroArg(char name) {
 	if (name == '@') {
-		auto str = fstk_GetUniqueIDStr();
+		std::shared_ptr<std::string> str = fstk_GetUniqueIDStr();
 		if (!str) {
 			error("'\\@' cannot be used outside of a macro or REPT/FOR block");
 		}
@@ -697,7 +697,7 @@ static std::shared_ptr<std::string> readMacroArg(char name) {
 			return nullptr;
 		}
 
-		auto str = macroArgs->getAllArgs();
+		std::shared_ptr<std::string> str = macroArgs->getAllArgs();
 		assume(str); // '\#' should always be defined (at least as an empty string)
 		return str;
 	} else if (name == '<') {
@@ -713,7 +713,7 @@ static std::shared_ptr<std::string> readMacroArg(char name) {
 			return nullptr;
 		}
 
-		auto str = macroArgs->getArg(num);
+		std::shared_ptr<std::string> str = macroArgs->getArg(num);
 		if (!str) {
 			error("Macro argument '\\<%" PRId32 ">' not defined", num);
 		}
@@ -727,7 +727,7 @@ static std::shared_ptr<std::string> readMacroArg(char name) {
 			return nullptr;
 		}
 
-		auto str = macroArgs->getArg(name - '0');
+		std::shared_ptr<std::string> str = macroArgs->getArg(name - '0');
 		if (!str) {
 			error("Macro argument '\\%c' not defined", name);
 		}
@@ -840,7 +840,7 @@ static int peek() {
 	} else if (c == '{' && !lexerState->disableInterpolation) {
 		// If character is an open brace, do symbol interpolation
 		shiftChar();
-		if (auto str = readInterpolation(0); str) {
+		if (std::shared_ptr<std::string> str = readInterpolation(0); str) {
 			beginExpansion(str, *str);
 		}
 		return peek();
@@ -1341,7 +1341,7 @@ static std::shared_ptr<std::string> readInterpolation(size_t depth) {
 	for (Defer reset{[&] { lexerState->disableInterpolation = disableInterpolation; }};;) {
 		if (int c = peek(); c == '{') { // Nested interpolation
 			shiftChar();
-			if (auto str = readInterpolation(depth + 1); str) {
+			if (std::shared_ptr<std::string> str = readInterpolation(depth + 1); str) {
 				beginExpansion(str, *str);
 			}
 			continue; // Restart, reading from the new buffer
@@ -1501,7 +1501,7 @@ static void appendCharInLiteral(std::string &str, int c) {
 		case '9':
 		case '<':
 			shiftChar();
-			if (auto arg = readMacroArg(c); arg) {
+			if (std::shared_ptr<std::string> arg = readMacroArg(c); arg) {
 				appendExpandedString(str, *arg);
 			}
 			break;
@@ -1523,7 +1523,7 @@ static void appendCharInLiteral(std::string &str, int c) {
 		// We'll be exiting the string/character scope, so re-enable expansions
 		// (Not interpolations, since they're handled by the function itself...)
 		lexerState->disableMacroArgs = false;
-		if (auto interpolation = readInterpolation(0); interpolation) {
+		if (std::shared_ptr<std::string> interpolation = readInterpolation(0); interpolation) {
 			appendExpandedString(str, *interpolation);
 		}
 		lexerState->disableMacroArgs = true;
