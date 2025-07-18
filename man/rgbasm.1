@@ -116,7 +116,7 @@ Write
 dependencies to
 .Ar depend_file .
 .It Fl MC
-To be used in conjunction with
+Implies
 .Fl MG .
 This makes
 .Nm
@@ -143,7 +143,9 @@ exits normally or continues processing (depending on whether
 was enabled) instead of erroring out.
 This feature is used in automatic updating of Makefiles.
 .It Fl MP
-When enabled, this causes a phony target to be added for each dependency other than the main file.
+When enabled, this adds a phony target to the rules emitted by
+.Fl M
+for each dependency other than the main file.
 This prevents
 .Xr make 1
 from erroring out when dependency files are deleted.

@@ -24,13 +24,13 @@
 #include "asm/symbol.hpp"
 #include "asm/warning.hpp"
 
-FILE *dependFile = nullptr;                // -M
-bool continueAfterMissingIncludes = false; // -MC
-bool generatedMissingIncludes = false;     // -MG
-bool generatePhonyDeps = false;            // -MP
-std::string targetFileName;                // -MQ, -MT
-bool failedOnMissingInclude = false;
 bool verbose = false; // -v
+
+FILE *dependFile = nullptr;                     // -M
+MissingInclude missingIncludeState = INC_ERROR; // -MC, -MG
+bool generatePhonyDeps = false;                 // -MP
+std::string targetFileName;                     // -MQ, -MT
+bool failedOnMissingInclude = false;
 
 // Escapes Make-special chars from a string
 static std::string make_escape(std::string &str) {
@@ -371,11 +371,11 @@ int main(int argc, char *argv[]) {
 		case 0:
 			switch (depType) {
 			case 'C':
-				continueAfterMissingIncludes = true;
+				missingIncludeState = GEN_CONTINUE;
 				break;
 
 			case 'G':
-				generatedMissingIncludes = true;
+				missingIncludeState = GEN_EXIT;
 				break;
 
 			case 'P':

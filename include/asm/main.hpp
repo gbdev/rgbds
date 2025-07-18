@@ -15,11 +15,16 @@ extern bool verbose;
 		} \
 	} while (0)
 
+enum MissingInclude {
+	INC_ERROR,    // A missing included file is an error that halts assembly
+	GEN_EXIT,     // A missing included file is assumed to be generated; exit normally
+	GEN_CONTINUE, // A missing included file is assumed to be generated; continue assembling
+};
+
 extern FILE *dependFile;
 extern std::string targetFileName;
-extern bool continueAfterMissingIncludes;
-extern bool generatedMissingIncludes;
-extern bool failedOnMissingInclude;
+extern MissingInclude missingIncludeState;
 extern bool generatePhonyDeps;
+extern bool failedOnMissingInclude;
 
 #endif // RGBDS_ASM_MAIN_HPP

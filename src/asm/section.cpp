@@ -874,9 +874,9 @@ void sect_PCRelByte(Expression const &expr, uint32_t pcShift) {
 	}
 }
 
-void sect_BinaryFile(std::string const &name, uint32_t startPos) {
+bool sect_BinaryFile(std::string const &name, uint32_t startPos) {
 	if (!requireCodeSection()) {
-		return;
+		return false;
 	}
 
 	FILE *file = nullptr;
@@ -884,24 +884,14 @@ void sect_BinaryFile(std::string const &name, uint32_t startPos) {
 		file = fopen(fullPath->c_str(), "rb");
 	}
 	if (!file) {
-		if (generatedMissingIncludes) {
-			// LCOV_EXCL_START
-			if (verbose && !continueAfterMissingIncludes) {
-				printf("Aborting (-MG) on INCBIN file '%s' (%s)\n", name.c_str(), strerror(errno));
-			}
-			// LCOV_EXCL_STOP
-			failedOnMissingInclude = true;
-		} else {
-			error("Error opening INCBIN file '%s': %s", name.c_str(), strerror(errno));
-		}
-		return;
+		return fstk_FileError(name, "INCBIN");
 	}
 	Defer closeFile{[&] { fclose(file); }};
 
 	if (fseek(file, 0, SEEK_END) != -1) {
 		if (startPos > ftell(file)) {
 			error("Specified start position is greater than length of file '%s'", name.c_str());
-			return;
+			return false;
 		}
 		// The file is seekable; skip to the specified start position
 		fseek(file, startPos, SEEK_SET);
@@ -913,7 +903,7 @@ void sect_BinaryFile(std::string const &name, uint32_t startPos) {
 		while (startPos--) {
 			if (fgetc(file) == EOF) {
 				error("Specified start position is greater than length of file '%s'", name.c_str());
-				return;
+				return false;
 			}
 		}
 	}
@@ -925,14 +915,15 @@ void sect_BinaryFile(std::string const &name, uint32_t startPos) {
 	if (ferror(file)) {
 		error("Error reading INCBIN file '%s': %s", name.c_str(), strerror(errno));
 	}
+	return false;
 }
 
-void sect_BinaryFileSlice(std::string const &name, uint32_t startPos, uint32_t length) {
+bool sect_BinaryFileSlice(std::string const &name, uint32_t startPos, uint32_t length) {
 	if (!requireCodeSection()) {
-		return;
+		return false;
 	}
 	if (length == 0) { // Don't even bother with 0-byte slices
-		return;
+		return false;
 	}
 
 	FILE *file = nullptr;
@@ -940,24 +931,14 @@ void sect_BinaryFileSlice(std::string const &name, uint32_t startPos, uint32_t l
 		file = fopen(fullPath->c_str(), "rb");
 	}
 	if (!file) {
-		if (generatedMissingIncludes) {
-			// LCOV_EXCL_START
-			if (verbose && !continueAfterMissingIncludes) {
-				printf("Aborting (-MG) on INCBIN file '%s' (%s)\n", name.c_str(), strerror(errno));
-			}
-			// LCOV_EXCL_STOP
-			failedOnMissingInclude = true;
-		} else {
-			error("Error opening INCBIN file '%s': %s", name.c_str(), strerror(errno));
-		}
-		return;
+		return fstk_FileError(name, "INCBIN");
 	}
 	Defer closeFile{[&] { fclose(file); }};
 
 	if (fseek(file, 0, SEEK_END) != -1) {
 		if (long fsize = ftell(file); startPos > fsize) {
 			error("Specified start position is greater than length of file '%s'", name.c_str());
-			return;
+			return false;
 		} else if (startPos + length > fsize) {
 			error(
 			    "Specified range in INCBIN file '%s' is out of bounds (%" PRIu32 " + %" PRIu32
@@ -967,7 +948,7 @@ void sect_BinaryFileSlice(std::string const &name, uint32_t startPos, uint32_t l
 			    length,
 			    fsize
 			);
-			return;
+			return false;
 		}
 		// The file is seekable; skip to the specified start position
 		fseek(file, startPos, SEEK_SET);
@@ -979,7 +960,7 @@ void sect_BinaryFileSlice(std::string const &name, uint32_t startPos, uint32_t l
 		while (startPos--) {
 			if (fgetc(file) == EOF) {
 				error("Specified start position is greater than length of file '%s'", name.c_str());
-				return;
+				return false;
 			}
 		}
 	}
@@ -997,6 +978,7 @@ void sect_BinaryFileSlice(std::string const &name, uint32_t startPos, uint32_t l
 			);
 		}
 	}
+	return false;
 }
 
 void sect_PushSection() {

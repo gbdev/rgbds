@@ -1139,8 +1139,7 @@ export_def:
 
 include:
 	label POP_INCLUDE string endofline {
-		fstk_RunInclude($3, false);
-		if (failedOnMissingInclude && !continueAfterMissingIncludes) {
+		if (fstk_RunInclude($3)) {
 			YYACCEPT;
 		}
 	}
@@ -1148,20 +1147,17 @@ include:
 
 incbin:
 	POP_INCBIN string {
-		sect_BinaryFile($2, 0);
-		if (failedOnMissingInclude && !continueAfterMissingIncludes) {
+		if (sect_BinaryFile($2, 0)) {
 			YYACCEPT;
 		}
 	}
 	| POP_INCBIN string COMMA uconst {
-		sect_BinaryFile($2, $4);
-		if (failedOnMissingInclude && !continueAfterMissingIncludes) {
+		if (sect_BinaryFile($2, $4)) {
 			YYACCEPT;
 		}
 	}
 	| POP_INCBIN string COMMA uconst COMMA uconst {
-		sect_BinaryFileSlice($2, $4, $6);
-		if (failedOnMissingInclude && !continueAfterMissingIncludes) {
+		if (sect_BinaryFileSlice($2, $4, $6)) {
 			YYACCEPT;
 		}
 	}

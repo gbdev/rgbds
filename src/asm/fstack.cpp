@@ -146,7 +146,7 @@ std::optional<std::string> fstk_FindFile(std::string const &path) {
 	}
 
 	errno = ENOENT;
-	if (generatedMissingIncludes) {
+	if (missingIncludeState != INC_ERROR) {
 		printDep(path);
 	}
 	return std::nullopt;
@@ -302,26 +302,30 @@ static Context &newReptContext(int32_t reptLineNo, ContentSpan const &span, uint
 	return context;
 }
 
-void fstk_RunInclude(std::string const &path, bool preInclude) {
-	std::optional<std::string> fullPath = fstk_FindFile(path);
-
-	if (!fullPath) {
-		if (generatedMissingIncludes && !preInclude) {
-			// LCOV_EXCL_START
-			if (!continueAfterMissingIncludes) {
-				verbosePrint(
-				    "Aborting (-MG) on INCLUDE file '%s' (%s)\n", path.c_str(), strerror(errno)
-				);
-			}
-			// LCOV_EXCL_STOP
-			failedOnMissingInclude = true;
-		} else {
-			error("Unable to open included file '%s': %s", path.c_str(), strerror(errno));
+bool fstk_FileError(std::string const &path, char const *functionName) {
+	if (missingIncludeState == INC_ERROR) {
+		error("Error opening %s file '%s': %s", functionName, path.c_str(), strerror(errno));
+	} else {
+		failedOnMissingInclude = true;
+		// LCOV_EXCL_START
+		if (missingIncludeState == GEN_EXIT) {
+			verbosePrint(
+			    "Aborting (-MG) on %s file '%s' (%s)\n", functionName, path.c_str(), strerror(errno)
+			);
+			return true;
 		}
-		return;
+		assume(missingIncludeState == GEN_CONTINUE);
+		// LCOV_EXCL_STOP
 	}
+	return false;
+}
 
-	newFileContext(*fullPath, false);
+bool fstk_RunInclude(std::string const &path) {
+	if (std::optional<std::string> fullPath = fstk_FindFile(path); fullPath) {
+		newFileContext(*fullPath, false);
+		return false;
+	}
+	return fstk_FileError(path, "INCLUDE");
 }
 
 void fstk_RunMacro(std::string const &macroName, std::shared_ptr<MacroArgs> macroArgs) {
@@ -410,6 +414,12 @@ void fstk_Init(std::string const &mainPath, size_t maxDepth) {
 	maxRecursionDepth = maxDepth;
 
 	if (!preIncludeName.empty()) {
-		fstk_RunInclude(preIncludeName, true);
+		if (std::optional<std::string> fullPath = fstk_FindFile(preIncludeName); fullPath) {
+			newFileContext(*fullPath, false);
+		} else {
+			error(
+			    "Error reading pre-included file '%s': %s", preIncludeName.c_str(), strerror(errno)
+			);
+		}
 	}
 }
