@@ -50,7 +50,6 @@ static Section *currentLoadSection = nullptr;
 static std::pair<Symbol const *, Symbol const *> currentLoadLabelScopes = {nullptr, nullptr};
 int32_t loadOffset; // Offset into the LOAD section's parent (see sect_GetOutputOffset)
 
-// A quick check to see if we have an initialized section
 [[nodiscard]]
 static bool requireSection() {
 	if (currentSection) {
@@ -61,8 +60,6 @@ static bool requireSection() {
 	return false;
 }
 
-// A quick check to see if we have an initialized section that can contain
-// this much initialized data
 [[nodiscard]]
 static bool requireCodeSection() {
 	if (!requireSection()) {
@@ -278,7 +275,6 @@ static void mergeSections(
 
 #undef sectError
 
-// Create a new section, not yet in the list.
 static Section *createSection(
     std::string const &name,
     SectionType type,
@@ -313,7 +309,6 @@ static Section *createSection(
 	return &sect;
 }
 
-// Create a new section fragment literal, not yet in the list.
 static Section *createSectionFragmentLiteral(Section const &parent) {
 	// Add the new section to the list, but do not update the map
 	Section &sect = sectionList.emplace_back();
@@ -339,7 +334,6 @@ static Section *createSectionFragmentLiteral(Section const &parent) {
 	return &sect;
 }
 
-// Find a section by name and type. If it doesn't exist, create it.
 static Section *getSection(
     std::string const &name,
     SectionType type,
@@ -436,7 +430,6 @@ static Section *getSection(
 	return sect;
 }
 
-// Set the current section
 static void changeSection() {
 	if (!currentUnionStack.empty()) {
 		fatal("Cannot change the section within a UNION");
@@ -466,7 +459,6 @@ bool Section::isSizeKnown() const {
 	return true;
 }
 
-// Set the current section by name and type
 void sect_NewSection(
     std::string const &name,
     SectionType type,
@@ -492,7 +484,6 @@ void sect_NewSection(
 	currentSection = sect;
 }
 
-// Set the current section by name and type
 void sect_SetLoadSection(
     std::string const &name,
     SectionType type,
@@ -554,7 +545,6 @@ Section *sect_GetSymbolSection() {
 	return currentLoadSection ? currentLoadSection : currentSection;
 }
 
-// The offset into the section above
 uint32_t sect_GetSymbolOffset() {
 	return curOffset;
 }
@@ -723,7 +713,6 @@ void sect_CheckUnionClosed() {
 	}
 }
 
-// Output a constant byte
 void sect_ConstByte(uint8_t byte) {
 	if (!requireCodeSection()) {
 		return;
@@ -732,7 +721,6 @@ void sect_ConstByte(uint8_t byte) {
 	writeByte(byte);
 }
 
-// Output a string's character units as bytes
 void sect_ByteString(std::vector<int32_t> const &string) {
 	if (!requireCodeSection()) {
 		return;
@@ -749,7 +737,6 @@ void sect_ByteString(std::vector<int32_t> const &string) {
 	}
 }
 
-// Output a string's character units as words
 void sect_WordString(std::vector<int32_t> const &string) {
 	if (!requireCodeSection()) {
 		return;
@@ -766,7 +753,6 @@ void sect_WordString(std::vector<int32_t> const &string) {
 	}
 }
 
-// Output a string's character units as longs
 void sect_LongString(std::vector<int32_t> const &string) {
 	if (!requireCodeSection()) {
 		return;
@@ -777,7 +763,6 @@ void sect_LongString(std::vector<int32_t> const &string) {
 	}
 }
 
-// Skip this many bytes
 void sect_Skip(uint32_t skip, bool ds) {
 	if (!requireSection()) {
 		return;
@@ -802,7 +787,6 @@ void sect_Skip(uint32_t skip, bool ds) {
 	}
 }
 
-// Output a byte that can be relocatable or constant
 void sect_RelByte(Expression const &expr, uint32_t pcShift) {
 	if (!requireCodeSection()) {
 		return;
@@ -816,7 +800,6 @@ void sect_RelByte(Expression const &expr, uint32_t pcShift) {
 	}
 }
 
-// Output several bytes that can be relocatable or constant
 void sect_RelBytes(uint32_t n, std::vector<Expression> const &exprs) {
 	if (!requireCodeSection()) {
 		return;
@@ -832,7 +815,6 @@ void sect_RelBytes(uint32_t n, std::vector<Expression> const &exprs) {
 	}
 }
 
-// Output a word that can be relocatable or constant
 void sect_RelWord(Expression const &expr, uint32_t pcShift) {
 	if (!requireCodeSection()) {
 		return;
@@ -846,7 +828,6 @@ void sect_RelWord(Expression const &expr, uint32_t pcShift) {
 	}
 }
 
-// Output a long that can be relocatable or constant
 void sect_RelLong(Expression const &expr, uint32_t pcShift) {
 	if (!requireCodeSection()) {
 		return;
@@ -860,7 +841,6 @@ void sect_RelLong(Expression const &expr, uint32_t pcShift) {
 	}
 }
 
-// Output a PC-relative byte that can be relocatable or constant
 void sect_PCRelByte(Expression const &expr, uint32_t pcShift) {
 	if (!requireCodeSection()) {
 		return;
@@ -894,12 +874,7 @@ void sect_PCRelByte(Expression const &expr, uint32_t pcShift) {
 	}
 }
 
-// Output a binary file
-void sect_BinaryFile(std::string const &name, int32_t startPos) {
-	if (startPos < 0) {
-		error("Start position cannot be negative (%" PRId32 ")", startPos);
-		startPos = 0;
-	}
+void sect_BinaryFile(std::string const &name, uint32_t startPos) {
 	if (!requireCodeSection()) {
 		return;
 	}
@@ -952,16 +927,7 @@ void sect_BinaryFile(std::string const &name, int32_t startPos) {
 	}
 }
 
-// Output a slice of a binary file
-void sect_BinaryFileSlice(std::string const &name, int32_t startPos, int32_t length) {
-	if (startPos < 0) {
-		error("Start position cannot be negative (%" PRId32 ")", startPos);
-		startPos = 0;
-	}
-	if (length < 0) {
-		error("Number of bytes to read cannot be negative (%" PRId32 ")", length);
-		length = 0;
-	}
+void sect_BinaryFileSlice(std::string const &name, uint32_t startPos, uint32_t length) {
 	if (!requireCodeSection()) {
 		return;
 	}
@@ -989,13 +955,13 @@ void sect_BinaryFileSlice(std::string const &name, int32_t startPos, int32_t len
 	Defer closeFile{[&] { fclose(file); }};
 
 	if (fseek(file, 0, SEEK_END) != -1) {
-		if (int32_t fsize = ftell(file); startPos > fsize) {
+		if (long fsize = ftell(file); startPos > fsize) {
 			error("Specified start position is greater than length of file '%s'", name.c_str());
 			return;
 		} else if (startPos + length > fsize) {
 			error(
 			    "Specified range in INCBIN file '%s' is out of bounds (%" PRIu32 " + %" PRIu32
-			    " > %" PRIu32 ")",
+			    " > %ld)",
 			    name.c_str(),
 			    startPos,
 			    length,
@@ -1033,7 +999,6 @@ void sect_BinaryFileSlice(std::string const &name, int32_t startPos, int32_t len
 	}
 }
 
-// Section stack routines
 void sect_PushSection() {
 	sectionStack.push_front({
 	    .section = currentSection,

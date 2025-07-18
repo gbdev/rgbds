@@ -96,8 +96,8 @@ void sect_RelBytes(uint32_t n, std::vector<Expression> const &exprs);
 void sect_RelWord(Expression const &expr, uint32_t pcShift);
 void sect_RelLong(Expression const &expr, uint32_t pcShift);
 void sect_PCRelByte(Expression const &expr, uint32_t pcShift);
-void sect_BinaryFile(std::string const &name, int32_t startPos);
-void sect_BinaryFileSlice(std::string const &name, int32_t startPos, int32_t length);
+void sect_BinaryFile(std::string const &name, uint32_t startPos);
+void sect_BinaryFileSlice(std::string const &name, uint32_t startPos, uint32_t length);
 
 void sect_EndSection();
 void sect_PushSection();

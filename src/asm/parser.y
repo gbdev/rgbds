@@ -1153,13 +1153,13 @@ incbin:
 			YYACCEPT;
 		}
 	}
-	| POP_INCBIN string COMMA iconst {
+	| POP_INCBIN string COMMA uconst {
 		sect_BinaryFile($2, $4);
 		if (failedOnMissingInclude && !continueAfterMissingIncludes) {
 			YYACCEPT;
 		}
 	}
-	| POP_INCBIN string COMMA iconst COMMA iconst {
+	| POP_INCBIN string COMMA uconst COMMA uconst {
 		sect_BinaryFileSlice($2, $4, $6);
 		if (failedOnMissingInclude && !continueAfterMissingIncludes) {
 			YYACCEPT;
