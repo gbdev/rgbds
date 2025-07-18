@@ -93,6 +93,7 @@ The RGBDS source code file structure is as follows:
 │   └── run-tests.sh
 ├── .clang-format
 ├── CMakeLists.txt
+├── compile_flags.txt
 ├── Dockerfile
 ├── Makefile
 └── README.md
@@ -118,6 +119,8 @@ The RGBDS source code file structure is as follows:
   modify the behavior of RGBDS.
 - `.clang-format` - code style for automated C++ formatting with
   [`clang-format`](https://clang.llvm.org/docs/ClangFormat.html).
+- `compile_flags.txt` - compiler flags for C++ static analysis with
+  [`clang-tidy`](https://clang.llvm.org/extra/clang-tidy/).
 - `Dockerfile` - defines how to build RGBDS with Docker.
 
 ## 3. History
