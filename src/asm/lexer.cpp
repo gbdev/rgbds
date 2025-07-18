@@ -239,6 +239,7 @@ static std::unordered_map<std::string, int, CaseInsensitive, CaseInsensitive> ke
     {"TZCOUNT",       T_(OP_TZCOUNT)       },
 
     {"BYTELEN",       T_(OP_BYTELEN)       },
+    {"READFILE",      T_(OP_READFILE)      },
     {"STRBYTE",       T_(OP_STRBYTE)       },
     {"STRCAT",        T_(OP_STRCAT)        },
     {"STRCHAR",       T_(OP_STRCHAR)       },
