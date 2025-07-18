@@ -174,15 +174,15 @@ static std::vector<LexerStackEntry> lexerStack;
 static bool atEof;
 
 void yy::parser::error(std::string const &msg) {
-	auto const &script = lexerStack.back();
+	LexerStackEntry const &script = lexerStack.back();
 	scriptError(script, "%s", msg.c_str());
 }
 
 static void includeFile(std::string &&path) {
 	// `emplace_back` can invalidate references to the stack's elements!
 	// This is why `newContext` must be gotten before `prevContext`.
-	auto &newContext = lexerStack.emplace_back(std::move(path));
-	auto &prevContext = lexerStack[lexerStack.size() - 2];
+	LexerStackEntry &newContext = lexerStack.emplace_back(std::move(path));
+	LexerStackEntry &prevContext = lexerStack[lexerStack.size() - 2];
 
 	if (!newContext.file.open(newContext.path, std::ios_base::in)) {
 		// The order is important: report the error, increment the line number, modify the stack!
@@ -232,7 +232,7 @@ static bool isIdentChar(int c) {
 }
 
 static std::string readIdent(int c) {
-	auto &context = lexerStack.back();
+	LexerStackEntry &context = lexerStack.back();
 	std::string ident;
 	ident.push_back(c);
 	for (c = context.file.sgetc(); isIdentChar(c); c = context.file.snextc()) {
@@ -246,7 +246,7 @@ static bool isDecDigit(int c) {
 }
 
 static yy::parser::symbol_type parseDecNumber(int c) {
-	auto &context = lexerStack.back();
+	LexerStackEntry &context = lexerStack.back();
 	uint32_t number = c - '0';
 	for (c = context.file.sgetc(); isDecDigit(c) || c == '_'; c = context.file.sgetc()) {
 		if (c != '_') {
@@ -262,8 +262,8 @@ static bool isBinDigit(int c) {
 }
 
 static yy::parser::symbol_type parseBinNumber(char const *prefix) {
-	auto &context = lexerStack.back();
-	auto c = context.file.sgetc();
+	LexerStackEntry &context = lexerStack.back();
+	int c = context.file.sgetc();
 	if (!isBinDigit(c)) {
 		scriptError(context, "No binary digits found after '%s'", prefix);
 		return yy::parser::make_number(0);
@@ -285,8 +285,8 @@ static bool isOctDigit(int c) {
 }
 
 static yy::parser::symbol_type parseOctNumber(char const *prefix) {
-	auto &context = lexerStack.back();
-	auto c = context.file.sgetc();
+	LexerStackEntry &context = lexerStack.back();
+	int c = context.file.sgetc();
 	if (!isOctDigit(c)) {
 		scriptError(context, "No octal digits found after '%s'", prefix);
 		return yy::parser::make_number(0);
@@ -320,8 +320,8 @@ static uint8_t parseHexDigit(int c) {
 }
 
 static yy::parser::symbol_type parseHexNumber(char const *prefix) {
-	auto &context = lexerStack.back();
-	auto c = context.file.sgetc();
+	LexerStackEntry &context = lexerStack.back();
+	int c = context.file.sgetc();
 	if (!isHexDigit(c)) {
 		scriptError(context, "No hexadecimal digits found after '%s'", prefix);
 		return yy::parser::make_number(0);
@@ -339,7 +339,7 @@ static yy::parser::symbol_type parseHexNumber(char const *prefix) {
 }
 
 static yy::parser::symbol_type parseNumber(int c) {
-	auto &context = lexerStack.back();
+	LexerStackEntry &context = lexerStack.back();
 	if (c == '0') {
 		switch (context.file.sgetc()) {
 		case 'x':
@@ -366,8 +366,8 @@ static yy::parser::symbol_type parseNumber(int c) {
 }
 
 static yy::parser::symbol_type parseString() {
-	auto &context = lexerStack.back();
-	auto c = context.file.sgetc();
+	LexerStackEntry &context = lexerStack.back();
+	int c = context.file.sgetc();
 	std::string str;
 	for (; c != '"'; c = context.file.sgetc()) {
 		if (c == EOF || isNewline(c)) {
@@ -402,8 +402,8 @@ static yy::parser::symbol_type parseString() {
 }
 
 yy::parser::symbol_type yylex() {
-	auto &context = lexerStack.back();
-	auto c = context.file.sbumpc();
+	LexerStackEntry &context = lexerStack.back();
+	int c = context.file.sbumpc();
 
 	// First, skip leading whitespace.
 	while (isWhiteSpace(c)) {
@@ -506,7 +506,7 @@ static void setFloatingSectionType(SectionType type) {
 }
 
 static void setSectionType(SectionType type) {
-	auto const &context = lexerStack.back();
+	LexerStackEntry const &context = lexerStack.back();
 
 	if (nbbanks(type) != 1) {
 		scriptError(
@@ -519,8 +519,8 @@ static void setSectionType(SectionType type) {
 }
 
 static void setSectionType(SectionType type, uint32_t bank) {
-	auto const &context = lexerStack.back();
-	auto const &typeInfo = sectionTypeInfo[type];
+	LexerStackEntry const &context = lexerStack.back();
+	SectionTypeInfo const &typeInfo = sectionTypeInfo[type];
 
 	if (bank < typeInfo.firstBank) {
 		scriptError(
@@ -545,7 +545,7 @@ static void setSectionType(SectionType type, uint32_t bank) {
 }
 
 static void setAddr(uint32_t addr) {
-	auto const &context = lexerStack.back();
+	LexerStackEntry const &context = lexerStack.back();
 	if (activeType == SECTTYPE_INVALID) {
 		scriptError(context, "Cannot set the current address: no memory region is active");
 		return;
@@ -555,8 +555,8 @@ static void setAddr(uint32_t addr) {
 		return;
 	}
 
-	auto &pc = curAddr[activeType][activeBankIdx];
-	auto const &typeInfo = sectionTypeInfo[activeType];
+	uint16_t &pc = curAddr[activeType][activeBankIdx];
+	SectionTypeInfo const &typeInfo = sectionTypeInfo[activeType];
 
 	if (addr < pc) {
 		scriptError(context, "Cannot decrease the current address (from $%04x to $%04x)", pc, addr);
@@ -576,7 +576,7 @@ static void setAddr(uint32_t addr) {
 }
 
 static void makeAddrFloating() {
-	auto const &context = lexerStack.back();
+	LexerStackEntry const &context = lexerStack.back();
 	if (activeType == SECTTYPE_INVALID) {
 		scriptError(
 		    context, "Cannot make the current address floating: no memory region is active"
@@ -590,7 +590,7 @@ static void makeAddrFloating() {
 }
 
 static void alignTo(uint32_t alignment, uint32_t alignOfs) {
-	auto const &context = lexerStack.back();
+	LexerStackEntry const &context = lexerStack.back();
 	if (activeType == SECTTYPE_INVALID) {
 		scriptError(context, "Cannot align: no memory region is active");
 		return;
@@ -619,8 +619,8 @@ static void alignTo(uint32_t alignment, uint32_t alignOfs) {
 		return;
 	}
 
-	auto const &typeInfo = sectionTypeInfo[activeType];
-	auto &pc = curAddr[activeType][activeBankIdx];
+	SectionTypeInfo const &typeInfo = sectionTypeInfo[activeType];
+	uint16_t &pc = curAddr[activeType][activeBankIdx];
 
 	if (alignment > 16) {
 		scriptError(
@@ -666,7 +666,7 @@ static void alignTo(uint32_t alignment, uint32_t alignOfs) {
 }
 
 static void pad(uint32_t length) {
-	auto const &context = lexerStack.back();
+	LexerStackEntry const &context = lexerStack.back();
 	if (activeType == SECTTYPE_INVALID) {
 		scriptError(context, "Cannot increase the current address: no memory region is active");
 		return;
@@ -677,8 +677,8 @@ static void pad(uint32_t length) {
 		return;
 	}
 
-	auto const &typeInfo = sectionTypeInfo[activeType];
-	auto &pc = curAddr[activeType][activeBankIdx];
+	SectionTypeInfo const &typeInfo = sectionTypeInfo[activeType];
+	uint16_t &pc = curAddr[activeType][activeBankIdx];
 
 	assume(pc >= typeInfo.startAddr);
 	if (uint16_t offset = pc - typeInfo.startAddr; length + offset > typeInfo.size) {
@@ -695,7 +695,7 @@ static void pad(uint32_t length) {
 }
 
 static void placeSection(std::string const &name, bool isOptional) {
-	auto const &context = lexerStack.back();
+	LexerStackEntry const &context = lexerStack.back();
 	if (activeType == SECTTYPE_INVALID) {
 		scriptError(
 		    context, "No memory region has been specified to place section \"%s\" in", name.c_str()
@@ -703,7 +703,7 @@ static void placeSection(std::string const &name, bool isOptional) {
 		return;
 	}
 
-	auto *section = sect_GetSection(name.c_str());
+	Section *section = sect_GetSection(name.c_str());
 	if (!section) {
 		if (!isOptional) {
 			scriptError(context, "Unknown section \"%s\"", name.c_str());
@@ -711,7 +711,7 @@ static void placeSection(std::string const &name, bool isOptional) {
 		return;
 	}
 
-	auto const &typeInfo = sectionTypeInfo[activeType];
+	SectionTypeInfo const &typeInfo = sectionTypeInfo[activeType];
 	assume(section->offset == 0);
 	// Check that the linker script doesn't contradict what the code says.
 	if (section->type == SECTTYPE_INVALID) {
@@ -833,7 +833,7 @@ void script_ProcessScript(char const *path) {
 
 	lexerStack.clear();
 	atEof = false;
-	auto &newContext = lexerStack.emplace_back(std::string(path));
+	LexerStackEntry &newContext = lexerStack.emplace_back(std::string(path));
 
 	if (!newContext.file.open(newContext.path, std::ios_base::in)) {
 		error("Failed to open linker script \"%s\"", newContext.path.c_str());
@@ -845,7 +845,7 @@ void script_ProcessScript(char const *path) {
 		(void)linkerScriptParser.parse();
 
 		// Free up working memory.
-		for (auto &region : curAddr) {
+		for (std::vector<uint16_t> &region : curAddr) {
 			region.clear();
 		}
 	}

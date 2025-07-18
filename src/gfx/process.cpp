@@ -144,7 +144,7 @@ public:
 			return false;
 		}
 		uint8_t bins = 0;
-		for (auto const &color : colors) {
+		for (std::optional<Rgba> const &color : colors) {
 			if (!color.has_value() || color->isTransparent()) {
 				continue;
 			}
@@ -299,7 +299,7 @@ public:
 			    Options::VERB_INTERM, "Embedded palette has %d colors: [", nbColors
 			);
 			for (int i = 0; i < nbColors; ++i) {
-				auto const &color = embeddedPal[i];
+				png_color const &color = embeddedPal[i];
 				options.verbosePrint(
 				    Options::VERB_INTERM,
 				    "#%02x%02x%02x%02x%s",
@@ -604,7 +604,7 @@ static std::tuple<std::vector<size_t>, std::vector<Palette>>
 	}
 	// Generate the actual palettes from the mappings
 	for (size_t protoPalID = 0; protoPalID < mappings.size(); ++protoPalID) {
-		auto &pal = palettes[mappings[protoPalID]];
+		Palette &pal = palettes[mappings[protoPalID]];
 		for (uint16_t color : protoPalettes[protoPalID]) {
 			pal.addColor(color);
 		}
@@ -688,7 +688,7 @@ static std::tuple<std::vector<size_t>, std::vector<Palette>>
 static void outputPalettes(std::vector<Palette> const &palettes) {
 	// LCOV_EXCL_START
 	if (options.verbosity >= Options::VERB_INTERM) {
-		for (auto &&palette : palettes) {
+		for (Palette const &palette : palettes) {
 			fputs("{ ", stderr);
 			for (uint16_t colorIndex : palette) {
 				fprintf(stderr, "%04" PRIx16 ", ", colorIndex);
@@ -790,7 +790,7 @@ public:
 		}
 	}
 
-	auto const &data() const { return _data; }
+	std::array<uint8_t, 16> const &data() const { return _data; }
 	uint16_t hash() const { return _hash; }
 
 	enum MatchType {
@@ -933,7 +933,7 @@ static void outputUnoptimizedMaps(
 
 	uint8_t tileID = 0;
 	uint8_t bank = 0;
-	for (auto attr : attrmap) {
+	for (AttrmapEntry const &attr : attrmap) {
 		if (tileID == options.maxNbTiles[bank]) {
 			assume(bank == 0);
 			bank = 1;
@@ -985,7 +985,7 @@ struct UniqueTiles {
 		return {tileData->tileID, matchType};
 	}
 
-	auto size() const { return tiles.size(); }
+	size_t size() const { return tiles.size(); }
 
 	auto begin() const { return tiles.begin(); }
 	auto end() const { return tiles.end(); }
@@ -1169,7 +1169,7 @@ void process() {
 	// LCOV_EXCL_START
 	if (options.verbosity >= Options::VERB_INTERM) {
 		fputs("Image colors: [ ", stderr);
-		for (auto const &slot : colors) {
+		for (std::optional<Rgba> const &slot : colors) {
 			if (!slot.has_value()) {
 				continue;
 			}
@@ -1287,7 +1287,7 @@ continue_visiting_tiles:;
 	);
 	// LCOV_EXCL_START
 	if (options.verbosity >= Options::VERB_INTERM) {
-		for (auto const &protoPal : protoPalettes) {
+		for (ProtoPalette const &protoPal : protoPalettes) {
 			fputs("[ ", stderr);
 			for (uint16_t color : protoPal) {
 				fprintf(stderr, "$%04x, ", color);
