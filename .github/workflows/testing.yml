@@ -149,7 +149,7 @@ jobs:
           path: |
             zbuild
             pngbuild
-          key: ${{ matrix.arch }}-${{ hashFiles('zlib/**', 'libpng/**') }}
+          key: ${{ matrix.os }}-${{ matrix.arch }}-${{ hashFiles('zlib/**', 'libpng/**') }}
       - name: Build zlib
         if: steps.cache.outputs.cache-hit != 'true'
         shell: bash
