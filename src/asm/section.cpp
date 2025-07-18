@@ -888,7 +888,7 @@ bool sect_BinaryFile(std::string const &name, uint32_t startPos) {
 	}
 	Defer closeFile{[&] { fclose(file); }};
 
-	if (fseek(file, 0, SEEK_END) != -1) {
+	if (fseek(file, 0, SEEK_END) == 0) {
 		if (startPos > ftell(file)) {
 			error("Specified start position is greater than length of file '%s'", name.c_str());
 			return false;
@@ -935,7 +935,7 @@ bool sect_BinaryFileSlice(std::string const &name, uint32_t startPos, uint32_t l
 	}
 	Defer closeFile{[&] { fclose(file); }};
 
-	if (fseek(file, 0, SEEK_END) != -1) {
+	if (fseek(file, 0, SEEK_END) == 0) {
 		if (long fsize = ftell(file); startPos > fsize) {
 			error("Specified start position is greater than length of file '%s'", name.c_str());
 			return false;

@@ -38,6 +38,7 @@
 	#include <algorithm>
 	#include <ctype.h>
 	#include <inttypes.h>
+	#include <optional>
 	#include <stdio.h>
 	#include <stdlib.h>
 	#include <string.h>
@@ -61,6 +62,7 @@
 
 	yy::parser::symbol_type yylex(); // Provided by lexer.cpp
 
+	static std::optional<std::string> readFile(std::string const &name, uint32_t maxLen);
 	static uint32_t strToNum(std::vector<int32_t> const &s);
 	static void errorInvalidUTF8Byte(uint8_t byte, char const *functionName);
 	static size_t strlenUTF8(std::string const &str, bool printErrors);
@@ -303,6 +305,7 @@
 %token OP_LOG "LOG"
 %token OP_LOW "LOW"
 %token OP_POW "POW"
+%token OP_READFILE "READFILE"
 %token OP_REVCHAR "REVCHAR"
 %token OP_ROUND "ROUND"
 %token OP_SIN "SIN"
@@ -1687,6 +1690,20 @@ string_literal:
 		$$ = std::move($1);
 		$$.append($3);
 	}
+	| OP_READFILE LPAREN string RPAREN {
+		if (std::optional<std::string> contents = readFile($3, UINT32_MAX); contents) {
+			$$ = std::move(*contents);
+		} else {
+			YYACCEPT;
+		}
+	}
+	| OP_READFILE LPAREN string COMMA uconst RPAREN {
+		if (std::optional<std::string> contents = readFile($3, $5); contents) {
+			$$ = std::move(*contents);
+		} else {
+			YYACCEPT;
+		}
+	}
 	| OP_STRSLICE LPAREN string COMMA iconst COMMA iconst RPAREN {
 		size_t len = strlenUTF8($3, false);
 		uint32_t start = adjustNegativeIndex($5, len, "STRSLICE");
@@ -2726,6 +2743,44 @@ hl_ind_dec:
 
 void yy::parser::error(std::string const &str) {
 	::error("%s", str.c_str());
+}
+
+static std::optional<std::string> readFile(std::string const &name, uint32_t maxLen) {
+	FILE *file = nullptr;
+	if (std::optional<std::string> fullPath = fstk_FindFile(name); fullPath) {
+		file = fopen(fullPath->c_str(), "rb");
+	}
+	if (!file) {
+		if (fstk_FileError(name, "READFILE")) {
+			// If `fstk_FileError` returned true due to `-MG`, we should abort due to a
+			// missing file, so return `std::nullopt`, which tells the caller to `YYACCEPT`
+			return std::nullopt;
+		}
+		return "";
+	}
+	Defer closeFile{[&] { fclose(file); }};
+
+	size_t readSize = maxLen;
+	if (fseek(file, 0, SEEK_END) == 0) {
+		// If the file is seekable and shorter than the max length,
+		// just read as many bytes as there are
+		if (long fileSize = ftell(file); static_cast<size_t>(fileSize) < readSize) {
+			readSize = fileSize;
+		}
+		fseek(file, 0, SEEK_SET);
+	} else if (errno != ESPIPE) {
+		error("Error determining size of READFILE file '%s': %s", name.c_str(), strerror(errno));
+	}
+
+	std::string contents;
+	contents.resize(readSize);
+
+	if (fread(&contents[0], 1, readSize, file) < readSize || ferror(file)) {
+		error("Error reading READFILE file '%s': %s", name.c_str(), strerror(errno));
+		return "";
+	}
+
+	return contents;
 }
 
 static uint32_t strToNum(std::vector<int32_t> const &s) {

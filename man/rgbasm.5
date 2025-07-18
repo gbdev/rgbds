@@ -599,6 +599,7 @@ with its corresponding argument in
 .Pq So %% Sc is replaced by the So % Sc character .
 .It Fn STRCHAR str idx Ta Returns the substring of Ar str No for the charmap entry at Ar idx No with the current charmap . Pq Ar idx No counts charmap entries, not characters.
 .It Fn REVCHAR vals... Ta Returns the string that is mapped to Ar vals No with the current charmap. If there is no unique charmap entry for Ar vals Ns , an error occurs.
+.It Fn READFILE name max Ta Returns the contents of the file Ar name No as a string. Reads up to Ar max No bytes, or the entire contents if Ar max No is not specified. If the file isn't found in the current directory, the include-path list passed to Xr rgbasm 1 Ap s Fl I No option on the command line will be searched.
 .El
 .Pp
 The following functions operate on string expressions, but return integers.
@@ -1814,10 +1815,9 @@ Use
 .Ic INCBIN
 to include a raw binary file as it is.
 If the file isn't found in the current directory, the include-path list passed to
-.Xr rgbasm 1
-(see the
+.Xr rgbasm 1 Ap s
 .Fl I
-option) on the command line will be searched.
+option on the command line will be searched.
 .Bd -literal -offset indent
 INCBIN "titlepic.bin"
 INCBIN "sprites/hero.bin"
@@ -2370,11 +2370,10 @@ block, all of them but the first one are ignored.
 Use
 .Ic INCLUDE
 to process another assembler file and then return to the current file when done.
-If the file isn't found in the current directory, the include path list (see the
+If the file isn't found in the current directory, the include-path list passed to
+.Xr rgbasm 1 Ap s
 .Fl I
-option in
-.Xr rgbasm 1 )
-will be searched.
+option on the command line will be searched.
 You may nest
 .Ic INCLUDE
 calls infinitely (or until you run out of memory, whichever comes first).
