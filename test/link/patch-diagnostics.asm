@@ -8,3 +8,6 @@ ld a, 1 >> (fzero - 1)
 ld a, 1 >> (fzero + 32)
 ld a, 1 >>> (fzero - 1)
 ld a, 1 >>> (fzero + 32)
+
+; We rely on this landing at address $0000, which isn't *guaranteed*...
+assert startof("test") == 0

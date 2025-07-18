@@ -3,8 +3,10 @@ SECTION "fixed", ROM0[420]
 	ds 69
 	PRINTLN "{@}"
 
-; FIXME: expected to land at $0000
 SECTION "floating", ROM0
 	db @
 	ds 42
 	db @
+
+; We rely on this landing at address $0000, which isn't *guaranteed*...
+assert STARTOF("floating") == 0
