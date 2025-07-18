@@ -112,7 +112,7 @@ rgbgfx_obj := \
 	src/gfx/warning.o
 
 rgbasm: ${rgbasm_obj}
-	$Q${CXX} ${REALLDFLAGS} -o $@ ${rgbasm_obj} ${REALCXXFLAGS} src/version.cpp -lm
+	$Q${CXX} ${REALLDFLAGS} -o $@ ${rgbasm_obj} ${REALCXXFLAGS} src/version.cpp
 
 rgblink: ${rgblink_obj}
 	$Q${CXX} ${REALLDFLAGS} -o $@ ${rgblink_obj} ${REALCXXFLAGS} src/version.cpp
