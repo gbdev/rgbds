@@ -715,10 +715,10 @@ is a string, this function returns the size of the section named
 If
 .Ar arg
 is a section type keyword, it returns the size of that section type.
+The result is not constant, since only RGBLINK can compute its value.
 If
 .Ar arg
 is an 8-bit or 16-bit register, it returns the size of that register.
-The result is not constant, since only RGBLINK can compute its value.
 .It Fn STARTOF arg Ta If
 .Ar arg
 is a string, this function returns the starting address of the section named
