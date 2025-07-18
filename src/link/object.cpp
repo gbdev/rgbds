@@ -92,12 +92,13 @@ static void readFileStackNode(
     FILE *file, std::vector<FileStackNode> &fileNodes, uint32_t nodeID, char const *fileName
 ) {
 	FileStackNode &node = fileNodes[nodeID];
-	uint32_t parentID;
 
+	uint32_t parentID;
 	tryReadLong(
 	    parentID, file, "%s: Cannot read node #%" PRIu32 "'s parent ID: %s", fileName, nodeID
 	);
 	node.parent = parentID != UINT32_MAX ? &fileNodes[parentID] : nullptr;
+
 	tryReadLong(
 	    node.lineNo, file, "%s: Cannot read node #%" PRIu32 "'s line number: %s", fileName, nodeID
 	);
@@ -206,9 +207,7 @@ static void readPatch(
     uint32_t patchID,
     std::vector<FileStackNode> const &fileNodes
 ) {
-	uint32_t nodeID, rpnSize;
-	PatchType type;
-
+	uint32_t nodeID;
 	tryReadLong(
 	    nodeID,
 	    file,
@@ -218,6 +217,7 @@ static void readPatch(
 	    patchID
 	);
 	patch.src = &fileNodes[nodeID];
+
 	tryReadLong(
 	    patch.lineNo,
 	    file,
@@ -250,6 +250,8 @@ static void readPatch(
 	    sectName.c_str(),
 	    patchID
 	);
+
+	PatchType type;
 	tryGetc(
 	    PatchType,
 	    type,
@@ -260,6 +262,8 @@ static void readPatch(
 	    patchID
 	);
 	patch.type = type;
+
+	uint32_t rpnSize;
 	tryReadLong(
 	    rpnSize,
 	    file,
@@ -270,9 +274,7 @@ static void readPatch(
 	);
 
 	patch.rpnExpression.resize(rpnSize);
-	size_t nbElementsRead = fread(patch.rpnExpression.data(), 1, rpnSize, file);
-
-	if (nbElementsRead != rpnSize) {
+	if (fread(patch.rpnExpression.data(), 1, rpnSize, file) != rpnSize) {
 		fatal(
 		    "%s: Cannot read \"%s\"'s patch #%" PRIu32 "'s RPN expression: %s",
 		    fileName,
@@ -366,8 +368,7 @@ static void readSection(
 	if (sect_HasData(section.type)) {
 		if (section.size) {
 			section.data.resize(section.size);
-			if (size_t nbRead = fread(section.data.data(), 1, section.size, file);
-			    nbRead != section.size) {
+			if (fread(section.data.data(), 1, section.size, file) != section.size) {
 				fatal(
 				    "%s: Cannot read \"%s\"'s data: %s",
 				    fileName,
