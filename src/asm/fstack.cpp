@@ -3,6 +3,7 @@
 #include "asm/fstack.hpp"
 #include <sys/stat.h>
 
+#include <deque>
 #include <errno.h>
 #include <inttypes.h>
 #include <memory>
@@ -46,7 +47,7 @@ size_t maxRecursionDepth;
 // The first include path for `fstk_FindFile` to try is none at all
 static std::vector<std::string> includePaths = {""};
 
-static std::string preIncludeName;
+static std::deque<std::string> preIncludeNames;
 
 std::string const &FileStackNode::dump(uint32_t curLineNo) const {
 	if (std::holds_alternative<std::vector<uint32_t>>(data)) {
@@ -115,12 +116,9 @@ void fstk_AddIncludePath(std::string const &path) {
 	}
 }
 
-void fstk_SetPreIncludeFile(std::string const &path) {
-	if (!preIncludeName.empty()) {
-		warnx("Overriding pre-included filename %s", preIncludeName.c_str());
-	}
-	preIncludeName = path;
-	verbosePrint("Pre-included filename %s\n", preIncludeName.c_str()); // LCOV_EXCL_LINE
+void fstk_AddPreIncludeFile(std::string const &path) {
+	preIncludeNames.emplace_front(path);
+	verbosePrint("Pre-included filename %s\n", path.c_str()); // LCOV_EXCL_LINE
 }
 
 static bool isValidFilePath(std::string const &path) {
@@ -413,13 +411,11 @@ void fstk_Init(std::string const &mainPath, size_t maxDepth) {
 
 	maxRecursionDepth = maxDepth;
 
-	if (!preIncludeName.empty()) {
-		if (std::optional<std::string> fullPath = fstk_FindFile(preIncludeName); fullPath) {
+	for (std::string const &name : preIncludeNames) {
+		if (std::optional<std::string> fullPath = fstk_FindFile(name); fullPath) {
 			newFileContext(*fullPath, false);
 		} else {
-			error(
-			    "Error reading pre-included file '%s': %s", preIncludeName.c_str(), strerror(errno)
-			);
+			error("Error reading pre-included file '%s': %s", name.c_str(), strerror(errno));
 		}
 	}
 }
