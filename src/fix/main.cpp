@@ -90,7 +90,7 @@ static void error(char const *fmt, ...) {
 	putc('\n', stderr);
 
 	if (nbErrors != UINT32_MAX) {
-		nbErrors++;
+		++nbErrors;
 	}
 }
 
@@ -104,7 +104,7 @@ static void fatal(char const *fmt, ...) {
 	putc('\n', stderr);
 
 	if (nbErrors != UINT32_MAX) {
-		nbErrors++;
+		++nbErrors;
 	}
 }
 
@@ -206,6 +206,18 @@ static void printAcceptedMBCNames() {
 
 static uint8_t tpp1Rev[2];
 
+static void skipWhitespace(char const *&ptr) {
+	while (*ptr == ' ' || *ptr == '\t') {
+		++ptr;
+	}
+}
+
+static void skipMBCSpace(char const *&ptr) {
+	while (*ptr == ' ' || *ptr == '\t' || *ptr == '_') {
+		++ptr;
+	}
+}
+
 static bool readMBCSlice(char const *&name, char const *expected) {
 	while (*expected) {
 		char c = *name++;
@@ -237,7 +249,7 @@ static MbcType parseMBC(char const *name) {
 		int base = 0;
 
 		if (name[0] == '$') {
-			name++;
+			++name;
 			base = 16;
 		}
 		// Parse number, and return it as-is (unless it's too large)
@@ -257,10 +269,7 @@ static MbcType parseMBC(char const *name) {
 		uint16_t mbc;
 		char const *ptr = name;
 
-		// Trim off leading whitespace
-		while (*ptr == ' ' || *ptr == '\t') {
-			ptr++;
-		}
+		skipWhitespace(ptr); // Trim off leading whitespace
 
 #define tryReadSlice(expected) \
 	do { \
@@ -274,11 +283,9 @@ static MbcType parseMBC(char const *name) {
 		case 'r':
 			tryReadSlice("OM");
 			// Handle optional " ONLY"
-			while (*ptr == ' ' || *ptr == '\t' || *ptr == '_') {
-				ptr++;
-			}
+			skipMBCSpace(ptr);
 			if (*ptr == 'O' || *ptr == 'o') {
-				ptr++;
+				++ptr;
 				tryReadSlice("NLY");
 			}
 			mbc = ROM;
@@ -351,9 +358,7 @@ static MbcType parseMBC(char const *name) {
 			case 'P': {
 				tryReadSlice("P1");
 				// Parse version
-				while (*ptr == ' ' || *ptr == '_') {
-					ptr++;
-				}
+				skipMBCSpace(ptr);
 				// Major
 				char *endptr;
 				unsigned long val = strtoul(ptr, &endptr, 10);
@@ -420,23 +425,18 @@ static MbcType parseMBC(char const *name) {
 		// clang-format on
 
 		for (;;) {
-			// Trim off trailing whitespace
-			while (*ptr == ' ' || *ptr == '\t' || *ptr == '_') {
-				ptr++;
-			}
+			skipWhitespace(ptr); // Trim off trailing whitespace
 
 			// If done, start processing "features"
 			if (!*ptr) {
 				break;
 			}
 			// We expect a '+' at this point
+			skipMBCSpace(ptr);
 			if (*ptr++ != '+') {
 				return MBC_BAD;
 			}
-			// Trim off leading whitespace
-			while (*ptr == ' ' || *ptr == '\t' || *ptr == '_') {
-				ptr++;
-			}
+			skipMBCSpace(ptr);
 
 			switch (*ptr++) {
 			case 'B': // BATTERY
@@ -502,7 +502,7 @@ static MbcType parseMBC(char const *name) {
 		case MBC1:
 		case MMM01:
 			if (features == RAM) {
-				mbc++;
+				++mbc;
 			} else if (features == (RAM | BATTERY)) {
 				mbc += 2;
 			} else if (features) {
@@ -534,7 +534,7 @@ static MbcType parseMBC(char const *name) {
 			    MBC3_TIMER_BATTERY + 1 == MBC3_TIMER_RAM_BATTERY, "Enum sanity check failed!"
 			);
 			if (features == RAM) {
-				mbc++;
+				++mbc;
 			} else if (features == (RAM | BATTERY)) {
 				mbc += 2;
 			} else if (features) {
@@ -552,7 +552,7 @@ static MbcType parseMBC(char const *name) {
 			static_assert(MBC5_RUMBLE + 1 == MBC5_RUMBLE_RAM, "Enum sanity check failed!");
 			static_assert(MBC5_RUMBLE + 2 == MBC5_RUMBLE_RAM_BATTERY, "Enum sanity check failed!");
 			if (features == RAM) {
-				mbc++;
+				++mbc;
 			} else if (features == (RAM | BATTERY)) {
 				mbc += 2;
 			} else if (features) {
@@ -604,10 +604,7 @@ static MbcType parseMBC(char const *name) {
 			break;
 		}
 
-		// Trim off trailing whitespace
-		while (*ptr == ' ' || *ptr == '\t') {
-			ptr++;
-		}
+		skipWhitespace(ptr); // Trim off trailing whitespace
 
 		// If there is still something past the whitespace, error out
 		if (*ptr) {
@@ -1050,7 +1047,7 @@ static void
 					fatal("\"%s\" has more than 65536 banks", name);
 					return;
 				}
-				nbBanks++;
+				++nbBanks;
 
 				// Update global checksum, too
 				for (uint16_t i = 0; i < bankLen; i++) {
@@ -1375,7 +1372,7 @@ int main(int argc, char *argv[]) {
 				default:
 					warnx("Ignoring '%c' in fix spec", *musl_optarg);
 				}
-				musl_optarg++;
+				++musl_optarg;
 			}
 			break;
 

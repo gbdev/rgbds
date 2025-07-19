@@ -527,7 +527,7 @@ void obj_ReadFile(char const *fileName, unsigned int fileID) {
 
 		sym_AddSymbol(symbol);
 		if (std::holds_alternative<Label>(symbol.data)) {
-			nbSymPerSect[std::get<Label>(symbol.data).sectionID]++;
+			++nbSymPerSect[std::get<Label>(symbol.data).sectionID];
 		}
 	}
 

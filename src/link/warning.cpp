@@ -52,7 +52,7 @@ static void printDiag(
 
 static void incrementErrors() {
 	if (nbErrors != UINT32_MAX) {
-		nbErrors++;
+		++nbErrors;
 	}
 }
 

@@ -209,7 +209,7 @@ static void parseScrambleSpec(char const *spec) {
 		}
 
 		if (*spec == '=') {
-			spec++; // `strtoul` will skip the whitespace on its own
+			++spec; // `strtoul` will skip the whitespace on its own
 			unsigned long limit;
 			char *endptr;
 

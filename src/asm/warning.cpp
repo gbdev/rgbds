@@ -81,8 +81,7 @@ static void printDiag(
 
 static void incrementErrors() {
 	// This intentionally makes 0 act as "unlimited" (or at least "limited to sizeof(unsigned)")
-	nbErrors++;
-	if (nbErrors == maxErrors) {
+	if (++nbErrors == maxErrors) {
 		fprintf(
 		    stderr,
 		    "Assembly aborted after the maximum of %u error%s! (configure with "

@@ -238,13 +238,13 @@ size_t charmap_ConvertNext(std::string_view &input, std::vector<int32_t> *output
 			break;
 		}
 
-		inputIdx++; // Consume that char
+		++inputIdx; // Consume that char
 
 		if (charmap.nodes[nodeIdx].isTerminal()) {
 			matchIdx = nodeIdx; // This node matches, register it
 			rewindDistance = 0; // If no longer match is found, rewind here
 		} else {
-			rewindDistance++;
+			++rewindDistance;
 		}
 	}
 
@@ -271,7 +271,7 @@ size_t charmap_ConvertNext(std::string_view &input, std::vector<int32_t> *output
 				codepointLen = 1;
 				break;
 			}
-			codepointLen++;
+			++codepointLen;
 			if (state == UTF8_ACCEPT) {
 				break;
 			}

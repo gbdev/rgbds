@@ -90,7 +90,7 @@ void out_AddSection(Section const &section) {
 	// Insert section while keeping the list sorted by increasing org
 	auto pos = bankSections.begin();
 	while (pos != bankSections.end() && (*pos)->org < section.org) {
-		pos++;
+		++pos;
 	}
 	bankSections.insert(pos, &section);
 }
@@ -178,7 +178,7 @@ static void
 			// Output padding up to the next SECTION
 			while (offset + baseOffset < section->org) {
 				putc(getNextFillByte(), outputFile);
-				offset++;
+				++offset;
 			}
 
 			// Output the section itself
@@ -196,7 +196,7 @@ static void
 	if (!disablePadding) {
 		while (offset < size) {
 			putc(getNextFillByte(), outputFile);
-			offset++;
+			++offset;
 		}
 	}
 }
@@ -419,7 +419,7 @@ uint16_t forEachSection(SortedSections const &sectList, F callback) {
 		                                                                         : zeroLenSection;
 		used += (*pickedSection)->size;
 		callback(**pickedSection);
-		pickedSection++;
+		++pickedSection;
 	}
 	return used;
 }

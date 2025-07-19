@@ -373,7 +373,7 @@ void LexerState::clear(uint32_t lineNo_) {
 }
 
 static void nextLine() {
-	lexerState->lineNo++;
+	++lexerState->lineNo;
 }
 
 uint32_t lexer_GetIFDepth() {
@@ -501,7 +501,7 @@ LexerState::~LexerState() {
 
 bool Expansion::advance() {
 	assume(offset <= size());
-	offset++;
+	++offset;
 	return offset > size();
 }
 
@@ -511,12 +511,11 @@ BufferedContent::~BufferedContent() {
 
 void BufferedContent::advance() {
 	assume(offset < std::size(buf));
-	offset++;
-	if (offset == std::size(buf)) {
+	if (++offset == std::size(buf)) {
 		offset = 0; // Wrap around if necessary
 	}
 	if (size > 0) {
-		size--;
+		--size;
 	}
 }
 
@@ -810,11 +809,11 @@ static int peek() {
 		return c;
 	}
 
-	lexerState->macroArgScanDistance++; // Do not consider again
+	++lexerState->macroArgScanDistance; // Do not consider again
 
 	if (c == '\\' && !lexerState->disableMacroArgs) {
 		// If character is a backslash, check for a macro arg
-		lexerState->macroArgScanDistance++;
+		++lexerState->macroArgScanDistance;
 		c = lexerState->peekCharAhead();
 		if (isMacroChar(c)) {
 			shiftChar();
@@ -854,10 +853,10 @@ static void shiftChar() {
 		if (lexerState->captureBuf) {
 			lexerState->captureBuf->push_back(peek());
 		}
-		lexerState->captureSize++;
+		++lexerState->captureSize;
 	}
 
-	lexerState->macroArgScanDistance--;
+	--lexerState->macroArgScanDistance;
 
 	for (;;) {
 		if (!lexerState->expansions.empty()) {
@@ -871,7 +870,7 @@ static void shiftChar() {
 		} else {
 			// Advance within the file contents
 			if (std::holds_alternative<ViewedContent>(lexerState->content)) {
-				std::get<ViewedContent>(lexerState->content).offset++;
+				++std::get<ViewedContent>(lexerState->content).offset;
 			} else {
 				std::get<BufferedContent>(lexerState->content).advance();
 			}
@@ -1008,7 +1007,7 @@ static std::string readAnonLabelRef(char c) {
 	// We come here having already peeked at one char, so no need to do it again
 	do {
 		shiftChar();
-		n++;
+		++n;
 	} while (peek() == c);
 
 	return sym_MakeAnonLabelName(n, c == '-');
@@ -1273,7 +1272,7 @@ static uint32_t readGfxConstant() {
 			bitPlaneUpper = bitPlaneUpper << 1 | (pixel >> 1);
 		}
 		if (width < 9) {
-			width++;
+			++width;
 		}
 	}
 
@@ -2124,13 +2123,13 @@ static Token yylex_RAW() {
 
 		case '(': // Open parentheses inside macro args
 			if (parenDepth < UINT_MAX) {
-				parenDepth++;
+				++parenDepth;
 			}
 			goto append;
 
 		case ')': // Close parentheses inside macro args
 			if (parenDepth > 0) {
-				parenDepth--;
+				--parenDepth;
 			}
 			goto append;
 
@@ -2358,11 +2357,11 @@ static Token yylex_SKIP_TO_ENDR() {
 		switch (readIdentifier(c, false).type) {
 		case T_(POP_FOR):
 		case T_(POP_REPT):
-			depth++;
+			++depth;
 			break;
 
 		case T_(POP_ENDR):
-			depth--;
+			--depth;
 			// `lexer_CaptureRept` has already guaranteed that the `ENDR`s are balanced
 			assume(depth > 0);
 			break;
@@ -2483,12 +2482,12 @@ Capture lexer_CaptureRept() {
 			switch (readIdentifier(c, false).type) {
 			case T_(POP_REPT):
 			case T_(POP_FOR):
-				depth++;
+				++depth;
 				break; // Ignore the rest of that line
 
 			case T_(POP_ENDR):
 				if (depth) {
-					depth--;
+					--depth;
 					break; // Ignore the rest of that line
 				}
 				endCapture(capture);

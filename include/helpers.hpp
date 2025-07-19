@@ -71,7 +71,7 @@ static inline int ctz(unsigned int x) {
 
 	while (!(x & 1)) {
 		x >>= 1;
-		cnt++;
+		++cnt;
 	}
 	return cnt;
 }
@@ -81,7 +81,7 @@ static inline int clz(unsigned int x) {
 
 	while (x <= UINT_MAX / 2) {
 		x <<= 1;
-		cnt++;
+		++cnt;
 	}
 	return cnt;
 }

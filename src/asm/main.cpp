@@ -293,7 +293,7 @@ int main(int argc, char *argv[]) {
 		case 'Q':
 			precisionArg = musl_optarg;
 			if (precisionArg[0] == '.') {
-				precisionArg++;
+				++precisionArg;
 			}
 			precision = strtoul(precisionArg, &endptr, 0);
 

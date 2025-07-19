@@ -98,7 +98,7 @@ Section *sect_FindSectionByName(std::string const &name) {
 #define sectError(...) \
 	do { \
 		error(__VA_ARGS__); \
-		nbSectErrors++; \
+		++nbSectErrors; \
 	} while (0)
 
 static unsigned int mergeSectUnion(

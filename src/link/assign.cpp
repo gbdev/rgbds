@@ -58,7 +58,7 @@ static void assignSection(Section &section, MemoryLocation const &location) {
 		next->bank = location.bank;
 	}
 
-	nbSectionsToAssign--;
+	--nbSectionsToAssign;
 
 	out_AddSection(section);
 }
@@ -151,7 +151,7 @@ static ssize_t getPlacement(Section const &section, MemoryLocation &location) {
 				location.address += section.alignMask + 1 + section.alignOfs;
 			} else {
 				// Any location is fine, so, next free block
-				spaceIdx++;
+				++spaceIdx;
 				if (spaceIdx < bankMem.size()) {
 					location.address = bankMem[spaceIdx].address;
 				}
@@ -161,7 +161,7 @@ static ssize_t getPlacement(Section const &section, MemoryLocation &location) {
 			// go forwards until that is no longer the case.
 			while (spaceIdx < bankMem.size()
 			       && location.address >= bankMem[spaceIdx].address + bankMem[spaceIdx].size) {
-				spaceIdx++;
+				++spaceIdx;
 			}
 
 			// Try again with the new location/free space combo
@@ -174,7 +174,7 @@ static ssize_t getPlacement(Section const &section, MemoryLocation &location) {
 			return -1;
 		} else if (scrambleROMX && section.type == SECTTYPE_ROMX && location.bank <= scrambleROMX) {
 			if (location.bank > typeInfo.firstBank) {
-				location.bank--;
+				--location.bank;
 			} else if (scrambleROMX < typeInfo.lastBank) {
 				location.bank = scrambleROMX + 1;
 			} else {
@@ -183,7 +183,7 @@ static ssize_t getPlacement(Section const &section, MemoryLocation &location) {
 		} else if (scrambleWRAMX && section.type == SECTTYPE_WRAMX
 		           && location.bank <= scrambleWRAMX) {
 			if (location.bank > typeInfo.firstBank) {
-				location.bank--;
+				--location.bank;
 			} else if (scrambleWRAMX < typeInfo.lastBank) {
 				location.bank = scrambleWRAMX + 1;
 			} else {
@@ -191,14 +191,14 @@ static ssize_t getPlacement(Section const &section, MemoryLocation &location) {
 			}
 		} else if (scrambleSRAM && section.type == SECTTYPE_SRAM && location.bank <= scrambleSRAM) {
 			if (location.bank > typeInfo.firstBank) {
-				location.bank--;
+				--location.bank;
 			} else if (scrambleSRAM < typeInfo.lastBank) {
 				location.bank = scrambleSRAM + 1;
 			} else {
 				return -1;
 			}
 		} else if (location.bank < typeInfo.lastBank) {
-			location.bank++;
+			++location.bank;
 		} else {
 			return -1;
 		}
@@ -355,11 +355,11 @@ static void categorizeSection(Section &section) {
 	// Insert section while keeping the list sorted by decreasing size
 	auto pos = sections.begin();
 	while (pos != sections.end() && (*pos)->size > section.size) {
-		pos++;
+		++pos;
 	}
 	sections.insert(pos, &section);
 
-	nbSectionsToAssign++;
+	++nbSectionsToAssign;
 }
 
 void assign_AssignSections() {
@@ -395,8 +395,7 @@ void assign_AssignSections() {
 		     constraints--) {
 			for (Section *section : unassignedSections[constraints]) {
 				fprintf(stderr, "%c \"%s\"", nbSections == 0 ? ';' : ',', section->name.c_str());
-				nbSections++;
-				if (nbSections == 10) {
+				if (++nbSections == 10) {
 					goto max_out; // Can't `break` out of a nested loop
 				}
 			}

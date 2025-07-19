@@ -37,6 +37,12 @@ void requireZeroErrors() {
 	}
 }
 
+static void incrementErrors() {
+	if (nbErrors != std::numeric_limits<decltype(nbErrors)>::max()) {
+		++nbErrors;
+	}
+}
+
 void error(char const *fmt, ...) {
 	va_list ap;
 	fputs("error: ", stderr);
@@ -45,9 +51,7 @@ void error(char const *fmt, ...) {
 	va_end(ap);
 	putc('\n', stderr);
 
-	if (nbErrors != std::numeric_limits<decltype(nbErrors)>::max()) {
-		nbErrors++;
-	}
+	incrementErrors();
 }
 
 [[noreturn]]
@@ -59,10 +63,7 @@ void fatal(char const *fmt, ...) {
 	va_end(ap);
 	putc('\n', stderr);
 
-	if (nbErrors != std::numeric_limits<decltype(nbErrors)>::max()) {
-		nbErrors++;
-	}
-
+	incrementErrors();
 	giveUp();
 }
 
@@ -89,9 +90,7 @@ void warning(WarningID id, char const *fmt, ...) {
 		va_end(ap);
 		putc('\n', stderr);
 
-		if (nbErrors != std::numeric_limits<decltype(nbErrors)>::max()) {
-			nbErrors++;
-		}
+		incrementErrors();
 		break;
 	}
 }

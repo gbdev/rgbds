@@ -189,7 +189,7 @@ bool yywrap() {
 			}
 		}
 		// Advance to the next iteration
-		fileInfoIters.front()++;
+		++fileInfoIters.front();
 		// If this wasn't the last iteration, wrap instead of popping
 		if (fileInfoIters.front() <= context.nbReptIters) {
 			lexer_RestartRept(context.fileInfo->lineNo);

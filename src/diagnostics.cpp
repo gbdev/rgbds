@@ -71,7 +71,7 @@ std::pair<WarningState, std::optional<uint8_t>> getInitialWarningState(std::stri
 		}
 		param = param * 10 + (*ptr - '0');
 
-		ptr++;
+		++ptr;
 	} while (*ptr);
 
 	// If we reached the end of the string, truncate it at the '='

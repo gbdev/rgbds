@@ -57,7 +57,7 @@ static int getopt(int argc, char *argv[], char const *optstring) {
 	}
 
 	if (!musl_optpos) {
-		musl_optpos++;
+		++musl_optpos;
 	}
 	k = mbtowc(&c, argv[musl_optind] + musl_optpos, MB_LEN_MAX);
 	if (k < 0) {
@@ -68,12 +68,12 @@ static int getopt(int argc, char *argv[], char const *optstring) {
 	musl_optpos += k;
 
 	if (!argv[musl_optind][musl_optpos]) {
-		musl_optind++;
+		++musl_optind;
 		musl_optpos = 0;
 	}
 
 	if (optstring[0] == '-' || optstring[0] == '+') {
-		optstring++;
+		++optstring;
 	}
 
 	i = 0;
@@ -83,7 +83,7 @@ static int getopt(int argc, char *argv[], char const *optstring) {
 		if (l > 0) {
 			i += l;
 		} else {
-			i++;
+			++i;
 		}
 	} while (l && d != c);
 
@@ -185,11 +185,11 @@ static int musl_getopt_long_core(
 
 			opt = start;
 			if (*opt == '-') {
-				opt++;
+				++opt;
 			}
 			while (*opt && *opt != '=' && *opt == *name) {
-				name++;
-				opt++;
+				++name;
+				++opt;
 			}
 			if (*opt && *opt != '=') {
 				continue;
@@ -200,7 +200,7 @@ static int musl_getopt_long_core(
 				cnt = 1;
 				break;
 			}
-			cnt++;
+			++cnt;
 		}
 		if (cnt == 1 && longonly && arg - start == mblen(start, MB_LEN_MAX)) {
 			int l = arg - start;
@@ -209,10 +209,10 @@ static int musl_getopt_long_core(
 				int j = 0;
 
 				while (j < l && start[j] == optstring[i + j]) {
-					j++;
+					++j;
 				}
 				if (j == l) {
-					cnt++;
+					++cnt;
 					break;
 				}
 			}
@@ -220,7 +220,7 @@ static int musl_getopt_long_core(
 		if (cnt == 1) {
 			i = match;
 			opt = arg;
-			musl_optind++;
+			++musl_optind;
 			if (*opt == '=') {
 				if (!longopts[i].has_arg) {
 					musl_optopt = longopts[i].val;
@@ -254,7 +254,7 @@ static int musl_getopt_long_core(
 					);
 					return '?';
 				}
-				musl_optind++;
+				++musl_optind;
 			}
 			if (idx) {
 				*idx = i;
@@ -275,7 +275,7 @@ static int musl_getopt_long_core(
 				    strlen(argv[musl_optind] + 2)
 				);
 			}
-			musl_optind++;
+			++musl_optind;
 			return '?';
 		}
 	}

@@ -545,7 +545,7 @@ Symbol *sym_AddAnonLabel() {
 	}
 
 	std::string anon = sym_MakeAnonLabelName(0, true); // The direction is important!
-	anonLabelID++;
+	++anonLabelID;
 	return addLabel(anon);
 }
 
@@ -565,8 +565,8 @@ std::string sym_MakeAnonLabelName(uint32_t ofs, bool neg) {
 			id = anonLabelID - ofs;
 		}
 	} else {
-		ofs--; // We're referencing symbols that haven't been created yet...
-		if (ofs > UINT32_MAX - anonLabelID) {
+		// We're referencing symbols that haven't been created yet...
+		if (--ofs > UINT32_MAX - anonLabelID) {
 			// LCOV_EXCL_START
 			error(
 			    "Reference to anonymous label %" PRIu32 " after, when only %" PRIu32

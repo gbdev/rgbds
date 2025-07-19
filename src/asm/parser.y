@@ -2830,7 +2830,7 @@ static size_t strlenUTF8(std::string const &str, bool printErrors) {
 			state = UTF8_ACCEPT;
 			// fallthrough
 		case UTF8_ACCEPT:
-			len++;
+			++len;
 			break;
 		}
 	}
@@ -2840,7 +2840,7 @@ static size_t strlenUTF8(std::string const &str, bool printErrors) {
 		if (printErrors) {
 			error("STRLEN: Incomplete UTF-8 character");
 		}
-		len++;
+		++len;
 	}
 
 	return len;
@@ -2861,10 +2861,10 @@ static std::string strsliceUTF8(std::string const &str, uint32_t start, uint32_t
 			state = UTF8_ACCEPT;
 			// fallthrough
 		case UTF8_ACCEPT:
-			curIdx++;
+			++curIdx;
 			break;
 		}
-		index++;
+		++index;
 	}
 
 	// An index 1 past the end of the string is allowed, but will trigger the
@@ -2887,16 +2887,16 @@ static std::string strsliceUTF8(std::string const &str, uint32_t start, uint32_t
 			state = UTF8_ACCEPT;
 			// fallthrough
 		case UTF8_ACCEPT:
-			curIdx++;
+			++curIdx;
 			break;
 		}
-		index++;
+		++index;
 	}
 
 	// Check for partial code point.
 	if (state != UTF8_ACCEPT) {
 		error("STRSLICE: Incomplete UTF-8 character");
-		curIdx++;
+		++curIdx;
 	}
 
 	if (curIdx < stop) {
@@ -2925,10 +2925,10 @@ static std::string strsubUTF8(std::string const &str, uint32_t pos, uint32_t len
 			state = UTF8_ACCEPT;
 			// fallthrough
 		case UTF8_ACCEPT:
-			curPos++;
+			++curPos;
 			break;
 		}
-		index++;
+		++index;
 	}
 
 	// A position 1 past the end of the string is allowed, but will trigger the
@@ -2950,16 +2950,16 @@ static std::string strsubUTF8(std::string const &str, uint32_t pos, uint32_t len
 			state = UTF8_ACCEPT;
 			// fallthrough
 		case UTF8_ACCEPT:
-			curLen++;
+			++curLen;
 			break;
 		}
-		index++;
+		++index;
 	}
 
 	// Check for partial code point.
 	if (state != UTF8_ACCEPT) {
 		error("STRSUB: Incomplete UTF-8 character");
-		curLen++;
+		++curLen;
 	}
 
 	if (curLen < len) {
@@ -3147,7 +3147,7 @@ static std::string
 			fmt.appendString(str, std::get<std::string>(args[argIndex]));
 		}
 
-		argIndex++;
+		++argIndex;
 	}
 
 	if (argIndex < args.size()) {

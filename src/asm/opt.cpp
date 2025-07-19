@@ -91,7 +91,7 @@ void opt_Parse(char const *s) {
 	case 'Q':
 		precisionArg = &s[1];
 		if (precisionArg[0] == '.') {
-			precisionArg++;
+			++precisionArg;
 		}
 		if (strlen(precisionArg) <= 2) {
 			int result;
