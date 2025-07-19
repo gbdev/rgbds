@@ -18,7 +18,7 @@ void WarningState::update(WarningState other) {
 	}
 }
 
-std::pair<WarningState, std::optional<uint8_t>> getInitialWarningState(std::string &flag) {
+std::pair<WarningState, std::optional<uint32_t>> getInitialWarningState(std::string &flag) {
 	// Check for prefixes that affect what the flag does
 	WarningState state;
 	if (flag.starts_with("error=")) {
@@ -51,28 +51,22 @@ std::pair<WarningState, std::optional<uint8_t>> getInitialWarningState(std::stri
 	// Is the rest of the string a decimal number?
 	// We want to avoid `strtoul`'s whitespace and sign, so we parse manually
 	char const *ptr = flag.c_str() + equals + 1;
-	uint8_t param = 0;
-	bool warned = false;
+	uint32_t param = 0;
+	bool overflowed = false;
 
-	// The `if`'s condition above ensures that this will run at least once
-	do {
-		// If we don't have a digit, bail
-		if (*ptr < '0' || *ptr > '9') {
-			break;
-		}
-		// Avoid overflowing!
-		if (param > UINT8_MAX - (*ptr - '0')) {
-			if (!warned) {
-				warnx("Invalid warning flag \"%s\": capping parameter at 255", flag.c_str());
-			}
-			warned = true; // Only warn once, cap always
-			param = 255;
+	for (; *ptr >= '0' && *ptr <= '9'; ++ptr) {
+		if (overflowed) {
 			continue;
 		}
-		param = param * 10 + (*ptr - '0');
 
-		++ptr;
-	} while (*ptr);
+		uint32_t c = *ptr - '0';
+		if (param > (UINT32_MAX - c) / 10) {
+			overflowed = true;
+			param = UINT32_MAX;
+			continue;
+		}
+		param = param * 10 + c;
+	}
 
 	// If we reached the end of the string, truncate it at the '='
 	if (*ptr == '\0') {

@@ -28,7 +28,7 @@ struct WarningState {
 	void update(WarningState other);
 };
 
-std::pair<WarningState, std::optional<uint8_t>> getInitialWarningState(std::string &flag);
+std::pair<WarningState, std::optional<uint32_t>> getInitialWarningState(std::string &flag);
 
 template<typename L>
 struct WarningFlag {
@@ -150,20 +150,17 @@ std::string Diagnostics<L, W>::processWarningFlag(char const *flag) {
 		if (!param.has_value() || *param == 0) {
 			param = paramWarning.defaultLevel;
 		} else if (*param > maxParam) {
-			if (*param != 255) { // Don't warn if already capped
-				warnx(
-				    "Invalid parameter %" PRIu8
-				    " for warning flag \"%s\"; capping at maximum %" PRIu8,
-				    *param,
-				    rootFlag.c_str(),
-				    maxParam
-				);
-			}
+			warnx(
+			    "Invalid warning flag parameter \"%s=%" PRIu32 "\"; capping at maximum %" PRIu8,
+			    rootFlag.c_str(),
+			    *param,
+			    maxParam
+			);
 			*param = maxParam;
 		}
 
 		// Set the first <param> to enabled/error, and disable the rest
-		for (uint8_t ofs = 0; ofs < maxParam; ofs++) {
+		for (uint32_t ofs = 0; ofs < maxParam; ofs++) {
 			if (WarningState &warning = state.flagStates[baseID + ofs]; ofs < *param) {
 				warning.update(flagState);
 			} else {
@@ -174,7 +171,7 @@ std::string Diagnostics<L, W>::processWarningFlag(char const *flag) {
 	}
 
 	if (param.has_value()) {
-		warnx("Unknown warning flag parameter \"%s\"", rootFlag.c_str());
+		warnx("Unknown warning flag parameter \"%s=%" PRIu32 "\"", rootFlag.c_str(), *param);
 		return rootFlag;
 	}
 

@@ -1,0 +1,5 @@
+warning: Invalid warning flag parameter "truncation=256"; capping at maximum 2
+warning: diagnostic-parameter-cap.asm(3): [-Wtruncation]
+    Expression must be 8-bit; use LOW() to force 8-bit
+warning: diagnostic-parameter-cap.asm(4): [-Wtruncation]
+    Expression must be 8-bit; use LOW() to force 8-bit
