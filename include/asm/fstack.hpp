@@ -56,7 +56,7 @@ std::shared_ptr<std::string> fstk_GetUniqueIDStr();
 MacroArgs *fstk_GetCurrentMacroArgs();
 
 void fstk_AddIncludePath(std::string const &path);
-void fstk_SetPreIncludeFile(std::string const &path);
+void fstk_AddPreIncludeFile(std::string const &path);
 std::optional<std::string> fstk_FindFile(std::string const &path);
 bool fstk_FileError(std::string const &path, char const *functionName);
 

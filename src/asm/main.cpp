@@ -270,7 +270,7 @@ int main(int argc, char *argv[]) {
 			break;
 
 		case 'P':
-			fstk_SetPreIncludeFile(musl_optarg);
+			fstk_AddPreIncludeFile(musl_optarg);
 			break;
 
 			unsigned long padByte;
