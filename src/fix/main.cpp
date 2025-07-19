@@ -263,13 +263,13 @@ static MbcType parseMBC(char const *name) {
 			return MBC_BAD_RANGE;
 		}
 		return static_cast<MbcType>(mbc);
+	}
 
-	} else {
-		// Begin by reading the MBC type:
-		uint16_t mbc;
-		char const *ptr = name;
+	// Begin by reading the MBC type:
+	uint16_t mbc;
+	char const *ptr = name;
 
-		skipWhitespace(ptr); // Trim off leading whitespace
+	skipWhitespace(ptr); // Trim off leading whitespace
 
 #define tryReadSlice(expected) \
 	do { \
@@ -278,341 +278,340 @@ static MbcType parseMBC(char const *name) {
 		} \
 	} while (0)
 
+	switch (*ptr++) {
+	case 'R': // ROM / ROM_ONLY
+	case 'r':
+		tryReadSlice("OM");
+		// Handle optional " ONLY"
+		skipMBCSpace(ptr);
+		if (*ptr == 'O' || *ptr == 'o') {
+			++ptr;
+			tryReadSlice("NLY");
+		}
+		mbc = ROM;
+		break;
+
+	case 'M': // MBC{1, 2, 3, 5, 6, 7} / MMM01
+	case 'm':
 		switch (*ptr++) {
-		case 'R': // ROM / ROM_ONLY
-		case 'r':
-			tryReadSlice("OM");
-			// Handle optional " ONLY"
-			skipMBCSpace(ptr);
-			if (*ptr == 'O' || *ptr == 'o') {
-				++ptr;
-				tryReadSlice("NLY");
-			}
-			mbc = ROM;
-			break;
-
-		case 'M': // MBC{1, 2, 3, 5, 6, 7} / MMM01
-		case 'm':
-			switch (*ptr++) {
-			case 'B':
-			case 'b':
-				switch (*ptr++) {
-				case 'C':
-				case 'c':
-					break;
-				default:
-					return MBC_BAD;
-				}
-				switch (*ptr++) {
-				case '1':
-					mbc = MBC1;
-					break;
-				case '2':
-					mbc = MBC2;
-					break;
-				case '3':
-					mbc = MBC3;
-					break;
-				case '5':
-					mbc = MBC5;
-					break;
-				case '6':
-					mbc = MBC6;
-					break;
-				case '7':
-					mbc = MBC7_SENSOR_RUMBLE_RAM_BATTERY;
-					break;
-				default:
-					return MBC_BAD;
-				}
-				break;
-			case 'M':
-			case 'm':
-				tryReadSlice("M01");
-				mbc = MMM01;
-				break;
-			default:
-				return MBC_BAD;
-			}
-			break;
-
-		case 'P': // POCKET_CAMERA
-		case 'p':
-			tryReadSlice("OCKET CAMERA");
-			mbc = POCKET_CAMERA;
-			break;
-
-		case 'B': // BANDAI_TAMA5
+		case 'B':
 		case 'b':
-			tryReadSlice("ANDAI TAMA5");
-			mbc = BANDAI_TAMA5;
-			break;
-
-		case 'T': // TAMA5 / TPP1
-		case 't':
 			switch (*ptr++) {
-			case 'A':
-				tryReadSlice("MA5");
-				mbc = BANDAI_TAMA5;
+			case 'C':
+			case 'c':
 				break;
-			case 'P': {
-				tryReadSlice("P1");
-				// Parse version
-				skipMBCSpace(ptr);
-				// Major
-				char *endptr;
-				unsigned long val = strtoul(ptr, &endptr, 10);
-
-				if (endptr == ptr) {
-					error("Failed to parse TPP1 major revision number");
-					return MBC_BAD_TPP1;
-				}
-				ptr = endptr;
-				if (val != 1) {
-					error("RGBFIX only supports TPP1 version 1.0");
-					return MBC_BAD_TPP1;
-				}
-				tpp1Rev[0] = val;
-				tryReadSlice(".");
-				// Minor
-				val = strtoul(ptr, &endptr, 10);
-				if (endptr == ptr) {
-					error("Failed to parse TPP1 minor revision number");
-					return MBC_BAD_TPP1;
-				}
-				ptr = endptr;
-				if (val > 0xFF) {
-					error("TPP1 minor revision number must be 8-bit");
-					return MBC_BAD_TPP1;
-				}
-				tpp1Rev[1] = val;
-				mbc = TPP1;
-				break;
-			}
 			default:
 				return MBC_BAD;
 			}
-			break;
-
-		case 'H': // HuC{1, 3}
-		case 'h':
-			tryReadSlice("UC");
 			switch (*ptr++) {
 			case '1':
-				mbc = HUC1_RAM_BATTERY;
+				mbc = MBC1;
+				break;
+			case '2':
+				mbc = MBC2;
 				break;
 			case '3':
-				mbc = HUC3;
+				mbc = MBC3;
+				break;
+			case '5':
+				mbc = MBC5;
+				break;
+			case '6':
+				mbc = MBC6;
+				break;
+			case '7':
+				mbc = MBC7_SENSOR_RUMBLE_RAM_BATTERY;
 				break;
 			default:
 				return MBC_BAD;
 			}
+			break;
+		case 'M':
+		case 'm':
+			tryReadSlice("M01");
+			mbc = MMM01;
+			break;
+		default:
+			return MBC_BAD;
+		}
+		break;
+
+	case 'P': // POCKET_CAMERA
+	case 'p':
+		tryReadSlice("OCKET CAMERA");
+		mbc = POCKET_CAMERA;
+		break;
+
+	case 'B': // BANDAI_TAMA5
+	case 'b':
+		tryReadSlice("ANDAI TAMA5");
+		mbc = BANDAI_TAMA5;
+		break;
+
+	case 'T': // TAMA5 / TPP1
+	case 't':
+		switch (*ptr++) {
+		case 'A':
+			tryReadSlice("MA5");
+			mbc = BANDAI_TAMA5;
+			break;
+		case 'P': {
+			tryReadSlice("P1");
+			// Parse version
+			skipMBCSpace(ptr);
+			// Major
+			char *endptr;
+			unsigned long val = strtoul(ptr, &endptr, 10);
+
+			if (endptr == ptr) {
+				error("Failed to parse TPP1 major revision number");
+				return MBC_BAD_TPP1;
+			}
+			ptr = endptr;
+			if (val != 1) {
+				error("RGBFIX only supports TPP1 version 1.0");
+				return MBC_BAD_TPP1;
+			}
+			tpp1Rev[0] = val;
+			tryReadSlice(".");
+			// Minor
+			val = strtoul(ptr, &endptr, 10);
+			if (endptr == ptr) {
+				error("Failed to parse TPP1 minor revision number");
+				return MBC_BAD_TPP1;
+			}
+			ptr = endptr;
+			if (val > 0xFF) {
+				error("TPP1 minor revision number must be 8-bit");
+				return MBC_BAD_TPP1;
+			}
+			tpp1Rev[1] = val;
+			mbc = TPP1;
+			break;
+		}
+		default:
+			return MBC_BAD;
+		}
+		break;
+
+	case 'H': // HuC{1, 3}
+	case 'h':
+		tryReadSlice("UC");
+		switch (*ptr++) {
+		case '1':
+			mbc = HUC1_RAM_BATTERY;
+			break;
+		case '3':
+			mbc = HUC3;
+			break;
+		default:
+			return MBC_BAD;
+		}
+		break;
+
+	default:
+		return MBC_BAD;
+	}
+
+	// Read "additional features"
+	uint8_t features = 0;
+	// clang-format off: vertically align values
+	static constexpr uint8_t RAM         = 1 << 7;
+	static constexpr uint8_t BATTERY     = 1 << 6;
+	static constexpr uint8_t TIMER       = 1 << 5;
+	static constexpr uint8_t RUMBLE      = 1 << 4;
+	static constexpr uint8_t SENSOR      = 1 << 3;
+	static constexpr uint8_t MULTIRUMBLE = 1 << 2;
+	// clang-format on
+
+	for (;;) {
+		skipWhitespace(ptr); // Trim off trailing whitespace
+
+		// If done, start processing "features"
+		if (!*ptr) {
+			break;
+		}
+		// We expect a '+' at this point
+		skipMBCSpace(ptr);
+		if (*ptr++ != '+') {
+			return MBC_BAD;
+		}
+		skipMBCSpace(ptr);
+
+		switch (*ptr++) {
+		case 'B': // BATTERY
+		case 'b':
+			tryReadSlice("ATTERY");
+			features |= BATTERY;
+			break;
+
+		case 'M':
+		case 'm':
+			tryReadSlice("ULTIRUMBLE");
+			features |= MULTIRUMBLE;
+			break;
+
+		case 'R': // RAM or RUMBLE
+		case 'r':
+			switch (*ptr++) {
+			case 'U':
+			case 'u':
+				tryReadSlice("MBLE");
+				features |= RUMBLE;
+				break;
+			case 'A':
+			case 'a':
+				tryReadSlice("M");
+				features |= RAM;
+				break;
+			default:
+				return MBC_BAD;
+			}
+			break;
+
+		case 'S': // SENSOR
+		case 's':
+			tryReadSlice("ENSOR");
+			features |= SENSOR;
+			break;
+
+		case 'T': // TIMER
+		case 't':
+			tryReadSlice("IMER");
+			features |= TIMER;
 			break;
 
 		default:
 			return MBC_BAD;
 		}
-
-		// Read "additional features"
-		uint8_t features = 0;
-		// clang-format off: vertically align values
-		static constexpr uint8_t RAM         = 1 << 7;
-		static constexpr uint8_t BATTERY     = 1 << 6;
-		static constexpr uint8_t TIMER       = 1 << 5;
-		static constexpr uint8_t RUMBLE      = 1 << 4;
-		static constexpr uint8_t SENSOR      = 1 << 3;
-		static constexpr uint8_t MULTIRUMBLE = 1 << 2;
-		// clang-format on
-
-		for (;;) {
-			skipWhitespace(ptr); // Trim off trailing whitespace
-
-			// If done, start processing "features"
-			if (!*ptr) {
-				break;
-			}
-			// We expect a '+' at this point
-			skipMBCSpace(ptr);
-			if (*ptr++ != '+') {
-				return MBC_BAD;
-			}
-			skipMBCSpace(ptr);
-
-			switch (*ptr++) {
-			case 'B': // BATTERY
-			case 'b':
-				tryReadSlice("ATTERY");
-				features |= BATTERY;
-				break;
-
-			case 'M':
-			case 'm':
-				tryReadSlice("ULTIRUMBLE");
-				features |= MULTIRUMBLE;
-				break;
-
-			case 'R': // RAM or RUMBLE
-			case 'r':
-				switch (*ptr++) {
-				case 'U':
-				case 'u':
-					tryReadSlice("MBLE");
-					features |= RUMBLE;
-					break;
-				case 'A':
-				case 'a':
-					tryReadSlice("M");
-					features |= RAM;
-					break;
-				default:
-					return MBC_BAD;
-				}
-				break;
-
-			case 'S': // SENSOR
-			case 's':
-				tryReadSlice("ENSOR");
-				features |= SENSOR;
-				break;
-
-			case 'T': // TIMER
-			case 't':
-				tryReadSlice("IMER");
-				features |= TIMER;
-				break;
-
-			default:
-				return MBC_BAD;
-			}
-		}
+	}
 #undef tryReadSlice
 
-		switch (mbc) {
-		case ROM:
-			if (!features) {
-				break;
-			}
-			mbc = ROM_RAM - 1;
-			static_assert(ROM_RAM + 1 == ROM_RAM_BATTERY, "Enum sanity check failed!");
-			static_assert(MBC1 + 1 == MBC1_RAM, "Enum sanity check failed!");
-			static_assert(MBC1 + 2 == MBC1_RAM_BATTERY, "Enum sanity check failed!");
-			static_assert(MMM01 + 1 == MMM01_RAM, "Enum sanity check failed!");
-			static_assert(MMM01 + 2 == MMM01_RAM_BATTERY, "Enum sanity check failed!");
-			[[fallthrough]];
-		case MBC1:
-		case MMM01:
-			if (features == RAM) {
-				++mbc;
-			} else if (features == (RAM | BATTERY)) {
-				mbc += 2;
-			} else if (features) {
-				return MBC_WRONG_FEATURES;
-			}
-			break;
-
-		case MBC2:
-			if (features == BATTERY) {
-				mbc = MBC2_BATTERY;
-			} else if (features) {
-				return MBC_WRONG_FEATURES;
-			}
-			break;
-
-		case MBC3:
-			// Handle timer, which also requires battery
-			if (features & TIMER) {
-				if (!(features & BATTERY)) {
-					warnx("MBC3+TIMER implies BATTERY");
-				}
-				features &= ~(TIMER | BATTERY); // Reset those bits
-				mbc = MBC3_TIMER_BATTERY;
-				// RAM is handled below
-			}
-			static_assert(MBC3 + 1 == MBC3_RAM, "Enum sanity check failed!");
-			static_assert(MBC3 + 2 == MBC3_RAM_BATTERY, "Enum sanity check failed!");
-			static_assert(
-			    MBC3_TIMER_BATTERY + 1 == MBC3_TIMER_RAM_BATTERY, "Enum sanity check failed!"
-			);
-			if (features == RAM) {
-				++mbc;
-			} else if (features == (RAM | BATTERY)) {
-				mbc += 2;
-			} else if (features) {
-				return MBC_WRONG_FEATURES;
-			}
-			break;
-
-		case MBC5:
-			if (features & RUMBLE) {
-				features &= ~RUMBLE;
-				mbc = MBC5_RUMBLE;
-			}
-			static_assert(MBC5 + 1 == MBC5_RAM, "Enum sanity check failed!");
-			static_assert(MBC5 + 2 == MBC5_RAM_BATTERY, "Enum sanity check failed!");
-			static_assert(MBC5_RUMBLE + 1 == MBC5_RUMBLE_RAM, "Enum sanity check failed!");
-			static_assert(MBC5_RUMBLE + 2 == MBC5_RUMBLE_RAM_BATTERY, "Enum sanity check failed!");
-			if (features == RAM) {
-				++mbc;
-			} else if (features == (RAM | BATTERY)) {
-				mbc += 2;
-			} else if (features) {
-				return MBC_WRONG_FEATURES;
-			}
-			break;
-
-		case MBC6:
-		case POCKET_CAMERA:
-		case BANDAI_TAMA5:
-		case HUC3:
-			// No extra features accepted
-			if (features) {
-				return MBC_WRONG_FEATURES;
-			}
-			break;
-
-		case MBC7_SENSOR_RUMBLE_RAM_BATTERY:
-			if (features != (SENSOR | RUMBLE | RAM | BATTERY)) {
-				return MBC_WRONG_FEATURES;
-			}
-			break;
-
-		case HUC1_RAM_BATTERY:
-			if (features != (RAM | BATTERY)) { // HuC1 expects RAM+BATTERY
-				return MBC_WRONG_FEATURES;
-			}
-			break;
-
-		case TPP1:
-			if (features & RAM) {
-				warnx("TPP1 requests RAM implicitly if given a non-zero RAM size");
-			}
-			if (features & BATTERY) {
-				mbc |= 0x08;
-			}
-			if (features & TIMER) {
-				mbc |= 0x04;
-			}
-			if (features & MULTIRUMBLE) {
-				mbc |= 0x03; // Also set the rumble flag
-			}
-			if (features & RUMBLE) {
-				mbc |= 0x01;
-			}
-			if (features & SENSOR) {
-				return MBC_WRONG_FEATURES;
-			}
+	switch (mbc) {
+	case ROM:
+		if (!features) {
 			break;
 		}
-
-		skipWhitespace(ptr); // Trim off trailing whitespace
-
-		// If there is still something past the whitespace, error out
-		if (*ptr) {
-			return MBC_BAD;
+		mbc = ROM_RAM - 1;
+		static_assert(ROM_RAM + 1 == ROM_RAM_BATTERY, "Enum sanity check failed!");
+		static_assert(MBC1 + 1 == MBC1_RAM, "Enum sanity check failed!");
+		static_assert(MBC1 + 2 == MBC1_RAM_BATTERY, "Enum sanity check failed!");
+		static_assert(MMM01 + 1 == MMM01_RAM, "Enum sanity check failed!");
+		static_assert(MMM01 + 2 == MMM01_RAM_BATTERY, "Enum sanity check failed!");
+		[[fallthrough]];
+	case MBC1:
+	case MMM01:
+		if (features == RAM) {
+			++mbc;
+		} else if (features == (RAM | BATTERY)) {
+			mbc += 2;
+		} else if (features) {
+			return MBC_WRONG_FEATURES;
 		}
+		break;
 
-		return static_cast<MbcType>(mbc);
+	case MBC2:
+		if (features == BATTERY) {
+			mbc = MBC2_BATTERY;
+		} else if (features) {
+			return MBC_WRONG_FEATURES;
+		}
+		break;
+
+	case MBC3:
+		// Handle timer, which also requires battery
+		if (features & TIMER) {
+			if (!(features & BATTERY)) {
+				warnx("MBC3+TIMER implies BATTERY");
+			}
+			features &= ~(TIMER | BATTERY); // Reset those bits
+			mbc = MBC3_TIMER_BATTERY;
+			// RAM is handled below
+		}
+		static_assert(MBC3 + 1 == MBC3_RAM, "Enum sanity check failed!");
+		static_assert(MBC3 + 2 == MBC3_RAM_BATTERY, "Enum sanity check failed!");
+		static_assert(
+		    MBC3_TIMER_BATTERY + 1 == MBC3_TIMER_RAM_BATTERY, "Enum sanity check failed!"
+		);
+		if (features == RAM) {
+			++mbc;
+		} else if (features == (RAM | BATTERY)) {
+			mbc += 2;
+		} else if (features) {
+			return MBC_WRONG_FEATURES;
+		}
+		break;
+
+	case MBC5:
+		if (features & RUMBLE) {
+			features &= ~RUMBLE;
+			mbc = MBC5_RUMBLE;
+		}
+		static_assert(MBC5 + 1 == MBC5_RAM, "Enum sanity check failed!");
+		static_assert(MBC5 + 2 == MBC5_RAM_BATTERY, "Enum sanity check failed!");
+		static_assert(MBC5_RUMBLE + 1 == MBC5_RUMBLE_RAM, "Enum sanity check failed!");
+		static_assert(MBC5_RUMBLE + 2 == MBC5_RUMBLE_RAM_BATTERY, "Enum sanity check failed!");
+		if (features == RAM) {
+			++mbc;
+		} else if (features == (RAM | BATTERY)) {
+			mbc += 2;
+		} else if (features) {
+			return MBC_WRONG_FEATURES;
+		}
+		break;
+
+	case MBC6:
+	case POCKET_CAMERA:
+	case BANDAI_TAMA5:
+	case HUC3:
+		// No extra features accepted
+		if (features) {
+			return MBC_WRONG_FEATURES;
+		}
+		break;
+
+	case MBC7_SENSOR_RUMBLE_RAM_BATTERY:
+		if (features != (SENSOR | RUMBLE | RAM | BATTERY)) {
+			return MBC_WRONG_FEATURES;
+		}
+		break;
+
+	case HUC1_RAM_BATTERY:
+		if (features != (RAM | BATTERY)) { // HuC1 expects RAM+BATTERY
+			return MBC_WRONG_FEATURES;
+		}
+		break;
+
+	case TPP1:
+		if (features & RAM) {
+			warnx("TPP1 requests RAM implicitly if given a non-zero RAM size");
+		}
+		if (features & BATTERY) {
+			mbc |= 0x08;
+		}
+		if (features & TIMER) {
+			mbc |= 0x04;
+		}
+		if (features & MULTIRUMBLE) {
+			mbc |= 0x03; // Also set the rumble flag
+		}
+		if (features & RUMBLE) {
+			mbc |= 0x01;
+		}
+		if (features & SENSOR) {
+			return MBC_WRONG_FEATURES;
+		}
+		break;
 	}
+
+	skipWhitespace(ptr); // Trim off trailing whitespace
+
+	// If there is still something past the whitespace, error out
+	if (*ptr) {
+		return MBC_BAD;
+	}
+
+	return static_cast<MbcType>(mbc);
 }
 
 static char const *mbcName(MbcType type) {
