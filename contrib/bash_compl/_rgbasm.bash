@@ -155,7 +155,7 @@ _rgbasm_completions() {
 			parse_short_opt "$cur_word"
 
 			if [[ "$state" = 'normal' ]]; then
-				mapfile -t COMPREPLY < <(compgen -W "${!opts[*]}" -P "$cur_word" ''; compgen -W '-MG -MP -MQ -MT' "$cur_word")
+				mapfile -t COMPREPLY < <(compgen -W "${!opts[*]}" -P "$cur_word" ''; compgen -W '-MC -MG -MP -MQ -MT' "$cur_word")
 				return 0
 			elif [[ "$optlen" = "${#cur_word}" && "$state" != "warning" ]]; then
 				# This short option group only awaits its argument!
