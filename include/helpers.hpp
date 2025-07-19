@@ -24,7 +24,7 @@ static inline void unreachable_() {
 	#ifdef _MSC_VER
 		#define assume(x) __assume(x)
 	#else
-		//  `[[gnu::assume()]]` for GCC or compatible also has insufficient support (GCC 13+ only)
+		// `[[gnu::assume()]]` for GCC or compatible also has insufficient support (GCC 13+ only)
 		#define assume(x) \
 			do { \
 				if (!(x)) { \

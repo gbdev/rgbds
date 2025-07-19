@@ -20,12 +20,12 @@
 
 // The solvers here are picked from the paper at https://arxiv.org/abs/1605.00558:
 // "Algorithms for the Pagination Problem, a Bin Packing with Overlapping Items"
-// Their formulation of the problem consists in packing "tiles" into "pages"; here is a
-// correspondence table for our application of it:
+// Their formulation of the problem consists in packing "tiles" into "pages".
+// Here is a correspondence table for our application of it:
 // Paper | RGBGFX
 // ------+-------
-//  Tile | Proto-palette
-//  Page | Palette
+// Tile  | Proto-palette
+// Page  | Palette
 
 // A reference to a proto-palette, and attached attributes for sorting purposes
 struct ProtoPalAttrs {

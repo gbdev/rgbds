@@ -1032,8 +1032,7 @@ static void
 		// This should be guaranteed from the size cap...
 		static_assert(0x10000 * BANK_SIZE <= SSIZE_MAX, "Max input file size too large for OS");
 		// Compute number of banks and ROMX len from file size
-		nbBanks = (fileSize + (BANK_SIZE - 1)) / BANK_SIZE;
-		//      = ceil(totalRomxLen / BANK_SIZE)
+		nbBanks = (fileSize + (BANK_SIZE - 1)) / BANK_SIZE; // ceil(fileSize / BANK_SIZE)
 		totalRomxLen = fileSize >= BANK_SIZE ? fileSize - BANK_SIZE : 0;
 	} else if (rom0Len == BANK_SIZE) {
 		// Copy ROMX when reading a pipe, and we're not at EOF yet

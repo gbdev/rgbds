@@ -641,7 +641,6 @@ static uint32_t readBracketedMacroArgNum() {
 		}
 
 		std::string symName;
-
 		for (; continuesIdentifier(c); c = peek()) {
 			symName += c;
 			shiftChar();
@@ -883,9 +882,16 @@ static void shiftChar() {
 
 static int nextChar() {
 	int c = peek();
-
-	// If not at EOF, advance read position
 	if (c != EOF) {
+		shiftChar();
+	}
+	return c;
+}
+
+template<typename P>
+static int skipChars(P predicate) {
+	int c = peek();
+	for (; predicate(c); c = peek()) {
 		shiftChar();
 	}
 	return c;
@@ -1032,10 +1038,7 @@ static uint32_t readFractionalPart(uint32_t integer) {
 			if (divisor > (UINT32_MAX - (c - '0')) / 10) {
 				warning(WARNING_LARGE_CONSTANT, "Precision of fixed-point constant is too large");
 				// Discard any additional digits
-				shiftChar();
-				while (c = peek(), (c >= '0' && c <= '9') || c == '_') {
-					shiftChar();
-				}
+				skipChars([](int d) { return (d >= '0' && d <= '9') || d == '_'; });
 				break;
 			}
 			value = value * 10 + (c - '0');
@@ -1443,84 +1446,8 @@ static void appendExpandedString(std::string &str, std::string const &expanded) 
 static void appendCharInLiteral(std::string &str, int c) {
 	bool rawMode = lexerState->mode == LEXER_RAW;
 
-	switch (c) {
-	case '\\': // Character escape or macro arg
-		c = peek();
-		switch (c) {
-		// Character escape
-		case '\\':
-		case '"':
-		case '\'':
-		case '{':
-		case '}':
-			if (rawMode) {
-				str += '\\';
-			}
-			str += c;
-			shiftChar();
-			break;
-		case 'n':
-			str += rawMode ? "\\n" : "\n";
-			shiftChar();
-			break;
-		case 'r':
-			str += rawMode ? "\\r" : "\r";
-			shiftChar();
-			break;
-		case 't':
-			str += rawMode ? "\\t" : "\t";
-			shiftChar();
-			break;
-		case '0':
-			if (rawMode) {
-				str += "\\0";
-			} else {
-				str += '\0';
-			}
-			shiftChar();
-			break;
-
-		// Line continuation
-		case ' ':
-		case '\t':
-		case '\r':
-		case '\n':
-			discardLineContinuation();
-			break;
-
-		// Macro arg
-		case '@':
-		case '#':
-		case '1':
-		case '2':
-		case '3':
-		case '4':
-		case '5':
-		case '6':
-		case '7':
-		case '8':
-		case '9':
-		case '<':
-			shiftChar();
-			if (std::shared_ptr<std::string> arg = readMacroArg(c); arg) {
-				appendExpandedString(str, *arg);
-			}
-			break;
-
-		case EOF: // Can't really print that one
-			error("Illegal character escape at end of input");
-			str += '\\';
-			break;
-
-		default:
-			error("Illegal character escape %s", printChar(c));
-			str += c;
-			shiftChar();
-			break;
-		}
-		break;
-
-	case '{': // Symbol interpolation
+	// Symbol interpolation
+	if (c == '{') {
 		// We'll be exiting the string/character scope, so re-enable expansions
 		// (Not interpolations, since they're handled by the function itself...)
 		lexerState->disableMacroArgs = false;
@@ -1528,10 +1455,86 @@ static void appendCharInLiteral(std::string &str, int c) {
 			appendExpandedString(str, *interpolation);
 		}
 		lexerState->disableMacroArgs = true;
+		return;
+	}
+
+	// Regular characters will just get copied
+	if (c != '\\') {
+		str += c;
+		return;
+	}
+
+	c = peek();
+	switch (c) {
+	// Character escape
+	case '\\':
+	case '"':
+	case '\'':
+	case '{':
+	case '}':
+		if (rawMode) {
+			str += '\\';
+		}
+		str += c;
+		shiftChar();
+		break;
+	case 'n':
+		str += rawMode ? "\\n" : "\n";
+		shiftChar();
+		break;
+	case 'r':
+		str += rawMode ? "\\r" : "\r";
+		shiftChar();
+		break;
+	case 't':
+		str += rawMode ? "\\t" : "\t";
+		shiftChar();
+		break;
+	case '0':
+		if (rawMode) {
+			str += "\\0";
+		} else {
+			str += '\0';
+		}
+		shiftChar();
 		break;
 
-	default: // Regular characters will just get copied
+	// Line continuation
+	case ' ':
+	case '\t':
+	case '\r':
+	case '\n':
+		discardLineContinuation();
+		break;
+
+	// Macro arg
+	case '@':
+	case '#':
+	case '1':
+	case '2':
+	case '3':
+	case '4':
+	case '5':
+	case '6':
+	case '7':
+	case '8':
+	case '9':
+	case '<':
+		shiftChar();
+		if (std::shared_ptr<std::string> arg = readMacroArg(c); arg) {
+			appendExpandedString(str, *arg);
+		}
+		break;
+
+	case EOF: // Can't really print that one
+		error("Illegal character escape at end of input");
+		str += '\\';
+		break;
+
+	default:
+		error("Illegal character escape %s", printChar(c));
 		str += c;
+		shiftChar();
 		break;
 	}
 }
@@ -1583,37 +1586,38 @@ static void readString(std::string &str, bool rawString) {
 			continue;
 		}
 
-		// Close the string and return if it's terminated
-		if (c == '"') {
-			if (!multiline) {
-				if (rawMode) {
-					str += c;
-				}
-				return;
-			}
-			// Only """ ends a multi-line string
-			if (peek() != '"') {
+		if (c != '"') {
+			// Append the character or handle special ones
+			if (rawString) {
 				str += c;
-				continue;
+			} else {
+				appendCharInLiteral(str, c);
 			}
-			shiftChar();
-			if (peek() != '"') {
-				str += "\"\"";
-				continue;
-			}
-			shiftChar();
+			continue;
+		}
+
+		// Close the string and return if it's terminated
+		if (!multiline) {
 			if (rawMode) {
-				str += "\"\"\"";
+				str += c;
 			}
 			return;
 		}
-
-		// Append the character or handle special ones
-		if (rawString) {
+		// Only """ ends a multi-line string
+		if (peek() != '"') {
 			str += c;
-		} else {
-			appendCharInLiteral(str, c);
+			continue;
 		}
+		shiftChar();
+		if (peek() != '"') {
+			str += "\"\"";
+			continue;
+		}
+		shiftChar();
+		if (rawMode) {
+			str += "\"\"\"";
+		}
+		return;
 	}
 }
 
@@ -1629,27 +1633,25 @@ static void readCharacter(std::string &str) {
 	}
 
 	for (;;) {
-		int c = peek();
-
-		// '\r', '\n' or EOF ends a character early
-		if (c == EOF || c == '\r' || c == '\n') {
+		switch (int c = peek(); c) {
+		case '\r':
+		case '\n':
+		case EOF:
+			// '\r', '\n' or EOF ends a character early
 			error("Unterminated character");
 			return;
-		}
-
-		// We'll be staying in the character, so we can safely consume the char
-		shiftChar();
-
-		// Close the character and return if it's terminated
-		if (c == '\'') {
+		case '\'':
+			// Close the character and return if it's terminated
+			shiftChar();
 			if (rawMode) {
 				str += c;
 			}
 			return;
+		default:
+			// Append the character or handle special ones
+			shiftChar();
+			appendCharInLiteral(str, c);
 		}
-
-		// Append the character or handle special ones
-		appendCharInLiteral(str, c);
 	}
 }
 
@@ -2347,14 +2349,7 @@ static Token yylex_SKIP_TO_ENDR() {
 			}
 		}
 
-		// Skip whitespace
-		for (;;) {
-			c = peek();
-			if (!isWhitespace(c)) {
-				break;
-			}
-			shiftChar();
-		}
+		c = skipChars(isWhitespace);
 
 		if (!startsIdentifier(c)) {
 			continue;
@@ -2489,19 +2484,18 @@ Capture lexer_CaptureRept() {
 			case T_(POP_REPT):
 			case T_(POP_FOR):
 				depth++;
-				// Ignore the rest of that line
-				break;
+				break; // Ignore the rest of that line
 
 			case T_(POP_ENDR):
-				if (!depth) {
-					endCapture(capture);
-					// The final ENDR has been captured, but we don't want it!
-					// We know we have read exactly "ENDR", not e.g. an EQUS
-					capture.span.size -= literal_strlen("ENDR");
-					return capture;
+				if (depth) {
+					depth--;
+					break; // Ignore the rest of that line
 				}
-				depth--;
-				break;
+				endCapture(capture);
+				// The final ENDR has been captured, but we don't want it!
+				// We know we have read exactly "ENDR", not e.g. an EQUS
+				capture.span.size -= literal_strlen("ENDR");
+				return capture;
 
 			default:
 				break;

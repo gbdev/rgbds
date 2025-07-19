@@ -41,10 +41,8 @@ struct Charmap {
 			auto [nodeIdx, mapping] = std::move(prefixes.top());
 			prefixes.pop();
 			CharmapNode const &node = nodes[nodeIdx];
-			if (node.isTerminal()) {
-				if (!callback(nodeIdx, mapping)) {
-					return false;
-				}
+			if (node.isTerminal() && !callback(nodeIdx, mapping)) {
+				return false;
 			}
 			for (unsigned c = 0; c < std::size(node.next); c++) {
 				if (size_t nextIdx = node.next[c]; nextIdx) {

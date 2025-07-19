@@ -131,8 +131,8 @@ std::string Diagnostics<L, W>::processWarningFlag(char const *flag) {
 	auto [flagState, param] = getInitialWarningState(rootFlag);
 
 	// Try to match the flag against a parametric warning
-	// If there was an equals sign, it will have set `param`; if not, `param` will be 0, which
-	// applies to all levels
+	// If there was an equals sign, it will have set `param`; if not, `param` will be 0,
+	// which applies to all levels
 	for (ParamWarning<W> const &paramWarning : paramWarnings) {
 		W baseID = paramWarning.firstID;
 		uint8_t maxParam = paramWarning.lastID - baseID + 1;
@@ -173,33 +173,35 @@ std::string Diagnostics<L, W>::processWarningFlag(char const *flag) {
 		return rootFlag;
 	}
 
-	// Try to match against a non-parametric warning, unless there was an equals sign
-	if (!param.has_value()) {
-		// Try to match against a "meta" warning
-		for (WarningFlag<L> const &metaWarning : metaWarnings) {
-			if (rootFlag != metaWarning.name) {
-				continue;
-			}
+	if (param.has_value()) {
+		warnx("Unknown warning flag parameter \"%s\"", rootFlag.c_str());
+		return rootFlag;
+	}
 
-			// Set each of the warning flags that meets this level
-			for (W id : EnumSeq(W::NB_WARNINGS)) {
-				if (metaWarning.level >= warningFlags[id].level) {
-					state.metaStates[id].update(flagState);
-				}
-			}
-			return rootFlag;
+	// Try to match against a "meta" warning
+	for (WarningFlag<L> const &metaWarning : metaWarnings) {
+		if (rootFlag != metaWarning.name) {
+			continue;
 		}
 
-		// Try to match the flag against a "normal" flag
-		for (W id : EnumSeq(W::NB_PLAIN_WARNINGS)) {
-			if (rootFlag == warningFlags[id].name) {
-				state.flagStates[id].update(flagState);
-				return rootFlag;
+		// Set each of the warning flags that meets this level
+		for (W id : EnumSeq(W::NB_WARNINGS)) {
+			if (metaWarning.level >= warningFlags[id].level) {
+				state.metaStates[id].update(flagState);
 			}
+		}
+		return rootFlag;
+	}
+
+	// Try to match against a "normal" flag
+	for (W id : EnumSeq(W::NB_PLAIN_WARNINGS)) {
+		if (rootFlag == warningFlags[id].name) {
+			state.flagStates[id].update(flagState);
+			return rootFlag;
 		}
 	}
 
-	warnx("Unknown warning flag \"%s\"", flag);
+	warnx("Unknown warning flag \"%s\"", rootFlag.c_str());
 	return rootFlag;
 }
 
