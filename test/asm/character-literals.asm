@@ -32,3 +32,4 @@ char '?', $3f ; ASCII
 char 'F', 0
 char 'ABF', 0
 char '\n\r\t', 0
+assert 0 == '

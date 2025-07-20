@@ -325,9 +325,9 @@ void Expression::makeUnaryOp(RPNCommand op, Expression &&src) {
 		case RPN_TZCOUNT:
 			data = val != 0 ? ctz(uval) : 32;
 			break;
+		// LCOV_EXCL_START
 		default:
 			// `makeUnaryOp` should never be called with a non-unary operator!
-			// LCOV_EXCL_START
 			unreachable_();
 		}
 		// LCOV_EXCL_STOP
@@ -467,9 +467,9 @@ void Expression::makeBinaryOp(RPNCommand op, Expression &&src1, Expression const
 
 			data = op_exponent(lval, rval);
 			break;
+		// LCOV_EXCL_START
 		default:
 			// `makeBinaryOp` should never be called with a non-binary operator!
-			// LCOV_EXCL_START
 			unreachable_();
 		}
 		// LCOV_EXCL_STOP

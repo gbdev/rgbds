@@ -12,7 +12,7 @@ def variable += 1
 
 def con2 equ -1
 def var2 = variable**2
-def str2 equs strcat("{string}", "\0\n\t\r")
+def str2 equs strcat("{string}", "\0\n\t\r\\\"\{")
 charmap "c2", 10, -11, 987654321
 
 PURGE polo

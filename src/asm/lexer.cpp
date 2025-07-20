@@ -624,7 +624,7 @@ static uint32_t readBracketedMacroArgNum() {
 	}
 
 	if (c >= '0' && c <= '9') {
-		uint32_t n = readDecimalNumber(0);
+		uint32_t n = readDecimalNumber(bumpChar());
 		if (n > INT32_MAX) {
 			error("Number in bracketed macro argument is too large");
 			return 0;
@@ -1165,11 +1165,11 @@ static uint32_t readOctalNumber() {
 }
 
 static uint32_t readDecimalNumber(int initial) {
-	uint32_t value = initial ? initial - '0' : 0;
-	bool empty = !initial;
+	assume(initial >= '0' && initial <= '9');
+	uint32_t value = initial - '0';
 
 	for (int c = peek();; c = nextChar()) {
-		if (c == '_' && !empty) {
+		if (c == '_') {
 			continue;
 		} else if (c >= '0' && c <= '9') {
 			c = c - '0';
@@ -1181,12 +1181,6 @@ static uint32_t readDecimalNumber(int initial) {
 			warning(WARNING_LARGE_CONSTANT, "Integer constant is too large");
 		}
 		value = value * 10 + c;
-
-		empty = false;
-	}
-
-	if (empty) {
-		error("Invalid integer constant, no digits");
 	}
 
 	return value;
@@ -1393,9 +1387,9 @@ static void appendExpandedString(std::string &str, std::string const &expanded) 
 		case '\n':
 			str += "\\n";
 			break;
+			// LCOV_EXCL_START
 		case '\r':
 			// A literal CR in a string may get treated as a LF, so '\r' is not tested.
-			// LCOV_EXCL_START
 			str += "\\r";
 			break;
 			// LCOV_EXCL_STOP
@@ -1637,16 +1631,9 @@ static bool isGarbageCharacter(int c) {
 	       && (c == '\0' || !strchr("; \t~[](),+-*/|^=!<>:&%`\"\r\n\\", c));
 }
 
-static void skipGarbageCharacters(int c) {
+static void reportGarbageCharacters(int c) {
 	// '#' can be garbage if it doesn't start a raw string or identifier
 	assume(isGarbageCharacter(c) || c == '#');
-
-	// Do not report weird characters when capturing, it'll be done later
-	if (lexerState->capturing) {
-		skipChars(isGarbageCharacter);
-		return;
-	}
-
 	if (isGarbageCharacter(peek())) {
 		// At least two characters are garbage; group them into one error report
 		std::string garbage = printChar(c);
@@ -1966,7 +1953,7 @@ static Token yylex_NORMAL() {
 			if (raw && startsIdentifier(peek())) {
 				c = bumpChar();
 			} else if (!startsIdentifier(c)) {
-				skipGarbageCharacters(c);
+				reportGarbageCharacters(c);
 				continue;
 			}
 

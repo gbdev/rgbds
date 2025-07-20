@@ -10,7 +10,7 @@ def var2 = $9
 
 ; String constants
 def string equs "goodbye~"
-def str2 equs "hello!\0\n\t\r"
+def str2 equs "hello!\0\n\t\r\\\"\{"
 
 ; Character maps
 newcharmap main

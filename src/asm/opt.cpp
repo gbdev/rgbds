@@ -7,6 +7,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "helpers.hpp" // assume
+
 #include "asm/fixpoint.hpp"
 #include "asm/fstack.hpp"
 #include "asm/lexer.hpp"
@@ -77,9 +79,9 @@ void opt_Parse(char const *s) {
 			result = sscanf(&s[1], "%x", &padByte);
 			if (result != 1) {
 				error("Invalid argument for option 'p'");
-			} else if (padByte > 0xFF) {
-				error("Argument for option 'p' must be between 0 and 0xFF");
 			} else {
+				// Two characters cannot be scanned as a hex number greater than 0xFF
+				assume(padByte <= 0xFF);
 				opt_P(padByte);
 			}
 		} else {

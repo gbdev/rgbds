@@ -12,4 +12,8 @@ warning: character-literals.asm(34) -> character-literals.asm::char(13): [-Wunma
     Unmapped character '\t'
 error: character-literals.asm(34) -> character-literals.asm::char(13):
     Character literals must be a single charmap unit
-Assembly aborted with 3 errors!
+error: character-literals.asm(35):
+    Unterminated character
+error: character-literals.asm(35):
+    Character literals must be a single charmap unit
+Assembly aborted with 5 errors!
