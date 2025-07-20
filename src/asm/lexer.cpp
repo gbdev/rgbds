@@ -681,14 +681,13 @@ static uint32_t readBracketedMacroArgNum() {
 }
 
 static std::shared_ptr<std::string> readMacroArg() {
-	int name = bumpChar();
-	if (name == '@') {
+	if (int c = bumpChar(); c == '@') {
 		std::shared_ptr<std::string> str = fstk_GetUniqueIDStr();
 		if (!str) {
 			error("'\\@' cannot be used outside of a macro or REPT/FOR block");
 		}
 		return str;
-	} else if (name == '#') {
+	} else if (c == '#') {
 		MacroArgs *macroArgs = fstk_GetCurrentMacroArgs();
 		if (!macroArgs) {
 			error("'\\#' cannot be used outside of a macro");
@@ -698,7 +697,7 @@ static std::shared_ptr<std::string> readMacroArg() {
 		std::shared_ptr<std::string> str = macroArgs->getAllArgs();
 		assume(str); // '\#' should always be defined (at least as an empty string)
 		return str;
-	} else if (name == '<') {
+	} else if (c == '<') {
 		int32_t num = readBracketedMacroArgNum();
 		if (num == 0) {
 			// The error was already reported by `readBracketedMacroArgNum`.
@@ -717,17 +716,17 @@ static std::shared_ptr<std::string> readMacroArg() {
 		}
 		return str;
 	} else {
-		assume(name >= '1' && name <= '9');
+		assume(c >= '1' && c <= '9');
 
 		MacroArgs *macroArgs = fstk_GetCurrentMacroArgs();
 		if (!macroArgs) {
-			error("'\\%c' cannot be used outside of a macro", name);
+			error("'\\%c' cannot be used outside of a macro", c);
 			return nullptr;
 		}
 
-		std::shared_ptr<std::string> str = macroArgs->getArg(name - '0');
+		std::shared_ptr<std::string> str = macroArgs->getArg(c - '0');
 		if (!str) {
-			error("Macro argument '\\%c' not defined", name);
+			error("Macro argument '\\%c' not defined", c);
 		}
 		return str;
 	}
@@ -769,10 +768,10 @@ int LexerState::peekCharAhead() {
 		// An expansion that has reached its end will have `exp.offset` == `exp.size()`,
 		// and `.peekCharAhead()` will continue with its parent
 		assume(exp.offset <= exp.size());
-		if (exp.offset + distance < exp.size()) {
+		if (size_t idx = exp.offset + distance; idx < exp.size()) {
 			// Macro args can't be recursive, since `peek()` marks them as scanned, so
 			// this is a failsafe that (as far as I can tell) won't ever actually run.
-			return static_cast<uint8_t>((*exp.contents)[exp.offset + distance]); // LCOV_EXCL_LINE
+			return static_cast<uint8_t>((*exp.contents)[idx]); // LCOV_EXCL_LINE
 		}
 		distance -= exp.size() - exp.offset;
 	}
@@ -1638,9 +1637,16 @@ static bool isGarbageCharacter(int c) {
 	       && (c == '\0' || !strchr("; \t~[](),+-*/|^=!<>:&%`\"\r\n\\", c));
 }
 
-static void reportGarbageCharacters(int c) {
+static void skipGarbageCharacters(int c) {
 	// '#' can be garbage if it doesn't start a raw string or identifier
 	assume(isGarbageCharacter(c) || c == '#');
+
+	// Do not report weird characters when capturing, it'll be done later
+	if (lexerState->capturing) {
+		skipChars(isGarbageCharacter);
+		return;
+	}
+
 	if (isGarbageCharacter(peek())) {
 		// At least two characters are garbage; group them into one error report
 		std::string garbage = printChar(c);
@@ -1960,10 +1966,7 @@ static Token yylex_NORMAL() {
 			if (raw && startsIdentifier(peek())) {
 				c = bumpChar();
 			} else if (!startsIdentifier(c)) {
-				// Do not report weird characters when capturing, it'll be done later
-				if (!lexerState->capturing) {
-					reportGarbageCharacters(c);
-				}
+				skipGarbageCharacters(c);
 				continue;
 			}
 
@@ -2285,7 +2288,6 @@ static Token yylex_SKIP_TO_ENDC() {
 
 static Token yylex_SKIP_TO_ENDR() {
 	lexer_SetMode(LEXER_NORMAL);
-	int depth = 1;
 
 	bool atLineStart = lexerState->atLineStart;
 	Defer notAtLineStart{[&] { lexerState->atLineStart = false; }};
@@ -2320,17 +2322,6 @@ static Token yylex_SKIP_TO_ENDR() {
 		}
 		shiftChar();
 		switch (readIdentifier(c, false).type) {
-		case T_(POP_FOR):
-		case T_(POP_REPT):
-			++depth;
-			break;
-
-		case T_(POP_ENDR):
-			--depth;
-			// `lexer_CaptureRept` has already guaranteed that the `ENDR`s are balanced
-			assume(depth > 0);
-			break;
-
 		case T_(POP_IF):
 			lexer_IncIFDepth();
 			break;
