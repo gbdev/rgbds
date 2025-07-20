@@ -600,6 +600,7 @@ static bool isMacroChar(char c) {
 static int peek();
 static void shiftChar();
 static int bumpChar();
+static int nextChar();
 static uint32_t readDecimalNumber(int initial);
 
 static uint32_t readBracketedMacroArgNum() {
@@ -619,8 +620,7 @@ static uint32_t readBracketedMacroArgNum() {
 	bool negative = c == '-';
 
 	if (negative) {
-		shiftChar();
-		c = peek();
+		c = nextChar();
 	}
 
 	if (c >= '0' && c <= '9') {
@@ -632,8 +632,7 @@ static uint32_t readBracketedMacroArgNum() {
 		num = negative ? -n : static_cast<int32_t>(n);
 	} else if (startsIdentifier(c) || c == '#') {
 		if (c == '#') {
-			shiftChar();
-			c = peek();
+			c = nextChar();
 			if (!startsIdentifier(c)) {
 				error("Empty raw symbol in bracketed macro argument");
 				return 0;
@@ -641,9 +640,8 @@ static uint32_t readBracketedMacroArgNum() {
 		}
 
 		std::string symName;
-		for (; continuesIdentifier(c); c = peek()) {
+		for (; continuesIdentifier(c); c = nextChar()) {
 			symName += c;
-			shiftChar();
 		}
 
 		Symbol const *sym = sym_FindScopedValidSymbol(symName);
@@ -667,8 +665,7 @@ static uint32_t readBracketedMacroArgNum() {
 		empty = true;
 	}
 
-	c = peek();
-	shiftChar();
+	c = bumpChar();
 	if (c != '>') {
 		error("Invalid character in bracketed macro argument %s", printChar(c));
 		return 0;
@@ -801,7 +798,6 @@ int LexerState::peekCharAhead() {
 }
 
 // forward declarations for peek
-static void shiftChar();
 static std::shared_ptr<std::string> readInterpolation(size_t depth);
 
 static int peek() {
@@ -887,11 +883,16 @@ static int bumpChar() {
 	return c;
 }
 
+static int nextChar() {
+	shiftChar();
+	return peek();
+}
+
 template<typename P>
 static int skipChars(P predicate) {
 	int c = peek();
-	for (; predicate(c); c = peek()) {
-		shiftChar();
+	while (predicate(c)) {
+		c = nextChar();
 	}
 	return c;
 }
@@ -1002,14 +1003,11 @@ static void discardLineContinuation() {
 // Functions to read tokenizable values
 
 static std::string readAnonLabelRef(char c) {
-	uint32_t n = 0;
-
 	// We come here having already peeked at one char, so no need to do it again
-	do {
-		shiftChar();
+	uint32_t n = 1;
+	while (nextChar() == c) {
 		++n;
-	} while (peek() == c);
-
+	}
 	return sym_MakeAnonLabelName(n, c == '-');
 }
 
@@ -1022,9 +1020,7 @@ static uint32_t readFractionalPart(uint32_t integer) {
 		READFRACTIONALPART_PRECISION_DIGITS,
 	} state = READFRACTIONALPART_DIGITS;
 
-	for (;; shiftChar()) {
-		int c = peek();
-
+	for (int c = peek();; c = nextChar()) {
 		if (state == READFRACTIONALPART_DIGITS) {
 			if (c == '_') {
 				continue;
@@ -1123,8 +1119,7 @@ static uint32_t readBinaryNumber() {
 	uint32_t value = 0;
 	bool empty = true;
 
-	for (;; shiftChar()) {
-		int c = peek();
+	for (int c = peek();; c = nextChar()) {
 		int bit;
 
 		if (c == '_' && !empty) {
@@ -1155,9 +1150,7 @@ static uint32_t readOctalNumber() {
 	uint32_t value = 0;
 	bool empty = true;
 
-	for (;; shiftChar()) {
-		int c = peek();
-
+	for (int c = peek();; c = nextChar()) {
 		if (c == '_' && !empty) {
 			continue;
 		} else if (c >= '0' && c <= '7') {
@@ -1185,9 +1178,7 @@ static uint32_t readDecimalNumber(int initial) {
 	uint32_t value = initial ? initial - '0' : 0;
 	bool empty = !initial;
 
-	for (;; shiftChar()) {
-		int c = peek();
-
+	for (int c = peek();; c = nextChar()) {
 		if (c == '_' && !empty) {
 			continue;
 		} else if (c >= '0' && c <= '9') {
@@ -1215,9 +1206,7 @@ static uint32_t readHexNumber() {
 	uint32_t value = 0;
 	bool empty = true;
 
-	for (;; shiftChar()) {
-		int c = peek();
-
+	for (int c = peek();; c = nextChar()) {
 		if (c == '_' && !empty) {
 			continue;
 		} else if (c >= 'a' && c <= 'f') {
@@ -1249,8 +1238,7 @@ static uint32_t readGfxConstant() {
 	uint32_t bitPlaneLower = 0, bitPlaneUpper = 0;
 	uint8_t width = 0;
 
-	for (;; shiftChar()) {
-		int c = peek();
+	for (int c = peek();; c = nextChar()) {
 		uint32_t pixel;
 
 		if (c == '_' && width > 0) {
@@ -1294,9 +1282,7 @@ static Token readIdentifier(char firstChar, bool raw) {
 	int tokenType = firstChar == '.' ? T_(LOCAL) : T_(SYMBOL);
 
 	// Continue reading while the char is in the identifier charset
-	for (int c = peek(); continuesIdentifier(c); c = peek()) {
-		shiftChar();
-
+	for (int c = peek(); continuesIdentifier(c); c = nextChar()) {
 		// Write the char to the identifier's name
 		identifier += c;
 
@@ -1548,11 +1534,10 @@ static void readString(std::string &str, bool rawString) {
 		str += '"';
 	}
 	if (peek() == '"') {
-		shiftChar();
 		if (rawMode) {
 			str += '"';
 		}
-		if (peek() != '"') {
+		if (nextChar() != '"') {
 			// "" is an empty string, skip the loop
 			return;
 		}
@@ -1606,8 +1591,7 @@ static void readString(std::string &str, bool rawString) {
 			str += c;
 			continue;
 		}
-		shiftChar();
-		if (peek() != '"') {
+		if (nextChar() != '"') {
 			str += "\"\"";
 			continue;
 		}
@@ -2054,8 +2038,7 @@ static Token yylex_RAW() {
 		if (isWhitespace(c)) {
 			shiftChar();
 		} else if (c == '\\') {
-			shiftChar();
-			c = peek();
+			c = nextChar();
 			// If not a line continuation, handle as a normal char
 			if (!isWhitespace(c) && c != '\n' && c != '\r') {
 				goto backslash;
@@ -2083,8 +2066,7 @@ static Token yylex_RAW() {
 
 		case '#': // Raw string literals inside macro args
 			str += c;
-			shiftChar();
-			if (peek() == '"') {
+			if (nextChar() == '"') {
 				shiftChar();
 				readString(str, true);
 			}
@@ -2100,8 +2082,7 @@ static Token yylex_RAW() {
 			goto finish;
 
 		case '/': // Block comments inside macro args
-			shiftChar();
-			if (peek() == '*') {
+			if (nextChar() == '*') {
 				shiftChar();
 				discardBlockComment();
 				continue;
@@ -2128,8 +2109,7 @@ static Token yylex_RAW() {
 			goto append;
 
 		case '\\': // Character escape
-			shiftChar();
-			c = peek();
+			c = nextChar();
 
 backslash:
 			switch (c) {
