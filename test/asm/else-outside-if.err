@@ -1,0 +1,2 @@
+FATAL: else-outside-if.asm(1):
+    Found ELSE outside of an IF construct

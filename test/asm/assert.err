@@ -1,5 +1,7 @@
 error: assert.asm(4):
     Assertion failed
+error: assert.asm(7):
+    Assertion failed: @ ain't 0 now? (Hint: it's $1)
 warning: assert.asm(10): [-Wassert]
     Assertion failed
 error: assert.asm(18):

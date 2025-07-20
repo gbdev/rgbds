@@ -1,0 +1,3 @@
+error: bad-precision.asm(1):
+    Fixed-point precision must be between 1 and 31, not 42
+Assembly aborted with 1 error!

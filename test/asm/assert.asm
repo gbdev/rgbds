@@ -3,10 +3,10 @@ SECTION "fixed", ROM0[0]
 FixedBase:
 	assert FixedBase ; This should eval (and fail) at compile time
 
-	ds 0
-	static_assert @ == 0, "@ ain't 0 now? (Hint: it's {@})"
+	ds 1
+	static_assert @ - FixedBase == 0, "@ ain't 0 now? (Hint: it's {@})"
 
-	ds 42
+	ds 41
 	assert WARN, @ - FixedBase != 42 ; This should also eval at compile time
 
 SECTION "floating", ROM0
