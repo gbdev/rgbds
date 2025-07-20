@@ -817,6 +817,11 @@ static int peek() {
 			shiftChar();
 			if (std::shared_ptr<std::string> str = readMacroArg(); str) {
 				beginExpansion(str, std::nullopt);
+
+				// Mark the entire macro arg expansion as "painted blue"
+				// so that macro args can't be recursive
+				// https://en.wikipedia.org/wiki/Painted_blue
+				lexerState->macroArgScanDistance += str->length();
 			}
 		} else if (c == '{' && !lexerState->disableInterpolation) {
 			// If character is an open brace, do symbol interpolation
