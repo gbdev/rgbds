@@ -815,37 +815,37 @@ static int peek() {
 		// If character is a backslash, check for a macro arg
 		++lexerState->macroArgScanDistance;
 		c = lexerState->peekCharAhead();
-		if (isMacroChar(c)) {
-			shiftChar();
-			shiftChar();
-
-			std::shared_ptr<std::string> str = readMacroArg(c);
-			// If the macro arg is invalid or an empty string, it cannot be expanded,
-			// so skip it and keep peeking.
-			if (!str || str->empty()) {
-				return peek();
-			}
-
-			beginExpansion(str, std::nullopt);
-
-			// Assuming macro args can't be recursive (I'll be damned if a way
-			// is found...), then we mark the entire macro arg as scanned.
-			lexerState->macroArgScanDistance += str->length();
-
-			c = str->front();
-		} else {
-			c = '\\';
+		if (!isMacroChar(c)) {
+			return '\\';
 		}
+
+		shiftChar();
+		shiftChar();
+
+		std::shared_ptr<std::string> str = readMacroArg(c);
+		// If the macro arg is invalid or an empty string, it cannot be expanded,
+		// so skip it and keep peeking.
+		if (!str || str->empty()) {
+			return peek(); // Tail recursion
+		}
+
+		beginExpansion(str, std::nullopt);
+
+		// Assuming macro args can't be recursive (I'll be damned if a way
+		// is found...), then we mark the entire macro arg as scanned.
+		lexerState->macroArgScanDistance += str->length();
+
+		return str->front();
 	} else if (c == '{' && !lexerState->disableInterpolation) {
 		// If character is an open brace, do symbol interpolation
 		shiftChar();
 		if (std::shared_ptr<std::string> str = readInterpolation(0); str) {
 			beginExpansion(str, *str);
 		}
-		return peek();
+		return peek(); // Tail recursion
+	} else {
+		return c;
 	}
-
-	return c;
 }
 
 static void shiftChar() {
@@ -1687,7 +1687,7 @@ static Token yylex_NORMAL() {
 		return Token(nextToken);
 	}
 
-	for (;;) {
+	for (;; lexerState->atLineStart = false) {
 		int c = nextChar();
 
 		switch (c) {
@@ -1698,7 +1698,7 @@ static Token yylex_NORMAL() {
 			[[fallthrough]];
 		case ' ':
 		case '\t':
-			break;
+			continue;
 
 			// Handle unambiguous single-char tokens
 
@@ -1775,11 +1775,10 @@ static Token yylex_NORMAL() {
 			case '*':
 				shiftChar();
 				discardBlockComment();
-				break;
+				continue;
 			default:
 				return Token(T_(OP_DIV));
 			}
-			break;
 
 		case '|': // Either |=, binary OR, or logical OR
 			switch (peek()) {
@@ -1967,7 +1966,7 @@ static Token yylex_NORMAL() {
 			// Macro args were handled by `peek`, and character escapes do not exist
 			// outside of string literals, so this must be a line continuation.
 			discardLineContinuation();
-			break;
+			continue;
 
 			// Handle raw strings... or fall through if '#' is not followed by '"'
 
@@ -1991,7 +1990,7 @@ static Token yylex_NORMAL() {
 				if (!lexerState->capturing) {
 					reportGarbageCharacters(c);
 				}
-				break;
+				continue;
 			}
 
 			Token token = readIdentifier(c, raw);
@@ -2020,7 +2019,7 @@ static Token yylex_NORMAL() {
 
 					assume(str);
 					beginExpansion(str, sym->name);
-					continue; // Restart, reading from the new buffer
+					return yylex_NORMAL(); // Tail recursion
 				}
 			}
 
@@ -2044,7 +2043,6 @@ static Token yylex_NORMAL() {
 
 			return token;
 		}
-		lexerState->atLineStart = false;
 	}
 }
 
