@@ -599,6 +599,7 @@ static bool isMacroChar(char c) {
 // forward declarations for readBracketedMacroArgNum
 static int peek();
 static void shiftChar();
+static int nextChar();
 static uint32_t readDecimalNumber(int initial);
 
 static uint32_t readBracketedMacroArgNum() {
@@ -682,7 +683,8 @@ static uint32_t readBracketedMacroArgNum() {
 	}
 }
 
-static std::shared_ptr<std::string> readMacroArg(char name) {
+static std::shared_ptr<std::string> readMacroArg() {
+	int name = nextChar();
 	if (name == '@') {
 		std::shared_ptr<std::string> str = fstk_GetUniqueIDStr();
 		if (!str) {
@@ -814,15 +816,13 @@ static int peek() {
 	if (c == '\\' && !lexerState->disableMacroArgs) {
 		// If character is a backslash, check for a macro arg
 		++lexerState->macroArgScanDistance;
-		c = lexerState->peekCharAhead();
-		if (!isMacroChar(c)) {
-			return '\\';
+		if (!isMacroChar(lexerState->peekCharAhead())) {
+			return c;
 		}
 
 		shiftChar();
-		shiftChar();
 
-		std::shared_ptr<std::string> str = readMacroArg(c);
+		std::shared_ptr<std::string> str = readMacroArg();
 		// If the macro arg is invalid or an empty string, it cannot be expanded,
 		// so skip it and keep peeking.
 		if (!str || str->empty()) {
@@ -1519,8 +1519,7 @@ static void appendCharInLiteral(std::string &str, int c) {
 	case '8':
 	case '9':
 	case '<':
-		shiftChar();
-		if (std::shared_ptr<std::string> arg = readMacroArg(c); arg) {
+		if (std::shared_ptr<std::string> arg = readMacroArg(); arg) {
 			appendExpandedString(str, *arg);
 		}
 		break;
@@ -2015,10 +2014,7 @@ static Token yylex_NORMAL() {
 				Symbol const *sym = sym_FindExactSymbol(std::get<std::string>(token.value));
 
 				if (sym && sym->type == SYM_EQUS) {
-					std::shared_ptr<std::string> str = sym->getEqus();
-
-					assume(str);
-					beginExpansion(str, sym->name);
+					beginExpansion(sym->getEqus(), sym->name);
 					return yylex_NORMAL(); // Tail recursion
 				}
 			}
