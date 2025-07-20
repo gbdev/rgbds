@@ -49,16 +49,23 @@ static std::vector<std::string> includePaths = {""};
 
 static std::deque<std::string> preIncludeNames;
 
+std::string FileStackNode::reptChain() const {
+	std::string chain;
+	std::vector<uint32_t> const &nodeIters = iters();
+	for (uint32_t i = nodeIters.size(); i--;) {
+		chain.append("::REPT~");
+		chain.append(std::to_string(nodeIters[i]));
+	}
+	return chain;
+}
+
 std::string const &FileStackNode::dump(uint32_t curLineNo) const {
 	if (std::holds_alternative<std::vector<uint32_t>>(data)) {
 		assume(parent); // REPT nodes use their parent's name
 		std::string const &lastName = parent->dump(lineNo);
 		fputs(" -> ", stderr);
 		fputs(lastName.c_str(), stderr);
-		std::vector<uint32_t> const &nodeIters = iters();
-		for (uint32_t i = nodeIters.size(); i--;) {
-			fprintf(stderr, "::REPT~%" PRIu32, nodeIters[i]);
-		}
+		fputs(reptChain().c_str(), stderr);
 		fprintf(stderr, "(%" PRIu32 ")", curLineNo);
 		return lastName;
 	} else {
@@ -248,11 +255,7 @@ static void newMacroContext(Symbol const &macro, std::shared_ptr<MacroArgs> macr
 		}
 	}
 	if (macro.src->type == NODE_REPT) {
-		std::vector<uint32_t> const &srcIters = macro.src->iters();
-		for (uint32_t i = srcIters.size(); i--;) {
-			fileInfoName.append("::REPT~");
-			fileInfoName.append(std::to_string(srcIters[i]));
-		}
+		fileInfoName.append(macro.src->reptChain());
 	}
 	fileInfoName.append("::");
 	fileInfoName.append(macro.name);

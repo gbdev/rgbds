@@ -44,6 +44,7 @@ struct FileStackNode {
 	    : type(type_), data(data_) {}
 
 	std::string const &dump(uint32_t curLineNo) const;
+	std::string reptChain() const;
 };
 
 extern size_t maxRecursionDepth;
