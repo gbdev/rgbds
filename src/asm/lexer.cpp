@@ -599,7 +599,7 @@ static bool isMacroChar(char c) {
 // forward declarations for readBracketedMacroArgNum
 static int peek();
 static void shiftChar();
-static int nextChar();
+static int bumpChar();
 static uint32_t readDecimalNumber(int initial);
 
 static uint32_t readBracketedMacroArgNum() {
@@ -684,7 +684,7 @@ static uint32_t readBracketedMacroArgNum() {
 }
 
 static std::shared_ptr<std::string> readMacroArg() {
-	int name = nextChar();
+	int name = bumpChar();
 	if (name == '@') {
 		std::shared_ptr<std::string> str = fstk_GetUniqueIDStr();
 		if (!str) {
@@ -879,7 +879,7 @@ static void shiftChar() {
 	}
 }
 
-static int nextChar() {
+static int bumpChar() {
 	int c = peek();
 	if (c != EOF) {
 		shiftChar();
@@ -935,7 +935,7 @@ void lexer_DumpStringExpansions() {
 static void discardBlockComment() {
 	Defer reenableExpansions = scopedDisableExpansions();
 	for (;;) {
-		int c = nextChar();
+		int c = bumpChar();
 
 		switch (c) {
 		case EOF:
@@ -1670,7 +1670,7 @@ static void reportGarbageCharacters(int c) {
 		// At least two characters are garbage; group them into one error report
 		std::string garbage = printChar(c);
 		while (isGarbageCharacter(peek())) {
-			c = nextChar();
+			c = bumpChar();
 			garbage += ", ";
 			garbage += printChar(c);
 		}
@@ -1687,7 +1687,7 @@ static Token yylex_NORMAL() {
 	}
 
 	for (;; lexerState->atLineStart = false) {
-		int c = nextChar();
+		int c = bumpChar();
 
 		switch (c) {
 			// Ignore whitespace and comments
@@ -1983,7 +1983,7 @@ static Token yylex_NORMAL() {
 		default:
 			bool raw = c == '#';
 			if (raw && startsIdentifier(peek())) {
-				c = nextChar();
+				c = bumpChar();
 			} else if (!startsIdentifier(c)) {
 				// Do not report weird characters when capturing, it'll be done later
 				if (!lexerState->capturing) {
@@ -2236,13 +2236,13 @@ static Token skipIfBlock(bool toEndc) {
 	for (int c;; atLineStart = false) {
 		// Read chars until EOL
 		while (!atLineStart) {
-			c = nextChar();
+			c = bumpChar();
 
 			if (c == EOF) {
 				return Token(T_(YYEOF));
 			} else if (c == '\\') {
 				// Unconditionally skip the next char, including line continuations
-				c = nextChar();
+				c = bumpChar();
 			} else if (c == '\r' || c == '\n') {
 				atLineStart = true;
 			}
@@ -2324,13 +2324,13 @@ static Token yylex_SKIP_TO_ENDR() {
 	for (int c;; atLineStart = false) {
 		// Read chars until EOL
 		while (!atLineStart) {
-			c = nextChar();
+			c = bumpChar();
 
 			if (c == EOF) {
 				return Token(T_(YYEOF));
 			} else if (c == '\\') {
 				// Unconditionally skip the next char, including line continuations
-				c = nextChar();
+				c = bumpChar();
 			} else if (c == '\r' || c == '\n') {
 				atLineStart = true;
 			}
@@ -2469,7 +2469,7 @@ Capture lexer_CaptureRept() {
 		nextLine();
 		// We're at line start, so attempt to match a `REPT` or `ENDR` token
 		do { // Discard initial whitespace
-			c = nextChar();
+			c = bumpChar();
 		} while (isWhitespace(c));
 		// Now, try to match `REPT`, `FOR` or `ENDR` as a **whole** keyword
 		if (startsIdentifier(c)) {
@@ -2496,7 +2496,7 @@ Capture lexer_CaptureRept() {
 		}
 
 		// Just consume characters until EOL or EOF
-		for (;; c = nextChar()) {
+		for (;; c = bumpChar()) {
 			if (c == EOF) {
 				error("Unterminated REPT/FOR block");
 				endCapture(capture);
@@ -2519,7 +2519,7 @@ Capture lexer_CaptureMacro() {
 		nextLine();
 		// We're at line start, so attempt to match an `ENDM` token
 		do { // Discard initial whitespace
-			c = nextChar();
+			c = bumpChar();
 		} while (isWhitespace(c));
 		// Now, try to match `ENDM` as a **whole** keyword
 		if (startsIdentifier(c) && readIdentifier(c, false).type == T_(POP_ENDM)) {
@@ -2531,7 +2531,7 @@ Capture lexer_CaptureMacro() {
 		}
 
 		// Just consume characters until EOL or EOF
-		for (;; c = nextChar()) {
+		for (;; c = bumpChar()) {
 			if (c == EOF) {
 				error("Unterminated macro definition");
 				endCapture(capture);
