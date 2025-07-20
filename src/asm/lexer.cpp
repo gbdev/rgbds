@@ -816,22 +816,12 @@ static int peek() {
 			return c;
 		}
 
+		// If character is a macro arg char, do macro arg expansion
 		shiftChar();
-
-		std::shared_ptr<std::string> str = readMacroArg();
-		// If the macro arg is invalid or an empty string, it cannot be expanded,
-		// so skip it and keep peeking.
-		if (!str || str->empty()) {
-			return peek(); // Tail recursion
+		if (std::shared_ptr<std::string> str = readMacroArg(); str) {
+			beginExpansion(str, std::nullopt);
 		}
-
-		beginExpansion(str, std::nullopt);
-
-		// Assuming macro args can't be recursive (I'll be damned if a way
-		// is found...), then we mark the entire macro arg as scanned.
-		lexerState->macroArgScanDistance += str->length();
-
-		return str->front();
+		return peek(); // Tail recursion
 	} else if (c == '{' && !lexerState->disableInterpolation) {
 		// If character is an open brace, do symbol interpolation
 		shiftChar();
