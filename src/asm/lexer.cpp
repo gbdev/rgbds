@@ -803,35 +803,31 @@ static std::shared_ptr<std::string> readInterpolation(size_t depth);
 static int peek() {
 	int c = lexerState->peekChar();
 
-	if (lexerState->macroArgScanDistance > 0) {
-		return c;
+	for (; lexerState->macroArgScanDistance == 0; c = lexerState->peekChar()) {
+		++lexerState->macroArgScanDistance; // Do not consider again
+
+		if (c == '\\' && !lexerState->disableMacroArgs) {
+			// If character is a backslash, check for a macro arg
+			++lexerState->macroArgScanDistance;
+			if (!isMacroChar(lexerState->peekCharAhead())) {
+				break;
+			}
+
+			// If character is a macro arg char, do macro arg expansion
+			shiftChar();
+			if (std::shared_ptr<std::string> str = readMacroArg(); str) {
+				beginExpansion(str, std::nullopt);
+			}
+		} else if (c == '{' && !lexerState->disableInterpolation) {
+			// If character is an open brace, do symbol interpolation
+			shiftChar();
+			if (std::shared_ptr<std::string> str = readInterpolation(0); str) {
+				beginExpansion(str, *str);
+			}
+		}
 	}
 
-	++lexerState->macroArgScanDistance; // Do not consider again
-
-	if (c == '\\' && !lexerState->disableMacroArgs) {
-		// If character is a backslash, check for a macro arg
-		++lexerState->macroArgScanDistance;
-		if (!isMacroChar(lexerState->peekCharAhead())) {
-			return c;
-		}
-
-		// If character is a macro arg char, do macro arg expansion
-		shiftChar();
-		if (std::shared_ptr<std::string> str = readMacroArg(); str) {
-			beginExpansion(str, std::nullopt);
-		}
-		return peek(); // Tail recursion
-	} else if (c == '{' && !lexerState->disableInterpolation) {
-		// If character is an open brace, do symbol interpolation
-		shiftChar();
-		if (std::shared_ptr<std::string> str = readInterpolation(0); str) {
-			beginExpansion(str, *str);
-		}
-		return peek(); // Tail recursion
-	} else {
-		return c;
-	}
+	return c;
 }
 
 static void shiftChar() {
