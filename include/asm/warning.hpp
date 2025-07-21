@@ -7,8 +7,6 @@
 
 #include "diagnostics.hpp"
 
-extern unsigned int nbErrors;
-
 enum WarningLevel {
 	LEVEL_DEFAULT,    // Warnings that are enabled by default
 	LEVEL_ALL,        // Warnings that probably indicate an error
@@ -81,5 +79,8 @@ void error(char const *fmt, ...);
 // get a list of all errors at the end, making it easier to fix all of them at
 // once.
 void error(std::function<void()> callback);
+
+void forceError();
+void requireZeroErrors();
 
 #endif // RGBDS_ASM_WARNING_HPP

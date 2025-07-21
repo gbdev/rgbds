@@ -418,8 +418,8 @@ int main(int argc, char *argv[]) {
 	fstk_Init(mainFileName, maxDepth);
 
 	// Perform parse (`yy::parser` is auto-generated from `parser.y`)
-	if (yy::parser parser; parser.parse() != 0 && nbErrors == 0) {
-		nbErrors = 1;
+	if (yy::parser parser; parser.parse() != 0) {
+		forceError();
 	}
 
 	if (!fstk_FailedOnMissingInclude()) {
@@ -432,10 +432,7 @@ int main(int argc, char *argv[]) {
 		sect_CheckStack();
 	}
 
-	if (nbErrors != 0) {
-		fprintf(stderr, "Assembly aborted with %u error%s!\n", nbErrors, nbErrors == 1 ? "" : "s");
-		exit(1);
-	}
+	requireZeroErrors();
 
 	// If parse aborted due to missing an include, and `-MG` was given, exit normally
 	if (fstk_FailedOnMissingInclude()) {

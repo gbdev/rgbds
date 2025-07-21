@@ -125,6 +125,19 @@ void fatal(char const *fmt, ...) {
 	exit(1);
 }
 
+void forceError() {
+	if (nbErrors == 0) {
+		nbErrors = 1;
+	}
+}
+
+void requireZeroErrors() {
+	if (nbErrors != 0) {
+		fprintf(stderr, "Assembly aborted with %u error%s!\n", nbErrors, nbErrors == 1 ? "" : "s");
+		exit(1);
+	}
+}
+
 void warning(WarningID id, char const *fmt, ...) {
 	char const *flag = warnings.warningFlags[id].name;
 	va_list args;
