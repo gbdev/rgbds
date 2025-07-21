@@ -850,8 +850,6 @@ void sdobj_ReadFile(FileStackNode const &src, FILE *file, std::vector<Symbol> &f
 		);
 	}
 
-	nbSectionsToAssign += fileSections.size();
-
 	for (FileSection &entry : fileSections) {
 		std::unique_ptr<Section> &section = entry.section;
 

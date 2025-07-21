@@ -379,7 +379,6 @@ static void readSection(
 		}
 
 		uint32_t nbPatches;
-
 		tryReadLong(
 		    nbPatches,
 		    file,
@@ -483,7 +482,6 @@ void obj_ReadFile(char const *fileName, unsigned int fileID) {
 	verbosePrint("Reading object file %s\n", fileName);
 
 	uint32_t revNum;
-
 	tryReadLong(revNum, file, "%s: Cannot read revision number: %s", fileName);
 	if (revNum != RGBDS_OBJECT_REV) {
 		fatal(
@@ -498,15 +496,13 @@ void obj_ReadFile(char const *fileName, unsigned int fileID) {
 		);
 	}
 
-	uint32_t nbNodes;
 	uint32_t nbSymbols;
-	uint32_t nbSections;
-
 	tryReadLong(nbSymbols, file, "%s: Cannot read number of symbols: %s", fileName);
+
+	uint32_t nbSections;
 	tryReadLong(nbSections, file, "%s: Cannot read number of sections: %s", fileName);
 
-	nbSectionsToAssign += nbSections;
-
+	uint32_t nbNodes;
 	tryReadLong(nbNodes, file, "%s: Cannot read number of nodes: %s", fileName);
 	nodes[fileID].resize(nbNodes);
 	verbosePrint("Reading %u nodes...\n", nbNodes);
@@ -545,7 +541,6 @@ void obj_ReadFile(char const *fileName, unsigned int fileID) {
 	}
 
 	uint32_t nbAsserts;
-
 	tryReadLong(nbAsserts, file, "%s: Cannot read number of assertions: %s", fileName);
 	verbosePrint("Reading %" PRIu32 " assertions...\n", nbAsserts);
 	for (uint32_t i = 0; i < nbAsserts; i++) {
