@@ -21,6 +21,7 @@
 
 #include "link/assign.hpp"
 #include "link/main.hpp"
+#include "link/patch.hpp"
 #include "link/sdas_obj.hpp"
 #include "link/section.hpp"
 #include "link/symbol.hpp"
@@ -544,7 +545,7 @@ void obj_ReadFile(char const *fileName, unsigned int fileID) {
 	tryReadLong(nbAsserts, file, "%s: Cannot read number of assertions: %s", fileName);
 	verbosePrint("Reading %" PRIu32 " assertions...\n", nbAsserts);
 	for (uint32_t i = 0; i < nbAsserts; i++) {
-		Assertion &assertion = assertions.emplace_front();
+		Assertion &assertion = patch_AddAssertion();
 
 		readAssertion(file, assertion, fileName, i, nodes[fileID]);
 		linkPatchToPCSect(assertion.patch, fileSections);

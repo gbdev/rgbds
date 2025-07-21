@@ -56,15 +56,6 @@ struct Section {
 	std::unique_ptr<Section> nextu; // The next "component" of this unionized sect
 };
 
-struct Assertion {
-	Patch patch; // Also used for its `.type`
-	std::string message;
-	// This would be redundant with `.section->fileSymbols`, but `section` is sometimes `nullptr`!
-	std::vector<Symbol> *fileSymbols;
-};
-
-extern std::deque<Assertion> assertions;
-
 // Execute a callback for each section currently registered.
 // This is to avoid exposing the data structure in which sections are stored.
 void sect_ForEach(void (*callback)(Section &));

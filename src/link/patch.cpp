@@ -459,6 +459,10 @@ static int32_t computeRPNExpr(Patch const &patch, std::vector<Symbol> const &fil
 	return popRPN(patch);
 }
 
+Assertion &patch_AddAssertion() {
+	return assertions.emplace_front();
+}
+
 void patch_CheckAssertions() {
 	verbosePrint("Checking assertions...\n");
 
