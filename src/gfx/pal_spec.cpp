@@ -9,6 +9,7 @@
 #include <inttypes.h>
 #include <limits.h>
 #include <optional>
+#include <png.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <streambuf>
@@ -578,6 +579,208 @@ static void parseGBCFile(std::filebuf &file) {
 	}
 }
 
+[[noreturn]]
+static void handlePngError(png_structp, char const *msg) {
+	fatal("Error reading palette file: %s", msg);
+}
+
+static void handlePngWarning(png_structp, char const *msg) {
+	warnx("In palette file: %s", msg);
+}
+
+static void readPngData(png_structp png, png_bytep data, size_t length) {
+	std::filebuf *file = reinterpret_cast<std::filebuf *>(png_get_io_ptr(png));
+	std::streamsize expectedLen = length;
+	std::streamsize nbBytesRead = file->sgetn(reinterpret_cast<char *>(data), expectedLen);
+
+	if (nbBytesRead != expectedLen) {
+		fatal(
+		    "Error reading palette file: file too short (expected at least %zd more bytes after "
+		    "reading %zu)",
+		    length - nbBytesRead,
+		    static_cast<size_t>(file->pubseekoff(0, std::ios_base::cur))
+		);
+	}
+}
+
+static bool checkPngSwatch(std::vector<png_byte> const &image, uint32_t base, uint32_t swatchSize) {
+	Rgba topLeft(image[base], image[base + 1], image[base + 2], image[base + 3]);
+	uint32_t rowFactor = swatchSize * options.nbColorsPerPal;
+	for (uint32_t y = 0; y < swatchSize; y++) {
+		for (uint32_t x = 0; x < swatchSize; x++) {
+			if (x == 0 && y == 0) {
+				continue;
+			}
+			uint32_t offset = base + (y * rowFactor + x) * 4;
+			Rgba pixel(image[offset], image[offset + 1], image[offset + 2], image[offset + 3]);
+			if (pixel != topLeft) {
+				return false;
+			}
+		}
+	}
+	return true;
+}
+
+static void parsePNGFile(std::filebuf &file) {
+	std::array<unsigned char, 8> pngHeader;
+	if (file.sgetn(reinterpret_cast<char *>(pngHeader.data()), pngHeader.size())
+	        != static_cast<std::streamsize>(pngHeader.size()) // Not enough bytes?
+	    || png_sig_cmp(pngHeader.data(), 0, pngHeader.size()) != 0) {
+		// LCOV_EXCL_START
+		error("Palette file does not appear to be a PNG palette file");
+		return;
+		// LCOV_EXCL_STOP
+	}
+
+	png_structp png =
+	    png_create_read_struct(PNG_LIBPNG_VER_STRING, nullptr, handlePngError, handlePngWarning);
+	if (!png) {
+		// LCOV_EXCL_START
+		error("Failed to create PNG read structure: %s", strerror(errno));
+		return;
+		// LCOV_EXCL_STOP
+	}
+
+	png_infop info = png_create_info_struct(png);
+	Defer destroyPng{[&] { png_destroy_read_struct(&png, &info, nullptr); }};
+	if (!info) {
+		// LCOV_EXCL_START
+		error("Failed to create PNG info structure: %s", strerror(errno));
+		return;
+		// LCOV_EXCL_STOP
+	}
+
+	png_set_read_fn(png, &file, readPngData);
+	png_set_sig_bytes(png, pngHeader.size());
+
+	// Process all chunks up to but not including the image data
+	png_read_info(png, info);
+
+	uint32_t width, height;
+	int bitDepth, colorType, interlaceType;
+	png_get_IHDR(
+	    png, info, &width, &height, &bitDepth, &colorType, &interlaceType, nullptr, nullptr
+	);
+
+	png_colorp embeddedPal = nullptr;
+	int nbColors;
+	png_bytep transparencyPal = nullptr;
+	int nbTransparentEntries;
+	if (png_get_PLTE(png, info, &embeddedPal, &nbColors) != 0) {
+		if (png_get_tRNS(png, info, &transparencyPal, &nbTransparentEntries, nullptr)) {
+			assume(nbTransparentEntries <= nbColors);
+		}
+	}
+
+	// Set up transformations to turn everything into RGBA888 for simplicity of handling
+
+	// Convert grayscale to RGB
+	switch (colorType & ~PNG_COLOR_MASK_ALPHA) {
+	case PNG_COLOR_TYPE_GRAY:
+		png_set_gray_to_rgb(png); // This also converts tRNS to alpha
+		break;
+	case PNG_COLOR_TYPE_PALETTE:
+		png_set_palette_to_rgb(png);
+		break;
+	}
+
+	if (png_get_valid(png, info, PNG_INFO_tRNS)) {
+		// If we read a tRNS chunk, convert it to alpha
+		png_set_tRNS_to_alpha(png);
+	} else if (!(colorType & PNG_COLOR_MASK_ALPHA)) {
+		// Otherwise, if we lack an alpha channel, default to full opacity
+		png_set_add_alpha(png, 0xFFFF, PNG_FILLER_AFTER);
+	}
+
+	// Scale 16bpp back to 8 (we don't need all of that precision anyway)
+	if (bitDepth == 16) {
+		png_set_scale_16(png);
+	} else if (bitDepth < 8) {
+		png_set_packing(png);
+	}
+
+	if (interlaceType != PNG_INTERLACE_NONE) {
+		png_set_interlace_handling(png);
+	}
+
+	// Update `info` with the transformations
+	png_read_update_info(png, info);
+	// These shouldn't have changed
+	assume(png_get_image_width(png, info) == width);
+	assume(png_get_image_height(png, info) == height);
+	// These should have changed, however
+	assume(png_get_color_type(png, info) == PNG_COLOR_TYPE_RGBA);
+	assume(png_get_bit_depth(png, info) == 8);
+
+	// Now that metadata has been read, we can process the image data
+
+	std::vector<png_byte> image(width * height * 4);
+	std::vector<png_bytep> rowPtrs(height);
+	for (uint32_t y = 0; y < height; ++y) {
+		rowPtrs[y] = image.data() + y * width * 4;
+	}
+	png_read_image(png, rowPtrs.data());
+
+	// The image width must evenly divide into a color swatch for each color per palette
+	if (width % options.nbColorsPerPal != 0) {
+		error(
+		    "PNG palette file is %" PRIu32 "x%" PRIu32 ", which is not a multiple of %" PRIu8
+		    " color swatches wide",
+		    width,
+		    height,
+		    options.nbColorsPerPal
+		);
+		return;
+	}
+
+	// Infer the color swatch size (width and height) from the image width
+	uint32_t swatchSize = width / options.nbColorsPerPal;
+
+	// The image height must evenly divide into a color swatch for each palette
+	if (height % swatchSize != 0) {
+		error(
+		    "PNG palette file is %" PRIu32 "x%" PRIu32 ", which is not a multiple of %" PRIu32
+		    " pixels high",
+		    width,
+		    height,
+		    swatchSize
+		);
+		return;
+	}
+
+	// More palettes than the maximum are a warning, not an error
+	uint32_t nbPals = height / swatchSize;
+	if (nbPals > options.nbPalettes) {
+		warnx(
+		    "PNG palette file contains %" PRIu32 " palette rows, but there can only be %" PRIu16
+		    "; ignoring extra",
+		    nbPals,
+		    options.nbPalettes
+		);
+		nbPals = options.nbPalettes;
+	}
+
+	options.palSpec.clear();
+
+	// Get each color from the top-left pixel of each swatch
+	uint32_t colorFactor = swatchSize * 4;
+	uint32_t palFactor = swatchSize * options.nbColorsPerPal;
+	for (uint32_t palIdx = 0; palIdx < nbPals; ++palIdx) {
+		options.palSpec.emplace_back();
+		for (uint32_t colorIdx = 0; colorIdx < options.nbColorsPerPal; ++colorIdx) {
+			std::optional<Rgba> &color = options.palSpec.back()[colorIdx];
+			uint32_t offset = (palIdx * palFactor + colorIdx) * colorFactor;
+			color = Rgba(image[offset], image[offset + 1], image[offset + 2], image[offset + 3]);
+
+			// Check that each swatch is completely one color
+			if (!checkPngSwatch(image, offset, swatchSize)) {
+				error("PNG palette file uses multiple colors in one color swatch");
+				return;
+			}
+		}
+	}
+}
+
 void parseExternalPalSpec(char const *arg) {
 	// `fmt:path`, parse the file according to the given format
 
@@ -596,6 +799,7 @@ void parseExternalPalSpec(char const *arg) {
 	    std::tuple{"ACT", &parseACTFile, std::ios::binary},
 	    std::tuple{"ACO", &parseACOFile, std::ios::binary},
 	    std::tuple{"GBC", &parseGBCFile, std::ios::binary},
+	    std::tuple{"PNG", &parsePNGFile, std::ios::binary},
 	};
 
 	auto iter = std::find_if(RANGE(parsers), [&arg, &ptr](auto const &parser) {

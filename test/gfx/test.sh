@@ -68,8 +68,8 @@ for f in seed*.bin; do
 done
 
 for f in *.png; do
-	# Do not process outputs of other tests as test inputs themselves
-	if [[ "$f" = result.png ]]; then
+	# Do not process outputs or palette inputs of other tests as test inputs themselves
+	if [[ "$f" = result.png ]] || [[ "$f" = *.pal.png ]]; then
 		continue
 	fi
 
