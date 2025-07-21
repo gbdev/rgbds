@@ -185,7 +185,6 @@ public:
 		options.verbosePrint(Options::VERB_LOG_ACT, "Opened input file\n");
 
 		std::array<unsigned char, 8> pngHeader;
-
 		if (file->sgetn(reinterpret_cast<char *>(pngHeader.data()), pngHeader.size())
 		        != static_cast<std::streamsize>(pngHeader.size()) // Not enough bytes?
 		    || png_sig_cmp(pngHeader.data(), 0, pngHeader.size()) != 0) {
@@ -215,8 +214,7 @@ public:
 		// Process all chunks up to but not including the image data
 		png_read_info(png, info);
 
-		int bitDepth, interlaceType; //, compressionType, filterMethod;
-
+		int bitDepth, interlaceType;
 		png_get_IHDR(
 		    png, info, &width, &height, &bitDepth, &colorType, &interlaceType, nullptr, nullptr
 		);
