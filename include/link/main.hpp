@@ -11,27 +11,31 @@
 
 #include "linkdefs.hpp"
 
-// Variables related to CLI options
-extern bool isDmgMode;
-extern char const *linkerScriptName;
-extern char const *mapFileName;
-extern bool noSymInMap;
-extern char const *symFileName;
-extern char const *overlayFileName;
-extern char const *outputFileName;
-extern uint8_t padValue;
-extern bool hasPadValue;
-extern uint16_t scrambleROMX;
-extern uint8_t scrambleWRAMX;
-extern uint8_t scrambleSRAM;
-extern bool is32kMode;
-extern bool beVerbose;
-extern bool isWRAM0Mode;
-extern bool disablePadding;
+struct Options {
+	bool isDmgMode;               // -d
+	char const *linkerScriptName; // -l
+	char const *mapFileName;      // -m
+	bool noSymInMap;              // -M
+	char const *symFileName;      // -n
+	char const *overlayFileName;  // -O
+	char const *outputFileName;   // -o
+	uint8_t padValue;             // -p
+	bool hasPadValue = false;
+	// Setting these three to 0 disables the functionality
+	uint16_t scrambleROMX = 0; // -S
+	uint8_t scrambleWRAMX = 0;
+	uint8_t scrambleSRAM = 0;
+	bool is32kMode;      // -t
+	bool beVerbose;      // -v
+	bool isWRAM0Mode;    // -w
+	bool disablePadding; // -x
+};
+
+extern Options options;
 
 #define verbosePrint(...) \
 	do { \
-		if (beVerbose) { \
+		if (options.beVerbose) { \
 			fprintf(stderr, __VA_ARGS__); \
 		} \
 	} while (0)

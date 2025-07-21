@@ -247,7 +247,7 @@ static void doSanityChecks(Section &section) {
 		return;
 	}
 
-	if (is32kMode && section.type == SECTTYPE_ROMX) {
+	if (options.is32kMode && section.type == SECTTYPE_ROMX) {
 		if (section.isBankFixed && section.bank != 1) {
 			error(
 			    "Section \"%s\" has type ROMX, which must be in bank 1 (if any) with option `-t`",
@@ -257,7 +257,7 @@ static void doSanityChecks(Section &section) {
 			section.type = SECTTYPE_ROM0;
 		}
 	}
-	if (isWRAM0Mode && section.type == SECTTYPE_WRAMX) {
+	if (options.isWRAM0Mode && section.type == SECTTYPE_WRAMX) {
 		if (section.isBankFixed && section.bank != 1) {
 			error(
 			    "Section \"%s\" has type WRAMX, which must be in bank 1 with options `-w` or `-d`",
@@ -267,7 +267,7 @@ static void doSanityChecks(Section &section) {
 			section.type = SECTTYPE_WRAM0;
 		}
 	}
-	if (isDmgMode && section.type == SECTTYPE_VRAM && section.bank == 1) {
+	if (options.isDmgMode && section.type == SECTTYPE_VRAM && section.bank == 1) {
 		error(
 		    "Section \"%s\" has type VRAM, which must be in bank 0 with option `-d`",
 		    section.name.c_str()

@@ -96,19 +96,19 @@ static ssize_t getPlacement(Section const &section, MemoryLocation &location) {
 	// Determine which bank we should start searching in
 	if (section.isBankFixed) {
 		location.bank = section.bank;
-	} else if (scrambleROMX && section.type == SECTTYPE_ROMX) {
+	} else if (options.scrambleROMX && section.type == SECTTYPE_ROMX) {
 		if (curScrambleROM < 1) {
-			curScrambleROM = scrambleROMX;
+			curScrambleROM = options.scrambleROMX;
 		}
 		location.bank = curScrambleROM--;
-	} else if (scrambleWRAMX && section.type == SECTTYPE_WRAMX) {
+	} else if (options.scrambleWRAMX && section.type == SECTTYPE_WRAMX) {
 		if (curScrambleWRAM < 1) {
-			curScrambleWRAM = scrambleWRAMX;
+			curScrambleWRAM = options.scrambleWRAMX;
 		}
 		location.bank = curScrambleWRAM--;
-	} else if (scrambleSRAM && section.type == SECTTYPE_SRAM) {
+	} else if (options.scrambleSRAM && section.type == SECTTYPE_SRAM) {
 		if (curScrambleSRAM < 0) {
-			curScrambleSRAM = scrambleSRAM;
+			curScrambleSRAM = options.scrambleSRAM;
 		}
 		location.bank = curScrambleSRAM--;
 	} else {
@@ -172,28 +172,30 @@ static ssize_t getPlacement(Section const &section, MemoryLocation &location) {
 		// available. Otherwise, try in ascending order.
 		if (section.isBankFixed) {
 			return -1;
-		} else if (scrambleROMX && section.type == SECTTYPE_ROMX && location.bank <= scrambleROMX) {
+		} else if (options.scrambleROMX && section.type == SECTTYPE_ROMX
+		           && location.bank <= options.scrambleROMX) {
 			if (location.bank > typeInfo.firstBank) {
 				--location.bank;
-			} else if (scrambleROMX < typeInfo.lastBank) {
-				location.bank = scrambleROMX + 1;
+			} else if (options.scrambleROMX < typeInfo.lastBank) {
+				location.bank = options.scrambleROMX + 1;
 			} else {
 				return -1;
 			}
-		} else if (scrambleWRAMX && section.type == SECTTYPE_WRAMX
-		           && location.bank <= scrambleWRAMX) {
+		} else if (options.scrambleWRAMX && section.type == SECTTYPE_WRAMX
+		           && location.bank <= options.scrambleWRAMX) {
 			if (location.bank > typeInfo.firstBank) {
 				--location.bank;
-			} else if (scrambleWRAMX < typeInfo.lastBank) {
-				location.bank = scrambleWRAMX + 1;
+			} else if (options.scrambleWRAMX < typeInfo.lastBank) {
+				location.bank = options.scrambleWRAMX + 1;
 			} else {
 				return -1;
 			}
-		} else if (scrambleSRAM && section.type == SECTTYPE_SRAM && location.bank <= scrambleSRAM) {
+		} else if (options.scrambleSRAM && section.type == SECTTYPE_SRAM
+		           && location.bank <= options.scrambleSRAM) {
 			if (location.bank > typeInfo.firstBank) {
 				--location.bank;
-			} else if (scrambleSRAM < typeInfo.lastBank) {
-				location.bank = scrambleSRAM + 1;
+			} else if (options.scrambleSRAM < typeInfo.lastBank) {
+				location.bank = options.scrambleSRAM + 1;
 			} else {
 				return -1;
 			}
@@ -388,7 +390,7 @@ void assign_AssignSections() {
 
 	// Overlaying requires only fully-constrained sections
 	verbosePrint("Assigning other sections...\n");
-	if (overlayFileName) {
+	if (options.overlayFileName) {
 		fputs("FATAL: All sections must be fixed when using an overlay file", stderr);
 		uint8_t nbSections = 0;
 		for (int8_t constraints = BANK_CONSTRAINED | ALIGN_CONSTRAINED; constraints >= 0;

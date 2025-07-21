@@ -25,23 +25,7 @@
 #include "link/symbol.hpp"
 #include "link/warning.hpp"
 
-bool isDmgMode;               // -d
-char const *linkerScriptName; // -l
-char const *mapFileName;      // -m
-bool noSymInMap;              // -M
-char const *symFileName;      // -n
-char const *overlayFileName;  // -O
-char const *outputFileName;   // -o
-uint8_t padValue;             // -p
-bool hasPadValue = false;
-// Setting these three to 0 disables the functionality
-uint16_t scrambleROMX = 0; // -S
-uint8_t scrambleWRAMX = 0;
-uint8_t scrambleSRAM = 0;
-bool is32kMode;      // -t
-bool beVerbose;      // -v
-bool isWRAM0Mode;    // -w
-bool disablePadding; // -x
+Options options;
 
 FILE *linkerScript;
 
@@ -243,20 +227,20 @@ static void parseScrambleSpec(char const *spec) {
 
 			switch (region) {
 			case SCRAMBLE_ROMX:
-				scrambleROMX = limit;
+				options.scrambleROMX = limit;
 				break;
 			case SCRAMBLE_SRAM:
-				scrambleSRAM = limit;
+				options.scrambleSRAM = limit;
 				break;
 			case SCRAMBLE_WRAMX:
-				scrambleWRAMX = limit;
+				options.scrambleWRAMX = limit;
 				break;
 			case SCRAMBLE_UNK: // The error has already been reported, do nothing
 				break;
 			}
 		} else if (region == SCRAMBLE_WRAMX) {
 			// Only WRAMX can be implied, since ROMX and SRAM size may vary
-			scrambleWRAMX = 7;
+			options.scrambleWRAMX = 7;
 		} else {
 			argErr('S', "Cannot imply limit for region \"%.*s\"", regionNameFmtLen, regionName);
 		}
@@ -279,8 +263,8 @@ int main(int argc, char *argv[]) {
 	for (int ch; (ch = musl_getopt_long_only(argc, argv, optstring, longopts, nullptr)) != -1;) {
 		switch (ch) {
 		case 'd':
-			isDmgMode = true;
-			isWRAM0Mode = true;
+			options.isDmgMode = true;
+			options.isWRAM0Mode = true;
 			break;
 		case 'h':
 			// LCOV_EXCL_START
@@ -288,37 +272,37 @@ int main(int argc, char *argv[]) {
 			exit(0);
 			// LCOV_EXCL_STOP
 		case 'l':
-			if (linkerScriptName) {
-				warnx("Overriding linker script %s", linkerScriptName);
+			if (options.linkerScriptName) {
+				warnx("Overriding linker script %s", options.linkerScriptName);
 			}
-			linkerScriptName = musl_optarg;
+			options.linkerScriptName = musl_optarg;
 			break;
 		case 'M':
-			noSymInMap = true;
+			options.noSymInMap = true;
 			break;
 		case 'm':
-			if (mapFileName) {
-				warnx("Overriding map file %s", mapFileName);
+			if (options.mapFileName) {
+				warnx("Overriding map file %s", options.mapFileName);
 			}
-			mapFileName = musl_optarg;
+			options.mapFileName = musl_optarg;
 			break;
 		case 'n':
-			if (symFileName) {
-				warnx("Overriding sym file %s", symFileName);
+			if (options.symFileName) {
+				warnx("Overriding sym file %s", options.symFileName);
 			}
-			symFileName = musl_optarg;
+			options.symFileName = musl_optarg;
 			break;
 		case 'O':
-			if (overlayFileName) {
-				warnx("Overriding overlay file %s", overlayFileName);
+			if (options.overlayFileName) {
+				warnx("Overriding overlay file %s", options.overlayFileName);
 			}
-			overlayFileName = musl_optarg;
+			options.overlayFileName = musl_optarg;
 			break;
 		case 'o':
-			if (outputFileName) {
-				warnx("Overriding output file %s", outputFileName);
+			if (options.outputFileName) {
+				warnx("Overriding output file %s", options.outputFileName);
 			}
-			outputFileName = musl_optarg;
+			options.outputFileName = musl_optarg;
 			break;
 		case 'p': {
 			char *endptr;
@@ -328,15 +312,15 @@ int main(int argc, char *argv[]) {
 				argErr('p', "Argument for 'p' must be a byte (between 0 and 0xFF)");
 				value = 0xFF;
 			}
-			padValue = value;
-			hasPadValue = true;
+			options.padValue = value;
+			options.hasPadValue = true;
 			break;
 		}
 		case 'S':
 			parseScrambleSpec(musl_optarg);
 			break;
 		case 't':
-			is32kMode = true;
+			options.is32kMode = true;
 			break;
 		case 'V':
 			// LCOV_EXCL_START
@@ -345,19 +329,19 @@ int main(int argc, char *argv[]) {
 			// LCOV_EXCL_STOP
 		case 'v':
 			// LCOV_EXCL_START
-			beVerbose = true;
+			options.beVerbose = true;
 			break;
 			// LCOV_EXCL_STOP
 		case 'W':
 			warnings.processWarningFlag(musl_optarg);
 			break;
 		case 'w':
-			isWRAM0Mode = true;
+			options.isWRAM0Mode = true;
 			break;
 		case 'x':
-			disablePadding = true;
+			options.disablePadding = true;
 			// implies tiny mode
-			is32kMode = true;
+			options.is32kMode = true;
 			break;
 		default:
 			// LCOV_EXCL_START
@@ -375,15 +359,15 @@ int main(int argc, char *argv[]) {
 	}
 
 	// Patch the size array depending on command-line options
-	if (!is32kMode) {
+	if (!options.is32kMode) {
 		sectionTypeInfo[SECTTYPE_ROM0].size = 0x4000;
 	}
-	if (!isWRAM0Mode) {
+	if (!options.isWRAM0Mode) {
 		sectionTypeInfo[SECTTYPE_WRAM0].size = 0x1000;
 	}
 
 	// Patch the bank ranges array depending on command-line options
-	if (isDmgMode) {
+	if (options.isDmgMode) {
 		sectionTypeInfo[SECTTYPE_VRAM].lastBank = 0;
 	}
 
@@ -393,10 +377,10 @@ int main(int argc, char *argv[]) {
 	}
 
 	// apply the linker script's modifications,
-	if (linkerScriptName) {
+	if (options.linkerScriptName) {
 		verbosePrint("Reading linker script...\n");
 
-		script_ProcessScript(linkerScriptName);
+		script_ProcessScript();
 
 		// If the linker script produced any errors, some sections may be in an invalid state
 		requireZeroErrors();

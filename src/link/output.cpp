@@ -125,7 +125,7 @@ static uint32_t checkOverlaySize() {
 
 	if (overlaySize % BANK_SIZE) {
 		warnx("Overlay file does not have a size multiple of 0x4000");
-	} else if (is32kMode && overlaySize != 0x8000) {
+	} else if (options.is32kMode && overlaySize != 0x8000) {
 		warnx("Overlay is not exactly 0x8000 bytes large");
 	} else if (overlaySize < 0x8000) {
 		warnx("Overlay is less than 0x8000 bytes large");
@@ -138,7 +138,7 @@ static uint32_t checkOverlaySize() {
 // This ensures that `writeROM` will output each bank, even if some are not
 // covered by any sections.
 static void coverOverlayBanks(uint32_t nbOverlayBanks) {
-	// 2 if is32kMode, 1 otherwise
+	// 2 if options.is32kMode, 1 otherwise
 	uint32_t nbRom0Banks = sectionTypeInfo[SECTTYPE_ROM0].size / BANK_SIZE;
 	// Discount ROM0 banks to avoid outputting too much
 	uint32_t nbUncoveredBanks = nbOverlayBanks - nbRom0Banks > sections[SECTTYPE_ROMX].size()
@@ -159,13 +159,13 @@ static uint8_t getNextFillByte() {
 			return c;
 		}
 
-		if (static bool warned = false; !hasPadValue && !warned) {
+		if (static bool warned = false; !options.hasPadValue && !warned) {
 			warnx("Output is larger than overlay file, but no padding value was specified");
 			warned = true;
 		}
 	}
 
-	return padValue;
+	return options.padValue;
 }
 
 static void
@@ -193,7 +193,7 @@ static void
 		}
 	}
 
-	if (!disablePadding) {
+	if (!options.disablePadding) {
 		while (offset < size) {
 			putc(getNextFillByte(), outputFile);
 			++offset;
@@ -202,16 +202,16 @@ static void
 }
 
 static void writeROM() {
-	if (outputFileName) {
-		if (strcmp(outputFileName, "-")) {
-			outputFile = fopen(outputFileName, "wb");
+	if (options.outputFileName) {
+		if (strcmp(options.outputFileName, "-")) {
+			outputFile = fopen(options.outputFileName, "wb");
 		} else {
-			outputFileName = "<stdout>";
+			options.outputFileName = "<stdout>";
 			(void)setmode(STDOUT_FILENO, O_BINARY);
 			outputFile = stdout;
 		}
 		if (!outputFile) {
-			fatal("Failed to open output file \"%s\": %s", outputFileName, strerror(errno));
+			fatal("Failed to open output file \"%s\": %s", options.outputFileName, strerror(errno));
 		}
 	}
 	Defer closeOutputFile{[&] {
@@ -220,16 +220,18 @@ static void writeROM() {
 		}
 	}};
 
-	if (overlayFileName) {
-		if (strcmp(overlayFileName, "-")) {
-			overlayFile = fopen(overlayFileName, "rb");
+	if (options.overlayFileName) {
+		if (strcmp(options.overlayFileName, "-")) {
+			overlayFile = fopen(options.overlayFileName, "rb");
 		} else {
-			overlayFileName = "<stdin>";
+			options.overlayFileName = "<stdin>";
 			(void)setmode(STDIN_FILENO, O_BINARY);
 			overlayFile = stdin;
 		}
 		if (!overlayFile) {
-			fatal("Failed to open overlay file \"%s\": %s", overlayFileName, strerror(errno));
+			fatal(
+			    "Failed to open overlay file \"%s\": %s", options.overlayFileName, strerror(errno)
+			);
 		}
 	}
 	Defer closeOverlayFile{[&] {
@@ -471,7 +473,7 @@ static void writeMapBank(SortedSections const &sectList, SectionType type, uint3
 		writeSectionName(sect.name, mapFile);
 		fputs("\"]\n", mapFile);
 
-		if (!noSymInMap) {
+		if (!options.noSymInMap) {
 			// Also print symbols in the following "pieces"
 			writeMapSymbols(&sect);
 		}
@@ -529,19 +531,19 @@ static void writeMapSummary() {
 }
 
 static void writeSym() {
-	if (!symFileName) {
+	if (!options.symFileName) {
 		return;
 	}
 
-	if (strcmp(symFileName, "-")) {
-		symFile = fopen(symFileName, "w");
+	if (strcmp(options.symFileName, "-")) {
+		symFile = fopen(options.symFileName, "w");
 	} else {
-		symFileName = "<stdout>";
+		options.symFileName = "<stdout>";
 		(void)setmode(STDOUT_FILENO, O_TEXT); // May have been set to O_BINARY previously
 		symFile = stdout;
 	}
 	if (!symFile) {
-		fatal("Failed to open sym file \"%s\": %s", symFileName, strerror(errno));
+		fatal("Failed to open sym file \"%s\": %s", options.symFileName, strerror(errno));
 	}
 	Defer closeSymFile{[&] { fclose(symFile); }};
 
@@ -579,19 +581,19 @@ static void writeSym() {
 }
 
 static void writeMap() {
-	if (!mapFileName) {
+	if (!options.mapFileName) {
 		return;
 	}
 
-	if (strcmp(mapFileName, "-")) {
-		mapFile = fopen(mapFileName, "w");
+	if (strcmp(options.mapFileName, "-")) {
+		mapFile = fopen(options.mapFileName, "w");
 	} else {
-		mapFileName = "<stdout>";
+		options.mapFileName = "<stdout>";
 		(void)setmode(STDOUT_FILENO, O_TEXT); // May have been set to O_BINARY previously
 		mapFile = stdout;
 	}
 	if (!mapFile) {
-		fatal("Failed to open map file \"%s\": %s", mapFileName, strerror(errno));
+		fatal("Failed to open map file \"%s\": %s", options.mapFileName, strerror(errno));
 	}
 	Defer closeMapFile{[&] { fclose(mapFile); }};
 

@@ -10,7 +10,7 @@
 
 	#include "linkdefs.hpp"
 
-	void script_ProcessScript(char const *path);
+	void script_ProcessScript();
 }
 
 %code {
@@ -828,12 +828,12 @@ static void placeSection(std::string const &name, bool isOptional) {
 
 /******************** External API ********************/
 
-void script_ProcessScript(char const *path) {
+void script_ProcessScript() {
 	activeType = SECTTYPE_INVALID;
 
 	lexerStack.clear();
 	atEof = false;
-	LexerStackEntry &newContext = lexerStack.emplace_back(std::string(path));
+	LexerStackEntry &newContext = lexerStack.emplace_back(std::string(options.linkerScriptName));
 
 	if (!newContext.file.open(newContext.path, std::ios_base::in)) {
 		error("Failed to open linker script \"%s\"", newContext.path.c_str());
