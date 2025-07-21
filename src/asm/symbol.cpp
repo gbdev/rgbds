@@ -36,7 +36,7 @@ static char savedTIME[256];
 static char savedDATE[256];
 static char savedTIMESTAMP_ISO8601_LOCAL[256];
 static char savedTIMESTAMP_ISO8601_UTC[256];
-static bool exportAll; // -E
+static bool exportAll = false; // -E
 
 bool sym_IsPC(Symbol const *sym) {
 	return sym == PCSymbol;

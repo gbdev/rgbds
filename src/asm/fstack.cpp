@@ -410,10 +410,8 @@ void fstk_NewRecursionDepth(size_t newDepth) {
 	options.maxRecursionDepth = newDepth;
 }
 
-void fstk_Init(std::string const &mainPath, size_t maxDepth) {
+void fstk_Init(std::string const &mainPath) {
 	newFileContext(mainPath, true);
-
-	options.maxRecursionDepth = maxDepth;
 
 	for (std::string const &name : preIncludeNames) {
 		if (std::optional<std::string> fullPath = fstk_FindFile(name); fullPath) {

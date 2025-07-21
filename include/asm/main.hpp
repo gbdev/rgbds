@@ -15,7 +15,7 @@ enum MissingInclude {
 
 struct Options {
 	uint8_t fixPrecision = 16;                      // -Q
-	size_t maxRecursionDepth;                       // -r
+	size_t maxRecursionDepth = 64;                  // -r
 	char binDigits[2] = {'0', '1'};                 // -b
 	char gfxDigits[4] = {'0', '1', '2', '3'};       // -g
 	bool verbose = false;                           // -v

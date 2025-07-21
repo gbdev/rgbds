@@ -75,6 +75,6 @@ void fstk_RunFor(
 bool fstk_Break();
 
 void fstk_NewRecursionDepth(size_t newDepth);
-void fstk_Init(std::string const &mainPath, size_t maxDepth);
+void fstk_Init(std::string const &mainPath);
 
 #endif // RGBDS_ASM_FSTACK_HPP

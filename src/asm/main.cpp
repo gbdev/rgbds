@@ -165,25 +165,22 @@ static std::vector<StateFeature> parseStateFeatures(char *str) {
 }
 
 int main(int argc, char *argv[]) {
-	time_t now = time(nullptr);
 	// Support SOURCE_DATE_EPOCH for reproducible builds
 	// https://reproducible-builds.org/docs/source-date-epoch/
+	time_t now = time(nullptr);
 	if (char const *sourceDateEpoch = getenv("SOURCE_DATE_EPOCH"); sourceDateEpoch) {
 		now = static_cast<time_t>(strtoul(sourceDateEpoch, nullptr, 0));
 	}
-
-	// Perform some init for below
 	sym_Init(now);
 
-	// Set defaults
-	sym_SetExportAll(false);
-	uint32_t maxDepth = 64;
-	char const *dependFileName = nullptr;
-	std::unordered_map<std::string, std::vector<StateFeature>> stateFileSpecs;
-	// Maximum of 100 errors only applies if rgbasm is printing errors to a terminal.
+	// Maximum of 100 errors only applies if rgbasm is printing errors to a terminal
 	if (isatty(STDERR_FILENO)) {
 		options.maxErrors = 100;
 	}
+
+	// Local options
+	char const *dependFileName = nullptr;                                      // -M
+	std::unordered_map<std::string, std::vector<StateFeature>> stateFileSpecs; // -s
 
 	for (int ch; (ch = musl_getopt_long_only(argc, argv, optstring, longopts, nullptr)) != -1;) {
 		switch (ch) {
@@ -295,7 +292,7 @@ int main(int argc, char *argv[]) {
 		}
 
 		case 'r':
-			maxDepth = strtoul(musl_optarg, &endptr, 0);
+			options.maxRecursionDepth = strtoul(musl_optarg, &endptr, 0);
 
 			if (musl_optarg[0] == '\0' || *endptr != '\0') {
 				fatal("Invalid argument for option 'r'");
@@ -415,7 +412,7 @@ int main(int argc, char *argv[]) {
 	charmap_New(DEFAULT_CHARMAP_NAME, nullptr);
 
 	// Init lexer and file stack, providing file info
-	fstk_Init(mainFileName, maxDepth);
+	fstk_Init(mainFileName);
 
 	// Perform parse (`yy::parser` is auto-generated from `parser.y`)
 	if (yy::parser parser; parser.parse() != 0) {
