@@ -587,8 +587,8 @@ static void beginExpansion(std::shared_ptr<std::string> str, std::optional<std::
 }
 
 void lexer_CheckRecursionDepth() {
-	if (lexerState->expansions.size() > maxRecursionDepth + 1) {
-		fatal("Recursion limit (%zu) exceeded", maxRecursionDepth);
+	if (lexerState->expansions.size() > options.maxRecursionDepth + 1) {
+		fatal("Recursion limit (%zu) exceeded", options.maxRecursionDepth);
 	}
 }
 
@@ -1043,10 +1043,10 @@ static uint32_t readFractionalPart(uint32_t integer) {
 		if (state >= READFRACTIONALPART_PRECISION) {
 			error("Invalid fixed-point constant, no significant digits after 'q'");
 		}
-		precision = fixPrecision;
+		precision = options.fixPrecision;
 	} else if (precision > 31) {
 		error("Fixed-point constant precision must be between 1 and 31");
-		precision = fixPrecision;
+		precision = options.fixPrecision;
 	}
 
 	if (integer >= (1ULL << (32 - precision))) {
@@ -1059,9 +1059,6 @@ static uint32_t readFractionalPart(uint32_t integer) {
 
 	return (integer << precision) | fractional;
 }
-
-char binDigits[2];
-char gfxDigits[4];
 
 static bool isValidDigit(char c) {
 	return (c >= '0' && c <= '9') || (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || c == '.'
@@ -1094,14 +1091,14 @@ static bool checkDigitErrors(char const *digits, size_t n, char const *type) {
 }
 
 void lexer_SetBinDigits(char const digits[2]) {
-	if (size_t n = std::size(binDigits); checkDigitErrors(digits, n, "binary")) {
-		memcpy(binDigits, digits, n);
+	if (size_t n = std::size(options.binDigits); checkDigitErrors(digits, n, "binary")) {
+		memcpy(options.binDigits, digits, n);
 	}
 }
 
 void lexer_SetGfxDigits(char const digits[4]) {
-	if (size_t n = std::size(gfxDigits); checkDigitErrors(digits, n, "graphics")) {
-		memcpy(gfxDigits, digits, n);
+	if (size_t n = std::size(options.gfxDigits); checkDigitErrors(digits, n, "graphics")) {
+		memcpy(options.gfxDigits, digits, n);
 	}
 }
 
@@ -1114,9 +1111,9 @@ static uint32_t readBinaryNumber() {
 
 		if (c == '_' && !empty) {
 			continue;
-		} else if (c == '0' || c == binDigits[0]) {
+		} else if (c == '0' || c == options.binDigits[0]) {
 			bit = 0;
-		} else if (c == '1' || c == binDigits[1]) {
+		} else if (c == '1' || c == options.binDigits[1]) {
 			bit = 1;
 		} else {
 			break;
@@ -1227,13 +1224,13 @@ static uint32_t readGfxConstant() {
 
 		if (c == '_' && width > 0) {
 			continue;
-		} else if (c == '0' || c == gfxDigits[0]) {
+		} else if (c == '0' || c == options.gfxDigits[0]) {
 			pixel = 0;
-		} else if (c == '1' || c == gfxDigits[1]) {
+		} else if (c == '1' || c == options.gfxDigits[1]) {
 			pixel = 1;
-		} else if (c == '2' || c == gfxDigits[2]) {
+		} else if (c == '2' || c == options.gfxDigits[2]) {
 			pixel = 2;
-		} else if (c == '3' || c == gfxDigits[3]) {
+		} else if (c == '3' || c == options.gfxDigits[3]) {
 			pixel = 3;
 		} else {
 			break;
@@ -1297,8 +1294,8 @@ static Token readIdentifier(char firstChar, bool raw) {
 // Functions to read strings
 
 static std::shared_ptr<std::string> readInterpolation(size_t depth) {
-	if (depth > maxRecursionDepth) {
-		fatal("Recursion limit (%zu) exceeded", maxRecursionDepth);
+	if (depth > options.maxRecursionDepth) {
+		fatal("Recursion limit (%zu) exceeded", options.maxRecursionDepth);
 	}
 
 	std::string fmtBuf;
@@ -1891,7 +1888,8 @@ static Token yylex_NORMAL() {
 			if (c == '=') {
 				shiftChar();
 				return Token(T_(POP_MODEQ));
-			} else if (c == '0' || c == '1' || c == binDigits[0] || c == binDigits[1]) {
+			} else if (c == '0' || c == '1' || c == options.binDigits[0]
+			           || c == options.binDigits[1]) {
 				return Token(T_(NUMBER), readBinaryNumber());
 			}
 			return Token(T_(OP_MOD));

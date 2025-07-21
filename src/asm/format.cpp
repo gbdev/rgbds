@@ -10,6 +10,7 @@
 #include <string.h>
 
 #include "asm/fixpoint.hpp"
+#include "asm/main.hpp" // options
 #include "asm/warning.hpp"
 
 void FormatSpec::useCharacter(int c) {
@@ -258,7 +259,7 @@ void FormatSpec::appendNumber(std::string &str, uint32_t value) const {
 			useFracWidth = 255;
 		}
 
-		size_t defaultPrec = fix_Precision();
+		size_t defaultPrec = options.fixPrecision;
 		size_t usePrec = hasPrec ? precision : defaultPrec;
 		if (usePrec < 1 || usePrec > 31) {
 			error(

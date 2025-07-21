@@ -7,7 +7,7 @@
 
 #include "diagnostics.hpp"
 
-extern unsigned int nbErrors, maxErrors;
+extern unsigned int nbErrors;
 
 enum WarningLevel {
 	LEVEL_DEFAULT,    // Warnings that are enabled by default

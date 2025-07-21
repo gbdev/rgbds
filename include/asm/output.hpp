@@ -16,8 +16,6 @@ struct FileStackNode;
 
 enum StateFeature { STATE_EQU, STATE_VAR, STATE_EQUS, STATE_CHAR, STATE_MACRO, NB_STATE_FEATURES };
 
-extern std::string objectFileName;
-
 void out_RegisterNode(std::shared_ptr<FileStackNode> node);
 void out_SetFileName(std::string const &name);
 void out_CreatePatch(uint32_t type, Expression const &expr, uint32_t ofs, uint32_t pcShift);

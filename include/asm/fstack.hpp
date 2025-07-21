@@ -47,8 +47,6 @@ struct FileStackNode {
 	std::string reptChain() const;
 };
 
-extern size_t maxRecursionDepth;
-
 struct MacroArgs;
 
 bool fstk_DumpCurrent();

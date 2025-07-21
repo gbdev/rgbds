@@ -1671,13 +1671,13 @@ iconst:
 
 precision_arg:
 	%empty {
-		$$ = fix_Precision();
+		$$ = options.fixPrecision;
 	}
 	| COMMA iconst {
 		$$ = $2;
 		if ($$ < 1 || $$ > 31) {
 			::error("Fixed-point precision must be between 1 and 31, not %" PRId32, $$);
-			$$ = fix_Precision();
+			$$ = options.fixPrecision;
 		}
 	}
 ;

@@ -12,6 +12,7 @@
 #include "asm/fixpoint.hpp"
 #include "asm/fstack.hpp"
 #include "asm/lexer.hpp"
+#include "asm/main.hpp" // options
 #include "asm/section.hpp"
 #include "asm/warning.hpp"
 
@@ -19,31 +20,31 @@ struct OptStackEntry {
 	char binDigits[2];
 	char gfxDigits[4];
 	uint8_t fixPrecision;
-	uint8_t fillByte;
+	uint8_t padByte;
 	size_t maxRecursionDepth;
 	DiagnosticsState<WarningID> warningStates;
 };
 
 static std::stack<OptStackEntry> stack;
 
-void opt_B(char const chars[2]) {
-	lexer_SetBinDigits(chars);
+void opt_B(char const binDigits[2]) {
+	lexer_SetBinDigits(binDigits);
 }
 
-void opt_G(char const chars[4]) {
-	lexer_SetGfxDigits(chars);
+void opt_G(char const gfxDigits[4]) {
+	lexer_SetGfxDigits(gfxDigits);
 }
 
 void opt_P(uint8_t padByte) {
-	fillByte = padByte;
+	options.padByte = padByte;
 }
 
-void opt_Q(uint8_t precision) {
-	fixPrecision = precision;
+void opt_Q(uint8_t fixPrecision) {
+	options.fixPrecision = fixPrecision;
 }
 
-void opt_R(size_t newDepth) {
-	fstk_NewRecursionDepth(newDepth);
+void opt_R(size_t maxRecursionDepth) {
+	fstk_NewRecursionDepth(maxRecursionDepth);
 	lexer_CheckRecursionDepth();
 }
 
@@ -97,15 +98,15 @@ void opt_Parse(char const *s) {
 		}
 		if (strlen(precisionArg) <= 2) {
 			int result;
-			unsigned int precision;
+			unsigned int fixPrecision;
 
-			result = sscanf(precisionArg, "%u", &precision);
+			result = sscanf(precisionArg, "%u", &fixPrecision);
 			if (result != 1) {
 				error("Invalid argument for option 'Q'");
-			} else if (precision < 1 || precision > 31) {
+			} else if (fixPrecision < 1 || fixPrecision > 31) {
 				error("Argument for option 'Q' must be between 1 and 31");
 			} else {
-				opt_Q(precision);
+				opt_Q(fixPrecision);
 			}
 		} else {
 			error("Invalid argument for option 'Q'");
@@ -124,14 +125,14 @@ void opt_Parse(char const *s) {
 		}
 
 		char *endptr;
-		unsigned long newDepth = strtoul(s, &endptr, 10);
+		unsigned long maxRecursionDepth = strtoul(s, &endptr, 10);
 
 		if (*endptr != '\0') {
 			error("Invalid argument to option 'r' (\"%s\")", s);
 		} else if (errno == ERANGE) {
 			error("Argument to 'r' is out of range (\"%s\")", s);
 		} else {
-			opt_R(newDepth);
+			opt_R(maxRecursionDepth);
 		}
 		break;
 	}
@@ -153,17 +154,12 @@ void opt_Parse(char const *s) {
 void opt_Push() {
 	OptStackEntry entry;
 
-	// Both of these are pulled from lexer.hpp
-	memcpy(entry.binDigits, binDigits, std::size(binDigits));
-	memcpy(entry.gfxDigits, gfxDigits, std::size(gfxDigits));
-
-	entry.fixPrecision = fixPrecision; // Pulled from fixpoint.hpp
-
-	entry.fillByte = fillByte; // Pulled from section.hpp
-
-	entry.warningStates = warnings.state; // Pulled from warning.hpp
-
-	entry.maxRecursionDepth = maxRecursionDepth; // Pulled from fstack.h
+	memcpy(entry.binDigits, options.binDigits, std::size(options.binDigits));
+	memcpy(entry.gfxDigits, options.gfxDigits, std::size(options.gfxDigits));
+	entry.padByte = options.padByte;
+	entry.fixPrecision = options.fixPrecision;
+	entry.maxRecursionDepth = options.maxRecursionDepth;
+	entry.warningStates = warnings.state;
 
 	stack.push(entry);
 }
@@ -179,7 +175,7 @@ void opt_Pop() {
 
 	opt_B(entry.binDigits);
 	opt_G(entry.gfxDigits);
-	opt_P(entry.fillByte);
+	opt_P(entry.padByte);
 	opt_Q(entry.fixPrecision);
 	opt_R(entry.maxRecursionDepth);
 

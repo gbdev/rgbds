@@ -24,12 +24,8 @@
 #include "asm/symbol.hpp"
 #include "asm/warning.hpp"
 
-bool verbose = false; // -v
+Options options;
 
-FILE *dependFile = nullptr;                     // -M
-MissingInclude missingIncludeState = INC_ERROR; // -MC, -MG
-bool generatePhonyDeps = false;                 // -MP
-std::string targetFileName;                     // -MQ, -MT
 bool failedOnMissingInclude = false;
 
 // Escapes Make-special chars from a string
@@ -178,20 +174,10 @@ int main(int argc, char *argv[]) {
 		now = static_cast<time_t>(strtoul(sourceDateEpoch, nullptr, 0));
 	}
 
-	Defer closeDependFile{[&] {
-		if (dependFile) {
-			fclose(dependFile);
-		}
-	}};
-
 	// Perform some init for below
 	sym_Init(now);
 
 	// Set defaults
-	opt_B("01");
-	opt_G("0123");
-	opt_P(0);
-	opt_Q(16);
 	sym_SetExportAll(false);
 	uint32_t maxDepth = 64;
 	char const *dependFileName = nullptr;
@@ -199,7 +185,7 @@ int main(int argc, char *argv[]) {
 	std::string newTarget;
 	// Maximum of 100 errors only applies if rgbasm is printing errors to a terminal.
 	if (isatty(STDERR_FILENO)) {
-		maxErrors = 100;
+		options.maxErrors = 100;
 	}
 
 	for (int ch; (ch = musl_getopt_long_only(argc, argv, optstring, longopts, nullptr)) != -1;) {
@@ -248,17 +234,17 @@ int main(int argc, char *argv[]) {
 			break;
 
 		case 'M':
-			if (dependFile) {
+			if (options.dependFile) {
 				warnx("Overriding dependfile %s", dependFileName);
 			}
 			if (strcmp("-", musl_optarg)) {
-				dependFile = fopen(musl_optarg, "w");
+				options.dependFile = fopen(musl_optarg, "w");
 				dependFileName = musl_optarg;
 			} else {
-				dependFile = stdout;
+				options.dependFile = stdout;
 				dependFileName = "<stdout>";
 			}
-			if (dependFile == nullptr) {
+			if (options.dependFile == nullptr) {
 				// LCOV_EXCL_START
 				fatal("Failed to open dependfile \"%s\": %s", dependFileName, strerror(errno));
 				// LCOV_EXCL_STOP
@@ -340,7 +326,7 @@ int main(int argc, char *argv[]) {
 
 		case 'v':
 			// LCOV_EXCL_START
-			verbose = true;
+			options.verbose = true;
 			break;
 			// LCOV_EXCL_STOP
 
@@ -352,34 +338,34 @@ int main(int argc, char *argv[]) {
 			warnings.state.warningsEnabled = false;
 			break;
 
-			unsigned long maxValue;
+			unsigned long maxErrors;
 		case 'X':
-			maxValue = strtoul(musl_optarg, &endptr, 0);
+			maxErrors = strtoul(musl_optarg, &endptr, 0);
 
 			if (musl_optarg[0] == '\0' || *endptr != '\0') {
 				fatal("Invalid argument for option 'X'");
 			}
 
-			if (maxValue > UINT_MAX) {
+			if (maxErrors > UINT_MAX) {
 				fatal("Argument for option 'X' must be between 0 and %u", UINT_MAX);
 			}
 
-			maxErrors = maxValue;
+			options.maxErrors = maxErrors;
 			break;
 
 		// Long-only options
 		case 0:
 			switch (depType) {
 			case 'C':
-				missingIncludeState = GEN_CONTINUE;
+				options.missingIncludeState = GEN_CONTINUE;
 				break;
 
 			case 'G':
-				missingIncludeState = GEN_EXIT;
+				options.missingIncludeState = GEN_EXIT;
 				break;
 
 			case 'P':
-				generatePhonyDeps = true;
+				options.generatePhonyDeps = true;
 				break;
 
 			case 'Q':
@@ -388,10 +374,10 @@ int main(int argc, char *argv[]) {
 				if (depType == 'Q') {
 					newTarget = make_escape(newTarget);
 				}
-				if (!targetFileName.empty()) {
-					targetFileName += ' ';
+				if (!options.targetFileName.empty()) {
+					options.targetFileName += ' ';
 				}
-				targetFileName += newTarget;
+				options.targetFileName += newTarget;
 				break;
 			}
 			break;
@@ -405,8 +391,8 @@ int main(int argc, char *argv[]) {
 		}
 	}
 
-	if (targetFileName.empty() && !objectFileName.empty()) {
-		targetFileName = objectFileName;
+	if (options.targetFileName.empty() && !options.objectFileName.empty()) {
+		options.targetFileName = options.objectFileName;
 	}
 
 	if (argc == musl_optind) {
@@ -419,14 +405,11 @@ int main(int argc, char *argv[]) {
 
 	verbosePrint("Assembling %s\n", mainFileName.c_str()); // LCOV_EXCL_LINE
 
-	if (dependFile) {
-		if (targetFileName.empty()) {
-			fatal("Dependency files can only be created if a target file is specified with either "
-			      "-o, -MQ or -MT");
-		}
-
-		fprintf(dependFile, "%s: %s\n", targetFileName.c_str(), mainFileName.c_str());
+	if (options.dependFile && options.targetFileName.empty()) {
+		fatal("Dependency files can only be created if a target file is specified with either "
+		      "-o, -MQ or -MT");
 	}
+	options.printDep(mainFileName);
 
 	charmap_New(DEFAULT_CHARMAP_NAME, nullptr);
 

@@ -18,7 +18,6 @@
 #include "asm/main.hpp"
 
 unsigned int nbErrors = 0;
-unsigned int maxErrors = 0;
 
 // clang-format off: nested initializers
 Diagnostics<WarningLevel, WarningID> warnings = {
@@ -81,7 +80,7 @@ static void printDiag(
 
 static void incrementErrors() {
 	// This intentionally makes 0 act as "unlimited" (or at least "limited to sizeof(unsigned)")
-	if (++nbErrors == maxErrors) {
+	if (++nbErrors == options.maxErrors) {
 		fprintf(
 		    stderr,
 		    "Assembly aborted after the maximum of %u error%s! (configure with "

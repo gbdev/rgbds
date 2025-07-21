@@ -42,7 +42,6 @@ struct Context {
 };
 
 static std::stack<Context> contextStack;
-size_t maxRecursionDepth;
 
 // The first include path for `fstk_FindFile` to try is none at all
 static std::vector<std::string> includePaths = {""};
@@ -134,11 +133,9 @@ static bool isValidFilePath(std::string const &path) {
 }
 
 static void printDep(std::string const &path) {
-	if (dependFile) {
-		fprintf(dependFile, "%s: %s\n", targetFileName.c_str(), path.c_str());
-		if (generatePhonyDeps && isValidFilePath(path)) {
-			fprintf(dependFile, "%s:\n", path.c_str());
-		}
+	options.printDep(path);
+	if (options.dependFile && options.generatePhonyDeps && isValidFilePath(path)) {
+		fprintf(options.dependFile, "%s:\n", path.c_str());
 	}
 }
 
@@ -151,7 +148,7 @@ std::optional<std::string> fstk_FindFile(std::string const &path) {
 	}
 
 	errno = ENOENT;
-	if (missingIncludeState != INC_ERROR) {
+	if (options.missingIncludeState != INC_ERROR) {
 		printDep(path);
 	}
 	return std::nullopt;
@@ -212,8 +209,8 @@ bool yywrap() {
 }
 
 static void checkRecursionDepth() {
-	if (contextStack.size() > maxRecursionDepth) {
-		fatal("Recursion limit (%zu) exceeded", maxRecursionDepth);
+	if (contextStack.size() > options.maxRecursionDepth) {
+		fatal("Recursion limit (%zu) exceeded", options.maxRecursionDepth);
 	}
 }
 
@@ -304,18 +301,18 @@ static Context &newReptContext(int32_t reptLineNo, ContentSpan const &span, uint
 }
 
 bool fstk_FileError(std::string const &path, char const *functionName) {
-	if (missingIncludeState == INC_ERROR) {
+	if (options.missingIncludeState == INC_ERROR) {
 		error("Error opening %s file '%s': %s", functionName, path.c_str(), strerror(errno));
 	} else {
 		failedOnMissingInclude = true;
 		// LCOV_EXCL_START
-		if (missingIncludeState == GEN_EXIT) {
+		if (options.missingIncludeState == GEN_EXIT) {
 			verbosePrint(
 			    "Aborting (-MG) on %s file '%s' (%s)\n", functionName, path.c_str(), strerror(errno)
 			);
 			return true;
 		}
-		assume(missingIncludeState == GEN_CONTINUE);
+		assume(options.missingIncludeState == GEN_CONTINUE);
 		// LCOV_EXCL_STOP
 	}
 	return false;
@@ -406,13 +403,13 @@ void fstk_NewRecursionDepth(size_t newDepth) {
 	if (contextStack.size() > newDepth + 1) {
 		fatal("Recursion limit (%zu) exceeded", newDepth);
 	}
-	maxRecursionDepth = newDepth;
+	options.maxRecursionDepth = newDepth;
 }
 
 void fstk_Init(std::string const &mainPath, size_t maxDepth) {
 	newFileContext(mainPath, true);
 
-	maxRecursionDepth = maxDepth;
+	options.maxRecursionDepth = maxDepth;
 
 	for (std::string const &name : preIncludeNames) {
 		if (std::optional<std::string> fullPath = fstk_FindFile(name); fullPath) {

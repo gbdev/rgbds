@@ -3,17 +3,9 @@
 #ifndef RGBDS_ASM_MAIN_HPP
 #define RGBDS_ASM_MAIN_HPP
 
+#include <stdint.h>
 #include <stdio.h>
 #include <string>
-
-extern bool verbose;
-
-#define verbosePrint(...) \
-	do { \
-		if (verbose) { \
-			fprintf(stderr, __VA_ARGS__); \
-		} \
-	} while (0)
 
 enum MissingInclude {
 	INC_ERROR,    // A missing included file is an error that halts assembly
@@ -21,10 +13,41 @@ enum MissingInclude {
 	GEN_CONTINUE, // A missing included file is assumed to be generated; continue assembling
 };
 
-extern FILE *dependFile;
-extern std::string targetFileName;
-extern MissingInclude missingIncludeState;
-extern bool generatePhonyDeps;
+struct Options {
+	uint8_t fixPrecision = 16;                      // -Q
+	size_t maxRecursionDepth;                       // -r
+	char binDigits[2] = {'0', '1'};                 // -b
+	char gfxDigits[4] = {'0', '1', '2', '3'};       // -g
+	bool verbose = false;                           // -v
+	FILE *dependFile = nullptr;                     // -M
+	std::string targetFileName;                     // -MQ, -MT
+	MissingInclude missingIncludeState = INC_ERROR; // -MC, -MG
+	bool generatePhonyDeps = false;                 // -MP
+	std::string objectFileName;                     // -o
+	uint8_t padByte = 0;                            // -p
+	unsigned int maxErrors = 0;                     // -X
+
+	~Options() {
+		if (dependFile) {
+			fclose(dependFile);
+		}
+	}
+
+	void printDep(std::string const &depName) {
+		if (dependFile) {
+			fprintf(dependFile, "%s: %s\n", targetFileName.c_str(), depName.c_str());
+		}
+	}
+};
+
+extern Options options;
 extern bool failedOnMissingInclude;
+
+#define verbosePrint(...) \
+	do { \
+		if (options.verbose) { \
+			fprintf(stderr, __VA_ARGS__); \
+		} \
+	} while (0)
 
 #endif // RGBDS_ASM_MAIN_HPP

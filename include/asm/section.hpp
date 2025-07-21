@@ -12,8 +12,6 @@
 
 #include "linkdefs.hpp"
 
-extern uint8_t fillByte;
-
 struct Expression;
 struct FileStackNode;
 struct Section;

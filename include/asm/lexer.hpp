@@ -116,9 +116,6 @@ struct LexerState {
 	void clear(uint32_t lineNo_);
 };
 
-extern char binDigits[2];
-extern char gfxDigits[4];
-
 void lexer_SetBinDigits(char const digits[2]);
 void lexer_SetGfxDigits(char const digits[4]);
 

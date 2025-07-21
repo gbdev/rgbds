@@ -10,12 +10,6 @@
 	#define M_PI 3.14159265358979323846
 #endif
 
-uint8_t fixPrecision;
-
-uint8_t fix_Precision() {
-	return fixPrecision;
-}
-
 static double fix2double(int32_t i, int32_t q) {
 	return i / pow(2.0, q);
 }

@@ -30,8 +30,6 @@ struct Assertion {
 	std::string message;
 };
 
-std::string objectFileName;
-
 // List of symbols to put in the object file
 static std::vector<Symbol *> objectSymbols;
 
@@ -316,21 +314,23 @@ static void writeFileStackNode(FileStackNode const &node, FILE *file) {
 }
 
 void out_WriteObject() {
-	if (objectFileName.empty()) {
+	if (options.objectFileName.empty()) {
 		return;
 	}
 
 	FILE *file;
-	if (objectFileName != "-") {
-		file = fopen(objectFileName.c_str(), "wb");
+	if (options.objectFileName != "-") {
+		file = fopen(options.objectFileName.c_str(), "wb");
 	} else {
-		objectFileName = "<stdout>";
+		options.objectFileName = "<stdout>";
 		(void)setmode(STDOUT_FILENO, O_BINARY);
 		file = stdout;
 	}
 	if (!file) {
 		// LCOV_EXCL_START
-		fatal("Failed to open object file '%s': %s", objectFileName.c_str(), strerror(errno));
+		fatal(
+		    "Failed to open object file '%s': %s", options.objectFileName.c_str(), strerror(errno)
+		);
 		// LCOV_EXCL_STOP
 	}
 	Defer closeFile{[&] { fclose(file); }};
@@ -370,11 +370,11 @@ void out_WriteObject() {
 }
 
 void out_SetFileName(std::string const &name) {
-	if (!objectFileName.empty()) {
-		warnx("Overriding output filename %s", objectFileName.c_str());
+	if (!options.objectFileName.empty()) {
+		warnx("Overriding output filename %s", options.objectFileName.c_str());
 	}
-	objectFileName = name;
-	verbosePrint("Output filename %s\n", objectFileName.c_str()); // LCOV_EXCL_LINE
+	options.objectFileName = name;
+	verbosePrint("Output filename %s\n", options.objectFileName.c_str()); // LCOV_EXCL_LINE
 }
 
 static void dumpString(std::string const &escape, FILE *file) {

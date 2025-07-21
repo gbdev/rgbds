@@ -24,8 +24,6 @@
 
 using namespace std::literals;
 
-uint8_t fillByte;
-
 struct UnionStackEntry {
 	uint32_t start;
 	uint32_t size;
@@ -782,7 +780,7 @@ void sect_Skip(uint32_t skip, bool ds) {
 		}
 		// We know we're in a code SECTION
 		while (skip--) {
-			writeByte(fillByte);
+			writeByte(options.padByte);
 		}
 	}
 }
