@@ -149,12 +149,9 @@ static ssize_t getPlacement(Section const &section, MemoryLocation &location) {
 				location.address &= ~section.alignMask;
 				// Go to next align boundary and add offset
 				location.address += section.alignMask + 1 + section.alignOfs;
-			} else {
+			} else if (++spaceIdx < bankMem.size()) {
 				// Any location is fine, so, next free block
-				++spaceIdx;
-				if (spaceIdx < bankMem.size()) {
-					location.address = bankMem[spaceIdx].address;
-				}
+				location.address = bankMem[spaceIdx].address;
 			}
 
 			// If that location is past the current block's end,

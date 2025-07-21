@@ -501,8 +501,7 @@ LexerState::~LexerState() {
 
 bool Expansion::advance() {
 	assume(offset <= size());
-	++offset;
-	return offset > size();
+	return ++offset > size();
 }
 
 BufferedContent::~BufferedContent() {

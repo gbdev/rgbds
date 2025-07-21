@@ -330,9 +330,8 @@ static void decant(
 					members.push_back(iter - processed.begin());
 					*iter = true; // Mark that proto-pal as processed
 				}
-				++iter;
 				++attrs;
-			} while (iter != processed.end());
+			} while (++iter != processed.end());
 
 			if (to.combinedVolume(RANGE(colors)) <= options.maxOpaqueColors()) {
 				// Iterate through the component's proto-palettes, and transfer them

@@ -44,9 +44,8 @@ struct Context {
 static std::stack<Context> contextStack;
 
 // The first include path for `fstk_FindFile` to try is none at all
-static std::vector<std::string> includePaths = {""};
-
-static std::deque<std::string> preIncludeNames;
+static std::vector<std::string> includePaths = {""}; // -I
+static std::deque<std::string> preIncludeNames;      // -P
 
 std::string FileStackNode::reptChain() const {
 	std::string chain;

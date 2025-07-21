@@ -369,14 +369,6 @@ void out_WriteObject() {
 	}
 }
 
-void out_SetFileName(std::string const &name) {
-	if (!options.objectFileName.empty()) {
-		warnx("Overriding output filename %s", options.objectFileName.c_str());
-	}
-	options.objectFileName = name;
-	verbosePrint("Output filename %s\n", options.objectFileName.c_str()); // LCOV_EXCL_LINE
-}
-
 static void dumpString(std::string const &escape, FILE *file) {
 	for (char c : escape) {
 		// Escape characters that need escaping

@@ -182,7 +182,6 @@ int main(int argc, char *argv[]) {
 	uint32_t maxDepth = 64;
 	char const *dependFileName = nullptr;
 	std::unordered_map<std::string, std::vector<StateFeature>> stateFileSpecs;
-	std::string newTarget;
 	// Maximum of 100 errors only applies if rgbasm is printing errors to a terminal.
 	if (isatty(STDERR_FILENO)) {
 		options.maxErrors = 100;
@@ -252,7 +251,11 @@ int main(int argc, char *argv[]) {
 			break;
 
 		case 'o':
-			out_SetFileName(musl_optarg);
+			if (!options.objectFileName.empty()) {
+				warnx("Overriding output filename %s", options.objectFileName.c_str());
+			}
+			options.objectFileName = musl_optarg;
+			verbosePrint("Output filename %s\n", options.objectFileName.c_str()); // LCOV_EXCL_LINE
 			break;
 
 		case 'P':
@@ -274,14 +277,12 @@ int main(int argc, char *argv[]) {
 			opt_P(padByte);
 			break;
 
-			unsigned long precision;
-			char const *precisionArg;
-		case 'Q':
-			precisionArg = musl_optarg;
+		case 'Q': {
+			char const *precisionArg = musl_optarg;
 			if (precisionArg[0] == '.') {
 				++precisionArg;
 			}
-			precision = strtoul(precisionArg, &endptr, 0);
+			unsigned long precision = strtoul(precisionArg, &endptr, 0);
 
 			if (musl_optarg[0] == '\0' || *endptr != '\0') {
 				fatal("Invalid argument for option 'Q'");
@@ -293,6 +294,7 @@ int main(int argc, char *argv[]) {
 
 			opt_Q(precision);
 			break;
+		}
 
 		case 'r':
 			maxDepth = strtoul(musl_optarg, &endptr, 0);
@@ -338,9 +340,8 @@ int main(int argc, char *argv[]) {
 			warnings.state.warningsEnabled = false;
 			break;
 
-			unsigned long maxErrors;
-		case 'X':
-			maxErrors = strtoul(musl_optarg, &endptr, 0);
+		case 'X': {
+			unsigned long maxErrors = strtoul(musl_optarg, &endptr, 0);
 
 			if (musl_optarg[0] == '\0' || *endptr != '\0') {
 				fatal("Invalid argument for option 'X'");
@@ -352,6 +353,7 @@ int main(int argc, char *argv[]) {
 
 			options.maxErrors = maxErrors;
 			break;
+		}
 
 		// Long-only options
 		case 0:
@@ -369,8 +371,8 @@ int main(int argc, char *argv[]) {
 				break;
 
 			case 'Q':
-			case 'T':
-				newTarget = musl_optarg;
+			case 'T': {
+				std::string newTarget = musl_optarg;
 				if (depType == 'Q') {
 					newTarget = make_escape(newTarget);
 				}
@@ -379,6 +381,7 @@ int main(int argc, char *argv[]) {
 				}
 				options.targetFileName += newTarget;
 				break;
+			}
 			}
 			break;
 
