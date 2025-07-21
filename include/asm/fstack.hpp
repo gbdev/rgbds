@@ -58,6 +58,7 @@ void fstk_AddIncludePath(std::string const &path);
 void fstk_AddPreIncludeFile(std::string const &path);
 std::optional<std::string> fstk_FindFile(std::string const &path);
 bool fstk_FileError(std::string const &path, char const *functionName);
+bool fstk_FailedOnMissingInclude();
 
 bool yywrap();
 bool fstk_RunInclude(std::string const &path);

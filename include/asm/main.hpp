@@ -41,7 +41,6 @@ struct Options {
 };
 
 extern Options options;
-extern bool failedOnMissingInclude;
 
 #define verbosePrint(...) \
 	do { \

@@ -46,6 +46,7 @@ static std::stack<Context> contextStack;
 // The first include path for `fstk_FindFile` to try is none at all
 static std::vector<std::string> includePaths = {""}; // -I
 static std::deque<std::string> preIncludeNames;      // -P
+static bool failedOnMissingInclude = false;
 
 std::string FileStackNode::reptChain() const {
 	std::string chain;
@@ -315,6 +316,10 @@ bool fstk_FileError(std::string const &path, char const *functionName) {
 		// LCOV_EXCL_STOP
 	}
 	return false;
+}
+
+bool fstk_FailedOnMissingInclude() {
+	return failedOnMissingInclude;
 }
 
 bool fstk_RunInclude(std::string const &path) {

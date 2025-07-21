@@ -26,8 +26,6 @@
 
 Options options;
 
-bool failedOnMissingInclude = false;
-
 // Escapes Make-special chars from a string
 static std::string make_escape(std::string &str) {
 	std::string escaped;
@@ -424,7 +422,7 @@ int main(int argc, char *argv[]) {
 		nbErrors = 1;
 	}
 
-	if (!failedOnMissingInclude) {
+	if (!fstk_FailedOnMissingInclude()) {
 		sect_CheckUnionClosed();
 		sect_CheckLoadClosed();
 		sect_CheckSizes();
@@ -440,7 +438,7 @@ int main(int argc, char *argv[]) {
 	}
 
 	// If parse aborted due to missing an include, and `-MG` was given, exit normally
-	if (failedOnMissingInclude) {
+	if (fstk_FailedOnMissingInclude()) {
 		return 0;
 	}
 
