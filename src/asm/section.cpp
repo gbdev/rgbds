@@ -38,9 +38,9 @@ struct SectionStackEntry {
 	std::stack<UnionStackEntry> unionStack;
 };
 
-std::deque<Section> sectionList;
-std::unordered_map<std::string, size_t> sectionMap; // Indexes into `sectionList`
 Section *currentSection = nullptr;
+std::deque<Section> sectionList;
+static std::unordered_map<std::string, size_t> sectionMap; // Indexes into `sectionList`
 
 static uint32_t curOffset; // Offset into the current section (see `sect_GetSymbolOffset`)
 
