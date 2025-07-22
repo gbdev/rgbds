@@ -58,7 +58,7 @@ static std::deque<Charmap> charmapList;
 static std::unordered_map<std::string, size_t> charmapMap; // Indexes into `charmapList`
 
 static Charmap *currentCharmap;
-std::stack<Charmap *> charmapStack;
+static std::stack<Charmap *> charmapStack;
 
 bool charmap_ForEach(
     void (*mapFunc)(std::string const &),

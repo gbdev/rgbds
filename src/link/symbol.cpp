@@ -13,8 +13,8 @@
 #include "link/section.hpp"
 #include "link/warning.hpp"
 
-std::unordered_map<std::string, Symbol *> symbols;
-std::unordered_map<std::string, std::vector<Symbol *>> localSymbols;
+static std::unordered_map<std::string, Symbol *> symbols;
+static std::unordered_map<std::string, std::vector<Symbol *>> localSymbols;
 
 void sym_ForEach(void (*callback)(Symbol &)) {
 	for (auto &it : symbols) {

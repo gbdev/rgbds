@@ -12,8 +12,8 @@
 
 #include "link/warning.hpp"
 
-std::vector<std::unique_ptr<Section>> sectionList;
-std::unordered_map<std::string, size_t> sectionMap; // Indexes into `sectionList`
+static std::vector<std::unique_ptr<Section>> sectionList;
+static std::unordered_map<std::string, size_t> sectionMap; // Indexes into `sectionList`
 
 void sect_ForEach(void (*callback)(Section &)) {
 	for (std::unique_ptr<Section> &ptr : sectionList) {

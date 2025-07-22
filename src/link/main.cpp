@@ -27,8 +27,6 @@
 
 Options options;
 
-FILE *linkerScript;
-
 std::string const &FileStackNode::dump(uint32_t curLineNo) const {
 	if (std::holds_alternative<std::vector<uint32_t>>(data)) {
 		assume(parent); // REPT nodes use their parent's name

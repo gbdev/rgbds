@@ -16,14 +16,14 @@
 #include "link/symbol.hpp"
 #include "link/warning.hpp"
 
-std::deque<Assertion> assertions;
+static std::deque<Assertion> assertions;
 
 struct RPNStackEntry {
 	int32_t value;
 	bool errorFlag; // Whether the value is a placeholder inserted for error recovery
 };
 
-std::deque<RPNStackEntry> rpnStack;
+static std::deque<RPNStackEntry> rpnStack;
 
 static void pushRPN(int32_t value, bool comesFromError) {
 	rpnStack.push_front({.value = value, .errorFlag = comesFromError});

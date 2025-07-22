@@ -38,15 +38,19 @@ struct SectionStackEntry {
 	std::stack<UnionStackEntry> unionStack;
 };
 
-std::stack<UnionStackEntry> currentUnionStack;
-std::deque<SectionStackEntry> sectionStack;
 std::deque<Section> sectionList;
 std::unordered_map<std::string, size_t> sectionMap; // Indexes into `sectionList`
-uint32_t curOffset; // Offset into the current section (see sect_GetSymbolOffset)
 Section *currentSection = nullptr;
+
+static uint32_t curOffset; // Offset into the current section (see `sect_GetSymbolOffset`)
+
+static std::deque<SectionStackEntry> sectionStack;
+
 static Section *currentLoadSection = nullptr;
 static std::pair<Symbol const *, Symbol const *> currentLoadLabelScopes = {nullptr, nullptr};
-int32_t loadOffset; // Offset into the LOAD section's parent (see sect_GetOutputOffset)
+static int32_t loadOffset; // Offset into the LOAD section's parent (see sect_GetOutputOffset)
+
+static std::stack<UnionStackEntry> currentUnionStack;
 
 [[nodiscard]]
 static bool requireSection() {

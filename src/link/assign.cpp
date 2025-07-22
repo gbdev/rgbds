@@ -32,9 +32,9 @@ struct FreeSpace {
 };
 
 // Table of free space for each bank
-std::vector<std::deque<FreeSpace>> memory[SECTTYPE_INVALID];
+static std::vector<std::deque<FreeSpace>> memory[SECTTYPE_INVALID];
 
-uint64_t nbSectionsToAssign;
+static uint64_t nbSectionsToAssign;
 
 // Init the free space-modelling structs
 static void initFreeSpace() {

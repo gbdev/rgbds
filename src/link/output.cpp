@@ -25,10 +25,10 @@
 
 static constexpr size_t BANK_SIZE = 0x4000;
 
-FILE *outputFile;
-FILE *overlayFile;
-FILE *symFile;
-FILE *mapFile;
+static FILE *outputFile;
+static FILE *overlayFile;
+static FILE *symFile;
+static FILE *mapFile;
 
 struct SortedSymbol {
 	Symbol const *sym;

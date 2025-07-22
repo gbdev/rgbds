@@ -22,20 +22,23 @@
 
 using namespace std::literals;
 
-std::unordered_map<std::string, Symbol> symbols;
-std::unordered_set<std::string> purgedSymbols;
+static std::unordered_map<std::string, Symbol> symbols;
+static std::unordered_set<std::string> purgedSymbols;
 
 static Symbol const *globalScope = nullptr; // Current section's global label scope
 static Symbol const *localScope = nullptr;  // Current section's local label scope
+
 static Symbol *PCSymbol;
 static Symbol *NARGSymbol;
 static Symbol *globalScopeSymbol;
 static Symbol *localScopeSymbol;
 static Symbol *RSSymbol;
+
 static char savedTIME[256];
 static char savedDATE[256];
 static char savedTIMESTAMP_ISO8601_LOCAL[256];
 static char savedTIMESTAMP_ISO8601_UTC[256];
+
 static bool exportAll = false; // -E
 
 bool sym_IsPC(Symbol const *sym) {
