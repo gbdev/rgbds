@@ -31,28 +31,28 @@ struct CharmapNode {
 struct Charmap {
 	std::string name;
 	std::vector<CharmapNode> nodes; // first node is reserved for the root node
+};
 
-	// Traverse the trie depth-first to derive the character mappings in definition order
-	template<typename F>
-	bool forEachChar(F callback) const {
-		// clang-format off: nested initializers
-		for (std::stack<std::pair<size_t, std::string>> prefixes({{0, ""}}); !prefixes.empty();) {
-			// clang-format on
-			auto [nodeIdx, mapping] = std::move(prefixes.top());
-			prefixes.pop();
-			CharmapNode const &node = nodes[nodeIdx];
-			if (node.isTerminal() && !callback(nodeIdx, mapping)) {
-				return false;
-			}
-			for (unsigned c = 0; c < std::size(node.next); c++) {
-				if (size_t nextIdx = node.next[c]; nextIdx) {
-					prefixes.push({nextIdx, mapping + static_cast<char>(c)});
-				}
+// Traverse the trie depth-first to derive the character mappings in definition order
+template<typename F>
+bool forEachChar(Charmap const &charmap, F callback) {
+	// clang-format off: nested initializers
+	for (std::stack<std::pair<size_t, std::string>> prefixes({{0, ""}}); !prefixes.empty();) {
+		// clang-format on
+		auto [nodeIdx, mapping] = std::move(prefixes.top());
+		prefixes.pop();
+		CharmapNode const &node = charmap.nodes[nodeIdx];
+		if (node.isTerminal() && !callback(nodeIdx, mapping)) {
+			return false;
+		}
+		for (unsigned c = 0; c < std::size(node.next); c++) {
+			if (size_t nextIdx = node.next[c]; nextIdx) {
+				prefixes.push({nextIdx, mapping + static_cast<char>(c)});
 			}
 		}
-		return true;
 	}
-};
+	return true;
+}
 
 static std::deque<Charmap> charmapList;
 static std::unordered_map<std::string, size_t> charmapMap; // Indexes into `charmapList`
@@ -66,7 +66,7 @@ bool charmap_ForEach(
 ) {
 	for (Charmap const &charmap : charmapList) {
 		std::map<size_t, std::string> mappings;
-		charmap.forEachChar([&mappings](size_t nodeIdx, std::string const &mapping) {
+		forEachChar(charmap, [&mappings](size_t nodeIdx, std::string const &mapping) {
 			mappings[nodeIdx] = mapping;
 			return true;
 		});
@@ -305,7 +305,7 @@ size_t charmap_ConvertNext(std::string_view &input, std::vector<int32_t> *output
 std::string charmap_Reverse(std::vector<int32_t> const &value, bool &unique) {
 	Charmap const &charmap = *currentCharmap;
 	std::string revMapping;
-	unique = charmap.forEachChar([&](size_t nodeIdx, std::string const &mapping) {
+	unique = forEachChar(charmap, [&](size_t nodeIdx, std::string const &mapping) {
 		if (charmap.nodes[nodeIdx].value == value) {
 			if (revMapping.empty()) {
 				revMapping = mapping;

@@ -364,51 +364,50 @@ public:
 		std::vector<uint32_t> indeterminates;
 
 		// Assign a color to the given position, and register it in the image palette as well
-		auto assignColor =
-		    [this, &conflicts, &indeterminates](png_uint_32 x, png_uint_32 y, Rgba &&color) {
-			    if (!color.isTransparent() && !color.isOpaque()) {
-				    uint32_t css = color.toCSS();
-				    if (std::find(RANGE(indeterminates), css) == indeterminates.end()) {
-					    error(
-					        "Color #%08x is neither transparent (alpha < %u) nor opaque (alpha >= "
-					        "%u) [first seen at x: %" PRIu32 ", y: %" PRIu32 "]",
-					        css,
-					        Rgba::transparency_threshold,
-					        Rgba::opacity_threshold,
-					        x,
-					        y
-					    );
-					    indeterminates.push_back(css);
-				    }
-			    } else if (Rgba const *other = colors.registerColor(color); other) {
-				    std::tuple conflicting{color.toCSS(), other->toCSS()};
-				    // Do not report combinations twice
-				    if (std::find(RANGE(conflicts), conflicting) == conflicts.end()) {
-					    warnx(
-					        "Fusing colors #%08x and #%08x into Game Boy color $%04x [first seen "
-					        "at x: %" PRIu32 ", y: %" PRIu32 "]",
-					        std::get<0>(conflicting),
-					        std::get<1>(conflicting),
-					        color.cgbColor(),
-					        x,
-					        y
-					    );
-					    // Do not report this combination again
-					    conflicts.emplace_back(conflicting);
-				    }
-			    }
+		auto assignColor = [&](png_uint_32 x, png_uint_32 y, Rgba &&color) {
+			if (!color.isTransparent() && !color.isOpaque()) {
+				uint32_t css = color.toCSS();
+				if (std::find(RANGE(indeterminates), css) == indeterminates.end()) {
+					error(
+					    "Color #%08x is neither transparent (alpha < %u) nor opaque (alpha >= "
+					    "%u) [first seen at x: %" PRIu32 ", y: %" PRIu32 "]",
+					    css,
+					    Rgba::transparency_threshold,
+					    Rgba::opacity_threshold,
+					    x,
+					    y
+					);
+					indeterminates.push_back(css);
+				}
+			} else if (Rgba const *other = colors.registerColor(color); other) {
+				std::tuple conflicting{color.toCSS(), other->toCSS()};
+				// Do not report combinations twice
+				if (std::find(RANGE(conflicts), conflicting) == conflicts.end()) {
+					warnx(
+					    "Fusing colors #%08x and #%08x into Game Boy color $%04x [first seen "
+					    "at x: %" PRIu32 ", y: %" PRIu32 "]",
+					    std::get<0>(conflicting),
+					    std::get<1>(conflicting),
+					    color.cgbColor(),
+					    x,
+					    y
+					);
+					// Do not report this combination again
+					conflicts.emplace_back(conflicting);
+				}
+			}
 
-			    pixel(x, y) = color;
-		    };
+			pixel(x, y) = color;
+		};
 
 		if (interlaceType == PNG_INTERLACE_NONE) {
 			for (png_uint_32 y = 0; y < height; ++y) {
-				png_read_row(png, row.data(), nullptr);
+				png_bytep ptr = row.data();
+				png_read_row(png, ptr, nullptr);
 
 				for (png_uint_32 x = 0; x < width; ++x) {
-					assignColor(
-					    x, y, Rgba(row[x * 4], row[x * 4 + 1], row[x * 4 + 2], row[x * 4 + 3])
-					);
+					assignColor(x, y, Rgba(ptr[0], ptr[1], ptr[2], ptr[3]));
+					ptr += 4;
 				}
 			}
 		} else {

@@ -426,24 +426,22 @@ static int32_t computeRPNExpr(Patch const &patch, std::vector<Symbol> const &fil
 			}
 
 			if (value == -1) { // PC
-				if (!patch.pcSection) {
+				if (patch.pcSection) {
+					value = patch.pcOffset + patch.pcSection->org;
+				} else {
 					errorAt(patch, "PC has no value outside of a section");
 					value = 0;
 					isError = true;
-				} else {
-					value = patch.pcOffset + patch.pcSection->org;
 				}
+			} else if (Symbol const *symbol = getSymbol(fileSymbols, value); !symbol) {
+				errorAt(patch, "Unknown symbol \"%s\"", fileSymbols[value].name.c_str());
+				sym_DumpLocalAliasedSymbols(fileSymbols[value].name);
+				isError = true;
+			} else if (std::holds_alternative<Label>(symbol->data)) {
+				Label const &label = std::get<Label>(symbol->data);
+				value = label.section->org + label.offset;
 			} else {
-				if (Symbol const *symbol = getSymbol(fileSymbols, value); !symbol) {
-					errorAt(patch, "Unknown symbol \"%s\"", fileSymbols[value].name.c_str());
-					sym_DumpLocalAliasedSymbols(fileSymbols[value].name);
-					isError = true;
-				} else if (std::holds_alternative<Label>(symbol->data)) {
-					Label const &label = std::get<Label>(symbol->data);
-					value = label.section->org + label.offset;
-				} else {
-					value = std::get<int32_t>(symbol->data);
-				}
+				value = std::get<int32_t>(symbol->data);
 			}
 			break;
 		}

@@ -211,28 +211,28 @@ void reverse() {
 
 		palettes.clear();
 		std::array<uint8_t, sizeof(uint16_t) * 4> buf; // 4 colors
-		size_t nbRead;
-		do {
-			nbRead = file->sgetn(reinterpret_cast<char *>(buf.data()), buf.size());
-			if (nbRead == buf.size()) {
-				// Expand the colors
-				auto &palette = palettes.emplace_back();
-				std::generate(
-				    palette.begin(),
-				    palette.begin() + options.nbColorsPerPal,
-				    [&buf, i = 0]() mutable {
-					    i += 2;
-					    return Rgba::fromCGBColor(buf[i - 2] + (buf[i - 1] << 8));
-				    }
-				);
-			} else if (nbRead != 0) {
+		for (;;) {
+			if (size_t nbRead = file->sgetn(reinterpret_cast<char *>(buf.data()), buf.size());
+			    nbRead == 0) {
+				break;
+			} else if (nbRead != buf.size()) {
 				fatal(
 				    "Palette data size (%zu) is not a multiple of %zu bytes!\n",
 				    palettes.size() * buf.size() + nbRead,
 				    buf.size()
 				);
 			}
-		} while (nbRead != 0);
+			// Expand the colors
+			auto &palette = palettes.emplace_back();
+			std::generate(
+			    palette.begin(),
+			    palette.begin() + options.nbColorsPerPal,
+			    [&buf, i = 0]() mutable {
+				    i += 2;
+				    return Rgba::fromCGBColor(buf[i - 2] + (buf[i - 1] << 8));
+			    }
+			);
+		}
 
 		if (palettes.size() > options.nbPalettes) {
 			warnx(

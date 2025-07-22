@@ -77,7 +77,7 @@ static int64_t readLong(FILE *file) {
 	do { \
 		FILE *tmpFile = file; \
 		std::string &tmpVal = var; \
-		for (int tmpByte = getc(tmpFile); tmpByte != '\0'; tmpByte = getc(tmpFile)) { \
+		for (int tmpByte; (tmpByte = getc(tmpFile)) != '\0';) { \
 			if (tmpByte == EOF) { \
 				fatal(__VA_ARGS__, feof(tmpFile) ? "Unexpected end of file" : strerror(errno)); \
 			} else { \
@@ -582,14 +582,15 @@ void obj_ReadFile(char const *fileName, unsigned int fileID) {
 	for (uint32_t i = 0; i < nbSymbols; i++) {
 		if (std::holds_alternative<Label>(fileSymbols[i].data)) {
 			Label &label = std::get<Label>(fileSymbols[i].data);
-			if (Section *section = label.section; section->modifier != SECTION_NORMAL) {
-				if (section->modifier == SECTION_FRAGMENT) {
-					// Add the fragment's offset to the symbol's
-					// (`section->offset` is computed by `sect_AddSection`)
-					label.offset += section->offset;
-				}
+			Section *section = label.section;
+			if (section->modifier != SECTION_NORMAL) {
 				// Associate the symbol with the main section, not the "component" one
 				label.section = sect_GetSection(section->name);
+			}
+			if (section->modifier == SECTION_FRAGMENT) {
+				// Add the fragment's offset to the symbol's
+				// (`section->offset` is computed by `sect_AddSection`)
+				label.offset += section->offset;
 			}
 		}
 	}

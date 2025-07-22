@@ -144,11 +144,18 @@ static void registerUnregisteredSymbol(Symbol &sym) {
 }
 
 static void writeRpn(std::vector<uint8_t> &rpnexpr, std::vector<uint8_t> const &rpn) {
-	std::string symName;
 	size_t rpnptr = 0;
 
 	for (size_t offset = 0; offset < rpn.size();) {
 		uint8_t rpndata = rpn[offset++];
+
+		auto getSymName = [&](){
+			std::string symName;
+			for (uint8_t c; (c = rpn[offset++]) != 0;) {
+				symName += c;
+			}
+			return symName;
+		};
 
 		switch (rpndata) {
 			Symbol *sym;
@@ -164,17 +171,8 @@ static void writeRpn(std::vector<uint8_t> &rpnexpr, std::vector<uint8_t> const &
 			break;
 
 		case RPN_SYM:
-			symName.clear();
-			for (;;) {
-				uint8_t c = rpn[offset++];
-				if (c == 0) {
-					break;
-				}
-				symName += c;
-			}
-
 			// The symbol name is always written expanded
-			sym = sym_FindExactSymbol(symName);
+			sym = sym_FindExactSymbol(getSymName());
 			if (sym->isConstant()) {
 				rpnexpr[rpnptr++] = RPN_CONST;
 				value = sym->getConstantValue();
@@ -191,17 +189,8 @@ static void writeRpn(std::vector<uint8_t> &rpnexpr, std::vector<uint8_t> const &
 			break;
 
 		case RPN_BANK_SYM:
-			symName.clear();
-			for (;;) {
-				uint8_t c = rpn[offset++];
-				if (c == 0) {
-					break;
-				}
-				symName += c;
-			}
-
 			// The symbol name is always written expanded
-			sym = sym_FindExactSymbol(symName);
+			sym = sym_FindExactSymbol(getSymName());
 			registerUnregisteredSymbol(*sym); // Ensure that `sym->ID` is set
 			value = sym->ID;
 

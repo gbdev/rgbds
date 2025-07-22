@@ -183,13 +183,15 @@ static void
 
 			// Output the section itself
 			fwrite(section->data.data(), 1, section->size, outputFile);
-			if (overlayFile) {
-				// Skip bytes even with pipes
-				for (uint16_t i = 0; i < section->size; i++) {
-					getc(overlayFile);
-				}
-			}
 			offset += section->size;
+
+			if (!overlayFile) {
+				continue;
+			}
+			// Skip bytes even with pipes
+			for (uint16_t i = 0; i < section->size; i++) {
+				getc(overlayFile);
+			}
 		}
 	}
 
@@ -277,17 +279,18 @@ static void writeSymName(std::string const &name, FILE *file) {
 		uint32_t state = UTF8_ACCEPT, codepoint;
 		do {
 			decode(&state, &codepoint, *ptr);
-			if (state == UTF8_REJECT) {
-				// This sequence was invalid; emit a U+FFFD, and recover
-				codepoint = 0xFFFD;
-				// Skip continuation bytes
-				// A NUL byte does not qualify, so we're good
-				while ((*ptr & 0xC0) == 0x80) {
-					++ptr;
-				}
-				break;
+			if (state != UTF8_REJECT) {
+				++ptr;
+				continue;
 			}
-			++ptr;
+			// This sequence was invalid; emit a U+FFFD, and recover
+			codepoint = 0xFFFD;
+			// Skip continuation bytes
+			// A NUL byte does not qualify, so we're good
+			while ((*ptr & 0xC0) == 0x80) {
+				++ptr;
+			}
+			break;
 		} while (state != UTF8_ACCEPT);
 		fprintf(file, codepoint <= 0xFFFF ? "\\u%04" PRIx32 : "\\U%08" PRIx32, codepoint);
 	}
@@ -337,7 +340,7 @@ static void writeSymBank(SortedSections const &bankSections, SectionType type, u
 
 	symList.reserve(nbSymbols);
 
-	forEachSortedSection(bankSections, [&](Section const &sect) {
+	forEachSortedSection(bankSections, [&symList](Section const &sect) {
 		for (Symbol const *sym : sect.symbols) {
 			// Don't output symbols that begin with an illegal character
 			if (sym->name.empty() || !startsIdentifier(sym->name[0])) {
