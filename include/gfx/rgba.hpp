@@ -17,16 +17,16 @@ struct Rgba {
 	explicit constexpr Rgba(uint32_t rgba = 0)
 	    : red(rgba >> 24), green(rgba >> 16), blue(rgba >> 8), alpha(rgba) {}
 
-	static constexpr Rgba fromCGBColor(uint16_t cgbColor) {
-		constexpr auto _5to8 = [](uint8_t fiveBpp) -> uint8_t {
-			fiveBpp &= 0b11111; // For caller's convenience
-			return fiveBpp << 3 | fiveBpp >> 2;
+	static constexpr Rgba fromCGBColor(uint16_t color) {
+		constexpr auto _5to8 = [](uint8_t channel) -> uint8_t {
+			channel &= 0b11111; // For caller's convenience
+			return channel << 3 | channel >> 2;
 		};
 		return {
-		    _5to8(cgbColor),
-		    _5to8(cgbColor >> 5),
-		    _5to8(cgbColor >> 10),
-		    static_cast<uint8_t>(cgbColor & 0x8000 ? 0x00 : 0xFF),
+		    _5to8(color),
+		    _5to8(color >> 5),
+		    _5to8(color >> 10),
+		    static_cast<uint8_t>(color & 0x8000 ? 0x00 : 0xFF),
 		};
 	}
 

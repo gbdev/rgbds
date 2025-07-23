@@ -23,6 +23,7 @@
 #include "gfx/main.hpp"
 #include "gfx/pal_packing.hpp"
 #include "gfx/pal_sorting.hpp"
+#include "gfx/png.hpp"
 #include "gfx/proto_palette.hpp"
 #include "gfx/warning.hpp"
 
@@ -41,9 +42,10 @@ public:
 	// color), then the other color is returned. Otherwise, `nullptr` is returned.
 	[[nodiscard]]
 	Rgba const *registerColor(Rgba const &rgba) {
-		std::optional<Rgba> &slot = _colors[rgba.cgbColor()];
+		uint16_t color = rgba.cgbColor();
+		std::optional<Rgba> &slot = _colors[color];
 
-		if (rgba.cgbColor() == Rgba::transparent && !isBgColorTransparent()) {
+		if (color == Rgba::transparent && !isBgColorTransparent()) {
 			options.hasTransparentPixels = true;
 		}
 
@@ -67,70 +69,12 @@ public:
 	auto end() const { return _colors.end(); }
 };
 
-class Png {
-	std::string const &path;
-	File file{};
-	png_structp png = nullptr;
-	png_infop info = nullptr;
+struct Image {
+	Png png{};
+	ImagePalette colors{};
 
-	// These are cached for speed
-	uint32_t width, height;
-	std::vector<Rgba> pixels;
-	ImagePalette colors;
-	int colorType;
-	int nbColors;
-	png_colorp embeddedPal = nullptr;
-	int nbTransparentEntries;
-	png_bytep transparencyPal = nullptr;
-
-	[[noreturn]]
-	static void handleError(png_structp png, char const *msg) {
-		Png *self = reinterpret_cast<Png *>(png_get_error_ptr(png));
-
-		fatal("Error reading input image (\"%s\"): %s", self->c_str(), msg);
-	}
-
-	static void handleWarning(png_structp png, char const *msg) {
-		Png *self = reinterpret_cast<Png *>(png_get_error_ptr(png));
-
-		warnx("In input image (\"%s\"): %s", self->c_str(), msg);
-	}
-
-	static void readData(png_structp png, png_bytep data, size_t length) {
-		Png *self = reinterpret_cast<Png *>(png_get_io_ptr(png));
-		std::streamsize expectedLen = length;
-		std::streamsize nbBytesRead =
-		    self->file->sgetn(reinterpret_cast<char *>(data), expectedLen);
-
-		if (nbBytesRead != expectedLen) {
-			fatal(
-			    "Error reading input image (\"%s\"): file too short (expected at least %zd more "
-			    "bytes after reading %zu)",
-			    self->c_str(),
-			    length - nbBytesRead,
-			    static_cast<size_t>(self->file->pubseekoff(0, std::ios_base::cur))
-			);
-		}
-	}
-
-public:
-	ImagePalette const &getColors() const { return colors; }
-
-	int getColorType() const { return colorType; }
-
-	std::tuple<int, png_const_colorp, int, png_bytep> getEmbeddedPal() const {
-		return {nbColors, embeddedPal, nbTransparentEntries, transparencyPal};
-	}
-
-	uint32_t getWidth() const { return width; }
-
-	uint32_t getHeight() const { return height; }
-
-	Rgba &pixel(uint32_t x, uint32_t y) { return pixels[y * width + x]; }
-
-	Rgba const &pixel(uint32_t x, uint32_t y) const { return pixels[y * width + x]; }
-
-	char const *c_str() const { return file.c_str(path); }
+	Rgba &pixel(uint32_t x, uint32_t y) { return png.pixels[y * png.width + x]; }
+	Rgba const &pixel(uint32_t x, uint32_t y) const { return png.pixels[y * png.width + x]; }
 
 	bool isSuitableForGrayscale() const {
 		// Check that all of the grays don't fall into the same "bin"
@@ -170,62 +114,22 @@ public:
 		return true;
 	}
 
-	// Reads a PNG and notes all of its colors
-	//
-	// This code is more complicated than strictly necessary, but that's because of the API
-	// being used: the "high-level" interface doesn't provide all the transformations we need,
-	// so we use the "lower-level" one instead.
-	// We also use that occasion to only read the PNG one line at a time, since we store all of
-	// the pixel data in `pixels`, which saves on memory allocations.
-	explicit Png(std::string const &filePath) : path(filePath), colors() {
-		if (file.open(path, std::ios_base::in | std::ios_base::binary) == nullptr) {
-			fatal("Failed to open input image (\"%s\"): %s", file.c_str(path), strerror(errno));
+	explicit Image(std::string const &path) {
+		File input;
+		if (input.open(path, std::ios_base::in | std::ios_base::binary) == nullptr) {
+			fatal("Failed to open input image (\"%s\"): %s", input.c_str(path), strerror(errno));
 		}
 
-		options.verbosePrint(Options::VERB_LOG_ACT, "Opened input file\n");
+		png = Png(input.c_str(path), *input);
 
-		std::array<unsigned char, 8> pngHeader;
-		if (file->sgetn(reinterpret_cast<char *>(pngHeader.data()), pngHeader.size())
-		        != static_cast<std::streamsize>(pngHeader.size()) // Not enough bytes?
-		    || png_sig_cmp(pngHeader.data(), 0, pngHeader.size()) != 0) {
-			fatal("Input file (\"%s\") is not a PNG image!", file.c_str(path));
+		// Validate input slice
+		if (options.inputSlice.width == 0 && png.width % 8 != 0) {
+			fatal("Image width (%" PRIu32 " pixels) is not a multiple of 8!", png.width);
 		}
-
-		options.verbosePrint(Options::VERB_INTERM, "PNG header signature is OK\n");
-
-		png = png_create_read_struct(
-		    PNG_LIBPNG_VER_STRING, static_cast<png_voidp>(this), handleError, handleWarning
-		);
-		if (!png) {
-			fatal("Failed to create PNG read structure: %s", strerror(errno)); // LCOV_EXCL_LINE
+		if (options.inputSlice.height == 0 && png.height % 8 != 0) {
+			fatal("Image height (%" PRIu32 " pixels) is not a multiple of 8!", png.height);
 		}
-
-		info = png_create_info_struct(png);
-		if (!info) {
-			// LCOV_EXCL_START
-			png_destroy_read_struct(&png, nullptr, nullptr);
-			fatal("Failed to create PNG info structure: %s", strerror(errno));
-			// LCOV_EXCL_STOP
-		}
-
-		png_set_read_fn(png, this, readData);
-		png_set_sig_bytes(png, pngHeader.size());
-
-		// Process all chunks up to but not including the image data
-		png_read_info(png, info);
-
-		int bitDepth, interlaceType;
-		png_get_IHDR(
-		    png, info, &width, &height, &bitDepth, &colorType, &interlaceType, nullptr, nullptr
-		);
-
-		if (options.inputSlice.width == 0 && width % 8 != 0) {
-			fatal("Image width (%" PRIu32 " pixels) is not a multiple of 8!", width);
-		}
-		if (options.inputSlice.height == 0 && height % 8 != 0) {
-			fatal("Image height (%" PRIu32 " pixels) is not a multiple of 8!", height);
-		}
-		if (options.inputSlice.right() > width || options.inputSlice.bottom() > height) {
+		if (options.inputSlice.right() > png.width || options.inputSlice.bottom() > png.height) {
 			error(
 			    "Image slice ((%" PRIu16 ", %" PRIu16 ") to (%" PRIu32 ", %" PRIu32
 			    ")) is outside the image bounds (%" PRIu32 "x%" PRIu32 ")!",
@@ -233,8 +137,8 @@ public:
 			    options.inputSlice.top,
 			    options.inputSlice.right(),
 			    options.inputSlice.bottom(),
-			    width,
-			    height
+			    png.width,
+			    png.height
 			);
 			if (options.inputSlice.width % 8 == 0 && options.inputSlice.height % 8 == 0) {
 				fprintf(
@@ -250,111 +154,6 @@ public:
 			giveUp();
 		}
 
-		pixels.resize(static_cast<size_t>(width) * static_cast<size_t>(height));
-
-		auto colorTypeName = [this]() {
-			switch (colorType) {
-			case PNG_COLOR_TYPE_GRAY:
-				return "grayscale";
-			case PNG_COLOR_TYPE_GRAY_ALPHA:
-				return "grayscale + alpha";
-			case PNG_COLOR_TYPE_PALETTE:
-				return "palette";
-			case PNG_COLOR_TYPE_RGB:
-				return "RGB";
-			case PNG_COLOR_TYPE_RGB_ALPHA:
-				return "RGB + alpha";
-			default:
-				fatal("Unknown color type %d", colorType);
-			}
-		};
-		auto interlaceTypeName = [&interlaceType]() {
-			switch (interlaceType) {
-			case PNG_INTERLACE_NONE:
-				return "not interlaced";
-			case PNG_INTERLACE_ADAM7:
-				return "interlaced (Adam7)";
-			default:
-				fatal("Unknown interlace type %d", interlaceType);
-			}
-		};
-		options.verbosePrint(
-		    Options::VERB_INTERM,
-		    "Input image: %" PRIu32 "x%" PRIu32 " pixels, %dbpp %s, %s\n",
-		    width,
-		    height,
-		    bitDepth,
-		    colorTypeName(),
-		    interlaceTypeName()
-		);
-
-		if (png_get_PLTE(png, info, &embeddedPal, &nbColors) != 0) {
-			if (png_get_tRNS(png, info, &transparencyPal, &nbTransparentEntries, nullptr)) {
-				assume(nbTransparentEntries <= nbColors);
-			}
-
-			options.verbosePrint(
-			    Options::VERB_INTERM, "Embedded palette has %d colors: [", nbColors
-			);
-			for (int i = 0; i < nbColors; ++i) {
-				png_color const &color = embeddedPal[i];
-				options.verbosePrint(
-				    Options::VERB_INTERM,
-				    "#%02x%02x%02x%02x%s",
-				    color.red,
-				    color.green,
-				    color.blue,
-				    transparencyPal && i < nbTransparentEntries ? transparencyPal[i] : 0xFF,
-				    i != nbColors - 1 ? ", " : "]\n"
-				);
-			}
-		} else {
-			options.verbosePrint(Options::VERB_INTERM, "No embedded palette\n");
-		}
-
-		// Set up transformations to turn everything into RGBA888 for simplicity of handling
-
-		// Convert grayscale to RGB
-		switch (colorType & ~PNG_COLOR_MASK_ALPHA) {
-		case PNG_COLOR_TYPE_GRAY:
-			png_set_gray_to_rgb(png); // This also converts tRNS to alpha
-			break;
-		case PNG_COLOR_TYPE_PALETTE:
-			png_set_palette_to_rgb(png);
-			break;
-		}
-
-		if (png_get_valid(png, info, PNG_INFO_tRNS)) {
-			// If we read a tRNS chunk, convert it to alpha
-			png_set_tRNS_to_alpha(png);
-		} else if (!(colorType & PNG_COLOR_MASK_ALPHA)) {
-			// Otherwise, if we lack an alpha channel, default to full opacity
-			png_set_add_alpha(png, 0xFFFF, PNG_FILLER_AFTER);
-		}
-
-		// Scale 16bpp back to 8 (we don't need all of that precision anyway)
-		if (bitDepth == 16) {
-			png_set_scale_16(png);
-		} else if (bitDepth < 8) {
-			png_set_packing(png);
-		}
-
-		// Do NOT call `png_set_interlace_handling`. We want to expand the rows ourselves.
-
-		// Update `info` with the transformations
-		png_read_update_info(png, info);
-		// These shouldn't have changed
-		assume(png_get_image_width(png, info) == width);
-		assume(png_get_image_height(png, info) == height);
-		// These should have changed, however
-		assume(png_get_color_type(png, info) == PNG_COLOR_TYPE_RGBA);
-		assume(png_get_bit_depth(png, info) == 8);
-
-		// Now that metadata has been read, we can process the image data
-
-		size_t nbRowBytes = png_get_rowbytes(png, info);
-		assume(nbRowBytes != 0);
-		std::vector<png_byte> row(nbRowBytes);
 		// Holds known-conflicting color pairs to avoid warning about them twice.
 		// We don't need to worry about transitivity, as ImagePalette slots are immutable once
 		// assigned, and conflicts always occur between that and another color.
@@ -363,103 +162,67 @@ public:
 		// Holds colors whose alpha value is ambiguous
 		std::vector<uint32_t> indeterminates;
 
-		// Assign a color to the given position, and register it in the image palette as well
-		auto assignColor = [&](png_uint_32 x, png_uint_32 y, Rgba &&color) {
-			if (!color.isTransparent() && !color.isOpaque()) {
-				uint32_t css = color.toCSS();
-				if (std::find(RANGE(indeterminates), css) == indeterminates.end()) {
-					error(
-					    "Color #%08x is neither transparent (alpha < %u) nor opaque (alpha >= "
-					    "%u) [first seen at x: %" PRIu32 ", y: %" PRIu32 "]",
-					    css,
-					    Rgba::transparency_threshold,
-					    Rgba::opacity_threshold,
-					    x,
-					    y
-					);
-					indeterminates.push_back(css);
-				}
-			} else if (Rgba const *other = colors.registerColor(color); other) {
-				std::tuple conflicting{color.toCSS(), other->toCSS()};
-				// Do not report combinations twice
-				if (std::find(RANGE(conflicts), conflicting) == conflicts.end()) {
-					warnx(
-					    "Fusing colors #%08x and #%08x into Game Boy color $%04x [first seen "
-					    "at x: %" PRIu32 ", y: %" PRIu32 "]",
-					    std::get<0>(conflicting),
-					    std::get<1>(conflicting),
-					    color.cgbColor(),
-					    x,
-					    y
-					);
-					// Do not report this combination again
-					conflicts.emplace_back(conflicting);
-				}
-			}
+		// Register colors from image
+		for (uint32_t y = 0; y < png.height; ++y) {
+			for (uint32_t x = 0; x < png.width; ++x) {
+				Rgba const &color = pixel(x, y);
 
-			pixel(x, y) = color;
-		};
-
-		if (interlaceType == PNG_INTERLACE_NONE) {
-			for (png_uint_32 y = 0; y < height; ++y) {
-				png_bytep ptr = row.data();
-				png_read_row(png, ptr, nullptr);
-
-				for (png_uint_32 x = 0; x < width; ++x) {
-					assignColor(x, y, Rgba(ptr[0], ptr[1], ptr[2], ptr[3]));
-					ptr += 4;
-				}
-			}
-		} else {
-			assume(interlaceType == PNG_INTERLACE_ADAM7);
-
-			// For interlace to work properly, we must read the image `nbPasses` times
-			for (int pass = 0; pass < PNG_INTERLACE_ADAM7_PASSES; ++pass) {
-				// The interlacing pass must be skipped if its width or height is reported as zero
-				if (PNG_PASS_COLS(width, pass) == 0 || PNG_PASS_ROWS(height, pass) == 0) {
-					continue;
-				}
-
-				png_uint_32 xStep = 1u << PNG_PASS_COL_SHIFT(pass);
-				png_uint_32 yStep = 1u << PNG_PASS_ROW_SHIFT(pass);
-
-				for (png_uint_32 y = PNG_PASS_START_ROW(pass); y < height; y += yStep) {
-					png_bytep ptr = row.data();
-					png_read_row(png, ptr, nullptr);
-
-					for (png_uint_32 x = PNG_PASS_START_COL(pass); x < width; x += xStep) {
-						assignColor(x, y, Rgba(ptr[0], ptr[1], ptr[2], ptr[3]));
-						ptr += 4;
+				// Assign a color to the given position, and register it in the image palette
+				if (color.isTransparent() == color.isOpaque()) {
+					uint32_t css = color.toCSS();
+					if (std::find(RANGE(indeterminates), css) == indeterminates.end()) {
+						error(
+						    "Color #%08x is neither transparent (alpha < %u) nor opaque (alpha >= "
+						    "%u) [first seen at x: %" PRIu32 ", y: %" PRIu32 "]",
+						    css,
+						    Rgba::transparency_threshold,
+						    Rgba::opacity_threshold,
+						    x,
+						    y
+						);
+						indeterminates.push_back(css);
+					}
+				} else if (Rgba const *other = colors.registerColor(color); other) {
+					std::tuple conflicting{color.toCSS(), other->toCSS()};
+					// Do not report combinations twice
+					if (std::find(RANGE(conflicts), conflicting) == conflicts.end()) {
+						warnx(
+						    "Fusing colors #%08x and #%08x into Game Boy color $%04x [first seen "
+						    "at x: %" PRIu32 ", y: %" PRIu32 "]",
+						    std::get<0>(conflicting),
+						    std::get<1>(conflicting),
+						    color.cgbColor(),
+						    x,
+						    y
+						);
+						// Do not report this combination again
+						conflicts.emplace_back(conflicting);
 					}
 				}
 			}
 		}
-
-		// We don't care about chunks after the image data (comments, etc.)
-		png_read_end(png, nullptr);
 	}
 
-	~Png() { png_destroy_read_struct(&png, &info, nullptr); }
-
 	class TilesVisitor {
-		Png const &_png;
+		Image const &_image;
 		bool const _columnMajor;
 		uint32_t const _width, _height;
 		uint32_t const _limit = _columnMajor ? _height : _width;
 
 	public:
-		TilesVisitor(Png const &png, bool columnMajor, uint32_t width, uint32_t height)
-		    : _png(png), _columnMajor(columnMajor), _width(width), _height(height) {}
+		TilesVisitor(Image const &image, bool columnMajor, uint32_t width, uint32_t height)
+		    : _image(image), _columnMajor(columnMajor), _width(width), _height(height) {}
 
 		class Tile {
-			Png const &_png;
+			Image const &_image;
+
 		public:
 			uint32_t const x, y;
 
-			Tile(Png const &png, uint32_t x_, uint32_t y_) : _png(png), x(x_), y(y_) {}
+			Tile(Image const &image, uint32_t x_, uint32_t y_) : _image(image), x(x_), y(y_) {}
 
 			Rgba pixel(uint32_t xOfs, uint32_t yOfs) const {
-				return _png.pixel(x + xOfs, y + yOfs);
+				return _image.pixel(x + xOfs, y + yOfs);
 			}
 		};
 
@@ -473,7 +236,7 @@ public:
 				return {x + options.inputSlice.left, y + options.inputSlice.top};
 			}
 			Tile operator*() const {
-				return {parent._png, x + options.inputSlice.left, y + options.inputSlice.top};
+				return {parent._image, x + options.inputSlice.left, y + options.inputSlice.top};
 			}
 
 			Iterator &operator++() {
@@ -496,13 +259,14 @@ public:
 			return ++it;                                         // ...now one-past-last!
 		}
 	};
+
 public:
 	TilesVisitor visitAsTiles() const {
 		return {
 		    *this,
 		    options.columnMajor,
-		    options.inputSlice.width ? options.inputSlice.width * 8 : width,
-		    options.inputSlice.height ? options.inputSlice.height * 8 : height,
+		    options.inputSlice.width ? options.inputSlice.width * 8 : png.width,
+		    options.inputSlice.height ? options.inputSlice.height * 8 : png.height,
 		};
 	}
 };
@@ -522,10 +286,7 @@ private:
 
 public:
 	// Creates a new raw tile, and returns a reference to it so it can be filled in
-	RawTile &newTile() {
-		_tiles.emplace_back();
-		return _tiles.back();
-	}
+	RawTile &newTile() { return _tiles.emplace_back(); }
 };
 
 struct AttrmapEntry {
@@ -547,32 +308,30 @@ struct AttrmapEntry {
 	}
 };
 
-static void generatePalSpec(Png const &png) {
+static void generatePalSpec(Image const &image) {
 	// Generate a palette spec from the first few colors in the embedded palette
-	auto [embPalSize, embPalRGB, embPalAlphaSize, embPalAlpha] = png.getEmbeddedPal();
-	if (embPalRGB == nullptr) {
+	std::vector<Rgba> const &embPal = image.png.palette;
+	if (embPal.empty()) {
 		fatal("`-c embedded` was given, but the PNG does not have an embedded palette!");
+	}
+
+	// Ignore extraneous colors if they are unused
+	size_t nbColors = embPal.size();
+	if (nbColors > options.maxOpaqueColors()) {
+		nbColors = options.maxOpaqueColors();
 	}
 
 	// Fill in the palette spec
 	options.palSpec.clear();
-	options.palSpec.emplace_back(); // A single palette, with `#00000000`s (transparent)
-	assume(options.palSpec.size() == 1);
-	if (embPalSize > options.maxOpaqueColors()) { // Ignore extraneous colors if they are unused
-		embPalSize = options.maxOpaqueColors();
-	}
-	for (int i = 0; i < embPalSize; ++i) {
-		options.palSpec[0][i] = Rgba(
-		    embPalRGB[i].red,
-		    embPalRGB[i].green,
-		    embPalRGB[i].blue,
-		    embPalAlpha && i < embPalAlphaSize ? embPalAlpha[i] : 0xFF
-		);
+	auto &palette = options.palSpec.emplace_back();
+	assume(nbColors <= palette.size());
+	for (size_t i = 0; i < nbColors; ++i) {
+		palette[i] = embPal[i];
 	}
 }
 
 static std::tuple<std::vector<size_t>, std::vector<Palette>>
-    generatePalettes(std::vector<ProtoPalette> const &protoPalettes, Png const &png) {
+    generatePalettes(std::vector<ProtoPalette> const &protoPalettes, Image const &image) {
 	// Run a "pagination" problem solver
 	auto [mappings, nbPalettes] = overloadAndRemove(protoPalettes);
 	assume(mappings.size() == protoPalettes.size());
@@ -609,16 +368,15 @@ static std::tuple<std::vector<size_t>, std::vector<Palette>>
 
 	// "Sort" colors in the generated palettes, see the man page for the flowchart
 	if (options.palSpecType == Options::DMG) {
-		sortGrayscale(palettes, png.getColors().raw());
-	} else if (auto [embPalSize, embPalRGB, embPalAlphaSize, embPalAlpha] = png.getEmbeddedPal();
-	           embPalRGB != nullptr) {
+		sortGrayscale(palettes, image.colors.raw());
+	} else if (!image.png.palette.empty()) {
 		warning(
 		    WARNING_EMBEDDED,
 		    "Sorting palette colors by PNG's embedded PLTE chunk without '-c/--colors embedded'"
 		);
-		sortIndexed(palettes, embPalSize, embPalRGB, embPalAlphaSize, embPalAlpha);
-	} else if (png.isSuitableForGrayscale()) {
-		sortGrayscale(palettes, png.getColors().raw());
+		sortIndexed(palettes, image.png.palette);
+	} else if (image.isSuitableForGrayscale()) {
+		sortGrayscale(palettes, image.colors.raw());
 	} else {
 		sortRgb(palettes);
 	}
@@ -641,8 +399,8 @@ static std::tuple<std::vector<size_t>, std::vector<Palette>>
 	auto listColors = [](auto const &list) {
 		static char buf[sizeof(", $XXXX, $XXXX, $XXXX, $XXXX")];
 		char *ptr = buf;
-		for (uint16_t cgbColor : list) {
-			ptr += snprintf(ptr, sizeof(", $XXXX"), ", $%04x", cgbColor);
+		for (uint16_t color : list) {
+			ptr += snprintf(ptr, sizeof(", $XXXX"), ", $%04x", color);
 		}
 		return &buf[literal_strlen(", ")];
 	};
@@ -753,7 +511,7 @@ public:
 	mutable uint16_t tileID;
 
 	static uint16_t
-	    rowBitplanes(Png::TilesVisitor::Tile const &tile, Palette const &palette, uint32_t y) {
+	    rowBitplanes(Image::TilesVisitor::Tile const &tile, Palette const &palette, uint32_t y) {
 		uint16_t row = 0;
 		for (uint32_t x = 0; x < 8; ++x) {
 			row <<= 1;
@@ -776,7 +534,7 @@ public:
 		}
 	}
 
-	TileData(Png::TilesVisitor::Tile const &tile, Palette const &palette) : _hash(0) {
+	TileData(Image::TilesVisitor::Tile const &tile, Palette const &palette) : _hash(0) {
 		size_t writeIndex = 0;
 		for (uint32_t y = 0; y < 8; ++y) {
 			uint16_t bitplanes = rowBitplanes(tile, palette, y);
@@ -856,7 +614,7 @@ struct std::hash<TileData> {
 };
 
 static void outputUnoptimizedTileData(
-    Png const &png,
+    Image const &image,
     std::vector<AttrmapEntry> const &attrmap,
     std::vector<Palette> const &palettes,
     std::vector<size_t> const &mappings
@@ -868,14 +626,14 @@ static void outputUnoptimizedTileData(
 		// LCOV_EXCL_STOP
 	}
 
-	uint16_t widthTiles = options.inputSlice.width ? options.inputSlice.width : png.getWidth() / 8;
+	uint16_t widthTiles = options.inputSlice.width ? options.inputSlice.width : image.png.width / 8;
 	uint16_t heightTiles =
-	    options.inputSlice.height ? options.inputSlice.height : png.getHeight() / 8;
+	    options.inputSlice.height ? options.inputSlice.height : image.png.height / 8;
 	uint64_t nbTiles = widthTiles * heightTiles;
 	uint64_t nbKeptTiles = nbTiles > options.trim ? nbTiles - options.trim : 0;
 	uint64_t tileIdx = 0;
 
-	for (auto [tile, attr] : zip(png.visitAsTiles(), attrmap)) {
+	for (auto [tile, attr] : zip(image.visitAsTiles(), attrmap)) {
 		// Do not emit fully-background tiles.
 		if (attr.isBackgroundTile()) {
 			++tileIdx;
@@ -993,7 +751,7 @@ struct UniqueTiles {
 // 8-bit tile IDs + the bank bit; this will save the work when we output the data later (potentially
 // twice)
 static UniqueTiles dedupTiles(
-    Png const &png,
+    Image const &image,
     std::vector<AttrmapEntry> &attrmap,
     std::vector<Palette> const &palettes,
     std::vector<size_t> const &mappings
@@ -1044,7 +802,7 @@ static UniqueTiles dedupTiles(
 	}
 
 	bool inputWithoutOutput = !options.inputTileset.empty() && options.output.empty();
-	for (auto [tile, attr] : zip(png.visitAsTiles(), attrmap)) {
+	for (auto [tile, attr] : zip(image.visitAsTiles(), attrmap)) {
 		if (attr.isBackgroundTile()) {
 			attr.xFlip = false;
 			attr.yFlip = false;
@@ -1157,16 +915,12 @@ void process() {
 	options.verbosePrint(Options::VERB_CFG, "Using libpng %s\n", png_get_libpng_ver(nullptr));
 
 	options.verbosePrint(Options::VERB_LOG_ACT, "Reading tiles...\n");
-	Png png(options.input); // This also sets `hasTransparentPixels` as a side effect
-	ImagePalette const &colors = png.getColors();
-
-	// Now, we have all the image's colors in `colors`
-	// The next step is to order the palette
+	Image image(options.input); // This also sets `hasTransparentPixels` as a side effect
 
 	// LCOV_EXCL_START
 	if (options.verbosity >= Options::VERB_INTERM) {
 		fputs("Image colors: [ ", stderr);
-		for (std::optional<Rgba> const &slot : colors) {
+		for (std::optional<Rgba> const &slot : image.colors) {
 			if (!slot.has_value()) {
 				continue;
 			}
@@ -1182,7 +936,7 @@ void process() {
 			    "Image contains transparent pixels, not compatible with a DMG palette specification"
 			);
 		}
-		if (!png.isSuitableForGrayscale()) {
+		if (!image.isSuitableForGrayscale()) {
 			fatal("Image contains too many or non-gray colors, not compatible with a DMG palette "
 			      "specification");
 		}
@@ -1195,7 +949,7 @@ void process() {
 	std::vector<ProtoPalette> protoPalettes;
 	std::vector<AttrmapEntry> attrmap{};
 
-	for (auto tile : png.visitAsTiles()) {
+	for (auto tile : image.visitAsTiles()) {
 		AttrmapEntry &attrs = attrmap.emplace_back();
 
 		// Count the unique non-transparent colors for packing
@@ -1227,8 +981,8 @@ void process() {
 		}
 
 		ProtoPalette protoPalette;
-		for (uint16_t cgbColor : tileColors) {
-			protoPalette.add(cgbColor);
+		for (uint16_t color : tileColors) {
+			protoPalette.add(color);
 		}
 
 		if (options.bgColor.has_value()
@@ -1295,17 +1049,17 @@ continue_visiting_tiles:;
 	// LCOV_EXCL_STOP
 
 	if (options.palSpecType == Options::EMBEDDED) {
-		generatePalSpec(png);
+		generatePalSpec(image);
 	}
 	auto [mappings, palettes] =
 	    options.palSpecType == Options::NO_SPEC || options.palSpecType == Options::DMG
-	        ? generatePalettes(protoPalettes, png)
+	        ? generatePalettes(protoPalettes, image)
 	        : makePalsAsSpecified(protoPalettes);
 	outputPalettes(palettes);
 
 	// If deduplication is not happening, we just need to output the tile data and/or maps as-is
 	if (!options.allowDedup) {
-		uint32_t const nbTilesH = png.getHeight() / 8, nbTilesW = png.getWidth() / 8;
+		uint32_t const nbTilesH = image.png.height / 8, nbTilesW = image.png.width / 8;
 
 		// Check the tile count
 		if (uint32_t nbTiles = nbTilesW * nbTilesH;
@@ -1326,7 +1080,7 @@ continue_visiting_tiles:;
 
 		if (!options.output.empty()) {
 			options.verbosePrint(Options::VERB_LOG_ACT, "Generating unoptimized tile data...\n");
-			outputUnoptimizedTileData(png, attrmap, palettes, mappings);
+			outputUnoptimizedTileData(image, attrmap, palettes, mappings);
 		}
 
 		if (!options.tilemap.empty() || !options.attrmap.empty() || !options.palmap.empty()) {
@@ -1339,7 +1093,7 @@ continue_visiting_tiles:;
 	} else {
 		// All of these require the deduplication process to be performed to be output
 		options.verbosePrint(Options::VERB_LOG_ACT, "Deduplicating tiles...\n");
-		UniqueTiles tiles = dedupTiles(png, attrmap, palettes, mappings);
+		UniqueTiles tiles = dedupTiles(image, attrmap, palettes, mappings);
 
 		if (size_t nbTiles = tiles.size();
 		    nbTiles > options.maxNbTiles[0] + options.maxNbTiles[1]) {

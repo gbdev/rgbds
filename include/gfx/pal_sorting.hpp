@@ -5,7 +5,6 @@
 
 #include <array>
 #include <optional>
-#include <png.h>
 #include <vector>
 
 #include "gfx/rgba.hpp"
@@ -16,13 +15,7 @@ static constexpr size_t NB_COLOR_SLOTS = (1 << (5 * 3)) + 1;
 
 struct Palette;
 
-void sortIndexed(
-    std::vector<Palette> &palettes,
-    int palSize,
-    png_color const *palRGB,
-    int palAlphaSize,
-    png_byte *palAlpha
-);
+void sortIndexed(std::vector<Palette> &palettes, std::vector<Rgba> const &embPal);
 void sortGrayscale(
     std::vector<Palette> &palettes, std::array<std::optional<Rgba>, NB_COLOR_SLOTS> const &colors
 );
