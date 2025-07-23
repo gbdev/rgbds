@@ -105,6 +105,7 @@ rgbgfx_obj := \
 	src/gfx/pal_packing.o \
 	src/gfx/pal_sorting.o \
 	src/gfx/pal_spec.o \
+	src/gfx/png.o \
 	src/gfx/process.o \
 	src/gfx/proto_palette.o \
 	src/gfx/reverse.o \
@@ -151,6 +152,8 @@ src/gfx/pal_packing.o: src/gfx/pal_packing.cpp
 src/gfx/pal_sorting.o: src/gfx/pal_sorting.cpp
 	$Q${CXX} ${REALCXXFLAGS} ${PNGCFLAGS} -c -o $@ $<
 src/gfx/pal_spec.o: src/gfx/pal_spec.cpp
+	$Q${CXX} ${REALCXXFLAGS} ${PNGCFLAGS} -c -o $@ $<
+src/gfx/png.o: src/gfx/png.cpp
 	$Q${CXX} ${REALCXXFLAGS} ${PNGCFLAGS} -c -o $@ $<
 src/gfx/process.o: src/gfx/process.cpp
 	$Q${CXX} ${REALCXXFLAGS} ${PNGCFLAGS} -c -o $@ $<

@@ -8,27 +8,14 @@
 
 #include "gfx/main.hpp"
 
-void sortIndexed(
-    std::vector<Palette> &palettes,
-    int palSize,
-    png_color const *palRGB,
-    int palAlphaSize,
-    png_byte *palAlpha
-) {
+void sortIndexed(std::vector<Palette> &palettes, std::vector<Rgba> const &embPal) {
 	options.verbosePrint(Options::VERB_LOG_ACT, "Sorting palettes using embedded palette...\n");
-
-	auto pngToRgb = [&palRGB, &palAlphaSize, &palAlpha](int index) {
-		png_color const &c = palRGB[index];
-		return Rgba(
-		    c.red, c.green, c.blue, palAlpha && index < palAlphaSize ? palAlpha[index] : 0xFF
-		);
-	};
 
 	for (Palette &pal : palettes) {
 		std::sort(RANGE(pal), [&](uint16_t lhs, uint16_t rhs) {
 			// Iterate through the PNG's palette, looking for either of the two
-			for (int i = 0; i < palSize; ++i) {
-				uint16_t color = pngToRgb(i).cgbColor();
+			for (Rgba const &rgba : embPal) {
+				uint16_t color = rgba.cgbColor();
 				if (color == Rgba::transparent) {
 					continue;
 				}

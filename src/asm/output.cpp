@@ -149,7 +149,7 @@ static void writeRpn(std::vector<uint8_t> &rpnexpr, std::vector<uint8_t> const &
 	for (size_t offset = 0; offset < rpn.size();) {
 		uint8_t rpndata = rpn[offset++];
 
-		auto getSymName = [&](){
+		auto getSymName = [&]() {
 			std::string symName;
 			for (uint8_t c; (c = rpn[offset++]) != 0;) {
 				symName += c;
