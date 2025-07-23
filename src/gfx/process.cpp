@@ -154,23 +154,23 @@ struct Image {
 			giveUp();
 		}
 
-		// Holds known-conflicting color pairs to avoid warning about them twice.
+		// Holds colors whose alpha value is ambiguous to avoid erroring about them twice.
+		std::unordered_set<uint32_t> ambiguous;
+		// Holds fused color pairs to avoid warning about them twice.
 		// We don't need to worry about transitivity, as ImagePalette slots are immutable once
 		// assigned, and conflicts always occur between that and another color.
 		// For the same reason, we don't need to worry about order, either.
-		std::vector<std::tuple<uint32_t, uint32_t>> conflicts;
-		// Holds colors whose alpha value is ambiguous
-		std::vector<uint32_t> indeterminates;
+		auto hashPair = [](std::pair<uint32_t, uint32_t> const &pair) {
+			return pair.first * 31 + pair.second;
+		};
+		std::unordered_set<std::pair<uint32_t, uint32_t>, decltype(hashPair)> fusions;
 
-		// Register colors from image
+		// Register colors from `png` into `colors`
 		for (uint32_t y = 0; y < png.height; ++y) {
 			for (uint32_t x = 0; x < png.width; ++x) {
-				Rgba const &color = pixel(x, y);
-
-				// Assign a color to the given position, and register it in the image palette
-				if (color.isTransparent() == color.isOpaque()) {
-					uint32_t css = color.toCSS();
-					if (std::find(RANGE(indeterminates), css) == indeterminates.end()) {
+				if (Rgba const &color = pixel(x, y); color.isTransparent() == color.isOpaque()) {
+					// Report ambiguously transparent or opaque colors
+					if (uint32_t css = color.toCSS(); ambiguous.find(css) == ambiguous.end()) {
 						error(
 						    "Color #%08x is neither transparent (alpha < %u) nor opaque (alpha >= "
 						    "%u) [first seen at x: %" PRIu32 ", y: %" PRIu32 "]",
@@ -180,23 +180,22 @@ struct Image {
 						    x,
 						    y
 						);
-						indeterminates.push_back(css);
+						ambiguous.insert(css); // Do not report this color again
 					}
 				} else if (Rgba const *other = colors.registerColor(color); other) {
-					std::tuple conflicting{color.toCSS(), other->toCSS()};
-					// Do not report combinations twice
-					if (std::find(RANGE(conflicts), conflicting) == conflicts.end()) {
+					// Report fused colors that reduce to the same RGB555 value
+					if (std::pair fused{color.toCSS(), other->toCSS()};
+					    fusions.find(fused) == fusions.end()) {
 						warnx(
 						    "Fusing colors #%08x and #%08x into Game Boy color $%04x [first seen "
 						    "at x: %" PRIu32 ", y: %" PRIu32 "]",
-						    std::get<0>(conflicting),
-						    std::get<1>(conflicting),
+						    fused.first,
+						    fused.second,
 						    color.cgbColor(),
 						    x,
 						    y
 						);
-						// Do not report this combination again
-						conflicts.emplace_back(conflicting);
+						fusions.insert(fused); // Do not report this fusion again
 					}
 				}
 			}
