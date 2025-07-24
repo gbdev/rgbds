@@ -1068,7 +1068,7 @@ static bool isValidDigit(char c) {
 }
 
 static bool checkDigitErrors(char const *digits, size_t n, char const *type) {
-	for (size_t i = 0; i < n; i++) {
+	for (size_t i = 0; i < n; ++i) {
 		char c = digits[i];
 
 		if (!isValidDigit(c)) {
@@ -1081,7 +1081,7 @@ static bool checkDigitErrors(char const *digits, size_t n, char const *type) {
 			return false;
 		}
 
-		for (size_t j = i + 1; j < n; j++) {
+		for (size_t j = i + 1; j < n; ++j) {
 			if (c == digits[j]) {
 				error("Repeated digit for %s constant %s", type, printChar(c));
 				return false;

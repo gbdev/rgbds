@@ -126,7 +126,7 @@ static void readFileStackNode(
 		    depth, file, "%s: Cannot read node #%" PRIu32 "'s rept depth: %s", fileName, nodeID
 		);
 		node.data = std::vector<uint32_t>(depth);
-		for (uint32_t i = 0; i < depth; i++) {
+		for (uint32_t i = 0; i < depth; ++i) {
 			tryReadLong(
 			    node.iters()[i],
 			    file,
@@ -389,7 +389,7 @@ static void readSection(
 		);
 
 		section.patches.resize(nbPatches);
-		for (uint32_t i = 0; i < nbPatches; i++) {
+		for (uint32_t i = 0; i < nbPatches; ++i) {
 			readPatch(file, section.patches[i], fileName, section.name, i, fileNodes);
 		}
 	}
@@ -516,7 +516,7 @@ void obj_ReadFile(char const *fileName, unsigned int fileID) {
 	std::vector<uint32_t> nbSymPerSect(nbSections, 0);
 
 	verbosePrint("Reading %" PRIu32 " symbols...\n", nbSymbols);
-	for (uint32_t i = 0; i < nbSymbols; i++) {
+	for (uint32_t i = 0; i < nbSymbols; ++i) {
 		// Read symbol
 		Symbol &symbol = fileSymbols[i];
 
@@ -532,7 +532,7 @@ void obj_ReadFile(char const *fileName, unsigned int fileID) {
 	std::vector<std::unique_ptr<Section>> fileSections(nbSections);
 
 	verbosePrint("Reading %" PRIu32 " sections...\n", nbSections);
-	for (uint32_t i = 0; i < nbSections; i++) {
+	for (uint32_t i = 0; i < nbSections; ++i) {
 		// Read section
 		fileSections[i] = std::make_unique<Section>();
 		fileSections[i]->nextu = nullptr;
@@ -544,7 +544,7 @@ void obj_ReadFile(char const *fileName, unsigned int fileID) {
 	uint32_t nbAsserts;
 	tryReadLong(nbAsserts, file, "%s: Cannot read number of assertions: %s", fileName);
 	verbosePrint("Reading %" PRIu32 " assertions...\n", nbAsserts);
-	for (uint32_t i = 0; i < nbAsserts; i++) {
+	for (uint32_t i = 0; i < nbAsserts; ++i) {
 		Assertion &assertion = patch_AddAssertion();
 
 		readAssertion(file, assertion, fileName, i, nodes[fileID]);
@@ -553,7 +553,7 @@ void obj_ReadFile(char const *fileName, unsigned int fileID) {
 	}
 
 	// Give patches' PC section pointers to their sections
-	for (uint32_t i = 0; i < nbSections; i++) {
+	for (uint32_t i = 0; i < nbSections; ++i) {
 		if (sect_HasData(fileSections[i]->type)) {
 			for (Patch &patch : fileSections[i]->patches) {
 				linkPatchToPCSect(patch, fileSections);
@@ -562,7 +562,7 @@ void obj_ReadFile(char const *fileName, unsigned int fileID) {
 	}
 
 	// Give symbols' section pointers to their sections
-	for (uint32_t i = 0; i < nbSymbols; i++) {
+	for (uint32_t i = 0; i < nbSymbols; ++i) {
 		if (std::holds_alternative<Label>(fileSymbols[i].data)) {
 			Label &label = std::get<Label>(fileSymbols[i].data);
 			label.section = fileSections[label.sectionID].get();
@@ -572,14 +572,14 @@ void obj_ReadFile(char const *fileName, unsigned int fileID) {
 	}
 
 	// Calling `sect_AddSection` invalidates the contents of `fileSections`!
-	for (uint32_t i = 0; i < nbSections; i++) {
+	for (uint32_t i = 0; i < nbSections; ++i) {
 		sect_AddSection(std::move(fileSections[i]));
 	}
 
 	// Fix symbols' section pointers to component sections
 	// This has to run **after** all the `sect_AddSection()` calls,
 	// so that `sect_GetSection()` will work
-	for (uint32_t i = 0; i < nbSymbols; i++) {
+	for (uint32_t i = 0; i < nbSymbols; ++i) {
 		if (std::holds_alternative<Label>(fileSymbols[i].data)) {
 			Label &label = std::get<Label>(fileSymbols[i].data);
 			Section *section = label.section;

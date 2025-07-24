@@ -118,7 +118,7 @@ static void permute(char **argv, int dest, int src) {
 	char *tmp = argv[src];
 	int i;
 
-	for (i = src; i > dest; i--) {
+	for (i = src; i > dest; --i) {
 		argv[i] = argv[i - 1];
 	}
 	argv[dest] = tmp;
@@ -146,7 +146,7 @@ static int musl_getopt_long(
 	skipped = musl_optind;
 	if (optstring[0] != '+' && optstring[0] != '-') {
 		int i;
-		for (i = musl_optind;; i++) {
+		for (i = musl_optind;; ++i) {
 			if (i >= argc || !argv[i]) {
 				return -1;
 			}
@@ -161,7 +161,7 @@ static int musl_getopt_long(
 	if (resumed > skipped) {
 		int i, cnt = musl_optind - resumed;
 
-		for (i = 0; i < cnt; i++) {
+		for (i = 0; i < cnt; ++i) {
 			permute(argv, skipped, musl_optind - 1);
 		}
 		musl_optind = skipped + cnt;
@@ -180,7 +180,7 @@ static int musl_getopt_long_core(
 		int i, cnt, match = 0;
 		char *arg = 0, *opt, *start = argv[musl_optind] + 1;
 
-		for (cnt = i = 0; longopts[i].name; i++) {
+		for (cnt = i = 0; longopts[i].name; ++i) {
 			char const *name = longopts[i].name;
 
 			opt = start;
@@ -205,7 +205,7 @@ static int musl_getopt_long_core(
 		if (cnt == 1 && longonly && arg - start == mblen(start, MB_LEN_MAX)) {
 			int l = arg - start;
 
-			for (i = 0; optstring[i]; i++) {
+			for (i = 0; optstring[i]; ++i) {
 				int j = 0;
 
 				while (j < l && start[j] == optstring[i + j]) {

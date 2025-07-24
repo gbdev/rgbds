@@ -370,7 +370,7 @@ int main(int argc, char *argv[]) {
 	}
 
 	// Read all object files first,
-	for (obj_Setup(argc - curArgIndex); curArgIndex < argc; curArgIndex++) {
+	for (obj_Setup(argc - curArgIndex); curArgIndex < argc; ++curArgIndex) {
 		obj_ReadFile(argv[curArgIndex], argc - curArgIndex - 1);
 	}
 

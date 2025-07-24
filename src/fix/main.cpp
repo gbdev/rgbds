@@ -881,7 +881,7 @@ static void overwriteBytes(
     uint8_t *rom0, uint16_t startAddr, uint8_t const *fixed, uint8_t size, char const *areaName
 ) {
 	if (!overwriteRom) {
-		for (uint8_t i = 0; i < size; i++) {
+		for (uint8_t i = 0; i < size; ++i) {
 			uint8_t origByte = rom0[i + startAddr];
 
 			if (origByte != 0 && origByte != fixed[i]) {
@@ -1049,7 +1049,7 @@ static void
 				++nbBanks;
 
 				// Update global checksum, too
-				for (uint16_t i = 0; i < bankLen; i++) {
+				for (uint16_t i = 0; i < bankLen; ++i) {
 					globalSum += romx[totalRomxLen + i];
 				}
 				totalRomxLen += bankLen;
@@ -1097,7 +1097,7 @@ static void
 	if (fixSpec & (FIX_HEADER_SUM | TRASH_HEADER_SUM)) {
 		uint8_t sum = 0;
 
-		for (uint16_t i = 0x134; i < 0x14D; i++) {
+		for (uint16_t i = 0x134; i < 0x14D; ++i) {
 			sum -= rom0[i] + 1;
 		}
 
@@ -1107,10 +1107,10 @@ static void
 	if (fixSpec & (FIX_GLOBAL_SUM | TRASH_GLOBAL_SUM)) {
 		// Computation of the global checksum does not include the checksum bytes
 		assume(rom0Len >= 0x14E);
-		for (uint16_t i = 0; i < 0x14E; i++) {
+		for (uint16_t i = 0; i < 0x14E; ++i) {
 			globalSum += rom0[i];
 		}
-		for (uint16_t i = 0x150; i < rom0Len; i++) {
+		for (uint16_t i = 0x150; i < rom0Len; ++i) {
 			globalSum += rom0[i];
 		}
 		// Pipes have already read ROMX and updated globalSum, but not regular files
@@ -1118,7 +1118,7 @@ static void
 			for (;;) {
 				ssize_t bankLen = readBytes(input, bank, sizeof(bank));
 
-				for (uint16_t i = 0; i < bankLen; i++) {
+				for (uint16_t i = 0; i < bankLen; ++i) {
 					globalSum += bank[i];
 				}
 				if (bankLen != sizeof(bank)) {
@@ -1558,7 +1558,7 @@ int main(int argc, char *argv[]) {
 		memcpy(logo, nintendoLogo, sizeof(nintendoLogo));
 	}
 	if (fixSpec & TRASH_LOGO) {
-		for (uint16_t i = 0; i < sizeof(logo); i++) {
+		for (uint16_t i = 0; i < sizeof(logo); ++i) {
 			logo[i] = 0xFF ^ logo[i];
 		}
 	}

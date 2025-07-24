@@ -807,7 +807,7 @@ void sect_RelBytes(uint32_t n, std::vector<Expression> const &exprs) {
 		return;
 	}
 
-	for (uint32_t i = 0; i < n; i++) {
+	for (uint32_t i = 0; i < n; ++i) {
 		if (Expression const &expr = exprs[i % exprs.size()]; !expr.isKnown()) {
 			createPatch(PATCHTYPE_BYTE, expr, i);
 			writeByte(0);

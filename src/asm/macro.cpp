@@ -29,14 +29,14 @@ std::shared_ptr<std::string> MacroArgs::getAllArgs() const {
 
 	size_t len = 0;
 
-	for (uint32_t i = shift; i < nbArgs; i++) {
+	for (uint32_t i = shift; i < nbArgs; ++i) {
 		len += args[i]->length() + 1; // 1 for comma
 	}
 
 	auto str = std::make_shared<std::string>();
 	str->reserve(len + 1); // 1 for comma
 
-	for (uint32_t i = shift; i < nbArgs; i++) {
+	for (uint32_t i = shift; i < nbArgs; ++i) {
 		std::shared_ptr<std::string> const &arg = args[i];
 
 		str->append(*arg);

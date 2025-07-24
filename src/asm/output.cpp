@@ -332,7 +332,7 @@ void out_WriteObject() {
 	putLong(sectionList.size(), file);
 
 	putLong(fileStackNodes.size(), file);
-	for (auto it = fileStackNodes.begin(); it != fileStackNodes.end(); it++) {
+	for (auto it = fileStackNodes.begin(); it != fileStackNodes.end(); ++it) {
 		FileStackNode const &node = **it;
 
 		writeFileStackNode(node, file);

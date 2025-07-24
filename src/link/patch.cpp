@@ -557,7 +557,7 @@ static void applyFilePatches(Section &section, Section &dataSection) {
 				    type.size * 8U
 				);
 			}
-			for (uint8_t i = 0; i < type.size; i++) {
+			for (uint8_t i = 0; i < type.size; ++i) {
 				dataSection.data[offset + i] = value & 0xFF;
 				value >>= 8;
 			}

@@ -45,7 +45,7 @@ bool forEachChar(Charmap const &charmap, F callback) {
 		if (node.isTerminal() && !callback(nodeIdx, mapping)) {
 			return false;
 		}
-		for (unsigned c = 0; c < std::size(node.next); c++) {
+		for (unsigned c = 0; c < std::size(node.next); ++c) {
 			if (size_t nextIdx = node.next[c]; nextIdx) {
 				prefixes.push({nextIdx, mapping + static_cast<char>(c)});
 			}

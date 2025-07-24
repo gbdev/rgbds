@@ -160,7 +160,7 @@ std::string Diagnostics<L, W>::processWarningFlag(char const *flag) {
 		}
 
 		// Set the first <param> to enabled/error, and disable the rest
-		for (uint32_t ofs = 0; ofs < maxParam; ofs++) {
+		for (uint32_t ofs = 0; ofs < maxParam; ++ofs) {
 			if (WarningState &warning = state.flagStates[baseID + ofs]; ofs < *param) {
 				warning.update(flagState);
 			} else {

@@ -580,10 +580,10 @@ static void parseGBCFile(char const *, std::filebuf &file) {
 }
 
 static bool checkPngSwatch(std::vector<Rgba> const &pixels, uint32_t base, uint32_t swatchSize) {
-	for (uint32_t y = 0; y < swatchSize; y++) {
+	for (uint32_t y = 0; y < swatchSize; ++y) {
 		uint32_t yOffset = y * swatchSize * options.nbColorsPerPal + base;
 
-		for (uint32_t x = 0; x < swatchSize; x++) {
+		for (uint32_t x = 0; x < swatchSize; ++x) {
 			if (x == 0 && y == 0) {
 				continue;
 			}

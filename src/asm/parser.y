@@ -2802,7 +2802,7 @@ static uint32_t strToNum(std::vector<int32_t> const &s) {
 
 	uint32_t r = 0;
 
-	for (uint32_t i = length < 4 ? 0 : length - 4; i < length; i++) {
+	for (uint32_t i = length < 4 ? 0 : length - 4; i < length; ++i) {
 		r <<= 8;
 		r |= static_cast<uint8_t>(s[i]);
 	}
@@ -2973,7 +2973,7 @@ static size_t charlenUTF8(std::string const &str) {
 	std::string_view view = str;
 	size_t len;
 
-	for (len = 0; charmap_ConvertNext(view, nullptr); len++) {}
+	for (len = 0; charmap_ConvertNext(view, nullptr); ++len) {}
 
 	return len;
 }
@@ -2983,7 +2983,7 @@ static std::string strcharUTF8(std::string const &str, uint32_t idx) {
 	size_t charLen = 1;
 
 	// Advance to starting index in source string.
-	for (uint32_t curIdx = 0; charLen && curIdx < idx; curIdx++) {
+	for (uint32_t curIdx = 0; charLen && curIdx < idx; ++curIdx) {
 		charLen = charmap_ConvertNext(view, nullptr);
 	}
 
@@ -3006,7 +3006,7 @@ static std::string charsubUTF8(std::string const &str, uint32_t pos) {
 	size_t charLen = 1;
 
 	// Advance to starting position in source string.
-	for (uint32_t curPos = 1; charLen && curPos < pos; curPos++) {
+	for (uint32_t curPos = 1; charLen && curPos < pos; ++curPos) {
 		charLen = charmap_ConvertNext(view, nullptr);
 	}
 
