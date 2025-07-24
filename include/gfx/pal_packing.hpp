@@ -8,10 +8,9 @@
 #include <vector>
 
 struct Palette;
-class ProtoPalette;
+class ColorSet;
 
-// Returns which palette each proto-palette maps to, and how many palettes are necessary
-std::tuple<std::vector<size_t>, size_t>
-    overloadAndRemove(std::vector<ProtoPalette> const &protoPalettes);
+// Returns which palette each color set maps to, and how many palettes are necessary
+std::tuple<std::vector<size_t>, size_t> overloadAndRemove(std::vector<ColorSet> const &colorSets);
 
 #endif // RGBDS_GFX_PAL_PACKING_HPP

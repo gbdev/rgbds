@@ -101,13 +101,13 @@ rgbfix_obj := \
 
 rgbgfx_obj := \
 	${common_obj} \
+	src/gfx/color_set.o \
 	src/gfx/main.o \
 	src/gfx/pal_packing.o \
 	src/gfx/pal_sorting.o \
 	src/gfx/pal_spec.o \
 	src/gfx/png.o \
 	src/gfx/process.o \
-	src/gfx/proto_palette.o \
 	src/gfx/reverse.o \
 	src/gfx/rgba.o \
 	src/gfx/warning.o
@@ -145,6 +145,8 @@ src/link/script.hpp: src/link/script.cpp
 	$Qtouch $@
 
 # Only RGBGFX uses libpng (POSIX make doesn't support pattern rules to cover all these)
+src/gfx/color_set.o: src/gfx/color_set.cpp
+	$Q${CXX} ${REALCXXFLAGS} ${PNGCFLAGS} -c -o $@ $<
 src/gfx/main.o: src/gfx/main.cpp
 	$Q${CXX} ${REALCXXFLAGS} ${PNGCFLAGS} -c -o $@ $<
 src/gfx/pal_packing.o: src/gfx/pal_packing.cpp
@@ -156,8 +158,6 @@ src/gfx/pal_spec.o: src/gfx/pal_spec.cpp
 src/gfx/png.o: src/gfx/png.cpp
 	$Q${CXX} ${REALCXXFLAGS} ${PNGCFLAGS} -c -o $@ $<
 src/gfx/process.o: src/gfx/process.cpp
-	$Q${CXX} ${REALCXXFLAGS} ${PNGCFLAGS} -c -o $@ $<
-src/gfx/proto_palette.o: src/gfx/proto_palette.cpp
 	$Q${CXX} ${REALCXXFLAGS} ${PNGCFLAGS} -c -o $@ $<
 src/gfx/reverse.o: src/gfx/reverse.cpp
 	$Q${CXX} ${REALCXXFLAGS} ${PNGCFLAGS} -c -o $@ $<

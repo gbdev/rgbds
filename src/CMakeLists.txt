@@ -75,13 +75,13 @@ set(rgbfix_src
     )
 
 set(rgbgfx_src
+    "gfx/color_set.cpp"
     "gfx/main.cpp"
     "gfx/pal_packing.cpp"
     "gfx/pal_sorting.cpp"
     "gfx/pal_spec.cpp"
     "gfx/png.cpp"
     "gfx/process.cpp"
-    "gfx/proto_palette.cpp"
     "gfx/reverse.cpp"
     "gfx/rgba.cpp"
     "gfx/warning.cpp"

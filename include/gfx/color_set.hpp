@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: MIT
 
-#ifndef RGBDS_GFX_PROTO_PALETTE_HPP
-#define RGBDS_GFX_PROTO_PALETTE_HPP
+#ifndef RGBDS_GFX_COLOR_SET_HPP
+#define RGBDS_GFX_COLOR_SET_HPP
 
 #include <array>
 #include <stddef.h>
 #include <stdint.h>
 
-class ProtoPalette {
+class ColorSet {
 public:
 	static constexpr size_t capacity = 4;
 
@@ -26,7 +26,7 @@ public:
 		WE_BIGGER,
 		THEY_BIGGER = -1,
 	};
-	ComparisonResult compare(ProtoPalette const &other) const;
+	ComparisonResult compare(ColorSet const &other) const;
 
 	size_t size() const;
 	bool empty() const;
@@ -35,4 +35,4 @@ public:
 	decltype(_colorIndices)::const_iterator end() const;
 };
 
-#endif // RGBDS_GFX_PROTO_PALETTE_HPP
+#endif // RGBDS_GFX_COLOR_SET_HPP

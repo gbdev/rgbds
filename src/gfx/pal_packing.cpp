@@ -15,26 +15,28 @@
 
 #include "helpers.hpp"
 
+#include "gfx/color_set.hpp"
 #include "gfx/main.hpp"
-#include "gfx/proto_palette.hpp"
 
 // The solvers here are picked from the paper at https://arxiv.org/abs/1605.00558:
 // "Algorithms for the Pagination Problem, a Bin Packing with Overlapping Items"
 // Their formulation of the problem consists in packing "tiles" into "pages".
 // Here is a correspondence table for our application of it:
-// Paper | RGBGFX
-// ------+-------
-// Tile  | Proto-palette
-// Page  | Palette
+//
+// Paper  | RGBGFX
+// -------+----------
+// Symbol | Color
+// Tile   | Color set
+// Page   | Palette
 
-// A reference to a proto-palette, and attached attributes for sorting purposes
-struct ProtoPalAttrs {
-	size_t protoPalIndex;
+// A reference to a color set, and attached attributes for sorting purposes
+struct ColorSetAttrs {
+	size_t colorSetIndex;
 	// Pages from which we are banned (to prevent infinite loops)
 	// This is dynamic because we wish not to hard-cap the amount of palettes
 	std::vector<bool> bannedPages;
 
-	explicit ProtoPalAttrs(size_t index) : protoPalIndex(index) {}
+	explicit ColorSetAttrs(size_t index) : colorSetIndex(index) {}
 	bool isBannedFrom(size_t index) const {
 		return index < bannedPages.size() && bannedPages[index];
 	}
@@ -46,27 +48,27 @@ struct ProtoPalAttrs {
 	}
 };
 
-// A collection of proto-palettes assigned to a palette
+// A collection of color sets assigned to a palette
 // Does not contain the actual color indices because we need to be able to remove elements
-class AssignedProtos {
+class AssignedSets {
 	// We leave room for emptied slots to avoid copying the structs around on removal
-	std::vector<std::optional<ProtoPalAttrs>> _assigned;
-	// For resolving proto-palette indices
-	std::vector<ProtoPalette> const *_protoPals;
+	std::vector<std::optional<ColorSetAttrs>> _assigned;
+	// For resolving color set indices
+	std::vector<ColorSet> const *_colorSets;
 
 public:
 	template<typename... Ts>
-	AssignedProtos(std::vector<ProtoPalette> const &protoPals, Ts &&...elems)
-	    : _assigned{std::forward<Ts>(elems)...}, _protoPals{&protoPals} {}
+	AssignedSets(std::vector<ColorSet> const &colorSets, Ts &&...elems)
+	    : _assigned{std::forward<Ts>(elems)...}, _colorSets{&colorSets} {}
 
 private:
 	template<typename Inner, template<typename> typename Constness>
 	class Iter {
 	public:
-		friend class AssignedProtos;
+		friend class AssignedSets;
 		// For `iterator_traits`
 		using difference_type = typename std::iterator_traits<Inner>::difference_type;
-		using value_type = ProtoPalAttrs;
+		using value_type = ColorSetAttrs;
 		using pointer = Constness<value_type> *;
 		using reference = Constness<value_type> &;
 		using iterator_category = std::forward_iterator_tag;
@@ -122,12 +124,12 @@ public:
 	}
 	const_iterator end() const { return const_iterator{&_assigned, _assigned.end()}; }
 
-	// Assigns a new ProtoPalAttrs in a free slot, assuming there is one
-	// Args are passed to the `ProtoPalAttrs`'s constructor
+	// Assigns a new ColorSetAttrs in a free slot, assuming there is one
+	// Args are passed to the `ColorSetAttrs`'s constructor
 	template<typename... Ts>
 	void assign(Ts &&...args) {
 		auto freeSlot =
-		    std::find_if_not(RANGE(_assigned), [](std::optional<ProtoPalAttrs> const &slot) {
+		    std::find_if_not(RANGE(_assigned), [](std::optional<ColorSetAttrs> const &slot) {
 			    return slot.has_value();
 		    });
 
@@ -145,11 +147,11 @@ public:
 	bool empty() const {
 		return std::find_if(
 		           RANGE(_assigned),
-		           [](std::optional<ProtoPalAttrs> const &slot) { return slot.has_value(); }
+		           [](std::optional<ColorSetAttrs> const &slot) { return slot.has_value(); }
 		       )
 		       == _assigned.end();
 	}
-	size_t nbProtoPals() const { return std::distance(RANGE(*this)); }
+	size_t nbColorSets() const { return std::distance(RANGE(*this)); }
 
 private:
 	template<typename Iter>
@@ -157,11 +159,11 @@ private:
 	    std::unordered_set<uint16_t> &colors,
 	    Iter iter,
 	    Iter const &end,
-	    std::vector<ProtoPalette> const &protoPals
+	    std::vector<ColorSet> const &colorSets
 	) {
 		for (; iter != end; ++iter) {
-			ProtoPalette const &protoPal = protoPals[iter->protoPalIndex];
-			colors.insert(RANGE(protoPal));
+			ColorSet const &colorSet = colorSets[iter->colorSetIndex];
+			colors.insert(RANGE(colorSet));
 		}
 	}
 	// This function should stay private because it returns a reference to a unique object
@@ -171,20 +173,20 @@ private:
 		static std::unordered_set<uint16_t> colors;
 
 		colors.clear();
-		addUniqueColors(colors, RANGE(*this), *_protoPals);
+		addUniqueColors(colors, RANGE(*this), *_colorSets);
 		return colors;
 	}
 public:
 	// Returns the number of distinct colors
 	size_t volume() const { return uniqueColors().size(); }
-	bool canFit(ProtoPalette const &protoPal) const {
+	bool canFit(ColorSet const &colorSet) const {
 		std::unordered_set<uint16_t> &colors = uniqueColors();
-		colors.insert(RANGE(protoPal));
+		colors.insert(RANGE(colorSet));
 		return colors.size() <= options.maxOpaqueColors();
 	}
 
-	// The `relSizeOf` method below should compute the sum, for each color in `protoPal`, of
-	// the reciprocal of the "multiplicity" of the color across "our" proto-palettes.
+	// The `relSizeOf` method below should compute the sum, for each color in `colorSet`, of
+	// the reciprocal of the "multiplicity" of the color across "our" color sets.
 	// However, literally computing the reciprocals would involve floating-point division, which
 	// leads to imprecision and even platform-specific differences.
 	// We avoid this by multiplying the reciprocals by a factor such that division always produces
@@ -199,22 +201,22 @@ public:
 		return factor;
 	}();
 
-	// Computes the "relative size" of a proto-palette on this palette;
-	// it's a measure of how much this proto-palette would "cost" to introduce.
-	uint32_t relSizeOf(ProtoPalette const &protoPal) const {
+	// Computes the "relative size" of a color set on this palette;
+	// it's a measure of how much this color set would "cost" to introduce.
+	uint32_t relSizeOf(ColorSet const &colorSet) const {
 		// NOTE: this function must not call `uniqueColors`, or one of its callers will break!
 
 		uint32_t relSize = 0;
-		for (uint16_t color : protoPal) {
-			// How many of our proto-palettes does this color also belong to?
+		for (uint16_t color : colorSet) {
+			// How many of our color sets does this color also belong to?
 			uint32_t multiplicity =
-			    std::count_if(RANGE(*this), [this, &color](ProtoPalAttrs const &attrs) {
-				    ProtoPalette const &pal = (*_protoPals)[attrs.protoPalIndex];
+			    std::count_if(RANGE(*this), [this, &color](ColorSetAttrs const &attrs) {
+				    ColorSet const &pal = (*_colorSets)[attrs.colorSetIndex];
 				    return std::find(RANGE(pal), color) != pal.end();
 			    });
 			// We increase the denominator by 1 here; the reference code does this,
 			// but the paper does not. Not adding 1 makes a multiplicity of 0 cause a division by 0
-			// (that is, if the color is not found in any proto-palette), and adding 1 still seems
+			// (that is, if the color is not found in any color set), and adding 1 still seems
 			// to preserve the paper's reasoning.
 			//
 			// The scale factor should ensure integer divisions only.
@@ -224,12 +226,12 @@ public:
 		return relSize;
 	}
 
-	// Computes the "relative size" of a set of proto-palettes on this palette
+	// Computes the "relative size" of a set of color sets on this palette
 	template<typename Iter>
-	size_t combinedVolume(Iter &&begin, Iter const &end, std::vector<ProtoPalette> const &protoPals)
+	size_t combinedVolume(Iter &&begin, Iter const &end, std::vector<ColorSet> const &colorSets)
 	    const {
 		std::unordered_set<uint16_t> &colors = uniqueColors();
-		addUniqueColors(colors, std::forward<Iter>(begin), end, protoPals);
+		addUniqueColors(colors, std::forward<Iter>(begin), end, colorSets);
 		return colors.size();
 	}
 	// Computes the "relative size" of a set of colors on this palette
@@ -242,13 +244,13 @@ public:
 };
 
 static void verboseOutputAssignments(
-    std::vector<AssignedProtos> const &assignments, std::vector<ProtoPalette> const &protoPalettes
+    std::vector<AssignedSets> const &assignments, std::vector<ColorSet> const &colorSets
 ) {
-	for (AssignedProtos const &assignment : assignments) {
+	for (AssignedSets const &assignment : assignments) {
 		fputs("{ ", stderr);
-		for (ProtoPalAttrs const &attrs : assignment) {
-			fprintf(stderr, "[%zu] ", attrs.protoPalIndex);
-			for (uint16_t colorIndex : protoPalettes[attrs.protoPalIndex]) {
+		for (ColorSetAttrs const &attrs : assignment) {
+			fprintf(stderr, "[%zu] ", attrs.colorSetIndex);
+			for (uint16_t colorIndex : colorSets[attrs.colorSetIndex]) {
 				fprintf(stderr, "%04" PRIx16 ", ", colorIndex);
 			}
 		}
@@ -256,9 +258,7 @@ static void verboseOutputAssignments(
 	}
 }
 
-static void decant(
-    std::vector<AssignedProtos> &assignments, std::vector<ProtoPalette> const &protoPalettes
-) {
+static void decant(std::vector<AssignedSets> &assignments, std::vector<ColorSet> const &colorSets) {
 	// "Decanting" is the process of moving all *things* that can fit in a lower index there
 	auto decantOn = [&assignments](auto const &tryDecanting) {
 		// No need to attempt decanting on palette #0, as there are no palettes to decant to
@@ -268,7 +268,7 @@ static void decant(
 				tryDecanting(assignments[to], assignments[from]);
 			}
 
-			// If the proto-palette is now empty, remove it
+			// If the color set is now empty, remove it
 			// Doing this now reduces the number of iterations performed by later steps
 			// NB: order is intentionally preserved so as not to alter the "decantation"'s
 			// properties
@@ -287,11 +287,11 @@ static void decant(
 	);
 
 	// Decant on palettes
-	decantOn([&protoPalettes](AssignedProtos &to, AssignedProtos &from) {
-		// If the entire palettes can be merged, move all of `from`'s proto-palettes
-		if (to.combinedVolume(RANGE(from), protoPalettes) <= options.maxOpaqueColors()) {
-			for (ProtoPalAttrs &attrs : from) {
-				to.assign(attrs.protoPalIndex);
+	decantOn([&colorSets](AssignedSets &to, AssignedSets &from) {
+		// If the entire palettes can be merged, move all of `from`'s color sets
+		if (to.combinedVolume(RANGE(from), colorSets) <= options.maxOpaqueColors()) {
+			for (ColorSetAttrs &attrs : from) {
+				to.assign(attrs.colorSetIndex);
 			}
 			from.clear();
 		}
@@ -300,13 +300,13 @@ static void decant(
 	    Options::VERB_DEBUG, "%zu palettes after decanting on palettes\n", assignments.size()
 	);
 
-	// Decant on "components" (= proto-pals sharing colors)
-	decantOn([&protoPalettes](AssignedProtos &to, AssignedProtos &from) {
-		// We need to iterate on all the "components", which are groups of proto-palettes sharing at
-		// least one color with another proto-palettes in the group.
-		// We do this by adding the first available proto-palette, and then looking for palettes
-		// with common colors. (As an optimization, we know we can skip palettes already scanned.)
-		std::vector<bool> processed(from.nbProtoPals(), false);
+	// Decant on "components" (= color sets sharing colors)
+	decantOn([&colorSets](AssignedSets &to, AssignedSets &from) {
+		// We need to iterate on all the "components", which are groups of color sets sharing at
+		// least one color with another color sets in the group.
+		// We do this by adding the first available color set, and then looking for palettes with
+		// common colors. (As an optimization, we know we can skip palettes already scanned.)
+		std::vector<bool> processed(from.nbColorSets(), false);
 		std::unordered_set<uint16_t> colors;
 		std::vector<size_t> members;
 		while (true) {
@@ -322,19 +322,19 @@ static void decant(
 			members.clear();
 			assume(members.empty()); // Compiler optimization hint
 			do {
-				ProtoPalette const &protoPal = protoPalettes[attrs->protoPalIndex];
-				// If this is the first proto-pal, or if at least one color matches, add it
+				ColorSet const &colorSet = colorSets[attrs->colorSetIndex];
+				// If this is the first color set, or if at least one color matches, add it
 				if (members.empty()
-				    || std::find_first_of(RANGE(colors), RANGE(protoPal)) != colors.end()) {
-					colors.insert(RANGE(protoPal));
+				    || std::find_first_of(RANGE(colors), RANGE(colorSet)) != colors.end()) {
+					colors.insert(RANGE(colorSet));
 					members.push_back(iter - processed.begin());
-					*iter = true; // Mark that proto-pal as processed
+					*iter = true; // Mark that color set as processed
 				}
 				++attrs;
 			} while (++iter != processed.end());
 
 			if (to.combinedVolume(RANGE(colors)) <= options.maxOpaqueColors()) {
-				// Iterate through the component's proto-palettes, and transfer them
+				// Iterate through the component's color sets, and transfer them
 				auto member = from.begin();
 				size_t curIndex = 0;
 				for (size_t index : members) {
@@ -350,56 +350,53 @@ static void decant(
 	    Options::VERB_DEBUG, "%zu palettes after decanting on \"components\"\n", assignments.size()
 	);
 
-	// Decant on individual proto-palettes
-	decantOn([&protoPalettes](AssignedProtos &to, AssignedProtos &from) {
+	// Decant on individual color sets
+	decantOn([&colorSets](AssignedSets &to, AssignedSets &from) {
 		for (auto iter = from.begin(); iter != from.end(); ++iter) {
-			if (to.canFit(protoPalettes[iter->protoPalIndex])) {
+			if (to.canFit(colorSets[iter->colorSetIndex])) {
 				to.assign(std::move(*iter));
 				from.remove(iter);
 			}
 		}
 	});
 	options.verbosePrint(
-	    Options::VERB_DEBUG, "%zu palettes after decanting on proto-palettes\n", assignments.size()
+	    Options::VERB_DEBUG, "%zu palettes after decanting on color sets\n", assignments.size()
 	);
 }
 
-std::tuple<std::vector<size_t>, size_t>
-    overloadAndRemove(std::vector<ProtoPalette> const &protoPalettes) {
+std::tuple<std::vector<size_t>, size_t> overloadAndRemove(std::vector<ColorSet> const &colorSets) {
 	options.verbosePrint(
 	    Options::VERB_LOG_ACT, "Paginating palettes using \"overload-and-remove\" strategy...\n"
 	);
 
-	// Sort the proto-palettes by size, which improves the packing algorithm's efficiency
-	auto const indexOfLargestProtoPalFirst = [&protoPalettes](size_t left, size_t right) {
-		ProtoPalette const &lhs = protoPalettes[left];
-		ProtoPalette const &rhs = protoPalettes[right];
-		return lhs.size() > rhs.size(); // We want the proto-pals to be sorted *largest first*!
+	// Sort the color sets by size, which improves the packing algorithm's efficiency
+	auto const indexOfLargestColorSetFirst = [&colorSets](size_t left, size_t right) {
+		ColorSet const &lhs = colorSets[left];
+		ColorSet const &rhs = colorSets[right];
+		return lhs.size() > rhs.size(); // We want the color sets to be sorted *largest first*!
 	};
-	std::vector<size_t> sortedProtoPalIDs;
-	sortedProtoPalIDs.reserve(protoPalettes.size());
-	for (size_t i = 0; i < protoPalettes.size(); ++i) {
-		sortedProtoPalIDs.insert(
-		    std::lower_bound(RANGE(sortedProtoPalIDs), i, indexOfLargestProtoPalFirst), i
+	std::vector<size_t> sortedColorSetIDs;
+	sortedColorSetIDs.reserve(colorSets.size());
+	for (size_t i = 0; i < colorSets.size(); ++i) {
+		sortedColorSetIDs.insert(
+		    std::lower_bound(RANGE(sortedColorSetIDs), i, indexOfLargestColorSetFirst), i
 		);
 	}
 
-	// Begin with all proto-palettes queued up for insertion
-	std::queue<ProtoPalAttrs> queue(std::deque<ProtoPalAttrs>(RANGE(sortedProtoPalIDs)));
+	// Begin with all color sets queued up for insertion
+	std::queue<ColorSetAttrs> queue(std::deque<ColorSetAttrs>(RANGE(sortedColorSetIDs)));
 	// Begin with no pages
-	std::vector<AssignedProtos> assignments{};
+	std::vector<AssignedSets> assignments{};
 
 	for (; !queue.empty(); queue.pop()) {
-		ProtoPalAttrs const &attrs = queue.front(); // Valid until the `queue.pop()`
-		options.verbosePrint(
-		    Options::VERB_TRACE, "Handling proto-palette %zu\n", attrs.protoPalIndex
-		);
+		ColorSetAttrs const &attrs = queue.front(); // Valid until the `queue.pop()`
+		options.verbosePrint(Options::VERB_TRACE, "Handling color set %zu\n", attrs.colorSetIndex);
 
-		ProtoPalette const &protoPal = protoPalettes[attrs.protoPalIndex];
+		ColorSet const &colorSet = colorSets[attrs.colorSetIndex];
 		size_t bestPalIndex = assignments.size();
-		// We're looking for a palette where the proto-palette's relative size is less than
+		// We're looking for a palette where the color set's relative size is less than
 		// its actual size; so only overwrite the "not found" index on meeting that criterion
-		uint32_t bestRelSize = protoPal.size() * AssignedProtos::scaleFactor;
+		uint32_t bestRelSize = colorSet.size() * AssignedSets::scaleFactor;
 
 		for (size_t i = 0; i < assignments.size(); ++i) {
 			// Skip the page if this one is banned from it
@@ -407,14 +404,14 @@ std::tuple<std::vector<size_t>, size_t>
 				continue;
 			}
 
-			uint32_t relSize = assignments[i].relSizeOf(protoPal);
+			uint32_t relSize = assignments[i].relSizeOf(colorSet);
 			options.verbosePrint(
 			    Options::VERB_TRACE,
 			    "  Relative size to palette %zu (of %zu): %" PRIu32 " (size = %zu)\n",
 			    i,
 			    assignments.size(),
 			    relSize,
-			    protoPal.size()
+			    colorSet.size()
 			);
 			if (relSize < bestRelSize) {
 				bestPalIndex = i;
@@ -426,19 +423,19 @@ std::tuple<std::vector<size_t>, size_t>
 			// Found nowhere to put it, create a new page containing just that one
 			options.verbosePrint(
 			    Options::VERB_TRACE,
-			    "Assigning proto-palette %zu to new palette %zu\n",
-			    attrs.protoPalIndex,
+			    "Assigning color set %zu to new palette %zu\n",
+			    attrs.colorSetIndex,
 			    bestPalIndex
 			);
-			assignments.emplace_back(protoPalettes, std::move(attrs));
+			assignments.emplace_back(colorSets, std::move(attrs));
 		} else {
 			options.verbosePrint(
 			    Options::VERB_TRACE,
-			    "Assigning proto-palette %zu to palette %zu\n",
-			    attrs.protoPalIndex,
+			    "Assigning color set %zu to palette %zu\n",
+			    attrs.colorSetIndex,
 			    bestPalIndex
 			);
-			AssignedProtos &bestPal = assignments[bestPalIndex];
+			AssignedSets &bestPal = assignments[bestPalIndex];
 			// Add the color to that palette
 			bestPal.assign(std::move(attrs));
 
@@ -452,23 +449,23 @@ std::tuple<std::vector<size_t>, size_t>
 				    options.maxOpaqueColors()
 				);
 
-				// Look for a proto-pal minimizing "efficiency" (size / rel_size)
+				// Look for a color set minimizing "efficiency" (size / rel_size)
 				auto [minEfficiencyIter, maxEfficiencyIter] = std::minmax_element(
 				    RANGE(bestPal),
-				    [&bestPal, &protoPalettes](ProtoPalAttrs const &lhs, ProtoPalAttrs const &rhs) {
-					    ProtoPalette const &lhsProtoPal = protoPalettes[lhs.protoPalIndex];
-					    ProtoPalette const &rhsProtoPal = protoPalettes[rhs.protoPalIndex];
-					    size_t lhsSize = lhsProtoPal.size();
-					    size_t rhsSize = rhsProtoPal.size();
-					    uint32_t lhsRelSize = bestPal.relSizeOf(lhsProtoPal);
-					    uint32_t rhsRelSize = bestPal.relSizeOf(rhsProtoPal);
+				    [&bestPal, &colorSets](ColorSetAttrs const &lhs, ColorSetAttrs const &rhs) {
+					    ColorSet const &lhsColorSet = colorSets[lhs.colorSetIndex];
+					    ColorSet const &rhsColorSet = colorSets[rhs.colorSetIndex];
+					    size_t lhsSize = lhsColorSet.size();
+					    size_t rhsSize = rhsColorSet.size();
+					    uint32_t lhsRelSize = bestPal.relSizeOf(lhsColorSet);
+					    uint32_t rhsRelSize = bestPal.relSizeOf(rhsColorSet);
 
 					    options.verbosePrint(
 					        Options::VERB_TRACE,
-					        "  Proto-palettes %zu <=> %zu: Efficiency: %zu / %" PRIu32 " <=> %zu / "
+					        "  Color sets %zu <=> %zu: Efficiency: %zu / %" PRIu32 " <=> %zu / "
 					        "%" PRIu32 "\n",
-					        lhs.protoPalIndex,
-					        rhs.protoPalIndex,
+					        lhs.colorSetIndex,
+					        rhs.colorSetIndex,
 					        lhsSize,
 					        lhsRelSize,
 					        rhsSize,
@@ -482,18 +479,17 @@ std::tuple<std::vector<size_t>, size_t>
 				);
 
 				// All efficiencies are identical iff min equals max
-				ProtoPalette const &minProtoPal = protoPalettes[minEfficiencyIter->protoPalIndex];
-				ProtoPalette const &maxProtoPal = protoPalettes[maxEfficiencyIter->protoPalIndex];
-				size_t minSize = minProtoPal.size();
-				size_t maxSize = maxProtoPal.size();
-				uint32_t minRelSize = bestPal.relSizeOf(minProtoPal);
-				uint32_t maxRelSize = bestPal.relSizeOf(maxProtoPal);
+				ColorSet const &minColorSet = colorSets[minEfficiencyIter->colorSetIndex];
+				ColorSet const &maxColorSet = colorSets[maxEfficiencyIter->colorSetIndex];
+				size_t minSize = minColorSet.size();
+				size_t maxSize = maxColorSet.size();
+				uint32_t minRelSize = bestPal.relSizeOf(minColorSet);
+				uint32_t maxRelSize = bestPal.relSizeOf(maxColorSet);
 				options.verbosePrint(
 				    Options::VERB_TRACE,
-				    "  Proto-palettes %zu <= %zu: Efficiency: %zu / %" PRIu32 " <= %zu / %" PRIu32
-				    "\n",
-				    minEfficiencyIter->protoPalIndex,
-				    maxEfficiencyIter->protoPalIndex,
+				    "  Color sets %zu <= %zu: Efficiency: %zu / %" PRIu32 " <= %zu / %" PRIu32 "\n",
+				    minEfficiencyIter->colorSetIndex,
+				    maxEfficiencyIter->colorSetIndex,
 				    minSize,
 				    minRelSize,
 				    maxSize,
@@ -507,11 +503,11 @@ std::tuple<std::vector<size_t>, size_t>
 					break;
 				}
 
-				// Remove the proto-pal with minimal efficiency
+				// Remove the color set with minimal efficiency
 				options.verbosePrint(
 				    Options::VERB_TRACE,
-				    "  Removing proto-palette %zu\n",
-				    minEfficiencyIter->protoPalIndex
+				    "  Removing color set %zu\n",
+				    minEfficiencyIter->colorSetIndex
 				);
 				queue.emplace(std::move(*minEfficiencyIter));
 				queue.back().banFrom(bestPalIndex); // Ban it from this palette
@@ -521,42 +517,41 @@ std::tuple<std::vector<size_t>, size_t>
 	}
 
 	// Deal with palettes still overloaded, by emptying them
-	auto const &largestProtoPalFirst =
-	    [&protoPalettes](ProtoPalAttrs const &lhs, ProtoPalAttrs const &rhs) {
-		    return protoPalettes[lhs.protoPalIndex].size()
-		           > protoPalettes[rhs.protoPalIndex].size();
+	auto const &largestColorSetFirst =
+	    [&colorSets](ColorSetAttrs const &lhs, ColorSetAttrs const &rhs) {
+		    return colorSets[lhs.colorSetIndex].size() > colorSets[rhs.colorSetIndex].size();
 	    };
-	std::vector<ProtoPalAttrs> overloadQueue{};
-	for (AssignedProtos &pal : assignments) {
+	std::vector<ColorSetAttrs> overloadQueue{};
+	for (AssignedSets &pal : assignments) {
 		if (pal.volume() > options.maxOpaqueColors()) {
-			for (ProtoPalAttrs &attrs : pal) {
+			for (ColorSetAttrs &attrs : pal) {
 				overloadQueue.emplace(
-				    std::lower_bound(RANGE(overloadQueue), attrs, largestProtoPalFirst),
+				    std::lower_bound(RANGE(overloadQueue), attrs, largestColorSetFirst),
 				    std::move(attrs)
 				);
 			}
 			pal.clear();
 		}
 	}
-	// Place back any proto-palettes now in the queue via first-fit
-	for (ProtoPalAttrs const &attrs : overloadQueue) {
-		ProtoPalette const &protoPal = protoPalettes[attrs.protoPalIndex];
-		auto iter = std::find_if(RANGE(assignments), [&protoPal](AssignedProtos const &pal) {
-			return pal.canFit(protoPal);
+	// Place back any color sets now in the queue via first-fit
+	for (ColorSetAttrs const &attrs : overloadQueue) {
+		ColorSet const &colorSet = colorSets[attrs.colorSetIndex];
+		auto iter = std::find_if(RANGE(assignments), [&colorSet](AssignedSets const &pal) {
+			return pal.canFit(colorSet);
 		});
 		if (iter == assignments.end()) { // No such page, create a new one
 			options.verbosePrint(
 			    Options::VERB_DEBUG,
-			    "Adding new palette (%zu) for overflowing proto-palette %zu\n",
+			    "Adding new palette (%zu) for overflowing color set %zu\n",
 			    assignments.size(),
-			    attrs.protoPalIndex
+			    attrs.colorSetIndex
 			);
-			assignments.emplace_back(protoPalettes, std::move(attrs));
+			assignments.emplace_back(colorSets, std::move(attrs));
 		} else {
 			options.verbosePrint(
 			    Options::VERB_DEBUG,
-			    "Assigning overflowing proto-palette %zu to palette %zu\n",
-			    attrs.protoPalIndex,
+			    "Assigning overflowing color set %zu to palette %zu\n",
+			    attrs.colorSetIndex,
 			    iter - assignments.begin()
 			);
 			iter->assign(std::move(attrs));
@@ -565,24 +560,24 @@ std::tuple<std::vector<size_t>, size_t>
 
 	// LCOV_EXCL_START
 	if (options.verbosity >= Options::VERB_INTERM) {
-		verboseOutputAssignments(assignments, protoPalettes);
+		verboseOutputAssignments(assignments, colorSets);
 	}
 	// LCOV_EXCL_STOP
 
 	// "Decant" the result
-	decant(assignments, protoPalettes);
+	decant(assignments, colorSets);
 	// Note that the result does not contain any empty palettes
 
 	// LCOV_EXCL_START
 	if (options.verbosity >= Options::VERB_INTERM) {
-		verboseOutputAssignments(assignments, protoPalettes);
+		verboseOutputAssignments(assignments, colorSets);
 	}
 	// LCOV_EXCL_STOP
 
-	std::vector<size_t> mappings(protoPalettes.size());
+	std::vector<size_t> mappings(colorSets.size());
 	for (size_t i = 0; i < assignments.size(); ++i) {
-		for (ProtoPalAttrs const &attrs : assignments[i]) {
-			mappings[attrs.protoPalIndex] = i;
+		for (ColorSetAttrs const &attrs : assignments[i]) {
+			mappings[attrs.colorSetIndex] = i;
 		}
 	}
 	return {mappings, assignments.size()};

@@ -20,11 +20,11 @@
 #include "helpers.hpp"
 #include "itertools.hpp"
 
+#include "gfx/color_set.hpp"
 #include "gfx/main.hpp"
 #include "gfx/pal_packing.hpp"
 #include "gfx/pal_sorting.hpp"
 #include "gfx/png.hpp"
-#include "gfx/proto_palette.hpp"
 #include "gfx/warning.hpp"
 
 static bool isBgColorTransparent() {
@@ -289,11 +289,11 @@ public:
 };
 
 struct AttrmapEntry {
-	// This field can either be a proto-palette ID, or `transparent` to indicate that the
+	// This field can either be a color set ID, or `transparent` to indicate that the
 	// corresponding tile is fully transparent. If you are looking to get the palette ID for this
 	// attrmap entry while correctly handling the above, use `getPalID`.
-	size_t protoPaletteID; // Only this field is used when outputting "unoptimized" data
-	uint8_t tileID;        // This is the ID as it will be output to the tilemap
+	size_t colorSetID; // Only this field is used when outputting "unoptimized" data
+	uint8_t tileID;    // This is the ID as it will be output to the tilemap
 	bool bank;
 	bool yFlip;
 	bool xFlip;
@@ -301,9 +301,9 @@ struct AttrmapEntry {
 	static constexpr size_t transparent = static_cast<size_t>(-1);
 	static constexpr size_t background = static_cast<size_t>(-2);
 
-	bool isBackgroundTile() const { return protoPaletteID == background; }
+	bool isBackgroundTile() const { return colorSetID == background; }
 	size_t getPalID(std::vector<size_t> const &mappings) const {
-		return mappings[isBackgroundTile() || protoPaletteID == transparent ? 0 : protoPaletteID];
+		return mappings[isBackgroundTile() || colorSetID == transparent ? 0 : colorSetID];
 	}
 };
 
@@ -330,18 +330,15 @@ static void generatePalSpec(Image const &image) {
 }
 
 static std::tuple<std::vector<size_t>, std::vector<Palette>>
-    generatePalettes(std::vector<ProtoPalette> const &protoPalettes, Image const &image) {
+    generatePalettes(std::vector<ColorSet> const &colorSets, Image const &image) {
 	// Run a "pagination" problem solver
-	auto [mappings, nbPalettes] = overloadAndRemove(protoPalettes);
-	assume(mappings.size() == protoPalettes.size());
+	auto [mappings, nbPalettes] = overloadAndRemove(colorSets);
+	assume(mappings.size() == colorSets.size());
 
 	// LCOV_EXCL_START
 	if (options.verbosity >= Options::VERB_INTERM) {
 		fprintf(
-		    stderr,
-		    "Proto-palette mappings: (%zu palette%s)\n",
-		    nbPalettes,
-		    nbPalettes != 1 ? "s" : ""
+		    stderr, "Color set mappings: (%zu palette%s)\n", nbPalettes, nbPalettes != 1 ? "s" : ""
 		);
 		for (size_t i = 0; i < mappings.size(); ++i) {
 			fprintf(stderr, "%zu -> %zu\n", i, mappings[i]);
@@ -358,9 +355,9 @@ static std::tuple<std::vector<size_t>, std::vector<Palette>>
 		}
 	}
 	// Generate the actual palettes from the mappings
-	for (size_t protoPalID = 0; protoPalID < mappings.size(); ++protoPalID) {
-		Palette &pal = palettes[mappings[protoPalID]];
-		for (uint16_t color : protoPalettes[protoPalID]) {
+	for (size_t colorSetID = 0; colorSetID < mappings.size(); ++colorSetID) {
+		Palette &pal = palettes[mappings[colorSetID]];
+		for (uint16_t color : colorSets[colorSetID]) {
 			pal.addColor(color);
 		}
 	}
@@ -383,7 +380,7 @@ static std::tuple<std::vector<size_t>, std::vector<Palette>>
 }
 
 static std::tuple<std::vector<size_t>, std::vector<Palette>>
-    makePalsAsSpecified(std::vector<ProtoPalette> const &protoPalettes) {
+    makePalsAsSpecified(std::vector<ColorSet> const &colorSets) {
 	// Convert the palette spec to actual palettes
 	std::vector<Palette> palettes(options.palSpec.size());
 	for (auto [spec, pal] : zip(options.palSpec, palettes)) {
@@ -404,22 +401,22 @@ static std::tuple<std::vector<size_t>, std::vector<Palette>>
 		return &buf[literal_strlen(", ")];
 	};
 
-	// Iterate through proto-palettes, and try mapping them to the specified palettes
-	std::vector<size_t> mappings(protoPalettes.size());
+	// Iterate through color sets, and try mapping them to the specified palettes
+	std::vector<size_t> mappings(colorSets.size());
 	bool bad = false;
-	for (size_t i = 0; i < protoPalettes.size(); ++i) {
-		ProtoPalette const &protoPal = protoPalettes[i];
+	for (size_t i = 0; i < colorSets.size(); ++i) {
+		ColorSet const &colorSet = colorSets[i];
 		// Find the palette...
-		auto iter = std::find_if(RANGE(palettes), [&protoPal](Palette const &pal) {
-			// ...which contains all colors in this proto-pal
-			return std::all_of(RANGE(protoPal), [&pal](uint16_t color) {
+		auto iter = std::find_if(RANGE(palettes), [&colorSet](Palette const &pal) {
+			// ...which contains all colors in this color set
+			return std::all_of(RANGE(colorSet), [&pal](uint16_t color) {
 				return std::find(RANGE(pal), color) != pal.end();
 			});
 		});
 
 		if (iter == palettes.end()) {
-			assume(!protoPal.empty());
-			error("Failed to fit tile colors [%s] in specified palettes", listColors(protoPal));
+			assume(!colorSet.empty());
+			error("Failed to fit tile colors [%s] in specified palettes", listColors(colorSet));
 			bad = true;
 		}
 		mappings[i] = iter - palettes.begin(); // Bogus value, but whatever
@@ -808,8 +805,7 @@ static UniqueTiles dedupTiles(
 			attr.bank = 0;
 			attr.tileID = 0;
 		} else {
-			auto [tileID, matchType] =
-			    tiles.addTile({tile, palettes[mappings[attr.protoPaletteID]]});
+			auto [tileID, matchType] = tiles.addTile({tile, palettes[mappings[attr.colorSetID]]});
 
 			if (inputWithoutOutput && matchType == TileData::NOPE) {
 				error(
@@ -903,9 +899,9 @@ static void
 void processPalettes() {
 	options.verbosePrint(Options::VERB_CFG, "Using libpng %s\n", png_get_libpng_ver(nullptr));
 
-	std::vector<ProtoPalette> protoPalettes;
+	std::vector<ColorSet> colorSets;
 	std::vector<Palette> palettes;
-	std::tie(std::ignore, palettes) = makePalsAsSpecified(protoPalettes);
+	std::tie(std::ignore, palettes) = makePalsAsSpecified(colorSets);
 
 	outputPalettes(palettes);
 }
@@ -941,11 +937,11 @@ void process() {
 		}
 	}
 
-	// Now, iterate through the tiles, generating proto-palettes as we go
+	// Now, iterate through the tiles, generating color sets as we go
 	// We do this unconditionally because this performs the image validation (which we want to
 	// perform even if no output is requested), and because it's necessary to generate any
 	// output (with the exception of an un-duplicated tilemap, but that's an acceptable loss.)
-	std::vector<ProtoPalette> protoPalettes;
+	std::vector<ColorSet> colorSets;
 	std::vector<AttrmapEntry> attrmap{};
 
 	for (auto tile : image.visitAsTiles()) {
@@ -973,22 +969,22 @@ void process() {
 		}
 
 		if (tileColors.empty()) {
-			// "Empty" proto-palettes screw with the packing process, so discard those
+			// "Empty" color sets screw with the packing process, so discard those
 			assume(!isBgColorTransparent());
-			attrs.protoPaletteID = AttrmapEntry::transparent;
+			attrs.colorSetID = AttrmapEntry::transparent;
 			continue;
 		}
 
-		ProtoPalette protoPalette;
+		ColorSet colorSet;
 		for (uint16_t color : tileColors) {
-			protoPalette.add(color);
+			colorSet.add(color);
 		}
 
 		if (options.bgColor.has_value()
 		    && std::find(RANGE(tileColors), options.bgColor->cgbColor()) != tileColors.end()) {
 			if (tileColors.size() == 1) {
 				// The tile contains just the background color, skip it.
-				attrs.protoPaletteID = AttrmapEntry::background;
+				attrs.colorSetID = AttrmapEntry::background;
 				continue;
 			}
 			fatal(
@@ -999,47 +995,47 @@ void process() {
 			);
 		}
 
-		// Insert the proto-palette, making sure to avoid overlaps
-		for (size_t n = 0; n < protoPalettes.size(); ++n) {
-			switch (protoPalette.compare(protoPalettes[n])) {
-			case ProtoPalette::WE_BIGGER:
-				protoPalettes[n] = protoPalette; // Override them
-				// Remove any other proto-palettes that we encompass
+		// Insert the color set, making sure to avoid overlaps
+		for (size_t n = 0; n < colorSets.size(); ++n) {
+			switch (colorSet.compare(colorSets[n])) {
+			case ColorSet::WE_BIGGER:
+				colorSets[n] = colorSet; // Override them
+				// Remove any other color sets that we encompass
 				// (Example [(0, 1), (0, 2)], inserting (0, 1, 2))
 				[[fallthrough]];
 
-			case ProtoPalette::THEY_BIGGER:
+			case ColorSet::THEY_BIGGER:
 				// Do nothing, they already contain us
-				attrs.protoPaletteID = n;
+				attrs.colorSetID = n;
 				goto continue_visiting_tiles; // Can't `continue` from within a nested loop
 
-			case ProtoPalette::NEITHER:
+			case ColorSet::NEITHER:
 				break; // Keep going
 			}
 		}
 
-		attrs.protoPaletteID = protoPalettes.size();
-		if (protoPalettes.size() == AttrmapEntry::background) { // Check for overflow
+		attrs.colorSetID = colorSets.size();
+		if (colorSets.size() == AttrmapEntry::background) { // Check for overflow
 			fatal(
-			    "Reached %zu proto-palettes... sorry, this image is too much for me to handle :(",
+			    "Reached %zu color sets... sorry, this image is too much for me to handle :(",
 			    AttrmapEntry::transparent
 			);
 		}
-		protoPalettes.push_back(protoPalette);
+		colorSets.push_back(colorSet);
 continue_visiting_tiles:;
 	}
 
 	options.verbosePrint(
 	    Options::VERB_INTERM,
-	    "Image contains %zu proto-palette%s\n",
-	    protoPalettes.size(),
-	    protoPalettes.size() != 1 ? "s" : ""
+	    "Image contains %zu color set%s\n",
+	    colorSets.size(),
+	    colorSets.size() != 1 ? "s" : ""
 	);
 	// LCOV_EXCL_START
 	if (options.verbosity >= Options::VERB_INTERM) {
-		for (ProtoPalette const &protoPal : protoPalettes) {
+		for (ColorSet const &colorSet : colorSets) {
 			fputs("[ ", stderr);
-			for (uint16_t color : protoPal) {
+			for (uint16_t color : colorSet) {
 				fprintf(stderr, "$%04x, ", color);
 			}
 			fputs("]\n", stderr);
@@ -1052,8 +1048,8 @@ continue_visiting_tiles:;
 	}
 	auto [mappings, palettes] =
 	    options.palSpecType == Options::NO_SPEC || options.palSpecType == Options::DMG
-	        ? generatePalettes(protoPalettes, image)
-	        : makePalsAsSpecified(protoPalettes);
+	        ? generatePalettes(colorSets, image)
+	        : makePalsAsSpecified(colorSets);
 	outputPalettes(palettes);
 
 	// If deduplication is not happening, we just need to output the tile data and/or maps as-is

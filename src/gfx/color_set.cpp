@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
 
-#include "gfx/proto_palette.hpp"
+#include "gfx/color_set.hpp"
 
 #include <algorithm>
 
 #include "helpers.hpp"
 
-void ProtoPalette::add(uint16_t color) {
+void ColorSet::add(uint16_t color) {
 	size_t i = 0;
 
 	// Seek the first slot greater than the new color
@@ -37,7 +37,7 @@ void ProtoPalette::add(uint16_t color) {
 	_colorIndices[i] = color;
 }
 
-ProtoPalette::ComparisonResult ProtoPalette::compare(ProtoPalette const &other) const {
+ColorSet::ComparisonResult ColorSet::compare(ColorSet const &other) const {
 	// This works because the sets are sorted numerically
 	assume(std::is_sorted(RANGE(_colorIndices)));
 	assume(std::is_sorted(RANGE(other._colorIndices)));
@@ -63,17 +63,17 @@ ProtoPalette::ComparisonResult ProtoPalette::compare(ProtoPalette const &other) 
 	return theyBigger ? THEY_BIGGER : (weBigger ? WE_BIGGER : NEITHER);
 }
 
-size_t ProtoPalette::size() const {
+size_t ColorSet::size() const {
 	return std::distance(RANGE(*this));
 }
 
-bool ProtoPalette::empty() const {
+bool ColorSet::empty() const {
 	return _colorIndices[0] == UINT16_MAX;
 }
 
-auto ProtoPalette::begin() const -> decltype(_colorIndices)::const_iterator {
+auto ColorSet::begin() const -> decltype(_colorIndices)::const_iterator {
 	return _colorIndices.begin();
 }
-auto ProtoPalette::end() const -> decltype(_colorIndices)::const_iterator {
+auto ColorSet::end() const -> decltype(_colorIndices)::const_iterator {
 	return std::find(RANGE(_colorIndices), UINT16_MAX);
 }
