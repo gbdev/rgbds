@@ -1,3 +1,3 @@
 error: macro-arg-recursion.asm(6) -> macro-arg-recursion.asm::m(2):
-    Begun line continuation, but encountered character '2'
+    Invalid character after line continuation '2'
 Assembly aborted with 1 error!

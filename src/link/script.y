@@ -459,7 +459,7 @@ yy::parser::symbol_type yylex() {
 		scriptError(context, "Unknown keyword \"%s\"", ident.c_str());
 		return yylex();
 	} else {
-		scriptError(context, "Unexpected character '%s'", printChar(c));
+		scriptError(context, "Unexpected character %s", printChar(c));
 		// Keep reading characters until the EOL, to avoid reporting too many errors.
 		for (c = context.file.sgetc(); !isNewline(c); c = context.file.sgetc()) {
 			if (c == EOF) {

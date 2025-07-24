@@ -1,5 +1,5 @@
 error: macro-arg-0.asm(5) -> macro-arg-0.asm::m(2):
-    Begun line continuation, but encountered character '0'
+    Invalid character after line continuation '0'
 error: macro-arg-0.asm(5) -> macro-arg-0.asm::m(3):
     Invalid bracketed macro argument '\<0>'
 Assembly aborted with 2 errors!

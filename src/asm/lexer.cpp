@@ -982,8 +982,11 @@ static void discardLineContinuation() {
 			break;
 		} else if (c == ';') {
 			discardComment();
+		} else if (c == EOF) {
+			error("Invalid line continuation at end of file");
+			break;
 		} else {
-			error("Begun line continuation, but encountered character %s", printChar(c));
+			error("Invalid character after line continuation %s", printChar(c));
 			break;
 		}
 	}
