@@ -169,7 +169,7 @@ private:
 	// This function should stay private because it returns a reference to a unique object
 	std::unordered_set<uint16_t> &uniqueColors() const {
 		// We check for *distinct* colors by stuffing them into a `set`; this should be
-		// faster than "back-checking" on every element (O(n²))
+		// faster than "back-checking" on every element (O(n^2))
 		static std::unordered_set<uint16_t> colors;
 
 		colors.clear();

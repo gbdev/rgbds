@@ -6,7 +6,7 @@ for the Game Boy and Game Boy Color. It consists of:
 - RGBASM (assembler)
 - RGBLINK (linker)
 - RGBFIX (checksum/header fixer)
-- RGBGFX (PNG‐to‐Game Boy graphics converter)
+- RGBGFX (PNG-to-Game Boy graphics converter)
 
 This is a fork of the original RGBDS which aims to make the programs more like
 other UNIX tools.
@@ -143,7 +143,7 @@ The RGBDS source code file structure is as follows:
 - 2010-09-25: Sørensen continues development of
   [ASMotor](https://github.com/asmotor/asmotor) to this day.
 - 2015-01-18: stag019 begins implementing [RGBGFX](https://github.com/stag019/rgbgfx),
-  a PNG‐to‐Game Boy graphics converter, for eventual integration into RGBDS.
+  a PNG-to-Game Boy graphics converter, for eventual integration into RGBDS.
 - 2016-09-05: RGBGFX is
   [integrated](https://github.com/gbdev/rgbds/commit/c3c31138ddbd8680d4e67957e387f2816798a71b)
   into Bentley's repository.
