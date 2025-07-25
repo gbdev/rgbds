@@ -115,7 +115,7 @@ static bool readMBCSlice(char const *&name, char const *expected) {
 }
 
 static MbcType parseMBC(char const *name) {
-	if (!strcasecmp(name, "help")) {
+	if (!strcasecmp(name, "help") || !strcasecmp(name, "list")) {
 		mbc_PrintAcceptedNames(stdout);
 		exit(0);
 	}
