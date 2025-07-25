@@ -58,31 +58,33 @@ runTest () {
 		fi
 		if [[ -z "$variant" ]]; then
 			cp "$desired_input" out.gb
-			if [[ -n "$(eval "$RGBFIX" $flags out.gb '2>out.err')" ]]; then
-				echo "${bold}${red}Fixing $1 in-place shouldn't output anything on stdout!${rescolors}${resbold}"
-				our_rc=1
-			fi
+			eval "$RGBFIX" $flags out.gb '>out.out' '2>out.err'
 			subst=out.gb
 		elif [[ "$variant" = ' piped' ]]; then
 			# Stop! This is not a Useless Use Of Cat. Using cat instead of
 			# stdin redirection makes the input an unseekable pipe - a scenario
 			# that's harder to deal with.
 			# shellcheck disable=SC2002
-			cat "$desired_input" | eval $RGBFIX "$flags" - '>out.gb' '2>out.err'
+			cat "$desired_input" | eval "$RGBFIX" $flags - '>out.gb' '2>out.err'
 			subst='<stdin>'
 		elif [[ "$variant" = ' output' ]]; then
 			cp "$desired_input" input.gb
-			if [[ -n "$(eval "$RGBFIX" $flags -o out.gb input.gb '2>out.err')" ]]; then
-				our_rc=1
-			fi
+			eval "$RGBFIX" $flags -o out.gb input.gb '>out.out' '2>out.err'
 			subst=input.gb
 		fi
 
+		if [[ -r "$2/$1.out" ]]; then
+			desired_outname="$2/$1.out"
+		else
+			desired_outname=/dev/null
+		fi
 		if [[ -r "$2/$1.err" ]]; then
 			desired_errname="$2/$1.err"
 		else
 			desired_errname=/dev/null
 		fi
+		sed "s/$subst/<filename>/g" out.out | tryDiff "$desired_outname" - "$1.out${variant}"
+		(( our_rc = our_rc || $? ))
 		sed "s/$subst/<filename>/g" out.err | tryDiff "$desired_errname" - "$1.err${variant}"
 		(( our_rc = our_rc || $? ))
 
