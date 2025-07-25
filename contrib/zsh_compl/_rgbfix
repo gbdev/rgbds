@@ -34,6 +34,20 @@ _mbc_names() {
 	_describe "MBC name" mbc_names
 }
 
+_rgbfix_warnings() {
+	local warnings=(
+		'error:Turn all warnings into errors'
+
+		'all:Enable most warning messages'
+		'everything:Enable literally everything'
+
+		'mbc:Warn about issues with MBC specs'
+		'overwrite:Warn when overwriting non-zero bytes'
+		'truncation:Warn when values are truncated to fit'
+	)
+	_describe warning warnings
+}
+
 local args=(
 	# Arguments are listed here in the same order as in the manual, except for the version and help
 	'(- : * options)'{-V,--version}'[Print version number and exit]'
@@ -45,6 +59,7 @@ local args=(
 	'(-O --overwrite)'{-O,--overwrite}'[Allow overwriting non-zero bytes]'
 	'(-s --sgb-compatible)'{-s,--sgb-compatible}'[Set the SGB flag]'
 	'(-f --fix-spec -v --validate)'{-v,--validate}'[Shorthand for -f lhg]'
+	-w'[Disable all warnings]'
 
 	'(-f --fix-spec -v --validate)'{-f,--fix-spec}'+[Fix or trash some header values]:fix spec:'
 	'(-i --game-id)'{-i,--game-id}'+[Set game ID string]:4-char game ID:'
@@ -57,6 +72,7 @@ local args=(
 	'(-p --pad-value)'{-p,--pad-value}'+[Pad to next valid size using this byte as padding]:padding byte:'
 	'(-r --ram-size)'{-r,--ram-size}'+[Set RAM size]:ram size byte:'
 	'(-t --title)'{-t,--title}'+[Set title string]:11-char title string:'
+	'(-W --warning)'{-W,--warning}'+[Toggle warning flags]:warning flag:_rgbfix_warnings'
 
 	'*'":ROM files:_files -g '*.{gb,sgb,gbc}'"
 )

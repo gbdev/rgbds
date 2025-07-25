@@ -8,7 +8,7 @@
 .Nd Game Boy header utility and checksum fixer
 .Sh SYNOPSIS
 .Nm
-.Op Fl hjOsVv
+.Op Fl hjOsVvw
 .Op Fl C | c
 .Op Fl f Ar fix_spec
 .Op Fl i Ar game_id
@@ -21,6 +21,7 @@
 .Op Fl p Ar pad_value
 .Op Fl r Ar ram_size
 .Op Fl t Ar title_str
+.Op Fl W Ar warning
 .Op Ar
 .Sh DESCRIPTION
 The
@@ -175,6 +176,72 @@ Print the version of the program and exit.
 .It Fl v , Fl \-validate
 Equivalent to
 .Fl f Cm lhg .
+.It Fl W Ar warning , Fl \-warning Ar warning
+Set warning flag
+.Ar warning .
+A warning message will be printed if
+.Ar warning
+is an unknown warning flag.
+See the
+.Sx DIAGNOSTICS
+section for a list of warnings.
+.It Fl w
+Disable all warning output, even when turned into errors.
+.El
+.Sh DIAGNOSTICS
+Warnings are diagnostic messages that indicate possibly erroneous behavior that does not necessarily compromise the header-fixing process.
+The following options alter the way warnings are processed.
+.Bl -tag -width Ds
+.It Fl Werror
+Make all warnings into errors.
+This can be negated as
+.Fl Wno-error
+to prevent turning all warnings into errors.
+.It Fl Werror=
+Make the specified warning or meta warning into an error.
+A warning's name is appended
+.Pq example: Fl Werror=overwrite ,
+and this warning is implicitly enabled and turned into an error.
+This can be negated as
+.Fl Wno-error=
+to prevent turning a specified warning into an error, even if
+.Fl Werror
+is in effect.
+.El
+.Pp
+The following warnings are
+.Dq meta
+warnings, that enable a collection of other warnings.
+If a specific warning is toggled via a meta flag and a specific one, the more specific one takes priority.
+The position on the command-line acts as a tie breaker, the last one taking effect.
+.Bl -tag -width Ds
+.It Fl Wall
+This enables warnings that are likely to indicate an error or undesired behavior, and that can easily be fixed.
+.It Fl Weverything
+Enables literally every warning.
+.El
+.Pp
+The following warnings are actual warning flags; with each description, the corresponding warning flag is included.
+Note that each of these flag also has a negation (for example,
+.Fl Wtruncation
+enables the warning that
+.Fl Wno-truncation
+disables; and
+.Fl Wall
+enables every warning that
+.Fl Wno-all
+disables).
+Only the non-default flag is listed here.
+Ignoring the
+.Dq no-
+prefix, entries are listed alphabetically.
+.Bl -tag -width Ds
+.It Fl Wno-mbc
+Warn when there are inconsistencies with or caveats about the specified MBC type.
+.It Fl Wno-overwrite
+Warn when overwriting different non-zero bytes in the header.
+.It Fl Wno-truncation
+Warn when truncating values to fit the available space.
 .El
 .Sh EXAMPLES
 Most values in the ROM header do not matter to the actual console, and most are seldom useful anyway.

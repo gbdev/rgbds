@@ -35,7 +35,7 @@ local args=(
 	'(-q --palette-map -Q --auto-palette-map)'{-Q,--auto-palette-map}'[Shortcut for -p <file>.palmap]'
 	'(-t --tilemap -T --auto-tilemap)'{-T,--auto-tilemap}'[Shortcut for -t <file>.tilemap]'
 	'(-u --unique-tiles)'{-u,--unique-tiles}'[Eliminate redundant tiles]'
-	{-v,--verbose}'[Enable verbose output]'
+	'(-v --verbose)'{-v,--verbose}'[Enable verbose output]'
 	-w'[Disable all warnings]'
 	'(-X --mirror-x)'{-X,--mirror-x}'[Eliminate horizontally mirrored tiles from output]'
 	'(-Y --mirror-y)'{-Y,--mirror-y}'[Eliminate vertically mirrored tiles from output]'

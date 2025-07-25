@@ -7,21 +7,21 @@ _rgblink_completions() {
 	# Empty long opt = it doesn't exit
 	# See the `state` variable below for info about `state_after`
 	declare -A opts=(
-		[V]="version:normal"
 		[h]="help:normal"
-		[d]="dmg:normal"
-		[t]="tiny:normal"
-		[v]="verbose:normal"
-		[w]="wramx:normal"
-		[x]="nopad:normal"
-		[l]="linkerscript:glob-*"
+		[V]="version:normal"
+		[W]="warning:warning"
 		[M]="no-sym-in-map:normal"
+		[d]="dmg:normal"
+		[l]="linkerscript:glob-*"
 		[m]="map:glob-*.map"
 		[n]="sym:glob-*.sym"
 		[O]="overlay:glob-*.gb *.gbc *.sgb"
 		[o]="output:glob-*.gb *.gbc *.sgb"
 		[p]="pad:unk"
-		[W]="warning:warning"
+		[t]="tiny:normal"
+		[v]="verbose:normal"
+		[w]="wramx:normal"
+		[x]="nopad:normal"
 	)
 	# Parse command-line up to current word
 	local opt_ena=true
