@@ -719,7 +719,7 @@ int main(int argc, char *argv[]) {
 #undef overrideSpecs
 
 				default:
-					warnx("Ignoring '%c' in fix spec", *musl_optarg);
+					fatal("Invalid character '%c' in fix spec", *musl_optarg);
 				}
 				++musl_optarg;
 			}
