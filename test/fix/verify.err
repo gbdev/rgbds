@@ -1,3 +1,6 @@
-warning: Overwrote a non-zero byte in the Nintendo logo
-warning: Overwrote a non-zero byte in the header checksum
-warning: Overwrote a non-zero byte in the global checksum
+warning: [-Woverwrite]
+    Overwrote a non-zero byte in the Nintendo logo
+warning: [-Woverwrite]
+    Overwrote a non-zero byte in the header checksum
+warning: [-Woverwrite]
+    Overwrote a non-zero byte in the global checksum

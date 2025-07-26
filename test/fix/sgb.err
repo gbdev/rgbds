@@ -1,1 +1,2 @@
-warning: Overwrote a non-zero byte in the SGB flag
+warning: [-Woverwrite]
+    Overwrote a non-zero byte in the SGB flag
