@@ -547,7 +547,7 @@ static void
 }
 
 static bool processFilename(char const *name, char const *outputName) {
-	resetErrors();
+	warnings.nbErrors = 0;
 
 	bool inputStdin = !strcmp(name, "-");
 	if (inputStdin && !outputName) {
@@ -901,7 +901,7 @@ int main(int argc, char *argv[]) {
 		fatalWithUsage("If `-o` is set then only a single input file may be specified");
 	}
 
-	bool failed = anyErrors();
+	bool failed = warnings.nbErrors > 0;
 	do {
 		failed |= processFilename(*argv, outputFilename);
 	} while (*++argv);

@@ -59,6 +59,13 @@ struct Diagnostics {
 	std::vector<WarningFlag<L>> warningFlags;
 	std::vector<ParamWarning<W>> paramWarnings;
 	DiagnosticsState<W> state;
+	uint64_t nbErrors;
+
+	void incrementErrors() {
+		if (nbErrors != UINT64_MAX) {
+			++nbErrors;
+		}
+	}
 
 	WarningBehavior getWarningBehavior(W id) const;
 	std::string processWarningFlag(char const *flag);

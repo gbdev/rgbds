@@ -336,14 +336,14 @@ int main(int argc, char *argv[]) {
 			break;
 
 		case 'X': {
-			unsigned long maxErrors = strtoul(musl_optarg, &endptr, 0);
+			uint64_t maxErrors = strtoul(musl_optarg, &endptr, 0);
 
 			if (musl_optarg[0] == '\0' || *endptr != '\0') {
 				fatal("Invalid argument for option 'X'");
 			}
 
-			if (maxErrors > UINT_MAX) {
-				fatal("Argument for option 'X' must be between 0 and %u", UINT_MAX);
+			if (maxErrors > UINT64_MAX) {
+				fatal("Argument for option 'X' must be between 0 and %" PRIu64, UINT64_MAX);
 			}
 
 			options.maxErrors = maxErrors;
@@ -416,7 +416,9 @@ int main(int argc, char *argv[]) {
 
 	// Perform parse (`yy::parser` is auto-generated from `parser.y`)
 	if (yy::parser parser; parser.parse() != 0) {
-		forceError();
+		if (warnings.nbErrors == 0) {
+			warnings.nbErrors = 1;
+		}
 	}
 
 	if (!fstk_FailedOnMissingInclude()) {

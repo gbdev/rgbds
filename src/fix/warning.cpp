@@ -1,7 +1,5 @@
 #include "fix/warning.hpp"
 
-static uint32_t nbErrors;
-
 // clang-format off: nested initializers
 Diagnostics<WarningLevel, WarningID> warnings = {
     .metaWarnings = {
@@ -16,34 +14,21 @@ Diagnostics<WarningLevel, WarningID> warnings = {
     },
     .paramWarnings = {},
     .state = DiagnosticsState<WarningID>(),
+    .nbErrors = 0,
 };
 // clang-format on
 
-void resetErrors() {
-	nbErrors = 0;
-}
-
-bool anyErrors() {
-	return nbErrors > 0;
-}
-
 uint32_t checkErrors(char const *filename) {
-	if (anyErrors()) {
+	if (warnings.nbErrors > 0) {
 		fprintf(
 		    stderr,
-		    "Fixing \"%s\" failed with %u error%s\n",
+		    "Fixing \"%s\" failed with %" PRIu64 " error%s\n",
 		    filename,
-		    nbErrors,
-		    nbErrors == 1 ? "" : "s"
+		    warnings.nbErrors,
+		    warnings.nbErrors == 1 ? "" : "s"
 		);
 	}
-	return nbErrors;
-}
-
-static void incrementErrors() {
-	if (nbErrors != UINT32_MAX) {
-		++nbErrors;
-	}
+	return warnings.nbErrors;
 }
 
 void error(char const *fmt, ...) {
@@ -54,7 +39,7 @@ void error(char const *fmt, ...) {
 	va_end(ap);
 	putc('\n', stderr);
 
-	incrementErrors();
+	warnings.incrementErrors();
 }
 
 void fatal(char const *fmt, ...) {
@@ -91,7 +76,7 @@ void warning(WarningID id, char const *fmt, ...) {
 		va_end(ap);
 		putc('\n', stderr);
 
-		incrementErrors();
+		warnings.incrementErrors();
 		break;
 	}
 }

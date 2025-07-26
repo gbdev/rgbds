@@ -80,7 +80,6 @@ void error(char const *fmt, ...);
 // once.
 void error(std::function<void()> callback);
 
-void forceError();
 void requireZeroErrors();
 
 #endif // RGBDS_ASM_WARNING_HPP

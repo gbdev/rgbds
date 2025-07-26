@@ -2,13 +2,10 @@
 
 #include "gfx/warning.hpp"
 
-#include <limits>
 #include <stdarg.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
-
-static uintmax_t nbErrors;
 
 // clang-format off: nested initializers
 Diagnostics<WarningLevel, WarningID> warnings = {
@@ -22,24 +19,24 @@ Diagnostics<WarningLevel, WarningID> warnings = {
     },
     .paramWarnings = {},
     .state = DiagnosticsState<WarningID>(),
+    .nbErrors = 0,
 };
 // clang-format on
 
 [[noreturn]]
 void giveUp() {
-	fprintf(stderr, "Conversion aborted after %ju error%s\n", nbErrors, nbErrors == 1 ? "" : "s");
+	fprintf(
+	    stderr,
+	    "Conversion aborted after %" PRIu64 " error%s\n",
+	    warnings.nbErrors,
+	    warnings.nbErrors == 1 ? "" : "s"
+	);
 	exit(1);
 }
 
 void requireZeroErrors() {
-	if (nbErrors != 0) {
+	if (warnings.nbErrors != 0) {
 		giveUp();
-	}
-}
-
-static void incrementErrors() {
-	if (nbErrors != std::numeric_limits<decltype(nbErrors)>::max()) {
-		++nbErrors;
 	}
 }
 
@@ -51,7 +48,7 @@ void error(char const *fmt, ...) {
 	va_end(ap);
 	putc('\n', stderr);
 
-	incrementErrors();
+	warnings.incrementErrors();
 }
 
 [[noreturn]]
@@ -63,7 +60,7 @@ void fatal(char const *fmt, ...) {
 	va_end(ap);
 	putc('\n', stderr);
 
-	incrementErrors();
+	warnings.incrementErrors();
 	giveUp();
 }
 
@@ -90,7 +87,7 @@ void warning(WarningID id, char const *fmt, ...) {
 		va_end(ap);
 		putc('\n', stderr);
 
-		incrementErrors();
+		warnings.incrementErrors();
 		break;
 	}
 }

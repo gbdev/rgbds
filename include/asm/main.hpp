@@ -25,7 +25,7 @@ struct Options {
 	bool generatePhonyDeps = false;                 // -MP
 	std::string objectFileName;                     // -o
 	uint8_t padByte = 0;                            // -p
-	unsigned int maxErrors = 0;                     // -X
+	uint64_t maxErrors = 0;                         // -X
 
 	~Options() {
 		if (dependFile) {

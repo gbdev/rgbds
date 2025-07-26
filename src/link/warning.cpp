@@ -7,8 +7,6 @@
 
 #include "link/main.hpp"
 
-static uint32_t nbErrors = 0;
-
 // clang-format off: nested initializers
 Diagnostics<WarningLevel, WarningID> warnings = {
     .metaWarnings = {
@@ -25,6 +23,7 @@ Diagnostics<WarningLevel, WarningID> warnings = {
     },
     .paramWarnings = {},
     .state = DiagnosticsState<WarningID>(),
+    .nbErrors = 0,
 };
 // clang-format on
 
@@ -50,20 +49,14 @@ static void printDiag(
 	putc('\n', stderr);
 }
 
-static void incrementErrors() {
-	if (nbErrors != UINT32_MAX) {
-		++nbErrors;
-	}
-}
-
 [[noreturn]]
 static void abortLinking(char const *verb) {
 	fprintf(
 	    stderr,
-	    "Linking %s with %" PRIu32 " error%s\n",
+	    "Linking %s with %" PRIu64 " error%s\n",
 	    verb ? verb : "aborted",
-	    nbErrors,
-	    nbErrors == 1 ? "" : "s"
+	    warnings.nbErrors,
+	    warnings.nbErrors == 1 ? "" : "s"
 	);
 	exit(1);
 }
@@ -88,7 +81,7 @@ void error(FileStackNode const *src, uint32_t lineNo, char const *fmt, ...) {
 	printDiag(src, lineNo, fmt, args, "error", nullptr, 0);
 	va_end(args);
 
-	incrementErrors();
+	warnings.incrementErrors();
 }
 
 void error(char const *fmt, ...) {
@@ -97,7 +90,7 @@ void error(char const *fmt, ...) {
 	printDiag(nullptr, 0, fmt, args, "error", nullptr, 0);
 	va_end(args);
 
-	incrementErrors();
+	warnings.incrementErrors();
 }
 
 void errorNoDump(char const *fmt, ...) {
@@ -107,7 +100,7 @@ void errorNoDump(char const *fmt, ...) {
 	vfprintf(stderr, fmt, args);
 	va_end(args);
 
-	incrementErrors();
+	warnings.incrementErrors();
 }
 
 void argErr(char flag, char const *fmt, ...) {
@@ -118,7 +111,7 @@ void argErr(char flag, char const *fmt, ...) {
 	va_end(args);
 	putc('\n', stderr);
 
-	incrementErrors();
+	warnings.incrementErrors();
 }
 
 [[noreturn]]
@@ -128,7 +121,7 @@ void fatal(FileStackNode const *src, uint32_t lineNo, char const *fmt, ...) {
 	printDiag(src, lineNo, fmt, args, "FATAL", nullptr, 0);
 	va_end(args);
 
-	incrementErrors();
+	warnings.incrementErrors();
 	abortLinking(nullptr);
 }
 
@@ -139,12 +132,12 @@ void fatal(char const *fmt, ...) {
 	printDiag(nullptr, 0, fmt, args, "FATAL", nullptr, 0);
 	va_end(args);
 
-	incrementErrors();
+	warnings.incrementErrors();
 	abortLinking(nullptr);
 }
 
 void requireZeroErrors() {
-	if (nbErrors != 0) {
+	if (warnings.nbErrors != 0) {
 		abortLinking("failed");
 	}
 }
@@ -166,7 +159,7 @@ void warning(FileStackNode const *src, uint32_t lineNo, WarningID id, char const
 	case WarningBehavior::ERROR:
 		printDiag(src, lineNo, fmt, args, "error", "[-Werror=%s]", flag);
 
-		incrementErrors();
+		warnings.incrementErrors();
 		break;
 	}
 

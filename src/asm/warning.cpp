@@ -17,8 +17,6 @@
 #include "asm/lexer.hpp"
 #include "asm/main.hpp"
 
-unsigned int nbErrors = 0;
-
 // clang-format off: nested initializers
 Diagnostics<WarningLevel, WarningID> warnings = {
     .metaWarnings = {
@@ -61,6 +59,7 @@ Diagnostics<WarningLevel, WarningID> warnings = {
         {WARNING_UNMAPPED_CHAR_1,  WARNING_UNMAPPED_CHAR_2,  1},
     },
     .state = DiagnosticsState<WarningID>(),
+    .nbErrors = 0,
 };
 // clang-format on
 
@@ -79,14 +78,15 @@ static void printDiag(
 }
 
 static void incrementErrors() {
-	// This intentionally makes 0 act as "unlimited" (or at least "limited to sizeof(unsigned)")
-	if (++nbErrors == options.maxErrors) {
+	// This intentionally makes 0 act as "unlimited"
+	warnings.incrementErrors();
+	if (warnings.nbErrors == options.maxErrors) {
 		fprintf(
 		    stderr,
-		    "Assembly aborted after the maximum of %u error%s! (configure with "
+		    "Assembly aborted after the maximum of %" PRIu64 " error%s! (configure with "
 		    "'-X/--max-errors')\n",
-		    nbErrors,
-		    nbErrors == 1 ? "" : "s"
+		    warnings.nbErrors,
+		    warnings.nbErrors == 1 ? "" : "s"
 		);
 		exit(1);
 	}
@@ -125,15 +125,14 @@ void fatal(char const *fmt, ...) {
 	exit(1);
 }
 
-void forceError() {
-	if (nbErrors == 0) {
-		nbErrors = 1;
-	}
-}
-
 void requireZeroErrors() {
-	if (nbErrors != 0) {
-		fprintf(stderr, "Assembly aborted with %u error%s!\n", nbErrors, nbErrors == 1 ? "" : "s");
+	if (warnings.nbErrors != 0) {
+		fprintf(
+		    stderr,
+		    "Assembly aborted with %" PRIu64 " error%s!\n",
+		    warnings.nbErrors,
+		    warnings.nbErrors == 1 ? "" : "s"
+		);
 		exit(1);
 	}
 }
