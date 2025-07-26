@@ -121,7 +121,6 @@ static uint8_t newLicenseeLen;
 static uint16_t oldLicensee = UNSPECIFIED;
 static MbcType cartridgeType = MBC_NONE;
 static uint16_t romVersion = UNSPECIFIED;
-static bool overwriteRom = false; // If false, warn when overwriting non-zero non-identical bytes
 static uint16_t padValue = UNSPECIFIED;
 static uint16_t ramSize = UNSPECIFIED;
 static bool sgb = false; // If false, SGB flags are left alone
@@ -187,7 +186,7 @@ static ssize_t writeBytes(int fd, uint8_t *buf, size_t len) {
 static void overwriteByte(uint8_t *rom0, uint16_t addr, uint8_t fixedByte, char const *areaName) {
 	uint8_t origByte = rom0[addr];
 
-	if (!overwriteRom && origByte != 0 && origByte != fixedByte) {
+	if (origByte != 0 && origByte != fixedByte) {
 		warning(WARNING_OVERWRITE, "Overwrote a non-zero byte in the %s", areaName);
 	}
 
@@ -197,14 +196,12 @@ static void overwriteByte(uint8_t *rom0, uint16_t addr, uint8_t fixedByte, char 
 static void overwriteBytes(
     uint8_t *rom0, uint16_t startAddr, uint8_t const *fixed, uint8_t size, char const *areaName
 ) {
-	if (!overwriteRom) {
-		for (uint8_t i = 0; i < size; ++i) {
-			uint8_t origByte = rom0[i + startAddr];
+	for (uint8_t i = 0; i < size; ++i) {
+		uint8_t origByte = rom0[i + startAddr];
 
-			if (origByte != 0 && origByte != fixed[i]) {
-				warning(WARNING_OVERWRITE, "Overwrote a non-zero byte in the %s", areaName);
-				break;
-			}
+		if (origByte != 0 && origByte != fixed[i]) {
+			warning(WARNING_OVERWRITE, "Overwrote a non-zero byte in the %s", areaName);
+			break;
 		}
 	}
 
@@ -783,7 +780,7 @@ int main(int argc, char *argv[]) {
 			break;
 
 		case 'O':
-			overwriteRom = true;
+			warnings.processWarningFlag("no-overwrite");
 			break;
 
 		case 'o':

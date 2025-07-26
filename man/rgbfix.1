@@ -99,7 +99,7 @@ Print help text for the program and exit.
 Set the game ID string
 .Pq Ad 0x13F Ns \(en Ns Ad 0x142
 to a given string.
-If it's longer than 4 chars, it will be truncated, and a warning emitted.
+If it's longer than 4 characters, it will be truncated.
 .It Fl j , Fl \-non-japanese
 Set the non-Japanese region flag
 .Pq Ad 0x14A
@@ -108,7 +108,7 @@ to 0x01.
 Set the new licensee string
 .Pq Ad 0x144 Ns \(en Ns Ad 0x145
 to a given string.
-If it's longer than 2 chars, it will be truncated, and a warning emitted.
+If it's longer than 2 characters, it will be truncated.
 .It Fl L Ar logo_file , Fl \-logo Ar logo_file
 Specify a logo file to use instead of the official Nintendo logo.
 The file must be 48 bytes of 1bpp tile data; the source image should be 48 pixels wide and 8 pixels tall.
@@ -137,7 +137,8 @@ Set the ROM version
 .Pq Ad 0x14C
 to a given value from 0 to 0xFF.
 .It Fl O , Fl \-overwrite
-Allow overwriting different non-zero bytes in the header without a warning being emitted.
+Alias for
+.Fl Wno-overwrite .
 .It Fl o Ar out_file , Fl \-output Ar out_file
 Write the modified ROM image to the given file, or '-' to write to standard output.
 If not specified, the input files are modified in-place, or written to standard output if read from standard input.
@@ -157,15 +158,14 @@ to a given value from 0 to 0xFF.
 Set the SGB flag
 .Pq Ad 0x146
 to 0x03.
-This flag will be ignored by the SGB unless the old licensee code is 0x33!
-If this is given as well as
-.Fl l ,
-but is not set to 0x33, a warning will be printed.
+This flag will be ignored by the SGB unless the old licensee code
+.Pq Fl -l
+is 0x33!
 .It Fl t Ar title , Fl \-title Ar title
 Set the title string
 .Pq Ad 0x134 Ns \(en Ns Ad 0x143
 to a given string.
-If the title is longer than the max length, it will be truncated, and a warning emitted.
+If the title is longer than the maximum length, it will be truncated.
 The max length is 11 characters if the game ID
 .Pq Fl i
 is specified, 15 characters if the CGB flag
@@ -297,7 +297,7 @@ Therefore,
 .Nm
 will ignore the
 .Ql RAM
-feature on a TPP1 mapper with a warning.
+feature on a TPP1 mapper.
 .Ss Special considerations
 TPP1 overwrites the byte at
 .Ad 0x14A ,
