@@ -76,8 +76,6 @@ enum MbcType {
 	MBC_NONE = UNSPECIFIED, // No MBC specified, do not act on it
 };
 
-void mbc_PrintAcceptedNames(FILE *file);
-
 bool mbc_HasRAM(MbcType type);
 char const *mbc_Name(MbcType type);
 MbcType mbc_ParseName(char const *name, uint8_t &tpp1Major, uint8_t &tpp1Minor);

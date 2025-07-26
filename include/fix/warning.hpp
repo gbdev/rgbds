@@ -37,6 +37,7 @@ void error(char const *fmt, ...);
 void fatal(char const *fmt, ...);
 
 void resetErrors();
+bool anyErrors();
 uint32_t checkErrors(char const *filename);
 
 #endif // RGBDS_FIX_WARNING_HPP

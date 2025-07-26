@@ -23,8 +23,12 @@ void resetErrors() {
 	nbErrors = 0;
 }
 
+bool anyErrors() {
+	return nbErrors > 0;
+}
+
 uint32_t checkErrors(char const *filename) {
-	if (nbErrors > 0) {
+	if (anyErrors()) {
 		fprintf(
 		    stderr,
 		    "Fixing \"%s\" failed with %u error%s\n",

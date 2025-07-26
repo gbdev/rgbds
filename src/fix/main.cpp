@@ -901,7 +901,7 @@ int main(int argc, char *argv[]) {
 		fatalWithUsage("If `-o` is set then only a single input file may be specified");
 	}
 
-	bool failed = false;
+	bool failed = anyErrors();
 	do {
 		failed |= processFilename(*argv, outputFilename);
 	} while (*++argv);

@@ -7,20 +7,7 @@
 
 #include "fix/warning.hpp"
 
-[[gnu::format(printf, 1, 2), noreturn]]
-static void fatalWithMBCNames(char const *fmt, ...) {
-	va_list ap;
-	fputs("FATAL: ", stderr);
-	va_start(ap, fmt);
-	vfprintf(stderr, fmt, ap);
-	va_end(ap);
-	putc('\n', stderr);
-
-	mbc_PrintAcceptedNames(stderr);
-	exit(1);
-}
-
-void mbc_PrintAcceptedNames(FILE *file) {
+static void printAcceptedMbcNames(FILE *file) {
 	fputs("Accepted MBC names:\n", file);
 	fputs("\tROM ($00) [aka ROM_ONLY]\n", file);
 	fputs("\tMBC1 ($01), MBC1+RAM ($02), MBC1+RAM+BATTERY ($03)\n", file);
@@ -43,6 +30,19 @@ void mbc_PrintAcceptedNames(FILE *file) {
 	fputs("\tTPP1_1.0+BATTERY+RUMBLE, TPP1_1.0+BATTERY+MULTIRUMBLE,\n", file);
 	fputs("\tTPP1_1.0+BATTERY+TIMER, TPP1_1.0+BATTERY+TIMER+RUMBLE,\n", file);
 	fputs("\tTPP1_1.0+BATTERY+TIMER+MULTIRUMBLE\n", file);
+}
+
+[[gnu::format(printf, 1, 2), noreturn]]
+static void fatalWithMBCNames(char const *fmt, ...) {
+	va_list ap;
+	fputs("FATAL: ", stderr);
+	va_start(ap, fmt);
+	vfprintf(stderr, fmt, ap);
+	va_end(ap);
+	putc('\n', stderr);
+
+	printAcceptedMbcNames(stderr);
+	exit(1);
 }
 
 bool mbc_HasRAM(MbcType type) {
@@ -241,7 +241,7 @@ MbcType mbc_ParseName(char const *name, uint8_t &tpp1Major, uint8_t &tpp1Minor) 
 	char const *fullName = name;
 
 	if (!strcasecmp(name, "help") || !strcasecmp(name, "list")) {
-		mbc_PrintAcceptedNames(stdout);
+		printAcceptedMbcNames(stdout);
 		exit(0);
 	}
 
