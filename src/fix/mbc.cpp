@@ -96,11 +96,13 @@ static void fatalWithMBCNames(char const *fmt, ...) {
 }
 
 char const *mbc_Name(MbcType type) {
-	return mbcData[type].first;
+	auto search = mbcData.find(type);
+	return search != mbcData.end() ? search->second.first : "(unknown)";
 }
 
 bool mbc_HasRAM(MbcType type) {
-	return mbcData[type].second;
+	auto search = mbcData.find(type);
+	return search != mbcData.end() && search->second.second;
 }
 
 static void skipWhitespace(char const *&ptr) {
