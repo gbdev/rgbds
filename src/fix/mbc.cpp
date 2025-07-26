@@ -1,11 +1,61 @@
 #include "fix/mbc.hpp"
 
 #include <stdlib.h>
+#include <unordered_map>
+#include <utility>
 
 #include "helpers.hpp"  // unreachable_
 #include "platform.hpp" // strcasecmp
 
 #include "fix/warning.hpp"
+
+// Associate every MBC type with its name and whether it has RAM
+static std::unordered_map<MbcType, std::pair<char const *, bool>> mbcData{
+    {ROM,                                   {"ROM", false}                           },
+    {ROM_RAM,                               {"ROM+RAM", true}                        },
+    {ROM_RAM_BATTERY,                       {"ROM+RAM+BATTERY", true}                },
+    {MBC1,                                  {"MBC1", false}                          },
+    {MBC1_RAM,                              {"MBC1+RAM", true}                       },
+    {MBC1_RAM_BATTERY,                      {"MBC1+RAM+BATTERY", true}               },
+    // MBC2 technically has RAM, but is not marked as such
+    {MBC2,                                  {"MBC2", false}                          },
+    {MBC2_BATTERY,                          {"MBC2+BATTERY", false}                  },
+    {MMM01,                                 {"MMM01", false}                         },
+    {MMM01_RAM,                             {"MMM01+RAM", true}                      },
+    {MMM01_RAM_BATTERY,                     {"MMM01+RAM+BATTERY", true}              },
+    {MBC3,                                  {"MBC3", false}                          },
+    {MBC3_TIMER_BATTERY,                    {"MBC3+TIMER+BATTERY", false}            },
+    {MBC3_TIMER_RAM_BATTERY,                {"MBC3+TIMER+RAM+BATTERY", true}         },
+    {MBC3_RAM,                              {"MBC3+RAM", true}                       },
+    {MBC3_RAM_BATTERY,                      {"MBC3+RAM+BATTERY", true}               },
+    {MBC5,                                  {"MBC5", false}                          },
+    {MBC5_RAM,                              {"MBC5+RAM", true}                       },
+    {MBC5_RAM_BATTERY,                      {"MBC5+RAM+BATTERY", true}               },
+    {MBC5_RUMBLE,                           {"MBC5+RUMBLE", false}                   },
+    {MBC5_RUMBLE_RAM,                       {"MBC5+RUMBLE+RAM", true}                },
+    {MBC5_RUMBLE_RAM_BATTERY,               {"MBC5+RUMBLE+RAM+BATTERY", true}        },
+    // MBC6 "Net de Get - Minigame @ 100" has RAM size 3 (32 KiB)
+    {MBC6,                                  {"MBC6", true}                           },
+    {MBC7_SENSOR_RUMBLE_RAM_BATTERY,        {"MBC7+SENSOR+RUMBLE+RAM+BATTERY", true} },
+    {POCKET_CAMERA,                         {"POCKET CAMERA", true}                  },
+    // Bandai TAMA5 "Game de Hakken!! Tamagotchi - Osutchi to Mesutchi" has RAM size 0
+    {BANDAI_TAMA5,                          {"BANDAI TAMA5", false}                  },
+    {HUC3,                                  {"HUC3", true}                           },
+    {HUC1_RAM_BATTERY,                      {"HUC1+RAM+BATTERY", true}               },
+    // TPP1 may or may not have RAM, don't use these flags for it
+    {TPP1,                                  {"TPP1", false}                          },
+    {TPP1_RUMBLE,                           {"TPP1+RUMBLE", false}                   },
+    {TPP1_MULTIRUMBLE_RUMBLE,               {"TPP1+MULTIRUMBLE", false}              },
+    {TPP1_TIMER,                            {"TPP1+TIMER", false}                    },
+    {TPP1_TIMER_RUMBLE,                     {"TPP1+TIMER+RUMBLE", false}             },
+    {TPP1_TIMER_MULTIRUMBLE_RUMBLE,         {"TPP1+TIMER+MULTIRUMBLE", false}        },
+    {TPP1_BATTERY,                          {"TPP1+BATTERY", false}                  },
+    {TPP1_BATTERY_RUMBLE,                   {"TPP1+BATTERY+RUMBLE", false}           },
+    {TPP1_BATTERY_MULTIRUMBLE_RUMBLE,       {"TPP1+BATTERY+MULTIRUMBLE", false}      },
+    {TPP1_BATTERY_TIMER,                    {"TPP1+BATTERY+TIMER", false}            },
+    {TPP1_BATTERY_TIMER_RUMBLE,             {"TPP1+BATTERY+TIMER+RUMBLE", false}     },
+    {TPP1_BATTERY_TIMER_MULTIRUMBLE_RUMBLE, {"TPP1+BATTERY+TIMER+MULTIRUMBLE", false}},
+};
 
 static void printAcceptedMbcNames(FILE *file) {
 	fputs("Accepted MBC names:\n", file);
@@ -45,155 +95,12 @@ static void fatalWithMBCNames(char const *fmt, ...) {
 	exit(1);
 }
 
-bool mbc_HasRAM(MbcType type) {
-	switch (type) {
-	case ROM_RAM:
-	case ROM_RAM_BATTERY:
-	case MBC1_RAM:
-	case MBC1_RAM_BATTERY:
-	case MMM01_RAM:
-	case MMM01_RAM_BATTERY:
-	case MBC3_TIMER_RAM_BATTERY:
-	case MBC3_RAM:
-	case MBC3_RAM_BATTERY:
-	case MBC5_RAM:
-	case MBC5_RAM_BATTERY:
-	case MBC5_RUMBLE_RAM:
-	case MBC5_RUMBLE_RAM_BATTERY:
-	case MBC6: // "Net de Get - Minigame @ 100" has RAM size 3 (32 KiB)
-	case MBC7_SENSOR_RUMBLE_RAM_BATTERY:
-	case POCKET_CAMERA:
-	case HUC3:
-	case HUC1_RAM_BATTERY:
-		return true;
-
-	case ROM:
-	case MBC1:
-	case MBC2: // Technically has RAM, but not marked as such
-	case MBC2_BATTERY:
-	case MMM01:
-	case MBC3:
-	case MBC3_TIMER_BATTERY:
-	case MBC5:
-	case MBC5_RUMBLE:
-	case BANDAI_TAMA5: // "Game de Hakken!! Tamagotchi - Osutchi to Mesutchi" has RAM size 0
-	case MBC_NONE:
-		return false;
-
-	// TPP1 may or may not have RAM, don't call this function for it
-	case TPP1:
-	case TPP1_RUMBLE:
-	case TPP1_MULTIRUMBLE:
-	case TPP1_MULTIRUMBLE_RUMBLE:
-	case TPP1_TIMER:
-	case TPP1_TIMER_RUMBLE:
-	case TPP1_TIMER_MULTIRUMBLE:
-	case TPP1_TIMER_MULTIRUMBLE_RUMBLE:
-	case TPP1_BATTERY:
-	case TPP1_BATTERY_RUMBLE:
-	case TPP1_BATTERY_MULTIRUMBLE:
-	case TPP1_BATTERY_MULTIRUMBLE_RUMBLE:
-	case TPP1_BATTERY_TIMER:
-	case TPP1_BATTERY_TIMER_RUMBLE:
-	case TPP1_BATTERY_TIMER_MULTIRUMBLE:
-	case TPP1_BATTERY_TIMER_MULTIRUMBLE_RUMBLE:
-		break;
-	}
-
-	unreachable_(); // LCOV_EXCL_LINE
+char const *mbc_Name(MbcType type) {
+	return mbcData[type].first;
 }
 
-char const *mbc_Name(MbcType type) {
-	switch (type) {
-	case ROM:
-		return "ROM";
-	case ROM_RAM:
-		return "ROM+RAM";
-	case ROM_RAM_BATTERY:
-		return "ROM+RAM+BATTERY";
-	case MBC1:
-		return "MBC1";
-	case MBC1_RAM:
-		return "MBC1+RAM";
-	case MBC1_RAM_BATTERY:
-		return "MBC1+RAM+BATTERY";
-	case MBC2:
-		return "MBC2";
-	case MBC2_BATTERY:
-		return "MBC2+BATTERY";
-	case MMM01:
-		return "MMM01";
-	case MMM01_RAM:
-		return "MMM01+RAM";
-	case MMM01_RAM_BATTERY:
-		return "MMM01+RAM+BATTERY";
-	case MBC3:
-		return "MBC3";
-	case MBC3_TIMER_BATTERY:
-		return "MBC3+TIMER+BATTERY";
-	case MBC3_TIMER_RAM_BATTERY:
-		return "MBC3+TIMER+RAM+BATTERY";
-	case MBC3_RAM:
-		return "MBC3+RAM";
-	case MBC3_RAM_BATTERY:
-		return "MBC3+RAM+BATTERY";
-	case MBC5:
-		return "MBC5";
-	case MBC5_RAM:
-		return "MBC5+RAM";
-	case MBC5_RAM_BATTERY:
-		return "MBC5+RAM+BATTERY";
-	case MBC5_RUMBLE:
-		return "MBC5+RUMBLE";
-	case MBC5_RUMBLE_RAM:
-		return "MBC5+RUMBLE+RAM";
-	case MBC5_RUMBLE_RAM_BATTERY:
-		return "MBC5+RUMBLE+RAM+BATTERY";
-	case MBC6:
-		return "MBC6";
-	case MBC7_SENSOR_RUMBLE_RAM_BATTERY:
-		return "MBC7+SENSOR+RUMBLE+RAM+BATTERY";
-	case POCKET_CAMERA:
-		return "POCKET CAMERA";
-	case BANDAI_TAMA5:
-		return "BANDAI TAMA5";
-	case HUC3:
-		return "HUC3";
-	case HUC1_RAM_BATTERY:
-		return "HUC1+RAM+BATTERY";
-	case TPP1:
-		return "TPP1";
-	case TPP1_RUMBLE:
-		return "TPP1+RUMBLE";
-	case TPP1_MULTIRUMBLE:
-	case TPP1_MULTIRUMBLE_RUMBLE:
-		return "TPP1+MULTIRUMBLE";
-	case TPP1_TIMER:
-		return "TPP1+TIMER";
-	case TPP1_TIMER_RUMBLE:
-		return "TPP1+TIMER+RUMBLE";
-	case TPP1_TIMER_MULTIRUMBLE:
-	case TPP1_TIMER_MULTIRUMBLE_RUMBLE:
-		return "TPP1+TIMER+MULTIRUMBLE";
-	case TPP1_BATTERY:
-		return "TPP1+BATTERY";
-	case TPP1_BATTERY_RUMBLE:
-		return "TPP1+BATTERY+RUMBLE";
-	case TPP1_BATTERY_MULTIRUMBLE:
-	case TPP1_BATTERY_MULTIRUMBLE_RUMBLE:
-		return "TPP1+BATTERY+MULTIRUMBLE";
-	case TPP1_BATTERY_TIMER:
-		return "TPP1+BATTERY+TIMER";
-	case TPP1_BATTERY_TIMER_RUMBLE:
-		return "TPP1+BATTERY+TIMER+RUMBLE";
-	case TPP1_BATTERY_TIMER_MULTIRUMBLE:
-	case TPP1_BATTERY_TIMER_MULTIRUMBLE_RUMBLE:
-		return "TPP1+BATTERY+TIMER+MULTIRUMBLE";
-	case MBC_NONE:
-		break;
-	}
-
-	unreachable_(); // LCOV_EXCL_LINE
+bool mbc_HasRAM(MbcType type) {
+	return mbcData[type].second;
 }
 
 static void skipWhitespace(char const *&ptr) {
@@ -596,6 +503,10 @@ MbcType mbc_ParseName(char const *name, uint8_t &tpp1Major, uint8_t &tpp1Minor) 
 		}
 		if (features & SENSOR) {
 			fatalWrongMBCFeatures(fullName);
+		}
+		// Multiple rumble speeds imply rumble
+		if (mbc & 0x01) {
+			assume(mbc & 0x02);
 		}
 		break;
 	}
