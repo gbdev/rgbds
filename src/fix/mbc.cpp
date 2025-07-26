@@ -518,7 +518,7 @@ MbcType mbc_ParseName(char const *name, uint8_t &tpp1Major, uint8_t &tpp1Minor) 
 		// Handle timer, which also requires battery
 		if (features & TIMER) {
 			if (!(features & BATTERY)) {
-				warnx("MBC3+TIMER implies BATTERY");
+				warning(WARNING_MBC, "MBC3+TIMER implies BATTERY");
 			}
 			features &= ~(TIMER | BATTERY); // Reset those bits
 			mbc = MBC3_TIMER_BATTERY;
@@ -580,7 +580,7 @@ MbcType mbc_ParseName(char const *name, uint8_t &tpp1Major, uint8_t &tpp1Minor) 
 
 	case TPP1:
 		if (features & RAM) {
-			warnx("TPP1 requests RAM implicitly if given a non-zero RAM size");
+			warning(WARNING_MBC, "TPP1 requests RAM implicitly if given a non-zero RAM size");
 		}
 		if (features & BATTERY) {
 			mbc |= 0x08;

@@ -188,7 +188,7 @@ static void overwriteByte(uint8_t *rom0, uint16_t addr, uint8_t fixedByte, char 
 	uint8_t origByte = rom0[addr];
 
 	if (!overwriteRom && origByte != 0 && origByte != fixedByte) {
-		warnx("Overwrote a non-zero byte in the %s", areaName);
+		warning(WARNING_OVERWRITE, "Overwrote a non-zero byte in the %s", areaName);
 	}
 
 	rom0[addr] = fixedByte;
@@ -202,7 +202,7 @@ static void overwriteBytes(
 			uint8_t origByte = rom0[i + startAddr];
 
 			if (origByte != 0 && origByte != fixed[i]) {
-				warnx("Overwrote a non-zero byte in the %s", areaName);
+				warning(WARNING_OVERWRITE, "Overwrote a non-zero byte in the %s", areaName);
 				break;
 			}
 		}
@@ -694,7 +694,7 @@ int main(int argc, char *argv[]) {
 			model = ch == 'c' ? BOTH : CGB;
 			if (titleLen > 15) {
 				titleLen = 15;
-				warnx("Truncating title \"%s\" to 15 chars", title);
+				warning(WARNING_TRUNCATION, "Truncating title \"%s\" to 15 chars", title);
 			}
 			break;
 
@@ -736,12 +736,12 @@ int main(int argc, char *argv[]) {
 			len = strlen(gameID);
 			if (len > 4) {
 				len = 4;
-				warnx("Truncating game ID \"%s\" to 4 chars", gameID);
+				warning(WARNING_TRUNCATION, "Truncating game ID \"%s\" to 4 chars", gameID);
 			}
 			gameIDLen = len;
 			if (titleLen > 11) {
 				titleLen = 11;
-				warnx("Truncating title \"%s\" to 11 chars", title);
+				warning(WARNING_TRUNCATION, "Truncating title \"%s\" to 11 chars", title);
 			}
 			break;
 
@@ -754,7 +754,9 @@ int main(int argc, char *argv[]) {
 			len = strlen(newLicensee);
 			if (len > 2) {
 				len = 2;
-				warnx("Truncating new licensee \"%s\" to 2 chars", newLicensee);
+				warning(
+				    WARNING_TRUNCATION, "Truncating new licensee \"%s\" to 2 chars", newLicensee
+				);
 			}
 			newLicenseeLen = len;
 			break;
@@ -770,7 +772,9 @@ int main(int argc, char *argv[]) {
 		case 'm':
 			cartridgeType = mbc_ParseName(musl_optarg, tpp1Rev[0], tpp1Rev[1]);
 			if (cartridgeType == ROM_RAM || cartridgeType == ROM_RAM_BATTERY) {
-				warnx("MBC \"%s\" is under-specified and poorly supported", musl_optarg);
+				warning(
+				    WARNING_MBC, "MBC \"%s\" is under-specified and poorly supported", musl_optarg
+				);
 			}
 			break;
 
@@ -805,7 +809,7 @@ int main(int argc, char *argv[]) {
 
 			if (len > maxLen) {
 				len = maxLen;
-				warnx("Truncating title \"%s\" to %u chars", title, maxLen);
+				warning(WARNING_TRUNCATION, "Truncating title \"%s\" to %u chars", title, maxLen);
 			}
 			titleLen = len;
 			break;
@@ -838,23 +842,38 @@ int main(int argc, char *argv[]) {
 	}
 
 	if ((cartridgeType & 0xFF00) == TPP1 && !japanese) {
-		warnx("TPP1 overwrites region flag for its identification code, ignoring `-j`");
+		warning(
+		    WARNING_MBC, "TPP1 overwrites region flag for its identification code, ignoring `-j`"
+		);
 	}
 
 	// Check that RAM size is correct for "standard" mappers
 	if (ramSize != UNSPECIFIED && (cartridgeType & 0xFF00) == 0) {
 		if (cartridgeType == ROM_RAM || cartridgeType == ROM_RAM_BATTERY) {
 			if (ramSize != 1) {
-				warnx("MBC \"%s\" should have 2 KiB of RAM (-r 1)", mbc_Name(cartridgeType));
+				warning(
+				    WARNING_MBC,
+				    "MBC \"%s\" should have 2 KiB of RAM (-r 1)",
+				    mbc_Name(cartridgeType)
+				);
 			}
 		} else if (mbc_HasRAM(cartridgeType)) {
 			if (!ramSize) {
-				warnx("MBC \"%s\" has RAM, but RAM size was set to 0", mbc_Name(cartridgeType));
+				warning(
+				    WARNING_MBC,
+				    "MBC \"%s\" has RAM, but RAM size was set to 0",
+				    mbc_Name(cartridgeType)
+				);
 			} else if (ramSize == 1) {
-				warnx("RAM size 1 (2 KiB) was specified for MBC \"%s\"", mbc_Name(cartridgeType));
+				warning(
+				    WARNING_MBC,
+				    "RAM size 1 (2 KiB) was specified for MBC \"%s\"",
+				    mbc_Name(cartridgeType)
+				);
 			}
 		} else if (ramSize) {
-			warnx(
+			warning(
+			    WARNING_MBC,
 			    "MBC \"%s\" has no RAM, but RAM size was set to %u",
 			    mbc_Name(cartridgeType),
 			    ramSize
