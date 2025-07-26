@@ -311,7 +311,11 @@ static void
 	if (oldLicensee != UNSPECIFIED) {
 		overwriteByte(rom0, 0x14B, oldLicensee, "old licensee code");
 	} else if (sgb && rom0[0x14B] != 0x33) {
-		warnx("SGB compatibility enabled, but old licensee was 0x%02x, not 0x33", rom0[0x14B]);
+		warning(
+		    WARNING_SGB,
+		    "SGB compatibility enabled, but old licensee was 0x%02x, not 0x33",
+		    rom0[0x14B]
+		);
 	}
 
 	if (romVersion != UNSPECIFIED) {
@@ -879,7 +883,11 @@ int main(int argc, char *argv[]) {
 	}
 
 	if (sgb && oldLicensee != UNSPECIFIED && oldLicensee != 0x33) {
-		warnx("SGB compatibility enabled, but old licensee is 0x%02x, not 0x33", oldLicensee);
+		warning(
+		    WARNING_SGB,
+		    "SGB compatibility enabled, but old licensee is 0x%02x, not 0x33",
+		    oldLicensee
+		);
 	}
 
 	initLogo();

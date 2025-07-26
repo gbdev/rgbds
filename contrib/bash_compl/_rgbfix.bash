@@ -146,6 +146,7 @@ _rgbfix_completions() {
 			mapfile -t COMPREPLY < <(compgen -W "
 				mbc
 				overwrite
+				sgb
 				truncation
 				all
 				everything

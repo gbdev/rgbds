@@ -43,6 +43,7 @@ _rgbfix_warnings() {
 
 		'mbc:Warn about issues with MBC specs'
 		'overwrite:Warn when overwriting non-zero bytes'
+		'sgb:Warn when SGB flag conflicts with old licensee code'
 		'truncation:Warn when values are truncated to fit'
 	)
 	_describe warning warnings
