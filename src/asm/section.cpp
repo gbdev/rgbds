@@ -723,44 +723,44 @@ void sect_ConstByte(uint8_t byte) {
 	writeByte(byte);
 }
 
-void sect_ByteString(std::vector<int32_t> const &string) {
+void sect_ByteString(std::vector<int32_t> const &str) {
 	if (!requireCodeSection()) {
 		return;
 	}
 
-	for (int32_t unit : string) {
+	for (int32_t unit : str) {
 		if (!checkNBit(unit, 8, "All character units")) {
 			break;
 		}
 	}
 
-	for (int32_t unit : string) {
+	for (int32_t unit : str) {
 		writeByte(static_cast<uint8_t>(unit));
 	}
 }
 
-void sect_WordString(std::vector<int32_t> const &string) {
+void sect_WordString(std::vector<int32_t> const &str) {
 	if (!requireCodeSection()) {
 		return;
 	}
 
-	for (int32_t unit : string) {
+	for (int32_t unit : str) {
 		if (!checkNBit(unit, 16, "All character units")) {
 			break;
 		}
 	}
 
-	for (int32_t unit : string) {
+	for (int32_t unit : str) {
 		writeWord(static_cast<uint16_t>(unit));
 	}
 }
 
-void sect_LongString(std::vector<int32_t> const &string) {
+void sect_LongString(std::vector<int32_t> const &str) {
 	if (!requireCodeSection()) {
 		return;
 	}
 
-	for (int32_t unit : string) {
+	for (int32_t unit : str) {
 		writeLong(static_cast<uint32_t>(unit));
 	}
 }

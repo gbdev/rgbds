@@ -55,6 +55,7 @@ common_obj := \
 
 rgbasm_obj := \
 	${common_obj} \
+	src/asm/actions.o \
 	src/asm/charmap.o \
 	src/asm/fixpoint.o \
 	src/asm/format.o \

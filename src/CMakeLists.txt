@@ -34,6 +34,7 @@ BISON_TARGET(LINKER_SCRIPT_PARSER "link/script.y"
 
 set(rgbasm_src
     "${BISON_ASM_PARSER_OUTPUT_SOURCE}"
+    "asm/actions.cpp"
     "asm/charmap.cpp"
     "asm/fixpoint.cpp"
     "asm/format.cpp"
