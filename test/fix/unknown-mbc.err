@@ -1,4 +1,4 @@
-error: Unknown MBC "MBC1337"
+FATAL: Unknown MBC "MBC1337"
 Accepted MBC names:
 	ROM ($00) [aka ROM_ONLY]
 	MBC1 ($01), MBC1+RAM ($02), MBC1+RAM+BATTERY ($03)

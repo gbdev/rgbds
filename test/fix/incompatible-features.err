@@ -1,4 +1,4 @@
-error: Features incompatible with MBC ("mbc1+multirumble")
+FATAL: Features incompatible with MBC ("mbc1+multirumble")
 Accepted MBC names:
 	ROM ($00) [aka ROM_ONLY]
 	MBC1 ($01), MBC1+RAM ($02), MBC1+RAM+BATTERY ($03)

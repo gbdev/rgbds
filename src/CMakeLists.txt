@@ -72,6 +72,8 @@ set(rgblink_src
 
 set(rgbfix_src
     "fix/main.cpp"
+    "fix/mbc.cpp"
+    "fix/warning.cpp"
     )
 
 set(rgbgfx_src

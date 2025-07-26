@@ -24,13 +24,13 @@ _rgbasm_completions() {
 	# Empty long opt = it doesn't exit
 	# See the `state` variable below for info about `state_after`
 	declare -A opts=(
-		[V]="version:normal"
 		[h]="help:normal"
-		[E]="export-all:normal"
-		[v]="verbose:normal"
+		[V]="version:normal"
+		[W]="warning:warning"
 		[w]=":normal"
 		[b]="binary-digits:unk"
 		[D]="define:unk"
+		[E]="export-all:normal"
 		[g]="gfx-chars:unk"
 		[I]="include:dir"
 		[M]="dependfile:glob-*.mk *.d"
@@ -40,7 +40,7 @@ _rgbasm_completions() {
 		[Q]="q-precision:unk"
 		[r]="recursion-depth:unk"
 		[s]="state:unk"
-		[W]="warning:warning"
+		[v]="verbose:normal"
 		[X]="max-errors:unk"
 	)
 	# Parse command-line up to current word

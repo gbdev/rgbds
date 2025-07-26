@@ -1,3 +1,6 @@
-warning: MBC "MBC3+RAM" has RAM, but RAM size was set to 0
-warning: Overwrote a non-zero byte in the cartridge type
-warning: Overwrote a non-zero byte in the RAM size
+warning: [-Wmbc]
+    MBC "MBC3+RAM" has RAM, but RAM size was set to 0
+warning: [-Woverwrite]
+    Overwrote a non-zero byte in the cartridge type
+warning: [-Woverwrite]
+    Overwrote a non-zero byte in the RAM size

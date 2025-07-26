@@ -18,13 +18,13 @@
 #include "platform.hpp"
 #include "version.hpp"
 
-static constexpr uint16_t UNSPECIFIED = 0x200;
-static_assert(UNSPECIFIED > 0xFF, "UNSPECIFIED should not be in byte range!");
+#include "fix/mbc.hpp"
+#include "fix/warning.hpp"
 
 static constexpr off_t BANK_SIZE = 0x4000;
 
 // Short options
-static char const *optstring = "Ccf:hi:jk:L:l:m:n:Oo:p:r:st:Vv";
+static char const *optstring = "Ccf:hi:jk:L:l:m:n:Oo:p:r:st:VvW:w";
 
 // Equivalent long options
 // Please keep in the same order as short opts.
@@ -53,16 +53,17 @@ static option const longopts[] = {
     {"title",            required_argument, nullptr, 't'},
     {"version",          no_argument,       nullptr, 'V'},
     {"validate",         no_argument,       nullptr, 'v'},
+    {"warning",          required_argument, nullptr, 'W'},
     {nullptr,            no_argument,       nullptr, 0  }
 };
 
 // LCOV_EXCL_START
 static void printUsage() {
 	fputs(
-	    "Usage: rgbfix [-hjOsVv] [-C | -c] [-f <fix_spec>] [-i <game_id>] [-k <licensee>]\n"
+	    "Usage: rgbfix [-hjOsVvw] [-C | -c] [-f <fix_spec>] [-i <game_id>] [-k <licensee>]\n"
 	    "              [-L <logo_file>] [-l <licensee_byte>] [-m <mbc_type>]\n"
 	    "              [-n <rom_version>] [-p <pad_value>] [-r <ram_size>] [-t <title_str>]\n"
-	    "              <file> ...\n"
+	    "              [-W warning] <file> ...\n"
 	    "Useful options:\n"
 	    "    -m, --mbc-type <value>      set the MBC type byte to this value; refer\n"
 	    "                                  to the man page for a list of values\n"
@@ -78,24 +79,8 @@ static void printUsage() {
 }
 // LCOV_EXCL_STOP
 
-static uint32_t nbErrors;
-
-[[gnu::format(printf, 1, 2)]]
-static void error(char const *fmt, ...) {
-	va_list ap;
-	fputs("error: ", stderr);
-	va_start(ap, fmt);
-	vfprintf(stderr, fmt, ap);
-	va_end(ap);
-	putc('\n', stderr);
-
-	if (nbErrors != UINT32_MAX) {
-		++nbErrors;
-	}
-}
-
-[[gnu::format(printf, 1, 2)]]
-static void fatal(char const *fmt, ...) {
+[[gnu::format(printf, 1, 2), noreturn]]
+static void fatalWithUsage(char const *fmt, ...) {
 	va_list ap;
 	fputs("FATAL: ", stderr);
 	va_start(ap, fmt);
@@ -103,679 +88,11 @@ static void fatal(char const *fmt, ...) {
 	va_end(ap);
 	putc('\n', stderr);
 
-	if (nbErrors != UINT32_MAX) {
-		++nbErrors;
-	}
-}
-
-enum MbcType {
-	ROM = 0x00,
-	ROM_RAM = 0x08,
-	ROM_RAM_BATTERY = 0x09,
-
-	MBC1 = 0x01,
-	MBC1_RAM = 0x02,
-	MBC1_RAM_BATTERY = 0x03,
-
-	MBC2 = 0x05,
-	MBC2_BATTERY = 0x06,
-
-	MMM01 = 0x0B,
-	MMM01_RAM = 0x0C,
-	MMM01_RAM_BATTERY = 0x0D,
-
-	MBC3 = 0x11,
-	MBC3_TIMER_BATTERY = 0x0F,
-	MBC3_TIMER_RAM_BATTERY = 0x10,
-	MBC3_RAM = 0x12,
-	MBC3_RAM_BATTERY = 0x13,
-
-	MBC5 = 0x19,
-	MBC5_RAM = 0x1A,
-	MBC5_RAM_BATTERY = 0x1B,
-	MBC5_RUMBLE = 0x1C,
-	MBC5_RUMBLE_RAM = 0x1D,
-	MBC5_RUMBLE_RAM_BATTERY = 0x1E,
-
-	MBC6 = 0x20,
-
-	MBC7_SENSOR_RUMBLE_RAM_BATTERY = 0x22,
-
-	POCKET_CAMERA = 0xFC,
-
-	BANDAI_TAMA5 = 0xFD,
-
-	HUC3 = 0xFE,
-
-	HUC1_RAM_BATTERY = 0xFF,
-
-	// "Extended" values (still valid, but not directly actionable)
-
-	// A high byte of 0x01 means TPP1, the low byte is the requested features
-	// This does not include SRAM, which is instead implied by a non-zero SRAM size
-	// Note: Multiple rumble speeds imply rumble
-	TPP1 = 0x100,
-	TPP1_RUMBLE = 0x101,
-	TPP1_MULTIRUMBLE = 0x102, // Should not be possible
-	TPP1_MULTIRUMBLE_RUMBLE = 0x103,
-	TPP1_TIMER = 0x104,
-	TPP1_TIMER_RUMBLE = 0x105,
-	TPP1_TIMER_MULTIRUMBLE = 0x106, // Should not be possible
-	TPP1_TIMER_MULTIRUMBLE_RUMBLE = 0x107,
-	TPP1_BATTERY = 0x108,
-	TPP1_BATTERY_RUMBLE = 0x109,
-	TPP1_BATTERY_MULTIRUMBLE = 0x10A, // Should not be possible
-	TPP1_BATTERY_MULTIRUMBLE_RUMBLE = 0x10B,
-	TPP1_BATTERY_TIMER = 0x10C,
-	TPP1_BATTERY_TIMER_RUMBLE = 0x10D,
-	TPP1_BATTERY_TIMER_MULTIRUMBLE = 0x10E, // Should not be possible
-	TPP1_BATTERY_TIMER_MULTIRUMBLE_RUMBLE = 0x10F,
-
-	// Error values
-	MBC_NONE = UNSPECIFIED, // No MBC specified, do not act on it
-	MBC_BAD,                // Specified MBC does not exist / syntax error
-	MBC_WRONG_FEATURES,     // MBC incompatible with specified features
-	MBC_BAD_RANGE,          // MBC number out of range
-	MBC_BAD_TPP1,           // Invalid TPP1 major or minor revision numbers
-};
-
-static void printAcceptedMBCNames() {
-	fputs("Accepted MBC names:\n", stderr);
-	fputs("\tROM ($00) [aka ROM_ONLY]\n", stderr);
-	fputs("\tMBC1 ($01), MBC1+RAM ($02), MBC1+RAM+BATTERY ($03)\n", stderr);
-	fputs("\tMBC2 ($05), MBC2+BATTERY ($06)\n", stderr);
-	fputs("\tROM+RAM ($08) [deprecated], ROM+RAM+BATTERY ($09) [deprecated]\n", stderr);
-	fputs("\tMMM01 ($0B), MMM01+RAM ($0C), MMM01+RAM+BATTERY ($0D)\n", stderr);
-	fputs("\tMBC3+TIMER+BATTERY ($0F), MBC3+TIMER+RAM+BATTERY ($10)\n", stderr);
-	fputs("\tMBC3 ($11), MBC3+RAM ($12), MBC3+RAM+BATTERY ($13)\n", stderr);
-	fputs("\tMBC5 ($19), MBC5+RAM ($1A), MBC5+RAM+BATTERY ($1B)\n", stderr);
-	fputs("\tMBC5+RUMBLE ($1C), MBC5+RUMBLE+RAM ($1D), MBC5+RUMBLE+RAM+BATTERY ($1E)\n", stderr);
-	fputs("\tMBC6 ($20)\n", stderr);
-	fputs("\tMBC7+SENSOR+RUMBLE+RAM+BATTERY ($22)\n", stderr);
-	fputs("\tPOCKET_CAMERA ($FC)\n", stderr);
-	fputs("\tBANDAI_TAMA5 ($FD) [aka TAMA5]\n", stderr);
-	fputs("\tHUC3 ($FE)\n", stderr);
-	fputs("\tHUC1+RAM+BATTERY ($FF)\n", stderr);
-
-	fputs("\n\tTPP1_1.0, TPP1_1.0+RUMBLE, TPP1_1.0+MULTIRUMBLE, TPP1_1.0+TIMER,\n", stderr);
-	fputs("\tTPP1_1.0+TIMER+RUMBLE, TPP1_1.0+TIMER+MULTIRUMBLE, TPP1_1.0+BATTERY,\n", stderr);
-	fputs("\tTPP1_1.0+BATTERY+RUMBLE, TPP1_1.0+BATTERY+MULTIRUMBLE,\n", stderr);
-	fputs("\tTPP1_1.0+BATTERY+TIMER, TPP1_1.0+BATTERY+TIMER+RUMBLE,\n", stderr);
-	fputs("\tTPP1_1.0+BATTERY+TIMER+MULTIRUMBLE\n", stderr);
+	printUsage();
+	exit(1);
 }
 
 static uint8_t tpp1Rev[2];
-
-static void skipWhitespace(char const *&ptr) {
-	while (*ptr == ' ' || *ptr == '\t') {
-		++ptr;
-	}
-}
-
-static void skipMBCSpace(char const *&ptr) {
-	while (*ptr == ' ' || *ptr == '\t' || *ptr == '_') {
-		++ptr;
-	}
-}
-
-static bool readMBCSlice(char const *&name, char const *expected) {
-	while (*expected) {
-		char c = *name++;
-
-		if (c == '\0') { // Name too short
-			return false;
-		}
-
-		if (c >= 'a' && c <= 'z') { // Perform the comparison case-insensitive
-			c = c - 'a' + 'A';
-		} else if (c == '_') { // Treat underscores as spaces
-			c = ' ';
-		}
-
-		if (c != *expected++) {
-			return false;
-		}
-	}
-	return true;
-}
-
-static MbcType parseMBC(char const *name) {
-	if (!strcasecmp(name, "help")) {
-		printAcceptedMBCNames();
-		exit(0);
-	}
-
-	if ((name[0] >= '0' && name[0] <= '9') || name[0] == '$') {
-		int base = 0;
-
-		if (name[0] == '$') {
-			++name;
-			base = 16;
-		}
-		// Parse number, and return it as-is (unless it's too large)
-		char *endptr;
-		unsigned long mbc = strtoul(name, &endptr, base);
-
-		if (*endptr) {
-			return MBC_BAD;
-		}
-		if (mbc > 0xFF) {
-			return MBC_BAD_RANGE;
-		}
-		return static_cast<MbcType>(mbc);
-	}
-
-	// Begin by reading the MBC type:
-	uint16_t mbc;
-	char const *ptr = name;
-
-	skipWhitespace(ptr); // Trim off leading whitespace
-
-#define tryReadSlice(expected) \
-	do { \
-		if (!readMBCSlice(ptr, expected)) { \
-			return MBC_BAD; \
-		} \
-	} while (0)
-
-	switch (*ptr++) {
-	case 'R': // ROM / ROM_ONLY
-	case 'r':
-		tryReadSlice("OM");
-		// Handle optional " ONLY"
-		skipMBCSpace(ptr);
-		if (*ptr == 'O' || *ptr == 'o') {
-			++ptr;
-			tryReadSlice("NLY");
-		}
-		mbc = ROM;
-		break;
-
-	case 'M': // MBC{1, 2, 3, 5, 6, 7} / MMM01
-	case 'm':
-		switch (*ptr++) {
-		case 'B':
-		case 'b':
-			switch (*ptr++) {
-			case 'C':
-			case 'c':
-				break;
-			default:
-				return MBC_BAD;
-			}
-			switch (*ptr++) {
-			case '1':
-				mbc = MBC1;
-				break;
-			case '2':
-				mbc = MBC2;
-				break;
-			case '3':
-				mbc = MBC3;
-				break;
-			case '5':
-				mbc = MBC5;
-				break;
-			case '6':
-				mbc = MBC6;
-				break;
-			case '7':
-				mbc = MBC7_SENSOR_RUMBLE_RAM_BATTERY;
-				break;
-			default:
-				return MBC_BAD;
-			}
-			break;
-		case 'M':
-		case 'm':
-			tryReadSlice("M01");
-			mbc = MMM01;
-			break;
-		default:
-			return MBC_BAD;
-		}
-		break;
-
-	case 'P': // POCKET_CAMERA
-	case 'p':
-		tryReadSlice("OCKET CAMERA");
-		mbc = POCKET_CAMERA;
-		break;
-
-	case 'B': // BANDAI_TAMA5
-	case 'b':
-		tryReadSlice("ANDAI TAMA5");
-		mbc = BANDAI_TAMA5;
-		break;
-
-	case 'T': // TAMA5 / TPP1
-	case 't':
-		switch (*ptr++) {
-		case 'A':
-			tryReadSlice("MA5");
-			mbc = BANDAI_TAMA5;
-			break;
-		case 'P': {
-			tryReadSlice("P1");
-			// Parse version
-			skipMBCSpace(ptr);
-			// Major
-			char *endptr;
-			unsigned long val = strtoul(ptr, &endptr, 10);
-
-			if (endptr == ptr) {
-				error("Failed to parse TPP1 major revision number");
-				return MBC_BAD_TPP1;
-			}
-			ptr = endptr;
-			if (val != 1) {
-				error("RGBFIX only supports TPP1 version 1.0");
-				return MBC_BAD_TPP1;
-			}
-			tpp1Rev[0] = val;
-			tryReadSlice(".");
-			// Minor
-			val = strtoul(ptr, &endptr, 10);
-			if (endptr == ptr) {
-				error("Failed to parse TPP1 minor revision number");
-				return MBC_BAD_TPP1;
-			}
-			ptr = endptr;
-			if (val > 0xFF) {
-				error("TPP1 minor revision number must be 8-bit");
-				return MBC_BAD_TPP1;
-			}
-			tpp1Rev[1] = val;
-			mbc = TPP1;
-			break;
-		}
-		default:
-			return MBC_BAD;
-		}
-		break;
-
-	case 'H': // HuC{1, 3}
-	case 'h':
-		tryReadSlice("UC");
-		switch (*ptr++) {
-		case '1':
-			mbc = HUC1_RAM_BATTERY;
-			break;
-		case '3':
-			mbc = HUC3;
-			break;
-		default:
-			return MBC_BAD;
-		}
-		break;
-
-	default:
-		return MBC_BAD;
-	}
-
-	// Read "additional features"
-	uint8_t features = 0;
-	// clang-format off: vertically align values
-	static constexpr uint8_t RAM         = 1 << 7;
-	static constexpr uint8_t BATTERY     = 1 << 6;
-	static constexpr uint8_t TIMER       = 1 << 5;
-	static constexpr uint8_t RUMBLE      = 1 << 4;
-	static constexpr uint8_t SENSOR      = 1 << 3;
-	static constexpr uint8_t MULTIRUMBLE = 1 << 2;
-	// clang-format on
-
-	for (;;) {
-		skipWhitespace(ptr); // Trim off trailing whitespace
-
-		// If done, start processing "features"
-		if (!*ptr) {
-			break;
-		}
-		// We expect a '+' at this point
-		skipMBCSpace(ptr);
-		if (*ptr++ != '+') {
-			return MBC_BAD;
-		}
-		skipMBCSpace(ptr);
-
-		switch (*ptr++) {
-		case 'B': // BATTERY
-		case 'b':
-			tryReadSlice("ATTERY");
-			features |= BATTERY;
-			break;
-
-		case 'M':
-		case 'm':
-			tryReadSlice("ULTIRUMBLE");
-			features |= MULTIRUMBLE;
-			break;
-
-		case 'R': // RAM or RUMBLE
-		case 'r':
-			switch (*ptr++) {
-			case 'U':
-			case 'u':
-				tryReadSlice("MBLE");
-				features |= RUMBLE;
-				break;
-			case 'A':
-			case 'a':
-				tryReadSlice("M");
-				features |= RAM;
-				break;
-			default:
-				return MBC_BAD;
-			}
-			break;
-
-		case 'S': // SENSOR
-		case 's':
-			tryReadSlice("ENSOR");
-			features |= SENSOR;
-			break;
-
-		case 'T': // TIMER
-		case 't':
-			tryReadSlice("IMER");
-			features |= TIMER;
-			break;
-
-		default:
-			return MBC_BAD;
-		}
-	}
-#undef tryReadSlice
-
-	switch (mbc) {
-	case ROM:
-		if (!features) {
-			break;
-		}
-		mbc = ROM_RAM - 1;
-		static_assert(ROM_RAM + 1 == ROM_RAM_BATTERY, "Enum sanity check failed!");
-		static_assert(MBC1 + 1 == MBC1_RAM, "Enum sanity check failed!");
-		static_assert(MBC1 + 2 == MBC1_RAM_BATTERY, "Enum sanity check failed!");
-		static_assert(MMM01 + 1 == MMM01_RAM, "Enum sanity check failed!");
-		static_assert(MMM01 + 2 == MMM01_RAM_BATTERY, "Enum sanity check failed!");
-		[[fallthrough]];
-	case MBC1:
-	case MMM01:
-		if (features == RAM) {
-			++mbc;
-		} else if (features == (RAM | BATTERY)) {
-			mbc += 2;
-		} else if (features) {
-			return MBC_WRONG_FEATURES;
-		}
-		break;
-
-	case MBC2:
-		if (features == BATTERY) {
-			mbc = MBC2_BATTERY;
-		} else if (features) {
-			return MBC_WRONG_FEATURES;
-		}
-		break;
-
-	case MBC3:
-		// Handle timer, which also requires battery
-		if (features & TIMER) {
-			if (!(features & BATTERY)) {
-				warnx("MBC3+TIMER implies BATTERY");
-			}
-			features &= ~(TIMER | BATTERY); // Reset those bits
-			mbc = MBC3_TIMER_BATTERY;
-			// RAM is handled below
-		}
-		static_assert(MBC3 + 1 == MBC3_RAM, "Enum sanity check failed!");
-		static_assert(MBC3 + 2 == MBC3_RAM_BATTERY, "Enum sanity check failed!");
-		static_assert(
-		    MBC3_TIMER_BATTERY + 1 == MBC3_TIMER_RAM_BATTERY, "Enum sanity check failed!"
-		);
-		if (features == RAM) {
-			++mbc;
-		} else if (features == (RAM | BATTERY)) {
-			mbc += 2;
-		} else if (features) {
-			return MBC_WRONG_FEATURES;
-		}
-		break;
-
-	case MBC5:
-		if (features & RUMBLE) {
-			features &= ~RUMBLE;
-			mbc = MBC5_RUMBLE;
-		}
-		static_assert(MBC5 + 1 == MBC5_RAM, "Enum sanity check failed!");
-		static_assert(MBC5 + 2 == MBC5_RAM_BATTERY, "Enum sanity check failed!");
-		static_assert(MBC5_RUMBLE + 1 == MBC5_RUMBLE_RAM, "Enum sanity check failed!");
-		static_assert(MBC5_RUMBLE + 2 == MBC5_RUMBLE_RAM_BATTERY, "Enum sanity check failed!");
-		if (features == RAM) {
-			++mbc;
-		} else if (features == (RAM | BATTERY)) {
-			mbc += 2;
-		} else if (features) {
-			return MBC_WRONG_FEATURES;
-		}
-		break;
-
-	case MBC6:
-	case POCKET_CAMERA:
-	case BANDAI_TAMA5:
-	case HUC3:
-		// No extra features accepted
-		if (features) {
-			return MBC_WRONG_FEATURES;
-		}
-		break;
-
-	case MBC7_SENSOR_RUMBLE_RAM_BATTERY:
-		if (features != (SENSOR | RUMBLE | RAM | BATTERY)) {
-			return MBC_WRONG_FEATURES;
-		}
-		break;
-
-	case HUC1_RAM_BATTERY:
-		if (features != (RAM | BATTERY)) { // HuC1 expects RAM+BATTERY
-			return MBC_WRONG_FEATURES;
-		}
-		break;
-
-	case TPP1:
-		if (features & RAM) {
-			warnx("TPP1 requests RAM implicitly if given a non-zero RAM size");
-		}
-		if (features & BATTERY) {
-			mbc |= 0x08;
-		}
-		if (features & TIMER) {
-			mbc |= 0x04;
-		}
-		if (features & MULTIRUMBLE) {
-			mbc |= 0x03; // Also set the rumble flag
-		}
-		if (features & RUMBLE) {
-			mbc |= 0x01;
-		}
-		if (features & SENSOR) {
-			return MBC_WRONG_FEATURES;
-		}
-		break;
-	}
-
-	skipWhitespace(ptr); // Trim off trailing whitespace
-
-	// If there is still something past the whitespace, error out
-	if (*ptr) {
-		return MBC_BAD;
-	}
-
-	return static_cast<MbcType>(mbc);
-}
-
-static char const *mbcName(MbcType type) {
-	switch (type) {
-	case ROM:
-		return "ROM";
-	case ROM_RAM:
-		return "ROM+RAM";
-	case ROM_RAM_BATTERY:
-		return "ROM+RAM+BATTERY";
-	case MBC1:
-		return "MBC1";
-	case MBC1_RAM:
-		return "MBC1+RAM";
-	case MBC1_RAM_BATTERY:
-		return "MBC1+RAM+BATTERY";
-	case MBC2:
-		return "MBC2";
-	case MBC2_BATTERY:
-		return "MBC2+BATTERY";
-	case MMM01:
-		return "MMM01";
-	case MMM01_RAM:
-		return "MMM01+RAM";
-	case MMM01_RAM_BATTERY:
-		return "MMM01+RAM+BATTERY";
-	case MBC3:
-		return "MBC3";
-	case MBC3_TIMER_BATTERY:
-		return "MBC3+TIMER+BATTERY";
-	case MBC3_TIMER_RAM_BATTERY:
-		return "MBC3+TIMER+RAM+BATTERY";
-	case MBC3_RAM:
-		return "MBC3+RAM";
-	case MBC3_RAM_BATTERY:
-		return "MBC3+RAM+BATTERY";
-	case MBC5:
-		return "MBC5";
-	case MBC5_RAM:
-		return "MBC5+RAM";
-	case MBC5_RAM_BATTERY:
-		return "MBC5+RAM+BATTERY";
-	case MBC5_RUMBLE:
-		return "MBC5+RUMBLE";
-	case MBC5_RUMBLE_RAM:
-		return "MBC5+RUMBLE+RAM";
-	case MBC5_RUMBLE_RAM_BATTERY:
-		return "MBC5+RUMBLE+RAM+BATTERY";
-	case MBC6:
-		return "MBC6";
-	case MBC7_SENSOR_RUMBLE_RAM_BATTERY:
-		return "MBC7+SENSOR+RUMBLE+RAM+BATTERY";
-	case POCKET_CAMERA:
-		return "POCKET CAMERA";
-	case BANDAI_TAMA5:
-		return "BANDAI TAMA5";
-	case HUC3:
-		return "HUC3";
-	case HUC1_RAM_BATTERY:
-		return "HUC1+RAM+BATTERY";
-	case TPP1:
-		return "TPP1";
-	case TPP1_RUMBLE:
-		return "TPP1+RUMBLE";
-	case TPP1_MULTIRUMBLE:
-	case TPP1_MULTIRUMBLE_RUMBLE:
-		return "TPP1+MULTIRUMBLE";
-	case TPP1_TIMER:
-		return "TPP1+TIMER";
-	case TPP1_TIMER_RUMBLE:
-		return "TPP1+TIMER+RUMBLE";
-	case TPP1_TIMER_MULTIRUMBLE:
-	case TPP1_TIMER_MULTIRUMBLE_RUMBLE:
-		return "TPP1+TIMER+MULTIRUMBLE";
-	case TPP1_BATTERY:
-		return "TPP1+BATTERY";
-	case TPP1_BATTERY_RUMBLE:
-		return "TPP1+BATTERY+RUMBLE";
-	case TPP1_BATTERY_MULTIRUMBLE:
-	case TPP1_BATTERY_MULTIRUMBLE_RUMBLE:
-		return "TPP1+BATTERY+MULTIRUMBLE";
-	case TPP1_BATTERY_TIMER:
-		return "TPP1+BATTERY+TIMER";
-	case TPP1_BATTERY_TIMER_RUMBLE:
-		return "TPP1+BATTERY+TIMER+RUMBLE";
-	case TPP1_BATTERY_TIMER_MULTIRUMBLE:
-	case TPP1_BATTERY_TIMER_MULTIRUMBLE_RUMBLE:
-		return "TPP1+BATTERY+TIMER+MULTIRUMBLE";
-
-	// Error values
-	case MBC_NONE:
-	case MBC_BAD:
-	case MBC_WRONG_FEATURES:
-	case MBC_BAD_RANGE:
-	case MBC_BAD_TPP1:
-		// LCOV_EXCL_START
-		unreachable_();
-	}
-
-	unreachable_();
-	// LCOV_EXCL_STOP
-}
-
-static bool hasRAM(MbcType type) {
-	switch (type) {
-	case ROM:
-	case MBC1:
-	case MBC2: // Technically has RAM, but not marked as such
-	case MBC2_BATTERY:
-	case MMM01:
-	case MBC3:
-	case MBC3_TIMER_BATTERY:
-	case MBC5:
-	case MBC5_RUMBLE:
-	case BANDAI_TAMA5: // "Game de Hakken!! Tamagotchi - Osutchi to Mesutchi" has RAM size 0
-	case MBC_NONE:
-	case MBC_BAD:
-	case MBC_WRONG_FEATURES:
-	case MBC_BAD_RANGE:
-	case MBC_BAD_TPP1:
-		return false;
-
-	case ROM_RAM:
-	case ROM_RAM_BATTERY:
-	case MBC1_RAM:
-	case MBC1_RAM_BATTERY:
-	case MMM01_RAM:
-	case MMM01_RAM_BATTERY:
-	case MBC3_TIMER_RAM_BATTERY:
-	case MBC3_RAM:
-	case MBC3_RAM_BATTERY:
-	case MBC5_RAM:
-	case MBC5_RAM_BATTERY:
-	case MBC5_RUMBLE_RAM:
-	case MBC5_RUMBLE_RAM_BATTERY:
-	case MBC6: // "Net de Get - Minigame @ 100" has RAM size 3 (32 KiB)
-	case MBC7_SENSOR_RUMBLE_RAM_BATTERY:
-	case POCKET_CAMERA:
-	case HUC3:
-	case HUC1_RAM_BATTERY:
-		return true;
-
-	// TPP1 may or may not have RAM, don't call this function for it
-	case TPP1:
-	case TPP1_RUMBLE:
-	case TPP1_MULTIRUMBLE:
-	case TPP1_MULTIRUMBLE_RUMBLE:
-	case TPP1_TIMER:
-	case TPP1_TIMER_RUMBLE:
-	case TPP1_TIMER_MULTIRUMBLE:
-	case TPP1_TIMER_MULTIRUMBLE_RUMBLE:
-	case TPP1_BATTERY:
-	case TPP1_BATTERY_RUMBLE:
-	case TPP1_BATTERY_MULTIRUMBLE:
-	case TPP1_BATTERY_MULTIRUMBLE_RUMBLE:
-	case TPP1_BATTERY_TIMER:
-	case TPP1_BATTERY_TIMER_RUMBLE:
-	case TPP1_BATTERY_TIMER_MULTIRUMBLE:
-	case TPP1_BATTERY_TIMER_MULTIRUMBLE_RUMBLE:
-		break;
-	}
-
-	unreachable_(); // LCOV_EXCL_LINE
-}
 
 static uint8_t const nintendoLogo[] = {
     0xCE, 0xED, 0x66, 0x66, 0xCC, 0x0D, 0x00, 0x0B, 0x03, 0x73, 0x00, 0x83, 0x00, 0x0C, 0x00, 0x0D,
@@ -804,7 +121,6 @@ static uint8_t newLicenseeLen;
 static uint16_t oldLicensee = UNSPECIFIED;
 static MbcType cartridgeType = MBC_NONE;
 static uint16_t romVersion = UNSPECIFIED;
-static bool overwriteRom = false; // If false, warn when overwriting non-zero non-identical bytes
 static uint16_t padValue = UNSPECIFIED;
 static uint16_t ramSize = UNSPECIFIED;
 static bool sgb = false; // If false, SGB flags are left alone
@@ -870,8 +186,8 @@ static ssize_t writeBytes(int fd, uint8_t *buf, size_t len) {
 static void overwriteByte(uint8_t *rom0, uint16_t addr, uint8_t fixedByte, char const *areaName) {
 	uint8_t origByte = rom0[addr];
 
-	if (!overwriteRom && origByte != 0 && origByte != fixedByte) {
-		warnx("Overwrote a non-zero byte in the %s", areaName);
+	if (origByte != 0 && origByte != fixedByte) {
+		warning(WARNING_OVERWRITE, "Overwrote a non-zero byte in the %s", areaName);
 	}
 
 	rom0[addr] = fixedByte;
@@ -880,14 +196,12 @@ static void overwriteByte(uint8_t *rom0, uint16_t addr, uint8_t fixedByte, char 
 static void overwriteBytes(
     uint8_t *rom0, uint16_t startAddr, uint8_t const *fixed, uint8_t size, char const *areaName
 ) {
-	if (!overwriteRom) {
-		for (uint8_t i = 0; i < size; ++i) {
-			uint8_t origByte = rom0[i + startAddr];
+	for (uint8_t i = 0; i < size; ++i) {
+		uint8_t origByte = rom0[i + startAddr];
 
-			if (origByte != 0 && origByte != fixed[i]) {
-				warnx("Overwrote a non-zero byte in the %s", areaName);
-				break;
-			}
+		if (origByte != 0 && origByte != fixed[i]) {
+			warning(WARNING_OVERWRITE, "Overwrote a non-zero byte in the %s", areaName);
+			break;
 		}
 	}
 
@@ -909,11 +223,11 @@ static void
 
 	if (rom0Len == -1) {
 		// LCOV_EXCL_START
-		fatal("Failed to read \"%s\"'s header: %s", name, strerror(errno));
+		error("Failed to read \"%s\"'s header: %s", name, strerror(errno));
 		return;
 		// LCOV_EXCL_STOP
 	} else if (rom0Len < headerSize) {
-		fatal(
+		error(
 		    "\"%s\" too short, expected at least %jd ($%jx) bytes, got only %jd",
 		    name,
 		    static_cast<intmax_t>(headerSize),
@@ -997,7 +311,11 @@ static void
 	if (oldLicensee != UNSPECIFIED) {
 		overwriteByte(rom0, 0x14B, oldLicensee, "old licensee code");
 	} else if (sgb && rom0[0x14B] != 0x33) {
-		warnx("SGB compatibility enabled, but old licensee was 0x%02x, not 0x33", rom0[0x14B]);
+		warning(
+		    WARNING_SGB,
+		    "SGB compatibility enabled, but old licensee was 0x%02x, not 0x33",
+		    rom0[0x14B]
+		);
 	}
 
 	if (romVersion != UNSPECIFIED) {
@@ -1022,7 +340,7 @@ static void
 	// Handle ROMX
 	if (input == output) {
 		if (fileSize >= 0x10000 * BANK_SIZE) {
-			fatal("\"%s\" has more than 65536 banks", name);
+			error("\"%s\" has more than 65536 banks", name);
 			return;
 		}
 		// This should be guaranteed from the size cap...
@@ -1043,7 +361,7 @@ static void
 				    0x10000 * BANK_SIZE <= SSIZE_MAX, "Max input file size too large for OS"
 				);
 				if (nbBanks == 0x10000) {
-					fatal("\"%s\" has more than 65536 banks", name);
+					error("\"%s\" has more than 65536 banks", name);
 					return;
 				}
 				++nbBanks;
@@ -1145,7 +463,7 @@ static void
 	if (input == output) {
 		if (lseek(output, 0, SEEK_SET) == static_cast<off_t>(-1)) {
 			// LCOV_EXCL_START
-			fatal("Failed to rewind \"%s\": %s", name, strerror(errno));
+			error("Failed to rewind \"%s\": %s", name, strerror(errno));
 			return;
 			// LCOV_EXCL_STOP
 		}
@@ -1159,12 +477,12 @@ static void
 
 	if (writeLen == -1) {
 		// LCOV_EXCL_START
-		fatal("Failed to write \"%s\"'s ROM0: %s", name, strerror(errno));
+		error("Failed to write \"%s\"'s ROM0: %s", name, strerror(errno));
 		return;
 		// LCOV_EXCL_STOP
 	} else if (writeLen < rom0Len) {
 		// LCOV_EXCL_START
-		fatal(
+		error(
 		    "Could only write %jd of \"%s\"'s %jd ROM0 bytes",
 		    static_cast<intmax_t>(writeLen),
 		    name,
@@ -1181,12 +499,12 @@ static void
 		writeLen = writeBytes(output, romx.data(), totalRomxLen);
 		if (writeLen == -1) {
 			// LCOV_EXCL_START
-			fatal("Failed to write \"%s\"'s ROMX: %s", name, strerror(errno));
+			error("Failed to write \"%s\"'s ROMX: %s", name, strerror(errno));
 			return;
 			// LCOV_EXCL_STOP
 		} else if (static_cast<size_t>(writeLen) < totalRomxLen) {
 			// LCOV_EXCL_START
-			fatal(
+			error(
 			    "Could only write %jd of \"%s\"'s %zu ROMX bytes",
 			    static_cast<intmax_t>(writeLen),
 			    name,
@@ -1202,7 +520,7 @@ static void
 		if (input == output) {
 			if (lseek(output, 0, SEEK_END) == static_cast<off_t>(-1)) {
 				// LCOV_EXCL_START
-				fatal("Failed to seek to end of \"%s\": %s", name, strerror(errno));
+				error("Failed to seek to end of \"%s\": %s", name, strerror(errno));
 				return;
 				// LCOV_EXCL_STOP
 			}
@@ -1219,7 +537,7 @@ static void
 			// so it's fine to cast to `size_t`
 			if (static_cast<size_t>(ret) != thisLen) {
 				// LCOV_EXCL_START
-				fatal("Failed to write \"%s\"'s padding: %s", name, strerror(errno));
+				error("Failed to write \"%s\"'s padding: %s", name, strerror(errno));
 				break;
 				// LCOV_EXCL_STOP
 			}
@@ -1229,7 +547,7 @@ static void
 }
 
 static bool processFilename(char const *name, char const *outputName) {
-	nbErrors = 0;
+	resetErrors();
 
 	bool inputStdin = !strcmp(name, "-");
 	if (inputStdin && !outputName) {
@@ -1245,7 +563,7 @@ static bool processFilename(char const *name, char const *outputName) {
 		} else {
 			output = open(outputName, O_WRONLY | O_BINARY | O_CREAT, 0600);
 			if (output == -1) {
-				fatal("Failed to open \"%s\" for writing: %s", outputName, strerror(errno));
+				error("Failed to open \"%s\" for writing: %s", outputName, strerror(errno));
 				return true;
 			}
 			openedOutput = true;
@@ -1261,79 +579,112 @@ static bool processFilename(char const *name, char const *outputName) {
 		name = "<stdin>";
 		(void)setmode(STDIN_FILENO, O_BINARY);
 		processFile(STDIN_FILENO, output, name, 0, false);
-	} else {
+	} else if (int input = open(name, (outputName ? O_RDONLY : O_RDWR) | O_BINARY); input == -1) {
 		// POSIX specifies that the results of O_RDWR on a FIFO are undefined.
 		// However, this is necessary to avoid a TOCTTOU, if the file was changed between
 		// `stat()` and `open(O_RDWR)`, which could trigger the UB anyway.
-		// Thus, we're going to hope that either the `open` fails, or it succeeds but IO
+		// Thus, we're going to hope that either the `open` fails, or it succeeds but I/O
 		// operations may fail, all of which we handle.
-		if (int input = open(name, (outputName ? O_RDONLY : O_RDWR) | O_BINARY); input == -1) {
-			fatal("Failed to open \"%s\" for reading+writing: %s", name, strerror(errno));
+		error("Failed to open \"%s\" for reading+writing: %s", name, strerror(errno));
+	} else {
+		Defer closeInput{[&] { close(input); }};
+		struct stat stat;
+		if (fstat(input, &stat) == -1) {
+			error("Failed to stat \"%s\": %s", name, strerror(errno)); // LCOV_EXCL_LINE
+		} else if (!S_ISREG(stat.st_mode)) { // We do not support FIFOs or symlinks
+			// LCOV_EXCL_START
+			error("\"%s\" is not a regular file, and thus cannot be modified in-place", name);
+			// LCOV_EXCL_STOP
+		} else if (stat.st_size < 0x150) {
+			// This check is in theory redundant with the one in `processFile`, but it
+			// prevents passing a file size of 0, which usually indicates pipes
+			error(
+			    "\"%s\" too short, expected at least 336 ($150) bytes, got only %jd",
+			    name,
+			    static_cast<intmax_t>(stat.st_size)
+			);
 		} else {
-			Defer closeInput{[&] { close(input); }};
-			struct stat stat;
-			if (fstat(input, &stat) == -1) {
-				// LCOV_EXCL_START
-				fatal("Failed to stat \"%s\": %s", name, strerror(errno));
-				// LCOV_EXCL_STOP
-			} else if (!S_ISREG(stat.st_mode)) { // We do not support FIFOs or symlinks
-				// LCOV_EXCL_START
-				fatal("\"%s\" is not a regular file, and thus cannot be modified in-place", name);
-				// LCOV_EXCL_STOP
-			} else if (stat.st_size < 0x150) {
-				// This check is in theory redundant with the one in `processFile`, but it
-				// prevents passing a file size of 0, which usually indicates pipes
-				fatal(
-				    "\"%s\" too short, expected at least 336 ($150) bytes, got only %jd",
-				    name,
-				    static_cast<intmax_t>(stat.st_size)
-				);
-			} else {
-				if (!outputName) {
-					output = input;
-				}
-				processFile(input, output, name, stat.st_size, true);
+			if (!outputName) {
+				output = input;
 			}
+			processFile(input, output, name, stat.st_size, true);
 		}
 	}
 
-	if (nbErrors) {
-		fprintf(
-		    stderr,
-		    "Fixing \"%s\" failed with %u error%s\n",
-		    name,
-		    nbErrors,
-		    nbErrors == 1 ? "" : "s"
-		);
-	}
-	return nbErrors;
+	return checkErrors(name);
 }
 
 static void parseByte(uint16_t &output, char name) {
 	if (musl_optarg[0] == 0) {
-		error("Argument to option '%c' may not be empty", name);
-	} else {
-		char *endptr;
-		unsigned long value;
+		fatal("Argument to option '%c' may not be empty", name);
+	}
 
-		if (musl_optarg[0] == '$') {
-			value = strtoul(&musl_optarg[1], &endptr, 16);
+	char *endptr;
+	unsigned long value;
+	if (musl_optarg[0] == '$') {
+		value = strtoul(&musl_optarg[1], &endptr, 16);
+	} else {
+		value = strtoul(musl_optarg, &endptr, 0);
+	}
+
+	if (*endptr) {
+		fatal("Expected number as argument to option '%c', got %s", name, musl_optarg);
+	} else if (value > 0xFF) {
+		fatal("Argument to option '%c' is larger than 255: %lu", name, value);
+	}
+
+	output = value;
+}
+
+static void initLogo() {
+	if (logoFilename) {
+		FILE *logoFile;
+		if (strcmp(logoFilename, "-")) {
+			logoFile = fopen(logoFilename, "rb");
 		} else {
-			value = strtoul(musl_optarg, &endptr, 0);
+			logoFilename = "<stdin>";
+			(void)setmode(STDIN_FILENO, O_BINARY);
+			logoFile = stdin;
 		}
-		if (*endptr) {
-			error("Expected number as argument to option '%c', got %s", name, musl_optarg);
-		} else if (value > 0xFF) {
-			error("Argument to option '%c' is larger than 255: %lu", name, value);
-		} else {
-			output = value;
+		if (!logoFile) {
+			fatal("Failed to open \"%s\" for reading: %s", logoFilename, strerror(errno));
+		}
+		Defer closeLogo{[&] { fclose(logoFile); }};
+
+		uint8_t logoBpp[sizeof(logo)];
+		if (size_t nbRead = fread(logoBpp, 1, sizeof(logoBpp), logoFile);
+		    nbRead != sizeof(logo) || fgetc(logoFile) != EOF || ferror(logoFile)) {
+			fatal("\"%s\" is not %zu bytes", logoFilename, sizeof(logo));
+		}
+		auto highs = [&logoBpp](size_t i) {
+			return (logoBpp[i * 2] & 0xF0) | ((logoBpp[i * 2 + 1] & 0xF0) >> 4);
+		};
+		auto lows = [&logoBpp](size_t i) {
+			return ((logoBpp[i * 2] & 0x0F) << 4) | (logoBpp[i * 2 + 1] & 0x0F);
+		};
+		constexpr size_t mid = sizeof(logo) / 2;
+		for (size_t i = 0; i < mid; i += 4) {
+			logo[i + 0] = highs(i + 0);
+			logo[i + 1] = highs(i + 1);
+			logo[i + 2] = lows(i + 0);
+			logo[i + 3] = lows(i + 1);
+			logo[mid + i + 0] = highs(i + 2);
+			logo[mid + i + 1] = highs(i + 3);
+			logo[mid + i + 2] = lows(i + 2);
+			logo[mid + i + 3] = lows(i + 3);
+		}
+	} else {
+		memcpy(logo, nintendoLogo, sizeof(nintendoLogo));
+	}
+
+	if (fixSpec & TRASH_LOGO) {
+		for (uint16_t i = 0; i < sizeof(logo); ++i) {
+			logo[i] = 0xFF ^ logo[i];
 		}
 	}
 }
 
 int main(int argc, char *argv[]) {
-	nbErrors = 0;
-
 	char const *outputFilename = nullptr;
 	for (int ch; (ch = musl_getopt_long_only(argc, argv, optstring, longopts, nullptr)) != -1;) {
 		switch (ch) {
@@ -1344,7 +695,7 @@ int main(int argc, char *argv[]) {
 			model = ch == 'c' ? BOTH : CGB;
 			if (titleLen > 15) {
 				titleLen = 15;
-				warnx("Truncating title \"%s\" to 15 chars", title);
+				warning(WARNING_TRUNCATION, "Truncating title \"%s\" to 15 chars", title);
 			}
 			break;
 
@@ -1369,7 +720,7 @@ int main(int argc, char *argv[]) {
 #undef overrideSpecs
 
 				default:
-					warnx("Ignoring '%c' in fix spec", *musl_optarg);
+					fatal("Invalid character '%c' in fix spec", *musl_optarg);
 				}
 				++musl_optarg;
 			}
@@ -1386,12 +737,12 @@ int main(int argc, char *argv[]) {
 			len = strlen(gameID);
 			if (len > 4) {
 				len = 4;
-				warnx("Truncating game ID \"%s\" to 4 chars", gameID);
+				warning(WARNING_TRUNCATION, "Truncating game ID \"%s\" to 4 chars", gameID);
 			}
 			gameIDLen = len;
 			if (titleLen > 11) {
 				titleLen = 11;
-				warnx("Truncating title \"%s\" to 11 chars", title);
+				warning(WARNING_TRUNCATION, "Truncating title \"%s\" to 11 chars", title);
 			}
 			break;
 
@@ -1404,7 +755,9 @@ int main(int argc, char *argv[]) {
 			len = strlen(newLicensee);
 			if (len > 2) {
 				len = 2;
-				warnx("Truncating new licensee \"%s\" to 2 chars", newLicensee);
+				warning(
+				    WARNING_TRUNCATION, "Truncating new licensee \"%s\" to 2 chars", newLicensee
+				);
 			}
 			newLicenseeLen = len;
 			break;
@@ -1418,17 +771,11 @@ int main(int argc, char *argv[]) {
 			break;
 
 		case 'm':
-			cartridgeType = parseMBC(musl_optarg);
-			if (cartridgeType == MBC_BAD) {
-				error("Unknown MBC \"%s\"", musl_optarg);
-				printAcceptedMBCNames();
-			} else if (cartridgeType == MBC_WRONG_FEATURES) {
-				error("Features incompatible with MBC (\"%s\")", musl_optarg);
-				printAcceptedMBCNames();
-			} else if (cartridgeType == MBC_BAD_RANGE) {
-				error("Specified MBC ID out of range 0-255: %s", musl_optarg);
-			} else if (cartridgeType == ROM_RAM || cartridgeType == ROM_RAM_BATTERY) {
-				warnx("MBC \"%s\" is under-specified and poorly supported", musl_optarg);
+			cartridgeType = mbc_ParseName(musl_optarg, tpp1Rev[0], tpp1Rev[1]);
+			if (cartridgeType == ROM_RAM || cartridgeType == ROM_RAM_BATTERY) {
+				warning(
+				    WARNING_MBC, "MBC \"%s\" is under-specified and poorly supported", musl_optarg
+				);
 			}
 			break;
 
@@ -1437,7 +784,7 @@ int main(int argc, char *argv[]) {
 			break;
 
 		case 'O':
-			overwriteRom = true;
+			warnings.processWarningFlag("no-overwrite");
 			break;
 
 		case 'o':
@@ -1463,7 +810,7 @@ int main(int argc, char *argv[]) {
 
 			if (len > maxLen) {
 				len = maxLen;
-				warnx("Truncating title \"%s\" to %u chars", title, maxLen);
+				warning(WARNING_TRUNCATION, "Truncating title \"%s\" to %u chars", title, maxLen);
 			}
 			titleLen = len;
 			break;
@@ -1479,6 +826,14 @@ int main(int argc, char *argv[]) {
 			fixSpec = FIX_LOGO | FIX_HEADER_SUM | FIX_GLOBAL_SUM;
 			break;
 
+		case 'W':
+			warnings.processWarningFlag(musl_optarg);
+			break;
+
+		case 'w':
+			warnings.state.warningsEnabled = false;
+			break;
+
 		default:
 			// LCOV_EXCL_START
 			printUsage();
@@ -1488,93 +843,65 @@ int main(int argc, char *argv[]) {
 	}
 
 	if ((cartridgeType & 0xFF00) == TPP1 && !japanese) {
-		warnx("TPP1 overwrites region flag for its identification code, ignoring `-j`");
+		warning(
+		    WARNING_MBC, "TPP1 overwrites region flag for its identification code, ignoring `-j`"
+		);
 	}
 
 	// Check that RAM size is correct for "standard" mappers
 	if (ramSize != UNSPECIFIED && (cartridgeType & 0xFF00) == 0) {
 		if (cartridgeType == ROM_RAM || cartridgeType == ROM_RAM_BATTERY) {
 			if (ramSize != 1) {
-				warnx("MBC \"%s\" should have 2 KiB of RAM (-r 1)", mbcName(cartridgeType));
+				warning(
+				    WARNING_MBC,
+				    "MBC \"%s\" should have 2 KiB of RAM (-r 1)",
+				    mbc_Name(cartridgeType)
+				);
 			}
-		} else if (hasRAM(cartridgeType)) {
+		} else if (mbc_HasRAM(cartridgeType)) {
 			if (!ramSize) {
-				warnx("MBC \"%s\" has RAM, but RAM size was set to 0", mbcName(cartridgeType));
+				warning(
+				    WARNING_MBC,
+				    "MBC \"%s\" has RAM, but RAM size was set to 0",
+				    mbc_Name(cartridgeType)
+				);
 			} else if (ramSize == 1) {
-				warnx("RAM size 1 (2 KiB) was specified for MBC \"%s\"", mbcName(cartridgeType));
+				warning(
+				    WARNING_MBC,
+				    "RAM size 1 (2 KiB) was specified for MBC \"%s\"",
+				    mbc_Name(cartridgeType)
+				);
 			}
 		} else if (ramSize) {
-			warnx(
-			    "MBC \"%s\" has no RAM, but RAM size was set to %u", mbcName(cartridgeType), ramSize
+			warning(
+			    WARNING_MBC,
+			    "MBC \"%s\" has no RAM, but RAM size was set to %u",
+			    mbc_Name(cartridgeType),
+			    ramSize
 			);
 		}
 	}
 
 	if (sgb && oldLicensee != UNSPECIFIED && oldLicensee != 0x33) {
-		warnx("SGB compatibility enabled, but old licensee is 0x%02x, not 0x33", oldLicensee);
+		warning(
+		    WARNING_SGB,
+		    "SGB compatibility enabled, but old licensee is 0x%02x, not 0x33",
+		    oldLicensee
+		);
 	}
+
+	initLogo();
 
 	argv += musl_optind;
-	bool failed = nbErrors;
-
-	if (logoFilename) {
-		FILE *logoFile;
-		if (strcmp(logoFilename, "-")) {
-			logoFile = fopen(logoFilename, "rb");
-		} else {
-			logoFilename = "<stdin>";
-			(void)setmode(STDIN_FILENO, O_BINARY);
-			logoFile = stdin;
-		}
-		if (!logoFile) {
-			fatal("Failed to open \"%s\" for reading: %s", logoFilename, strerror(errno));
-			exit(1);
-		}
-		Defer closeLogo{[&] { fclose(logoFile); }};
-		uint8_t logoBpp[sizeof(logo)];
-		if (size_t nbRead = fread(logoBpp, 1, sizeof(logoBpp), logoFile);
-		    nbRead != sizeof(logo) || fgetc(logoFile) != EOF || ferror(logoFile)) {
-			fatal("\"%s\" is not %zu bytes", logoFilename, sizeof(logo));
-			exit(1);
-		}
-		auto highs = [&logoBpp](size_t i) {
-			return (logoBpp[i * 2] & 0xF0) | ((logoBpp[i * 2 + 1] & 0xF0) >> 4);
-		};
-		auto lows = [&logoBpp](size_t i) {
-			return ((logoBpp[i * 2] & 0x0F) << 4) | (logoBpp[i * 2 + 1] & 0x0F);
-		};
-		constexpr size_t mid = sizeof(logo) / 2;
-		for (size_t i = 0; i < mid; i += 4) {
-			logo[i + 0] = highs(i + 0);
-			logo[i + 1] = highs(i + 1);
-			logo[i + 2] = lows(i + 0);
-			logo[i + 3] = lows(i + 1);
-			logo[mid + i + 0] = highs(i + 2);
-			logo[mid + i + 1] = highs(i + 3);
-			logo[mid + i + 2] = lows(i + 2);
-			logo[mid + i + 3] = lows(i + 3);
-		}
-	} else {
-		memcpy(logo, nintendoLogo, sizeof(nintendoLogo));
-	}
-	if (fixSpec & TRASH_LOGO) {
-		for (uint16_t i = 0; i < sizeof(logo); ++i) {
-			logo[i] = 0xFF ^ logo[i];
-		}
-	}
-
 	if (!*argv) {
-		fatal("Please specify an input file (pass `-` to read from standard input)");
-		printUsage();
-		exit(1);
+		fatalWithUsage("Please specify an input file (pass `-` to read from standard input)");
 	}
 
 	if (outputFilename && argc != musl_optind + 1) {
-		fatal("If `-o` is set then only a single input file may be specified");
-		printUsage();
-		exit(1);
+		fatalWithUsage("If `-o` is set then only a single input file may be specified");
 	}
 
+	bool failed = false;
 	do {
 		failed |= processFilename(*argv, outputFilename);
 	} while (*++argv);

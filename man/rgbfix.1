@@ -8,7 +8,7 @@
 .Nd Game Boy header utility and checksum fixer
 .Sh SYNOPSIS
 .Nm
-.Op Fl hjOsVv
+.Op Fl hjOsVvw
 .Op Fl C | c
 .Op Fl f Ar fix_spec
 .Op Fl i Ar game_id
@@ -21,6 +21,7 @@
 .Op Fl p Ar pad_value
 .Op Fl r Ar ram_size
 .Op Fl t Ar title_str
+.Op Fl W Ar warning
 .Op Ar
 .Sh DESCRIPTION
 The
@@ -98,7 +99,7 @@ Print help text for the program and exit.
 Set the game ID string
 .Pq Ad 0x13F Ns \(en Ns Ad 0x142
 to a given string.
-If it's longer than 4 chars, it will be truncated, and a warning emitted.
+If it's longer than 4 characters, it will be truncated.
 .It Fl j , Fl \-non-japanese
 Set the non-Japanese region flag
 .Pq Ad 0x14A
@@ -107,7 +108,7 @@ to 0x01.
 Set the new licensee string
 .Pq Ad 0x144 Ns \(en Ns Ad 0x145
 to a given string.
-If it's longer than 2 chars, it will be truncated, and a warning emitted.
+If it's longer than 2 characters, it will be truncated.
 .It Fl L Ar logo_file , Fl \-logo Ar logo_file
 Specify a logo file to use instead of the official Nintendo logo.
 The file must be 48 bytes of 1bpp tile data; the source image should be 48 pixels wide and 8 pixels tall.
@@ -124,6 +125,8 @@ to a given value from 0 to 0xFF.
 This value may also be an MBC name.
 The list of accepted names can be obtained by passing
 .Ql Cm help
+or
+.Ql Cm list
 as the argument.
 Any amount of whitespace (space and tabs) is allowed around plus signs, and the order of "components" is free, as long as the MBC name is first.
 There are special considerations to take for the TPP1 mapper; see the
@@ -134,7 +137,8 @@ Set the ROM version
 .Pq Ad 0x14C
 to a given value from 0 to 0xFF.
 .It Fl O , Fl \-overwrite
-Allow overwriting different non-zero bytes in the header without a warning being emitted.
+Alias for
+.Fl Wno-overwrite .
 .It Fl o Ar out_file , Fl \-output Ar out_file
 Write the modified ROM image to the given file, or '-' to write to standard output.
 If not specified, the input files are modified in-place, or written to standard output if read from standard input.
@@ -154,15 +158,14 @@ to a given value from 0 to 0xFF.
 Set the SGB flag
 .Pq Ad 0x146
 to 0x03.
-This flag will be ignored by the SGB unless the old licensee code is 0x33!
-If this is given as well as
-.Fl l ,
-but is not set to 0x33, a warning will be printed.
+This flag will be ignored by the SGB unless the old licensee code
+.Pq Fl -l
+is 0x33!
 .It Fl t Ar title , Fl \-title Ar title
 Set the title string
 .Pq Ad 0x134 Ns \(en Ns Ad 0x143
 to a given string.
-If the title is longer than the max length, it will be truncated, and a warning emitted.
+If the title is longer than the maximum length, it will be truncated.
 The max length is 11 characters if the game ID
 .Pq Fl i
 is specified, 15 characters if the CGB flag
@@ -175,6 +178,77 @@ Print the version of the program and exit.
 .It Fl v , Fl \-validate
 Equivalent to
 .Fl f Cm lhg .
+.It Fl W Ar warning , Fl \-warning Ar warning
+Set warning flag
+.Ar warning .
+A warning message will be printed if
+.Ar warning
+is an unknown warning flag.
+See the
+.Sx DIAGNOSTICS
+section for a list of warnings.
+.It Fl w
+Disable all warning output, even when turned into errors.
+.El
+.Sh DIAGNOSTICS
+Warnings are diagnostic messages that indicate possibly erroneous behavior that does not necessarily compromise the header-fixing process.
+The following options alter the way warnings are processed.
+.Bl -tag -width Ds
+.It Fl Werror
+Make all warnings into errors.
+This can be negated as
+.Fl Wno-error
+to prevent turning all warnings into errors.
+.It Fl Werror=
+Make the specified warning or meta warning into an error.
+A warning's name is appended
+.Pq example: Fl Werror=overwrite ,
+and this warning is implicitly enabled and turned into an error.
+This can be negated as
+.Fl Wno-error=
+to prevent turning a specified warning into an error, even if
+.Fl Werror
+is in effect.
+.El
+.Pp
+The following warnings are
+.Dq meta
+warnings, that enable a collection of other warnings.
+If a specific warning is toggled via a meta flag and a specific one, the more specific one takes priority.
+The position on the command-line acts as a tie breaker, the last one taking effect.
+.Bl -tag -width Ds
+.It Fl Wall
+This enables warnings that are likely to indicate an error or undesired behavior, and that can easily be fixed.
+.It Fl Weverything
+Enables literally every warning.
+.El
+.Pp
+The following warnings are actual warning flags; with each description, the corresponding warning flag is included.
+Note that each of these flag also has a negation (for example,
+.Fl Wtruncation
+enables the warning that
+.Fl Wno-truncation
+disables; and
+.Fl Wall
+enables every warning that
+.Fl Wno-all
+disables).
+Only the non-default flag is listed here.
+Ignoring the
+.Dq no-
+prefix, entries are listed alphabetically.
+.Bl -tag -width Ds
+.It Fl Wno-mbc
+Warn when there are inconsistencies with or caveats about the specified MBC type.
+.It Fl Wno-overwrite
+Warn when overwriting different non-zero bytes in the header.
+.It Fl Wno-sgb
+Warn when the SGB flag
+.Pq Fl s
+conflicts with the old licensee code
+.Pq Fl l .
+.It Fl Wno-truncation
+Warn when truncating values to fit the available space.
 .El
 .Sh EXAMPLES
 Most values in the ROM header do not matter to the actual console, and most are seldom useful anyway.
@@ -228,7 +302,7 @@ Therefore,
 .Nm
 will ignore the
 .Ql RAM
-feature on a TPP1 mapper with a warning.
+feature on a TPP1 mapper.
 .Ss Special considerations
 TPP1 overwrites the byte at
 .Ad 0x14A ,
