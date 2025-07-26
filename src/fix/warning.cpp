@@ -39,9 +39,7 @@ void fatal(char const *fmt, ...) {
 	va_end(ap);
 	putc('\n', stderr);
 
-	if (nbErrors != UINT32_MAX) {
-		++nbErrors;
-	}
+	exit(1);
 }
 
 void resetErrors() {

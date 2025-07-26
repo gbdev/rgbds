@@ -31,7 +31,7 @@ void warning(WarningID id, char const *fmt, ...);
 [[gnu::format(printf, 1, 2)]]
 void error(char const *fmt, ...);
 
-// Prints a fatal error and increments the error count
+// Prints a fatal error and exits
 [[gnu::format(printf, 1, 2)]]
 void fatal(char const *fmt, ...);
 

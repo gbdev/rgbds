@@ -74,15 +74,12 @@ enum MbcType {
 
 	// Error values
 	MBC_NONE = UNSPECIFIED, // No MBC specified, do not act on it
-	MBC_BAD,                // Specified MBC does not exist / syntax error
-	MBC_WRONG_FEATURES,     // MBC incompatible with specified features
-	MBC_BAD_RANGE,          // MBC number out of range
-	MBC_BAD_TPP1,           // Invalid TPP1 major or minor revision numbers
 };
 
 void mbc_PrintAcceptedNames(FILE *file);
 
-char const *mbc_Name(MbcType type);
 bool mbc_HasRAM(MbcType type);
+char const *mbc_Name(MbcType type);
+MbcType mbc_ParseName(char const *name, uint8_t &tpp1Major, uint8_t &tpp1Minor);
 
 #endif // RGBDS_FIX_MBC_HPP
