@@ -18,6 +18,7 @@
 #include "extern/getopt.hpp"
 #include "file.hpp"
 #include "platform.hpp"
+#include "usage.hpp"
 #include "version.hpp"
 
 #include "gfx/pal_spec.hpp"
@@ -98,39 +99,23 @@ static option const longopts[] = {
     {nullptr,            no_argument,       nullptr, 0  }
 };
 
-// LCOV_EXCL_START
-static void printUsage() {
-	fputs(
-	    "Usage: rgbgfx [-r stride] [-ChmOuVXYZ] [-v [-v ...]] [-a <attr_map> | -A]\n"
-	    "       [-b <base_ids>] [-c <colors>] [-d <depth>] [-i <tileset_file>]\n"
-	    "       [-L <slice>] [-l <base_pal>] [-N <nb_tiles>] [-n <nb_pals>]\n"
-	    "       [-o <out_file>] [-p <pal_file> | -P] [-q <pal_map> | -Q]\n"
-	    "       [-s <nb_colors>] [-t <tile_map> | -T] [-x <nb_tiles>] <file>\n"
-	    "Useful options:\n"
-	    "    -m, --mirror-tiles    optimize out mirrored tiles\n"
-	    "    -o, --output <path>   output the tile data to this path\n"
-	    "    -t, --tilemap <path>  output the tile map to this path\n"
-	    "    -u, --unique-tiles    optimize out identical tiles\n"
-	    "    -V, --version         print RGBGFX version and exit\n"
-	    "\n"
-	    "For help, use `man rgbgfx' or go to https://rgbds.gbdev.io/docs/\n",
-	    stderr
-	);
-}
-// LCOV_EXCL_STOP
-
-[[gnu::format(printf, 1, 2), noreturn]]
-static void fatalWithUsage(char const *fmt, ...) {
-	va_list ap;
-	fputs("FATAL: ", stderr);
-	va_start(ap, fmt);
-	vfprintf(stderr, fmt, ap);
-	va_end(ap);
-	putc('\n', stderr);
-
-	printUsage();
-	exit(1);
-}
+// clang-format off: long string literal
+static Usage usage(
+    "Usage: rgbgfx [-r stride] [-ChmOuVXYZ] [-v [-v ...]] [-a <attr_map> | -A]\n"
+    "       [-b <base_ids>] [-c <colors>] [-d <depth>] [-i <tileset_file>]\n"
+    "       [-L <slice>] [-l <base_pal>] [-N <nb_tiles>] [-n <nb_pals>]\n"
+    "       [-o <out_file>] [-p <pal_file> | -P] [-q <pal_map> | -Q]\n"
+    "       [-s <nb_colors>] [-t <tile_map> | -T] [-x <nb_tiles>] <file>\n"
+    "Useful options:\n"
+    "    -m, --mirror-tiles    optimize out mirrored tiles\n"
+    "    -o, --output <path>   output the tile data to this path\n"
+    "    -t, --tilemap <path>  output the tile map to this path\n"
+    "    -u, --unique-tiles    optimize out identical tiles\n"
+    "    -V, --version         print RGBGFX version and exit\n"
+    "\n"
+    "For help, use `man rgbgfx' or go to https://rgbds.gbdev.io/docs/\n"
+);
+// clang-format on
 
 // Parses a number at the beginning of a string, moving the pointer to skip the parsed characters.
 // Returns the provided errVal on error.
@@ -209,13 +194,13 @@ static void skipWhitespace(char *&arg) {
 
 static void registerInput(char const *arg) {
 	if (!options.input.empty()) {
-		fatalWithUsage(
+		usage.printAndExit(
 		    "Input image specified more than once! (first \"%s\", then \"%s\")",
 		    options.input.c_str(),
 		    arg
 		);
 	} else if (arg[0] == '\0') { // Empty input path
-		fatalWithUsage("Input image path cannot be empty");
+		usage.printAndExit("Input image path cannot be empty");
 	} else {
 		options.input = arg;
 	}
@@ -379,10 +364,7 @@ static char *parseArgv(int argc, char *argv[]) {
 			}
 			break;
 		case 'h':
-			// LCOV_EXCL_START
-			printUsage();
-			exit(0);
-			// LCOV_EXCL_STOP
+			usage.printAndExit(0); // LCOV_EXCL_LINE
 		case 'i':
 			if (!options.inputTileset.empty()) {
 				warnx("Overriding input tileset file %s", options.inputTileset.c_str());
@@ -591,10 +573,7 @@ static char *parseArgv(int argc, char *argv[]) {
 			}
 			break;
 		default:
-			// LCOV_EXCL_START
-			printUsage();
-			exit(1);
-			// LCOV_EXCL_STOP
+			usage.printAndExit(1); // LCOV_EXCL_LINE
 		}
 	}
 
@@ -818,7 +797,7 @@ int main(int argc, char *argv[]) {
 		if (autoOptEnabled) {
 			std::string &image = localOptions.groupOutputs ? options.output : options.input;
 			if (image.empty()) {
-				fatalWithUsage(
+				usage.printAndExit(
 				    "No %s specified",
 				    localOptions.groupOutputs ? "output tile data file" : "input image"
 				);
@@ -875,7 +854,7 @@ int main(int argc, char *argv[]) {
 	           && !localOptions.reverse) {
 		processPalettes();
 	} else {
-		fatalWithUsage("No input image specified");
+		usage.printAndExit("No input image specified");
 	}
 
 	requireZeroErrors();

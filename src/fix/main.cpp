@@ -16,6 +16,7 @@
 #include "extern/getopt.hpp"
 #include "helpers.hpp"
 #include "platform.hpp"
+#include "usage.hpp"
 #include "version.hpp"
 
 #include "fix/mbc.hpp"
@@ -57,40 +58,24 @@ static option const longopts[] = {
     {nullptr,            no_argument,       nullptr, 0  }
 };
 
-// LCOV_EXCL_START
-static void printUsage() {
-	fputs(
-	    "Usage: rgbfix [-hjOsVvw] [-C | -c] [-f <fix_spec>] [-i <game_id>] [-k <licensee>]\n"
-	    "              [-L <logo_file>] [-l <licensee_byte>] [-m <mbc_type>]\n"
-	    "              [-n <rom_version>] [-p <pad_value>] [-r <ram_size>] [-t <title_str>]\n"
-	    "              [-W warning] <file> ...\n"
-	    "Useful options:\n"
-	    "    -m, --mbc-type <value>      set the MBC type byte to this value; refer\n"
-	    "                                  to the man page for a list of values\n"
-	    "    -p, --pad-value <value>     pad to the next valid size using this value\n"
-	    "    -r, --ram-size <code>       set the cart RAM size byte to this value\n"
-	    "    -o, --output <path>         set the output file\n"
-	    "    -V, --version               print RGBFIX version and exit\n"
-	    "    -v, --validate              fix the header logo and both checksums (-f lhg)\n"
-	    "\n"
-	    "For help, use `man rgbfix' or go to https://rgbds.gbdev.io/docs/\n",
-	    stderr
-	);
-}
-// LCOV_EXCL_STOP
-
-[[gnu::format(printf, 1, 2), noreturn]]
-static void fatalWithUsage(char const *fmt, ...) {
-	va_list ap;
-	fputs("FATAL: ", stderr);
-	va_start(ap, fmt);
-	vfprintf(stderr, fmt, ap);
-	va_end(ap);
-	putc('\n', stderr);
-
-	printUsage();
-	exit(1);
-}
+// clang-format off: long string literal
+static Usage usage(
+    "Usage: rgbfix [-hjOsVvw] [-C | -c] [-f <fix_spec>] [-i <game_id>] [-k <licensee>]\n"
+    "              [-L <logo_file>] [-l <licensee_byte>] [-m <mbc_type>]\n"
+    "              [-n <rom_version>] [-p <pad_value>] [-r <ram_size>] [-t <title_str>]\n"
+    "              [-W warning] <file> ...\n"
+    "Useful options:\n"
+    "    -m, --mbc-type <value>      set the MBC type byte to this value; refer\n"
+    "                                  to the man page for a list of values\n"
+    "    -p, --pad-value <value>     pad to the next valid size using this value\n"
+    "    -r, --ram-size <code>       set the cart RAM size byte to this value\n"
+    "    -o, --output <path>         set the output file\n"
+    "    -V, --version               print RGBFIX version and exit\n"
+    "    -v, --validate              fix the header logo and both checksums (-f lhg)\n"
+    "\n"
+    "For help, use `man rgbfix' or go to https://rgbds.gbdev.io/docs/\n"
+);
+// clang-format on
 
 static uint8_t tpp1Rev[2];
 
@@ -727,10 +712,7 @@ int main(int argc, char *argv[]) {
 			break;
 
 		case 'h':
-			// LCOV_EXCL_START
-			printUsage();
-			exit(0);
-			// LCOV_EXCL_STOP
+			usage.printAndExit(0); // LCOV_EXCL_LINE
 
 		case 'i':
 			gameID = musl_optarg;
@@ -835,10 +817,7 @@ int main(int argc, char *argv[]) {
 			break;
 
 		default:
-			// LCOV_EXCL_START
-			printUsage();
-			exit(1);
-			// LCOV_EXCL_STOP
+			usage.printAndExit(1); // LCOV_EXCL_LINE
 		}
 	}
 
@@ -894,11 +873,11 @@ int main(int argc, char *argv[]) {
 
 	argv += musl_optind;
 	if (!*argv) {
-		fatalWithUsage("Please specify an input file (pass `-` to read from standard input)");
+		usage.printAndExit("Please specify an input file (pass `-` to read from standard input)");
 	}
 
 	if (outputFilename && argc != musl_optind + 1) {
-		fatalWithUsage("If `-o` is set then only a single input file may be specified");
+		usage.printAndExit("If `-o` is set then only a single input file may be specified");
 	}
 
 	bool failed = warnings.nbErrors > 0;

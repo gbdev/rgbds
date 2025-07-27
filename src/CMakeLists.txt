@@ -5,6 +5,7 @@ configure_file(version.cpp _version.cpp ESCAPE_QUOTES)
 set(common_src
     "extern/getopt.cpp"
     "diagnostics.cpp"
+    "usage.cpp"
     "_version.cpp"
     )
 

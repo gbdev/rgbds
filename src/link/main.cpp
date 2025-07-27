@@ -15,6 +15,7 @@
 #include "itertools.hpp"
 #include "platform.hpp"
 #include "script.hpp" // Generated from script.y
+#include "usage.hpp"
 #include "version.hpp"
 
 #include "link/assign.hpp"
@@ -81,39 +82,23 @@ static option const longopts[] = {
     {nullptr,         no_argument,       nullptr, 0  }
 };
 
-// LCOV_EXCL_START
-static void printUsage() {
-	fputs(
-	    "Usage: rgblink [-dhMtVvwx] [-l script] [-m map_file] [-n sym_file]\n"
-	    "               [-O overlay_file] [-o out_file] [-p pad_value]\n"
-	    "               [-S spec] <file> ...\n"
-	    "Useful options:\n"
-	    "    -l, --linkerscript <path>  set the input linker script\n"
-	    "    -m, --map <path>           set the output map file\n"
-	    "    -n, --sym <path>           set the output symbol list file\n"
-	    "    -o, --output <path>        set the output file\n"
-	    "    -p, --pad <value>          set the value to pad between sections with\n"
-	    "    -x, --nopad                disable padding of output binary\n"
-	    "    -V, --version              print RGBLINK version and exits\n"
-	    "\n"
-	    "For help, use `man rgblink' or go to https://rgbds.gbdev.io/docs/\n",
-	    stderr
-	);
-}
-// LCOV_EXCL_STOP
-
-[[gnu::format(printf, 1, 2), noreturn]]
-static void fatalWithUsage(char const *fmt, ...) {
-	va_list ap;
-	fputs("FATAL: ", stderr);
-	va_start(ap, fmt);
-	vfprintf(stderr, fmt, ap);
-	va_end(ap);
-	putc('\n', stderr);
-
-	printUsage();
-	exit(1);
-}
+// clang-format off: long string literal
+static Usage usage(
+    "Usage: rgblink [-dhMtVvwx] [-l script] [-m map_file] [-n sym_file]\n"
+    "               [-O overlay_file] [-o out_file] [-p pad_value]\n"
+    "               [-S spec] <file> ...\n"
+    "Useful options:\n"
+    "    -l, --linkerscript <path>  set the input linker script\n"
+    "    -m, --map <path>           set the output map file\n"
+    "    -n, --sym <path>           set the output symbol list file\n"
+    "    -o, --output <path>        set the output file\n"
+    "    -p, --pad <value>          set the value to pad between sections with\n"
+    "    -x, --nopad                disable padding of output binary\n"
+    "    -V, --version              print RGBLINK version and exits\n"
+    "\n"
+    "For help, use `man rgblink' or go to https://rgbds.gbdev.io/docs/\n"
+);
+// clang-format on
 
 enum ScrambledRegion {
 	SCRAMBLE_ROMX,
@@ -268,10 +253,7 @@ int main(int argc, char *argv[]) {
 			options.isWRAM0Mode = true;
 			break;
 		case 'h':
-			// LCOV_EXCL_START
-			printUsage();
-			exit(0);
-			// LCOV_EXCL_STOP
+			usage.printAndExit(0); // LCOV_EXCL_LINE
 		case 'l':
 			if (linkerScriptName) {
 				warnx("Overriding linker script %s", linkerScriptName);
@@ -345,10 +327,7 @@ int main(int argc, char *argv[]) {
 			options.is32kMode = true;
 			break;
 		default:
-			// LCOV_EXCL_START
-			printUsage();
-			exit(1);
-			// LCOV_EXCL_STOP
+			usage.printAndExit(1); // LCOV_EXCL_LINE
 		}
 	}
 
@@ -356,7 +335,7 @@ int main(int argc, char *argv[]) {
 
 	// If no input files were specified, the user must have screwed up
 	if (curArgIndex == argc) {
-		fatalWithUsage("Please specify an input file (pass `-` to read from standard input)");
+		usage.printAndExit("Please specify an input file (pass `-` to read from standard input)");
 	}
 
 	// Patch the size array depending on command-line options

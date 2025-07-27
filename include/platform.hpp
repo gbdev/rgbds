@@ -1,7 +1,5 @@
 // SPDX-License-Identifier: MIT
 
-// platform-specific hacks
-
 #ifndef RGBDS_PLATFORM_HPP
 #define RGBDS_PLATFORM_HPP
 

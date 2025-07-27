@@ -15,6 +15,7 @@
 #include "extern/getopt.hpp"
 #include "helpers.hpp"
 #include "parser.hpp" // Generated from parser.y
+#include "usage.hpp"
 #include "version.hpp"
 
 #include "asm/charmap.hpp"
@@ -83,41 +84,25 @@ static option const longopts[] = {
     {nullptr,           no_argument,       nullptr,  0  }
 };
 
-// LCOV_EXCL_START
-static void printUsage() {
-	fputs(
-	    "Usage: rgbasm [-EhVvw] [-b chars] [-D name[=value]] [-g chars] [-I path]\n"
-	    "              [-M depend_file] [-MC] [-MG] [-MP] [-MT target_file] [-MQ target_file]\n"
-	    "              [-o out_file] [-P include_file] [-p pad_value] [-Q precision]\n"
-	    "              [-r depth] [-s features:state_file] [-W warning] [-X max_errors]\n"
-	    "              <file>\n"
-	    "Useful options:\n"
-	    "    -E, --export-all               export all labels\n"
-	    "    -M, --dependfile <path>        set the output dependency file\n"
-	    "    -o, --output <path>            set the output object file\n"
-	    "    -p, --pad-value <value>        set the value to use for `ds'\n"
-	    "    -s, --state <features>:<path>  set an output state file\n"
-	    "    -V, --version                  print RGBASM version and exit\n"
-	    "    -W, --warning <warning>        enable or disable warnings\n"
-	    "\n"
-	    "For help, use `man rgbasm' or go to https://rgbds.gbdev.io/docs/\n",
-	    stderr
-	);
-}
-// LCOV_EXCL_STOP
-
-[[gnu::format(printf, 1, 2), noreturn]]
-static void fatalWithUsage(char const *fmt, ...) {
-	va_list ap;
-	fputs("FATAL: ", stderr);
-	va_start(ap, fmt);
-	vfprintf(stderr, fmt, ap);
-	va_end(ap);
-	putc('\n', stderr);
-
-	printUsage();
-	exit(1);
-}
+// clang-format off: long string literal
+static Usage usage(
+    "Usage: rgbasm [-EhVvw] [-b chars] [-D name[=value]] [-g chars] [-I path]\n"
+    "              [-M depend_file] [-MC] [-MG] [-MP] [-MT target_file] [-MQ target_file]\n"
+    "              [-o out_file] [-P include_file] [-p pad_value] [-Q precision]\n"
+    "              [-r depth] [-s features:state_file] [-W warning] [-X max_errors]\n"
+    "              <file>\n"
+    "Useful options:\n"
+    "    -E, --export-all               export all labels\n"
+    "    -M, --dependfile <path>        set the output dependency file\n"
+    "    -o, --output <path>            set the output object file\n"
+    "    -p, --pad-value <value>        set the value to use for `ds'\n"
+    "    -s, --state <features>:<path>  set an output state file\n"
+    "    -V, --version                  print RGBASM version and exit\n"
+    "    -W, --warning <warning>        enable or disable warnings\n"
+    "\n"
+    "For help, use `man rgbasm' or go to https://rgbds.gbdev.io/docs/\n"
+);
+// clang-format on
 
 // Parse a comma-separated string of '-s/--state' features
 static std::vector<StateFeature> parseStateFeatures(char *str) {
@@ -218,10 +203,7 @@ int main(int argc, char *argv[]) {
 			break;
 
 		case 'h':
-			// LCOV_EXCL_START
-			printUsage();
-			exit(0);
-			// LCOV_EXCL_STOP
+			usage.printAndExit(0); // LCOV_EXCL_LINE
 
 		case 'I':
 			fstk_AddIncludePath(musl_optarg);
@@ -382,10 +364,7 @@ int main(int argc, char *argv[]) {
 
 		// Unrecognized options
 		default:
-			// LCOV_EXCL_START
-			printUsage();
-			exit(1);
-			// LCOV_EXCL_STOP
+			usage.printAndExit(1); // LCOV_EXCL_LINE
 		}
 	}
 
@@ -394,9 +373,9 @@ int main(int argc, char *argv[]) {
 	}
 
 	if (argc == musl_optind) {
-		fatalWithUsage("Please specify an input file (pass `-` to read from standard input)");
+		usage.printAndExit("Please specify an input file (pass `-` to read from standard input)");
 	} else if (argc != musl_optind + 1) {
-		fatalWithUsage("More than one input file specified");
+		usage.printAndExit("More than one input file specified");
 	}
 
 	std::string mainFileName = argv[musl_optind];
