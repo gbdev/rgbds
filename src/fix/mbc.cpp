@@ -57,43 +57,29 @@ static std::unordered_map<MbcType, std::pair<char const *, bool>> mbcData{
     {TPP1_BATTERY_TIMER_MULTIRUMBLE_RUMBLE, {"TPP1+BATTERY+TIMER+MULTIRUMBLE", false}},
 };
 
-static void printAcceptedMbcNames(FILE *file) {
-	fputs("Accepted MBC names:\n", file);
-	fputs("\tROM ($00) [aka ROM_ONLY]\n", file);
-	fputs("\tMBC1 ($01), MBC1+RAM ($02), MBC1+RAM+BATTERY ($03)\n", file);
-	fputs("\tMBC2 ($05), MBC2+BATTERY ($06)\n", file);
-	fputs("\tROM+RAM ($08) [deprecated], ROM+RAM+BATTERY ($09) [deprecated]\n", file);
-	fputs("\tMMM01 ($0B), MMM01+RAM ($0C), MMM01+RAM+BATTERY ($0D)\n", file);
-	fputs("\tMBC3+TIMER+BATTERY ($0F), MBC3+TIMER+RAM+BATTERY ($10)\n", file);
-	fputs("\tMBC3 ($11), MBC3+RAM ($12), MBC3+RAM+BATTERY ($13)\n", file);
-	fputs("\tMBC5 ($19), MBC5+RAM ($1A), MBC5+RAM+BATTERY ($1B)\n", file);
-	fputs("\tMBC5+RUMBLE ($1C), MBC5+RUMBLE+RAM ($1D), MBC5+RUMBLE+RAM+BATTERY ($1E)\n", file);
-	fputs("\tMBC6 ($20)\n", file);
-	fputs("\tMBC7+SENSOR+RUMBLE+RAM+BATTERY ($22)\n", file);
-	fputs("\tPOCKET_CAMERA ($FC)\n", file);
-	fputs("\tBANDAI_TAMA5 ($FD) [aka TAMA5]\n", file);
-	fputs("\tHUC3 ($FE)\n", file);
-	fputs("\tHUC1+RAM+BATTERY ($FF)\n", file);
-
-	fputs("\n\tTPP1_1.0, TPP1_1.0+RUMBLE, TPP1_1.0+MULTIRUMBLE, TPP1_1.0+TIMER,\n", file);
-	fputs("\tTPP1_1.0+TIMER+RUMBLE, TPP1_1.0+TIMER+MULTIRUMBLE, TPP1_1.0+BATTERY,\n", file);
-	fputs("\tTPP1_1.0+BATTERY+RUMBLE, TPP1_1.0+BATTERY+MULTIRUMBLE,\n", file);
-	fputs("\tTPP1_1.0+BATTERY+TIMER, TPP1_1.0+BATTERY+TIMER+RUMBLE,\n", file);
-	fputs("\tTPP1_1.0+BATTERY+TIMER+MULTIRUMBLE\n", file);
-}
-
-[[gnu::format(printf, 1, 2), noreturn]]
-static void fatalWithMBCNames(char const *fmt, ...) {
-	va_list ap;
-	fputs("FATAL: ", stderr);
-	va_start(ap, fmt);
-	vfprintf(stderr, fmt, ap);
-	va_end(ap);
-	putc('\n', stderr);
-
-	printAcceptedMbcNames(stderr);
-	exit(1);
-}
+static char const *acceptedMBCNames =
+    "Accepted MBC names:\n"
+    "\tROM ($00) [aka ROM_ONLY]\n"
+    "\tMBC1 ($01), MBC1+RAM ($02), MBC1+RAM+BATTERY ($03)\n"
+    "\tMBC2 ($05), MBC2+BATTERY ($06)\n"
+    "\tROM+RAM ($08) [deprecated], ROM+RAM+BATTERY ($09) [deprecated]\n"
+    "\tMMM01 ($0B), MMM01+RAM ($0C), MMM01+RAM+BATTERY ($0D)\n"
+    "\tMBC3+TIMER+BATTERY ($0F), MBC3+TIMER+RAM+BATTERY ($10)\n"
+    "\tMBC3 ($11), MBC3+RAM ($12), MBC3+RAM+BATTERY ($13)\n"
+    "\tMBC5 ($19), MBC5+RAM ($1A), MBC5+RAM+BATTERY ($1B)\n"
+    "\tMBC5+RUMBLE ($1C), MBC5+RUMBLE+RAM ($1D), MBC5+RUMBLE+RAM+BATTERY ($1E)\n"
+    "\tMBC6 ($20)\n"
+    "\tMBC7+SENSOR+RUMBLE+RAM+BATTERY ($22)\n"
+    "\tPOCKET_CAMERA ($FC)\n"
+    "\tBANDAI_TAMA5 ($FD) [aka TAMA5]\n"
+    "\tHUC3 ($FE)\n"
+    "\tHUC1+RAM+BATTERY ($FF)\n"
+    "\n"
+    "\tTPP1_1.0, TPP1_1.0+RUMBLE, TPP1_1.0+MULTIRUMBLE, TPP1_1.0+TIMER,\n"
+    "\tTPP1_1.0+TIMER+RUMBLE, TPP1_1.0+TIMER+MULTIRUMBLE, TPP1_1.0+BATTERY,\n"
+    "\tTPP1_1.0+BATTERY+RUMBLE, TPP1_1.0+BATTERY+MULTIRUMBLE,\n"
+    "\tTPP1_1.0+BATTERY+TIMER, TPP1_1.0+BATTERY+TIMER+RUMBLE,\n"
+    "\tTPP1_1.0+BATTERY+TIMER+MULTIRUMBLE"; // No trailing newline
 
 char const *mbc_Name(MbcType type) {
 	auto search = mbcData.find(type);
@@ -138,19 +124,19 @@ static bool readMBCSlice(char const *&name, char const *expected) {
 
 [[noreturn]]
 static void fatalUnknownMBC(char const *fullName) {
-	fatalWithMBCNames("Unknown MBC \"%s\"", fullName);
+	fatal("Unknown MBC \"%s\"\n%s", fullName, acceptedMBCNames);
 }
 
 [[noreturn]]
 static void fatalWrongMBCFeatures(char const *fullName) {
-	fatalWithMBCNames("Features incompatible with MBC (\"%s\")", fullName);
+	fatal("Features incompatible with MBC (\"%s\")\n%s", fullName, acceptedMBCNames);
 }
 
 MbcType mbc_ParseName(char const *name, uint8_t &tpp1Major, uint8_t &tpp1Minor) {
 	char const *fullName = name;
 
 	if (!strcasecmp(name, "help") || !strcasecmp(name, "list")) {
-		printAcceptedMbcNames(stdout);
+		puts(acceptedMBCNames); // Outputs to stdout and appends a newline
 		exit(0);
 	}
 

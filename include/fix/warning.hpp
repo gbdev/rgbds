@@ -24,7 +24,7 @@ enum WarningID {
 
 extern Diagnostics<WarningLevel, WarningID> warnings;
 
-// Warns the user about problems that don't prevent fixing the ROM
+// Warns the user about problems that don't prevent fixing the ROM header
 [[gnu::format(printf, 2, 3)]]
 void warning(WarningID id, char const *fmt, ...);
 
@@ -32,8 +32,8 @@ void warning(WarningID id, char const *fmt, ...);
 [[gnu::format(printf, 1, 2)]]
 void error(char const *fmt, ...);
 
-// Prints a fatal error and exits
-[[gnu::format(printf, 1, 2)]]
+// Prints an error, and exits with failure
+[[gnu::format(printf, 1, 2), noreturn]]
 void fatal(char const *fmt, ...);
 
 uint32_t checkErrors(char const *filename);
