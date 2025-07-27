@@ -1,0 +1,2 @@
+error: linkerscript-noexist.link(1): Failed to open included linker script "linkerscript-noexist.inc": No such file or directory
+Linking failed with 1 error

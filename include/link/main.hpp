@@ -12,13 +12,13 @@
 #include "linkdefs.hpp"
 
 struct Options {
-	bool isDmgMode;               // -d
-	char const *mapFileName;      // -m
-	bool noSymInMap;              // -M
-	char const *symFileName;      // -n
-	char const *overlayFileName;  // -O
-	char const *outputFileName;   // -o
-	uint8_t padValue;             // -p
+	bool isDmgMode;              // -d
+	char const *mapFileName;     // -m
+	bool noSymInMap;             // -M
+	char const *symFileName;     // -n
+	char const *overlayFileName; // -O
+	char const *outputFileName;  // -o
+	uint8_t padValue;            // -p
 	bool hasPadValue = false;
 	// Setting these three to 0 disables the functionality
 	uint16_t scrambleROMX; // -S

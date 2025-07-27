@@ -18,7 +18,7 @@
 #include "version.hpp"
 
 #include "link/assign.hpp"
-#include "link/layout.hpp"
+#include "link/lexer.hpp"
 #include "link/object.hpp"
 #include "link/output.hpp"
 #include "link/patch.hpp"
@@ -151,7 +151,7 @@ static void parseScrambleSpec(char const *spec) {
 
 		// If this trips, `spec` must be pointing at a ',' or '=' (or NUL) due to the assumption
 		if (regionNameLen == 0) {
-			argErr('S', "Missing region name");
+			argError('S', "Missing region name");
 
 			if (*spec == '\0') {
 				break;
@@ -165,7 +165,7 @@ static void parseScrambleSpec(char const *spec) {
 		// Find the next non-blank char after the region name's end
 		spec += regionNameLen + strspn(&spec[regionNameLen], " \t");
 		if (*spec != '\0' && *spec != ',' && *spec != '=') {
-			argErr(
+			argError(
 			    'S',
 			    "Unexpected '%c' after region name \"%.*s\"",
 			    *spec,
@@ -188,7 +188,7 @@ static void parseScrambleSpec(char const *spec) {
 		}
 
 		if (region == SCRAMBLE_UNK) {
-			argErr('S', "Unknown region \"%.*s\"", regionNameFmtLen, regionName);
+			argError('S', "Unknown region \"%.*s\"", regionNameFmtLen, regionName);
 		}
 
 		if (*spec == '=') {
@@ -197,13 +197,13 @@ static void parseScrambleSpec(char const *spec) {
 			char *endptr;
 
 			if (*spec == '\0' || *spec == ',') {
-				argErr('S', "Empty limit for region \"%.*s\"", regionNameFmtLen, regionName);
+				argError('S', "Empty limit for region \"%.*s\"", regionNameFmtLen, regionName);
 				goto next;
 			}
 			limit = strtoul(spec, &endptr, 10);
 			endptr += strspn(endptr, " \t");
 			if (*endptr != '\0' && *endptr != ',') {
-				argErr(
+				argError(
 				    'S',
 				    "Invalid non-numeric limit for region \"%.*s\"",
 				    regionNameFmtLen,
@@ -214,7 +214,7 @@ static void parseScrambleSpec(char const *spec) {
 			spec = endptr;
 
 			if (region != SCRAMBLE_UNK && limit > scrambleSpecs[region].max) {
-				argErr(
+				argError(
 				    'S',
 				    "Limit for region \"%.*s\" may not exceed %" PRIu16,
 				    regionNameFmtLen,
@@ -241,7 +241,7 @@ static void parseScrambleSpec(char const *spec) {
 			// Only WRAMX can be implied, since ROMX and SRAM size may vary
 			options.scrambleWRAMX = 7;
 		} else {
-			argErr('S', "Cannot imply limit for region \"%.*s\"", regionNameFmtLen, regionName);
+			argError('S', "Cannot imply limit for region \"%.*s\"", regionNameFmtLen, regionName);
 		}
 
 next: // Can't `continue` a `for` loop with this nontrivial iteration logic
@@ -310,7 +310,7 @@ int main(int argc, char *argv[]) {
 			unsigned long value = strtoul(musl_optarg, &endptr, 0);
 
 			if (musl_optarg[0] == '\0' || *endptr != '\0' || value > 0xFF) {
-				argErr('p', "Argument for 'p' must be a byte (between 0 and 0xFF)");
+				argError('p', "Argument for 'p' must be a byte (between 0 and 0xFF)");
 				value = 0xFF;
 			}
 			options.padValue = value;

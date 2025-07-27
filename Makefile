@@ -80,6 +80,7 @@ src/asm/lexer.o src/asm/main.o: src/asm/parser.hpp
 rgblink_obj := \
 	${common_obj} \
 	src/link/assign.o \
+	src/link/lexer.o \
 	src/link/layout.o \
 	src/link/main.o \
 	src/link/object.o \
@@ -95,7 +96,7 @@ rgblink_obj := \
 	src/opmath.o \
 	src/util.o
 
-src/link/layout.o src/link/main.o: src/link/script.hpp
+src/link/lexer.o src/link/main.o: src/link/script.hpp
 
 rgbfix_obj := \
 	${common_obj} \

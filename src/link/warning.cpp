@@ -103,12 +103,20 @@ void errorNoDump(char const *fmt, ...) {
 	warnings.incrementErrors();
 }
 
-void argErr(char flag, char const *fmt, ...) {
+void argError(char flag, char const *fmt, ...) {
 	va_list args;
 	fprintf(stderr, "error: Invalid argument for option '%c': ", flag);
 	va_start(args, fmt);
 	vfprintf(stderr, fmt, args);
 	va_end(args);
+	putc('\n', stderr);
+
+	warnings.incrementErrors();
+}
+
+void scriptError(char const *name, uint32_t lineNo, char const *fmt, va_list args) {
+	fprintf(stderr, "error: %s(%" PRIu32 "): ", name, lineNo);
+	vfprintf(stderr, fmt, args);
 	putc('\n', stderr);
 
 	warnings.incrementErrors();

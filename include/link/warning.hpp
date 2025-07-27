@@ -3,6 +3,7 @@
 #ifndef RGBDS_LINK_WARNING_HPP
 #define RGBDS_LINK_WARNING_HPP
 
+#include <stdarg.h>
 #include <stdint.h>
 
 #include "diagnostics.hpp"
@@ -48,7 +49,9 @@ void error(char const *fmt, ...);
 [[gnu::format(printf, 1, 2)]]
 void errorNoDump(char const *fmt, ...);
 [[gnu::format(printf, 2, 3)]]
-void argErr(char flag, char const *fmt, ...);
+void argError(char flag, char const *fmt, ...);
+
+void scriptError(char const *name, uint32_t lineNo, char const *fmt, va_list args);
 
 [[gnu::format(printf, 3, 4), noreturn]]
 void fatal(FileStackNode const *src, uint32_t lineNo, char const *fmt, ...);

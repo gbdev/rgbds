@@ -74,6 +74,7 @@ static void printDiag(
 	}
 	vfprintf(stderr, fmt, args);
 	putc('\n', stderr);
+
 	lexer_DumpStringExpansions();
 }
 

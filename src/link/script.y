@@ -12,8 +12,8 @@
 }
 
 %code {
+	#include "link/lexer.hpp"
 	#include "link/layout.hpp"
-	#include "link/warning.hpp"
 
 	yy::parser::symbol_type yylex(); // Provided by layout.cpp
 }
@@ -110,5 +110,5 @@ optional:
 /******************** Error handler ********************/
 
 void yy::parser::error(std::string const &msg) {
-	scriptError(lexer_Context(), "%s", msg.c_str());
+	lexer_Error("%s", msg.c_str());
 }
