@@ -595,7 +595,7 @@ static bool isMacroChar(char c) {
 	return c == '@' || c == '#' || c == '<' || (c >= '1' && c <= '9');
 }
 
-// forward declarations for readBracketedMacroArgNum
+// Forward declarations for `readBracketedMacroArgNum`
 static int peek();
 static void shiftChar();
 static int bumpChar();
@@ -795,7 +795,7 @@ int LexerState::peekCharAhead() {
 	return EOF;
 }
 
-// forward declarations for peek
+// Forward declarations for `peek`
 static std::shared_ptr<std::string> readInterpolation(size_t depth);
 
 static int peek() {
@@ -1622,7 +1622,7 @@ static void readCharacter(std::string &str) {
 
 // Lexer core
 
-static Token yylex_SKIP_TO_ENDC(); // forward declaration for yylex_NORMAL
+static Token yylex_SKIP_TO_ENDC(); // Forward declaration for `yylex_NORMAL`
 
 // Must stay in sync with the `switch` in `yylex_NORMAL`!
 static bool isGarbageCharacter(int c) {

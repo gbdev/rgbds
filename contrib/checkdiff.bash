@@ -26,11 +26,23 @@ dependency include/linkdefs.hpp    man/rgbds.5 \
 dependency src/asm/parser.y        man/rgbasm.5 \
            "Was the rgbasm grammar changed?"
 
+dependency src/asm/actions.cpp     man/rgbasm.5 \
+           "Was the rgbasm grammar changed?"
+
 dependency src/link/script.y       man/rgblink.5 \
            "Was the linker script grammar changed?"
 
-dependency include/asm/warning.hpp man/rgbasm.1 \
+dependency src/link/layout.cpp     man/rgblink.5 \
+           "Was the linker script grammar changed?"
+
+dependency include/asm/warning.hpp  man/rgbasm.1 \
            "Were the rgbasm warnings changed?"
+dependency include/link/warning.hpp man/rgblink.1 \
+           "Were the rgblink warnings changed?"
+dependency include/fix/warning.hpp  man/rgbfix.1 \
+           "Were the rgbfix warnings changed?"
+dependency include/gfx/warning.hpp  man/rgbgfx.1 \
+           "Were the rgbgfx warnings changed?"
 
 dependency src/asm/object.cpp      include/linkdefs.hpp \
            "Should the object file revision be bumped?"

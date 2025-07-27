@@ -24,8 +24,8 @@ enum SymbolType {
 	SYM_REF // Forward reference to a label
 };
 
-struct Symbol;                    // For the `sym_IsPC` forward declaration
-bool sym_IsPC(Symbol const *sym); // For the inline `getSection` method
+struct Symbol;                    // Forward declaration for `sym_IsPC`
+bool sym_IsPC(Symbol const *sym); // Forward declaration for `getSection`
 
 struct Symbol {
 	std::string name;

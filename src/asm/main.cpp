@@ -14,7 +14,7 @@
 #include "diagnostics.hpp"
 #include "extern/getopt.hpp"
 #include "helpers.hpp"
-#include "parser.hpp"
+#include "parser.hpp" // Generated from parser.y
 #include "version.hpp"
 
 #include "asm/charmap.hpp"

@@ -80,18 +80,6 @@ struct Options {
 
 extern Options options;
 
-// Prints the error count, and exits with failure
-[[noreturn]]
-void giveUp();
-// If any error has been emitted thus far, calls `giveUp()`.
-void requireZeroErrors();
-// Prints an error, and increments the error count
-[[gnu::format(printf, 1, 2)]]
-void error(char const *fmt, ...);
-// Prints a fatal error, increments the error count, and gives up
-[[gnu::format(printf, 1, 2), noreturn]]
-void fatal(char const *fmt, ...);
-
 struct Palette {
 	// An array of 4 GBC-native (RGB555) colors
 	std::array<uint16_t, 4> colors{UINT16_MAX, UINT16_MAX, UINT16_MAX, UINT16_MAX};

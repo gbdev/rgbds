@@ -2719,7 +2719,7 @@ hl_ind_dec:
 
 %%
 
-/******************** Semantic actions ********************/
+/******************** Error handler ********************/
 
 void yy::parser::error(std::string const &str) {
 	::error("%s", str.c_str());

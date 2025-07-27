@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+
 #include "asm/actions.hpp"
 
 #include <stdio.h>

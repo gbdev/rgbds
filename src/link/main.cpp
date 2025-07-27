@@ -14,10 +14,11 @@
 #include "helpers.hpp" // assume
 #include "itertools.hpp"
 #include "platform.hpp"
-#include "script.hpp"
+#include "script.hpp" // Generated from script.y
 #include "version.hpp"
 
 #include "link/assign.hpp"
+#include "link/layout.hpp"
 #include "link/object.hpp"
 #include "link/output.hpp"
 #include "link/patch.hpp"
@@ -257,6 +258,8 @@ next: // Can't `continue` a `for` loop with this nontrivial iteration logic
 }
 
 int main(int argc, char *argv[]) {
+	char const *linkerScriptName = nullptr; // -l
+
 	// Parse options
 	for (int ch; (ch = musl_getopt_long_only(argc, argv, optstring, longopts, nullptr)) != -1;) {
 		switch (ch) {
@@ -270,10 +273,10 @@ int main(int argc, char *argv[]) {
 			exit(0);
 			// LCOV_EXCL_STOP
 		case 'l':
-			if (options.linkerScriptName) {
-				warnx("Overriding linker script %s", options.linkerScriptName);
+			if (linkerScriptName) {
+				warnx("Overriding linker script %s", linkerScriptName);
 			}
-			options.linkerScriptName = musl_optarg;
+			linkerScriptName = musl_optarg;
 			break;
 		case 'M':
 			options.noSymInMap = true;
@@ -375,10 +378,15 @@ int main(int argc, char *argv[]) {
 	}
 
 	// apply the linker script's modifications,
-	if (options.linkerScriptName) {
+	if (linkerScriptName) {
 		verbosePrint("Reading linker script...\n");
 
-		script_ProcessScript();
+		if (lexer_Init(linkerScriptName)) {
+			yy::parser parser;
+			// We don't care about the return value, as any error increments the global error count,
+			// which is what `main` checks.
+			(void)parser.parse();
+		}
 
 		// If the linker script produced any errors, some sections may be in an invalid state
 		requireZeroErrors();
