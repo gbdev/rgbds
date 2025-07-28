@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <errno.h>
 #include <fcntl.h>
+#include <fstream>
 #include <inttypes.h>
 #include <limits.h>
 #include <math.h>
@@ -31,72 +32,6 @@
 #include "asm/warning.hpp"
 // Include this last so it gets all type & constant definitions
 #include "parser.hpp" // For token definitions, generated from parser.y
-
-// Neither MSVC nor MinGW provide `mmap`
-#if defined(_MSC_VER) || defined(__MINGW32__)
-// clang-format off: maintain `include` order
-	#define WIN32_LEAN_AND_MEAN // Include less from `windows.h`
-	#include <windows.h>   // target architecture
-// clang-format on
-	#include <fileapi.h>   // CreateFileA
-	#include <handleapi.h> // CloseHandle
-	#include <memoryapi.h> // MapViewOfFile
-	#include <winbase.h>   // CreateFileMappingA
-
-static char *mapFile(int fd, std::string const &path, size_t) {
-	void *mappingAddr = nullptr;
-	if (HANDLE file = CreateFileA(
-	        path.c_str(),
-	        GENERIC_READ,
-	        FILE_SHARE_READ,
-	        nullptr,
-	        OPEN_EXISTING,
-	        FILE_FLAG_POSIX_SEMANTICS | FILE_FLAG_RANDOM_ACCESS,
-	        nullptr
-	    );
-	    file != INVALID_HANDLE_VALUE) {
-		if (HANDLE mappingObj = CreateFileMappingA(file, nullptr, PAGE_READONLY, 0, 0, nullptr);
-		    mappingObj != INVALID_HANDLE_VALUE) {
-			mappingAddr = MapViewOfFile(mappingObj, FILE_MAP_READ, 0, 0, 0);
-			CloseHandle(mappingObj);
-		}
-		CloseHandle(file);
-	}
-	return static_cast<char *>(mappingAddr);
-}
-
-struct FileUnmapDeleter {
-	FileUnmapDeleter(size_t) {}
-
-	void operator()(char *mappingAddr) { UnmapViewOfFile(mappingAddr); }
-};
-
-#else // defined(_MSC_VER) || defined(__MINGW32__)
-	#include <sys/mman.h>
-
-static char *mapFile(int fd, std::string const &path, size_t size) {
-	void *mappingAddr = mmap(nullptr, size, PROT_READ, MAP_PRIVATE, fd, 0);
-	// LCOV_EXCL_START
-	if (mappingAddr == MAP_FAILED && errno == ENOTSUP) {
-		// The implementation may not support MAP_PRIVATE; try again with MAP_SHARED
-		// instead, offering, I believe, weaker guarantees about external modifications to
-		// the file while reading it. That's still better than not opening it at all, though.
-		verbosePrint("mmap(%s, MAP_PRIVATE) failed, retrying with MAP_SHARED\n", path.c_str());
-		mappingAddr = mmap(nullptr, size, PROT_READ, MAP_SHARED, fd, 0);
-	}
-	// LCOV_EXCL_STOP
-	return mappingAddr != MAP_FAILED ? static_cast<char *>(mappingAddr) : nullptr;
-}
-
-struct FileUnmapDeleter {
-	size_t mappingSize;
-
-	FileUnmapDeleter(size_t mappingSize_) : mappingSize(mappingSize_) {}
-
-	void operator()(char *mappingAddr) { munmap(mappingAddr, mappingSize); }
-};
-
-#endif // !( defined(_MSC_VER) || defined(__MINGW32__) )
 
 using namespace std::literals;
 
@@ -406,39 +341,43 @@ void LexerState::setFileAsNextState(std::string const &filePath, bool updateStat
 		}
 		path = filePath;
 
-		int fd = open(path.c_str(), O_RDONLY);
-		if (fd < 0) {
-			// LCOV_EXCL_START
-			fatal("Failed to open file \"%s\": %s", path.c_str(), strerror(errno));
-			// LCOV_EXCL_STOP
-		}
-
-		bool isMmapped = false;
-
 		if (size_t size = static_cast<size_t>(statBuf.st_size); statBuf.st_size > 0) {
-			// Try using `mmap` for better performance
-			if (char *mappingAddr = mapFile(fd, path, size); mappingAddr != nullptr) {
-				close(fd);
-				content.emplace<ViewedContent>(
-				    std::shared_ptr<char[]>(mappingAddr, FileUnmapDeleter(size)), size
-				);
-				verbosePrint("File \"%s\" is mmap()ped\n", path.c_str()); // LCOV_EXCL_LINE
-				isMmapped = true;
-			}
-		}
+			// Read the entire file for better performance
+			// Ideally we'd use C++20 `auto ptr = std::make_shared<char[]>(size)`,
+			// but it has insufficient compiler support
+			auto ptr = std::shared_ptr<char[]>(new char[size]);
 
-		if (!isMmapped) {
-			// Sometimes mmap() fails or isn't available, so have a fallback
-			content.emplace<BufferedContent>(fd);
+			if (std::ifstream fs(path, std::ios::binary); !fs) {
+				// LCOV_EXCL_START
+				fatal("Failed to open file \"%s\": %s", path.c_str(), strerror(errno));
+				// LCOV_EXCL_STOP
+			} else if (!fs.read(ptr.get(), size)) {
+				// LCOV_EXCL_START
+				fatal("Failed to read file \"%s\": %s", path.c_str(), strerror(errno));
+				// LCOV_EXCL_STOP
+			}
+			content.emplace<ViewedContent>(ptr, size);
+
+			verbosePrint("File \"%s\" is fully read\n", path.c_str()); // LCOV_EXCL_LINE
+		} else {
 			// LCOV_EXCL_START
 			if (statBuf.st_size == 0) {
 				verbosePrint("File \"%s\" is empty\n", path.c_str());
 			} else {
-				verbosePrint(
-				    "File \"%s\" is opened; errno reports: %s\n", path.c_str(), strerror(errno)
-				);
+				verbosePrint("Failed to stat file \"%s\": %s\n", path.c_str(), strerror(errno));
 			}
 			// LCOV_EXCL_STOP
+
+			// Have a fallback if reading the file failed
+			int fd = open(path.c_str(), O_RDONLY);
+			if (fd < 0) {
+				// LCOV_EXCL_START
+				fatal("Failed to open file \"%s\": %s", path.c_str(), strerror(errno));
+				// LCOV_EXCL_STOP
+			}
+			content.emplace<BufferedContent>(fd);
+
+			verbosePrint("File \"%s\" is opened\n", path.c_str()); // LCOV_EXCL_LINE
 		}
 	}
 
