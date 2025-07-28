@@ -717,6 +717,29 @@ static void verboseOutputConfig() {
 	fputs("Ready.\n", stderr);
 }
 
+// Manual implementation of std::filesystem::path.replace_extension().
+// macOS <10.15 did not support std::filesystem::path.
+static void replaceExtension(std::string &path, char const *extension) {
+	constexpr std::string_view chars =
+// Both must start with a dot!
+#if defined(_MSC_VER) || defined(__MINGW32__)
+	    "./\\"sv;
+#else
+	    "./"sv;
+#endif
+	size_t len = path.npos;
+	if (size_t i = path.find_last_of(chars); i != path.npos && path[i] == '.') {
+		// We found the last dot, but check if it's part of a stem
+		// (There must be a non-path separator character before it)
+		if (i != 0 && chars.find(path[i - 1], 1) == chars.npos) {
+			// We can replace the extension
+			len = i;
+		}
+	}
+	path.assign(path, 0, len);
+	path.append(extension);
+}
+
 int main(int argc, char *argv[]) {
 	struct AtFileStackEntry {
 		int parentInd;            // Saved offset into parent argv
@@ -794,36 +817,17 @@ int main(int argc, char *argv[]) {
 	}
 
 	auto autoOutPath = [](bool autoOptEnabled, std::string &path, char const *extension) {
-		if (autoOptEnabled) {
-			std::string &image = localOptions.groupOutputs ? options.output : options.input;
-			if (image.empty()) {
-				usage.printAndExit(
-				    "No %s specified",
-				    localOptions.groupOutputs ? "output tile data file" : "input image"
-				);
-			}
-
-			// Manual implementation of std::filesystem::path.replace_extension().
-			constexpr std::string_view chars =
-// Both must start with a dot!
-#if defined(_MSC_VER) || defined(__MINGW32__)
-			    "./\\"sv;
-#else
-			    "./"sv;
-#endif
-			size_t len = image.npos;
-			size_t i = image.find_last_of(chars);
-			if (i != image.npos && image[i] == '.') {
-				// We found the last dot, but check if it's part of a stem
-				// (There must be a non-path separator character before it)
-				if (i != 0 && chars.find(image[i - 1], 1) == chars.npos) {
-					// We can replace the extension
-					len = i;
-				}
-			}
-			path.assign(image, 0, len);
-			path.append(extension);
+		if (!autoOptEnabled) {
+			return;
 		}
+		path = localOptions.groupOutputs ? options.output : options.input;
+		if (path.empty()) {
+			usage.printAndExit(
+			    "No %s specified",
+			    localOptions.groupOutputs ? "output tile data file" : "input image"
+			);
+		}
+		replaceExtension(path, extension);
 	};
 	autoOutPath(localOptions.autoAttrmap, options.attrmap, ".attrmap");
 	autoOutPath(localOptions.autoTilemap, options.tilemap, ".tilemap");
