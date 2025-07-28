@@ -5,7 +5,6 @@
 #include <algorithm>
 #include <errno.h>
 #include <inttypes.h>
-#include <optional>
 #include <stack>
 #include <stdio.h>
 #include <stdlib.h>
@@ -38,8 +37,8 @@ struct SectionStackEntry {
 	std::stack<UnionStackEntry> unionStack;
 };
 
-Section *currentSection = nullptr;
-std::deque<Section> sectionList;
+static Section *currentSection = nullptr;
+static std::deque<Section> sectionList;
 static std::unordered_map<std::string, size_t> sectionMap; // Indexes into `sectionList`
 
 static uint32_t curOffset; // Offset into the current section (see `sect_GetSymbolOffset`)
@@ -76,6 +75,16 @@ static bool requireCodeSection() {
 	    "Section '%s' cannot contain code or data (not ROM0 or ROMX)", currentSection->name.c_str()
 	);
 	return false;
+}
+
+size_t sect_CountSections() {
+	return sectionList.size();
+}
+
+void sect_ForEach(void (*callback)(Section &)) {
+	for (Section &sect : sectionList) {
+		callback(sect);
+	}
 }
 
 void sect_CheckSizes() {
@@ -440,6 +449,16 @@ static void changeSection() {
 	sym_ResetCurrentLabelScopes();
 }
 
+uint32_t Section::getID() const {
+	// Section fragments share the same name but have different IDs, so search by identity
+	if (auto search =
+	        std::find_if(RANGE(sectionList), [this](Section const &s) { return &s == this; });
+	    search != sectionList.end()) {
+		return static_cast<uint32_t>(std::distance(sectionList.begin(), search));
+	}
+	return UINT32_MAX; // LCOV_EXCL_LINE
+}
+
 bool Section::isSizeKnown() const {
 	// SECTION UNION and SECTION FRAGMENT can still grow
 	if (modifier != SECTION_NORMAL) {
@@ -553,6 +572,14 @@ uint32_t sect_GetSymbolOffset() {
 
 uint32_t sect_GetOutputOffset() {
 	return curOffset + loadOffset;
+}
+
+std::optional<uint32_t> sect_GetOutputBank() {
+	return currentSection ? std::optional<uint32_t>(currentSection->bank) : std::nullopt;
+}
+
+Patch *sect_AddOutputPatch() {
+	return currentSection ? &currentSection->patches.emplace_front() : nullptr;
 }
 
 // Returns how many bytes need outputting for the specified alignment and offset to succeed

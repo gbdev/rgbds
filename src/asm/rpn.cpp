@@ -4,6 +4,7 @@
 
 #include <inttypes.h>
 #include <limits.h>
+#include <optional>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -102,15 +103,15 @@ void Expression::makeBankSymbol(std::string const &symName) {
 	clear();
 	if (Symbol const *sym = sym_FindScopedSymbol(symName); sym_IsPC(sym)) {
 		// The @ symbol is treated differently.
-		if (!currentSection) {
+		if (std::optional<uint32_t> outputBank = sect_GetOutputBank(); !outputBank) {
 			error("PC has no bank outside of a section");
 			data = 1;
-		} else if (currentSection->bank == UINT32_MAX) {
+		} else if (*outputBank == UINT32_MAX) {
 			data = "Current section's bank is not known";
 
 			*reserveSpace(1) = RPN_BANK_SELF;
 		} else {
-			data = static_cast<int32_t>(currentSection->bank);
+			data = static_cast<int32_t>(*outputBank);
 		}
 		return;
 	} else if (sym && !sym->isLabel()) {

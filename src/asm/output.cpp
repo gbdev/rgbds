@@ -60,29 +60,13 @@ void out_RegisterNode(std::shared_ptr<FileStackNode> node) {
 	}
 }
 
-// Return a section's ID, or UINT32_MAX if the section does not exist
-static uint32_t getSectIDIfAny(Section *sect) {
-	if (!sect) {
-		return UINT32_MAX;
-	}
-
-	// Section fragments share the same name but have different IDs, so search by identity
-	if (auto search =
-	        std::find_if(RANGE(sectionList), [&sect](Section const &s) { return &s == sect; });
-	    search != sectionList.end()) {
-		return static_cast<uint32_t>(std::distance(sectionList.begin(), search));
-	}
-
-	fatal("Unknown section '%s'", sect->name.c_str()); // LCOV_EXCL_LINE
-}
-
 static void writePatch(Patch const &patch, FILE *file) {
 	assume(patch.src->ID != UINT32_MAX);
 
 	putLong(patch.src->ID, file);
 	putLong(patch.lineNo, file);
 	putLong(patch.offset, file);
-	putLong(getSectIDIfAny(patch.pcSection), file);
+	putLong(patch.pcSection ? patch.pcSection->getID() : UINT32_MAX, file);
 	putLong(patch.pcOffset, file);
 	putc(patch.type, file);
 	putLong(patch.rpn.size(), file);
@@ -126,10 +110,12 @@ static void writeSymbol(Symbol const &sym, FILE *file) {
 	} else {
 		assume(sym.src->ID != UINT32_MAX);
 
+		Section *symSection = sym.getSection();
+
 		putc(sym.isExported ? SYMTYPE_EXPORT : SYMTYPE_LOCAL, file);
 		putLong(sym.src->ID, file);
 		putLong(sym.fileLine, file);
-		putLong(getSectIDIfAny(sym.getSection()), file);
+		putLong(symSection ? symSection->getID() : UINT32_MAX, file);
 		putLong(sym.getOutputValue(), file);
 	}
 }
@@ -259,7 +245,8 @@ static void initPatch(Patch &patch, uint32_t type, Expression const &expr, uint3
 
 void out_CreatePatch(uint32_t type, Expression const &expr, uint32_t ofs, uint32_t pcShift) {
 	// Add the patch to the list
-	Patch &patch = currentSection->patches.emplace_front();
+	assume(sect_GetOutputBank().has_value());
+	Patch &patch = *sect_AddOutputPatch();
 
 	initPatch(patch, type, expr, ofs);
 
@@ -305,7 +292,7 @@ void out_WriteObject() {
 		return;
 	}
 
-	FILE *file;
+	static FILE *file; // `static` so `sect_ForEach` callback can see it
 	if (options.objectFileName != "-") {
 		file = fopen(options.objectFileName.c_str(), "wb");
 	} else {
@@ -329,7 +316,7 @@ void out_WriteObject() {
 	putLong(RGBDS_OBJECT_REV, file);
 
 	putLong(objectSymbols.size(), file);
-	putLong(sectionList.size(), file);
+	putLong(sect_CountSections(), file);
 
 	putLong(fileStackNodes.size(), file);
 	for (auto it = fileStackNodes.begin(); it != fileStackNodes.end(); ++it) {
@@ -345,9 +332,7 @@ void out_WriteObject() {
 		writeSymbol(*sym, file);
 	}
 
-	for (Section const &sect : sectionList) {
-		writeSection(sect, file);
-	}
+	sect_ForEach([](Section &sect) { writeSection(sect, file); });
 
 	putLong(assertions.size(), file);
 

@@ -5,6 +5,7 @@
 
 #include <deque>
 #include <memory>
+#include <optional>
 #include <stdint.h>
 #include <string>
 #include <unordered_map>
@@ -40,6 +41,7 @@ struct Section {
 	std::deque<Patch> patches;
 	std::vector<uint8_t> data;
 
+	uint32_t getID() const; // ID of the section in the object file (`UINT32_MAX` if none)
 	bool isSizeKnown() const;
 };
 
@@ -49,8 +51,8 @@ struct SectionSpec {
 	uint16_t alignOfs;
 };
 
-extern std::deque<Section> sectionList;
-extern Section *currentSection;
+size_t sect_CountSections();
+void sect_ForEach(void (*callback)(Section &));
 
 Section *sect_FindSectionByName(std::string const &name);
 void sect_NewSection(
@@ -73,6 +75,10 @@ void sect_CheckLoadClosed();
 Section *sect_GetSymbolSection();
 uint32_t sect_GetSymbolOffset();
 uint32_t sect_GetOutputOffset();
+std::optional<uint32_t> sect_GetOutputBank();
+
+Patch *sect_AddOutputPatch();
+
 uint32_t sect_GetAlignBytes(uint8_t alignment, uint16_t offset);
 void sect_AlignPC(uint8_t alignment, uint16_t offset);
 
