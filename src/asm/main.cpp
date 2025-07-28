@@ -16,6 +16,7 @@
 #include "helpers.hpp"
 #include "parser.hpp" // Generated from parser.y
 #include "usage.hpp"
+#include "util.hpp" // UpperMap
 #include "version.hpp"
 
 #include "asm/charmap.hpp"
@@ -124,25 +125,25 @@ static std::vector<StateFeature> parseStateFeatures(char *str) {
 			fatal("Empty feature for option 's'");
 		}
 		// Parse the `feature` and update the `features` list
+		static UpperMap<StateFeature> const featureNames{
+		    {"EQU",   STATE_EQU  },
+		    {"VAR",   STATE_VAR  },
+		    {"EQUS",  STATE_EQUS },
+		    {"CHAR",  STATE_CHAR },
+		    {"MACRO", STATE_MACRO},
+		};
 		if (!strcasecmp(feature, "all")) {
 			if (!features.empty()) {
 				warnx("Redundant feature before \"%s\" for option 's'", feature);
 			}
 			features.assign({STATE_EQU, STATE_VAR, STATE_EQUS, STATE_CHAR, STATE_MACRO});
+		} else if (auto search = featureNames.find(feature); search == featureNames.end()) {
+			fatal("Invalid feature for option 's': \"%s\"", feature);
+		} else if (StateFeature value = search->second;
+		           std::find(RANGE(features), value) != features.end()) {
+			warnx("Ignoring duplicate feature for option 's': \"%s\"", feature);
 		} else {
-			StateFeature value = !strcasecmp(feature, "equ")     ? STATE_EQU
-			                     : !strcasecmp(feature, "var")   ? STATE_VAR
-			                     : !strcasecmp(feature, "equs")  ? STATE_EQUS
-			                     : !strcasecmp(feature, "char")  ? STATE_CHAR
-			                     : !strcasecmp(feature, "macro") ? STATE_MACRO
-			                                                     : NB_STATE_FEATURES;
-			if (value == NB_STATE_FEATURES) {
-				fatal("Invalid feature for option 's': \"%s\"", feature);
-			} else if (std::find(RANGE(features), value) != features.end()) {
-				warnx("Ignoring duplicate feature for option 's': \"%s\"", feature);
-			} else {
-				features.push_back(value);
-			}
+			features.push_back(value);
 		}
 		feature = next;
 	}

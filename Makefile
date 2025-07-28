@@ -116,7 +116,8 @@ rgbgfx_obj := \
 	src/gfx/process.o \
 	src/gfx/reverse.o \
 	src/gfx/rgba.o \
-	src/gfx/warning.o
+	src/gfx/warning.o \
+	src/util.o
 
 rgbasm: ${rgbasm_obj}
 	$Q${CXX} ${REALLDFLAGS} -o $@ ${rgbasm_obj} ${REALCXXFLAGS} src/version.cpp

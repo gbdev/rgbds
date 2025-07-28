@@ -5,7 +5,6 @@
 #include <sys/types.h>
 
 #include <algorithm>
-#include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <inttypes.h>
@@ -115,28 +114,9 @@ struct Token {
 	Token(int type_, std::string &&value_) : type(type_), value(value_) {}
 };
 
-struct CaseInsensitive {
-	// FNV-1a hash of an uppercased string
-	size_t operator()(std::string const &str) const {
-		size_t hash = 0x811C9DC5;
-
-		for (char const &c : str) {
-			hash = (hash ^ toupper(c)) * 16777619;
-		}
-		return hash;
-	}
-
-	// Compare two strings without case-sensitivity (by converting to uppercase)
-	bool operator()(std::string const &str1, std::string const &str2) const {
-		return std::equal(RANGE(str1), RANGE(str2), [](char c1, char c2) {
-			return toupper(c1) == toupper(c2);
-		});
-	}
-};
-
 // This map lists all RGBASM keywords which `yylex_NORMAL` lexes as identifiers.
 // All non-identifier tokens are lexed separately.
-static std::unordered_map<std::string, int, CaseInsensitive, CaseInsensitive> keywordDict = {
+static UpperMap<int> const keywordDict{
     {"ADC",           T_(SM83_ADC)         },
     {"ADD",           T_(SM83_ADD)         },
     {"AND",           T_(SM83_AND)         },

@@ -15,11 +15,12 @@
 #include <string.h>
 #include <string>
 #include <string_view>
-#include <tuple>
+#include <utility>
 
 #include "diagnostics.hpp"
 #include "helpers.hpp"
 #include "platform.hpp"
+#include "util.hpp" // UpperMap
 
 #include "gfx/main.hpp"
 #include "gfx/png.hpp"
@@ -668,36 +669,30 @@ void parseExternalPalSpec(char const *arg) {
 	}
 	char const *path = ptr + 1;
 
-	static std::array parsers{
-	    std::tuple{"PSP", &parsePSPFile, std::ios::in    },
-	    std::tuple{"GPL", &parseGPLFile, std::ios::in    },
-	    std::tuple{"HEX", &parseHEXFile, std::ios::in    },
-	    std::tuple{"ACT", &parseACTFile, std::ios::binary},
-	    std::tuple{"ACO", &parseACOFile, std::ios::binary},
-	    std::tuple{"GBC", &parseGBCFile, std::ios::binary},
-	    std::tuple{"PNG", &parsePNGFile, std::ios::binary},
+	static UpperMap<std::pair<void (*)(char const *, std::filebuf &), bool>> const parsers{
+	    {"PSP", std::pair{&parsePSPFile, false}},
+	    {"GPL", std::pair{&parseGPLFile, false}},
+	    {"HEX", std::pair{&parseHEXFile, false}},
+	    {"ACT", std::pair{&parseACTFile, true} },
+	    {"ACO", std::pair{&parseACOFile, true} },
+	    {"GBC", std::pair{&parseGBCFile, true} },
+	    {"PNG", std::pair{&parsePNGFile, true} },
 	};
-
-	auto iter = std::find_if(RANGE(parsers), [&arg, &ptr](auto const &parser) {
-		return strncasecmp(arg, std::get<0>(parser), ptr - arg) == 0;
-	});
-	if (iter == parsers.end()) {
-		error(
-		    "Unknown external palette format \"%.*s\"",
-		    static_cast<int>(std::min(ptr - arg, static_cast<decltype(ptr - arg)>(INT_MAX))),
-		    arg
-		);
+	std::string format{arg, ptr};
+	auto search = parsers.find(format);
+	if (search == parsers.end()) {
+		error("Unknown external palette format \"%s\"", format.c_str());
 		return;
 	}
 
 	std::filebuf file;
 	// Some parsers read the file in text mode, others in binary mode
-	if (!file.open(path, std::ios::in | std::get<2>(*iter))) {
+	if (!file.open(path, search->second.second ? std::ios::in | std::ios::binary : std::ios::in)) {
 		fatal("Failed to open palette file \"%s\": %s", path, strerror(errno));
 		return;
 	}
 
-	std::get<1> (*iter)(path, file);
+	search->second.first(path, file);
 }
 
 void parseDmgPalSpec(char const * const rawArg) {

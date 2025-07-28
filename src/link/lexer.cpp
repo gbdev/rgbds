@@ -3,12 +3,10 @@
 #include "link/lexer.hpp"
 
 #include <array>
-#include <ctype.h>
 #include <errno.h>
 #include <fstream>
 #include <inttypes.h>
 #include <stdio.h>
-#include <string_view>
 #include <vector>
 
 #include "helpers.hpp"
@@ -265,22 +263,6 @@ static yy::parser::symbol_type parseString() {
 	return yy::parser::make_string(std::move(str));
 }
 
-struct Keyword {
-	std::string_view name;
-	yy::parser::symbol_type (*tokenGen)();
-};
-
-using namespace std::literals;
-
-static std::array keywords{
-    Keyword{"ORG"sv,      yy::parser::make_ORG     },
-    Keyword{"FLOATING"sv, yy::parser::make_FLOATING},
-    Keyword{"INCLUDE"sv,  yy::parser::make_INCLUDE },
-    Keyword{"ALIGN"sv,    yy::parser::make_ALIGN   },
-    Keyword{"DS"sv,       yy::parser::make_DS      },
-    Keyword{"OPTIONAL"sv, yy::parser::make_OPTIONAL},
-};
-
 yy::parser::symbol_type yylex() {
 	LexerStackEntry &context = lexerStack.back();
 	int c = context.file.sbumpc();
@@ -320,18 +302,30 @@ yy::parser::symbol_type yylex() {
 	} else if (isIdentChar(c)) { // Note that we match these *after* digit characters!
 		std::string ident = readIdent(c);
 
-		auto strUpperCmp = [](char cmp, char ref) { return toupper(cmp) == ref; };
-
-		for (SectionType type : EnumSeq(SECTTYPE_INVALID)) {
-			if (std::equal(RANGE(ident), RANGE(sectionTypeInfo[type].name), strUpperCmp)) {
-				return yy::parser::make_sect_type(type);
-			}
+		static UpperMap<SectionType> const sectTypes{
+		    {"WRAM0", SECTTYPE_WRAM0},
+		    {"VRAM",  SECTTYPE_VRAM },
+		    {"ROMX",  SECTTYPE_ROMX },
+		    {"ROM0",  SECTTYPE_ROM0 },
+		    {"HRAM",  SECTTYPE_HRAM },
+		    {"WRAMX", SECTTYPE_WRAMX},
+		    {"SRAM",  SECTTYPE_SRAM },
+		    {"OAM",   SECTTYPE_OAM  },
+		};
+		if (auto search = sectTypes.find(ident); search != sectTypes.end()) {
+			return yy::parser::make_sect_type(search->second);
 		}
 
-		for (Keyword const &keyword : keywords) {
-			if (std::equal(RANGE(ident), RANGE(keyword.name), strUpperCmp)) {
-				return keyword.tokenGen();
-			}
+		static UpperMap<yy::parser::symbol_type (*)()> const keywords{
+		    {"ORG",      yy::parser::make_ORG     },
+		    {"FLOATING", yy::parser::make_FLOATING},
+		    {"INCLUDE",  yy::parser::make_INCLUDE },
+		    {"ALIGN",    yy::parser::make_ALIGN   },
+		    {"DS",       yy::parser::make_DS      },
+		    {"OPTIONAL", yy::parser::make_OPTIONAL},
+		};
+		if (auto search = keywords.find(ident); search != keywords.end()) {
+			return search->second();
 		}
 
 		lexer_Error("Unknown keyword \"%s\"", ident.c_str());

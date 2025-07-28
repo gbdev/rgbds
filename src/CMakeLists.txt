@@ -91,6 +91,7 @@ set(rgbgfx_src
     "gfx/reverse.cpp"
     "gfx/rgba.cpp"
     "gfx/warning.cpp"
+    "util.cpp"
     )
 
 foreach(PROG "asm" "fix" "gfx" "link")
