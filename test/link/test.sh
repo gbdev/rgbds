@@ -233,6 +233,14 @@ tryDiff "$test"/out.err "$outtemp"
 tryCmp "$test"/out.gb "$gbtemp"
 evaluateTest
 
+test="overlay/unfixed"
+startTest
+"$RGBASM" -o "$otemp" "$test"/a.asm
+continueTest
+rgblinkQuiet -o "$gbtemp" -O "$test"/overlay.gb "$otemp" 2>"$outtemp"
+tryDiff "$test"/out.err "$outtemp"
+evaluateTest
+
 test="overlay/tiny"
 startTest
 "$RGBASM" -o "$otemp" "$test"/a.asm

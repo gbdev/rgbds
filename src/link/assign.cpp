@@ -379,15 +379,15 @@ static void categorizeSection(Section &section) {
 	sections.insert(pos, &section);
 }
 
-static std::vector<Section *> checkOverlayCompat() {
-	std::vector<Section *> unfixedSections;
+static std::vector<Section const *> checkOverlayCompat() {
+	std::vector<Section const *> unfixedSections;
 
 	if (!options.overlayFileName) {
 		return unfixedSections;
 	}
 
 	for (uint8_t constraints = std::size(unassignedSections); constraints--;) {
-		if ((constraints & (BANK_CONSTRAINED | ORG_CONSTRAINED))
+		if (((constraints & BANK_CONSTRAINED) && (constraints & ORG_CONSTRAINED))
 		    || unassignedSections[constraints].empty()) {
 			continue;
 		}
@@ -418,17 +418,26 @@ void assign_AssignSections() {
 	});
 
 	// Overlaying requires only fully-constrained sections
-	if (std::vector<Section *> unfixedSections = checkOverlayCompat(); !unfixedSections.empty()) {
+	if (std::vector<Section const *> unfixedSections = checkOverlayCompat();
+	    !unfixedSections.empty()) {
 		size_t nbUnfixedSections = unfixedSections.size();
-		fputs("FATAL: All sections must be fixed when using an overlay file", stderr);
-		for (size_t i = 0; i < nbUnfixedSections; ++i) {
-			fprintf(stderr, "%c \"%s\"", i == 0 ? ';' : ',', unfixedSections[i]->name.c_str());
+		std::string unfixedList;
+		for (Section const *section : unfixedSections) {
+			unfixedList += "\n- \"";
+			unfixedList += section->name;
+			unfixedList += '"';
 		}
-		if (nbSectionsToAssign != nbUnfixedSections) {
-			fprintf(stderr, " and %" PRIu64 " more", nbSectionsToAssign - nbUnfixedSections);
+		if (nbSectionsToAssign > nbUnfixedSections) {
+			unfixedList += "\n- and ";
+			unfixedList += std::to_string(nbSectionsToAssign - nbUnfixedSections);
+			unfixedList += " more";
 		}
-		fprintf(stderr, " %s not\n", nbSectionsToAssign == 1 ? "is" : "are");
-		exit(1);
+		fatal(
+		    "All sections must be fixed when using an overlay file; %" PRIu64 " %s not:%s",
+		    nbSectionsToAssign,
+		    nbSectionsToAssign == 1 ? "is" : "are",
+		    unfixedList.c_str()
+		);
 	}
 
 	// Assign sections in decreasing constraint order
