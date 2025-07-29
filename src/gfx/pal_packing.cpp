@@ -307,42 +307,38 @@ static void decant(std::vector<AssignedSets> &assignments, std::vector<ColorSet>
 		// We do this by adding the first available color set, and then looking for palettes with
 		// common colors. (As an optimization, we know we can skip palettes already scanned.)
 		std::vector<bool> processed(from.nbColorSets(), false);
-		std::unordered_set<uint16_t> colors;
-		std::vector<size_t> members;
-		while (true) {
-			auto iter = std::find(RANGE(processed), true);
-			if (iter == processed.end()) { // Processed everything!
-				break;
-			}
+		for (std::vector<bool>::iterator iter;
+		     (iter = std::find(RANGE(processed), true)) != processed.end();) {
 			auto attrs = from.begin();
 			std::advance(attrs, iter - processed.begin());
 
+			std::unordered_set<uint16_t> colors(RANGE(colorSets[attrs->colorSetIndex]));
+			std::vector<size_t> members = {static_cast<size_t>(iter - processed.begin())};
+			*iter = true; // Mark the first color set as processed
+
 			// Build up the "component"...
-			colors.clear();
-			members.clear();
-			assume(members.empty()); // Compiler optimization hint
-			do {
-				ColorSet const &colorSet = colorSets[attrs->colorSetIndex];
-				// If this is the first color set, or if at least one color matches, add it
-				if (members.empty()
-				    || std::find_first_of(RANGE(colors), RANGE(colorSet)) != colors.end()) {
+			for (; ++iter != processed.end(); ++attrs) {
+				// If at least one color matches, add it
+				if (ColorSet const &colorSet = colorSets[attrs->colorSetIndex];
+				    std::find_first_of(RANGE(colors), RANGE(colorSet)) != colors.end()) {
 					colors.insert(RANGE(colorSet));
 					members.push_back(iter - processed.begin());
 					*iter = true; // Mark that color set as processed
 				}
-				++attrs;
-			} while (++iter != processed.end());
+			}
 
-			if (to.combinedVolume(RANGE(colors)) <= options.maxOpaqueColors()) {
-				// Iterate through the component's color sets, and transfer them
-				auto member = from.begin();
-				size_t curIndex = 0;
-				for (size_t index : members) {
-					std::advance(member, index - curIndex);
-					curIndex = index;
-					to.assign(std::move(*member));
-					from.remove(member); // Removing does not shift elements, so it's cheap
-				}
+			if (to.combinedVolume(RANGE(colors)) > options.maxOpaqueColors()) {
+				continue;
+			}
+
+			// Iterate through the component's color sets, and transfer them
+			auto member = from.begin();
+			size_t curIndex = 0;
+			for (size_t index : members) {
+				std::advance(member, index - curIndex);
+				curIndex = index;
+				to.assign(std::move(*member));
+				from.remove(member); // Removing does not shift elements, so it's cheap
 			}
 		}
 	});
@@ -383,12 +379,13 @@ std::tuple<std::vector<size_t>, size_t> overloadAndRemove(std::vector<ColorSet> 
 		);
 	}
 
-	// Begin with all color sets queued up for insertion
-	std::queue<ColorSetAttrs> queue(std::deque<ColorSetAttrs>(RANGE(sortedColorSetIDs)));
 	// Begin with no pages
-	std::vector<AssignedSets> assignments{};
+	std::vector<AssignedSets> assignments;
 
-	for (; !queue.empty(); queue.pop()) {
+	// Begin with all color sets queued up for insertion
+	for (std::queue<ColorSetAttrs> queue(std::deque<ColorSetAttrs>(RANGE(sortedColorSetIDs)));
+	     !queue.empty();
+	     queue.pop()) {
 		ColorSetAttrs const &attrs = queue.front(); // Valid until the `queue.pop()`
 		options.verbosePrint(Options::VERB_TRACE, "Handling color set %zu\n", attrs.colorSetIndex);
 
@@ -428,91 +425,78 @@ std::tuple<std::vector<size_t>, size_t> overloadAndRemove(std::vector<ColorSet> 
 			    bestPalIndex
 			);
 			assignments.emplace_back(colorSets, std::move(attrs));
-		} else {
+			continue;
+		}
+
+		options.verbosePrint(
+		    Options::VERB_TRACE,
+		    "Assigning color set %zu to palette %zu\n",
+		    attrs.colorSetIndex,
+		    bestPalIndex
+		);
+		AssignedSets &bestPal = assignments[bestPalIndex];
+		// Add the color to that palette
+		bestPal.assign(std::move(attrs));
+
+		auto compareEfficiency = [&](ColorSetAttrs const &attrs1, ColorSetAttrs const &attrs2) {
+			ColorSet const &colorSet1 = colorSets[attrs1.colorSetIndex];
+			ColorSet const &colorSet2 = colorSets[attrs2.colorSetIndex];
+			size_t size1 = colorSet1.size();
+			size_t size2 = colorSet2.size();
+			uint32_t relSize1 = bestPal.relSizeOf(colorSet1);
+			uint32_t relSize2 = bestPal.relSizeOf(colorSet2);
+
 			options.verbosePrint(
 			    Options::VERB_TRACE,
-			    "Assigning color set %zu to palette %zu\n",
-			    attrs.colorSetIndex,
-			    bestPalIndex
+			    "  Color sets %zu <=> %zu: Efficiency: %zu / %" PRIu32 " <=> %zu / "
+			    "%" PRIu32 "\n",
+			    attrs1.colorSetIndex,
+			    attrs2.colorSetIndex,
+			    size1,
+			    relSize1,
+			    size2,
+			    relSize2
 			);
-			AssignedSets &bestPal = assignments[bestPalIndex];
-			// Add the color to that palette
-			bestPal.assign(std::move(attrs));
 
-			// If this overloads the palette, get it back to normal (if possible)
-			while (bestPal.volume() > options.maxOpaqueColors()) {
-				options.verbosePrint(
-				    Options::VERB_TRACE,
-				    "Palette %zu is overloaded! (%zu > %" PRIu8 ")\n",
-				    bestPalIndex,
-				    bestPal.volume(),
-				    options.maxOpaqueColors()
-				);
+			// This comparison is algebraically equivalent to
+			// `size1 / relSize1 <=> size2 / relSize2`,
+			// but without potential precision loss from floating-point division.
+			size_t efficiency1 = size1 * relSize2;
+			size_t efficiency2 = size2 * relSize1;
+			return (efficiency1 > efficiency2) - (efficiency1 < efficiency2);
+		};
 
-				// Look for a color set minimizing "efficiency" (size / rel_size)
-				auto [minEfficiencyIter, maxEfficiencyIter] = std::minmax_element(
-				    RANGE(bestPal),
-				    [&bestPal, &colorSets](ColorSetAttrs const &lhs, ColorSetAttrs const &rhs) {
-					    ColorSet const &lhsColorSet = colorSets[lhs.colorSetIndex];
-					    ColorSet const &rhsColorSet = colorSets[rhs.colorSetIndex];
-					    size_t lhsSize = lhsColorSet.size();
-					    size_t rhsSize = rhsColorSet.size();
-					    uint32_t lhsRelSize = bestPal.relSizeOf(lhsColorSet);
-					    uint32_t rhsRelSize = bestPal.relSizeOf(rhsColorSet);
+		// If this overloads the palette, get it back to normal (if possible)
+		while (bestPal.volume() > options.maxOpaqueColors()) {
+			options.verbosePrint(
+			    Options::VERB_TRACE,
+			    "Palette %zu is overloaded! (%zu > %" PRIu8 ")\n",
+			    bestPalIndex,
+			    bestPal.volume(),
+			    options.maxOpaqueColors()
+			);
 
-					    options.verbosePrint(
-					        Options::VERB_TRACE,
-					        "  Color sets %zu <=> %zu: Efficiency: %zu / %" PRIu32 " <=> %zu / "
-					        "%" PRIu32 "\n",
-					        lhs.colorSetIndex,
-					        rhs.colorSetIndex,
-					        lhsSize,
-					        lhsRelSize,
-					        rhsSize,
-					        rhsRelSize
-					    );
-					    // This comparison is algebraically equivalent to
-					    // `lhsSize / lhsRelSize < rhsSize / rhsRelSize`,
-					    // but without potential precision loss from floating-point division.
-					    return lhsSize * rhsRelSize < rhsSize * lhsRelSize;
-				    }
-				);
+			// Look for a color set minimizing "efficiency" (size / relSize)
+			auto [minEfficiencyIter, maxEfficiencyIter] = std::minmax_element(
+			    RANGE(bestPal),
+			    [&compareEfficiency](ColorSetAttrs const &lhs, ColorSetAttrs const &rhs) {
+				    return compareEfficiency(lhs, rhs) < 0;
+			    }
+			);
 
-				// All efficiencies are identical iff min equals max
-				ColorSet const &minColorSet = colorSets[minEfficiencyIter->colorSetIndex];
-				ColorSet const &maxColorSet = colorSets[maxEfficiencyIter->colorSetIndex];
-				size_t minSize = minColorSet.size();
-				size_t maxSize = maxColorSet.size();
-				uint32_t minRelSize = bestPal.relSizeOf(minColorSet);
-				uint32_t maxRelSize = bestPal.relSizeOf(maxColorSet);
-				options.verbosePrint(
-				    Options::VERB_TRACE,
-				    "  Color sets %zu <= %zu: Efficiency: %zu / %" PRIu32 " <= %zu / %" PRIu32 "\n",
-				    minEfficiencyIter->colorSetIndex,
-				    maxEfficiencyIter->colorSetIndex,
-				    minSize,
-				    minRelSize,
-				    maxSize,
-				    maxRelSize
-				);
-				// This comparison is algebraically equivalent to
-				// `maxSize / maxRelSize == minSize / minRelSize`,
-				// but without potential precision loss from floating-point division.
-				if (maxSize * minRelSize == minSize * maxRelSize) {
-					options.verbosePrint(Options::VERB_TRACE, "  All efficiencies are identical\n");
-					break;
-				}
-
-				// Remove the color set with minimal efficiency
-				options.verbosePrint(
-				    Options::VERB_TRACE,
-				    "  Removing color set %zu\n",
-				    minEfficiencyIter->colorSetIndex
-				);
-				queue.emplace(std::move(*minEfficiencyIter));
-				queue.back().banFrom(bestPalIndex); // Ban it from this palette
-				bestPal.remove(minEfficiencyIter);
+			// All efficiencies are identical iff min equals max
+			if (compareEfficiency(*minEfficiencyIter, *maxEfficiencyIter) == 0) {
+				options.verbosePrint(Options::VERB_TRACE, "  All efficiencies are identical\n");
+				break;
 			}
+
+			// Remove the color set with minimal efficiency
+			options.verbosePrint(
+			    Options::VERB_TRACE, "  Removing color set %zu\n", minEfficiencyIter->colorSetIndex
+			);
+			queue.emplace(std::move(*minEfficiencyIter));
+			queue.back().banFrom(bestPalIndex); // Ban it from this palette
+			bestPal.remove(minEfficiencyIter);
 		}
 	}
 
