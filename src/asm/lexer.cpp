@@ -720,36 +720,42 @@ static std::shared_ptr<std::string> readInterpolation(size_t depth);
 static int peek() {
 	int c = lexerState->peekChar();
 
-	for (; lexerState->macroArgScanDistance == 0; c = lexerState->peekChar()) {
-		++lexerState->macroArgScanDistance; // Do not consider again
-
-		if (c == '\\' && !lexerState->disableMacroArgs) {
-			// If character is a backslash, check for a macro arg
-			++lexerState->macroArgScanDistance;
-			if (!isMacroChar(lexerState->peekCharAhead())) {
-				break;
-			}
-
-			// If character is a macro arg char, do macro arg expansion
-			shiftChar();
-			if (std::shared_ptr<std::string> str = readMacroArg(); str) {
-				beginExpansion(str, std::nullopt);
-
-				// Mark the entire macro arg expansion as "painted blue"
-				// so that macro args can't be recursive
-				// https://en.wikipedia.org/wiki/Painted_blue
-				lexerState->macroArgScanDistance += str->length();
-			}
-		} else if (c == '{' && !lexerState->disableInterpolation) {
-			// If character is an open brace, do symbol interpolation
-			shiftChar();
-			if (std::shared_ptr<std::string> str = readInterpolation(0); str) {
-				beginExpansion(str, *str);
-			}
-		}
+	if (lexerState->macroArgScanDistance > 0) {
+		return c;
 	}
 
-	return c;
+	++lexerState->macroArgScanDistance; // Do not consider again
+
+	if (c == '\\' && !lexerState->disableMacroArgs) {
+		// If character is a backslash, check for a macro arg
+		++lexerState->macroArgScanDistance;
+		if (!isMacroChar(lexerState->peekCharAhead())) {
+			return c;
+		}
+
+		// If character is a macro arg char, do macro arg expansion
+		shiftChar();
+		if (std::shared_ptr<std::string> str = readMacroArg(); str) {
+			beginExpansion(str, std::nullopt);
+
+			// Mark the entire macro arg expansion as "painted blue"
+			// so that macro args can't be recursive
+			// https://en.wikipedia.org/wiki/Painted_blue
+			lexerState->macroArgScanDistance += str->length();
+		}
+
+		return peek(); // Tail recursion
+	} else if (c == '{' && !lexerState->disableInterpolation) {
+		// If character is an open brace, do symbol interpolation
+		shiftChar();
+		if (std::shared_ptr<std::string> str = readInterpolation(0); str) {
+			beginExpansion(str, *str);
+		}
+
+		return peek(); // Tail recursion
+	} else {
+		return c;
+	}
 }
 
 static void shiftChar() {
