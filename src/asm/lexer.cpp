@@ -15,9 +15,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unordered_map>
-#ifndef _MSC_VER
-	#include <unistd.h>
-#endif
 
 #include "helpers.hpp"
 #include "util.hpp"
@@ -32,8 +29,6 @@
 #include "asm/warning.hpp"
 // Include this last so it gets all type & constant definitions
 #include "parser.hpp" // For token definitions, generated from parser.y
-
-using namespace std::literals;
 
 // Bison 3.6 changed token "types" to "kinds"; cast to int for simple compatibility
 #define T_(name) static_cast<int>(yy::parser::token::name)
@@ -562,9 +557,7 @@ static uint32_t readBracketedMacroArgNum() {
 			symName += c;
 		}
 
-		Symbol const *sym = sym_FindScopedValidSymbol(symName);
-
-		if (!sym) {
+		if (Symbol const *sym = sym_FindScopedValidSymbol(symName); !sym) {
 			if (sym_IsPurgedScoped(symName)) {
 				error("Bracketed symbol \"%s\" does not exist; it was purged", symName.c_str());
 			} else {
@@ -884,9 +877,7 @@ static void discardBlockComment() {
 static void discardComment() {
 	Defer reenableExpansions = scopedDisableExpansions();
 	for (;; shiftChar()) {
-		int c = peek();
-
-		if (c == EOF || c == '\r' || c == '\n') {
+		if (int c = peek(); c == EOF || c == '\r' || c == '\n') {
 			break;
 		}
 	}
@@ -894,9 +885,7 @@ static void discardComment() {
 
 static void discardLineContinuation() {
 	for (;;) {
-		int c = peek();
-
-		if (isWhitespace(c)) {
+		if (int c = peek(); isWhitespace(c)) {
 			shiftChar();
 		} else if (c == '\r' || c == '\n') {
 			shiftChar();
@@ -1277,9 +1266,7 @@ static std::shared_ptr<std::string> readInterpolation(size_t depth) {
 		return nullptr;
 	}
 
-	Symbol const *sym = sym_FindScopedValidSymbol(fmtBuf);
-
-	if (!sym || !sym->isDefined()) {
+	if (Symbol const *sym = sym_FindScopedValidSymbol(fmtBuf); !sym || !sym->isDefined()) {
 		if (sym_IsPurgedScoped(fmtBuf)) {
 			error("Interpolated symbol \"%s\" does not exist; it was purged", fmtBuf.c_str());
 		} else {
@@ -1901,9 +1888,8 @@ static Token yylex_NORMAL() {
 			// Raw symbols and local symbols cannot be string expansions
 			if (!raw && token.type == T_(SYMBOL) && lexerState->expandStrings) {
 				// Attempt string expansion
-				Symbol const *sym = sym_FindExactSymbol(std::get<std::string>(token.value));
-
-				if (sym && sym->type == SYM_EQUS) {
+				if (Symbol const *sym = sym_FindExactSymbol(std::get<std::string>(token.value));
+				    sym && sym->type == SYM_EQUS) {
 					beginExpansion(sym->getEqus(), sym->name);
 					return yylex_NORMAL(); // Tail recursion
 				}
