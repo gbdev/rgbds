@@ -1,2 +1,2 @@
-error: Invalid argument for option 'S': Unexpected ':' after region name "romx"
-Linking failed with 1 error
+FATAL: Unexpected character ':' in spec for option 'S'
+Linking aborted with 1 error

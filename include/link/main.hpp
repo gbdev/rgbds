@@ -22,8 +22,8 @@ struct Options {
 	bool hasPadValue = false;
 	// Setting these three to 0 disables the functionality
 	uint16_t scrambleROMX; // -S
-	uint8_t scrambleWRAMX;
-	uint8_t scrambleSRAM;
+	uint16_t scrambleWRAMX;
+	uint16_t scrambleSRAM;
 	bool is32kMode;      // -t
 	bool beVerbose;      // -v
 	bool isWRAM0Mode;    // -w

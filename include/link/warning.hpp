@@ -48,8 +48,6 @@ void error(FileStackNode const *src, uint32_t lineNo, char const *fmt, ...);
 void error(char const *fmt, ...);
 [[gnu::format(printf, 1, 2)]]
 void errorNoDump(char const *fmt, ...);
-[[gnu::format(printf, 2, 3)]]
-void argError(char flag, char const *fmt, ...);
 
 void scriptError(char const *name, uint32_t lineNo, char const *fmt, va_list args);
 

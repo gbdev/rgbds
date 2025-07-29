@@ -8,6 +8,7 @@
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
+#include <utility>
 
 #include "diagnostics.hpp"
 #include "extern/getopt.hpp"
@@ -16,6 +17,7 @@
 #include "platform.hpp"
 #include "script.hpp" // Generated from script.y
 #include "usage.hpp"
+#include "util.hpp" // UpperMap, printChar
 #include "version.hpp"
 
 #include "link/assign.hpp"
@@ -100,145 +102,111 @@ static Usage usage(
 );
 // clang-format on
 
-enum ScrambledRegion {
-	SCRAMBLE_ROMX,
-	SCRAMBLE_SRAM,
-	SCRAMBLE_WRAMX,
+static void parseScrambleSpec(char *spec) {
+	static UpperMap<std::pair<uint16_t *, uint16_t>> scrambleSpecs{
+	    {"ROMX",  std::pair{&options.scrambleROMX, 65535}},
+	    {"SRAM",  std::pair{&options.scrambleSRAM, 255}  },
+	    {"WRAMX", std::pair{&options.scrambleWRAMX, 7}   },
+	};
 
-	SCRAMBLE_UNK, // Used for errors
-};
-
-struct {
-	char const *name;
-	uint16_t max;
-} scrambleSpecs[SCRAMBLE_UNK] = {
-    {"romx",  65535}, // SCRAMBLE_ROMX
-    {"sram",  255  }, // SCRAMBLE_SRAM
-    {"wramx", 7    }, // SCRAMBLE_WRAMX
-};
-
-static void parseScrambleSpec(char const *spec) {
-	// Skip any leading whitespace
+	// Skip leading whitespace before the regions.
 	spec += strspn(spec, " \t");
 
-	// The argument to `-S` should be a comma-separated list of sections followed by an '='
-	// indicating their scramble limit.
-	while (spec) {
-		// Invariant: we should not be pointing at whitespace at this point
-		assume(*spec != ' ' && *spec != '\t');
+	// The argument to `-S` should be a comma-separated list of regions, allowing a trailing comma.
+	// Each region name is optionally followed by an '=' and a region size.
+	while (*spec) {
+		char *regionName = spec;
 
-		// Remember where the region's name begins and ends
-		char const *regionName = spec;
-		size_t regionNameLen = strcspn(spec, "=, \t");
-		// Length of region name string slice for print formatting, truncated if too long
-		int regionNameFmtLen = regionNameLen > INT_MAX ? INT_MAX : static_cast<int>(regionNameLen);
-		ScrambledRegion region = SCRAMBLE_UNK;
+		// The region name continues (skipping any whitespace) until a ',' (next region),
+		// '=' (region size), or the end of the string.
+		size_t regionNameLen = strcspn(regionName, "=, \t");
+		// Skip trailing whitespace after the region name.
+		size_t regionNameSkipLen = regionNameLen + strspn(regionName + regionNameLen, " \t");
+		spec = regionName + regionNameSkipLen;
 
-		// If this trips, `spec` must be pointing at a ',' or '=' (or NUL) due to the assumption
-		if (regionNameLen == 0) {
-			argError('S', "Missing region name");
-
-			if (*spec == '\0') {
-				break;
-			}
-			if (*spec == '=') {               // Skip the limit, too
-				spec = strchr(&spec[1], ','); // Skip to next comma, if any
-			}
-			goto next;
+		if (*spec != '=' && *spec != ',' && *spec != '\0') {
+			fatal("Unexpected character %s in spec for option 'S'", printChar(*spec));
 		}
 
-		// Find the next non-blank char after the region name's end
-		spec += regionNameLen + strspn(&spec[regionNameLen], " \t");
-		if (*spec != '\0' && *spec != ',' && *spec != '=') {
-			argError(
-			    'S',
-			    "Unexpected '%c' after region name \"%.*s\"",
-			    *spec,
-			    regionNameFmtLen,
-			    regionName
-			);
-			// Skip to next ',' or '=' (or NUL) and keep parsing
-			spec += 1 + strcspn(&spec[1], ",=");
-		}
-
-		// Now, determine which region type this is
-		for (ScrambledRegion r : EnumSeq(SCRAMBLE_UNK)) {
-			// If the strings match (case-insensitively), we got it!
-			// `strncasecmp` must be used here since `regionName` points
-			// to the entire remaining argument.
-			if (!strncasecmp(scrambleSpecs[r].name, regionName, regionNameLen)) {
-				region = r;
-				break;
-			}
-		}
-
-		if (region == SCRAMBLE_UNK) {
-			argError('S', "Unknown region \"%.*s\"", regionNameFmtLen, regionName);
-		}
-
+		char *regionSize = nullptr;
+		size_t regionSizeLen = 0;
+		// The '=' region size limit is optional.
 		if (*spec == '=') {
-			++spec; // `strtoul` will skip the whitespace on its own
-			unsigned long limit;
+			regionSize = spec + 1; // Skip the '='
+			// Skip leading whitespace before the region size.
+			regionSize += strspn(regionSize, " \t");
+
+			// The region size continues (skipping any whitespace) until a ',' (next region)
+			// or the end of the string.
+			regionSizeLen = strcspn(regionSize, ", \t");
+			// Skip trailing whitespace after the region size.
+			size_t regionSizeSkipLen = regionSizeLen + strspn(regionSize + regionSizeLen, " \t");
+			spec = regionSize + regionSizeSkipLen;
+
+			if (*spec != ',' && *spec != '\0') {
+				fatal("Unexpected character %s in spec for option 'S'", printChar(*spec));
+			}
+		}
+
+		// Skip trailing comma after the region.
+		if (*spec == ',') {
+			++spec;
+		}
+		// Skip trailing whitespace after the region.
+		// `spec` will be the next region name, or the end of the string.
+		spec += strspn(spec, " \t");
+
+		// Terminate the `regionName` and `regionSize` strings.
+		regionName[regionNameLen] = '\0';
+		if (regionSize) {
+			regionSize[regionSizeLen] = '\0';
+		}
+
+		// Check for an empty region name or limit.
+		// Note that by skipping leading whitespace before the loop, and skipping a trailing comma
+		// and whitespace before the next iteration, we guarantee that the region name will not be
+		// empty if it is present at all.
+		if (*regionName == '\0') {
+			fatal("Empty region name in spec for option 'S'");
+		}
+		if (regionSize && *regionSize == '\0') {
+			fatal("Empty region size limit in spec for option 'S'");
+		}
+
+		// Determine which region type this is.
+		auto search = scrambleSpecs.find(regionName);
+		if (search == scrambleSpecs.end()) {
+			fatal("Unknown region name \"%s\" in spec for option 'S'", regionName);
+		}
+
+		uint16_t limit = search->second.second;
+		if (regionSize) {
 			char *endptr;
+			unsigned long value = strtoul(regionSize, &endptr, 0);
 
-			if (*spec == '\0' || *spec == ',') {
-				argError('S', "Empty limit for region \"%.*s\"", regionNameFmtLen, regionName);
-				goto next;
+			if (*endptr != '\0') {
+				fatal("Invalid region size limit \"%s\" for option 'S'", regionSize);
 			}
-			limit = strtoul(spec, &endptr, 10);
-			endptr += strspn(endptr, " \t");
-			if (*endptr != '\0' && *endptr != ',') {
-				argError(
-				    'S',
-				    "Invalid non-numeric limit for region \"%.*s\"",
-				    regionNameFmtLen,
-				    regionName
+			if (value > limit) {
+				fatal(
+				    "%s region size for option 'S' must be between 0 and %" PRIu16,
+				    search->first.c_str(),
+				    limit
 				);
-				endptr = strchr(endptr, ',');
-			}
-			spec = endptr;
-
-			if (region != SCRAMBLE_UNK && limit > scrambleSpecs[region].max) {
-				argError(
-				    'S',
-				    "Limit for region \"%.*s\" may not exceed %" PRIu16,
-				    regionNameFmtLen,
-				    regionName,
-				    scrambleSpecs[region].max
-				);
-				limit = scrambleSpecs[region].max;
 			}
 
-			switch (region) {
-			case SCRAMBLE_ROMX:
-				options.scrambleROMX = limit;
-				break;
-			case SCRAMBLE_SRAM:
-				options.scrambleSRAM = limit;
-				break;
-			case SCRAMBLE_WRAMX:
-				options.scrambleWRAMX = limit;
-				break;
-			case SCRAMBLE_UNK: // The error has already been reported, do nothing
-				break;
-			}
-		} else if (region == SCRAMBLE_WRAMX) {
-			// Only WRAMX can be implied, since ROMX and SRAM size may vary
-			options.scrambleWRAMX = 7;
-		} else {
-			argError('S', "Cannot imply limit for region \"%.*s\"", regionNameFmtLen, regionName);
+			limit = value;
+		} else if (search->second.first != &options.scrambleWRAMX) {
+			// Only WRAMX limit can be implied, since ROMX and SRAM size may vary.
+			fatal("Missing %s region size limit for option 'S'", search->first.c_str());
 		}
 
-next: // Can't `continue` a `for` loop with this nontrivial iteration logic
-		if (spec) {
-			assume(*spec == ',' || *spec == '\0');
-			if (*spec == ',') {
-				spec += 1 + strspn(&spec[1], " \t");
-			}
-			if (*spec == '\0') {
-				break;
-			}
+		if (*search->second.first != limit && *search->second.first != 0) {
+			warnx("Overriding %s region size limit for option 'S'", search->first.c_str());
 		}
+
+		// Update the scrambling region size limit.
+		*search->second.first = limit;
 	}
 }
 
@@ -291,10 +259,13 @@ int main(int argc, char *argv[]) {
 			char *endptr;
 			unsigned long value = strtoul(musl_optarg, &endptr, 0);
 
-			if (musl_optarg[0] == '\0' || *endptr != '\0' || value > 0xFF) {
-				argError('p', "Argument for 'p' must be a byte (between 0 and 0xFF)");
-				value = 0xFF;
+			if (musl_optarg[0] == '\0' || *endptr != '\0') {
+				fatal("Invalid argument for option 'p'");
 			}
+			if (value > 0xFF) {
+				fatal("Argument for option 'p' must be between 0 and 0xFF");
+			}
+
 			options.padValue = value;
 			options.hasPadValue = true;
 			break;
