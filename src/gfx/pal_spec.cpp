@@ -216,13 +216,26 @@ static bool readLine(std::filebuf &file, std::string &buffer) {
 	}
 }
 
-#define requireLine(kind, file, buffer) \
+#define requireLine(kind, filename, file, buffer) \
 	do { \
 		if (!readLine(file, buffer)) { \
-			error(kind " palette file is shorter than expected"); \
+			error(kind " palette file \"%s\" is shorter than expected", filename); \
 			return; \
 		} \
 	} while (0)
+
+static void warnExtraColors(
+    char const *kind, char const *filename, uint16_t nbColors, uint16_t maxNbColors
+) {
+	warnx(
+	    "%s file \"%s\" contains %" PRIu16 " colors, but there can only be %" PRIu16
+	    "; ignoring extra",
+	    kind,
+	    filename,
+	    nbColors,
+	    maxNbColors
+	);
+}
 
 // Parses the initial part of a string_view, advancing the "read index" as it does
 template<typename U> // Should be uint*_t
@@ -266,24 +279,24 @@ static std::optional<Rgba> parseColor(std::string const &str, size_t &n, uint16_
 	return std::optional<Rgba>{Rgba(*r, *g, *b, 0xFF)};
 }
 
-static void parsePSPFile(char const *, std::filebuf &file) {
+static void parsePSPFile(char const *filename, std::filebuf &file) {
 	// https://www.selapa.net/swatches/colors/fileformats.php#psp_pal
 
 	std::string line;
 	if (!readLine(file, line) || line != "JASC-PAL") {
-		error("Palette file does not appear to be a PSP palette file");
+		error("File \"%s\" is not a valid PSP palette file", filename);
 		return;
 	}
 
 	line.clear();
-	requireLine("PSP", file, line);
+	requireLine("PSP", filename, file, line);
 	if (line != "0100") {
 		error("Unsupported PSP palette file version \"%s\"", line.c_str());
 		return;
 	}
 
 	line.clear();
-	requireLine("PSP", file, line);
+	requireLine("PSP", filename, file, line);
 	size_t n = 0;
 	std::optional<uint16_t> nbColors = parseDec<uint16_t>(line, n);
 	if (!nbColors || n != line.length()) {
@@ -291,22 +304,16 @@ static void parsePSPFile(char const *, std::filebuf &file) {
 		return;
 	}
 
-	if (uint16_t nbPalColors = options.nbColorsPerPal * options.nbPalettes;
-	    *nbColors > nbPalColors) {
-		warnx(
-		    "PSP file contains %" PRIu16 " colors, but there can only be %" PRIu16
-		    "; ignoring extra",
-		    *nbColors,
-		    nbPalColors
-		);
-		nbColors = nbPalColors;
+	if (uint16_t maxNbColors = options.maxNbColors(); *nbColors > maxNbColors) {
+		warnExtraColors("PSP", filename, *nbColors, maxNbColors);
+		nbColors = maxNbColors;
 	}
 
 	options.palSpec.clear();
 
 	for (uint16_t i = 0; i < *nbColors; ++i) {
 		line.clear();
-		requireLine("PSP", file, line);
+		requireLine("PSP", filename, file, line);
 
 		n = 0;
 		std::optional<Rgba> color = parseColor(line, n, i + 1);
@@ -329,17 +336,17 @@ static void parsePSPFile(char const *, std::filebuf &file) {
 	}
 }
 
-static void parseGPLFile(char const *, std::filebuf &file) {
+static void parseGPLFile(char const *filename, std::filebuf &file) {
 	// https://gitlab.gnome.org/GNOME/gimp/-/blob/gimp-2-10/app/core/gimppalette-load.c#L39
 
 	std::string line;
 	if (!readLine(file, line) || !line.starts_with("GIMP Palette")) {
-		error("Palette file does not appear to be a GPL palette file");
+		error("File \"%s\" is not a valid GPL palette file", filename);
 		return;
 	}
 
 	uint16_t nbColors = 0;
-	uint16_t const maxNbColors = options.nbColorsPerPal * options.nbPalettes;
+	uint16_t const maxNbColors = options.maxNbColors();
 
 	for (;;) {
 		line.clear();
@@ -375,20 +382,15 @@ static void parseGPLFile(char const *, std::filebuf &file) {
 	}
 
 	if (nbColors > maxNbColors) {
-		warnx(
-		    "GPL file contains %" PRIu16 " colors, but there can only be %" PRIu16
-		    "; ignoring extra",
-		    nbColors,
-		    maxNbColors
-		);
+		warnExtraColors("GPL", filename, nbColors, maxNbColors);
 	}
 }
 
-static void parseHEXFile(char const *, std::filebuf &file) {
+static void parseHEXFile(char const *filename, std::filebuf &file) {
 	// https://lospec.com/palette-list/tag/gbc
 
 	uint16_t nbColors = 0;
-	uint16_t const maxNbColors = options.nbColorsPerPal * options.nbPalettes;
+	uint16_t const maxNbColors = options.maxNbColors();
 
 	for (;;) {
 		std::string line;
@@ -422,16 +424,11 @@ static void parseHEXFile(char const *, std::filebuf &file) {
 	}
 
 	if (nbColors > maxNbColors) {
-		warnx(
-		    "HEX file contains %" PRIu16 " colors, but there can only be %" PRIu16
-		    "; ignoring extra",
-		    nbColors,
-		    maxNbColors
-		);
+		warnExtraColors("HEX", filename, nbColors, maxNbColors);
 	}
 }
 
-static void parseACTFile(char const *, std::filebuf &file) {
+static void parseACTFile(char const *filename, std::filebuf &file) {
 	// https://www.adobe.com/devnet-apps/photoshop/fileformatashtml/#50577411_pgfId-1070626
 
 	std::array<char, 772> buf{};
@@ -441,23 +438,21 @@ static void parseACTFile(char const *, std::filebuf &file) {
 	if (len == 772) {
 		nbColors = readBE<uint16_t>(&buf[768]);
 		if (nbColors > 256 || nbColors == 0) {
-			error("Invalid number of colors in ACT file (%" PRIu16 ")", nbColors);
+			error("Invalid number of colors in ACT file \"%s\" (%" PRIu16 ")", filename, nbColors);
 			return;
 		}
 	} else if (len != 768) {
-		error("Invalid file size for ACT file (expected 768 or 772 bytes, got %zu", len);
+		error(
+		    "Invalid file size for ACT file \"%s\" (expected 768 or 772 bytes, got %zu)",
+		    filename,
+		    len
+		);
 		return;
 	}
 
-	if (uint16_t nbPalColors = options.nbColorsPerPal * options.nbPalettes;
-	    nbColors > nbPalColors) {
-		warnx(
-		    "ACT file contains %" PRIu16 " colors, but there can only be %" PRIu16
-		    "; ignoring extra",
-		    nbColors,
-		    nbPalColors
-		);
-		nbColors = nbPalColors;
+	if (uint16_t maxNbColors = options.maxNbColors(); nbColors > maxNbColors) {
+		warnExtraColors("ACT", filename, nbColors, maxNbColors);
+		nbColors = maxNbColors;
 	}
 
 	options.palSpec.clear();
@@ -483,7 +478,7 @@ static void parseACTFile(char const *, std::filebuf &file) {
 	}
 }
 
-static void parseACOFile(char const *, std::filebuf &file) {
+static void parseACOFile(char const *filename, std::filebuf &file) {
 	// https://www.adobe.com/devnet-apps/photoshop/fileformatashtml/#50577411_pgfId-1055819
 
 	char buf[10];
@@ -493,7 +488,7 @@ static void parseACOFile(char const *, std::filebuf &file) {
 		return;
 	}
 	if (readBE<uint16_t>(buf) != 1) {
-		error("Palette file does not appear to be an ACO v1 file");
+		error("File \"%s\" is not a valid ACO v1 file", filename);
 		return;
 	}
 
@@ -503,15 +498,9 @@ static void parseACOFile(char const *, std::filebuf &file) {
 	}
 	uint16_t nbColors = readBE<uint16_t>(buf);
 
-	if (uint16_t nbPalColors = options.nbColorsPerPal * options.nbPalettes;
-	    nbColors > nbPalColors) {
-		warnx(
-		    "ACO file contains %" PRIu16 " colors, but there can only be %" PRIu16
-		    "; ignoring extra",
-		    nbColors,
-		    nbPalColors
-		);
-		nbColors = nbPalColors;
+	if (uint16_t maxNbColors = options.maxNbColors(); nbColors > maxNbColors) {
+		warnExtraColors("ACO", filename, nbColors, maxNbColors);
+		nbColors = maxNbColors;
 	}
 
 	options.palSpec.clear();
@@ -552,7 +541,7 @@ static void parseACOFile(char const *, std::filebuf &file) {
 	}
 }
 
-static void parseGBCFile(char const *, std::filebuf &file) {
+static void parseGBCFile(char const *filename, std::filebuf &file) {
 	// This only needs to be able to read back files generated by `rgbgfx -p`
 	options.palSpec.clear();
 
@@ -562,7 +551,8 @@ static void parseGBCFile(char const *, std::filebuf &file) {
 			break;
 		} else if (len != sizeof(buf)) {
 			error(
-			    "GBC palette dump contains %zu 8-byte palette%s, plus %zu byte%s",
+			    "GBC palette file \"%s\" contains %zu 8-byte palette%s, plus %zu byte%s",
+			    filename,
 			    options.palSpec.size(),
 			    options.palSpec.size() == 1 ? "" : "s",
 			    len,
@@ -629,11 +619,8 @@ static void parsePNGFile(char const *filename, std::filebuf &file) {
 	// More palettes than the maximum are a warning, not an error
 	uint32_t nbPals = png.height / swatchSize;
 	if (nbPals > options.nbPalettes) {
-		warnx(
-		    "PNG palette file contains %" PRIu32 " palette rows, but there can only be %" PRIu16
-		    "; ignoring extra",
-		    nbPals,
-		    options.nbPalettes
+		warnExtraColors(
+		    "PNG palette", filename, nbPals * options.nbColorsPerPal, options.maxNbColors()
 		);
 		nbPals = options.nbPalettes;
 	}

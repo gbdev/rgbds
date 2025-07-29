@@ -53,7 +53,7 @@ Png::Png(char const *filename, std::streambuf &file) {
 	if (input.file.sgetn(reinterpret_cast<char *>(pngHeader.data()), pngHeader.size())
 	        != static_cast<std::streamsize>(pngHeader.size()) // Not enough bytes?
 	    || png_sig_cmp(pngHeader.data(), 0, pngHeader.size()) != 0) {
-		fatal("PNG file (\"%s\") is not a valid PNG image!", input.filename); // LCOV_EXCL_LINE
+		fatal("File \"%s\" is not a valid PNG image", input.filename); // LCOV_EXCL_LINE
 	}
 
 	options.verbosePrint(Options::VERB_INTERM, "PNG header signature is OK\n");

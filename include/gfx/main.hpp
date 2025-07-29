@@ -71,6 +71,8 @@ struct Options {
 	mutable bool hasTransparentPixels = false;
 	uint8_t maxOpaqueColors() const { return nbColorsPerPal - hasTransparentPixels; }
 
+	uint16_t maxNbColors() const { return nbColorsPerPal * nbPalettes; }
+
 	uint8_t dmgColors[4] = {};
 	uint8_t dmgValue(uint8_t i) const {
 		assume(i < 4);
