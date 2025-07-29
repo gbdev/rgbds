@@ -243,6 +243,7 @@ public:
 	}
 };
 
+// LCOV_EXCL_START
 static void verboseOutputAssignments(
     std::vector<AssignedSets> const &assignments, std::vector<ColorSet> const &colorSets
 ) {
@@ -257,6 +258,7 @@ static void verboseOutputAssignments(
 		fprintf(stderr, "} (volume = %zu)\n", assignment.volume());
 	}
 }
+// LCOV_EXCL_STOP
 
 static void decant(std::vector<AssignedSets> &assignments, std::vector<ColorSet> const &colorSets) {
 	// "Decanting" is the process of moving all *things* that can fit in a lower index there
