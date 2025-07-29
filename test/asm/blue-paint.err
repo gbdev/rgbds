@@ -1,0 +1,23 @@
+error: blue-paint.asm(9) -> blue-paint.asm::arg_to_arg(7):
+    Invalid character after line continuation '3'
+error: blue-paint.asm(9) -> blue-paint.asm::arg_to_arg(7):
+    syntax error, unexpected number
+error: blue-paint.asm(9) -> blue-paint.asm::arg_to_arg(7):
+    Unknown character '}'
+error: blue-paint.asm(15) -> blue-paint.asm::arg_to_interp(13):
+    Unknown character '{'
+error: blue-paint.asm(15) -> blue-paint.asm::arg_to_interp(13):
+    Unknown character '}'
+error: blue-paint.asm(26) -> blue-paint.asm::endless(24):
+    Invalid character after line continuation '1'
+error: blue-paint.asm(26) -> blue-paint.asm::endless(24):
+    syntax error, unexpected number
+FATAL: blue-paint.asm(30):
+    Recursion limit (5) exceeded
+while expanding symbol "{infinite}"
+while expanding symbol "{infinite}"
+while expanding symbol "{infinite}"
+while expanding symbol "{infinite}"
+while expanding symbol "{infinite}"
+while expanding symbol "{infinite}"
+while expanding symbol "{infinite}"
