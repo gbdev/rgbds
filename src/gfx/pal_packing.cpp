@@ -300,15 +300,15 @@ static void decant(std::vector<AssignedSets> &assignments, std::vector<ColorSet>
 	    Options::VERB_DEBUG, "%zu palettes after decanting on palettes\n", assignments.size()
 	);
 
-	// Decant on "components" (= color sets sharing colors)
+	// Decant on "components" (color sets sharing colors)
 	decantOn([&colorSets](AssignedSets &to, AssignedSets &from) {
 		// We need to iterate on all the "components", which are groups of color sets sharing at
-		// least one color with another color sets in the group.
+		// least one color with another color set in the group.
 		// We do this by adding the first available color set, and then looking for palettes with
 		// common colors. (As an optimization, we know we can skip palettes already scanned.)
 		std::vector<bool> processed(from.nbColorSets(), false);
 		for (std::vector<bool>::iterator iter;
-		     (iter = std::find(RANGE(processed), true)) != processed.end();) {
+		     (iter = std::find(RANGE(processed), false)) != processed.end();) {
 			auto attrs = from.begin();
 			std::advance(attrs, iter - processed.begin());
 
