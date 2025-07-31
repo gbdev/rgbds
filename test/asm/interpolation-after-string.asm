@@ -1,5 +1,5 @@
-def hello = $11
-def goodbye = $22
+def concat equs """++ "hi world" ++"""
+println ""{concat}""
 
 def greeting equs "hello"
 println ""{greeting}

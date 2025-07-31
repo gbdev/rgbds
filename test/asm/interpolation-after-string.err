@@ -1,3 +1,7 @@
+error: interpolation-after-string.asm(2):
+    Unknown character '{'
+error: interpolation-after-string.asm(2):
+    Unknown character '}'
 error: interpolation-after-string.asm(5):
     Unknown character '{'
 error: interpolation-after-string.asm(5):
@@ -11,4 +15,4 @@ error: interpolation-after-string.asm(8):
     syntax error, unexpected symbol
 error: interpolation-after-string.asm(8):
     Unknown character '}'
-Assembly aborted with 6 errors!
+Assembly aborted with 8 errors!
