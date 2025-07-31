@@ -1219,7 +1219,9 @@ static std::shared_ptr<std::string> readInterpolation(size_t depth) {
 		// `lexerState->peekChar()` lets `readInterpolation()` handle its own nested expansions,
 		// increasing `depth` each time.
 		if (lexerState->peekChar() == '{') {
-			++lexerState->expansionScanDistance; // Prevent `shiftChar()` from calling `peek()`
+			// Increment `lexerState->expansionScanDistance` to prevent `shiftChar()` from calling
+			// `peek()` and to balance its decrement.
+			++lexerState->expansionScanDistance;
 			shiftChar();
 			if (std::shared_ptr<std::string> str = readInterpolation(depth + 1); str) {
 				beginExpansion(str, *str);
@@ -1425,12 +1427,19 @@ static void readString(std::string &str, bool rawString) {
 		if (rawMode) {
 			str += '"';
 		}
-		if (nextChar() != '"') {
+		shiftChar();
+		// `peek()` would mark the third character here as "painted blue" whether or not it is a
+		// third quote, which would incorrectly prevent expansions right after an empty string "".
+		// `lexerState->peekChar()` avoids this, and is okay since expansions are disabled here.
+		if (lexerState->peekChar() != '"') {
 			// "" is an empty string, skip the loop
 			return;
 		}
-		// """ begins a multi-line string
+		// Increment `lexerState->expansionScanDistance` to prevent `shiftChar()` from calling
+		// `peek()` and to balance its decrement.
+		++lexerState->expansionScanDistance;
 		shiftChar();
+		// """ begins a multi-line string
 		if (rawMode) {
 			str += '"';
 		}

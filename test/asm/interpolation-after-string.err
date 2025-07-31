@@ -1,18 +1,8 @@
-error: interpolation-after-string.asm(2):
-    Unknown character '{'
-error: interpolation-after-string.asm(2):
-    Unknown character '}'
-error: interpolation-after-string.asm(5):
-    Unknown character '{'
 error: interpolation-after-string.asm(5):
     syntax error, unexpected symbol
-while expanding symbol "greeting"
-error: interpolation-after-string.asm(5):
-    Unknown character '}'
+while expanding symbol "hello"
 error: interpolation-after-string.asm(8):
-    Unknown character '{'
+    Interpolated symbol "goodbye" does not exist
 error: interpolation-after-string.asm(8):
-    syntax error, unexpected symbol
-error: interpolation-after-string.asm(8):
-    Unknown character '}'
-Assembly aborted with 8 errors!
+    syntax error, unexpected string
+Assembly aborted with 3 errors!
