@@ -272,9 +272,8 @@ void LexerState::clear(uint32_t lineNo_) {
 	capturing = false;
 	captureBuf = nullptr;
 
-	disableMacroArgs = false;
-	disableInterpolation = false;
-	macroArgScanDistance = 0;
+	disableExpansions = false;
+	expansionScanDistance = 0;
 	expandStrings = true;
 
 	expansions.clear();
@@ -517,13 +516,10 @@ static int nextChar();
 static uint32_t readDecimalNumber(int initial);
 
 static uint32_t readBracketedMacroArgNum() {
-	bool disableMacroArgs = lexerState->disableMacroArgs;
-	bool disableInterpolation = lexerState->disableInterpolation;
-	lexerState->disableMacroArgs = false;
-	lexerState->disableInterpolation = false;
+	bool disableExpansions = lexerState->disableExpansions;
+	lexerState->disableExpansions = false;
 	Defer restoreExpansions{[&] {
-		lexerState->disableMacroArgs = disableMacroArgs;
-		lexerState->disableInterpolation = disableInterpolation;
+		lexerState->disableExpansions = disableExpansions;
 	}};
 
 	int32_t num = 0;
@@ -713,15 +709,17 @@ static std::shared_ptr<std::string> readInterpolation(size_t depth);
 static int peek() {
 	int c = lexerState->peekChar();
 
-	if (lexerState->macroArgScanDistance > 0) {
+	if (lexerState->expansionScanDistance > 0) {
 		return c;
 	}
 
-	++lexerState->macroArgScanDistance; // Do not consider again
+	++lexerState->expansionScanDistance; // Do not consider again
 
-	if (c == '\\' && !lexerState->disableMacroArgs) {
+	if (lexerState->disableExpansions) {
+		return c;
+	} else if (c == '\\') {
 		// If character is a backslash, check for a macro arg
-		++lexerState->macroArgScanDistance;
+		++lexerState->expansionScanDistance;
 		if (!isMacroChar(lexerState->peekCharAhead())) {
 			return c;
 		}
@@ -734,11 +732,11 @@ static int peek() {
 			// Mark the entire macro arg expansion as "painted blue"
 			// so that macro args can't be recursive
 			// https://en.wikipedia.org/wiki/Painted_blue
-			lexerState->macroArgScanDistance += str->length();
+			lexerState->expansionScanDistance += str->length();
 		}
 
 		return peek(); // Tail recursion
-	} else if (c == '{' && !lexerState->disableInterpolation) {
+	} else if (c == '{') {
 		// If character is an open brace, do symbol interpolation
 		shiftChar();
 		if (std::shared_ptr<std::string> str = readInterpolation(0); str) {
@@ -759,7 +757,7 @@ static void shiftChar() {
 		++lexerState->captureSize;
 	}
 
-	--lexerState->macroArgScanDistance;
+	--lexerState->expansionScanDistance;
 
 	for (;;) {
 		if (!lexerState->expansions.empty()) {
@@ -811,11 +809,9 @@ static void handleCRLF(int c) {
 }
 
 static auto scopedDisableExpansions() {
-	lexerState->disableMacroArgs = true;
-	lexerState->disableInterpolation = true;
+	lexerState->disableExpansions = true;
 	return Defer{[&] {
-		lexerState->disableMacroArgs = false;
-		lexerState->disableInterpolation = false;
+		lexerState->disableExpansions = false;
 	}};
 }
 
@@ -1217,21 +1213,19 @@ static std::shared_ptr<std::string> readInterpolation(size_t depth) {
 	std::string fmtBuf;
 	FormatSpec fmt{};
 
-	// In a context where `lexerState->disableInterpolation` is true, `peek` will expand
-	// nested interpolations itself, which can lead to stack overflow. This lets
-	// `readInterpolation` handle its own nested expansions, increasing `depth` each time.
-	bool disableInterpolation = lexerState->disableInterpolation;
-	lexerState->disableInterpolation = true;
-
-	// Reset `lexerState->disableInterpolation` when exiting this loop
-	for (Defer reset{[&] { lexerState->disableInterpolation = disableInterpolation; }};;) {
-		if (int c = peek(); c == '{') { // Nested interpolation
+	for (;;) {
+		// If `lexerState->disableExpansions` is false, `peek()` will expand nested interpolations
+		// and recursively call `readInterpolation()`, which can cause stack overflow.
+		// `lexerState->peekChar()` lets `readInterpolation()` handle its own nested expansions,
+		// increasing `depth` each time.
+		if (lexerState->peekChar() == '{') {
+			++lexerState->expansionScanDistance; // Prevent `shiftChar()` from calling `peek()`
 			shiftChar();
 			if (std::shared_ptr<std::string> str = readInterpolation(depth + 1); str) {
 				beginExpansion(str, *str);
 			}
 			continue; // Restart, reading from the new buffer
-		} else if (c == EOF || c == '\r' || c == '\n' || c == '"') {
+		} else if (int c = peek(); c == EOF || c == '\r' || c == '\n' || c == '"') {
 			error("Missing }");
 			break;
 		} else if (c == '}') {
@@ -1329,12 +1323,11 @@ static void appendCharInLiteral(std::string &str, int c) {
 	// Symbol interpolation
 	if (c == '{') {
 		// We'll be exiting the string/character scope, so re-enable expansions
-		// (Not interpolations, since they're handled by the function itself...)
-		lexerState->disableMacroArgs = false;
+		lexerState->disableExpansions = false;
 		if (std::shared_ptr<std::string> interpolation = readInterpolation(0); interpolation) {
 			appendExpandedString(str, *interpolation);
 		}
-		lexerState->disableMacroArgs = true;
+		lexerState->disableExpansions = true;
 		return;
 	}
 

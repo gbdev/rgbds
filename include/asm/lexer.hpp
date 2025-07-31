@@ -92,9 +92,8 @@ struct LexerState {
 	size_t captureSize; // Amount of text captured
 	std::shared_ptr<std::vector<char>> captureBuf; // Buffer to send the captured text to if set
 
-	bool disableMacroArgs;
-	bool disableInterpolation;
-	size_t macroArgScanDistance; // Max distance already scanned for macro args
+	bool disableExpansions;
+	size_t expansionScanDistance; // Max distance already scanned for expansions
 	bool expandStrings;
 	std::deque<Expansion> expansions; // Front is the innermost current expansion
 
