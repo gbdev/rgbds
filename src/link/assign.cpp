@@ -410,6 +410,9 @@ void assign_AssignSections() {
 	// Initialize assignment
 	initFreeSpace();
 
+	// Check if we need to do smart linking and discard any sections
+	sect_PerformSmartLink();
+
 	// Generate linked lists of sections to assign
 	static uint64_t nbSectionsToAssign = 0; // `static` so `sect_ForEach` callback can see it
 	sect_ForEach([](Section &section) {

@@ -54,6 +54,7 @@ struct Section {
 	std::vector<Symbol> *fileSymbols;
 	std::vector<Symbol *> symbols;
 	std::unique_ptr<Section> nextu; // The next "component" of this unionized sect
+	bool smartLinked = false;       // Set to true if kept by smart linking
 };
 
 // Execute a callback for each section currently registered.
@@ -68,5 +69,10 @@ Section *sect_GetSection(std::string const &name);
 
 // Checks if all sections meet reasonable criteria, such as max size
 void sect_DoSanityChecks();
+
+// Adds a section as a new "root" of the smart link graph
+void sect_AddSmartSection(std::string const &name);
+
+void sect_PerformSmartLink();
 
 #endif // RGBDS_LINK_SECTION_HPP

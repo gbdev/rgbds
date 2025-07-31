@@ -579,3 +579,178 @@ static void applyPatches(Section &section) {
 void patch_ApplyPatches() {
 	sect_ForEach(applyPatches);
 }
+
+// Executes a callback on all sections referenced by a patch's expression
+static void findReferencedSections(
+    Patch const &patch, void (*callback)(Section &), std::vector<Symbol> const &fileSymbols
+) {
+	uint8_t const *expression = patch.rpnExpression.data();
+	int32_t size = static_cast<int32_t>(patch.rpnExpression.size());
+
+	while (size > 0) {
+		RPNCommand command = static_cast<RPNCommand>(getRPNByte(expression, size, patch));
+
+		switch (command) {
+		// Ignore operators
+		case RPN_ADD:
+		case RPN_SUB:
+		case RPN_MUL:
+		case RPN_DIV:
+		case RPN_MOD:
+		case RPN_NEG:
+		case RPN_EXP:
+		case RPN_OR:
+		case RPN_AND:
+		case RPN_XOR:
+		case RPN_NOT:
+		case RPN_LOGAND:
+		case RPN_LOGOR:
+		case RPN_LOGNOT:
+		case RPN_LOGEQ:
+		case RPN_LOGNE:
+		case RPN_LOGGT:
+		case RPN_LOGLT:
+		case RPN_LOGGE:
+		case RPN_LOGLE:
+		case RPN_SHL:
+		case RPN_SHR:
+		case RPN_USHR:
+		case RPN_HIGH:
+		case RPN_LOW:
+		case RPN_BITWIDTH:
+		case RPN_TZCOUNT:
+			break;
+
+		case RPN_BANK_SYM: {
+			int32_t symbolID = 0;
+			for (uint8_t shift = 0; shift < 32; shift += 8) {
+				symbolID |= getRPNByte(expression, size, patch) << shift;
+			}
+
+			if (Symbol const *symbol = getSymbol(fileSymbols, symbolID); !symbol) {
+				error(
+				    patch.src,
+				    patch.lineNo,
+				    "Requested BANK() of symbol \"%s\", which was not found",
+				    fileSymbols[symbolID].name.c_str()
+				);
+			} else if (std::holds_alternative<Label>(symbol->data)) {
+				callback(*std::get<Label>(symbol->data).section);
+			} else {
+				error(
+				    patch.src,
+				    patch.lineNo,
+				    "Requested BANK() of non-label symbol \"%s\"",
+				    fileSymbols[symbolID].name.c_str()
+				);
+			}
+			break;
+		}
+
+		case RPN_BANK_SECT: {
+			// `expression` is not guaranteed to be '\0'-terminated. If it is not,
+			// `getRPNByte` will have a fatal internal error.
+			char const *name = reinterpret_cast<char const *>(expression);
+			while (getRPNByte(expression, size, patch)) {}
+
+			if (Section *sect = sect_GetSection(name); !sect) {
+				error(
+				    patch.src,
+				    patch.lineNo,
+				    "Requested BANK() of section \"%s\", which was not found",
+				    name
+				);
+			} else {
+				callback(*sect);
+			}
+			break;
+		}
+
+		case RPN_SIZEOF_SECT: {
+			// This has assumptions commented in the `RPN_BANK_SECT` case above.
+			char const *name = reinterpret_cast<char const *>(expression);
+			while (getRPNByte(expression, size, patch)) {}
+
+			if (Section *sect = sect_GetSection(name); !sect) {
+				error(
+				    patch.src,
+				    patch.lineNo,
+				    "Requested SIZEOF() of section \"%s\", which was not found",
+				    name
+				);
+			} else {
+				callback(*sect);
+			}
+			break;
+		}
+
+		case RPN_STARTOF_SECT: {
+			// This has assumptions commented in the `RPN_BANK_SECT` case above.
+			char const *name = reinterpret_cast<char const *>(expression);
+			while (getRPNByte(expression, size, patch)) {}
+
+			if (Section *sect = sect_GetSection(name); !sect) {
+				error(
+				    patch.src,
+				    patch.lineNo,
+				    "Requested STARTOF() of section \"%s\", which was not found",
+				    name
+				);
+			} else {
+				callback(*sect);
+			}
+			break;
+		}
+
+		// Ignore values that do not reference a symbol
+		case RPN_BANK_SELF:
+		case RPN_SIZEOF_SECTTYPE:
+		case RPN_STARTOF_SECTTYPE:
+		case RPN_HRAM:
+		case RPN_RST:
+		case RPN_BIT_INDEX:
+			break;
+
+		case RPN_CONST:
+			// Just skip the bytes of the constant
+			getRPNByte(expression, size, patch);
+			getRPNByte(expression, size, patch);
+			getRPNByte(expression, size, patch);
+			getRPNByte(expression, size, patch);
+			break;
+
+		case RPN_SYM: {
+			int32_t symbolID = 0;
+			for (uint8_t shift = 0; shift < 32; shift += 8) {
+				symbolID |= getRPNByte(expression, size, patch) << shift;
+			}
+
+			if (symbolID != -1) { // Ignore PC
+				if (Symbol const *symbol = getSymbol(fileSymbols, symbolID); !symbol) {
+					error(
+					    patch.src,
+					    patch.lineNo,
+					    "Unknown symbol \"%s\"",
+					    fileSymbols[symbolID].name.c_str()
+					);
+				} else if (std::holds_alternative<Label>(symbol->data)) {
+					callback(*std::get<Label>(symbol->data).section);
+				}
+			}
+			break;
+		}
+		}
+	}
+}
+
+void patch_FindSectionReferencedSections(Section &section, void (*callback)(Section &)) {
+	for (Patch const &patch : section.patches) {
+		findReferencedSections(patch, callback, *section.fileSymbols);
+	}
+}
+
+void patch_FindAssertionReferencedSections(void (*callback)(Section &)) {
+	for (Assertion const &assertion : assertions) {
+		findReferencedSections(assertion.patch, callback, *assertion.fileSymbols);
+	}
+}
