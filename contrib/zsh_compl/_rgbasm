@@ -39,7 +39,7 @@ local args=(
 	'(- : * options)'{-h,--help}'[Print help text and exit]'
 
 	'(-E --export-all)'{-E,--export-all}'[Export all symbols]'
-	'(-v --verbose)'{-v,--verbose}'[Print additional messages regarding progression]'
+	'(-v --verbose)'{-v,--verbose}'[Enable verbose output]'
 	-w'[Disable all warnings]'
 
 	'(-b --binary-digits)'{-b,--binary-digits}'+[Change chars for binary constants]:digit spec:'

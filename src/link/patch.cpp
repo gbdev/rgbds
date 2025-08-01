@@ -10,6 +10,7 @@
 #include "helpers.hpp" // assume, clz, ctz
 #include "linkdefs.hpp"
 #include "opmath.hpp"
+#include "verbosity.hpp"
 
 #include "link/main.hpp"
 #include "link/section.hpp"
@@ -462,7 +463,7 @@ Assertion &patch_AddAssertion() {
 }
 
 void patch_CheckAssertions() {
-	verbosePrint("Checking assertions...\n");
+	verbosePrint(VERB_NOTICE, "Checking assertions...\n");
 
 	for (Assertion &assert : assertions) {
 		int32_t value = computeRPNExpr(assert.patch, *assert.fileSymbols);
@@ -505,7 +506,7 @@ void patch_CheckAssertions() {
 
 // Applies all of a section's patches to a data section
 static void applyFilePatches(Section &section, Section &dataSection) {
-	verbosePrint("Patching section \"%s\"...\n", section.name.c_str());
+	verbosePrint(VERB_INFO, "Patching section \"%s\"...\n", section.name.c_str());
 	for (Patch &patch : section.patches) {
 		int32_t value = computeRPNExpr(patch, *section.fileSymbols);
 		uint16_t offset = patch.offset + section.offset;

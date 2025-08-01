@@ -11,6 +11,7 @@
 #include <vector>
 
 #include "helpers.hpp"
+#include "verbosity.hpp"
 
 #include "gfx/rgba.hpp"
 
@@ -20,7 +21,6 @@ struct Options {
 	bool allowMirroringX = false; // -X, -m
 	bool allowMirroringY = false; // -Y, -m
 	bool columnMajor = false;     // -Z
-	uint8_t verbosity = 0;        // -v
 
 	std::string attrmap{};                    // -a, -A
 	std::optional<Rgba> bgColor{};            // -B
@@ -42,6 +42,7 @@ struct Options {
 		uint16_t height;
 		uint32_t right() const { return left + width * 8; }
 		uint32_t bottom() const { return top + height * 8; }
+		bool specified() const { return left || top || width || height; }
 	} inputSlice{0, 0, 0, 0};                          // -L (margins in clockwise order, like CSS)
 	uint8_t basePalID = 0;                             // -l
 	std::array<uint16_t, 2> maxNbTiles{UINT16_MAX, 0}; // -N
@@ -55,18 +56,6 @@ struct Options {
 	uint64_t trim = 0;                                 // -x
 
 	std::string input{}; // positional arg
-
-	// clang-format off: vertically align values
-	static constexpr uint8_t VERB_NONE    = 0; // Normal, no extra output
-	static constexpr uint8_t VERB_CFG     = 1; // Print configuration after parsing options
-	static constexpr uint8_t VERB_LOG_ACT = 2; // Log actions before doing them
-	static constexpr uint8_t VERB_INTERM  = 3; // Print some intermediate results
-	static constexpr uint8_t VERB_DEBUG   = 4; // Internals are logged
-	static constexpr uint8_t VERB_TRACE   = 5; // Step-by-step algorithm details
-	static constexpr uint8_t VERB_VVVVVV  = 6; // What, can't I have a little fun?
-	// clang-format on
-	[[gnu::format(printf, 3, 4)]]
-	void verbosePrint(uint8_t level, char const *fmt, ...) const;
 
 	mutable bool hasTransparentPixels = false;
 	uint8_t maxOpaqueColors() const { return nbColorsPerPal - hasTransparentPixels; }

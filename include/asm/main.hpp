@@ -7,6 +7,8 @@
 #include <stdio.h>
 #include <string>
 
+#include "verbosity.hpp"
+
 enum MissingInclude {
 	INC_ERROR,    // A missing included file is an error that halts assembly
 	GEN_EXIT,     // A missing included file is assumed to be generated; exit normally
@@ -14,11 +16,11 @@ enum MissingInclude {
 };
 
 struct Options {
+	bool exportAll = false;                         // -E
 	uint8_t fixPrecision = 16;                      // -Q
 	size_t maxRecursionDepth = 64;                  // -r
 	char binDigits[2] = {'0', '1'};                 // -b
 	char gfxDigits[4] = {'0', '1', '2', '3'};       // -g
-	bool verbose = false;                           // -v
 	FILE *dependFile = nullptr;                     // -M
 	std::string targetFileName;                     // -MQ, -MT
 	MissingInclude missingIncludeState = INC_ERROR; // -MC, -MG
@@ -41,12 +43,5 @@ struct Options {
 };
 
 extern Options options;
-
-#define verbosePrint(...) \
-	do { \
-		if (options.verbose) { \
-			fprintf(stderr, __VA_ARGS__); \
-		} \
-	} while (0)
 
 #endif // RGBDS_ASM_MAIN_HPP

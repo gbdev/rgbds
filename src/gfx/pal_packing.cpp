@@ -14,6 +14,7 @@
 #include <utility>
 
 #include "helpers.hpp"
+#include "verbosity.hpp"
 
 #include "gfx/color_set.hpp"
 #include "gfx/main.hpp"
@@ -247,6 +248,10 @@ public:
 static void verboseOutputAssignments(
     std::vector<AssignedSets> const &assignments, std::vector<ColorSet> const &colorSets
 ) {
+	if (!checkVerbosity(VERB_INFO)) {
+		return;
+	}
+
 	for (AssignedSets const &assignment : assignments) {
 		fputs("{ ", stderr);
 		for (ColorSetAttrs const &attrs : assignment) {
@@ -284,9 +289,7 @@ static void decant(std::vector<AssignedSets> &assignments, std::vector<ColorSet>
 		}
 	};
 
-	options.verbosePrint(
-	    Options::VERB_DEBUG, "%zu palettes before decanting\n", assignments.size()
-	);
+	verbosePrint(VERB_DEBUG, "%zu palettes before decanting\n", assignments.size());
 
 	// Decant on palettes
 	decantOn([&colorSets](AssignedSets &to, AssignedSets &from) {
@@ -298,9 +301,7 @@ static void decant(std::vector<AssignedSets> &assignments, std::vector<ColorSet>
 			from.clear();
 		}
 	});
-	options.verbosePrint(
-	    Options::VERB_DEBUG, "%zu palettes after decanting on palettes\n", assignments.size()
-	);
+	verbosePrint(VERB_DEBUG, "%zu palettes after decanting on palettes\n", assignments.size());
 
 	// Decant on "components" (color sets sharing colors)
 	decantOn([&colorSets](AssignedSets &to, AssignedSets &from) {
@@ -344,8 +345,8 @@ static void decant(std::vector<AssignedSets> &assignments, std::vector<ColorSet>
 			}
 		}
 	});
-	options.verbosePrint(
-	    Options::VERB_DEBUG, "%zu palettes after decanting on \"components\"\n", assignments.size()
+	verbosePrint(
+	    VERB_DEBUG, "%zu palettes after decanting on \"components\"\n", assignments.size()
 	);
 
 	// Decant on individual color sets
@@ -357,15 +358,11 @@ static void decant(std::vector<AssignedSets> &assignments, std::vector<ColorSet>
 			}
 		}
 	});
-	options.verbosePrint(
-	    Options::VERB_DEBUG, "%zu palettes after decanting on color sets\n", assignments.size()
-	);
+	verbosePrint(VERB_DEBUG, "%zu palettes after decanting on color sets\n", assignments.size());
 }
 
 std::tuple<std::vector<size_t>, size_t> overloadAndRemove(std::vector<ColorSet> const &colorSets) {
-	options.verbosePrint(
-	    Options::VERB_LOG_ACT, "Paginating palettes using \"overload-and-remove\" strategy...\n"
-	);
+	verbosePrint(VERB_NOTICE, "Paginating palettes using \"overload-and-remove\" strategy...\n");
 
 	// Sort the color sets by size, which improves the packing algorithm's efficiency
 	auto const indexOfLargestColorSetFirst = [&colorSets](size_t left, size_t right) {
@@ -389,7 +386,7 @@ std::tuple<std::vector<size_t>, size_t> overloadAndRemove(std::vector<ColorSet> 
 	     !queue.empty();
 	     queue.pop()) {
 		ColorSetAttrs const &attrs = queue.front(); // Valid until the `queue.pop()`
-		options.verbosePrint(Options::VERB_TRACE, "Handling color set %zu\n", attrs.colorSetIndex);
+		verbosePrint(VERB_TRACE, "Handling color set %zu\n", attrs.colorSetIndex);
 
 		ColorSet const &colorSet = colorSets[attrs.colorSetIndex];
 		size_t bestPalIndex = assignments.size();
@@ -404,8 +401,8 @@ std::tuple<std::vector<size_t>, size_t> overloadAndRemove(std::vector<ColorSet> 
 			}
 
 			uint32_t relSize = assignments[i].relSizeOf(colorSet);
-			options.verbosePrint(
-			    Options::VERB_TRACE,
+			verbosePrint(
+			    VERB_TRACE,
 			    "  Relative size to palette %zu (of %zu): %" PRIu32 " (size = %zu)\n",
 			    i,
 			    assignments.size(),
@@ -420,8 +417,8 @@ std::tuple<std::vector<size_t>, size_t> overloadAndRemove(std::vector<ColorSet> 
 
 		if (bestPalIndex == assignments.size()) {
 			// Found nowhere to put it, create a new page containing just that one
-			options.verbosePrint(
-			    Options::VERB_TRACE,
+			verbosePrint(
+			    VERB_TRACE,
 			    "Assigning color set %zu to new palette %zu\n",
 			    attrs.colorSetIndex,
 			    bestPalIndex
@@ -430,8 +427,8 @@ std::tuple<std::vector<size_t>, size_t> overloadAndRemove(std::vector<ColorSet> 
 			continue;
 		}
 
-		options.verbosePrint(
-		    Options::VERB_TRACE,
+		verbosePrint(
+		    VERB_TRACE,
 		    "Assigning color set %zu to palette %zu\n",
 		    attrs.colorSetIndex,
 		    bestPalIndex
@@ -448,8 +445,8 @@ std::tuple<std::vector<size_t>, size_t> overloadAndRemove(std::vector<ColorSet> 
 			uint32_t relSize1 = bestPal.relSizeOf(colorSet1);
 			uint32_t relSize2 = bestPal.relSizeOf(colorSet2);
 
-			options.verbosePrint(
-			    Options::VERB_TRACE,
+			verbosePrint(
+			    VERB_TRACE,
 			    "  Color sets %zu <=> %zu: Efficiency: %zu / %" PRIu32 " <=> %zu / "
 			    "%" PRIu32 "\n",
 			    attrs1.colorSetIndex,
@@ -470,8 +467,8 @@ std::tuple<std::vector<size_t>, size_t> overloadAndRemove(std::vector<ColorSet> 
 
 		// If this overloads the palette, get it back to normal (if possible)
 		while (bestPal.volume() > options.maxOpaqueColors()) {
-			options.verbosePrint(
-			    Options::VERB_TRACE,
+			verbosePrint(
+			    VERB_TRACE,
 			    "Palette %zu is overloaded! (%zu > %" PRIu8 ")\n",
 			    bestPalIndex,
 			    bestPal.volume(),
@@ -488,13 +485,13 @@ std::tuple<std::vector<size_t>, size_t> overloadAndRemove(std::vector<ColorSet> 
 
 			// All efficiencies are identical iff min equals max
 			if (compareEfficiency(*minEfficiencyIter, *maxEfficiencyIter) == 0) {
-				options.verbosePrint(Options::VERB_TRACE, "  All efficiencies are identical\n");
+				verbosePrint(VERB_TRACE, "  All efficiencies are identical\n");
 				break;
 			}
 
 			// Remove the color set with minimal efficiency
-			options.verbosePrint(
-			    Options::VERB_TRACE, "  Removing color set %zu\n", minEfficiencyIter->colorSetIndex
+			verbosePrint(
+			    VERB_TRACE, "  Removing color set %zu\n", minEfficiencyIter->colorSetIndex
 			);
 			queue.emplace(std::move(*minEfficiencyIter));
 			queue.back().banFrom(bestPalIndex); // Ban it from this palette
@@ -526,16 +523,16 @@ std::tuple<std::vector<size_t>, size_t> overloadAndRemove(std::vector<ColorSet> 
 			return pal.canFit(colorSet);
 		});
 		if (iter == assignments.end()) { // No such page, create a new one
-			options.verbosePrint(
-			    Options::VERB_DEBUG,
+			verbosePrint(
+			    VERB_DEBUG,
 			    "Adding new palette (%zu) for overflowing color set %zu\n",
 			    assignments.size(),
 			    attrs.colorSetIndex
 			);
 			assignments.emplace_back(colorSets, std::move(attrs));
 		} else {
-			options.verbosePrint(
-			    Options::VERB_DEBUG,
+			verbosePrint(
+			    VERB_DEBUG,
 			    "Assigning overflowing color set %zu to palette %zu\n",
 			    attrs.colorSetIndex,
 			    iter - assignments.begin()
@@ -544,21 +541,13 @@ std::tuple<std::vector<size_t>, size_t> overloadAndRemove(std::vector<ColorSet> 
 		}
 	}
 
-	// LCOV_EXCL_START
-	if (options.verbosity >= Options::VERB_INTERM) {
-		verboseOutputAssignments(assignments, colorSets);
-	}
-	// LCOV_EXCL_STOP
+	verboseOutputAssignments(assignments, colorSets); // LCOV_EXCL_LINE
 
 	// "Decant" the result
 	decant(assignments, colorSets);
 	// Note that the result does not contain any empty palettes
 
-	// LCOV_EXCL_START
-	if (options.verbosity >= Options::VERB_INTERM) {
-		verboseOutputAssignments(assignments, colorSets);
-	}
-	// LCOV_EXCL_STOP
+	verboseOutputAssignments(assignments, colorSets); // LCOV_EXCL_LINE
 
 	std::vector<size_t> mappings(colorSets.size());
 	for (size_t i = 0; i < assignments.size(); ++i) {

@@ -71,7 +71,6 @@ struct Symbol {
 
 void sym_ForEach(void (*callback)(Symbol &));
 
-void sym_SetExportAll(bool set);
 Symbol *sym_AddLocalLabel(std::string const &symName);
 Symbol *sym_AddLabel(std::string const &symName);
 Symbol *sym_AddAnonLabel();

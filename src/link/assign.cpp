@@ -14,6 +14,7 @@
 #include "itertools.hpp"
 #include "linkdefs.hpp"
 #include "platform.hpp"
+#include "verbosity.hpp"
 
 #include "link/main.hpp"
 #include "link/output.hpp"
@@ -405,7 +406,7 @@ static std::vector<Section const *> checkOverlayCompat() {
 }
 
 void assign_AssignSections() {
-	verbosePrint("Beginning assignment...\n");
+	verbosePrint(VERB_NOTICE, "Beginning assignment...\n");
 
 	// Initialize assignment
 	initFreeSpace();
@@ -443,7 +444,7 @@ void assign_AssignSections() {
 	// Assign sections in decreasing constraint order
 	for (uint8_t constraints = std::size(unassignedSections); constraints--;) {
 		if (char const *constraintName = constraintNames[constraints]; constraintName) {
-			verbosePrint("Assigning %sconstrained sections...\n", constraintName);
+			verbosePrint(VERB_INFO, "Assigning %sconstrained sections...\n", constraintName);
 		} else {
 			assume(unassignedSections[constraints].empty());
 		}

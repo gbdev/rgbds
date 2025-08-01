@@ -74,7 +74,8 @@ rgbasm_obj := \
 	src/extern/utf8decoder.o \
 	src/linkdefs.o \
 	src/opmath.o \
-	src/util.o
+	src/util.o \
+	src/verbosity.o
 
 src/asm/lexer.o src/asm/main.o: src/asm/parser.hpp
 
@@ -95,7 +96,8 @@ rgblink_obj := \
 	src/extern/utf8decoder.o \
 	src/linkdefs.o \
 	src/opmath.o \
-	src/util.o
+	src/util.o \
+	src/verbosity.o
 
 src/link/lexer.o src/link/main.o: src/link/script.hpp
 
@@ -117,7 +119,8 @@ rgbgfx_obj := \
 	src/gfx/reverse.o \
 	src/gfx/rgba.o \
 	src/gfx/warning.o \
-	src/util.o
+	src/util.o \
+	src/verbosity.o
 
 rgbasm: ${rgbasm_obj}
 	$Q${CXX} ${REALLDFLAGS} -o $@ ${rgbasm_obj} ${REALCXXFLAGS} src/version.cpp

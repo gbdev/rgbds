@@ -19,6 +19,7 @@
 #include "file.hpp"
 #include "platform.hpp"
 #include "usage.hpp"
+#include "verbosity.hpp"
 #include "version.hpp"
 
 #include "gfx/pal_spec.hpp"
@@ -39,18 +40,6 @@ static struct LocalOptions {
 	bool groupOutputs;
 	bool reverse;
 } localOptions;
-
-void Options::verbosePrint(uint8_t level, char const *fmt, ...) const {
-	// LCOV_EXCL_START
-	if (verbosity >= level) {
-		va_list ap;
-
-		va_start(ap, fmt);
-		vfprintf(stderr, fmt, ap);
-		va_end(ap);
-	}
-	// LCOV_EXCL_STOP
-}
 
 // Short options
 static char const *optstring = "-Aa:B:b:Cc:d:hi:L:l:mN:n:Oo:Pp:Qq:r:s:Tt:U:uVvW:wXx:YZ";
@@ -107,11 +96,12 @@ static Usage usage(
     "       [-o <out_file>] [-p <pal_file> | -P] [-q <pal_map> | -Q]\n"
     "       [-s <nb_colors>] [-t <tile_map> | -T] [-x <nb_tiles>] <file>\n"
     "Useful options:\n"
-    "    -m, --mirror-tiles    optimize out mirrored tiles\n"
-    "    -o, --output <path>   output the tile data to this path\n"
-    "    -t, --tilemap <path>  output the tile map to this path\n"
-    "    -u, --unique-tiles    optimize out identical tiles\n"
-    "    -V, --version         print RGBGFX version and exit\n"
+    "    -m, --mirror-tiles       optimize out mirrored tiles\n"
+    "    -o, --output <path>      output the tile data to this path\n"
+    "    -t, --tilemap <path>     output the tile map to this path\n"
+    "    -u, --unique-tiles       optimize out identical tiles\n"
+    "    -V, --version            print RGBGFX version and exit\n"
+    "    -W, --warning <warning>  enable or disable warnings\n"
     "\n"
     "For help, use `man rgbgfx' or go to https://rgbds.gbdev.io/docs/\n"
 );
@@ -536,9 +526,7 @@ static char *parseArgv(int argc, char *argv[]) {
 			// LCOV_EXCL_STOP
 		case 'v':
 			// LCOV_EXCL_START
-			if (options.verbosity < Options::VERB_VVVVVV) {
-				++options.verbosity;
-			}
+			incrementVerbosity();
 			break;
 			// LCOV_EXCL_STOP
 		case 'W':
@@ -580,93 +568,66 @@ static char *parseArgv(int argc, char *argv[]) {
 	return nullptr; // Done processing this argv
 }
 
+// LCOV_EXCL_START
 static void verboseOutputConfig() {
-	fprintf(stderr, "rgbgfx %s\n", get_package_version_string());
-
-	if (options.verbosity >= Options::VERB_VVVVVV) {
-		putc('\n', stderr);
-		// clang-format off: vertically align values
-		static std::array<uint16_t, 21> gfx{
-		    0b0111111110,
-		    0b1111111111,
-		    0b1110011001,
-		    0b1110011001,
-		    0b1111111111,
-		    0b1111111111,
-		    0b1110000001,
-		    0b1111000011,
-		    0b0111111110,
-		    0b0001111000,
-		    0b0111111110,
-		    0b1111111111,
-		    0b1111111111,
-		    0b1111111111,
-		    0b1101111011,
-		    0b1101111011,
-		    0b0011111100,
-		    0b0011001100,
-		    0b0111001110,
-		    0b0111001110,
-		    0b0111001110,
-		};
-		// clang-format on
-		static std::array<char const *, 3> textbox{
-		    "  ,----------------------------------------.",
-		    "  | Augh, dimensional interference again?! |",
-		    "  `----------------------------------------'",
-		};
-		for (size_t i = 0; i < gfx.size(); ++i) {
-			uint16_t row = gfx[i];
-			for (uint8_t _ = 0; _ < 10; ++_) {
-				unsigned char c = row & 1 ? '0' : ' ';
-				putc(c, stderr);
-				// Double the pixel horizontally, otherwise the aspect ratio looks wrong
-				putc(c, stderr);
-				row >>= 1;
-			}
-			if (i < textbox.size()) {
-				fputs(textbox[i], stderr);
-			}
-			putc('\n', stderr);
-		}
-		putc('\n', stderr);
+	if (!checkVerbosity(VERB_CONFIG)) {
+		return;
 	}
 
+	fprintf(stderr, "rgbgfx %s\n", get_package_version_string());
+
+	printVVVVVVerbosity();
+
 	fputs("Options:\n", stderr);
+	// -Z/--columns
 	if (options.columnMajor) {
 		fputs("\tVisit image in column-major order\n", stderr);
 	}
+	// -u/--unique-tiles
 	if (options.allowDedup) {
-		fputs("\tAllow deduplicating tiles\n", stderr);
+		fputs("\tAllow deduplicating identical tiles\n", stderr);
 	}
-	if (options.allowMirroringX) {
+	// -m/--mirror-tiles
+	if (options.allowMirroringX && options.allowMirroringY) {
+		fputs("\tAllow deduplicating mirrored tiles\n", stderr);
+	}
+	// -X/--mirror-x
+	else if (options.allowMirroringX) {
 		fputs("\tAllow deduplicating horizontally mirrored tiles\n", stderr);
 	}
-	if (options.allowMirroringY) {
+	// -Y/--mirror-y
+	else if (options.allowMirroringY) {
 		fputs("\tAllow deduplicating vertically mirrored tiles\n", stderr);
 	}
+	// -C/--color-curve
 	if (options.useColorCurve) {
 		fputs("\tUse color curve\n", stderr);
 	}
+	// -d/--depth
 	fprintf(stderr, "\tBit depth: %" PRIu8 "bpp\n", options.bitDepth);
+	// -x/--trim-end
 	if (options.trim != 0) {
 		fprintf(stderr, "\tTrim the last %" PRIu64 " tiles\n", options.trim);
 	}
+	// -n/--nb-palettes
 	fprintf(stderr, "\tMaximum %" PRIu16 " palettes\n", options.nbPalettes);
+	// -s/--palette-size
 	fprintf(stderr, "\tPalettes contain %" PRIu8 " colors\n", options.nbColorsPerPal);
-	fprintf(stderr, "\t%s palette spec\n", [] {
-		switch (options.palSpecType) {
-		case Options::NO_SPEC:
-			return "No";
-		case Options::EXPLICIT:
-			return "Explicit";
-		case Options::EMBEDDED:
-			return "Embedded";
-		case Options::DMG:
-			return "DMG";
-		}
-		return "???";
-	}());
+	// -c/--colors
+	if (options.palSpecType != Options::NO_SPEC) {
+		fprintf(stderr, "\t%s palette spec\n", [] {
+			switch (options.palSpecType) {
+			case Options::EXPLICIT:
+				return "Explicit";
+			case Options::EMBEDDED:
+				return "Embedded";
+			case Options::DMG:
+				return "DMG";
+			default:
+				return "???";
+			}
+		}());
+	}
 	if (options.palSpecType == Options::EXPLICIT) {
 		fputs("\t[\n", stderr);
 		for (auto const &pal : options.palSpec) {
@@ -682,40 +643,65 @@ static void verboseOutputConfig() {
 		}
 		fputs("\t]\n", stderr);
 	}
+	// -L/--slice
+	if (options.inputSlice.specified()) {
+		fprintf(
+		    stderr,
+		    "\tInput image slice: %" PRIu16 "x%" PRIu16 " pixels starting at (%" PRIu16 ", %" PRIu16
+		    ")\n",
+		    options.inputSlice.width,
+		    options.inputSlice.height,
+		    options.inputSlice.left,
+		    options.inputSlice.top
+		);
+	}
+	// -b/--base-tiles
+	if (options.baseTileIDs[0] || options.baseTileIDs[1]) {
+		fprintf(
+		    stderr,
+		    "\tBase tile IDs: bank 0 = 0x%02" PRIx8 ", bank 1 = 0x%02" PRIx8 "\n",
+		    options.baseTileIDs[0],
+		    options.baseTileIDs[1]
+		);
+	}
+	// -l/--base-palette
+	if (options.basePalID) {
+		fprintf(stderr, "\tBase palette ID: %" PRIu8 "\n", options.basePalID);
+	}
+	// -N/--nb-tiles
 	fprintf(
 	    stderr,
-	    "\tInput image slice: %" PRIu16 "x%" PRIu16 " pixels starting at (%" PRIu16 ", %" PRIu16
-	    ")\n",
-	    options.inputSlice.width,
-	    options.inputSlice.height,
-	    options.inputSlice.left,
-	    options.inputSlice.top
-	);
-	fprintf(
-	    stderr,
-	    "\tBase tile IDs: [%" PRIu8 ", %" PRIu8 "]\n",
-	    options.baseTileIDs[0],
-	    options.baseTileIDs[1]
-	);
-	fprintf(stderr, "\tBase palette ID: %" PRIu8 "\n", options.basePalID);
-	fprintf(
-	    stderr,
-	    "\tMaximum %" PRIu16 " tiles in bank 0, %" PRIu16 " in bank 1\n",
+	    "\tMaximum %" PRIu16 " tiles in bank 0, and %" PRIu16 " in bank 1\n",
 	    options.maxNbTiles[0],
 	    options.maxNbTiles[1]
 	);
+	// -O/--group-outputs (influences other options)
 	auto printPath = [](char const *name, std::string const &path) {
 		if (!path.empty()) {
 			fprintf(stderr, "\t%s: %s\n", name, path.c_str());
 		}
 	};
+	// file
 	printPath("Input image", options.input);
+	// -i/--input-tileset
+	printPath("Input tileset", options.inputTileset);
+	// -o/--output
 	printPath("Output tile data", options.output);
+	// -t/--tilemap or -T/--auto-tilemap
 	printPath("Output tilemap", options.tilemap);
+	// -a/--attrmap or -A/--auto-attrmap
 	printPath("Output attrmap", options.attrmap);
+	// -p/--palette or -P/--auto-palette
 	printPath("Output palettes", options.palettes);
+	// -q/--palette-map or -Q/--auto-palette-map
+	printPath("Output palette map", options.palmap);
+	// -r/--reverse
+	if (localOptions.reverse) {
+		fprintf(stderr, "\tReverse image width: %" PRIu16 " tiles\n", options.reversedWidth);
+	}
 	fputs("Ready.\n", stderr);
 }
+// LCOV_EXCL_STOP
 
 // Manual implementation of std::filesystem::path.replace_extension().
 // macOS <10.15 did not support std::filesystem::path.
@@ -839,11 +825,7 @@ int main(int argc, char *argv[]) {
 		parseExternalPalSpec(localOptions.externalPalSpec);
 	}
 
-	// LCOV_EXCL_START
-	if (options.verbosity >= Options::VERB_CFG) {
-		verboseOutputConfig();
-	}
-	// LCOV_EXCL_STOP
+	verboseOutputConfig(); // LCOV_EXCL_LINE
 
 	// Do not do anything if option parsing went wrong.
 	requireZeroErrors();

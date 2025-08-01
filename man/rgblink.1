@@ -114,7 +114,25 @@ Useful for ROMs that fit in 32 KiB.
 .It Fl V , Fl \-version
 Print the version of the program and exit.
 .It Fl v , Fl \-verbose
-Verbose: enable printing more information to standard error.
+Be verbose.
+The verbosity level is increased by one each time the flag is specified, with each level including the previous:
+.Bl -enum -compact
+.It
+Print the
+.Nm
+configuration before taking actions.
+.It
+Print a notice before significant actions.
+.It
+Print some of the actions' intermediate results.
+.It
+Print some internal debug information.
+.It
+Print detailed internal information.
+.El
+The verbosity level does not go past 6.
+.Pp
+Note that verbose output is only intended to be consumed by humans, and may change without notice between RGBDS releases; relying on those for scripts is not advised.
 .It Fl W Ar warning , Fl \-warning Ar warning
 Set warning flag
 .Ar warning .

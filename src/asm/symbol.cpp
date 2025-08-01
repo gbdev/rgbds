@@ -17,6 +17,7 @@
 #include "asm/fstack.hpp"
 #include "asm/lexer.hpp"
 #include "asm/macro.hpp"
+#include "asm/main.hpp"
 #include "asm/output.hpp"
 #include "asm/warning.hpp"
 
@@ -38,8 +39,6 @@ static char savedTIME[256];
 static char savedDATE[256];
 static char savedTIMESTAMP_ISO8601_LOCAL[256];
 static char savedTIMESTAMP_ISO8601_UTC[256];
-
-static bool exportAll = false; // -E
 
 bool sym_IsPC(Symbol const *sym) {
 	return sym == PCSymbol;
@@ -497,7 +496,7 @@ static Symbol *addLabel(std::string const &symName) {
 	sym->type = SYM_LABEL;
 	sym->data = static_cast<int32_t>(sect_GetSymbolOffset());
 	// Don't export anonymous labels
-	if (exportAll && !symName.starts_with('!')) {
+	if (options.exportAll && !symName.starts_with('!')) {
 		sym->isExported = true;
 	}
 	sym->section = sect_GetSymbolSection();
@@ -633,11 +632,6 @@ Symbol *sym_Ref(std::string const &symName) {
 	}
 
 	return sym;
-}
-
-// Set whether to export all relocatable symbols by default
-void sym_SetExportAll(bool set) {
-	exportAll = set;
 }
 
 // Define the built-in symbols
