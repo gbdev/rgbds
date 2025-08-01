@@ -5,10 +5,9 @@
 #include "asm/fixpoint.hpp"
 
 #include <math.h>
+#include <numbers>
 
-#ifndef M_PI
-	#define M_PI 3.14159265358979323846
-#endif
+static constexpr double tau = std::numbers::pi * 2;
 
 static double fix2double(int32_t i, int32_t q) {
 	return i / pow(2.0, q);
@@ -25,11 +24,11 @@ static int32_t double2fix(double d, int32_t q) {
 }
 
 static double turn2rad(double t) {
-	return t * (M_PI * 2);
+	return t * tau;
 }
 
 static double rad2turn(double r) {
-	return r / (M_PI * 2);
+	return r / tau;
 }
 
 int32_t fix_Sin(int32_t i, int32_t q) {
