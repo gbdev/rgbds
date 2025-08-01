@@ -780,6 +780,20 @@ static void shiftChar() {
 	}
 }
 
+static bool consumeChar(int c) {
+	// This is meant to be called when the "extra" behavior of `peek()` is not wanted,
+	// e.g. painting the peeked-at character "blue".
+	if (lexerState->peekChar() != c) {
+		return false;
+	}
+
+	// Increment `lexerState->expansionScanDistance` to prevent `shiftChar()` from calling
+	// `peek()` and to balance its decrement.
+	++lexerState->expansionScanDistance;
+	shiftChar();
+	return true;
+}
+
 static int bumpChar() {
 	int c = peek();
 	if (c != EOF) {
@@ -1214,15 +1228,9 @@ static std::shared_ptr<std::string> readInterpolation(size_t depth) {
 	FormatSpec fmt{};
 
 	for (;;) {
-		// If `lexerState->disableExpansions` is false, `peek()` will expand nested interpolations
-		// and recursively call `readInterpolation()`, which can cause stack overflow.
-		// `lexerState->peekChar()` lets `readInterpolation()` handle its own nested expansions,
-		// increasing `depth` each time.
-		if (lexerState->peekChar() == '{') {
-			// Increment `lexerState->expansionScanDistance` to prevent `shiftChar()` from calling
-			// `peek()` and to balance its decrement.
-			++lexerState->expansionScanDistance;
-			shiftChar();
+		// Use `consumeChar()` since `peek()` might expand nested interpolations and recursively
+		// call `readInterpolation()`, which can cause stack overflow.
+		if (consumeChar('{')) {
 			if (std::shared_ptr<std::string> str = readInterpolation(depth + 1); str) {
 				beginExpansion(str, *str);
 			}
@@ -1428,17 +1436,13 @@ static void readString(std::string &str, bool rawString) {
 			str += '"';
 		}
 		shiftChar();
-		// `peek()` would mark the third character here as "painted blue" whether or not it is a
-		// third quote, which would incorrectly prevent expansions right after an empty string "".
-		// `lexerState->peekChar()` avoids this, and is okay since expansions are disabled here.
-		if (lexerState->peekChar() != '"') {
+		// Use `consumeChar()` since `peek()` would mark the third character here as "painted blue"
+		// whether or not it is a third quote, which would incorrectly prevent expansions right
+		// after an empty string "".
+		if (!consumeChar('"')) {
 			// "" is an empty string, skip the loop
 			return;
 		}
-		// Increment `lexerState->expansionScanDistance` to prevent `shiftChar()` from calling
-		// `peek()` and to balance its decrement.
-		++lexerState->expansionScanDistance;
-		shiftChar();
 		// """ begins a multi-line string
 		if (rawMode) {
 			str += '"';
