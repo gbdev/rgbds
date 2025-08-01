@@ -14,10 +14,10 @@ error: blue-paint.asm(26) -> blue-paint.asm::endless(24):
     syntax error, unexpected number
 FATAL: blue-paint.asm(30):
     Recursion limit (5) exceeded
-while expanding symbol "{infinite}"
-while expanding symbol "{infinite}"
-while expanding symbol "{infinite}"
-while expanding symbol "{infinite}"
-while expanding symbol "{infinite}"
-while expanding symbol "{infinite}"
-while expanding symbol "{infinite}"
+while expanding symbol "infinite"
+while expanding symbol "infinite"
+while expanding symbol "infinite"
+while expanding symbol "infinite"
+while expanding symbol "infinite"
+while expanding symbol "infinite"
+while expanding symbol "infinite"

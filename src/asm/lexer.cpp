@@ -518,9 +518,7 @@ static uint32_t readDecimalNumber(int initial);
 static uint32_t readBracketedMacroArgNum() {
 	bool disableExpansions = lexerState->disableExpansions;
 	lexerState->disableExpansions = false;
-	Defer restoreExpansions{[&] {
-		lexerState->disableExpansions = disableExpansions;
-	}};
+	Defer restoreExpansions{[&] { lexerState->disableExpansions = disableExpansions; }};
 
 	int32_t num = 0;
 	int c = peek();
@@ -704,7 +702,7 @@ int LexerState::peekCharAhead() {
 }
 
 // Forward declarations for `peek`
-static std::shared_ptr<std::string> readInterpolation(size_t depth);
+static std::pair<Symbol const *, std::shared_ptr<std::string>> readInterpolation(size_t depth);
 
 static int peek() {
 	int c = lexerState->peekChar();
@@ -739,8 +737,8 @@ static int peek() {
 	} else if (c == '{') {
 		// If character is an open brace, do symbol interpolation
 		shiftChar();
-		if (std::shared_ptr<std::string> str = readInterpolation(0); str) {
-			beginExpansion(str, *str);
+		if (auto interp = readInterpolation(0); interp.first && interp.second) {
+			beginExpansion(interp.second, interp.first->name);
 		}
 
 		return peek(); // Tail recursion
@@ -824,9 +822,7 @@ static void handleCRLF(int c) {
 
 static auto scopedDisableExpansions() {
 	lexerState->disableExpansions = true;
-	return Defer{[&] {
-		lexerState->disableExpansions = false;
-	}};
+	return Defer{[&] { lexerState->disableExpansions = false; }};
 }
 
 // "Services" provided by the lexer to the rest of the program
@@ -1219,7 +1215,7 @@ static Token readIdentifier(char firstChar, bool raw) {
 
 // Functions to read strings
 
-static std::shared_ptr<std::string> readInterpolation(size_t depth) {
+static std::pair<Symbol const *, std::shared_ptr<std::string>> readInterpolation(size_t depth) {
 	if (depth > options.maxRecursionDepth) {
 		fatal("Recursion limit (%zu) exceeded", options.maxRecursionDepth);
 	}
@@ -1231,8 +1227,8 @@ static std::shared_ptr<std::string> readInterpolation(size_t depth) {
 		// Use `consumeChar()` since `peek()` might expand nested interpolations and recursively
 		// call `readInterpolation()`, which can cause stack overflow.
 		if (consumeChar('{')) {
-			if (std::shared_ptr<std::string> str = readInterpolation(depth + 1); str) {
-				beginExpansion(str, *str);
+			if (auto interp = readInterpolation(depth + 1); interp.first && interp.second) {
+				beginExpansion(interp.second, interp.first->name);
 			}
 			continue; // Restart, reading from the new buffer
 		} else if (int c = peek(); c == EOF || c == '\r' || c == '\n' || c == '"') {
@@ -1267,7 +1263,7 @@ static std::shared_ptr<std::string> readInterpolation(size_t depth) {
 		    "symbol",
 		    fmtBuf.c_str()
 		);
-		return nullptr;
+		return {nullptr, nullptr};
 	}
 
 	if (Symbol const *sym = sym_FindScopedValidSymbol(fmtBuf); !sym || !sym->isDefined()) {
@@ -1276,18 +1272,19 @@ static std::shared_ptr<std::string> readInterpolation(size_t depth) {
 		} else {
 			error("Interpolated symbol \"%s\" does not exist", fmtBuf.c_str());
 		}
+		return {sym, nullptr};
 	} else if (sym->type == SYM_EQUS) {
 		auto buf = std::make_shared<std::string>();
 		fmt.appendString(*buf, *sym->getEqus());
-		return buf;
+		return {sym, buf};
 	} else if (sym->isNumeric()) {
 		auto buf = std::make_shared<std::string>();
 		fmt.appendNumber(*buf, sym->getConstantValue());
-		return buf;
+		return {sym, buf};
 	} else {
 		error("Interpolated symbol \"%s\" is not a numeric or string symbol", fmtBuf.c_str());
+		return {sym, nullptr};
 	}
-	return nullptr;
 }
 
 static void appendExpandedString(std::string &str, std::string const &expanded) {
@@ -1334,8 +1331,8 @@ static void appendCharInLiteral(std::string &str, int c) {
 	if (c == '{') {
 		// We'll be exiting the string/character scope, so re-enable expansions
 		lexerState->disableExpansions = false;
-		if (std::shared_ptr<std::string> interpolation = readInterpolation(0); interpolation) {
-			appendExpandedString(str, *interpolation);
+		if (auto interp = readInterpolation(0); interp.second) {
+			appendExpandedString(str, *interp.second);
 		}
 		lexerState->disableExpansions = true;
 		return;

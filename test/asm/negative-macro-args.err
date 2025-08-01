@@ -14,13 +14,13 @@ error: negative-macro-args.asm(21) -> negative-macro-args.asm::mac(14):
     Macro argument '\<-2147483648>' not defined
 error: negative-macro-args.asm(21) -> negative-macro-args.asm::mac(14):
     Number in bracketed macro argument is too large
-while expanding symbol "-2147483648"
+while expanding symbol "i"
 error: negative-macro-args.asm(21) -> negative-macro-args.asm::mac(15):
     Macro argument '\<-2147483648>' not defined
 error: negative-macro-args.asm(21) -> negative-macro-args.asm::mac(15):
     Number in bracketed macro argument is too large
-while expanding symbol "2147483648"
+while expanding symbol "i"
 error: negative-macro-args.asm(21) -> negative-macro-args.asm::mac(18):
     Number in bracketed macro argument is too large
-while expanding symbol "4294967295"
+while expanding symbol "i"
 Assembly aborted with 11 errors!

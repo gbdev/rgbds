@@ -1,8 +1,7 @@
 error: interpolation-after-string.asm(5):
     syntax error, unexpected symbol
-while expanding symbol "hello"
-error: interpolation-after-string.asm(8):
-    Interpolated symbol "goodbye" does not exist
+while expanding symbol "greeting"
 error: interpolation-after-string.asm(8):
     syntax error, unexpected string
-Assembly aborted with 3 errors!
+while expanding symbol "string"
+Assembly aborted with 2 errors!
