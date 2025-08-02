@@ -5,11 +5,12 @@
 #include <algorithm>
 
 #include "helpers.hpp"
+#include "verbosity.hpp"
 
 #include "gfx/main.hpp"
 
 void sortIndexed(std::vector<Palette> &palettes, std::vector<Rgba> const &embPal) {
-	options.verbosePrint(Options::VERB_LOG_ACT, "Sorting palettes using embedded palette...\n");
+	verbosePrint(VERB_NOTICE, "Sorting palettes using embedded palette...\n");
 
 	for (Palette &pal : palettes) {
 		std::sort(RANGE(pal), [&](uint16_t lhs, uint16_t rhs) {
@@ -35,7 +36,7 @@ void sortIndexed(std::vector<Palette> &palettes, std::vector<Rgba> const &embPal
 void sortGrayscale(
     std::vector<Palette> &palettes, std::array<std::optional<Rgba>, NB_COLOR_SLOTS> const &colors
 ) {
-	options.verbosePrint(Options::VERB_LOG_ACT, "Sorting palette by grayscale bins...\n");
+	verbosePrint(VERB_NOTICE, "Sorting palette by grayscale bins...\n");
 
 	// This method is only applicable if there are at most as many colors as colors per palette, so
 	// we should only have a single palette.
@@ -59,7 +60,7 @@ static unsigned int luminance(uint16_t color) {
 }
 
 void sortRgb(std::vector<Palette> &palettes) {
-	options.verbosePrint(Options::VERB_LOG_ACT, "Sorting palettes by luminance...\n");
+	verbosePrint(VERB_NOTICE, "Sorting palettes by luminance...\n");
 
 	for (Palette &pal : palettes) {
 		// Sort from lightest to darkest

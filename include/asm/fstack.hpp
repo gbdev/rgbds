@@ -49,6 +49,8 @@ struct FileStackNode {
 
 struct MacroArgs;
 
+void fstk_VerboseOutputConfig();
+
 bool fstk_DumpCurrent();
 std::shared_ptr<FileStackNode> fstk_GetFileStack();
 std::shared_ptr<std::string> fstk_GetUniqueIDStr();

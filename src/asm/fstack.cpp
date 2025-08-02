@@ -15,6 +15,7 @@
 #include "helpers.hpp"
 #include "linkdefs.hpp"
 #include "platform.hpp" // S_ISDIR (stat macro)
+#include "verbosity.hpp"
 
 #include "asm/lexer.hpp"
 #include "asm/macro.hpp"
@@ -88,6 +89,28 @@ bool fstk_DumpCurrent() {
 	return true;
 }
 
+// LCOV_EXCL_START
+void fstk_VerboseOutputConfig() {
+	assume(checkVerbosity(VERB_CONFIG));
+	// -I/--include
+	if (includePaths.size() > 1) {
+		fputs("\tInclude file paths:\n", stderr);
+		for (std::string const &path : includePaths) {
+			if (!path.empty()) {
+				fprintf(stderr, "\t - %s\n", path.c_str());
+			}
+		}
+	}
+	// -P/--preinclude
+	if (!preIncludeNames.empty()) {
+		fputs("\tPreincluded files:\n", stderr);
+		for (std::string const &name : preIncludeNames) {
+			fprintf(stderr, "\t - %s\n", name.c_str());
+		}
+	}
+}
+// LCOV_EXCL_STOP
+
 std::shared_ptr<FileStackNode> fstk_GetFileStack() {
 	return contextStack.empty() ? nullptr : contextStack.top().fileInfo;
 }
@@ -124,7 +147,6 @@ void fstk_AddIncludePath(std::string const &path) {
 
 void fstk_AddPreIncludeFile(std::string const &path) {
 	preIncludeNames.emplace_front(path);
-	verbosePrint("Pre-included filename %s\n", path.c_str()); // LCOV_EXCL_LINE
 }
 
 static bool isValidFilePath(std::string const &path) {
@@ -308,7 +330,11 @@ bool fstk_FileError(std::string const &path, char const *functionName) {
 		// LCOV_EXCL_START
 		if (options.missingIncludeState == GEN_EXIT) {
 			verbosePrint(
-			    "Aborting (-MG) on %s file '%s' (%s)\n", functionName, path.c_str(), strerror(errno)
+			    VERB_NOTICE,
+			    "Aborting (-MG) on %s file '%s' (%s)\n",
+			    functionName,
+			    path.c_str(),
+			    strerror(errno)
 			);
 			return true;
 		}

@@ -15,6 +15,7 @@
 #include "diagnostics.hpp"
 #include "file.hpp"
 #include "helpers.hpp" // assume
+#include "verbosity.hpp"
 
 #include "gfx/main.hpp"
 #include "gfx/warning.hpp"
@@ -98,7 +99,7 @@ static void printPalette(std::array<std::optional<Rgba>, 4> const &palette) {
 }
 
 void reverse() {
-	options.verbosePrint(Options::VERB_CFG, "Using libpng %s\n", png_get_libpng_ver(nullptr));
+	verbosePrint(VERB_CONFIG, "Using libpng %s\n", png_get_libpng_ver(nullptr));
 
 	// Check for weird flag combinations
 
@@ -127,7 +128,7 @@ void reverse() {
 		);
 	}
 
-	options.verbosePrint(Options::VERB_LOG_ACT, "Reading tiles...\n");
+	verbosePrint(VERB_NOTICE, "Reading tiles...\n");
 	std::vector<uint8_t> const tiles = readInto(options.output);
 	uint8_t tileSize = 8 * options.bitDepth;
 	if (tiles.size() % tileSize != 0) {
@@ -140,13 +141,13 @@ void reverse() {
 
 	// By default, assume tiles are not deduplicated, and add the (allegedly) trimmed tiles
 	size_t const nbTiles = tiles.size() / tileSize;
-	options.verbosePrint(Options::VERB_INTERM, "Read %zu tiles.\n", nbTiles);
+	verbosePrint(VERB_INFO, "Read %zu tiles.\n", nbTiles);
 	size_t mapSize = nbTiles + options.trim; // Image size in tiles
 	std::optional<std::vector<uint8_t>> tilemap;
 	if (!options.tilemap.empty()) {
 		tilemap = readInto(options.tilemap);
 		mapSize = tilemap->size();
-		options.verbosePrint(Options::VERB_INTERM, "Read %zu tilemap entries.\n", mapSize);
+		verbosePrint(VERB_INFO, "Read %zu tilemap entries.\n", mapSize);
 	}
 
 	if (mapSize == 0) {
@@ -172,7 +173,7 @@ void reverse() {
 				break;
 			}
 		}
-		options.verbosePrint(Options::VERB_INTERM, "Picked reversing width of %zu tiles\n", width);
+		verbosePrint(VERB_INFO, "Picked reversing width of %zu tiles\n", width);
 	}
 	if (mapSize % width != 0) {
 		if (options.trim == 0 && !tilemap) {
@@ -192,9 +193,7 @@ void reverse() {
 	}
 	height = mapSize / width;
 
-	options.verbosePrint(
-	    Options::VERB_INTERM, "Reversed image dimensions: %zux%zu tiles\n", width, height
-	);
+	verbosePrint(VERB_INFO, "Reversed image dimensions: %zux%zu tiles\n", width, height);
 
 	Rgba const grayColors[4] = {
 	    Rgba(0xFFFFFFFF), Rgba(0xAAAAAAFF), Rgba(0x555555FF), Rgba(0x000000FF)
@@ -320,8 +319,8 @@ void reverse() {
 			}
 		}
 
-		options.verbosePrint(
-		    Options::VERB_INTERM,
+		verbosePrint(
+		    VERB_INFO,
 		    "Number of tiles in bank {0: %" PRIu16 ", 1: %" PRIu16 "}\n",
 		    nbTilesInBank[0],
 		    nbTilesInBank[1]
@@ -404,7 +403,7 @@ void reverse() {
 		}
 	}
 
-	options.verbosePrint(Options::VERB_LOG_ACT, "Writing image...\n");
+	verbosePrint(VERB_NOTICE, "Writing image...\n");
 	File pngFile;
 	if (!pngFile.open(options.input, std::ios::out | std::ios::binary)) {
 		// LCOV_EXCL_START

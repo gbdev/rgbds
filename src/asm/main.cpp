@@ -17,6 +17,7 @@
 #include "parser.hpp" // Generated from parser.y
 #include "usage.hpp"
 #include "util.hpp" // UpperMap
+#include "verbosity.hpp"
 #include "version.hpp"
 
 #include "asm/charmap.hpp"
@@ -28,23 +29,8 @@
 
 Options options;
 
-// Escapes Make-special chars from a string
-static std::string make_escape(std::string &str) {
-	std::string escaped;
-	size_t pos = 0;
-	for (;;) {
-		// All dollars needs to be doubled
-		size_t nextPos = str.find('$', pos);
-		if (nextPos == std::string::npos) {
-			break;
-		}
-		escaped.append(str, pos, nextPos - pos);
-		escaped.append("$$");
-		pos = nextPos + literal_strlen("$");
-	}
-	escaped.append(str, pos, str.length() - pos);
-	return escaped;
-}
+static char const *dependFileName = nullptr;                                      // -M
+static std::unordered_map<std::string, std::vector<StateFeature>> stateFileSpecs; // -s
 
 // Short options
 static char const *optstring = "b:D:Eg:hI:M:o:P:p:Q:r:s:VvW:wX:";
@@ -105,6 +91,148 @@ static Usage usage(
 );
 // clang-format on
 
+// LCOV_EXCL_START
+static void verboseOutputConfig(int argc, char *argv[]) {
+	if (!checkVerbosity(VERB_CONFIG)) {
+		return;
+	}
+
+	fprintf(stderr, "rgbasm %s\n", get_package_version_string());
+
+	printVVVVVVerbosity();
+
+	fputs("Options:\n", stderr);
+	// -E/--export-all
+	if (options.exportAll) {
+		fputs("\tExport all labels by default\n", stderr);
+	}
+	// -b/--binary-digits
+	if (options.binDigits[0] != '0' || options.binDigits[1] != '1') {
+		fprintf(
+		    stderr, "\tBinary digits: '%c', '%c'\n", options.binDigits[0], options.binDigits[1]
+		);
+	}
+	// -g/--gfx-chars
+	if (options.gfxDigits[0] != '0' || options.gfxDigits[1] != '1' || options.gfxDigits[2] != '2'
+	    || options.gfxDigits[3] != '3') {
+		fprintf(
+		    stderr,
+		    "\tGraphics characters: '%c', '%c', '%c', '%c'\n",
+		    options.gfxDigits[0],
+		    options.gfxDigits[1],
+		    options.gfxDigits[2],
+		    options.gfxDigits[3]
+		);
+	}
+	// -Q/--q-precision
+	fprintf(
+	    stderr,
+	    "\tFixed-point precision: Q%d.%" PRIu8 "\n",
+	    32 - options.fixPrecision,
+	    options.fixPrecision
+	);
+	// -p/--pad-value
+	fprintf(stderr, "\tPad value: 0x%02" PRIx8 "\n", options.padByte);
+	// -r/--recursion-depth
+	fprintf(stderr, "\tMaximum recursion depth %zu\n", options.maxRecursionDepth);
+	// -X/--max-errors
+	if (options.maxErrors) {
+		fprintf(stderr, "\tMaximum %" PRIu64 " errors\n", options.maxErrors);
+	}
+	// -D/--define
+	static bool hasDefines = false; // `static` so `sym_ForEach` callback can see it
+	sym_ForEach([](Symbol &sym) {
+		if (!sym.isBuiltin && sym.type == SYM_EQUS) {
+			if (!hasDefines) {
+				fputs("\tDefinitions:\n", stderr);
+				hasDefines = true;
+			}
+			fprintf(stderr, "\t - def %s equs \"%s\"\n", sym.name.c_str(), sym.getEqus()->c_str());
+		}
+	});
+	// -s/--state
+	if (!stateFileSpecs.empty()) {
+		fputs("\tOutput state files:\n", stderr);
+		static char const *featureNames[NB_STATE_FEATURES] = {
+		    "equ",
+		    "var",
+		    "equs",
+		    "char",
+		    "macro",
+		};
+		for (auto [name, features] : stateFileSpecs) {
+			fprintf(stderr, "\t - %s: ", name == "-" ? "<stdout>" : name.c_str());
+			for (size_t i = 0; i < features.size(); ++i) {
+				if (i > 0) {
+					fputs(", ", stderr);
+				}
+				fputs(featureNames[features[i]], stderr);
+			}
+			putc('\n', stderr);
+		}
+	}
+	// asmfile
+	if (musl_optind < argc) {
+		fprintf(stderr, "\tInput asm file: %s", argv[musl_optind]);
+		if (musl_optind + 1 < argc) {
+			fprintf(stderr, " (and %d more)", argc - musl_optind - 1);
+		}
+		putc('\n', stderr);
+	}
+	// -o/--output
+	if (!options.objectFileName.empty()) {
+		fprintf(stderr, "\tOutput object file: %s\n", options.objectFileName.c_str());
+	}
+	fstk_VerboseOutputConfig();
+	if (dependFileName) {
+		fprintf(
+		    stderr,
+		    "\tOutput dependency file: %s\n",
+		    strcmp(dependFileName, "-") ? dependFileName : "<stdout>"
+		);
+		// -MT or -MQ
+		if (!options.targetFileName.empty()) {
+			fprintf(stderr, "\tTarget file(s): %s\n", options.targetFileName.c_str());
+		}
+		// -MG or -MC
+		switch (options.missingIncludeState) {
+		case INC_ERROR:
+			fputs("\tExit with an error on a missing dependency\n", stderr);
+			break;
+		case GEN_EXIT:
+			fputs("\tExit normally on a missing dependency\n", stderr);
+			break;
+		case GEN_CONTINUE:
+			fputs("\tContinue processing after a missing dependency\n", stderr);
+			break;
+		}
+		// -MP
+		if (options.generatePhonyDeps) {
+			fputs("\tGenerate phony dependencies\n", stderr);
+		}
+		// [-MG] [-MC]
+	}
+	fputs("Ready.\n", stderr);
+}
+// LCOV_EXCL_STOP
+
+static std::string escapeMakeChars(std::string &str) {
+	std::string escaped;
+	size_t pos = 0;
+	for (;;) {
+		// All dollars needs to be doubled
+		size_t nextPos = str.find('$', pos);
+		if (nextPos == std::string::npos) {
+			break;
+		}
+		escaped.append(str, pos, nextPos - pos);
+		escaped.append("$$");
+		pos = nextPos + literal_strlen("$");
+	}
+	escaped.append(str, pos, str.length() - pos);
+	return escaped;
+}
+
 // Parse a comma-separated string of '-s/--state' features
 static std::vector<StateFeature> parseStateFeatures(char *str) {
 	std::vector<StateFeature> features;
@@ -164,10 +292,6 @@ int main(int argc, char *argv[]) {
 		options.maxErrors = 100;
 	}
 
-	// Local options
-	char const *dependFileName = nullptr;                                      // -M
-	std::unordered_map<std::string, std::vector<StateFeature>> stateFileSpecs; // -s
-
 	for (int ch; (ch = musl_getopt_long_only(argc, argv, optstring, longopts, nullptr)) != -1;) {
 		switch (ch) {
 			char *endptr;
@@ -192,7 +316,7 @@ int main(int argc, char *argv[]) {
 			break;
 
 		case 'E':
-			sym_SetExportAll(true);
+			options.exportAll = true;
 			break;
 
 		case 'g':
@@ -211,21 +335,13 @@ int main(int argc, char *argv[]) {
 			break;
 
 		case 'M':
-			if (options.dependFile) {
-				warnx("Overriding dependfile %s", dependFileName);
+			if (dependFileName) {
+				warnx(
+				    "Overriding dependency file %s",
+				    strcmp(dependFileName, "-") ? dependFileName : "<stdout>"
+				);
 			}
-			if (strcmp("-", musl_optarg)) {
-				options.dependFile = fopen(musl_optarg, "w");
-				dependFileName = musl_optarg;
-			} else {
-				options.dependFile = stdout;
-				dependFileName = "<stdout>";
-			}
-			if (options.dependFile == nullptr) {
-				// LCOV_EXCL_START
-				fatal("Failed to open dependfile \"%s\": %s", dependFileName, strerror(errno));
-				// LCOV_EXCL_STOP
-			}
+			dependFileName = musl_optarg;
 			break;
 
 		case 'o':
@@ -233,7 +349,6 @@ int main(int argc, char *argv[]) {
 				warnx("Overriding output filename %s", options.objectFileName.c_str());
 			}
 			options.objectFileName = musl_optarg;
-			verbosePrint("Output filename %s\n", options.objectFileName.c_str()); // LCOV_EXCL_LINE
 			break;
 
 		case 'P':
@@ -295,7 +410,6 @@ int main(int argc, char *argv[]) {
 			if (stateFileSpecs.find(name) != stateFileSpecs.end()) {
 				warnx("Overriding state filename %s", name);
 			}
-			verbosePrint("State filename %s\n", name); // LCOV_EXCL_LINE
 			stateFileSpecs.emplace(name, std::move(features));
 			break;
 		}
@@ -306,7 +420,7 @@ int main(int argc, char *argv[]) {
 
 		case 'v':
 			// LCOV_EXCL_START
-			options.verbose = true;
+			incrementVerbosity();
 			break;
 			// LCOV_EXCL_STOP
 
@@ -352,7 +466,7 @@ int main(int argc, char *argv[]) {
 			case 'T': {
 				std::string newTarget = musl_optarg;
 				if (depType == 'Q') {
-					newTarget = make_escape(newTarget);
+					newTarget = escapeMakeChars(newTarget);
 				}
 				if (!options.targetFileName.empty()) {
 					options.targetFileName += ' ';
@@ -373,6 +487,8 @@ int main(int argc, char *argv[]) {
 		options.targetFileName = options.objectFileName;
 	}
 
+	verboseOutputConfig(argc, argv);
+
 	if (argc == musl_optind) {
 		usage.printAndExit("Please specify an input file (pass `-` to read from standard input)");
 	} else if (argc != musl_optind + 1) {
@@ -381,7 +497,20 @@ int main(int argc, char *argv[]) {
 
 	std::string mainFileName = argv[musl_optind];
 
-	verbosePrint("Assembling %s\n", mainFileName.c_str()); // LCOV_EXCL_LINE
+	verbosePrint(VERB_NOTICE, "Assembling %s\n", mainFileName.c_str()); // LCOV_EXCL_LINE
+
+	if (dependFileName) {
+		if (strcmp("-", dependFileName)) {
+			options.dependFile = fopen(dependFileName, "w");
+			if (options.dependFile == nullptr) {
+				// LCOV_EXCL_START
+				fatal("Failed to open dependency file \"%s\": %s", dependFileName, strerror(errno));
+				// LCOV_EXCL_STOP
+			}
+		} else {
+			options.dependFile = stdout;
+		}
+	}
 
 	if (options.dependFile && options.targetFileName.empty()) {
 		fatal("Dependency files can only be created if a target file is specified with either "

@@ -17,6 +17,7 @@
 #include "helpers.hpp"
 #include "linkdefs.hpp"
 #include "platform.hpp"
+#include "verbosity.hpp"
 #include "version.hpp"
 
 #include "link/assign.hpp"
@@ -480,7 +481,7 @@ void obj_ReadFile(char const *fileName, unsigned int fileID) {
 		fatal("%s: Not a RGBDS object file", fileName);
 	}
 
-	verbosePrint("Reading object file %s\n", fileName);
+	verbosePrint(VERB_NOTICE, "Reading object file %s\n", fileName);
 
 	uint32_t revNum;
 	tryReadLong(revNum, file, "%s: Cannot read revision number: %s", fileName);
@@ -506,7 +507,7 @@ void obj_ReadFile(char const *fileName, unsigned int fileID) {
 	uint32_t nbNodes;
 	tryReadLong(nbNodes, file, "%s: Cannot read number of nodes: %s", fileName);
 	nodes[fileID].resize(nbNodes);
-	verbosePrint("Reading %u nodes...\n", nbNodes);
+	verbosePrint(VERB_INFO, "Reading %u nodes...\n", nbNodes);
 	for (uint32_t i = nbNodes; i--;) {
 		readFileStackNode(file, nodes[fileID], i, fileName);
 	}
@@ -515,7 +516,7 @@ void obj_ReadFile(char const *fileName, unsigned int fileID) {
 	std::vector<Symbol> &fileSymbols = symbolLists.emplace_front(nbSymbols);
 	std::vector<uint32_t> nbSymPerSect(nbSections, 0);
 
-	verbosePrint("Reading %" PRIu32 " symbols...\n", nbSymbols);
+	verbosePrint(VERB_INFO, "Reading %" PRIu32 " symbols...\n", nbSymbols);
 	for (uint32_t i = 0; i < nbSymbols; ++i) {
 		// Read symbol
 		Symbol &symbol = fileSymbols[i];
@@ -531,7 +532,7 @@ void obj_ReadFile(char const *fileName, unsigned int fileID) {
 	// This file's sections, stored in a table to link symbols to them
 	std::vector<std::unique_ptr<Section>> fileSections(nbSections);
 
-	verbosePrint("Reading %" PRIu32 " sections...\n", nbSections);
+	verbosePrint(VERB_INFO, "Reading %" PRIu32 " sections...\n", nbSections);
 	for (uint32_t i = 0; i < nbSections; ++i) {
 		// Read section
 		fileSections[i] = std::make_unique<Section>();
@@ -543,7 +544,7 @@ void obj_ReadFile(char const *fileName, unsigned int fileID) {
 
 	uint32_t nbAsserts;
 	tryReadLong(nbAsserts, file, "%s: Cannot read number of assertions: %s", fileName);
-	verbosePrint("Reading %" PRIu32 " assertions...\n", nbAsserts);
+	verbosePrint(VERB_INFO, "Reading %" PRIu32 " assertions...\n", nbAsserts);
 	for (uint32_t i = 0; i < nbAsserts; ++i) {
 		Assertion &assertion = patch_AddAssertion();
 

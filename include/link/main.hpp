@@ -10,6 +10,7 @@
 #include <vector>
 
 #include "linkdefs.hpp"
+#include "verbosity.hpp"
 
 struct Options {
 	bool isDmgMode;              // -d
@@ -25,19 +26,11 @@ struct Options {
 	uint16_t scrambleWRAMX;
 	uint16_t scrambleSRAM;
 	bool is32kMode;      // -t
-	bool beVerbose;      // -v
 	bool isWRAM0Mode;    // -w
 	bool disablePadding; // -x
 };
 
 extern Options options;
-
-#define verbosePrint(...) \
-	do { \
-		if (options.beVerbose) { \
-			fprintf(stderr, __VA_ARGS__); \
-		} \
-	} while (0)
 
 struct FileStackNode {
 	FileStackNodeType type;

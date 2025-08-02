@@ -53,6 +53,7 @@ set(rgbasm_src
     "linkdefs.cpp"
     "opmath.cpp"
     "util.cpp"
+    "verbosity.cpp"
     )
 
 set(rgblink_src
@@ -72,6 +73,7 @@ set(rgblink_src
     "linkdefs.cpp"
     "opmath.cpp"
     "util.cpp"
+    "verbosity.cpp"
     )
 
 set(rgbfix_src
@@ -92,6 +94,7 @@ set(rgbgfx_src
     "gfx/rgba.cpp"
     "gfx/warning.cpp"
     "util.cpp"
+    "verbosity.cpp"
     )
 
 foreach(PROG "asm" "fix" "gfx" "link")

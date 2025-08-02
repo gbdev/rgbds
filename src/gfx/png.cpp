@@ -4,6 +4,8 @@
 
 #include <png.h>
 
+#include "verbosity.hpp"
+
 #include "gfx/main.hpp"
 #include "gfx/rgba.hpp"
 #include "gfx/warning.hpp"
@@ -47,7 +49,7 @@ static void readData(png_structp png, png_bytep data, size_t length) {
 Png::Png(char const *filename, std::streambuf &file) {
 	Input input(filename, file);
 
-	options.verbosePrint(Options::VERB_LOG_ACT, "Reading PNG file \"%s\"\n", input.filename);
+	verbosePrint(VERB_NOTICE, "Reading PNG file \"%s\"\n", input.filename);
 
 	std::array<unsigned char, 8> pngHeader;
 	if (input.file.sgetn(reinterpret_cast<char *>(pngHeader.data()), pngHeader.size())
@@ -56,7 +58,7 @@ Png::Png(char const *filename, std::streambuf &file) {
 		fatal("File \"%s\" is not a valid PNG image", input.filename); // LCOV_EXCL_LINE
 	}
 
-	options.verbosePrint(Options::VERB_INTERM, "PNG header signature is OK\n");
+	verbosePrint(VERB_INFO, "PNG header signature is OK\n");
 
 	png_structp png = png_create_read_struct(
 	    PNG_LIBPNG_VER_STRING, static_cast<png_voidp>(&input), handleError, handleWarning
@@ -110,8 +112,8 @@ Png::Png(char const *filename, std::streambuf &file) {
 			return "unknown interlace type";
 		}
 	};
-	options.verbosePrint(
-	    Options::VERB_INTERM,
+	verbosePrint(
+	    VERB_INFO,
 	    "PNG image: %" PRIu32 "x%" PRIu32 " pixels, %dbpp %s, %s\n",
 	    width,
 	    height,
@@ -139,18 +141,15 @@ Png::Png(char const *filename, std::streambuf &file) {
 			);
 		}
 
-		options.verbosePrint(
-		    Options::VERB_INTERM, "Embedded PNG palette has %d colors: [", nbColors
-		);
-		for (int i = 0; i < nbColors; ++i) {
-			if (i > 0) {
-				options.verbosePrint(Options::VERB_INTERM, ", ");
+		if (checkVerbosity(VERB_INFO)) {
+			fprintf(stderr, "Embedded PNG palette has %d colors: [", nbColors);
+			for (int i = 0; i < nbColors; ++i) {
+				fprintf(stderr, "%s#%08x", i > 0 ? ", " : "", palette[i].toCSS());
 			}
-			options.verbosePrint(Options::VERB_INTERM, "#%08x", palette[i].toCSS());
+			fprintf(stderr, "]\n");
 		}
-		options.verbosePrint(Options::VERB_INTERM, "]\n");
 	} else {
-		options.verbosePrint(Options::VERB_INTERM, "No embedded PNG palette\n");
+		verbosePrint(VERB_INFO, "No embedded PNG palette\n");
 	}
 
 	// Set up transformations to turn everything into RGBA8888 for simplicity of handling

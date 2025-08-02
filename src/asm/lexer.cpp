@@ -18,6 +18,7 @@
 
 #include "helpers.hpp"
 #include "util.hpp"
+#include "verbosity.hpp"
 
 #include "asm/fixpoint.hpp"
 #include "asm/format.hpp"
@@ -325,7 +326,7 @@ void LexerState::setFileAsNextState(std::string const &filePath, bool updateStat
 	if (filePath == "-") {
 		path = "<stdin>";
 		content.emplace<BufferedContent>(STDIN_FILENO);
-		verbosePrint("Opening stdin\n"); // LCOV_EXCL_LINE
+		verbosePrint(VERB_INFO, "Opening stdin\n"); // LCOV_EXCL_LINE
 	} else {
 		struct stat statBuf;
 		if (stat(filePath.c_str(), &statBuf) != 0) {
@@ -352,13 +353,17 @@ void LexerState::setFileAsNextState(std::string const &filePath, bool updateStat
 			}
 			content.emplace<ViewedContent>(ptr, size);
 
-			verbosePrint("File \"%s\" is fully read\n", path.c_str()); // LCOV_EXCL_LINE
+			// LCOV_EXCL_START
+			verbosePrint(VERB_INFO, "File \"%s\" is fully read\n", path.c_str());
+			// LCOV_EXCL_STOP
 		} else {
 			// LCOV_EXCL_START
 			if (statBuf.st_size == 0) {
-				verbosePrint("File \"%s\" is empty\n", path.c_str());
+				verbosePrint(VERB_INFO, "File \"%s\" is empty\n", path.c_str());
 			} else {
-				verbosePrint("Failed to stat file \"%s\": %s\n", path.c_str(), strerror(errno));
+				verbosePrint(
+				    VERB_INFO, "Failed to stat file \"%s\": %s\n", path.c_str(), strerror(errno)
+				);
 			}
 			// LCOV_EXCL_STOP
 
@@ -371,7 +376,7 @@ void LexerState::setFileAsNextState(std::string const &filePath, bool updateStat
 			}
 			content.emplace<BufferedContent>(fd);
 
-			verbosePrint("File \"%s\" is opened\n", path.c_str()); // LCOV_EXCL_LINE
+			verbosePrint(VERB_INFO, "File \"%s\" is opened\n", path.c_str()); // LCOV_EXCL_LINE
 		}
 	}
 

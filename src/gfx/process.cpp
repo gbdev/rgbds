@@ -19,6 +19,7 @@
 #include "file.hpp"
 #include "helpers.hpp"
 #include "itertools.hpp"
+#include "verbosity.hpp"
 
 #include "gfx/color_set.hpp"
 #include "gfx/main.hpp"
@@ -79,8 +80,8 @@ struct Image {
 	bool isSuitableForGrayscale() const {
 		// Check that all of the grays don't fall into the same "bin"
 		if (colors.size() > options.maxOpaqueColors()) { // Apply the Pigeonhole Principle
-			options.verbosePrint(
-			    Options::VERB_DEBUG,
+			verbosePrint(
+			    VERB_DEBUG,
 			    "Too many colors for grayscale sorting (%zu > %" PRIu8 ")\n",
 			    colors.size(),
 			    options.maxOpaqueColors()
@@ -93,8 +94,8 @@ struct Image {
 				continue;
 			}
 			if (!color->isGray()) {
-				options.verbosePrint(
-				    Options::VERB_DEBUG,
+				verbosePrint(
+				    VERB_DEBUG,
 				    "Found non-gray color #%08x, not using grayscale sorting\n",
 				    color->toCSS()
 				);
@@ -102,8 +103,8 @@ struct Image {
 			}
 			uint8_t mask = 1 << color->grayIndex();
 			if (bins & mask) { // Two in the same bin!
-				options.verbosePrint(
-				    Options::VERB_DEBUG,
+				verbosePrint(
+				    VERB_DEBUG,
 				    "Color #%08x conflicts with another one, not using grayscale sorting\n",
 				    color->toCSS()
 				);
@@ -336,7 +337,7 @@ static std::tuple<std::vector<size_t>, std::vector<Palette>>
 	assume(mappings.size() == colorSets.size());
 
 	// LCOV_EXCL_START
-	if (options.verbosity >= Options::VERB_INTERM) {
+	if (checkVerbosity(VERB_INFO)) {
 		fprintf(
 		    stderr, "Color set mappings: (%zu palette%s)\n", nbPalettes, nbPalettes != 1 ? "s" : ""
 		);
@@ -438,7 +439,7 @@ static std::tuple<std::vector<size_t>, std::vector<Palette>>
 
 static void outputPalettes(std::vector<Palette> const &palettes) {
 	// LCOV_EXCL_START
-	if (options.verbosity >= Options::VERB_INTERM) {
+	if (checkVerbosity(VERB_INFO)) {
 		for (Palette const &palette : palettes) {
 			fputs("{ ", stderr);
 			for (uint16_t colorIndex : palette) {
@@ -897,7 +898,7 @@ static void
 }
 
 void processPalettes() {
-	options.verbosePrint(Options::VERB_CFG, "Using libpng %s\n", png_get_libpng_ver(nullptr));
+	verbosePrint(VERB_CONFIG, "Using libpng %s\n", png_get_libpng_ver(nullptr));
 
 	std::vector<ColorSet> colorSets;
 	std::vector<Palette> palettes;
@@ -907,13 +908,13 @@ void processPalettes() {
 }
 
 void process() {
-	options.verbosePrint(Options::VERB_CFG, "Using libpng %s\n", png_get_libpng_ver(nullptr));
+	verbosePrint(VERB_CONFIG, "Using libpng %s\n", png_get_libpng_ver(nullptr));
 
-	options.verbosePrint(Options::VERB_LOG_ACT, "Reading tiles...\n");
+	verbosePrint(VERB_NOTICE, "Reading tiles...\n");
 	Image image(options.input); // This also sets `hasTransparentPixels` as a side effect
 
 	// LCOV_EXCL_START
-	if (options.verbosity >= Options::VERB_INTERM) {
+	if (checkVerbosity(VERB_INFO)) {
 		fputs("Image colors: [ ", stderr);
 		for (std::optional<Rgba> const &slot : image.colors) {
 			if (!slot.has_value()) {
@@ -1025,14 +1026,14 @@ void process() {
 continue_visiting_tiles:;
 	}
 
-	options.verbosePrint(
-	    Options::VERB_INTERM,
+	verbosePrint(
+	    VERB_INFO,
 	    "Image contains %zu color set%s\n",
 	    colorSets.size(),
 	    colorSets.size() != 1 ? "s" : ""
 	);
 	// LCOV_EXCL_START
-	if (options.verbosity >= Options::VERB_INTERM) {
+	if (checkVerbosity(VERB_INFO)) {
 		for (ColorSet const &colorSet : colorSets) {
 			fputs("[ ", stderr);
 			for (uint16_t color : colorSet) {
@@ -1074,20 +1075,19 @@ continue_visiting_tiles:;
 		}
 
 		if (!options.output.empty()) {
-			options.verbosePrint(Options::VERB_LOG_ACT, "Generating unoptimized tile data...\n");
+			verbosePrint(VERB_NOTICE, "Generating unoptimized tile data...\n");
 			outputUnoptimizedTileData(image, attrmap, palettes, mappings);
 		}
 
 		if (!options.tilemap.empty() || !options.attrmap.empty() || !options.palmap.empty()) {
-			options.verbosePrint(
-			    Options::VERB_LOG_ACT,
-			    "Generating unoptimized tilemap and/or attrmap and/or palmap...\n"
+			verbosePrint(
+			    VERB_NOTICE, "Generating unoptimized tilemap and/or attrmap and/or palmap...\n"
 			);
 			outputUnoptimizedMaps(attrmap, mappings);
 		}
 	} else {
 		// All of these require the deduplication process to be performed to be output
-		options.verbosePrint(Options::VERB_LOG_ACT, "Deduplicating tiles...\n");
+		verbosePrint(VERB_NOTICE, "Deduplicating tiles...\n");
 		UniqueTiles tiles = dedupTiles(image, attrmap, palettes, mappings);
 
 		if (size_t nbTiles = tiles.size();
@@ -1101,22 +1101,22 @@ continue_visiting_tiles:;
 		}
 
 		if (!options.output.empty()) {
-			options.verbosePrint(Options::VERB_LOG_ACT, "Generating optimized tile data...\n");
+			verbosePrint(VERB_NOTICE, "Generating optimized tile data...\n");
 			outputTileData(tiles);
 		}
 
 		if (!options.tilemap.empty()) {
-			options.verbosePrint(Options::VERB_LOG_ACT, "Generating optimized tilemap...\n");
+			verbosePrint(VERB_NOTICE, "Generating optimized tilemap...\n");
 			outputTilemap(attrmap);
 		}
 
 		if (!options.attrmap.empty()) {
-			options.verbosePrint(Options::VERB_LOG_ACT, "Generating optimized attrmap...\n");
+			verbosePrint(VERB_NOTICE, "Generating optimized attrmap...\n");
 			outputAttrmap(attrmap, mappings);
 		}
 
 		if (!options.palmap.empty()) {
-			options.verbosePrint(Options::VERB_LOG_ACT, "Generating optimized palmap...\n");
+			verbosePrint(VERB_NOTICE, "Generating optimized palmap...\n");
 			outputPalmap(attrmap, mappings);
 		}
 	}

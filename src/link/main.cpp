@@ -18,6 +18,7 @@
 #include "script.hpp" // Generated from script.y
 #include "usage.hpp"
 #include "util.hpp" // UpperMap, printChar
+#include "verbosity.hpp"
 #include "version.hpp"
 
 #include "link/assign.hpp"
@@ -31,28 +32,7 @@
 
 Options options;
 
-std::string const &FileStackNode::dump(uint32_t curLineNo) const {
-	if (std::holds_alternative<std::vector<uint32_t>>(data)) {
-		assume(parent); // REPT nodes use their parent's name
-		std::string const &lastName = parent->dump(lineNo);
-		fputs(" -> ", stderr);
-		fputs(lastName.c_str(), stderr);
-		for (uint32_t iter : iters()) {
-			fprintf(stderr, "::REPT~%" PRIu32, iter);
-		}
-		fprintf(stderr, "(%" PRIu32 ")", curLineNo);
-		return lastName;
-	} else {
-		if (parent) {
-			parent->dump(lineNo);
-			fputs(" -> ", stderr);
-		}
-		std::string const &nodeName = name();
-		fputs(nodeName.c_str(), stderr);
-		fprintf(stderr, "(%" PRIu32 ")", curLineNo);
-		return nodeName;
-	}
-}
+static char const *linkerScriptName = nullptr; // -l
 
 // Short options
 static char const *optstring = "dhl:m:Mn:O:o:p:S:tVvW:wx";
@@ -96,18 +76,131 @@ static Usage usage(
     "    -o, --output <path>        set the output file\n"
     "    -p, --pad <value>          set the value to pad between sections with\n"
     "    -x, --nopad                disable padding of output binary\n"
-    "    -V, --version              print RGBLINK version and exits\n"
+    "    -V, --version              print RGBLINK version and exit\n"
+    "    -W, --warning <warning>    enable or disable warnings\n"
     "\n"
     "For help, use `man rgblink' or go to https://rgbds.gbdev.io/docs/\n"
 );
 // clang-format on
 
-static void parseScrambleSpec(char *spec) {
-	static UpperMap<std::pair<uint16_t *, uint16_t>> scrambleSpecs{
-	    {"ROMX",  std::pair{&options.scrambleROMX, 65535}},
-	    {"SRAM",  std::pair{&options.scrambleSRAM, 255}  },
-	    {"WRAMX", std::pair{&options.scrambleWRAMX, 7}   },
+// LCOV_EXCL_START
+static void verboseOutputConfig(int argc, char *argv[]) {
+	if (!checkVerbosity(VERB_CONFIG)) {
+		return;
+	}
+
+	fprintf(stderr, "rgblink %s\n", get_package_version_string());
+
+	printVVVVVVerbosity();
+
+	fputs("Options:\n", stderr);
+	// -d/--dmg
+	if (options.isDmgMode) {
+		fputs("\tDMG mode prohibits non-DMG section types\n", stderr);
+	}
+	// -t/--tiny
+	if (options.is32kMode) {
+		fputs("\tROM0 covers the full 32 KiB of ROM\n", stderr);
+	}
+	// -w/--wramx
+	if (options.isWRAM0Mode) {
+		fputs("\tWRAM0 covers the full 8 KiB of WRAM\n", stderr);
+	}
+	// -x/--nopad
+	if (options.disablePadding) {
+		fputs("\tNo padding at the end of the ROM file\n", stderr);
+	}
+	// -p/--pad
+	fprintf(stderr, "\tPad value: 0x%02" PRIx8 "\n", options.padValue);
+	// -S/--scramble
+	if (options.scrambleROMX || options.scrambleWRAMX || options.scrambleSRAM) {
+		fputs("\tScramble: ", stderr);
+		if (options.scrambleROMX) {
+			fprintf(stderr, "ROMX = %" PRIu16, options.scrambleROMX);
+			if (options.scrambleWRAMX || options.scrambleSRAM) {
+				fputs(", ", stderr);
+			}
+		}
+		if (options.scrambleWRAMX) {
+			fprintf(stderr, "WRAMX = %" PRIu16, options.scrambleWRAMX);
+			if (options.scrambleSRAM) {
+				fputs(", ", stderr);
+			}
+		}
+		if (options.scrambleSRAM) {
+			fprintf(stderr, "SRAM = %" PRIu16, options.scrambleSRAM);
+		}
+		putc('\n', stderr);
+	}
+	// file ...
+	if (musl_optind < argc) {
+		fprintf(stderr, "\tInput object files: ");
+		for (int i = musl_optind; i < argc; ++i) {
+			if (i > musl_optind) {
+				fputs(", ", stderr);
+			}
+			if (i - musl_optind == 10) {
+				fprintf(stderr, "and %d more", argc - i);
+				break;
+			}
+			fputs(argv[i], stderr);
+		}
+		putc('\n', stderr);
+	}
+	auto printPath = [](char const *name, char const *path) {
+		if (path) {
+			fprintf(stderr, "\t%s: %s\n", name, path);
+		}
 	};
+	// -O/--overlay
+	printPath("Overlay file", options.overlayFileName);
+	// -l/--linkerscript
+	printPath("Linker script", linkerScriptName);
+	// -o/--output
+	printPath("Output ROM file", options.outputFileName);
+	// -m/--map
+	printPath("Output map file", options.mapFileName);
+	// -M/--no-sym-in-map
+	if (options.mapFileName && options.noSymInMap) {
+		fputs("\tNo symbols in map file\n", stderr);
+	}
+	// -n/--sym
+	printPath("Output sym file", options.symFileName);
+	fputs("Ready.\n", stderr);
+}
+// LCOV_EXCL_STOP
+
+std::string const &FileStackNode::dump(uint32_t curLineNo) const {
+	if (std::holds_alternative<std::vector<uint32_t>>(data)) {
+		assume(parent); // REPT nodes use their parent's name
+		std::string const &lastName = parent->dump(lineNo);
+		fputs(" -> ", stderr);
+		fputs(lastName.c_str(), stderr);
+		for (uint32_t iter : iters()) {
+			fprintf(stderr, "::REPT~%" PRIu32, iter);
+		}
+		fprintf(stderr, "(%" PRIu32 ")", curLineNo);
+		return lastName;
+	} else {
+		if (parent) {
+			parent->dump(lineNo);
+			fputs(" -> ", stderr);
+		}
+		std::string const &nodeName = name();
+		fputs(nodeName.c_str(), stderr);
+		fprintf(stderr, "(%" PRIu32 ")", curLineNo);
+		return nodeName;
+	}
+}
+
+static void parseScrambleSpec(char *spec) {
+	// clang-format off: vertically align nested initializers
+	static UpperMap<std::pair<uint16_t *, uint16_t>> scrambleSpecs{
+	    {"ROMX",  std::pair{&options.scrambleROMX,  65535}},
+	    {"SRAM",  std::pair{&options.scrambleSRAM,  255  }},
+	    {"WRAMX", std::pair{&options.scrambleWRAMX, 7    }},
+	};
+	// clang-format on
 
 	// Skip leading whitespace before the regions.
 	spec += strspn(spec, " \t");
@@ -211,8 +304,6 @@ static void parseScrambleSpec(char *spec) {
 }
 
 int main(int argc, char *argv[]) {
-	char const *linkerScriptName = nullptr; // -l
-
 	// Parse options
 	for (int ch; (ch = musl_getopt_long_only(argc, argv, optstring, longopts, nullptr)) != -1;) {
 		switch (ch) {
@@ -283,7 +374,7 @@ int main(int argc, char *argv[]) {
 			// LCOV_EXCL_STOP
 		case 'v':
 			// LCOV_EXCL_START
-			options.beVerbose = true;
+			incrementVerbosity();
 			break;
 			// LCOV_EXCL_STOP
 		case 'W':
@@ -302,10 +393,10 @@ int main(int argc, char *argv[]) {
 		}
 	}
 
-	int curArgIndex = musl_optind;
+	verboseOutputConfig(argc, argv);
 
 	// If no input files were specified, the user must have screwed up
-	if (curArgIndex == argc) {
+	if (musl_optind == argc) {
 		usage.printAndExit("Please specify an input file (pass `-` to read from standard input)");
 	}
 
@@ -323,13 +414,14 @@ int main(int argc, char *argv[]) {
 	}
 
 	// Read all object files first,
-	for (obj_Setup(argc - curArgIndex); curArgIndex < argc; ++curArgIndex) {
-		obj_ReadFile(argv[curArgIndex], argc - curArgIndex - 1);
+	obj_Setup(argc - musl_optind);
+	for (int i = musl_optind; i < argc; ++i) {
+		obj_ReadFile(argv[i], argc - i - 1);
 	}
 
 	// apply the linker script's modifications,
 	if (linkerScriptName) {
-		verbosePrint("Reading linker script...\n");
+		verbosePrint(VERB_NOTICE, "Reading linker script...\n");
 
 		if (lexer_Init(linkerScriptName)) {
 			yy::parser parser;
