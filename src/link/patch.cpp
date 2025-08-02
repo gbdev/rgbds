@@ -7,7 +7,7 @@
 #include <stdint.h>
 #include <vector>
 
-#include "helpers.hpp" // assume, clz, ctz
+#include "helpers.hpp" // assume
 #include "linkdefs.hpp"
 #include "opmath.hpp"
 #include "verbosity.hpp"
@@ -96,7 +96,6 @@ static int32_t computeRPNExpr(Patch const &patch, std::vector<Symbol> const &fil
 
 	while (size > 0) {
 		RPNCommand command = static_cast<RPNCommand>(getRPNByte(expression, size, patch));
-		int32_t value;
 
 		isError = false;
 
@@ -104,6 +103,7 @@ static int32_t computeRPNExpr(Patch const &patch, std::vector<Symbol> const &fil
 		// C++ does not guarantee order of evaluation of operands!
 		// So, if there are two `popRPN` in the same expression, make
 		// sure the operation is commutative.
+		int32_t value;
 		switch (command) {
 		case RPN_ADD:
 			value = popRPN(patch) + popRPN(patch);
@@ -145,7 +145,7 @@ static int32_t computeRPNExpr(Patch const &patch, std::vector<Symbol> const &fil
 			}
 			break;
 		case RPN_NEG:
-			value = -popRPN(patch);
+			value = op_neg(popRPN(patch));
 			break;
 		case RPN_EXP:
 			value = popRPN(patch);
@@ -159,19 +159,17 @@ static int32_t computeRPNExpr(Patch const &patch, std::vector<Symbol> const &fil
 			break;
 
 		case RPN_HIGH:
-			value = (popRPN(patch) >> 8) & 0xFF;
+			value = op_high(popRPN(patch));
 			break;
 		case RPN_LOW:
-			value = popRPN(patch) & 0xFF;
+			value = op_low(popRPN(patch));
 			break;
 
 		case RPN_BITWIDTH:
-			value = popRPN(patch);
-			value = value != 0 ? 32 - clz(static_cast<uint32_t>(value)) : 0;
+			value = op_bitwidth(popRPN(patch));
 			break;
 		case RPN_TZCOUNT:
-			value = popRPN(patch);
-			value = value != 0 ? ctz(static_cast<uint32_t>(value)) : 32;
+			value = op_tzcount(popRPN(patch));
 			break;
 
 		case RPN_OR:

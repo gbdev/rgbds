@@ -10,7 +10,7 @@
 #include <string.h>
 #include <string_view>
 
-#include "helpers.hpp" // assume, clz, ctz
+#include "helpers.hpp" // assume
 #include "opmath.hpp"
 
 #include "asm/output.hpp"
@@ -253,7 +253,7 @@ static int32_t tryConstLow(Expression const &expr) {
 	assume(sect.org == UINT32_MAX);
 	int32_t symbolOfs = sym->getValue() + 1;
 
-	return (symbolOfs + sect.alignOfs) & 0xFF;
+	return op_low(symbolOfs + sect.alignOfs);
 }
 
 // Returns a constant binary AND with one non-constant operand, or -1 if it cannot be computed.
@@ -301,12 +301,9 @@ void Expression::makeUnaryOp(RPNCommand op, Expression &&src) {
 	// First, check if the expression is known
 	if (src.isKnown()) {
 		// If the expressions is known, just compute the value
-		int32_t val = src.value();
-		uint32_t uval = static_cast<uint32_t>(val);
-
-		switch (op) {
+		switch (int32_t val = src.value(); op) {
 		case RPN_NEG:
-			data = static_cast<int32_t>(-uval);
+			data = op_neg(val);
 			break;
 		case RPN_NOT:
 			data = ~val;
@@ -315,16 +312,16 @@ void Expression::makeUnaryOp(RPNCommand op, Expression &&src) {
 			data = !val;
 			break;
 		case RPN_HIGH:
-			data = static_cast<int32_t>(uval >> 8 & 0xFF);
+			data = op_high(val);
 			break;
 		case RPN_LOW:
-			data = val & 0xFF;
+			data = op_low(val);
 			break;
 		case RPN_BITWIDTH:
-			data = val != 0 ? 32 - clz(uval) : 0;
+			data = op_bitwidth(val);
 			break;
 		case RPN_TZCOUNT:
-			data = val != 0 ? ctz(uval) : 32;
+			data = op_tzcount(val);
 			break;
 		// LCOV_EXCL_START
 		default:
@@ -397,37 +394,30 @@ void Expression::makeBinaryOp(RPNCommand op, Expression &&src1, Expression const
 			if (rval < 0) {
 				warning(WARNING_SHIFT_AMOUNT, "Shifting left by negative amount %" PRId32, rval);
 			}
-
 			if (rval >= 32) {
 				warning(WARNING_SHIFT_AMOUNT, "Shifting left by large amount %" PRId32, rval);
 			}
-
 			data = op_shift_left(lval, rval);
 			break;
 		case RPN_SHR:
 			if (lval < 0) {
 				warning(WARNING_SHIFT, "Shifting right negative value %" PRId32, lval);
 			}
-
 			if (rval < 0) {
 				warning(WARNING_SHIFT_AMOUNT, "Shifting right by negative amount %" PRId32, rval);
 			}
-
 			if (rval >= 32) {
 				warning(WARNING_SHIFT_AMOUNT, "Shifting right by large amount %" PRId32, rval);
 			}
-
 			data = op_shift_right(lval, rval);
 			break;
 		case RPN_USHR:
 			if (rval < 0) {
 				warning(WARNING_SHIFT_AMOUNT, "Shifting right by negative amount %" PRId32, rval);
 			}
-
 			if (rval >= 32) {
 				warning(WARNING_SHIFT_AMOUNT, "Shifting right by large amount %" PRId32, rval);
 			}
-
 			data = op_shift_right_unsigned(lval, rval);
 			break;
 		case RPN_MUL:
@@ -437,7 +427,6 @@ void Expression::makeBinaryOp(RPNCommand op, Expression &&src1, Expression const
 			if (rval == 0) {
 				fatal("Division by zero");
 			}
-
 			if (lval == INT32_MIN && rval == -1) {
 				warning(
 				    WARNING_DIV,
@@ -454,7 +443,6 @@ void Expression::makeBinaryOp(RPNCommand op, Expression &&src1, Expression const
 			if (rval == 0) {
 				fatal("Modulo by zero");
 			}
-
 			if (lval == INT32_MIN && rval == -1) {
 				data = 0;
 			} else {
@@ -465,7 +453,6 @@ void Expression::makeBinaryOp(RPNCommand op, Expression &&src1, Expression const
 			if (rval < 0) {
 				fatal("Exponentiation by negative power");
 			}
-
 			data = op_exponent(lval, rval);
 			break;
 		// LCOV_EXCL_START

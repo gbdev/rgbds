@@ -6,6 +6,8 @@
 
 #include <stdint.h>
 
+#include "helpers.hpp" // clz, ctz
+
 int32_t op_divide(int32_t dividend, int32_t divisor) {
 	// Adjust division to floor toward negative infinity,
 	// not truncate toward zero
@@ -95,4 +97,25 @@ int32_t op_shift_right_unsigned(int32_t value, int32_t amount) {
 	}
 
 	return static_cast<uint32_t>(value) >> amount;
+}
+
+int32_t op_neg(int32_t value) {
+	// Avoid negating signed INT_MIN
+	return static_cast<int32_t>(-static_cast<uint32_t>(value));
+}
+
+int32_t op_high(int32_t value) {
+	return static_cast<int32_t>(static_cast<uint32_t>(value) >> 8 & 0xFF);
+}
+
+int32_t op_low(int32_t value) {
+	return value & 0xFF;
+}
+
+int32_t op_bitwidth(int32_t value) {
+	return value != 0 ? 32 - clz(static_cast<uint32_t>(value)) : 0;
+}
+
+int32_t op_tzcount(int32_t value) {
+	return value != 0 ? ctz(static_cast<uint32_t>(value)) : 32;
 }
