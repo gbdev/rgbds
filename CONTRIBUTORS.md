@@ -32,3 +32,7 @@
 - yenatch &lt;yenatch@gmail.com&gt;
 - phs &lt;phil@philhsmith.com&gt;
 - jidoc01 &lt;jidoc01@naver.com&gt;
+
+[<img src="https://contrib.rocks/image?repo=gbdev/rgbds">](https://github.com/gbdev/rgbds/graphs/contributors)
+
+Contributor image made with [contrib.rocks](https://contrib.rocks).
