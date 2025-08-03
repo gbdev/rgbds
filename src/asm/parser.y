@@ -12,15 +12,11 @@
 
 	#include "linkdefs.hpp"
 
+	#include "asm/actions.hpp"
 	#include "asm/lexer.hpp"
 	#include "asm/macro.hpp"
 	#include "asm/rpn.hpp"
 	#include "asm/section.hpp"
-
-	struct AlignmentSpec {
-		uint8_t alignment;
-		uint16_t alignOfs;
-	};
 
 	struct ForArgs {
 		int32_t start;
@@ -47,7 +43,6 @@
 	#include "extern/utf8decoder.hpp"
 	#include "helpers.hpp"
 
-	#include "asm/actions.hpp"
 	#include "asm/charmap.hpp"
 	#include "asm/fixpoint.hpp"
 	#include "asm/fstack.hpp"
@@ -465,48 +460,19 @@ line_directive:
 
 if:
 	POP_IF iconst NEWLINE {
-		lexer_IncIFDepth();
-
-		if ($2) {
-			lexer_RunIFBlock();
-		} else {
-			lexer_SetMode(LEXER_SKIP_TO_ELIF);
-		}
+		act_If($2);
 	}
 ;
 
 elif:
 	POP_ELIF iconst NEWLINE {
-		if (lexer_GetIFDepth() == 0) {
-			fatal("Found ELIF outside of an IF construct");
-		}
-		if (lexer_RanIFBlock()) {
-			if (lexer_ReachedELSEBlock()) {
-				fatal("Found ELIF after an ELSE block");
-			}
-			lexer_SetMode(LEXER_SKIP_TO_ENDC);
-		} else if ($2) {
-			lexer_RunIFBlock();
-		} else {
-			lexer_SetMode(LEXER_SKIP_TO_ELIF);
-		}
+		act_Elif($2);
 	}
 ;
 
 else:
 	POP_ELSE NEWLINE {
-		if (lexer_GetIFDepth() == 0) {
-			fatal("Found ELSE outside of an IF construct");
-		}
-		if (lexer_RanIFBlock()) {
-			if (lexer_ReachedELSEBlock()) {
-				fatal("Found ELSE after an ELSE block");
-			}
-			lexer_SetMode(LEXER_SKIP_TO_ENDC);
-		} else {
-			lexer_RunIFBlock();
-			lexer_ReachELSEBlock();
-		}
+		act_Else();
 	}
 ;
 
@@ -521,7 +487,7 @@ plain_directive:
 
 endc:
 	POP_ENDC {
-		lexer_DecIFDepth();
+		act_Endc();
 	}
 ;
 
@@ -684,29 +650,10 @@ align:
 
 align_spec:
 	uconst {
-		if ($1 > 16) {
-			::error("Alignment must be between 0 and 16, not %u", $1);
-			$$.alignment = $$.alignOfs = 0;
-		} else {
-			$$.alignment = $1;
-			$$.alignOfs = 0;
-		}
+		$$ = act_Alignment($1, 0);
 	}
 	| uconst COMMA iconst {
-		if ($1 > 16) {
-			::error("Alignment must be between 0 and 16, not %u", $1);
-			$$.alignment = $$.alignOfs = 0;
-		} else if ($3 <= -(1 << $1) || $3 >= 1 << $1) {
-			::error(
-			    "The absolute alignment offset (%" PRIu32 ") must be less than alignment size (%d)",
-			    static_cast<uint32_t>($3 < 0 ? -$3 : $3),
-			    1 << $1
-			);
-			$$.alignment = $$.alignOfs = 0;
-		} else {
-			$$.alignment = $1;
-			$$.alignOfs = $3 < 0 ? (1 << $1) + $3 : $3;
-		}
+		$$ = act_Alignment($1, $3);
 	}
 ;
 
@@ -796,28 +743,16 @@ assert_type:
 
 assert:
 	POP_ASSERT assert_type relocexpr {
-		if (!$3.isKnown()) {
-			out_CreateAssert($2, $3, "", sect_GetOutputOffset());
-		} else if ($3.value() == 0) {
-			act_FailAssert($2);
-		}
+		act_Assert($2, $3, "");
 	}
 	| POP_ASSERT assert_type relocexpr COMMA string {
-		if (!$3.isKnown()) {
-			out_CreateAssert($2, $3, $5, sect_GetOutputOffset());
-		} else if ($3.value() == 0) {
-			act_FailAssertMsg($2, $5);
-		}
+		act_Assert($2, $3, $5);
 	}
 	| POP_STATIC_ASSERT assert_type iconst {
-		if ($3 == 0) {
-			act_FailAssert($2);
-		}
+		act_StaticAssert($2, $3, "");
 	}
 	| POP_STATIC_ASSERT assert_type iconst COMMA string {
-		if ($3 == 0) {
-			act_FailAssertMsg($2, $5);
-		}
+		act_StaticAssert($2, $3, $5);
 	}
 ;
 
@@ -963,13 +898,11 @@ ds:
 	}
 	| POP_DS POP_ALIGN LBRACK align_spec RBRACK trailing_comma {
 		uint32_t n = sect_GetAlignBytes($4.alignment, $4.alignOfs);
-
 		sect_Skip(n, true);
 		sect_AlignPC($4.alignment, $4.alignOfs);
 	}
 	| POP_DS POP_ALIGN LBRACK align_spec RBRACK COMMA ds_args trailing_comma {
 		uint32_t n = sect_GetAlignBytes($4.alignment, $4.alignOfs);
-
 		sect_RelBytes(n, $7);
 		sect_AlignPC($4.alignment, $4.alignOfs);
 	}
@@ -1385,13 +1318,7 @@ relocexpr_no_str:
 		$$.makeNumber($1);
 	}
 	| CHARACTER {
-		std::vector<int32_t> output = charmap_Convert($1);
-		if (output.size() == 1) {
-			$$.makeNumber(static_cast<uint32_t>(output[0]));
-		} else {
-			::error("Character literals must be a single charmap unit");
-			$$.makeNumber(0);
-		}
+		$$.makeNumber(act_CharToNum($1));
 	}
 	| OP_LOGICNOT relocexpr %prec NEG {
 		$$.makeUnaryOp(RPN_LOGNOT, std::move($2));
@@ -1598,36 +1525,10 @@ relocexpr_no_str:
 		$$.makeNumber(charSize);
 	}
 	| OP_CHARVAL LPAREN string COMMA iconst RPAREN {
-		if (size_t len = charmap_CharSize($3); len != 0) {
-			uint32_t idx = act_AdjustNegativeIndex($5, len, "CHARVAL");
-			if (std::optional<int32_t> val = charmap_CharValue($3, idx); val.has_value()) {
-				$$.makeNumber(*val);
-			} else {
-				warning(
-				    WARNING_BUILTIN_ARG,
-				    "CHARVAL: Index %" PRIu32 " is past the end of the character mapping",
-				    idx
-				);
-				$$.makeNumber(0);
-			}
-		} else {
-			::error("CHARVAL: No character mapping for \"%s\"", $3.c_str());
-			$$.makeNumber(0);
-		}
+		$$.makeNumber(act_CharVal($3, $5));
 	}
 	| OP_STRBYTE LPAREN string COMMA iconst RPAREN {
-		size_t len = $3.length();
-		uint32_t idx = act_AdjustNegativeIndex($5, len, "STRBYTE");
-		if (idx < len) {
-			$$.makeNumber(static_cast<uint8_t>($3[idx]));
-		} else {
-			warning(
-			    WARNING_BUILTIN_ARG,
-			    "STRBYTE: Index %" PRIu32 " is past the end of the string",
-			    idx
-			);
-			$$.makeNumber(0);
-		}
+		$$.makeNumber(act_StringByte($3, $5));
 	}
 	| LPAREN relocexpr RPAREN {
 		$$ = std::move($2);
@@ -1685,35 +1586,22 @@ string_literal:
 		}
 	}
 	| OP_STRSLICE LPAREN string COMMA iconst COMMA iconst RPAREN {
-		size_t len = act_StringLen($3, false);
-		uint32_t start = act_AdjustNegativeIndex($5, len, "STRSLICE");
-		uint32_t stop = act_AdjustNegativeIndex($7, len, "STRSLICE");
-		$$ = act_StringSlice($3, start, stop);
+		$$ = act_StringSlice($3, $5, $7);
 	}
 	| OP_STRSLICE LPAREN string COMMA iconst RPAREN {
-		size_t len = act_StringLen($3, false);
-		uint32_t start = act_AdjustNegativeIndex($5, len, "STRSLICE");
-		$$ = act_StringSlice($3, start, len);
+		$$ = act_StringSlice($3, $5, std::nullopt);
 	}
 	| OP_STRSUB LPAREN string COMMA iconst COMMA uconst RPAREN {
-		size_t len = act_StringLen($3, false);
-		uint32_t pos = act_AdjustNegativePos($5, len, "STRSUB");
-		$$ = act_StringSub($3, pos, $7);
+		$$ = act_StringSub($3, $5, $7);
 	}
 	| OP_STRSUB LPAREN string COMMA iconst RPAREN {
-		size_t len = act_StringLen($3, false);
-		uint32_t pos = act_AdjustNegativePos($5, len, "STRSUB");
-		$$ = act_StringSub($3, pos, pos > len ? 0 : len + 1 - pos);
+		$$ = act_StringSub($3, $5, std::nullopt);
 	}
 	| OP_STRCHAR LPAREN string COMMA iconst RPAREN {
-		size_t len = act_CharLen($3);
-		uint32_t idx = act_AdjustNegativeIndex($5, len, "STRCHAR");
-		$$ = act_StringChar($3, idx);
+		$$ = act_StringChar($3, $5);
 	}
 	| OP_CHARSUB LPAREN string COMMA iconst RPAREN {
-		size_t len = act_CharLen($3);
-		uint32_t pos = act_AdjustNegativePos($5, len, "CHARSUB");
-		$$ = act_CharSub($3, pos);
+		$$ = act_CharSub($3, $5);
 	}
 	| OP_REVCHAR LPAREN charmap_args RPAREN {
 		bool unique;
@@ -1745,23 +1633,7 @@ string_literal:
 		$$ = act_StringFormat($3.format, $3.args);
 	}
 	| POP_SECTION LPAREN scoped_sym RPAREN {
-		Symbol *sym = sym_FindScopedValidSymbol($3);
-
-		if (!sym) {
-			if (sym_IsPurgedScoped($3)) {
-				fatal("Unknown symbol \"%s\"; it was purged", $3.c_str());
-			} else {
-				fatal("Unknown symbol \"%s\"", $3.c_str());
-			}
-		}
-		Section const *section = sym->getSection();
-
-		if (!section) {
-			fatal("\"%s\" does not belong to any section", sym->name.c_str());
-		}
-		// Section names are capped by rgbasm's maximum string length,
-		// so this currently can't overflow.
-		$$ = section->name;
+		$$ = act_SectionName($3);
 	}
 ;
 

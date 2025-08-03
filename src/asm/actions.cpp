@@ -15,6 +15,107 @@
 #include "asm/symbol.hpp"
 #include "asm/warning.hpp"
 
+void act_If(int32_t condition) {
+	lexer_IncIFDepth();
+
+	if (condition) {
+		lexer_RunIFBlock();
+	} else {
+		lexer_SetMode(LEXER_SKIP_TO_ELIF);
+	}
+}
+
+void act_Elif(int32_t condition) {
+	if (lexer_GetIFDepth() == 0) {
+		fatal("Found ELIF outside of an IF construct");
+	}
+	if (lexer_RanIFBlock()) {
+		if (lexer_ReachedELSEBlock()) {
+			fatal("Found ELIF after an ELSE block");
+		}
+		lexer_SetMode(LEXER_SKIP_TO_ENDC);
+	} else if (condition) {
+		lexer_RunIFBlock();
+	} else {
+		lexer_SetMode(LEXER_SKIP_TO_ELIF);
+	}
+}
+
+void act_Else() {
+	if (lexer_GetIFDepth() == 0) {
+		fatal("Found ELSE outside of an IF construct");
+	}
+	if (lexer_RanIFBlock()) {
+		if (lexer_ReachedELSEBlock()) {
+			fatal("Found ELSE after an ELSE block");
+		}
+		lexer_SetMode(LEXER_SKIP_TO_ENDC);
+	} else {
+		lexer_RunIFBlock();
+		lexer_ReachELSEBlock();
+	}
+}
+
+void act_Endc() {
+	lexer_DecIFDepth();
+}
+
+AlignmentSpec act_Alignment(int32_t alignment, int32_t alignOfs) {
+	AlignmentSpec spec = {0, 0};
+	if (alignment > 16) {
+		error("Alignment must be between 0 and 16, not %u", alignment);
+	} else if (alignOfs <= -(1 << alignment) || alignOfs >= 1 << alignment) {
+		error(
+		    "The absolute alignment offset (%" PRIu32 ") must be less than alignment size (%d)",
+		    static_cast<uint32_t>(alignOfs < 0 ? -alignOfs : alignOfs),
+		    1 << alignment
+		);
+	} else {
+		spec.alignment = alignment;
+		spec.alignOfs = alignOfs < 0 ? (1 << alignment) + alignOfs : alignOfs;
+	}
+	return spec;
+}
+
+static void failAssert(AssertionType type, std::string const &message) {
+	switch (type) {
+	case ASSERT_FATAL:
+		if (message.empty()) {
+			fatal("Assertion failed");
+		} else {
+			fatal("Assertion failed: %s", message.c_str());
+		}
+	case ASSERT_ERROR:
+		if (message.empty()) {
+			error("Assertion failed");
+		} else {
+			error("Assertion failed: %s", message.c_str());
+		}
+		break;
+	case ASSERT_WARN:
+		if (message.empty()) {
+			warning(WARNING_ASSERT, "Assertion failed");
+		} else {
+			warning(WARNING_ASSERT, "Assertion failed: %s", message.c_str());
+		}
+		break;
+	}
+}
+
+void act_Assert(AssertionType type, Expression const &expr, std::string const &message) {
+	if (!expr.isKnown()) {
+		out_CreateAssert(type, expr, message, sect_GetOutputOffset());
+	} else if (expr.value() == 0) {
+		failAssert(type, message);
+	}
+}
+
+void act_StaticAssert(AssertionType type, int32_t condition, std::string const &message) {
+	if (!condition) {
+		failAssert(type, message);
+	}
+}
+
 std::optional<std::string> act_ReadFile(std::string const &name, uint32_t maxLen) {
 	FILE *file = nullptr;
 	if (std::optional<std::string> fullPath = fstk_FindFile(name); fullPath) {
@@ -53,6 +154,15 @@ std::optional<std::string> act_ReadFile(std::string const &name, uint32_t maxLen
 	return contents;
 }
 
+uint32_t act_CharToNum(std::string const &str) {
+	if (std::vector<int32_t> output = charmap_Convert(str); output.size() == 1) {
+		return static_cast<uint32_t>(output[0]);
+	} else {
+		error("Character literals must be a single charmap unit");
+		return 0;
+	}
+}
+
 uint32_t act_StringToNum(std::vector<int32_t> const &str) {
 	uint32_t length = str.size();
 
@@ -78,6 +188,63 @@ uint32_t act_StringToNum(std::vector<int32_t> const &str) {
 	}
 
 	return r;
+}
+
+static uint32_t adjustNegativeIndex(int32_t idx, size_t len, char const *functionName) {
+	// String functions adjust negative index arguments the same way,
+	// such that position -1 is the last character of a string.
+	if (idx < 0) {
+		idx += len;
+	}
+	if (idx < 0) {
+		warning(WARNING_BUILTIN_ARG, "%s: Index starts at 0", functionName);
+		idx = 0;
+	}
+	return static_cast<uint32_t>(idx);
+}
+
+static uint32_t adjustNegativePos(int32_t pos, size_t len, char const *functionName) {
+	// STRSUB and CHARSUB adjust negative position arguments the same way,
+	// such that position -1 is the last character of a string.
+	if (pos < 0) {
+		pos += len + 1;
+	}
+	if (pos < 1) {
+		warning(WARNING_BUILTIN_ARG, "%s: Position starts at 1", functionName);
+		pos = 1;
+	}
+	return static_cast<uint32_t>(pos);
+}
+
+int32_t act_CharVal(std::string const &str, int32_t negIdx) {
+	if (size_t len = charmap_CharSize(str); len != 0) {
+		uint32_t idx = adjustNegativeIndex(negIdx, len, "CHARVAL");
+		if (std::optional<int32_t> val = charmap_CharValue(str, idx); val.has_value()) {
+			return *val;
+		} else {
+			warning(
+			    WARNING_BUILTIN_ARG,
+			    "CHARVAL: Index %" PRIu32 " is past the end of the character mapping",
+			    idx
+			);
+			return 0;
+		}
+	} else {
+		error("CHARVAL: No character mapping for \"%s\"", str.c_str());
+		return 0;
+	}
+}
+
+uint8_t act_StringByte(std::string const &str, int32_t negIdx) {
+	size_t len = str.length();
+	if (uint32_t idx = adjustNegativeIndex(negIdx, len, "STRBYTE"); idx < len) {
+		return static_cast<uint8_t>(str[idx]);
+	} else {
+		warning(
+		    WARNING_BUILTIN_ARG, "STRBYTE: Index %" PRIu32 " is past the end of the string", idx
+		);
+		return 0;
+	}
 }
 
 static void errorInvalidUTF8Byte(uint8_t byte, char const *functionName) {
@@ -116,7 +283,12 @@ size_t act_StringLen(std::string const &str, bool printErrors) {
 	return len;
 }
 
-std::string act_StringSlice(std::string const &str, uint32_t start, uint32_t stop) {
+std::string
+    act_StringSlice(std::string const &str, int32_t negStart, std::optional<int32_t> negStop) {
+	size_t adjustLen = act_StringLen(str, false);
+	uint32_t start = adjustNegativeIndex(negStart, adjustLen, "STRSLICE");
+	uint32_t stop = negStop ? adjustNegativeIndex(*negStop, adjustLen, "STRSLICE") : adjustLen;
+
 	size_t strLen = str.length();
 	size_t index = 0;
 	uint32_t state = UTF8_ACCEPT;
@@ -180,7 +352,11 @@ std::string act_StringSlice(std::string const &str, uint32_t start, uint32_t sto
 	return str.substr(startIndex, index - startIndex);
 }
 
-std::string act_StringSub(std::string const &str, uint32_t pos, uint32_t len) {
+std::string act_StringSub(std::string const &str, int32_t negPos, std::optional<uint32_t> optLen) {
+	size_t adjustLen = act_StringLen(str, false);
+	uint32_t pos = adjustNegativePos(negPos, adjustLen, "STRSUB");
+	uint32_t len = optLen ? *optLen : pos > adjustLen ? 0 : adjustLen + 1 - pos;
+
 	size_t strLen = str.length();
 	size_t index = 0;
 	uint32_t state = UTF8_ACCEPT;
@@ -248,7 +424,10 @@ size_t act_CharLen(std::string const &str) {
 	return len;
 }
 
-std::string act_StringChar(std::string const &str, uint32_t idx) {
+std::string act_StringChar(std::string const &str, int32_t negIdx) {
+	size_t adjustLen = act_CharLen(str);
+	uint32_t idx = adjustNegativeIndex(negIdx, adjustLen, "STRCHAR");
+
 	std::string_view view = str;
 	size_t charLen = 1;
 
@@ -269,7 +448,10 @@ std::string act_StringChar(std::string const &str, uint32_t idx) {
 	return std::string(start);
 }
 
-std::string act_CharSub(std::string const &str, uint32_t pos) {
+std::string act_CharSub(std::string const &str, int32_t negPos) {
+	size_t adjustLen = act_CharLen(str);
+	uint32_t pos = adjustNegativePos(negPos, adjustLen, "CHARSUB");
+
 	std::string_view view = str;
 	size_t charLen = 1;
 
@@ -315,32 +497,6 @@ int32_t act_CharCmp(std::string_view str1, std::string_view str2) {
 			}
 		}
 	}
-}
-
-uint32_t act_AdjustNegativeIndex(int32_t idx, size_t len, char const *functionName) {
-	// String functions adjust negative index arguments the same way,
-	// such that position -1 is the last character of a string.
-	if (idx < 0) {
-		idx += len;
-	}
-	if (idx < 0) {
-		warning(WARNING_BUILTIN_ARG, "%s: Index starts at 0", functionName);
-		idx = 0;
-	}
-	return static_cast<uint32_t>(idx);
-}
-
-uint32_t act_AdjustNegativePos(int32_t pos, size_t len, char const *functionName) {
-	// STRSUB and CHARSUB adjust negative position arguments the same way,
-	// such that position -1 is the last character of a string.
-	if (pos < 0) {
-		pos += len + 1;
-	}
-	if (pos < 1) {
-		warning(WARNING_BUILTIN_ARG, "%s: Position starts at 1", functionName);
-		pos = 1;
-	}
-	return static_cast<uint32_t>(pos);
 }
 
 std::string
@@ -431,39 +587,30 @@ std::string act_StringFormat(
 	return str;
 }
 
+std::string act_SectionName(std::string const &symName) {
+	Symbol *sym = sym_FindScopedValidSymbol(symName);
+	if (!sym) {
+		if (sym_IsPurgedScoped(symName)) {
+			fatal("Unknown symbol \"%s\"; it was purged", symName.c_str());
+		} else {
+			fatal("Unknown symbol \"%s\"", symName.c_str());
+		}
+	}
+
+	Section const *section = sym->getSection();
+	if (!section) {
+		fatal("\"%s\" does not belong to any section", sym->name.c_str());
+	}
+
+	return section->name;
+}
+
 void act_CompoundAssignment(std::string const &symName, RPNCommand op, int32_t constValue) {
 	Expression oldExpr, constExpr, newExpr;
-	int32_t newValue;
-
 	oldExpr.makeSymbol(symName);
 	constExpr.makeNumber(constValue);
 	newExpr.makeBinaryOp(op, std::move(oldExpr), constExpr);
-	newValue = newExpr.getConstVal();
+
+	int32_t newValue = newExpr.getConstVal();
 	sym_AddVar(symName, newValue);
-}
-
-void act_FailAssert(AssertionType type) {
-	switch (type) {
-	case ASSERT_FATAL:
-		fatal("Assertion failed");
-	case ASSERT_ERROR:
-		error("Assertion failed");
-		break;
-	case ASSERT_WARN:
-		warning(WARNING_ASSERT, "Assertion failed");
-		break;
-	}
-}
-
-void act_FailAssertMsg(AssertionType type, std::string const &message) {
-	switch (type) {
-	case ASSERT_FATAL:
-		fatal("Assertion failed: %s", message.c_str());
-	case ASSERT_ERROR:
-		error("Assertion failed: %s", message.c_str());
-		break;
-	case ASSERT_WARN:
-		warning(WARNING_ASSERT, "Assertion failed: %s", message.c_str());
-		break;
-	}
 }
