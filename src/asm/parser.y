@@ -1527,6 +1527,9 @@ relocexpr_no_str:
 	| OP_CHARVAL LPAREN string COMMA iconst RPAREN {
 		$$.makeNumber(act_CharVal($3, $5));
 	}
+	| OP_CHARVAL LPAREN string RPAREN {
+		$$.makeNumber(act_CharVal($3));
+	}
 	| OP_STRBYTE LPAREN string COMMA iconst RPAREN {
 		$$.makeNumber(act_StringByte($3, $5));
 	}

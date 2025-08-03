@@ -216,6 +216,18 @@ static uint32_t adjustNegativePos(int32_t pos, size_t len, char const *functionN
 	return static_cast<uint32_t>(pos);
 }
 
+int32_t act_CharVal(std::string const &str) {
+	if (size_t len = charmap_CharSize(str); len == 0) {
+		error("CHARVAL: No character mapping for \"%s\"", str.c_str());
+		return 0;
+	} else if (len != 1) {
+		error("CHARVAL: Character mapping for \"%s\" must have a single value", str.c_str());
+		return 0;
+	} else {
+		return *charmap_CharValue(str, 0);
+	}
+}
+
 int32_t act_CharVal(std::string const &str, int32_t negIdx) {
 	if (size_t len = charmap_CharSize(str); len != 0) {
 		uint32_t idx = adjustNegativeIndex(negIdx, len, "CHARVAL");
