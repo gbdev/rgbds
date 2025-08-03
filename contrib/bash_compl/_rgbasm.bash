@@ -61,7 +61,7 @@ _rgbasm_completions() {
 	parse_short_opt() {
 		# These options act like a long option (= takes up the entire word), but only use a single dash
 		# So, they need some special handling
-		if [[ "$1" = "-M"[GP] ]]; then
+		if [[ "$1" = "-M"[CGP] ]]; then
 			state=normal
 			optlen=${#1}
 			return;
@@ -146,7 +146,7 @@ _rgbasm_completions() {
 			# It is, try to complete one
 			mapfile -t COMPREPLY < <(compgen -W "${opts[*]%%:*}" -P '--' -- "${cur_word#--}")
 			return 0
-		elif [[ "$cur_word" = '-M'[GPQT] ]]; then
+		elif [[ "$cur_word" = '-M'[CGPQT] ]]; then
 			# These options act like long opts with no arguments, so return them and exactly them
 			COMPREPLY=( "$cur_word" )
 			return 0
