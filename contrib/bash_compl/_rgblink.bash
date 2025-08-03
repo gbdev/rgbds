@@ -18,6 +18,7 @@ _rgblink_completions() {
 		[O]="overlay:glob-*.gb *.gbc *.sgb"
 		[o]="output:glob-*.gb *.gbc *.sgb"
 		[p]="pad:unk"
+		[s]="smart:unk"
 		[t]="tiny:normal"
 		[v]="verbose:normal"
 		[w]="wramx:normal"
