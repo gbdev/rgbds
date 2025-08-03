@@ -36,3 +36,13 @@
 [<img src="https://contrib.rocks/image?repo=gbdev/rgbds">](https://github.com/gbdev/rgbds/graphs/contributors)
 
 Contributor image made with [contrib.rocks](https://contrib.rocks).
+
+## Acknowledgements
+
+RGBGFX generates palettes using algorithms found in the paper
+["Algorithms for the Pagination Problem, a Bin Packing with Overlapping Items"](https://arxiv.org/abs/1605.00558)
+([GitHub](https://github.com/pagination-problem/pagination), MIT license),
+by Aristide Grange, Imed Kacem, and Sébastien Martin.
+
+RGBGFX's color palette was taken from [SameBoy](https://sameboy.github.io), with permission and help
+by [LIJI](https://github.com/LIJI32).
