@@ -18,6 +18,7 @@
 #include <unordered_map>
 
 #include "helpers.hpp"
+#include "style.hpp"
 #include "util.hpp"
 #include "verbosity.hpp"
 
@@ -845,9 +846,15 @@ void lexer_DumpStringExpansions() {
 	for (Expansion &exp : lexerState->expansions) {
 		// Only register EQUS expansions, not string args
 		if (exp.name) {
-			fprintf(stderr, "while expanding symbol \"%s\"\n", exp.name->c_str());
+			style_Set(stderr, STYLE_CYAN, false);
+			fputs("while expanding symbol \"", stderr);
+			style_Set(stderr, STYLE_CYAN, true);
+			fputs(exp.name->c_str(), stderr);
+			style_Set(stderr, STYLE_CYAN, false);
+			fputs("\"\n", stderr);
 		}
 	}
+	style_Reset(stderr);
 }
 
 // Functions to discard non-tokenized characters

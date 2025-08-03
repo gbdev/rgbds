@@ -9,6 +9,7 @@
 .Sh SYNOPSIS
 .Nm
 .Op Fl dhMtVvwx
+.Op Fl \-color Ar when
 .Op Fl l Ar linker_script
 .Op Fl m Ar map_file
 .Op Fl n Ar sym_file
@@ -63,6 +64,18 @@ is invalid because it could also be
 .Fl \-version .
 The arguments are as follows:
 .Bl -tag -width Ds
+.It Fl \-color Ar when
+Specify when to highlight warning and error messages with color:
+.Ql always ,
+.Ql never ,
+or
+.Ql auto .
+.Ql auto
+determines whether to use colors based on the
+.Ql Lk https://no-color.org/ NO_COLOR
+or
+.Ql Lk https://force-color.org/ FORCE_COLOR
+environment variables, or whether the output is to a TTY.
 .It Fl d , Fl \-dmg
 Enable DMG mode.
 Prohibit the use of sections that doesn't exist on a DMG, such as VRAM bank 1.

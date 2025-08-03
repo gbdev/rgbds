@@ -10,6 +10,7 @@
 .Nm
 .Op Fl EhVvw
 .Op Fl b Ar chars
+.Op Fl \-color Ar when
 .Op Fl D Ar name Ns Op = Ns Ar value
 .Op Fl g Ar chars
 .Op Fl I Ar path
@@ -65,6 +66,18 @@ letters,
 .Sq # ,
 or
 .Sq @ .
+.It Fl \-color Ar when
+Specify when to highlight warning and error messages with color:
+.Ql always ,
+.Ql never ,
+or
+.Ql auto .
+.Ql auto
+determines whether to use colors based on the
+.Ql Lk https://no-color.org/ NO_COLOR
+or
+.Ql Lk https://force-color.org/ FORCE_COLOR
+environment variables, or whether the output is to a TTY.
 .It Fl D Ar name Ns Oo = Ns Ar value Oc , Fl \-define Ar name Ns Oo = Ns Ar value Oc
 Add a string symbol to the compiled source code.
 This is equivalent to

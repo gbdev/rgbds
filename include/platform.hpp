@@ -28,6 +28,7 @@
 	#define STDERR_FILENO 2
 	#define ssize_t       int
 	#define SSIZE_MAX     INT_MAX
+	#define isatty        _isatty
 #else
 	#include <fcntl.h>  // IWYU pragma: export
 	#include <limits.h> // IWYU pragma: export

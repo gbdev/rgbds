@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+
 #include "diagnostics.hpp"
 
 void warnx(char const *fmt, ...) {

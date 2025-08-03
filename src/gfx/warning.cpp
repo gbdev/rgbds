@@ -7,6 +7,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "style.hpp"
+
 // clang-format off: nested initializers
 Diagnostics<WarningLevel, WarningID> warnings = {
     .metaWarnings = {
@@ -25,12 +27,14 @@ Diagnostics<WarningLevel, WarningID> warnings = {
 
 [[noreturn]]
 void giveUp() {
+	style_Set(stderr, STYLE_RED, true);
 	fprintf(
 	    stderr,
 	    "Conversion aborted after %" PRIu64 " error%s\n",
 	    warnings.nbErrors,
 	    warnings.nbErrors == 1 ? "" : "s"
 	);
+	style_Reset(stderr);
 	exit(1);
 }
 
@@ -42,7 +46,9 @@ void requireZeroErrors() {
 
 void error(char const *fmt, ...) {
 	va_list ap;
+	style_Set(stderr, STYLE_RED, true);
 	fputs("error: ", stderr);
+	style_Reset(stderr);
 	va_start(ap, fmt);
 	vfprintf(stderr, fmt, ap);
 	va_end(ap);
@@ -54,7 +60,9 @@ void error(char const *fmt, ...) {
 [[noreturn]]
 void fatal(char const *fmt, ...) {
 	va_list ap;
+	style_Set(stderr, STYLE_RED, true);
 	fputs("FATAL: ", stderr);
+	style_Reset(stderr);
 	va_start(ap, fmt);
 	vfprintf(stderr, fmt, ap);
 	va_end(ap);
@@ -73,7 +81,9 @@ void warning(WarningID id, char const *fmt, ...) {
 		break;
 
 	case WarningBehavior::ENABLED:
+		style_Set(stderr, STYLE_YELLOW, true);
 		fprintf(stderr, "warning: [-W%s]\n    ", flag);
+		style_Reset(stderr);
 		va_start(ap, fmt);
 		vfprintf(stderr, fmt, ap);
 		va_end(ap);
@@ -81,7 +91,9 @@ void warning(WarningID id, char const *fmt, ...) {
 		break;
 
 	case WarningBehavior::ERROR:
+		style_Set(stderr, STYLE_RED, true);
 		fprintf(stderr, "error: [-Werror=%s]\n    ", flag);
+		style_Reset(stderr);
 		va_start(ap, fmt);
 		vfprintf(stderr, fmt, ap);
 		va_end(ap);

@@ -16,6 +16,7 @@
 #include "itertools.hpp"
 #include "platform.hpp"
 #include "script.hpp" // Generated from script.y
+#include "style.hpp"
 #include "usage.hpp"
 #include "util.hpp" // UpperMap, printChar
 #include "verbosity.hpp"
@@ -37,6 +38,9 @@ static char const *linkerScriptName = nullptr; // -l
 // Short options
 static char const *optstring = "dhl:m:Mn:O:o:p:S:tVvW:wx";
 
+// Variables for the long-only options
+static int longOpt; // `--color`
+
 // Equivalent long options
 // Please keep in the same order as short opts.
 // Also, make sure long opts don't create ambiguity:
@@ -45,23 +49,24 @@ static char const *optstring = "dhl:m:Mn:O:o:p:S:tVvW:wx";
 // This is because long opt matching, even to a single char, is prioritized
 // over short opt matching.
 static option const longopts[] = {
-    {"dmg",           no_argument,       nullptr, 'd'},
-    {"help",          no_argument,       nullptr, 'h'},
-    {"linkerscript",  required_argument, nullptr, 'l'},
-    {"map",           required_argument, nullptr, 'm'},
-    {"no-sym-in-map", no_argument,       nullptr, 'M'},
-    {"sym",           required_argument, nullptr, 'n'},
-    {"overlay",       required_argument, nullptr, 'O'},
-    {"output",        required_argument, nullptr, 'o'},
-    {"pad",           required_argument, nullptr, 'p'},
-    {"scramble",      required_argument, nullptr, 'S'},
-    {"tiny",          no_argument,       nullptr, 't'},
-    {"version",       no_argument,       nullptr, 'V'},
-    {"verbose",       no_argument,       nullptr, 'v'},
-    {"warning",       required_argument, nullptr, 'W'},
-    {"wramx",         no_argument,       nullptr, 'w'},
-    {"nopad",         no_argument,       nullptr, 'x'},
-    {nullptr,         no_argument,       nullptr, 0  }
+    {"dmg",           no_argument,       nullptr,  'd'},
+    {"help",          no_argument,       nullptr,  'h'},
+    {"linkerscript",  required_argument, nullptr,  'l'},
+    {"map",           required_argument, nullptr,  'm'},
+    {"no-sym-in-map", no_argument,       nullptr,  'M'},
+    {"sym",           required_argument, nullptr,  'n'},
+    {"overlay",       required_argument, nullptr,  'O'},
+    {"output",        required_argument, nullptr,  'o'},
+    {"pad",           required_argument, nullptr,  'p'},
+    {"scramble",      required_argument, nullptr,  'S'},
+    {"tiny",          no_argument,       nullptr,  't'},
+    {"version",       no_argument,       nullptr,  'V'},
+    {"verbose",       no_argument,       nullptr,  'v'},
+    {"warning",       required_argument, nullptr,  'W'},
+    {"wramx",         no_argument,       nullptr,  'w'},
+    {"nopad",         no_argument,       nullptr,  'x'},
+    {"color",         required_argument, &longOpt, 'c'},
+    {nullptr,         no_argument,       nullptr,  0  },
 };
 
 // clang-format off: long string literal
@@ -174,21 +179,29 @@ std::string const &FileStackNode::dump(uint32_t curLineNo) const {
 	if (std::holds_alternative<std::vector<uint32_t>>(data)) {
 		assume(parent); // REPT nodes use their parent's name
 		std::string const &lastName = parent->dump(lineNo);
+		style_Set(stderr, STYLE_CYAN, false);
 		fputs(" -> ", stderr);
+		style_Set(stderr, STYLE_CYAN, true);
 		fputs(lastName.c_str(), stderr);
 		for (uint32_t iter : iters()) {
 			fprintf(stderr, "::REPT~%" PRIu32, iter);
 		}
+		style_Set(stderr, STYLE_CYAN, false);
 		fprintf(stderr, "(%" PRIu32 ")", curLineNo);
+		style_Reset(stderr);
 		return lastName;
 	} else {
 		if (parent) {
 			parent->dump(lineNo);
+			style_Set(stderr, STYLE_CYAN, false);
 			fputs(" -> ", stderr);
 		}
 		std::string const &nodeName = name();
+		style_Set(stderr, STYLE_CYAN, true);
 		fputs(nodeName.c_str(), stderr);
+		style_Set(stderr, STYLE_CYAN, false);
 		fprintf(stderr, "(%" PRIu32 ")", curLineNo);
+		style_Reset(stderr);
 		return nodeName;
 	}
 }
@@ -387,6 +400,17 @@ int main(int argc, char *argv[]) {
 			options.disablePadding = true;
 			// implies tiny mode
 			options.is32kMode = true;
+			break;
+		case 0: // Long-only options
+			if (longOpt == 'c') {
+				if (!strcasecmp(musl_optarg, "always")) {
+					style_Enable(true);
+				} else if (!strcasecmp(musl_optarg, "never")) {
+					style_Enable(false);
+				} else if (strcasecmp(musl_optarg, "auto")) {
+					fatal("Invalid argument for option '--color'");
+				}
+			}
 			break;
 		default:
 			usage.printAndExit(1); // LCOV_EXCL_LINE

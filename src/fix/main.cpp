@@ -16,6 +16,7 @@
 #include "extern/getopt.hpp"
 #include "helpers.hpp"
 #include "platform.hpp"
+#include "style.hpp"
 #include "usage.hpp"
 #include "version.hpp"
 
@@ -27,6 +28,9 @@ static constexpr off_t BANK_SIZE = 0x4000;
 // Short options
 static char const *optstring = "Ccf:hi:jk:L:l:m:n:Oo:p:r:st:VvW:w";
 
+// Variables for the long-only options
+static int longOpt; // `--color`
+
 // Equivalent long options
 // Please keep in the same order as short opts.
 // Also, make sure long opts don't create ambiguity:
@@ -35,27 +39,28 @@ static char const *optstring = "Ccf:hi:jk:L:l:m:n:Oo:p:r:st:VvW:w";
 // This is because long opt matching, even to a single char, is prioritized
 // over short opt matching.
 static option const longopts[] = {
-    {"color-only",       no_argument,       nullptr, 'C'},
-    {"color-compatible", no_argument,       nullptr, 'c'},
-    {"fix-spec",         required_argument, nullptr, 'f'},
-    {"help",             no_argument,       nullptr, 'h'},
-    {"game-id",          required_argument, nullptr, 'i'},
-    {"non-japanese",     no_argument,       nullptr, 'j'},
-    {"new-licensee",     required_argument, nullptr, 'k'},
-    {"logo",             required_argument, nullptr, 'L'},
-    {"old-licensee",     required_argument, nullptr, 'l'},
-    {"mbc-type",         required_argument, nullptr, 'm'},
-    {"rom-version",      required_argument, nullptr, 'n'},
-    {"overwrite",        no_argument,       nullptr, 'O'},
-    {"output",           required_argument, nullptr, 'o'},
-    {"pad-value",        required_argument, nullptr, 'p'},
-    {"ram-size",         required_argument, nullptr, 'r'},
-    {"sgb-compatible",   no_argument,       nullptr, 's'},
-    {"title",            required_argument, nullptr, 't'},
-    {"version",          no_argument,       nullptr, 'V'},
-    {"validate",         no_argument,       nullptr, 'v'},
-    {"warning",          required_argument, nullptr, 'W'},
-    {nullptr,            no_argument,       nullptr, 0  }
+    {"color-only",       no_argument,       nullptr,  'C'},
+    {"color-compatible", no_argument,       nullptr,  'c'},
+    {"fix-spec",         required_argument, nullptr,  'f'},
+    {"help",             no_argument,       nullptr,  'h'},
+    {"game-id",          required_argument, nullptr,  'i'},
+    {"non-japanese",     no_argument,       nullptr,  'j'},
+    {"new-licensee",     required_argument, nullptr,  'k'},
+    {"logo",             required_argument, nullptr,  'L'},
+    {"old-licensee",     required_argument, nullptr,  'l'},
+    {"mbc-type",         required_argument, nullptr,  'm'},
+    {"rom-version",      required_argument, nullptr,  'n'},
+    {"overwrite",        no_argument,       nullptr,  'O'},
+    {"output",           required_argument, nullptr,  'o'},
+    {"pad-value",        required_argument, nullptr,  'p'},
+    {"ram-size",         required_argument, nullptr,  'r'},
+    {"sgb-compatible",   no_argument,       nullptr,  's'},
+    {"title",            required_argument, nullptr,  't'},
+    {"version",          no_argument,       nullptr,  'V'},
+    {"validate",         no_argument,       nullptr,  'v'},
+    {"warning",          required_argument, nullptr,  'W'},
+    {"color",            required_argument, &longOpt, 'c'},
+    {nullptr,            no_argument,       nullptr,  0  },
 };
 
 // clang-format off: long string literal
@@ -815,6 +820,19 @@ int main(int argc, char *argv[]) {
 
 		case 'w':
 			warnings.state.warningsEnabled = false;
+			break;
+
+		// Long-only options
+		case 0:
+			if (longOpt == 'c') {
+				if (!strcasecmp(musl_optarg, "always")) {
+					style_Enable(true);
+				} else if (!strcasecmp(musl_optarg, "never")) {
+					style_Enable(false);
+				} else if (strcasecmp(musl_optarg, "auto")) {
+					fatal("Invalid argument for option '--color'");
+				}
+			}
 			break;
 
 		default:

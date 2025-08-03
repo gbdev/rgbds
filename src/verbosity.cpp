@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+
 #include "verbosity.hpp"
 
 #include <array>

@@ -12,6 +12,7 @@
 #include "diagnostics.hpp"
 #include "helpers.hpp"
 #include "itertools.hpp"
+#include "style.hpp"
 
 #include "asm/fstack.hpp"
 #include "asm/lexer.hpp"
@@ -64,14 +65,24 @@ Diagnostics<WarningLevel, WarningID> warnings = {
 // clang-format on
 
 static void printDiag(
-    char const *fmt, va_list args, char const *type, char const *flagfmt, char const *flag
+    char const *fmt,
+    va_list args,
+    char const *type,
+    StyleColor color,
+    char const *flagfmt,
+    char const *flag
 ) {
-	fputs(type, stderr);
-	fputs(": ", stderr);
+	style_Set(stderr, color, true);
+	fprintf(stderr, "%s: ", type);
 	if (fstk_DumpCurrent()) {
-		fprintf(stderr, flagfmt, flag);
+		putc(':', stderr);
+		if (flagfmt) {
+			style_Set(stderr, color, true);
+			fprintf(stderr, flagfmt, flag);
+		}
 		fputs("\n    ", stderr);
 	}
+	style_Reset(stderr);
 	vfprintf(stderr, fmt, args);
 	putc('\n', stderr);
 
@@ -82,13 +93,16 @@ static void incrementErrors() {
 	// This intentionally makes 0 act as "unlimited"
 	warnings.incrementErrors();
 	if (warnings.nbErrors == options.maxErrors) {
+		style_Set(stderr, STYLE_RED, true);
 		fprintf(
 		    stderr,
-		    "Assembly aborted after the maximum of %" PRIu64 " error%s! (configure with "
-		    "'-X/--max-errors')\n",
+		    "Assembly aborted after the maximum of %" PRIu64 " error%s!",
 		    warnings.nbErrors,
 		    warnings.nbErrors == 1 ? "" : "s"
 		);
+		style_Set(stderr, STYLE_RED, false);
+		fputs(" (configure with '-X/--max-errors')\n", stderr);
+		style_Reset(stderr);
 		exit(1);
 	}
 }
@@ -97,17 +111,19 @@ void error(char const *fmt, ...) {
 	va_list args;
 
 	va_start(args, fmt);
-	printDiag(fmt, args, "error", ":", nullptr);
+	printDiag(fmt, args, "error", STYLE_RED, nullptr, nullptr);
 	va_end(args);
 
 	incrementErrors();
 }
 
 void error(std::function<void()> callback) {
+	style_Set(stderr, STYLE_RED, true);
 	fputs("error: ", stderr);
 	if (fstk_DumpCurrent()) {
 		fputs(":\n    ", stderr);
 	}
+	style_Reset(stderr);
 	callback();
 	putc('\n', stderr);
 	lexer_DumpStringExpansions();
@@ -120,7 +136,7 @@ void fatal(char const *fmt, ...) {
 	va_list args;
 
 	va_start(args, fmt);
-	printDiag(fmt, args, "FATAL", ":", nullptr);
+	printDiag(fmt, args, "FATAL", STYLE_RED, nullptr, nullptr);
 	va_end(args);
 
 	exit(1);
@@ -128,12 +144,14 @@ void fatal(char const *fmt, ...) {
 
 void requireZeroErrors() {
 	if (warnings.nbErrors != 0) {
+		style_Set(stderr, STYLE_RED, true);
 		fprintf(
 		    stderr,
 		    "Assembly aborted with %" PRIu64 " error%s!\n",
 		    warnings.nbErrors,
 		    warnings.nbErrors == 1 ? "" : "s"
 		);
+		style_Reset(stderr);
 		exit(1);
 	}
 }
@@ -149,11 +167,11 @@ void warning(WarningID id, char const *fmt, ...) {
 		break;
 
 	case WarningBehavior::ENABLED:
-		printDiag(fmt, args, "warning", ": [-W%s]", flag);
+		printDiag(fmt, args, "warning", STYLE_YELLOW, " [-W%s]", flag);
 		break;
 
 	case WarningBehavior::ERROR:
-		printDiag(fmt, args, "error", ": [-Werror=%s]", flag);
+		printDiag(fmt, args, "error", STYLE_RED, " [-Werror=%s]", flag);
 		break;
 	}
 

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+
 #include "fix/mbc.hpp"
 
 #include <stdlib.h>
