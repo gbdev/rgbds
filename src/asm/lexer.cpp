@@ -257,6 +257,10 @@ static bool isWhitespace(int c) {
 	return c == ' ' || c == '\t';
 }
 
+static bool isNewline(int c) {
+	return c == '\r' || c == '\n';
+}
+
 static LexerState *lexerState = nullptr;
 static LexerState *lexerStateEOL = nullptr;
 
@@ -286,6 +290,13 @@ void LexerState::clear(uint32_t lineNo_) {
 
 static void nextLine() {
 	++lexerState->lineNo;
+}
+
+static void nextLineOutsideExpansion() {
+	// Newlines read within an expansion should not increase the line count
+	if (lexerState->expansions.empty()) {
+		nextLine();
+	}
 }
 
 uint32_t lexer_GetIFDepth() {
@@ -757,7 +768,9 @@ static int peek() {
 static void shiftChar() {
 	if (lexerState->capturing) {
 		if (lexerState->captureBuf) {
-			lexerState->captureBuf->push_back(peek());
+			int c = peek();
+			assume(c != EOF); // Avoid calling `shiftChar()` when it could be EOF while capturing
+			lexerState->captureBuf->push_back(c);
 		}
 		++lexerState->captureSize;
 	}
@@ -801,9 +814,7 @@ static bool consumeChar(int c) {
 
 static int bumpChar() {
 	int c = peek();
-	if (c != EOF) {
-		shiftChar();
-	}
+	shiftChar();
 	return c;
 }
 
@@ -872,9 +883,7 @@ static void discardBlockComment() {
 			handleCRLF(c);
 			[[fallthrough]];
 		case '\n':
-			if (lexerState->expansions.empty()) {
-				nextLine();
-			}
+			nextLineOutsideExpansion();
 			continue;
 		case '/':
 			if (peek() == '*') {
@@ -895,23 +904,17 @@ static void discardBlockComment() {
 
 static void discardComment() {
 	Defer reenableExpansions = scopedDisableExpansions();
-	for (;; shiftChar()) {
-		if (int c = peek(); c == EOF || c == '\r' || c == '\n') {
-			break;
-		}
-	}
+	skipChars([](int c) { return c != EOF && !isNewline(c); });
 }
 
 static void discardLineContinuation() {
 	for (;;) {
 		if (int c = peek(); isWhitespace(c)) {
 			shiftChar();
-		} else if (c == '\r' || c == '\n') {
+		} else if (isNewline(c)) {
 			shiftChar();
 			handleCRLF(c);
-			if (lexerState->expansions.empty()) {
-				nextLine();
-			}
+			nextLineOutsideExpansion();
 			break;
 		} else if (c == ';') {
 			discardComment();
@@ -1244,7 +1247,7 @@ static std::pair<Symbol const *, std::shared_ptr<std::string>> readInterpolation
 				beginExpansion(interp.second, interp.first->name);
 			}
 			continue; // Restart, reading from the new buffer
-		} else if (int c = peek(); c == EOF || c == '\r' || c == '\n' || c == '"') {
+		} else if (int c = peek(); c == EOF || isNewline(c) || c == '"') {
 			error("Missing }");
 			break;
 		} else if (c == '}') {
@@ -1464,7 +1467,7 @@ static void readString(std::string &str, bool rawString) {
 		int c = peek();
 
 		// '\r', '\n' or EOF ends a single-line string early
-		if (c == EOF || (!multiline && (c == '\r' || c == '\n'))) {
+		if (c == EOF || (!multiline && isNewline(c))) {
 			error("Unterminated string");
 			return;
 		}
@@ -1473,7 +1476,7 @@ static void readString(std::string &str, bool rawString) {
 		shiftChar();
 
 		// Handle '\r' or '\n' (in multiline strings only, already handled above otherwise)
-		if (c == '\r' || c == '\n') {
+		if (isNewline(c)) {
 			handleCRLF(c);
 			nextLine();
 			str += '\n';
@@ -1948,7 +1951,7 @@ static Token yylex_RAW() {
 		} else if (c == '\\') {
 			c = nextChar();
 			// If not a line continuation, handle as a normal char
-			if (!isWhitespace(c) && c != '\n' && c != '\r') {
+			if (!isWhitespace(c) && !isNewline(c)) {
 				goto backslash;
 			}
 			// Line continuations count as "whitespace"
@@ -2096,9 +2099,10 @@ finish: // Can't `break` out of a nested `for`-`switch`
 	if (!str.empty()) {
 		return Token(T_(STRING), str);
 	}
+
 	lexer_SetMode(LEXER_NORMAL);
 
-	if (c == '\r' || c == '\n') {
+	if (isNewline(c)) {
 		shiftChar();
 		handleCRLF(c);
 		return Token(T_(NEWLINE));
@@ -2107,54 +2111,57 @@ finish: // Can't `break` out of a nested `for`-`switch`
 	return Token(T_(YYEOF));
 }
 
-// This function uses the fact that `if`, etc. constructs are only valid when
-// there's nothing before them on their lines. This enables filtering
-// "meaningful" (= at line start) vs. "meaningless" (everything else) tokens.
-// It's especially important due to macro args not being handled in this
-// state, and lexing them in "normal" mode potentially producing such tokens.
-static Token skipIfBlock(bool toEndc) {
-	lexer_SetMode(LEXER_NORMAL);
-	uint32_t startingDepth = lexer_GetIFDepth();
+static int skipPastEOL() {
+	if (lexerState->atLineStart) {
+		lexerState->atLineStart = false;
+		return skipChars(isWhitespace);
+	}
 
-	bool atLineStart = lexerState->atLineStart;
-	Defer notAtLineStart{[&] { lexerState->atLineStart = false; }};
-
-	Defer reenableExpansions = scopedDisableExpansions();
-
-	for (int c;; atLineStart = false) {
-		// Read chars until EOL
-		while (!atLineStart) {
+	for (;;) {
+		if (int c = bumpChar(); c == EOF) {
+			return EOF;
+		} else if (isNewline(c)) {
+			handleCRLF(c);
+			nextLine();
+			return skipChars(isWhitespace);
+		} else if (c == '\\') {
+			// Unconditionally skip the next char, including line continuations
 			c = bumpChar();
-
-			if (c == EOF) {
-				return Token(T_(YYEOF));
-			} else if (c == '\\') {
-				// Unconditionally skip the next char, including line continuations
-				c = bumpChar();
-			} else if (c == '\r' || c == '\n') {
-				atLineStart = true;
-			}
-
-			if (c == '\r' || c == '\n') {
+			if (isNewline(c)) {
 				handleCRLF(c);
-				// Do this both on line continuations and plain EOLs
 				nextLine();
 			}
 		}
+	}
+}
 
-		// Skip leading whitespace
-		for (;; shiftChar()) {
-			c = peek();
-			if (!isWhitespace(c)) {
-				break;
-			}
+// This function uses the fact that `IF` and `REPT` constructs are only valid
+// when there's nothing before them on their lines. This enables filtering
+// "meaningful" tokens (at line start) vs. "meaningless" (everything else) ones.
+// It's especially important due to macro args not being handled in this
+// state, and lexing them in "normal" mode potentially producing such tokens.
+static Token skipToLeadingIdentifier() {
+	for (;;) {
+		if (int c = skipPastEOL(); c == EOF) {
+			return Token(T_(YYEOF));
+		} else if (startsIdentifier(c)) {
+			shiftChar();
+			return readIdentifier(c, false);
 		}
+	}
+}
 
-		if (!startsIdentifier(c)) {
-			continue;
-		}
-		shiftChar();
-		switch (Token token = readIdentifier(c, false); token.type) {
+static Token skipIfBlock(bool toEndc) {
+	uint32_t startingDepth = lexer_GetIFDepth();
+
+	lexer_SetMode(LEXER_NORMAL);
+
+	Defer reenableExpansions = scopedDisableExpansions();
+	for (;;) {
+		switch (Token token = skipToLeadingIdentifier(); token.type) {
+		case T_(YYEOF):
+			return token;
+
 		case T_(POP_IF):
 			lexer_IncIFDepth();
 			break;
@@ -2185,9 +2192,6 @@ static Token skipIfBlock(bool toEndc) {
 			}
 			lexer_DecIFDepth();
 			break;
-
-		default:
-			break;
 		}
 	}
 }
@@ -2203,48 +2207,21 @@ static Token yylex_SKIP_TO_ENDC() {
 static Token yylex_SKIP_TO_ENDR() {
 	lexer_SetMode(LEXER_NORMAL);
 
-	bool atLineStart = lexerState->atLineStart;
-	Defer notAtLineStart{[&] { lexerState->atLineStart = false; }};
-
+	// This does not have to look for an `ENDR` token because the entire `REPT` or `FOR` body has
+	// been captured into the current fstack context, so it can just skip to the end of that
+	// context, which yields an EOF.
 	Defer reenableExpansions = scopedDisableExpansions();
+	for (;;) {
+		switch (Token token = skipToLeadingIdentifier(); token.type) {
+		case T_(YYEOF):
+			return token;
 
-	for (int c;; atLineStart = false) {
-		// Read chars until EOL
-		while (!atLineStart) {
-			c = bumpChar();
-
-			if (c == EOF) {
-				return Token(T_(YYEOF));
-			} else if (c == '\\') {
-				// Unconditionally skip the next char, including line continuations
-				c = bumpChar();
-			} else if (c == '\r' || c == '\n') {
-				atLineStart = true;
-			}
-
-			if (c == '\r' || c == '\n') {
-				handleCRLF(c);
-				// Do this both on line continuations and plain EOLs
-				nextLine();
-			}
-		}
-
-		c = skipChars(isWhitespace);
-
-		if (!startsIdentifier(c)) {
-			continue;
-		}
-		shiftChar();
-		switch (readIdentifier(c, false).type) {
 		case T_(POP_IF):
 			lexer_IncIFDepth();
 			break;
 
 		case T_(POP_ENDC):
 			lexer_DecIFDepth();
-			break;
-
-		default:
 			break;
 		}
 	}
@@ -2258,9 +2235,8 @@ yy::parser::symbol_type yylex() {
 	if (lexerState->lastToken == T_(EOB) && yywrap()) {
 		return yy::parser::make_YYEOF();
 	}
-	// Newlines read within an expansion should not increase the line count
-	if (lexerState->atLineStart && lexerState->expansions.empty()) {
-		nextLine();
+	if (lexerState->atLineStart) {
+		nextLineOutsideExpansion();
 	}
 
 	static Token (* const lexerModeFuncs[NB_LEXER_MODES])() = {
@@ -2338,23 +2314,20 @@ Capture lexer_CaptureRept() {
 	Capture capture = startCapture();
 
 	Defer reenableExpansions = scopedDisableExpansions();
-
-	size_t depth = 0;
-
-	for (int c;;) {
+	for (size_t depth = 0;;) {
 		nextLine();
-		// We're at line start, so attempt to match a `REPT` or `ENDR` token
-		do { // Discard initial whitespace
-			c = bumpChar();
-		} while (isWhitespace(c));
-		// Now, try to match `REPT`, `FOR` or `ENDR` as a **whole** keyword
+		int c = skipChars(isWhitespace);
+		if (c != EOF) {
+			shiftChar();
+		}
+
+		// We're at line start, so attempt to match a `REPT`, `FOR`, or `ENDR` token
 		if (startsIdentifier(c)) {
 			switch (readIdentifier(c, false).type) {
 			case T_(POP_REPT):
 			case T_(POP_FOR):
 				++depth;
 				break; // Ignore the rest of that line
-
 			case T_(POP_ENDR):
 				if (depth) {
 					--depth;
@@ -2365,22 +2338,23 @@ Capture lexer_CaptureRept() {
 				// We know we have read exactly "ENDR", not e.g. an EQUS
 				capture.span.size -= literal_strlen("ENDR");
 				return capture;
-
-			default:
-				break;
 			}
 		}
 
 		// Just consume characters until EOL or EOF
-		for (;; c = bumpChar()) {
+		for (;;) {
 			if (c == EOF) {
 				error("Unterminated REPT/FOR block");
 				endCapture(capture);
 				capture.span.ptr = nullptr; // Indicates that it reached EOF before an ENDR
 				return capture;
-			} else if (c == '\n' || c == '\r') {
+			} else if (isNewline(c)) {
 				handleCRLF(c);
 				break;
+			}
+			c = peek();
+			if (c != EOF) {
+				shiftChar();
 			}
 		}
 	}
@@ -2390,14 +2364,14 @@ Capture lexer_CaptureMacro() {
 	Capture capture = startCapture();
 
 	Defer reenableExpansions = scopedDisableExpansions();
-
-	for (int c;;) {
+	for (;;) {
 		nextLine();
+		int c = skipChars(isWhitespace);
+		if (c != EOF) {
+			shiftChar();
+		}
+
 		// We're at line start, so attempt to match an `ENDM` token
-		do { // Discard initial whitespace
-			c = bumpChar();
-		} while (isWhitespace(c));
-		// Now, try to match `ENDM` as a **whole** keyword
 		if (startsIdentifier(c) && readIdentifier(c, false).type == T_(POP_ENDM)) {
 			endCapture(capture);
 			// The ENDM has been captured, but we don't want it!
@@ -2407,15 +2381,19 @@ Capture lexer_CaptureMacro() {
 		}
 
 		// Just consume characters until EOL or EOF
-		for (;; c = bumpChar()) {
+		for (;;) {
 			if (c == EOF) {
 				error("Unterminated macro definition");
 				endCapture(capture);
 				capture.span.ptr = nullptr; // Indicates that it reached EOF before an ENDM
 				return capture;
-			} else if (c == '\n' || c == '\r') {
+			} else if (isNewline(c)) {
 				handleCRLF(c);
 				break;
+			}
+			c = peek();
+			if (c != EOF) {
+				shiftChar();
 			}
 		}
 	}
