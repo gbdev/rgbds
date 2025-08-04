@@ -11,6 +11,8 @@
 
 static constexpr size_t maxLineLen = 79;
 
+// LCOV_EXCL_START
+
 void Usage::printAndExit(int code) const {
 	FILE *file = code ? stderr : stdout;
 
@@ -112,3 +114,5 @@ void Usage::printAndExit(char const *fmt, ...) const {
 
 	printAndExit(1);
 }
+
+// LCOV_EXCL_STOP

@@ -68,6 +68,7 @@ void style_Set(FILE *file, StyleColor color, bool bold) {
 		return;
 	}
 
+	// LCOV_EXCL_START
 #if STYLE_ANSI
 	fprintf(file, "\033[%dm", static_cast<int>(color) + (bold ? 90 : 30));
 #else
@@ -76,6 +77,7 @@ void style_Set(FILE *file, StyleColor color, bool bold) {
 		SetConsoleTextAttribute(handle, (defaultAttrib & ~0xF) | (color | (bold ? 8 : 0)));
 	}
 #endif
+	// LCOV_EXCL_STOP
 }
 
 void style_Reset(FILE *file) {
@@ -83,6 +85,7 @@ void style_Reset(FILE *file) {
 		return;
 	}
 
+	// LCOV_EXCL_START
 #if STYLE_ANSI
 	fputs("\033[m", file);
 #else
@@ -91,4 +94,5 @@ void style_Reset(FILE *file) {
 		SetConsoleTextAttribute(handle, defaultAttrib);
 	}
 #endif
+	// LCOV_EXCL_STOP
 }
