@@ -72,7 +72,7 @@ bool charmap_ForEach(
 		});
 
 		mapFunc(charmap.name);
-		for (auto [nodeIdx, mapping] : mappings) {
+		for (auto const &[nodeIdx, mapping] : mappings) {
 			charFunc(mapping, charmap.nodes[nodeIdx].value);
 		}
 	}

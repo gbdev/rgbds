@@ -63,24 +63,30 @@ static option const longopts[] = {
     {nullptr,            no_argument,       nullptr,  0  },
 };
 
-// clang-format off: long string literal
-static Usage usage(
-    "Usage: rgbfix [-hjOsVvw] [-C | -c] [-f <fix_spec>] [-i <game_id>] [-k <licensee>]\n"
-    "              [-L <logo_file>] [-l <licensee_byte>] [-m <mbc_type>]\n"
-    "              [-n <rom_version>] [-p <pad_value>] [-r <ram_size>] [-t <title_str>]\n"
-    "              [-W warning] <file> ...\n"
-    "Useful options:\n"
-    "    -m, --mbc-type <value>   set the MBC type byte to this value; `-m help'\n"
-    "                               or `-m list' prints the accepted values\n"
-    "    -p, --pad-value <value>  pad to the next valid size using this value\n"
-    "    -r, --ram-size <code>    set the cart RAM size byte to this value\n"
-    "    -o, --output <path>      set the output file\n"
-    "    -V, --version            print RGBFIX version and exit\n"
-    "    -v, --validate           fix the header logo and both checksums (`-f lhg')\n"
-    "    -W, --warning <warning>  enable or disable warnings\n"
-    "\n"
-    "For help, use `man rgbfix' or go to https://rgbds.gbdev.io/docs/\n"
-);
+// clang-format off: nested initializers
+static Usage usage = {
+    .name = "rgbfix",
+    .flags = {
+        "[-hjOsVvw]", "[-C | -c]", "[-f <fix_spec>]", "[-i <game_id>]", "[-k <licensee>]",
+        "[-L <logo_file>]", "[-l <licensee_byte>]", "[-m <mbc_type>]", "[-n <rom_version>]",
+        "[-p <pad_value>]", "[-r <ram_size>]", "[-t <title_str>]", "[-W warning]", "<file> ...",
+    },
+    .options = {
+        {
+            {"-m", "--mbc-type <value>"},
+            {
+                "set the MBC type byte to this value; `-m help'",
+                "or `-m list' prints the accepted values",
+            },
+        },
+        {{"-p", "--pad-value <value>"}, {"pad to the next valid size using this value"}},
+        {{"-r", "--ram-size <code>"}, {"set the cart RAM size byte to this value"}},
+        {{"-o", "--output <path>"}, {"set the output file"}},
+        {{"-V", "--version"}, {"print RGBFIX version and exit"}},
+        {{"-v", "--validate"}, {"fix the header logo and both checksums (`-f lhg')"}},
+        {{"-W", "--warning <warning>"}, {"enable or disable warnings"}},
+    },
+};
 // clang-format on
 
 static uint8_t tpp1Rev[2];

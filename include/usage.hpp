@@ -4,12 +4,14 @@
 #define RGBDS_USAGE_HPP
 
 #include <stdarg.h>
+#include <string>
+#include <utility>
+#include <vector>
 
-class Usage {
-	char const *usage;
-
-public:
-	Usage(char const *usage_) : usage(usage_) {}
+struct Usage {
+	std::string name;
+	std::vector<std::string> flags;
+	std::vector<std::pair<std::vector<std::string>, std::vector<std::string>>> options;
 
 	[[noreturn]]
 	void printAndExit(int code) const;

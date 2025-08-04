@@ -69,23 +69,24 @@ static option const longopts[] = {
     {nullptr,         no_argument,       nullptr,  0  },
 };
 
-// clang-format off: long string literal
-static Usage usage(
-    "Usage: rgblink [-dhMtVvwx] [-l script] [-m map_file] [-n sym_file]\n"
-    "               [-O overlay_file] [-o out_file] [-p pad_value]\n"
-    "               [-S spec] <file> ...\n"
-    "Useful options:\n"
-    "    -l, --linkerscript <path>  set the input linker script\n"
-    "    -m, --map <path>           set the output map file\n"
-    "    -n, --sym <path>           set the output symbol list file\n"
-    "    -o, --output <path>        set the output file\n"
-    "    -p, --pad <value>          set the value to pad between sections with\n"
-    "    -x, --nopad                disable padding of output binary\n"
-    "    -V, --version              print RGBLINK version and exit\n"
-    "    -W, --warning <warning>    enable or disable warnings\n"
-    "\n"
-    "For help, use `man rgblink' or go to https://rgbds.gbdev.io/docs/\n"
-);
+// clang-format off: nested initializers
+static Usage usage = {
+    .name = "rgblink",
+    .flags = {
+        "[-dhMtVvwx]", "[-l script]", "[-m map_file]", "[-n sym_file]", "[-O overlay_file]",
+        "[-o out_file]", "[-p pad_value]", "[-S spec]", "<file> ...",
+    },
+    .options = {
+        {{"-l", "--linkerscript <path>"}, {"set the input linker script"}},
+        {{"-m", "--map <path>"}, {"set the output map file"}},
+        {{"-n", "--sym <path>"}, {"set the output symbol list file"}},
+        {{"-o", "--output <path>"}, {"set the output file"}},
+        {{"-p", "--pad <value>"}, {"set the value to pad between sections with"}},
+        {{"-x", "--nopad"}, {"disable padding of output binary"}},
+        {{"-V", "--version"}, {"print RGBLINK version and exit"}},
+        {{"-W", "--warning <warning>"}, {"enable or disable warnings"}},
+    },
+};
 // clang-format on
 
 // LCOV_EXCL_START

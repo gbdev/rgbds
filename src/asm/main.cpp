@@ -73,24 +73,25 @@ static option const longopts[] = {
     {nullptr,           no_argument,       nullptr,  0  },
 };
 
-// clang-format off: long string literal
-static Usage usage(
-    "Usage: rgbasm [-EhVvw] [-b chars] [-D name[=value]] [-g chars] [-I path]\n"
-    "              [-M depend_file] [-MC] [-MG] [-MP] [-MT target_file] [-MQ target_file]\n"
-    "              [-o out_file] [-P include_file] [-p pad_value] [-Q precision]\n"
-    "              [-r depth] [-s features:state_file] [-W warning] [-X max_errors]\n"
-    "              <file>\n"
-    "Useful options:\n"
-    "    -E, --export-all               export all labels\n"
-    "    -M, --dependfile <path>        set the output dependency file\n"
-    "    -o, --output <path>            set the output object file\n"
-    "    -p, --pad-value <value>        set the value to use for `ds'\n"
-    "    -s, --state <features>:<path>  set an output state file\n"
-    "    -V, --version                  print RGBASM version and exit\n"
-    "    -W, --warning <warning>        enable or disable warnings\n"
-    "\n"
-    "For help, use `man rgbasm' or go to https://rgbds.gbdev.io/docs/\n"
-);
+// clang-format off: nested initializers
+static Usage usage = {
+    .name = "rgbasm",
+    .flags = {
+        "[-EhVvw]", "[-b chars]", "[-D name[=value]]", "[-g chars]", "[-I path]",
+        "[-M depend_file]", "[-MC]", "[-MG]", "[-MP]", "[-MT target_file]", "[-MQ target_file]",
+        "[-o out_file]", "[-P include_file]", "[-p pad_value]", "[-Q precision]", "[-r depth]",
+        "[-s features:state_file]", "[-W warning]", "[-X max_errors]", "<file>",
+    },
+    .options = {
+        {{"-E", "--export-all"}, {"export all labels"}},
+        {{"-M", "--dependfile <path>"}, {"set the output dependency file"}},
+        {{"-o", "--output <path>"}, {"set the output object file"}},
+        {{"-p", "--pad-value <value>"}, {"set the value to use for `ds'"}},
+        {{"-s", "--state <features>:<path>"}, {"set an output state file"}},
+        {{"-V", "--version"}, {"print RGBASM version and exit"}},
+        {{"-W", "--warning <warning>"}, {"enable or disable warnings"}},
+    },
+};
 // clang-format on
 
 // LCOV_EXCL_START
@@ -162,7 +163,7 @@ static void verboseOutputConfig(int argc, char *argv[]) {
 		    "char",
 		    "macro",
 		};
-		for (auto [name, features] : stateFileSpecs) {
+		for (auto const &[name, features] : stateFileSpecs) {
 			fprintf(stderr, "\t - %s: ", name == "-" ? "<stdout>" : name.c_str());
 			for (size_t i = 0; i < features.size(); ++i) {
 				if (i > 0) {
@@ -561,7 +562,7 @@ int main(int argc, char *argv[]) {
 
 	out_WriteObject();
 
-	for (auto [name, features] : stateFileSpecs) {
+	for (auto const &[name, features] : stateFileSpecs) {
 		out_WriteState(name, features);
 	}
 

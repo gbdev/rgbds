@@ -93,23 +93,25 @@ static option const longopts[] = {
     {nullptr,            no_argument,       nullptr,  0  },
 };
 
-// clang-format off: long string literal
-static Usage usage(
-    "Usage: rgbgfx [-r stride] [-ChmOuVXYZ] [-v [-v ...]] [-a <attr_map> | -A]\n"
-    "       [-b <base_ids>] [-c <colors>] [-d <depth>] [-i <tileset_file>]\n"
-    "       [-L <slice>] [-l <base_pal>] [-N <nb_tiles>] [-n <nb_pals>]\n"
-    "       [-o <out_file>] [-p <pal_file> | -P] [-q <pal_map> | -Q]\n"
-    "       [-s <nb_colors>] [-t <tile_map> | -T] [-x <nb_tiles>] <file>\n"
-    "Useful options:\n"
-    "    -m, --mirror-tiles       optimize out mirrored tiles\n"
-    "    -o, --output <path>      output the tile data to this path\n"
-    "    -t, --tilemap <path>     output the tile map to this path\n"
-    "    -u, --unique-tiles       optimize out identical tiles\n"
-    "    -V, --version            print RGBGFX version and exit\n"
-    "    -W, --warning <warning>  enable or disable warnings\n"
-    "\n"
-    "For help, use `man rgbgfx' or go to https://rgbds.gbdev.io/docs/\n"
-);
+// clang-format off: nested initializers
+static Usage usage = {
+    .name = "rgbgfx",
+    .flags = {
+        "[-r stride]", "[-ChmOuVXYZ]", "[-v [-v ...]]", "[-a <attr_map> | -A]", "[-b <base_ids>]",
+        "[-c <colors>]", "[-d <depth>]", "[-i <tileset_file>]", "[-L <slice>]", "[-l <base_pal>]",
+        "[-N <nb_tiles>]", "[-n <nb_pals>]", "[-o <out_file>]", "[-p <pal_file> | -P]",
+        "[-q <pal_map> | -Q]", "[-s <nb_colors>]", "[-t <tile_map> | -T]", "[-x <nb_tiles>]",
+        "<file>",
+    },
+    .options = {
+        {{"-m", "--mirror-tiles"}, {"optimize out mirrored tiles"}},
+        {{"-o", "--output <path>"}, {"output the tile data to this path"}},
+        {{"-t", "--tilemap <path>"}, {"output the tile map to this path"}},
+        {{"-u", "--unique-tiles"}, {"optimize out identical tiles"}},
+        {{"-V", "--version"}, {"print RGBGFX version and exit"}},
+        {{"-W", "--warning <warning>"}, {"enable or disable warnings"}},
+    },
+};
 // clang-format on
 
 // Parses a number at the beginning of a string, moving the pointer to skip the parsed characters.

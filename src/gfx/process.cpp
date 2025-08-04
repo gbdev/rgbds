@@ -630,7 +630,7 @@ static void outputUnoptimizedTileData(
 	uint64_t nbKeptTiles = nbTiles > options.trim ? nbTiles - options.trim : 0;
 	uint64_t tileIdx = 0;
 
-	for (auto [tile, attr] : zip(image.visitAsTiles(), attrmap)) {
+	for (auto const &[tile, attr] : zip(image.visitAsTiles(), attrmap)) {
 		// Do not emit fully-background tiles.
 		if (attr.isBackgroundTile()) {
 			++tileIdx;
@@ -799,7 +799,7 @@ static UniqueTiles dedupTiles(
 	}
 
 	bool inputWithoutOutput = !options.inputTileset.empty() && options.output.empty();
-	for (auto [tile, attr] : zip(image.visitAsTiles(), attrmap)) {
+	for (auto const &[tile, attr] : zip(image.visitAsTiles(), attrmap)) {
 		if (attr.isBackgroundTile()) {
 			attr.xFlip = false;
 			attr.yFlip = false;

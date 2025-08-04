@@ -34,7 +34,7 @@ static const WORD defaultAttrib = []() {
 static HANDLE getHandle(FILE *file) {
 	return file == stdout ? outHandle : file == stderr ? errHandle : INVALID_HANDLE_VALUE;
 }
-#endif
+#endif // !STYLE_ANSI
 
 static Tribool forceStyle = []() {
 	if (char const *forceColor = getenv("FORCE_COLOR");
