@@ -10,7 +10,31 @@
 
 #include "platform.hpp" // isatty
 
+#if !STYLE_ANSI
+// clang-format off: maintain `include` order
+	#define WIN32_LEAN_AND_MEAN // Include less from `windows.h`
+	#include <windows.h>
+// clang-format on
+#endif
+
 enum Tribool { TRI_NO, TRI_YES, TRI_MAYBE };
+
+#if !STYLE_ANSI
+static const HANDLE outHandle = GetStdHandle(STD_OUTPUT_HANDLE);
+static const HANDLE errHandle = GetStdHandle(STD_ERROR_HANDLE);
+
+static const WORD defaultAttrib = []() {
+	if (CONSOLE_SCREEN_BUFFER_INFO info; GetConsoleScreenBufferInfo(outHandle, &info)
+	                                     || GetConsoleScreenBufferInfo(errHandle, &info)) {
+		return info.wAttributes;
+	}
+	return static_cast<WORD>((STYLE_BLACK << 4) | (STYLE_GRAY | 8));
+}();
+
+static HANDLE getHandle(FILE *file) {
+	return file == stdout ? outHandle : file == stderr ? errHandle : INVALID_HANDLE_VALUE;
+}
+#endif
 
 static Tribool forceStyle = []() {
 	if (char const *forceColor = getenv("FORCE_COLOR");
@@ -47,7 +71,10 @@ void style_Set(FILE *file, StyleColor color, bool bold) {
 #if STYLE_ANSI
 	fprintf(file, "\033[%dm", static_cast<int>(color) + (bold ? 90 : 30));
 #else
-	// TODO: support Windows
+	if (HANDLE handle = getHandle(file); handle != INVALID_HANDLE_VALUE) {
+		fflush(file);
+		SetConsoleTextAttribute(handle, (defaultAttrib & ~0xF) | (color | (bold ? 8 : 0)));
+	}
 #endif
 }
 
@@ -59,6 +86,9 @@ void style_Reset(FILE *file) {
 #if STYLE_ANSI
 	fputs("\033[m", file);
 #else
-	// TODO: support Windows
+	if (HANDLE handle = getHandle(file); handle != INVALID_HANDLE_VALUE) {
+		fflush(file);
+		SetConsoleTextAttribute(handle, defaultAttrib);
+	}
 #endif
 }

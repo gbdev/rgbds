@@ -13,6 +13,7 @@
 
 enum StyleColor {
 #if STYLE_ANSI
+	// Values analogous to ANSI foreground and background SGR colors
 	STYLE_BLACK,
 	STYLE_RED,
 	STYLE_GREEN,
@@ -22,14 +23,15 @@ enum StyleColor {
 	STYLE_CYAN,
 	STYLE_GRAY,
 #else
+	// Values analogous to `FOREGROUND_*` constants from `windows.h`
 	STYLE_BLACK,
-	STYLE_BLUE,
-	STYLE_GREEN,
-	STYLE_CYAN,
-	STYLE_RED,
-	STYLE_MAGENTA,
-	STYLE_YELLOW,
-	STYLE_GRAY,
+	STYLE_BLUE,    // bit 0
+	STYLE_GREEN,   // bit 1
+	STYLE_CYAN,    // STYLE_BLUE | STYLE_GREEN
+	STYLE_RED,     // bit 2
+	STYLE_MAGENTA, // STYLE_BLUE | STYLE_RED
+	STYLE_YELLOW,  // STYLE_GREEN | STYLE_RED
+	STYLE_GRAY,    // STYLE_BLUE | STYLE_GREEN | STYLE_RED
 #endif
 };
 
