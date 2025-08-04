@@ -10,6 +10,7 @@
 .Nm
 .Op Fl hjOsVvw
 .Op Fl C | c
+.Op Fl \-color Ar when
 .Op Fl f Ar fix_spec
 .Op Fl i Ar game_id
 .Op Fl k Ar licensee_str
@@ -46,13 +47,13 @@ can be a path to a file, or
 to read from standard input.
 .Pp
 Note that options can be abbreviated as long as the abbreviation is unambiguous:
-.Fl \-color-o
+.Fl \-verb
 is
-.Fl \-color-only ,
+.Fl \-verbose ,
 but
-.Fl \-color
+.Fl \-ver
 is invalid because it could also be
-.Fl \-color-compatible .
+.Fl \-version .
 Options later in the command line override those set earlier.
 Accepted options are as follows:
 .Bl -tag -width Ds
@@ -70,6 +71,18 @@ to 0x80.
 This overrides
 .Fl c
 if it was set prior.
+.It Fl \-color Ar when
+Specify when to highlight warning and error messages with color:
+.Ql always ,
+.Ql never ,
+or
+.Ql auto .
+.Ql auto
+determines whether to use colors based on the
+.Ql Lk https://no-color.org/ NO_COLOR
+or
+.Ql Lk https://force-color.org/ FORCE_COLOR
+environment variables, or whether the output is to a TTY.
 .It Fl f Ar fix_spec , Fl \-fix-spec Ar fix_spec
 Fix certain header values that the Game Boy checks for correctness.
 Alternatively, intentionally trash these values by writing their binary inverse instead.

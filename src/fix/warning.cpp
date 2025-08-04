@@ -1,4 +1,8 @@
+// SPDX-License-Identifier: MIT
+
 #include "fix/warning.hpp"
+
+#include "style.hpp"
 
 // clang-format off: nested initializers
 Diagnostics<WarningLevel, WarningID> warnings = {
@@ -20,6 +24,7 @@ Diagnostics<WarningLevel, WarningID> warnings = {
 
 uint32_t checkErrors(char const *filename) {
 	if (warnings.nbErrors > 0) {
+		style_Set(stderr, STYLE_RED, true);
 		fprintf(
 		    stderr,
 		    "Fixing \"%s\" failed with %" PRIu64 " error%s\n",
@@ -27,13 +32,16 @@ uint32_t checkErrors(char const *filename) {
 		    warnings.nbErrors,
 		    warnings.nbErrors == 1 ? "" : "s"
 		);
+		style_Reset(stderr);
 	}
 	return warnings.nbErrors;
 }
 
 void error(char const *fmt, ...) {
 	va_list ap;
+	style_Set(stderr, STYLE_RED, true);
 	fputs("error: ", stderr);
+	style_Reset(stderr);
 	va_start(ap, fmt);
 	vfprintf(stderr, fmt, ap);
 	va_end(ap);
@@ -44,7 +52,9 @@ void error(char const *fmt, ...) {
 
 void fatal(char const *fmt, ...) {
 	va_list ap;
+	style_Set(stderr, STYLE_RED, true);
 	fputs("FATAL: ", stderr);
+	style_Reset(stderr);
 	va_start(ap, fmt);
 	vfprintf(stderr, fmt, ap);
 	va_end(ap);
@@ -62,7 +72,9 @@ void warning(WarningID id, char const *fmt, ...) {
 		break;
 
 	case WarningBehavior::ENABLED:
+		style_Set(stderr, STYLE_YELLOW, true);
 		fprintf(stderr, "warning: [-W%s]\n    ", flag);
+		style_Reset(stderr);
 		va_start(ap, fmt);
 		vfprintf(stderr, fmt, ap);
 		va_end(ap);
@@ -70,7 +82,9 @@ void warning(WarningID id, char const *fmt, ...) {
 		break;
 
 	case WarningBehavior::ERROR:
+		style_Set(stderr, STYLE_RED, true);
 		fprintf(stderr, "error: [-Werror=%s]\n    ", flag);
+		style_Reset(stderr);
 		va_start(ap, fmt);
 		vfprintf(stderr, fmt, ap);
 		va_end(ap);

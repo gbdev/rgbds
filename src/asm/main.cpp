@@ -15,6 +15,7 @@
 #include "extern/getopt.hpp"
 #include "helpers.hpp"
 #include "parser.hpp" // Generated from parser.y
+#include "style.hpp"
 #include "usage.hpp"
 #include "util.hpp" // UpperMap
 #include "verbosity.hpp"
@@ -36,7 +37,7 @@ static std::unordered_map<std::string, std::vector<StateFeature>> stateFileSpecs
 static char const *optstring = "b:D:Eg:hI:M:o:P:p:Q:r:s:VvW:wX:";
 
 // Variables for the long-only options
-static int depType; // Variants of `-M`
+static int longOpt; // `--color` and variants of `-M`
 
 // Equivalent long options
 // Please keep in the same order as short opts.
@@ -53,11 +54,6 @@ static option const longopts[] = {
     {"help",            no_argument,       nullptr,  'h'},
     {"include",         required_argument, nullptr,  'I'},
     {"dependfile",      required_argument, nullptr,  'M'},
-    {"MC",              no_argument,       &depType, 'C'},
-    {"MG",              no_argument,       &depType, 'G'},
-    {"MP",              no_argument,       &depType, 'P'},
-    {"MQ",              required_argument, &depType, 'Q'},
-    {"MT",              required_argument, &depType, 'T'},
     {"output",          required_argument, nullptr,  'o'},
     {"preinclude",      required_argument, nullptr,  'P'},
     {"pad-value",       required_argument, nullptr,  'p'},
@@ -68,27 +64,34 @@ static option const longopts[] = {
     {"verbose",         no_argument,       nullptr,  'v'},
     {"warning",         required_argument, nullptr,  'W'},
     {"max-errors",      required_argument, nullptr,  'X'},
-    {nullptr,           no_argument,       nullptr,  0  }
+    {"color",           required_argument, &longOpt, 'c'},
+    {"MC",              no_argument,       &longOpt, 'C'},
+    {"MG",              no_argument,       &longOpt, 'G'},
+    {"MP",              no_argument,       &longOpt, 'P'},
+    {"MQ",              required_argument, &longOpt, 'Q'},
+    {"MT",              required_argument, &longOpt, 'T'},
+    {nullptr,           no_argument,       nullptr,  0  },
 };
 
-// clang-format off: long string literal
-static Usage usage(
-    "Usage: rgbasm [-EhVvw] [-b chars] [-D name[=value]] [-g chars] [-I path]\n"
-    "              [-M depend_file] [-MC] [-MG] [-MP] [-MT target_file] [-MQ target_file]\n"
-    "              [-o out_file] [-P include_file] [-p pad_value] [-Q precision]\n"
-    "              [-r depth] [-s features:state_file] [-W warning] [-X max_errors]\n"
-    "              <file>\n"
-    "Useful options:\n"
-    "    -E, --export-all               export all labels\n"
-    "    -M, --dependfile <path>        set the output dependency file\n"
-    "    -o, --output <path>            set the output object file\n"
-    "    -p, --pad-value <value>        set the value to use for `ds'\n"
-    "    -s, --state <features>:<path>  set an output state file\n"
-    "    -V, --version                  print RGBASM version and exit\n"
-    "    -W, --warning <warning>        enable or disable warnings\n"
-    "\n"
-    "For help, use `man rgbasm' or go to https://rgbds.gbdev.io/docs/\n"
-);
+// clang-format off: nested initializers
+static Usage usage = {
+    .name = "rgbasm",
+    .flags = {
+        "[-EhVvw]", "[-b chars]", "[-D name[=value]]", "[-g chars]", "[-I path]",
+        "[-M depend_file]", "[-MC]", "[-MG]", "[-MP]", "[-MT target_file]", "[-MQ target_file]",
+        "[-o out_file]", "[-P include_file]", "[-p pad_value]", "[-Q precision]", "[-r depth]",
+        "[-s features:state_file]", "[-W warning]", "[-X max_errors]", "<file>",
+    },
+    .options = {
+        {{"-E", "--export-all"}, {"export all labels"}},
+        {{"-M", "--dependfile <path>"}, {"set the output dependency file"}},
+        {{"-o", "--output <path>"}, {"set the output object file"}},
+        {{"-p", "--pad-value <value>"}, {"set the value to use for `ds'"}},
+        {{"-s", "--state <features>:<path>"}, {"set an output state file"}},
+        {{"-V", "--version"}, {"print RGBASM version and exit"}},
+        {{"-W", "--warning <warning>"}, {"enable or disable warnings"}},
+    },
+};
 // clang-format on
 
 // LCOV_EXCL_START
@@ -160,7 +163,7 @@ static void verboseOutputConfig(int argc, char *argv[]) {
 		    "char",
 		    "macro",
 		};
-		for (auto [name, features] : stateFileSpecs) {
+		for (auto const &[name, features] : stateFileSpecs) {
 			fprintf(stderr, "\t - %s: ", name == "-" ? "<stdout>" : name.c_str());
 			for (size_t i = 0; i < features.size(); ++i) {
 				if (i > 0) {
@@ -449,7 +452,17 @@ int main(int argc, char *argv[]) {
 
 		// Long-only options
 		case 0:
-			switch (depType) {
+			switch (longOpt) {
+			case 'c':
+				if (!strcasecmp(musl_optarg, "always")) {
+					style_Enable(true);
+				} else if (!strcasecmp(musl_optarg, "never")) {
+					style_Enable(false);
+				} else if (strcasecmp(musl_optarg, "auto")) {
+					fatal("Invalid argument for option '--color'");
+				}
+				break;
+
 			case 'C':
 				options.missingIncludeState = GEN_CONTINUE;
 				break;
@@ -465,7 +478,7 @@ int main(int argc, char *argv[]) {
 			case 'Q':
 			case 'T': {
 				std::string newTarget = musl_optarg;
-				if (depType == 'Q') {
+				if (longOpt == 'Q') {
 					newTarget = escapeMakeChars(newTarget);
 				}
 				if (!options.targetFileName.empty()) {
@@ -549,7 +562,7 @@ int main(int argc, char *argv[]) {
 
 	out_WriteObject();
 
-	for (auto [name, features] : stateFileSpecs) {
+	for (auto const &[name, features] : stateFileSpecs) {
 		out_WriteState(name, features);
 	}
 

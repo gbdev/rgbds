@@ -15,6 +15,7 @@
 #include "helpers.hpp"
 #include "linkdefs.hpp"
 #include "platform.hpp" // S_ISDIR (stat macro)
+#include "style.hpp"
 #include "verbosity.hpp"
 
 #include "asm/lexer.hpp"
@@ -63,19 +64,27 @@ std::string const &FileStackNode::dump(uint32_t curLineNo) const {
 	if (std::holds_alternative<std::vector<uint32_t>>(data)) {
 		assume(parent); // REPT nodes use their parent's name
 		std::string const &lastName = parent->dump(lineNo);
+		style_Set(stderr, STYLE_CYAN, false);
 		fputs(" -> ", stderr);
+		style_Set(stderr, STYLE_CYAN, true);
 		fputs(lastName.c_str(), stderr);
 		fputs(reptChain().c_str(), stderr);
+		style_Set(stderr, STYLE_CYAN, false);
 		fprintf(stderr, "(%" PRIu32 ")", curLineNo);
+		style_Reset(stderr);
 		return lastName;
 	} else {
 		if (parent) {
 			parent->dump(lineNo);
+			style_Set(stderr, STYLE_CYAN, false);
 			fputs(" -> ", stderr);
 		}
 		std::string const &nodeName = name();
+		style_Set(stderr, STYLE_CYAN, true);
 		fputs(nodeName.c_str(), stderr);
+		style_Set(stderr, STYLE_CYAN, false);
 		fprintf(stderr, "(%" PRIu32 ")", curLineNo);
+		style_Reset(stderr);
 		return nodeName;
 	}
 }

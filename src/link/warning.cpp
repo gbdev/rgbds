@@ -5,6 +5,8 @@
 #include <inttypes.h>
 #include <stdarg.h>
 
+#include "style.hpp"
+
 #include "link/main.hpp"
 
 // clang-format off: nested initializers
@@ -33,24 +35,29 @@ static void printDiag(
     char const *fmt,
     va_list args,
     char const *type,
+    StyleColor color,
     char const *flagfmt,
     char const *flag
 ) {
+	style_Set(stderr, color, true);
 	fprintf(stderr, "%s: ", type);
 	if (src) {
 		src->dump(lineNo);
 		fputs(": ", stderr);
 	}
 	if (flagfmt) {
+		style_Set(stderr, color, true);
 		fprintf(stderr, flagfmt, flag);
 		fputs("\n    ", stderr);
 	}
+	style_Reset(stderr);
 	vfprintf(stderr, fmt, args);
 	putc('\n', stderr);
 }
 
 [[noreturn]]
 static void abortLinking(char const *verb) {
+	style_Set(stderr, STYLE_RED, true);
 	fprintf(
 	    stderr,
 	    "Linking %s with %" PRIu64 " error%s\n",
@@ -58,27 +65,28 @@ static void abortLinking(char const *verb) {
 	    warnings.nbErrors,
 	    warnings.nbErrors == 1 ? "" : "s"
 	);
+	style_Reset(stderr);
 	exit(1);
 }
 
 void warning(FileStackNode const *src, uint32_t lineNo, char const *fmt, ...) {
 	va_list args;
 	va_start(args, fmt);
-	printDiag(src, lineNo, fmt, args, "warning", nullptr, 0);
+	printDiag(src, lineNo, fmt, args, "warning", STYLE_YELLOW, nullptr, nullptr);
 	va_end(args);
 }
 
 void warning(char const *fmt, ...) {
 	va_list args;
 	va_start(args, fmt);
-	printDiag(nullptr, 0, fmt, args, "warning", nullptr, 0);
+	printDiag(nullptr, 0, fmt, args, "warning", STYLE_YELLOW, nullptr, nullptr);
 	va_end(args);
 }
 
 void error(FileStackNode const *src, uint32_t lineNo, char const *fmt, ...) {
 	va_list args;
 	va_start(args, fmt);
-	printDiag(src, lineNo, fmt, args, "error", nullptr, 0);
+	printDiag(src, lineNo, fmt, args, "error", STYLE_RED, nullptr, nullptr);
 	va_end(args);
 
 	warnings.incrementErrors();
@@ -87,7 +95,7 @@ void error(FileStackNode const *src, uint32_t lineNo, char const *fmt, ...) {
 void error(char const *fmt, ...) {
 	va_list args;
 	va_start(args, fmt);
-	printDiag(nullptr, 0, fmt, args, "error", nullptr, 0);
+	printDiag(nullptr, 0, fmt, args, "error", STYLE_RED, nullptr, nullptr);
 	va_end(args);
 
 	warnings.incrementErrors();
@@ -95,7 +103,9 @@ void error(char const *fmt, ...) {
 
 void errorNoDump(char const *fmt, ...) {
 	va_list args;
+	style_Set(stderr, STYLE_RED, true);
 	fputs("error: ", stderr);
+	style_Reset(stderr);
 	va_start(args, fmt);
 	vfprintf(stderr, fmt, args);
 	va_end(args);
@@ -104,7 +114,13 @@ void errorNoDump(char const *fmt, ...) {
 }
 
 void scriptError(char const *name, uint32_t lineNo, char const *fmt, va_list args) {
-	fprintf(stderr, "error: %s(%" PRIu32 "): ", name, lineNo);
+	style_Set(stderr, STYLE_RED, true);
+	fputs("error: ", stderr);
+	style_Set(stderr, STYLE_CYAN, true);
+	fputs(name, stderr);
+	style_Set(stderr, STYLE_CYAN, false);
+	fprintf(stderr, "(%" PRIu32 "): ", lineNo);
+	style_Reset(stderr);
 	vfprintf(stderr, fmt, args);
 	putc('\n', stderr);
 
@@ -115,7 +131,7 @@ void scriptError(char const *name, uint32_t lineNo, char const *fmt, va_list arg
 void fatal(FileStackNode const *src, uint32_t lineNo, char const *fmt, ...) {
 	va_list args;
 	va_start(args, fmt);
-	printDiag(src, lineNo, fmt, args, "FATAL", nullptr, 0);
+	printDiag(src, lineNo, fmt, args, "FATAL", STYLE_RED, nullptr, nullptr);
 	va_end(args);
 
 	warnings.incrementErrors();
@@ -126,7 +142,7 @@ void fatal(FileStackNode const *src, uint32_t lineNo, char const *fmt, ...) {
 void fatal(char const *fmt, ...) {
 	va_list args;
 	va_start(args, fmt);
-	printDiag(nullptr, 0, fmt, args, "FATAL", nullptr, 0);
+	printDiag(nullptr, 0, fmt, args, "FATAL", STYLE_RED, nullptr, nullptr);
 	va_end(args);
 
 	warnings.incrementErrors();
@@ -150,11 +166,11 @@ void warning(FileStackNode const *src, uint32_t lineNo, WarningID id, char const
 		break;
 
 	case WarningBehavior::ENABLED:
-		printDiag(src, lineNo, fmt, args, "warning", "[-W%s]", flag);
+		printDiag(src, lineNo, fmt, args, "warning", STYLE_RED, "[-W%s]", flag);
 		break;
 
 	case WarningBehavior::ERROR:
-		printDiag(src, lineNo, fmt, args, "error", "[-Werror=%s]", flag);
+		printDiag(src, lineNo, fmt, args, "error", STYLE_YELLOW, "[-Werror=%s]", flag);
 
 		warnings.incrementErrors();
 		break;

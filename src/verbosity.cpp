@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+
 #include "verbosity.hpp"
 
 #include <array>
@@ -8,14 +10,16 @@
 
 static Verbosity verbosity = VERB_NONE;
 
+bool checkVerbosity(Verbosity level) {
+	return verbosity >= level;
+}
+
+// LCOV_EXCL_START
+
 void incrementVerbosity() {
 	if (verbosity < VERB_VVVVVV) {
 		verbosity = static_cast<Verbosity>(verbosity + 1);
 	}
-}
-
-bool checkVerbosity(Verbosity level) {
-	return verbosity >= level;
 }
 
 void printVVVVVVerbosity() {
@@ -67,3 +71,5 @@ void printVVVVVVerbosity() {
 	}
 	putc('\n', stderr);
 }
+
+// LCOV_EXCL_STOP

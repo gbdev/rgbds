@@ -18,6 +18,7 @@
 #include "extern/getopt.hpp"
 #include "file.hpp"
 #include "platform.hpp"
+#include "style.hpp"
 #include "usage.hpp"
 #include "verbosity.hpp"
 #include "version.hpp"
@@ -44,6 +45,9 @@ static struct LocalOptions {
 // Short options
 static char const *optstring = "-Aa:B:b:Cc:d:hi:L:l:mN:n:Oo:Pp:Qq:r:s:Tt:U:uVvW:wXx:YZ";
 
+// Variables for the long-only options
+static int longOpt; // `--color`
+
 // Equivalent long options
 // Please keep in the same order as short opts.
 // Also, make sure long opts don't create ambiguity:
@@ -52,59 +56,62 @@ static char const *optstring = "-Aa:B:b:Cc:d:hi:L:l:mN:n:Oo:Pp:Qq:r:s:Tt:U:uVvW:
 // This is because long opt matching, even to a single char, is prioritized
 // over short opt matching.
 static option const longopts[] = {
-    {"auto-attr-map",    no_argument,       nullptr, 'A'},
-    {"attr-map",         required_argument, nullptr, 'a'},
-    {"background-color", required_argument, nullptr, 'B'},
-    {"base-tiles",       required_argument, nullptr, 'b'},
-    {"color-curve",      no_argument,       nullptr, 'C'},
-    {"colors",           required_argument, nullptr, 'c'},
-    {"depth",            required_argument, nullptr, 'd'},
-    {"help",             no_argument,       nullptr, 'h'},
-    {"input-tileset",    required_argument, nullptr, 'i'},
-    {"slice",            required_argument, nullptr, 'L'},
-    {"base-palette",     required_argument, nullptr, 'l'},
-    {"mirror-tiles",     no_argument,       nullptr, 'm'},
-    {"nb-tiles",         required_argument, nullptr, 'N'},
-    {"nb-palettes",      required_argument, nullptr, 'n'},
-    {"group-outputs",    no_argument,       nullptr, 'O'},
-    {"output",           required_argument, nullptr, 'o'},
-    {"auto-palette",     no_argument,       nullptr, 'P'},
-    {"palette",          required_argument, nullptr, 'p'},
-    {"auto-palette-map", no_argument,       nullptr, 'Q'},
-    {"palette-map",      required_argument, nullptr, 'q'},
-    {"reverse",          required_argument, nullptr, 'r'},
-    {"palette-size",     required_argument, nullptr, 's'},
-    {"auto-tilemap",     no_argument,       nullptr, 'T'},
-    {"tilemap",          required_argument, nullptr, 't'},
-    {"unit-size",        required_argument, nullptr, 'U'},
-    {"unique-tiles",     no_argument,       nullptr, 'u'},
-    {"version",          no_argument,       nullptr, 'V'},
-    {"verbose",          no_argument,       nullptr, 'v'},
-    {"warning",          required_argument, nullptr, 'W'},
-    {"mirror-x",         no_argument,       nullptr, 'X'},
-    {"trim-end",         required_argument, nullptr, 'x'},
-    {"mirror-y",         no_argument,       nullptr, 'Y'},
-    {"columns",          no_argument,       nullptr, 'Z'},
-    {nullptr,            no_argument,       nullptr, 0  }
+    {"auto-attr-map",    no_argument,       nullptr,  'A'},
+    {"attr-map",         required_argument, nullptr,  'a'},
+    {"background-color", required_argument, nullptr,  'B'},
+    {"base-tiles",       required_argument, nullptr,  'b'},
+    {"color-curve",      no_argument,       nullptr,  'C'},
+    {"colors",           required_argument, nullptr,  'c'},
+    {"depth",            required_argument, nullptr,  'd'},
+    {"help",             no_argument,       nullptr,  'h'},
+    {"input-tileset",    required_argument, nullptr,  'i'},
+    {"slice",            required_argument, nullptr,  'L'},
+    {"base-palette",     required_argument, nullptr,  'l'},
+    {"mirror-tiles",     no_argument,       nullptr,  'm'},
+    {"nb-tiles",         required_argument, nullptr,  'N'},
+    {"nb-palettes",      required_argument, nullptr,  'n'},
+    {"group-outputs",    no_argument,       nullptr,  'O'},
+    {"output",           required_argument, nullptr,  'o'},
+    {"auto-palette",     no_argument,       nullptr,  'P'},
+    {"palette",          required_argument, nullptr,  'p'},
+    {"auto-palette-map", no_argument,       nullptr,  'Q'},
+    {"palette-map",      required_argument, nullptr,  'q'},
+    {"reverse",          required_argument, nullptr,  'r'},
+    {"palette-size",     required_argument, nullptr,  's'},
+    {"auto-tilemap",     no_argument,       nullptr,  'T'},
+    {"tilemap",          required_argument, nullptr,  't'},
+    {"unit-size",        required_argument, nullptr,  'U'},
+    {"unique-tiles",     no_argument,       nullptr,  'u'},
+    {"version",          no_argument,       nullptr,  'V'},
+    {"verbose",          no_argument,       nullptr,  'v'},
+    {"warning",          required_argument, nullptr,  'W'},
+    {"mirror-x",         no_argument,       nullptr,  'X'},
+    {"trim-end",         required_argument, nullptr,  'x'},
+    {"mirror-y",         no_argument,       nullptr,  'Y'},
+    {"columns",          no_argument,       nullptr,  'Z'},
+    {"color",            required_argument, &longOpt, 'c'},
+    {nullptr,            no_argument,       nullptr,  0  },
 };
 
-// clang-format off: long string literal
-static Usage usage(
-    "Usage: rgbgfx [-r stride] [-ChmOuVXYZ] [-v [-v ...]] [-a <attr_map> | -A]\n"
-    "       [-b <base_ids>] [-c <colors>] [-d <depth>] [-i <tileset_file>]\n"
-    "       [-L <slice>] [-l <base_pal>] [-N <nb_tiles>] [-n <nb_pals>]\n"
-    "       [-o <out_file>] [-p <pal_file> | -P] [-q <pal_map> | -Q]\n"
-    "       [-s <nb_colors>] [-t <tile_map> | -T] [-x <nb_tiles>] <file>\n"
-    "Useful options:\n"
-    "    -m, --mirror-tiles       optimize out mirrored tiles\n"
-    "    -o, --output <path>      output the tile data to this path\n"
-    "    -t, --tilemap <path>     output the tile map to this path\n"
-    "    -u, --unique-tiles       optimize out identical tiles\n"
-    "    -V, --version            print RGBGFX version and exit\n"
-    "    -W, --warning <warning>  enable or disable warnings\n"
-    "\n"
-    "For help, use `man rgbgfx' or go to https://rgbds.gbdev.io/docs/\n"
-);
+// clang-format off: nested initializers
+static Usage usage = {
+    .name = "rgbgfx",
+    .flags = {
+        "[-r stride]", "[-ChmOuVXYZ]", "[-v [-v ...]]", "[-a <attr_map> | -A]", "[-b <base_ids>]",
+        "[-c <colors>]", "[-d <depth>]", "[-i <tileset_file>]", "[-L <slice>]", "[-l <base_pal>]",
+        "[-N <nb_tiles>]", "[-n <nb_pals>]", "[-o <out_file>]", "[-p <pal_file> | -P]",
+        "[-q <pal_map> | -Q]", "[-s <nb_colors>]", "[-t <tile_map> | -T]", "[-x <nb_tiles>]",
+        "<file>",
+    },
+    .options = {
+        {{"-m", "--mirror-tiles"}, {"optimize out mirrored tiles"}},
+        {{"-o", "--output <path>"}, {"output the tile data to this path"}},
+        {{"-t", "--tilemap <path>"}, {"output the tile map to this path"}},
+        {{"-u", "--unique-tiles"}, {"optimize out identical tiles"}},
+        {{"-V", "--version"}, {"print RGBGFX version and exit"}},
+        {{"-W", "--warning <warning>"}, {"enable or disable warnings"}},
+    },
+};
 // clang-format on
 
 // Parses a number at the beginning of a string, moving the pointer to skip the parsed characters.
@@ -551,6 +558,17 @@ static char *parseArgv(int argc, char *argv[]) {
 			break;
 		case 'Z':
 			options.columnMajor = true;
+			break;
+		case 0: // Long-only options
+			if (longOpt == 'c') {
+				if (!strcasecmp(musl_optarg, "always")) {
+					style_Enable(true);
+				} else if (!strcasecmp(musl_optarg, "never")) {
+					style_Enable(false);
+				} else if (strcasecmp(musl_optarg, "auto")) {
+					fatal("Invalid argument for option '--color'");
+				}
+			}
 			break;
 		case 1: // Positional argument, requested by leading `-` in opt string
 			if (musl_optarg[0] == '@') {

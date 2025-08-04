@@ -16,6 +16,7 @@
 #include "extern/getopt.hpp"
 #include "helpers.hpp"
 #include "platform.hpp"
+#include "style.hpp"
 #include "usage.hpp"
 #include "version.hpp"
 
@@ -27,6 +28,9 @@ static constexpr off_t BANK_SIZE = 0x4000;
 // Short options
 static char const *optstring = "Ccf:hi:jk:L:l:m:n:Oo:p:r:st:VvW:w";
 
+// Variables for the long-only options
+static int longOpt; // `--color`
+
 // Equivalent long options
 // Please keep in the same order as short opts.
 // Also, make sure long opts don't create ambiguity:
@@ -35,47 +39,54 @@ static char const *optstring = "Ccf:hi:jk:L:l:m:n:Oo:p:r:st:VvW:w";
 // This is because long opt matching, even to a single char, is prioritized
 // over short opt matching.
 static option const longopts[] = {
-    {"color-only",       no_argument,       nullptr, 'C'},
-    {"color-compatible", no_argument,       nullptr, 'c'},
-    {"fix-spec",         required_argument, nullptr, 'f'},
-    {"help",             no_argument,       nullptr, 'h'},
-    {"game-id",          required_argument, nullptr, 'i'},
-    {"non-japanese",     no_argument,       nullptr, 'j'},
-    {"new-licensee",     required_argument, nullptr, 'k'},
-    {"logo",             required_argument, nullptr, 'L'},
-    {"old-licensee",     required_argument, nullptr, 'l'},
-    {"mbc-type",         required_argument, nullptr, 'm'},
-    {"rom-version",      required_argument, nullptr, 'n'},
-    {"overwrite",        no_argument,       nullptr, 'O'},
-    {"output",           required_argument, nullptr, 'o'},
-    {"pad-value",        required_argument, nullptr, 'p'},
-    {"ram-size",         required_argument, nullptr, 'r'},
-    {"sgb-compatible",   no_argument,       nullptr, 's'},
-    {"title",            required_argument, nullptr, 't'},
-    {"version",          no_argument,       nullptr, 'V'},
-    {"validate",         no_argument,       nullptr, 'v'},
-    {"warning",          required_argument, nullptr, 'W'},
-    {nullptr,            no_argument,       nullptr, 0  }
+    {"color-only",       no_argument,       nullptr,  'C'},
+    {"color-compatible", no_argument,       nullptr,  'c'},
+    {"fix-spec",         required_argument, nullptr,  'f'},
+    {"help",             no_argument,       nullptr,  'h'},
+    {"game-id",          required_argument, nullptr,  'i'},
+    {"non-japanese",     no_argument,       nullptr,  'j'},
+    {"new-licensee",     required_argument, nullptr,  'k'},
+    {"logo",             required_argument, nullptr,  'L'},
+    {"old-licensee",     required_argument, nullptr,  'l'},
+    {"mbc-type",         required_argument, nullptr,  'm'},
+    {"rom-version",      required_argument, nullptr,  'n'},
+    {"overwrite",        no_argument,       nullptr,  'O'},
+    {"output",           required_argument, nullptr,  'o'},
+    {"pad-value",        required_argument, nullptr,  'p'},
+    {"ram-size",         required_argument, nullptr,  'r'},
+    {"sgb-compatible",   no_argument,       nullptr,  's'},
+    {"title",            required_argument, nullptr,  't'},
+    {"version",          no_argument,       nullptr,  'V'},
+    {"validate",         no_argument,       nullptr,  'v'},
+    {"warning",          required_argument, nullptr,  'W'},
+    {"color",            required_argument, &longOpt, 'c'},
+    {nullptr,            no_argument,       nullptr,  0  },
 };
 
-// clang-format off: long string literal
-static Usage usage(
-    "Usage: rgbfix [-hjOsVvw] [-C | -c] [-f <fix_spec>] [-i <game_id>] [-k <licensee>]\n"
-    "              [-L <logo_file>] [-l <licensee_byte>] [-m <mbc_type>]\n"
-    "              [-n <rom_version>] [-p <pad_value>] [-r <ram_size>] [-t <title_str>]\n"
-    "              [-W warning] <file> ...\n"
-    "Useful options:\n"
-    "    -m, --mbc-type <value>   set the MBC type byte to this value; `-m help'\n"
-    "                               or `-m list' prints the accepted values\n"
-    "    -p, --pad-value <value>  pad to the next valid size using this value\n"
-    "    -r, --ram-size <code>    set the cart RAM size byte to this value\n"
-    "    -o, --output <path>      set the output file\n"
-    "    -V, --version            print RGBFIX version and exit\n"
-    "    -v, --validate           fix the header logo and both checksums (`-f lhg')\n"
-    "    -W, --warning <warning>  enable or disable warnings\n"
-    "\n"
-    "For help, use `man rgbfix' or go to https://rgbds.gbdev.io/docs/\n"
-);
+// clang-format off: nested initializers
+static Usage usage = {
+    .name = "rgbfix",
+    .flags = {
+        "[-hjOsVvw]", "[-C | -c]", "[-f <fix_spec>]", "[-i <game_id>]", "[-k <licensee>]",
+        "[-L <logo_file>]", "[-l <licensee_byte>]", "[-m <mbc_type>]", "[-n <rom_version>]",
+        "[-p <pad_value>]", "[-r <ram_size>]", "[-t <title_str>]", "[-W warning]", "<file> ...",
+    },
+    .options = {
+        {
+            {"-m", "--mbc-type <value>"},
+            {
+                "set the MBC type byte to this value; `-m help'",
+                "or `-m list' prints the accepted values",
+            },
+        },
+        {{"-p", "--pad-value <value>"}, {"pad to the next valid size using this value"}},
+        {{"-r", "--ram-size <code>"}, {"set the cart RAM size byte to this value"}},
+        {{"-o", "--output <path>"}, {"set the output file"}},
+        {{"-V", "--version"}, {"print RGBFIX version and exit"}},
+        {{"-v", "--validate"}, {"fix the header logo and both checksums (`-f lhg')"}},
+        {{"-W", "--warning <warning>"}, {"enable or disable warnings"}},
+    },
+};
 // clang-format on
 
 static uint8_t tpp1Rev[2];
@@ -815,6 +826,19 @@ int main(int argc, char *argv[]) {
 
 		case 'w':
 			warnings.state.warningsEnabled = false;
+			break;
+
+		// Long-only options
+		case 0:
+			if (longOpt == 'c') {
+				if (!strcasecmp(musl_optarg, "always")) {
+					style_Enable(true);
+				} else if (!strcasecmp(musl_optarg, "never")) {
+					style_Enable(false);
+				} else if (strcasecmp(musl_optarg, "auto")) {
+					fatal("Invalid argument for option '--color'");
+				}
+			}
 			break;
 
 		default:
