@@ -31,7 +31,7 @@ void act_StaticAssert(AssertionType type, int32_t condition, std::string const &
 std::optional<std::string> act_ReadFile(std::string const &name, uint32_t maxLen);
 
 uint32_t act_CharToNum(std::string const &str);
-uint32_t act_StringToNum(std::vector<int32_t> const &str);
+uint32_t act_StringToNum(std::string const &str);
 
 int32_t act_CharVal(std::string const &str);
 int32_t act_CharVal(std::string const &str, int32_t negIdx);

@@ -1296,17 +1296,15 @@ relocexpr:
 		$$ = std::move($1);
 	}
 	| string_literal {
-		std::vector<int32_t> output = charmap_Convert($1);
-		$$.makeNumber(act_StringToNum(output));
+		$$.makeNumber(act_StringToNum($1));
 	}
 	| scoped_sym {
 		$$ = handleSymbolByType(
 		    $1,
 		    [](Expression const &expr) { return expr; },
 		    [](std::string const &str) {
-			    std::vector<int32_t> output = charmap_Convert(str);
 			    Expression expr;
-			    expr.makeNumber(act_StringToNum(output));
+			    expr.makeNumber(act_StringToNum(str));
 			    return expr;
 		    }
 		);
@@ -2004,26 +2002,22 @@ sm83_ldd:
 
 sm83_ldh:
 	SM83_LDH MODE_A COMMA op_mem_ind {
-		if ($4.makeCheckHRAM()) {
-			warning(
-			    WARNING_OBSOLETE,
-			    "LDH is deprecated with values from $00 to $FF; use $FF00 to $FFFF"
-			);
-		}
-
+		$4.makeCheckHRAM();
 		sect_ConstByte(0xF0);
-		sect_RelByte($4, 1);
+		if (!$4.isKnown()) {
+			sect_RelByte($4, 1);
+		} else {
+			sect_ConstByte($4.value());
+		}
 	}
 	| SM83_LDH op_mem_ind COMMA MODE_A {
-		if ($2.makeCheckHRAM()) {
-			warning(
-			    WARNING_OBSOLETE,
-			    "LDH is deprecated with values from $00 to $FF; use $FF00 to $FFFF"
-			);
-		}
-
+		$2.makeCheckHRAM();
 		sect_ConstByte(0xE0);
-		sect_RelByte($2, 1);
+		if (!$2.isKnown()) {
+			sect_RelByte($2, 1);
+		} else {
+			sect_ConstByte($2.value());
+		}
 	}
 	| SM83_LDH MODE_A COMMA c_ind {
 		sect_ConstByte(0xF2);
@@ -2108,10 +2102,6 @@ sm83_ld_c_ind:
 	SM83_LD ff00_c_ind COMMA MODE_A {
 		sect_ConstByte(0xE2);
 	}
-	| SM83_LD c_ind COMMA MODE_A {
-		warning(WARNING_OBSOLETE, "LD [C], A is deprecated; use LDH [C], A");
-		sect_ConstByte(0xE2);
-	}
 ;
 
 sm83_ld_rr:
@@ -2143,10 +2133,6 @@ sm83_ld_a:
 		sect_ConstByte(0x40 | ($2 << 3) | $4);
 	}
 	| SM83_LD reg_a COMMA ff00_c_ind {
-		sect_ConstByte(0xF2);
-	}
-	| SM83_LD reg_a COMMA c_ind {
-		warning(WARNING_OBSOLETE, "LD A, [C] is deprecated; use LDH A, [C]");
 		sect_ConstByte(0xF2);
 	}
 	| SM83_LD reg_a COMMA reg_rr {

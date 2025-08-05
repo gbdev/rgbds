@@ -68,7 +68,7 @@ struct Diagnostics {
 	}
 
 	WarningBehavior getWarningBehavior(W id) const;
-	std::string processWarningFlag(char const *flag);
+	void processWarningFlag(char const *flag);
 };
 
 template<typename L, typename W>
@@ -121,18 +121,18 @@ WarningBehavior Diagnostics<L, W>::getWarningBehavior(W id) const {
 }
 
 template<typename L, typename W>
-std::string Diagnostics<L, W>::processWarningFlag(char const *flag) {
+void Diagnostics<L, W>::processWarningFlag(char const *flag) {
 	std::string rootFlag = flag;
 
 	// Check for `-Werror` or `-Wno-error` to return early
 	if (rootFlag == "error") {
 		// `-Werror` promotes warnings to errors
 		state.warningsAreErrors = true;
-		return rootFlag;
+		return;
 	} else if (rootFlag == "no-error") {
 		// `-Wno-error` disables promotion of warnings to errors
 		state.warningsAreErrors = false;
-		return rootFlag;
+		return;
 	}
 
 	auto [flagState, param] = getInitialWarningState(rootFlag);
@@ -174,12 +174,12 @@ std::string Diagnostics<L, W>::processWarningFlag(char const *flag) {
 				warning.state = WARNING_DISABLED;
 			}
 		}
-		return rootFlag;
+		return;
 	}
 
 	if (param.has_value()) {
 		warnx("Unknown warning flag parameter \"%s=%" PRIu32 "\"", rootFlag.c_str(), *param);
-		return rootFlag;
+		return;
 	}
 
 	// Try to match against a "meta" warning
@@ -194,19 +194,18 @@ std::string Diagnostics<L, W>::processWarningFlag(char const *flag) {
 				state.metaStates[id].update(flagState);
 			}
 		}
-		return rootFlag;
+		return;
 	}
 
 	// Try to match against a "normal" flag
 	for (W id : EnumSeq(W::NB_PLAIN_WARNINGS)) {
 		if (rootFlag == warningFlags[id].name) {
 			state.flagStates[id].update(flagState);
-			return rootFlag;
+			return;
 		}
 	}
 
 	warnx("Unknown warning flag \"%s\"", rootFlag.c_str());
-	return rootFlag;
 }
 
 #endif // RGBDS_DIAGNOSTICS_HPP
