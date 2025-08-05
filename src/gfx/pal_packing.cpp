@@ -252,6 +252,7 @@ static void verboseOutputAssignments(
 		return;
 	}
 
+	style_Set(stderr, STYLE_MAGENTA, false);
 	for (AssignedSets const &assignment : assignments) {
 		fputs("{ ", stderr);
 		for (ColorSetAttrs const &attrs : assignment) {
@@ -262,6 +263,7 @@ static void verboseOutputAssignments(
 		}
 		fprintf(stderr, "} (volume = %zu)\n", assignment.volume());
 	}
+	style_Reset(stderr);
 }
 // LCOV_EXCL_STOP
 

@@ -338,12 +338,14 @@ static std::tuple<std::vector<size_t>, std::vector<Palette>>
 
 	// LCOV_EXCL_START
 	if (checkVerbosity(VERB_INFO)) {
+		style_Set(stderr, STYLE_MAGENTA, false);
 		fprintf(
 		    stderr, "Color set mappings: (%zu palette%s)\n", nbPalettes, nbPalettes != 1 ? "s" : ""
 		);
 		for (size_t i = 0; i < mappings.size(); ++i) {
 			fprintf(stderr, "%zu -> %zu\n", i, mappings[i]);
 		}
+		style_Reset(stderr);
 	}
 	// LCOV_EXCL_STOP
 
@@ -440,6 +442,7 @@ static std::tuple<std::vector<size_t>, std::vector<Palette>>
 static void outputPalettes(std::vector<Palette> const &palettes) {
 	// LCOV_EXCL_START
 	if (checkVerbosity(VERB_INFO)) {
+		style_Set(stderr, STYLE_MAGENTA, false);
 		for (Palette const &palette : palettes) {
 			fputs("{ ", stderr);
 			for (uint16_t colorIndex : palette) {
@@ -447,6 +450,7 @@ static void outputPalettes(std::vector<Palette> const &palettes) {
 			}
 			fputs("}\n", stderr);
 		}
+		style_Reset(stderr);
 	}
 	// LCOV_EXCL_STOP
 
@@ -915,6 +919,7 @@ void process() {
 
 	// LCOV_EXCL_START
 	if (checkVerbosity(VERB_INFO)) {
+		style_Set(stderr, STYLE_MAGENTA, false);
 		fputs("Image colors: [ ", stderr);
 		for (std::optional<Rgba> const &slot : image.colors) {
 			if (!slot.has_value()) {
@@ -923,6 +928,7 @@ void process() {
 			fprintf(stderr, "#%08x, ", slot->toCSS());
 		}
 		fputs("]\n", stderr);
+		style_Reset(stderr);
 	}
 	// LCOV_EXCL_STOP
 
@@ -1034,6 +1040,7 @@ continue_visiting_tiles:;
 	);
 	// LCOV_EXCL_START
 	if (checkVerbosity(VERB_INFO)) {
+		style_Set(stderr, STYLE_MAGENTA, false);
 		for (ColorSet const &colorSet : colorSets) {
 			fputs("[ ", stderr);
 			for (uint16_t color : colorSet) {
@@ -1041,6 +1048,7 @@ continue_visiting_tiles:;
 			}
 			fputs("]\n", stderr);
 		}
+		style_Reset(stderr);
 	}
 	// LCOV_EXCL_STOP
 

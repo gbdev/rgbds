@@ -100,6 +100,8 @@ static void verboseOutputConfig(int argc, char *argv[]) {
 		return;
 	}
 
+	style_Set(stderr, STYLE_MAGENTA, false);
+
 	fprintf(stderr, "rgbasm %s\n", get_package_version_string());
 
 	printVVVVVVerbosity();
@@ -216,6 +218,8 @@ static void verboseOutputConfig(int argc, char *argv[]) {
 		// [-MG] [-MC]
 	}
 	fputs("Ready.\n", stderr);
+
+	style_Reset(stderr);
 }
 // LCOV_EXCL_STOP
 

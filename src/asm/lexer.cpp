@@ -2255,8 +2255,9 @@ yy::parser::symbol_type yylex() {
 	lexerState->lastToken = token.type;
 	lexerState->atLineStart = token.type == T_(NEWLINE) || token.type == T_(EOB);
 
-	// Uncomment this if you want to debug what the lexer is lexing:
-	// fprintf(stderr, "{lexing %s}\n", yy::parser::symbol_type(token.type).name());
+	// LCOV_EXCL_START
+	verbosePrint(VERB_TRACE, "Lexed '%s' token\n", yy::parser::symbol_type(token.type).name());
+	// LCOV_EXCL_STOP
 
 	if (std::holds_alternative<uint32_t>(token.value)) {
 		return yy::parser::symbol_type(token.type, std::get<uint32_t>(token.value));

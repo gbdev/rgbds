@@ -27,6 +27,8 @@ void printVVVVVVerbosity() {
 		return;
 	}
 
+	style_Set(stderr, STYLE_CYAN, true); // "Viridian"
+
 	putc('\n', stderr);
 	// clang-format off: vertically align values
 	static std::array<std::bitset<10>, 21> gfx{
@@ -70,6 +72,8 @@ void printVVVVVVerbosity() {
 		putc('\n', stderr);
 	}
 	putc('\n', stderr);
+
+	style_Set(stderr, STYLE_MAGENTA, false);
 }
 
 // LCOV_EXCL_STOP

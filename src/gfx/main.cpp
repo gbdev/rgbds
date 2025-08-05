@@ -592,6 +592,8 @@ static void verboseOutputConfig() {
 		return;
 	}
 
+	style_Set(stderr, STYLE_MAGENTA, false);
+
 	fprintf(stderr, "rgbgfx %s\n", get_package_version_string());
 
 	printVVVVVVerbosity();
@@ -718,6 +720,8 @@ static void verboseOutputConfig() {
 		fprintf(stderr, "\tReverse image width: %" PRIu16 " tiles\n", options.reversedWidth);
 	}
 	fputs("Ready.\n", stderr);
+
+	style_Reset(stderr);
 }
 // LCOV_EXCL_STOP
 
