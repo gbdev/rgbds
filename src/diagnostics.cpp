@@ -2,9 +2,13 @@
 
 #include "diagnostics.hpp"
 
+#include "style.hpp"
+
 void warnx(char const *fmt, ...) {
 	va_list ap;
+	style_Set(stderr, STYLE_YELLOW, true);
 	fputs("warning: ", stderr);
+	style_Reset(stderr);
 	va_start(ap, fmt);
 	vfprintf(stderr, fmt, ap);
 	va_end(ap);
