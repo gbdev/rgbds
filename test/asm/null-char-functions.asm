@@ -23,11 +23,3 @@ assert_equal strrpl(#s, "\0", "0"), "hello0world"
 assert_equal strfmt("%s", #s), #s
 assert_equal strchar(#s, 5), "\0"
 assert_equal strchar(#s, -1), "d"
-
-assert strin(#s, "o\0w") == 5
-assert strin(#s, "orld") == 8
-assert strrin(#s, "o\0w") == 5
-assert strrin(#s, "o") == 8
-
-assert_equal strsub(#s, 5, 3), "o\0w"
-assert_equal strsub(#s, 7), "world"

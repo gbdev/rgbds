@@ -625,18 +625,6 @@ the charmap entries of a string are counted by
 .Ql CHARLEN ;
 and the values of a charmap entry are counted by
 .Ql CHARSIZE .
-.Pp
-The following legacy functions are similar to other functions that operate on string expressions, but for historical reasons, they count starting from
-.Em position 1 ,
-not from index 0!
-(Position -1 still counts from the end.)
-.Bl -column "STRSUB(str, pos, len)"
-.It Sy Name Ta Sy Operation
-.It Fn STRSUB str pos len Ta Returns a substring of Ar str No starting at Ar pos No and Ar len No characters long. If Ar len No is not specified, the substring continues to the end of Ar str No .
-.It Fn STRIN str sub Ta Returns the first position of Ar sub No in Ar str Ns , or 0 if it's not present.
-.It Fn STRRIN str sub Ta Returns the last position of Ar sub No in Ar str Ns , or 0 if it's not present.
-.It Fn CHARSUB str pos Ta Returns the substring of Ar str No for the charmap entry at Ar pos No with the current charmap . Pq Ar pos No counts charmap entries, not characters.
-.El
 .Ss Character maps
 When writing text strings that are meant to be displayed on the Game Boy, the character encoding in the ROM may need to be different than the source file encoding.
 For example, the tiles used for uppercase letters may be placed starting at tile index 128, which differs from ASCII starting at 65.

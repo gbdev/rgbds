@@ -14,11 +14,11 @@
 DEF invalid EQUS "aÃ¤bæ¼¢,a£¤bæð¢!"
 
 DEF n = STRLEN("{invalid}")
-DEF copy EQUS STRSUB("{invalid}", 1)
+DEF copy EQUS STRSLICE("{invalid}", 0)
 
 println "\"{#s:invalid}\" == \"{#s:copy}\" ({d:n})"
 
-DEF mid1 EQUS STRSUB("{invalid}", 5, 2)
+DEF mid1 EQUS STRSLICE("{invalid}", 4, 6)
 DEF mid2 EQUS STRSLICE("{invalid}", 8, 9)
 println "\"{#s:mid2}{#s:mid1}\""
 
@@ -51,8 +51,5 @@ DEF n = STRLEN("{invalid}")
 DEF r = CHARLEN("{invalid}")
 println "\"{#s:invalid}\": {d:n} == {d:r}"
 
-DEF final EQUS STRSUB("{invalid}", 4, 1)
-println "\"{#s:invalid}\" ends \"{#s:final}\""
-
-REDEF final EQUS STRSLICE("{invalid}", 3, 4)
+DEF final EQUS STRSLICE("{invalid}", 3, 4)
 println "\"{#s:invalid}\" ends \"{#s:final}\""

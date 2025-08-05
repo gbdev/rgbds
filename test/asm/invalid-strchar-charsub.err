@@ -1,6 +1,0 @@
-warning: invalid-strchar-charsub.asm(1): [-Wbuiltin-args]
-    STRCHAR: Index 3 is past the end of the string
-warning: invalid-strchar-charsub.asm(2): [-Wbuiltin-args]
-    CHARSUB: Position 4 is past the end of the string
-warning: invalid-strchar-charsub.asm(3): [-Wbuiltin-args]
-    CHARSUB: Position starts at 1

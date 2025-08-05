@@ -351,6 +351,8 @@ std::string
 }
 
 std::string act_StringSub(std::string const &str, int32_t negPos, std::optional<uint32_t> optLen) {
+	warning(WARNING_OBSOLETE, "`STRSUB` is deprecated; use 0-indexed `STRSLICE` instead");
+
 	size_t adjustLen = act_StringLen(str, false);
 	uint32_t pos = adjustNegativePos(negPos, adjustLen, "STRSUB");
 	uint32_t len = optLen ? *optLen : pos > adjustLen ? 0 : adjustLen + 1 - pos;
@@ -447,6 +449,8 @@ std::string act_StringChar(std::string const &str, int32_t negIdx) {
 }
 
 std::string act_CharSub(std::string const &str, int32_t negPos) {
+	warning(WARNING_OBSOLETE, "`CHARSUB` is deprecated; use 0-indexed `STRCHAR` instead");
+
 	size_t adjustLen = act_CharLen(str);
 	uint32_t pos = adjustNegativePos(negPos, adjustLen, "CHARSUB");
 

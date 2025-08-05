@@ -22,27 +22,3 @@ STRSLICE("カタカナ",2,4): カナ
 STRSLICE("カタカナ",2,12): カナ
 STRSLICE("g̈",0,1): g
 STRSLICE("g̈",0,2): g̈
-STRSUB("ABC",1,1): A
-STRSUB("ABC",2,1): B
-STRSUB("ABC",3,1): C
-STRSUB("ABC",-3,1): A
-STRSUB("ABC",-2,1): B
-STRSUB("ABC",-1,1): C
-STRSUB("ABC",2): BC
-STRSUB("ABC",0): ABC
-STRSUB("ABC",-2): BC
-STRSUB("ABC",5): 
-STRSUB("ABC",-5): ABC
-STRSUB("ABC",1,2): AB
-STRSUB("ABC",2,2): BC
-STRSUB("ABC",2,32): BC
-STRSUB("ABC",2,300): BC
-STRSUB("ABC",-4,300): ABC
-STRSUB("ABC",4,0): 
-STRSUB("ABC",5,0): 
-STRSUB("ABC",4,1): 
-STRSUB("カタカナ",1,2): カタ
-STRSUB("カタカナ",3,2): カナ
-STRSUB("カタカナ",3,10): カナ
-STRSUB("g̈",1,1): g
-STRSUB("g̈",1,2): g̈

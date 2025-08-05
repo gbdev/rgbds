@@ -1493,10 +1493,12 @@ relocexpr_no_str:
 		$$.makeNumber(pos != std::string::npos ? pos : -1);
 	}
 	| OP_STRIN LPAREN string COMMA string RPAREN {
+		warning(WARNING_OBSOLETE, "`STRIN` is deprecated; use 0-indexed `STRFIND` instead");
 		size_t pos = $3.find($5);
 		$$.makeNumber(pos != std::string::npos ? pos + 1 : 0);
 	}
 	| OP_STRRIN LPAREN string COMMA string RPAREN {
+		warning(WARNING_OBSOLETE, "`STRRIN` is deprecated; use 0-indexed `STRRFIND` instead");
 		size_t pos = $3.rfind($5);
 		$$.makeNumber(pos != std::string::npos ? pos + 1 : 0);
 	}

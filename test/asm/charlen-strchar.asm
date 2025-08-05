@@ -18,11 +18,6 @@ DEF S EQUS "XBold<NULL>ABC"
 	assert STRCHAR("{S}", 0) == $58 ; ASCII "X"
 	db "{S}"
 
-	for n, CHARLEN("{S}")
-		assert STRCHAR("{S}", n) == CHARSUB("{S}", n + 1)
-		assert STRCHAR("{S}", -n - 1) == CHARSUB("{S}", -n - 1)
-	endr
-
 	newcharmap ascii
 
 	assert CHARLEN("{S}") == 14

@@ -7,13 +7,13 @@ error: invalid-utf-8-strings.asm(16):
 error: invalid-utf-8-strings.asm(16):
     STRLEN: Invalid UTF-8 byte 0xA2
 error: invalid-utf-8-strings.asm(17):
-    STRSUB: Invalid UTF-8 byte 0xA3
+    STRSLICE: Invalid UTF-8 byte 0xA3
 error: invalid-utf-8-strings.asm(17):
-    STRSUB: Invalid UTF-8 byte 0xA4
+    STRSLICE: Invalid UTF-8 byte 0xA4
 error: invalid-utf-8-strings.asm(17):
-    STRSUB: Invalid UTF-8 byte 0xF0
+    STRSLICE: Invalid UTF-8 byte 0xF0
 error: invalid-utf-8-strings.asm(17):
-    STRSUB: Invalid UTF-8 byte 0xA2
+    STRSLICE: Invalid UTF-8 byte 0xA2
 error: invalid-utf-8-strings.asm(22):
     STRSLICE: Invalid UTF-8 byte 0xA3
 error: invalid-utf-8-strings.asm(22):
@@ -55,7 +55,5 @@ error: invalid-utf-8-strings.asm(40):
 error: invalid-utf-8-strings.asm(50):
     STRLEN: Incomplete UTF-8 character
 error: invalid-utf-8-strings.asm(54):
-    STRSUB: Incomplete UTF-8 character
-error: invalid-utf-8-strings.asm(57):
     STRSLICE: Incomplete UTF-8 character
-Assembly aborted with 30 errors!
+Assembly aborted with 29 errors!

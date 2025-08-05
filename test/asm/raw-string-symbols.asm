@@ -4,7 +4,7 @@ def hello equs "world"
 def name equs "hello"
 println "{name}"
 println #name
-assert !strcmp(strsub(#name, 1, 4), "hell")
+assert !strcmp(strslice(#name, 0, 4), "hell")
 assert strlen(#hello) == charlen(#hello)
 assert strlen("{hello}") == 5
 
