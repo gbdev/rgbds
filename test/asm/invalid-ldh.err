@@ -1,0 +1,5 @@
+error: invalid-ldh.asm(2):
+    Source address $11 not between $FF00 to $FFFF
+error: invalid-ldh.asm(3):
+    Source address $22 not between $FF00 to $FFFF
+Assembly aborted with 2 errors!

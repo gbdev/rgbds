@@ -155,39 +155,25 @@ std::optional<std::string> act_ReadFile(std::string const &name, uint32_t maxLen
 }
 
 uint32_t act_CharToNum(std::string const &str) {
-	if (std::vector<int32_t> output = charmap_Convert(str); output.size() == 1) {
-		return static_cast<uint32_t>(output[0]);
+	if (std::vector<int32_t> units = charmap_Convert(str); units.size() == 1) {
+		// The string is a single character with a single unit value,
+		// which can be used directly as a numeric character.
+		return static_cast<uint32_t>(units[0]);
 	} else {
 		error("Character literals must be a single charmap unit");
 		return 0;
 	}
 }
 
-uint32_t act_StringToNum(std::vector<int32_t> const &str) {
-	uint32_t length = str.size();
-
-	if (length == 1) {
-		// The string is a single character with a single value,
+uint32_t act_StringToNum(std::string const &str) {
+	if (std::vector<int32_t> units = charmap_Convert(str); units.size() == 1) {
+		// The string is a single character with a single unit value,
 		// which can be used directly as a number.
-		return static_cast<uint32_t>(str[0]);
+		return static_cast<uint32_t>(units[0]);
+	} else {
+		error("Strings as numbers must be a single charmap unit");
+		return 0;
 	}
-
-	warning(WARNING_OBSOLETE, "Treating multi-unit strings as numbers is deprecated");
-
-	for (int32_t v : str) {
-		if (!checkNBit(v, 8, "All character units")) {
-			break;
-		}
-	}
-
-	uint32_t r = 0;
-
-	for (uint32_t i = length < 4 ? 0 : length - 4; i < length; ++i) {
-		r <<= 8;
-		r |= static_cast<uint8_t>(str[i]);
-	}
-
-	return r;
 }
 
 static uint32_t adjustNegativeIndex(int32_t idx, size_t len, char const *functionName) {

@@ -43,7 +43,7 @@ charmap "ab", $0
 
 	new_ map1
 
-	print_mapped "ab"
+	print_mapped "ab" ; error
 
 	new_ map2, main
 
@@ -51,7 +51,7 @@ charmap "ab", $0
 
 	set_ map1
 
-	print_mapped "ab"
+	print_mapped "ab" ; error
 
 	new_ map3
 
@@ -70,7 +70,7 @@ charmap "cd", $2
 	set_ map3
 
 	print_mapped "ab"
-	print_mapped "cd"
+	print_mapped "cd" ; error
 
 	set_ main
 
@@ -92,8 +92,8 @@ charmap "ef", $3
 	push_set_ map3
 
 	print_mapped "ab"
-	print_mapped "cd"
-	print_mapped "ef"
+	print_mapped "cd" ; error
+	print_mapped "ef" ; error
 
 	pop_
 
@@ -101,7 +101,7 @@ charmap "ef", $3
 
 	pop_
 
-	print_mapped "ab"
+	print_mapped "ab" ; error
 
 	new_ map1
 

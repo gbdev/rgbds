@@ -11,7 +11,3 @@ SECTION "Test", ROM0
 	db "A" + 1
 	dw "A" + 1
 	dl "A" + 1
-
-	db 1, ("WXYZ") & $ff, -1
-	dw 1, ("WXYZ") & $ffff, -1
-	dl 1, ("WXYZ"), -1

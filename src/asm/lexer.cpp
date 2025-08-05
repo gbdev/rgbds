@@ -69,7 +69,6 @@ static UpperMap<int> const keywordDict{
     {"LD",            T_(SM83_LD)          },
     {"LDI",           T_(SM83_LDI)         },
     {"LDD",           T_(SM83_LDD)         },
-    {"LDIO",          T_(SM83_LDH)         },
     {"LDH",           T_(SM83_LDH)         },
     {"NOP",           T_(SM83_NOP)         },
     {"OR",            T_(SM83_OR)          },
@@ -250,8 +249,6 @@ static UpperMap<int> const keywordDict{
 
     {"OPT",           T_(POP_OPT)          },
 };
-
-static auto ldio = keywordDict.find("LDIO");
 
 static LexerState *lexerState = nullptr;
 static LexerState *lexerStateEOL = nullptr;
@@ -1205,9 +1202,6 @@ static Token readIdentifier(char firstChar, bool raw) {
 	// Attempt to check for a keyword if the identifier is not raw or a local label
 	if (!raw && tokenType != T_(LOCAL)) {
 		if (auto search = keywordDict.find(identifier); search != keywordDict.end()) {
-			if (search == ldio) {
-				warning(WARNING_OBSOLETE, "LDIO is deprecated; use LDH");
-			}
 			return Token(search->second);
 		}
 	}

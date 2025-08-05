@@ -376,15 +376,9 @@ static int32_t computeRPNExpr(Patch const &patch, std::vector<Symbol> const &fil
 
 		case RPN_HRAM:
 			value = popRPN(patch);
-			if (value < 0 || (value > 0xFF && value < 0xFF00) || value > 0xFFFF) {
+			if (value < 0xFF00 || value > 0xFFFF) {
 				firstErrorAt(patch, "Address $%" PRIx32 " for LDH is not in HRAM range", value);
 				value = 0;
-			} else if (value >= 0 && value <= 0xFF) {
-				warningAt(
-				    patch,
-				    WARNING_OBSOLETE,
-				    "LDH is deprecated with values from $00 to $FF; use $FF00 to $FFFF"
-				);
 			}
 			value &= 0xFF;
 			break;

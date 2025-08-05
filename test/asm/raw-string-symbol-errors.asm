@@ -4,7 +4,7 @@ macro m
 endm
 
 assert (#n) == 42
-assert (#s) == $656c6c6f
+assert (#s) == 0
 assert (#m) == 0
 assert (#u) == 0
 

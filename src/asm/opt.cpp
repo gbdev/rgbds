@@ -49,9 +49,7 @@ void opt_R(size_t maxRecursionDepth) {
 }
 
 void opt_W(char const *flag) {
-	if (warnings.processWarningFlag(flag) == "numeric-string") {
-		warning(WARNING_OBSOLETE, "Warning flag \"numeric-string\" is deprecated");
-	}
+	warnings.processWarningFlag(flag);
 }
 
 void opt_Parse(char const *s) {

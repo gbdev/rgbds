@@ -40,7 +40,7 @@ struct Expression {
 	void makeUnaryOp(RPNCommand op, Expression &&src);
 	void makeBinaryOp(RPNCommand op, Expression &&src1, Expression const &src2);
 
-	bool makeCheckHRAM();
+	void makeCheckHRAM();
 	void makeCheckRST();
 	void makeCheckBitIndex(uint8_t mask);
 

@@ -1,21 +1,21 @@
-warning: multiple-charmaps.asm(46) -> multiple-charmaps.asm::print_mapped(34): [-Wobsolete]
-    Treating multi-unit strings as numbers is deprecated
-warning: multiple-charmaps.asm(54) -> multiple-charmaps.asm::print_mapped(34): [-Wobsolete]
-    Treating multi-unit strings as numbers is deprecated
+error: multiple-charmaps.asm(46) -> multiple-charmaps.asm::print_mapped(34):
+    Strings as numbers must be a single charmap unit
+error: multiple-charmaps.asm(54) -> multiple-charmaps.asm::print_mapped(34):
+    Strings as numbers must be a single charmap unit
 warning: multiple-charmaps.asm(64): [-Wcharmap-redef]
     Overriding charmap mapping
-warning: multiple-charmaps.asm(73) -> multiple-charmaps.asm::print_mapped(34): [-Wobsolete]
-    Treating multi-unit strings as numbers is deprecated
-warning: multiple-charmaps.asm(95) -> multiple-charmaps.asm::print_mapped(34): [-Wobsolete]
-    Treating multi-unit strings as numbers is deprecated
-warning: multiple-charmaps.asm(96) -> multiple-charmaps.asm::print_mapped(34): [-Wobsolete]
-    Treating multi-unit strings as numbers is deprecated
-warning: multiple-charmaps.asm(104) -> multiple-charmaps.asm::print_mapped(34): [-Wobsolete]
-    Treating multi-unit strings as numbers is deprecated
+error: multiple-charmaps.asm(73) -> multiple-charmaps.asm::print_mapped(34):
+    Strings as numbers must be a single charmap unit
+error: multiple-charmaps.asm(95) -> multiple-charmaps.asm::print_mapped(34):
+    Strings as numbers must be a single charmap unit
+error: multiple-charmaps.asm(96) -> multiple-charmaps.asm::print_mapped(34):
+    Strings as numbers must be a single charmap unit
+error: multiple-charmaps.asm(104) -> multiple-charmaps.asm::print_mapped(34):
+    Strings as numbers must be a single charmap unit
 error: multiple-charmaps.asm(106) -> multiple-charmaps.asm::new_(9):
     Charmap 'map1' already exists
 error: multiple-charmaps.asm(108) -> multiple-charmaps.asm::set_(15):
     Charmap 'map5' doesn't exist
 error: multiple-charmaps.asm(110) -> multiple-charmaps.asm::pop_(30):
     No entries in the charmap stack
-Assembly aborted with 3 errors!
+Assembly aborted with 9 errors!
