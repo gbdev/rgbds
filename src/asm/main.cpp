@@ -507,7 +507,7 @@ int main(int argc, char *argv[]) {
 	verboseOutputConfig(argc, argv);
 
 	if (argc == musl_optind) {
-		usage.printAndExit("Please specify an input file (pass `-` to read from standard input)");
+		usage.printAndExit("No input file specified (pass `-` to read from standard input)");
 	} else if (argc != musl_optind + 1) {
 		usage.printAndExit("More than one input file specified");
 	}

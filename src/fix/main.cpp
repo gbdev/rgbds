@@ -898,7 +898,7 @@ int main(int argc, char *argv[]) {
 
 	argv += musl_optind;
 	if (!*argv) {
-		usage.printAndExit("Please specify an input file (pass `-` to read from standard input)");
+		usage.printAndExit("No input file specified (pass `-` to read from standard input)");
 	}
 
 	if (outputFilename && argc != musl_optind + 1) {

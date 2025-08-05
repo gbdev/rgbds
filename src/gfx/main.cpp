@@ -862,7 +862,7 @@ int main(int argc, char *argv[]) {
 	           && !localOptions.reverse) {
 		processPalettes();
 	} else {
-		usage.printAndExit("No input image specified");
+		usage.printAndExit("No input file specified (pass `-` to read from standard input)");
 	}
 
 	requireZeroErrors();
