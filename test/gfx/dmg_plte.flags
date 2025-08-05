@@ -1,2 +1,3 @@
--c embedded
--c DMG=E4
+	# Override embedded with DMG
+	-c embedded
+	-c DMG

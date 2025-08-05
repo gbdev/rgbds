@@ -322,6 +322,9 @@ static char *parseArgv(int argc, char *argv[]) {
 				options.palSpecType = Options::EMBEDDED;
 			} else if (strcasecmp(musl_optarg, "auto") == 0) {
 				options.palSpecType = Options::NO_SPEC;
+			} else if (strcasecmp(musl_optarg, "dmg") == 0) {
+				options.palSpecType = Options::DMG;
+				parseDmgPalSpec(0xE4); // Same darkest-first order as `sortGrayscale`
 			} else if (strncasecmp(musl_optarg, "dmg=", literal_strlen("dmg=")) == 0) {
 				options.palSpecType = Options::DMG;
 				parseDmgPalSpec(&musl_optarg[literal_strlen("dmg=")]);

@@ -692,7 +692,11 @@ void parseDmgPalSpec(char const * const rawArg) {
 		return;
 	}
 
-	options.palSpecDmg = toHex(arg[0], arg[1]);
+	parseDmgPalSpec(toHex(arg[0], arg[1]));
+}
+
+void parseDmgPalSpec(uint8_t palSpecDmg) {
+	options.palSpecDmg = palSpecDmg;
 
 	// Map gray shades to their DMG color indexes for fast lookup by `Rgba::grayIndex`
 	for (uint8_t i = 0; i < 4; ++i) {
