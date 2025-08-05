@@ -145,6 +145,7 @@ _rgbfix_completions() {
 		warning)
 			mapfile -t COMPREPLY < <(compgen -W "
 				mbc
+				obsolete
 				overwrite
 				sgb
 				truncation

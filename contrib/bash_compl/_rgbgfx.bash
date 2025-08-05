@@ -157,6 +157,7 @@ _rgbgfx_completions() {
 		warning)
 			mapfile -t COMPREPLY < <(compgen -W "
 				embedded
+				obsolete
 				trim-nonempty
 				all
 				everything

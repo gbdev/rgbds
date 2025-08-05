@@ -13,6 +13,7 @@ enum WarningLevel {
 
 enum WarningID {
 	WARNING_MBC,        // Issues with MBC specs
+	WARNING_OBSOLETE,   // Obsolete/deprecated things
 	WARNING_OVERWRITE,  // Overwriting non-zero bytes
 	WARNING_SGB,        // SGB flag conflicts with old licensee code
 	WARNING_TRUNCATION, // Truncating values to fit

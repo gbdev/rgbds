@@ -8,7 +8,7 @@
 .Nd Game Boy header utility and checksum fixer
 .Sh SYNOPSIS
 .Nm
-.Op Fl hjOsVvw
+.Op Fl hjsVvw
 .Op Fl C | c
 .Op Fl \-color Ar when
 .Op Fl f Ar fix_spec
@@ -149,9 +149,6 @@ section below.
 Set the ROM version
 .Pq Ad 0x14C
 to a given value from 0 to 0xFF.
-.It Fl O , Fl \-overwrite
-Alias for
-.Fl Wno-overwrite .
 .It Fl o Ar out_file , Fl \-output Ar out_file
 Write the modified ROM image to the given file, or '-' to write to standard output.
 If not specified, the input files are modified in-place, or written to standard output if read from standard input.
@@ -253,6 +250,8 @@ prefix, entries are listed alphabetically.
 .Bl -tag -width Ds
 .It Fl Wno-mbc
 Warn when there are inconsistencies with or caveats about the specified MBC type.
+.It Fl Wno-obsolete
+Warn when obsolete features are encountered, which have been deprecated and may later be removed.
 .It Fl Wno-overwrite
 Warn when overwriting different non-zero bytes in the header.
 .It Fl Wno-sgb

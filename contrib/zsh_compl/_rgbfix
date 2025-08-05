@@ -42,6 +42,7 @@ _rgbfix_warnings() {
 		'everything:Enable literally everything'
 
 		'mbc:Warn about issues with MBC specs'
+		'obsolete:Warn when using deprecated features'
 		'overwrite:Warn when overwriting non-zero bytes'
 		'sgb:Warn when SGB flag conflicts with old licensee code'
 		'truncation:Warn when values are truncated to fit'

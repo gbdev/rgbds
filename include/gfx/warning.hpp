@@ -13,6 +13,7 @@ enum WarningLevel {
 
 enum WarningID {
 	WARNING_EMBEDDED,      // Using an embedded PNG palette without '-c embedded'
+	WARNING_OBSOLETE,      // Obsolete/deprecated things
 	WARNING_TRIM_NONEMPTY, // '-x' trims nonempty tiles
 
 	NB_PLAIN_WARNINGS,

@@ -17,6 +17,7 @@ Diagnostics<WarningLevel, WarningID> warnings = {
     },
     .warningFlags = {
         {"embedded",      LEVEL_EVERYTHING},
+        {"obsolete",      LEVEL_DEFAULT   },
         {"trim-nonempty", LEVEL_ALL       },
     },
     .paramWarnings = {},

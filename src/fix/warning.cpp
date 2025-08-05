@@ -12,6 +12,7 @@ Diagnostics<WarningLevel, WarningID> warnings = {
     },
     .warningFlags = {
         {"mbc",        LEVEL_DEFAULT   },
+        {"obsolete",   LEVEL_DEFAULT   },
         {"overwrite",  LEVEL_DEFAULT   },
         {"sgb",        LEVEL_DEFAULT   },
         {"truncation", LEVEL_DEFAULT   },

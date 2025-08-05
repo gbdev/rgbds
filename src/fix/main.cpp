@@ -778,6 +778,7 @@ int main(int argc, char *argv[]) {
 			break;
 
 		case 'O':
+			warning(WARNING_OBSOLETE, "'-O' is deprecated; use '-Wno-overwrite' instead");
 			warnings.processWarningFlag("no-overwrite");
 			break;
 

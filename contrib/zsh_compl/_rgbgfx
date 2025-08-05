@@ -17,6 +17,7 @@ _rgbgfx_warnings() {
 		'everything:Enable literally everything'
 
 		'embedded:Warn when using embedded PLTE without "-c embedded"'
+		'obsolete:Warn when using deprecated features'
 		'trim-nonempty:Warn when "-x" trims nonempty tiles'
 	)
 	_describe warning warnings
