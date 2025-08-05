@@ -180,6 +180,16 @@ and so on.
 Gray shade 0 is the lightest (white), 3 is the darkest (black).
 The same gray shade cannot go in two color indexes.
 To specify a DMG palette, the input PNG must have all its colors in shades of gray, without any transparent colors.
+.It Sy automatic palette generation
+If
+.Ar pal_spec
+is the case-insensitive word
+.Cm auto ,
+then a palette is automatically generated using the procedure described in
+.Sx PALETTE GENERATION .
+This is the default behavior if
+.Fl c
+was not specified.
 .It Sy external palette spec
 Otherwise,
 .Ar pal_spec

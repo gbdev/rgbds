@@ -343,6 +343,8 @@ static char *parseArgv(int argc, char *argv[]) {
 			} else if (strcasecmp(musl_optarg, "embedded") == 0) {
 				// Use PLTE, error out if missing
 				options.palSpecType = Options::EMBEDDED;
+			} else if (strcasecmp(musl_optarg, "auto") == 0) {
+				options.palSpecType = Options::NO_SPEC;
 			} else if (strncasecmp(musl_optarg, "dmg=", literal_strlen("dmg=")) == 0) {
 				options.palSpecType = Options::DMG;
 				parseDmgPalSpec(&musl_optarg[literal_strlen("dmg=")]);
@@ -634,7 +636,9 @@ static void verboseOutputConfig() {
 	// -s/--palette-size
 	fprintf(stderr, "\tPalettes contain %" PRIu8 " colors\n", options.nbColorsPerPal);
 	// -c/--colors
-	if (options.palSpecType != Options::NO_SPEC) {
+	if (options.palSpecType == Options::NO_SPEC) {
+		fputs("\tAutomatic palette generation\n", stderr);
+	} else {
 		fprintf(stderr, "\t%s palette spec\n", [] {
 			switch (options.palSpecType) {
 			case Options::EXPLICIT:
