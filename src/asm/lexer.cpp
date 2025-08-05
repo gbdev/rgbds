@@ -2316,13 +2316,10 @@ Capture lexer_CaptureRept() {
 	Defer reenableExpansions = scopedDisableExpansions();
 	for (size_t depth = 0;;) {
 		nextLine();
-		int c = skipChars(isWhitespace);
-		if (c != EOF) {
-			shiftChar();
-		}
 
 		// We're at line start, so attempt to match a `REPT`, `FOR`, or `ENDR` token
-		if (startsIdentifier(c)) {
+		if (int c = skipChars(isWhitespace); startsIdentifier(c)) {
+			shiftChar();
 			switch (readIdentifier(c, false).type) {
 			case T_(POP_REPT):
 			case T_(POP_FOR):
@@ -2342,20 +2339,15 @@ Capture lexer_CaptureRept() {
 		}
 
 		// Just consume characters until EOL or EOF
-		for (;;) {
-			if (c == EOF) {
-				error("Unterminated REPT/FOR block");
-				endCapture(capture);
-				capture.span.ptr = nullptr; // Indicates that it reached EOF before an ENDR
-				return capture;
-			} else if (isNewline(c)) {
-				handleCRLF(c);
-				break;
-			}
-			c = peek();
-			if (c != EOF) {
-				shiftChar();
-			}
+		if (int c = skipChars([](int d) { return d != EOF && !isNewline(d); }); c == EOF) {
+			error("Unterminated REPT/FOR block");
+			endCapture(capture);
+			capture.span.ptr = nullptr; // Indicates that it reached EOF before an ENDR
+			return capture;
+		} else {
+			assume(isNewline(c));
+			shiftChar();
+			handleCRLF(c);
 		}
 	}
 }
@@ -2366,35 +2358,29 @@ Capture lexer_CaptureMacro() {
 	Defer reenableExpansions = scopedDisableExpansions();
 	for (;;) {
 		nextLine();
-		int c = skipChars(isWhitespace);
-		if (c != EOF) {
-			shiftChar();
-		}
 
 		// We're at line start, so attempt to match an `ENDM` token
-		if (startsIdentifier(c) && readIdentifier(c, false).type == T_(POP_ENDM)) {
-			endCapture(capture);
-			// The ENDM has been captured, but we don't want it!
-			// We know we have read exactly "ENDM", not e.g. an EQUS
-			capture.span.size -= literal_strlen("ENDM");
-			return capture;
+		if (int c = skipChars(isWhitespace); startsIdentifier(c)) {
+			shiftChar();
+			if (readIdentifier(c, false).type == T_(POP_ENDM)) {
+				endCapture(capture);
+				// The ENDM has been captured, but we don't want it!
+				// We know we have read exactly "ENDM", not e.g. an EQUS
+				capture.span.size -= literal_strlen("ENDM");
+				return capture;
+			}
 		}
 
 		// Just consume characters until EOL or EOF
-		for (;;) {
-			if (c == EOF) {
-				error("Unterminated macro definition");
-				endCapture(capture);
-				capture.span.ptr = nullptr; // Indicates that it reached EOF before an ENDM
-				return capture;
-			} else if (isNewline(c)) {
-				handleCRLF(c);
-				break;
-			}
-			c = peek();
-			if (c != EOF) {
-				shiftChar();
-			}
+		if (int c = skipChars([](int d) { return d != EOF && !isNewline(d); }); c == EOF) {
+			error("Unterminated macro definition");
+			endCapture(capture);
+			capture.span.ptr = nullptr; // Indicates that it reached EOF before an ENDM
+			return capture;
+		} else {
+			assume(isNewline(c));
+			shiftChar();
+			handleCRLF(c);
 		}
 	}
 }
