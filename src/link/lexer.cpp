@@ -60,14 +60,6 @@ void lexer_IncLineNo() {
 	++lexerStack.back().lineNo;
 }
 
-static bool isWhiteSpace(int c) {
-	return c == ' ' || c == '\t';
-}
-
-static bool isNewline(int c) {
-	return c == '\r' || c == '\n';
-}
-
 yy::parser::symbol_type yylex(); // Forward declaration for `yywrap`
 
 static yy::parser::symbol_type yywrap() {
@@ -268,7 +260,7 @@ yy::parser::symbol_type yylex() {
 	int c = context.file.sbumpc();
 
 	// First, skip leading whitespace.
-	while (isWhiteSpace(c)) {
+	while (isWhitespace(c)) {
 		c = context.file.sbumpc();
 	}
 	// Then, skip a comment if applicable.

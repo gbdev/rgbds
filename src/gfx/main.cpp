@@ -20,6 +20,7 @@
 #include "platform.hpp"
 #include "style.hpp"
 #include "usage.hpp"
+#include "util.hpp"
 #include "verbosity.hpp"
 #include "version.hpp"
 
@@ -210,68 +211,44 @@ static std::vector<size_t> readAtFile(std::string const &path, std::vector<char>
 		fatal("Error reading @%s: %s", file.c_str(path), strerror(errno));
 	}
 
-	// We only filter out `EOF`, but calling `isblank()` on anything else is UB!
-	static_assert(
-	    std::streambuf::traits_type::eof() == EOF,
-	    "isblank(std::streambuf::traits_type::eof()) is UB!"
-	);
-	std::vector<size_t> argvOfs;
-
-	for (;;) {
-		int c;
+	for (std::vector<size_t> argvOfs;;) {
+		int c = file->sbumpc();
 
 		// First, discard any leading whitespace
-		do {
+		while (isWhitespace(c)) {
 			c = file->sbumpc();
-			if (c == EOF) {
-				return argvOfs;
-			}
-		} while (isblank(c));
+		}
 
-		switch (c) {
-		case '#': // If it's a comment, discard everything until EOL
-			while ((c = file->sbumpc()) != '\n') {
-				if (c == EOF) {
-					return argvOfs;
-				}
+		// If it's a comment, discard everything until EOL
+		if (c == '#') {
+			c = file->sbumpc();
+			while (c != EOF && !isNewline(c)) {
+				c = file->sbumpc();
 			}
-			continue; // Start processing the next line
-		// If it's an empty line, ignore it
-		case '\r':          // Assuming CRLF here
-			file->sbumpc(); // Discard the upcoming '\n'
-			[[fallthrough]];
-		case '\n':
+		}
+
+		if (c == EOF) {
+			return argvOfs;
+		} else if (isNewline(c)) {
 			continue; // Start processing the next line
 		}
 
 		// Alright, now we can parse the line
 		do {
+			argvOfs.push_back(argPool.size());
+
 			// Read one argument (until the next whitespace char).
 			// We know there is one because we already have its first character in `c`.
-			argvOfs.push_back(argPool.size());
-			// Reading and appending characters one at a time may be inefficient, but I'm counting
-			// on `vector` and `sbumpc` to do the right thing here.
-			argPool.push_back(c); // Push the character we've already read
-			for (;;) {
-				c = file->sbumpc();
-				if (c == EOF || c == '\n' || isblank(c)) {
-					break;
-				} else if (c == '\r') {
-					file->sbumpc(); // Discard the '\n'
-					break;
-				}
+			for (; c != EOF && !isNewline(c) && !isWhitespace(c); c = file->sbumpc()) {
 				argPool.push_back(c);
 			}
 			argPool.push_back('\0');
 
 			// Discard whitespace until the next argument (candidate)
-			while (isblank(c)) {
+			while (isWhitespace(c)) {
 				c = file->sbumpc();
 			}
-			if (c == '\r') {
-				c = file->sbumpc(); // Skip the '\n'
-			}
-		} while (c != '\n' && c != EOF); // End if we reached EOL
+		} while (c != EOF && !isNewline(c)); // End if we reached EOL
 	}
 }
 

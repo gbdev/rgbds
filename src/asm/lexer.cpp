@@ -253,14 +253,6 @@ static UpperMap<int> const keywordDict{
 
 static auto ldio = keywordDict.find("LDIO");
 
-static bool isWhitespace(int c) {
-	return c == ' ' || c == '\t';
-}
-
-static bool isNewline(int c) {
-	return c == '\r' || c == '\n';
-}
-
 static LexerState *lexerState = nullptr;
 static LexerState *lexerStateEOL = nullptr;
 
