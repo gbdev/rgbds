@@ -1202,7 +1202,6 @@ static Token readIdentifier(char firstChar, bool raw) {
 
 	// Continue reading while the char is in the identifier charset
 	for (int c = peek(); continuesIdentifier(c); c = nextChar()) {
-		// Write the char to the identifier's name
 		identifier += c;
 
 		// If the char was a dot, the identifier is a local label
@@ -1211,8 +1210,8 @@ static Token readIdentifier(char firstChar, bool raw) {
 		}
 	}
 
-	// Attempt to check for a keyword if the identifier is not raw
-	if (!raw) {
+	// Attempt to check for a keyword if the identifier is not raw or a local label
+	if (!raw && tokenType != T_(LOCAL)) {
 		if (auto search = keywordDict.find(identifier); search != keywordDict.end()) {
 			if (search == ldio) {
 				warning(WARNING_OBSOLETE, "LDIO is deprecated; use LDH");
@@ -2152,12 +2151,10 @@ static Token skipToLeadingIdentifier() {
 }
 
 static Token skipIfBlock(bool toEndc) {
-	uint32_t startingDepth = lexer_GetIFDepth();
-
 	lexer_SetMode(LEXER_NORMAL);
 
 	Defer reenableExpansions = scopedDisableExpansions();
-	for (;;) {
+	for (uint32_t startingDepth = lexer_GetIFDepth();;) {
 		switch (Token token = skipToLeadingIdentifier(); token.type) {
 		case T_(YYEOF):
 			return token;
