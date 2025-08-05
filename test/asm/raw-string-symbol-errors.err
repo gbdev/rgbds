@@ -1,5 +1,5 @@
-warning: raw-string-symbol-errors.asm(7): [-Wobsolete]
-    Treating multi-unit strings as numbers is deprecated
+error: raw-string-symbol-errors.asm(7):
+    Strings as numbers must be a single charmap unit
 error: raw-string-symbol-errors.asm(8):
     'm' is not a numeric symbol
 error: raw-string-symbol-errors.asm(11):
@@ -8,8 +8,8 @@ error: raw-string-symbol-errors.asm(13):
     'm' is not a string symbol
 error: raw-string-symbol-errors.asm(14):
     'u' is not a string symbol
-warning: raw-string-symbol-errors.asm(17): [-Wobsolete]
-    Treating multi-unit strings as numbers is deprecated
+error: raw-string-symbol-errors.asm(17):
+    Strings as numbers must be a single charmap unit
 error: raw-string-symbol-errors.asm(18):
     'm' is not a numeric symbol
 error: raw-string-symbol-errors.asm(19):
@@ -24,4 +24,4 @@ error: raw-string-symbol-errors.asm(27):
     's' was already purged
 error: raw-string-symbol-errors.asm(29):
     's' is not a string symbol
-Assembly aborted with 11 errors!
+Assembly aborted with 13 errors!
