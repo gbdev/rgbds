@@ -209,6 +209,31 @@ typed in column 1.
 Instead, use
 .Ql \&;
 comments.
+.Ss STRIN, STRRIN, STRSUB, and CHARSUB
+Deprecated in 1.0.0.
+.Pp
+These functions used 1-based indexing of string characters, which was inconsistent with the 0-based indexing used more often in programming.
+.Pp
+Instead of
+.Ic STRIN ,
+use
+.Ic STRFIND ;
+instead of
+.Ic STRRIN ,
+use
+.Ic STRRFIND ;
+instead of
+.Ic STRSUB ,
+use
+.Ic STRSLICE ;
+and instead of
+.Ic CHARSUB ,
+use
+.Ic  STRCHAR .
+.Pp
+Note that
+.Ic STRSLICE
+takes a start and end index instead of a start index and a length.
 .Ss PRINTT, PRINTI, PRINTV, and PRINTF
 Deprecated in 0.5.0, removed in 0.6.0.
 .Pp
@@ -247,7 +272,7 @@ and
 .Ic DATA ,
 use
 .Ic ROMX ;
-instead of
+and instead of
 .Ic BSS ,
 use
 .Ic  WRAM0 .
@@ -330,6 +355,11 @@ Instead, use
 .Fl I
 or
 .Fl \-include .
+.Ss rgbfix -O/--overwrite
+Deprecated in 1.0.0.
+.Pp
+Instead, use
+.Dl -Wno-overwrite .
 .Ss rgbgfx -h
 Removed in 0.6.0.
 .Pp
