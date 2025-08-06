@@ -1,4 +1,4 @@
-opt Wno-unmapped-char
+opt Wno-unmapped-char, Wno-obsolete
 
 MACRO new_
 	IF _NARG > 1

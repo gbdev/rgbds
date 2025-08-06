@@ -1,5 +1,9 @@
 warning: multivalue-charmap.asm(11): [-Wtruncation]
     All character units must be 8-bit
+warning: multivalue-charmap.asm(20): [-Wobsolete]
+    Treating strings as numbers is deprecated
+warning: multivalue-charmap.asm(21): [-Wobsolete]
+    Treating strings as numbers is deprecated
 warning: multivalue-charmap.asm(22): [-Wtruncation]
     All character units must be 8-bit
 warning: multivalue-charmap.asm(34): [-Wtruncation]

@@ -19,7 +19,7 @@ charmap "a", 1
 charmap "b", 2
 charmap "ab", 12
 assert "a" + "b" == 3
-assert "a" ++ "b" == 12
+assert charval("a" ++ "b") == 12
 
 ; errors
 assert 2 ++ 2 == 4

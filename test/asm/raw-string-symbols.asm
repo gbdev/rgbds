@@ -1,4 +1,4 @@
-opt Wno-unmapped-char
+opt Wno-unmapped-char, Wno-obsolete
 
 def hello equs "world"
 def name equs "hello"
