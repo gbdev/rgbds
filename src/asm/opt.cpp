@@ -53,6 +53,9 @@ void opt_W(char const *flag) {
 }
 
 void opt_Parse(char const *s) {
+	if (s[0] == '-') {
+		++s;
+	}
 	switch (s[0]) {
 	case 'b':
 		if (strlen(&s[1]) == 2) {
