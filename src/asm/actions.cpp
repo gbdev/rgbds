@@ -166,6 +166,7 @@ uint32_t act_CharToNum(std::string const &str) {
 }
 
 uint32_t act_StringToNum(std::string const &str) {
+	warning(WARNING_OBSOLETE, "Treating strings as numbers is deprecated");
 	if (std::vector<int32_t> units = charmap_Convert(str); units.size() == 1) {
 		// The string is a single character with a single unit value,
 		// which can be used directly as a number.

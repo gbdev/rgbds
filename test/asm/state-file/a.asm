@@ -21,6 +21,6 @@ MACRO mac2
 ENDM
 
 newcharmap map2, main
-charmap "\0\n\t\r", "\t", "\r", "\0", "\n"
+charmap "\0\n\t\r", '\t', '\r', '\0', '\n'
 
 REDEF string EQUS "goodbye~"

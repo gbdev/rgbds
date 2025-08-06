@@ -1,3 +1,5 @@
+warning: empty-strings.asm(5): [-Wobsolete]
+    Treating strings as numbers is deprecated
 error: empty-strings.asm(5):
     Strings as numbers must be a single charmap unit
 Assembly aborted with 1 error!
