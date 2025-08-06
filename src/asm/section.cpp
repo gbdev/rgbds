@@ -105,7 +105,6 @@ Section *sect_FindSectionByName(std::string const &name) {
 	return search != sectionMap.end() ? &sectionList[search->second] : nullptr;
 }
 
-#define mask(align) ((1U << (align)) - 1)
 #define sectError(...) \
 	do { \
 		error(__VA_ARGS__); \
@@ -115,8 +114,15 @@ Section *sect_FindSectionByName(std::string const &name) {
 static unsigned int mergeSectUnion(
     Section &sect, SectionType type, uint32_t org, uint8_t alignment, uint16_t alignOffset
 ) {
-	assume(alignment < 16); // Should be ensured by the caller
 	unsigned int nbSectErrors = 0;
+
+	assume(alignment < 16); // Should be ensured by the caller
+	uint32_t alignSize = 1u << alignment;
+	uint32_t alignMask = alignSize - 1;
+
+	assume(sect.align <= 16); // Left-shifting by 32 or more would be UB
+	uint32_t sectAlignSize = 1u << sect.align;
+	uint32_t sectAlignMask = sectAlignSize - 1;
 
 	// Unionized sections only need "compatible" constraints, and they end up with the strictest
 	// combination of both.
@@ -130,10 +136,10 @@ static unsigned int mergeSectUnion(
 			sectError(
 			    "Section already declared as fixed at different address $%04" PRIx32, sect.org
 			);
-		} else if (sect.align != 0 && (mask(sect.align) & (org - sect.alignOfs))) {
+		} else if (sect.align != 0 && ((org - sect.alignOfs) & sectAlignMask)) {
 			sectError(
-			    "Section already declared as aligned to %u bytes (offset %" PRIu16 ")",
-			    1U << sect.align,
+			    "Section already declared as aligned to %" PRIu32 " bytes (offset %" PRIu16 ")",
+			    sectAlignSize,
 			    sect.alignOfs
 			);
 		} else {
@@ -144,17 +150,18 @@ static unsigned int mergeSectUnion(
 	} else if (alignment != 0) {
 		// Make sure any fixed address given is compatible
 		if (sect.org != UINT32_MAX) {
-			if ((sect.org - alignOffset) & mask(alignment)) {
+			if ((sect.org - alignOffset) & alignMask) {
 				sectError(
 				    "Section already declared as fixed at incompatible address $%04" PRIx32,
 				    sect.org
 				);
 			}
 			// Check if alignment offsets are compatible
-		} else if ((alignOffset & mask(sect.align)) != (sect.alignOfs & mask(alignment))) {
+		} else if ((alignOffset & sectAlignMask) != (sect.alignOfs & alignMask)) {
 			sectError(
-			    "Section already declared with incompatible %u-byte alignment (offset %" PRIu16 ")",
-			    1U << sect.align,
+			    "Section already declared with incompatible %" PRIu32
+			    "-byte alignment (offset %" PRIu16 ")",
+			    sectAlignSize,
 			    sect.alignOfs
 			);
 		} else if (alignment > sect.align) {
@@ -169,8 +176,15 @@ static unsigned int mergeSectUnion(
 
 static unsigned int
     mergeFragments(Section &sect, uint32_t org, uint8_t alignment, uint16_t alignOffset) {
-	assume(alignment < 16); // Should be ensured by the caller
 	unsigned int nbSectErrors = 0;
+
+	assume(alignment < 16); // Should be ensured by the caller
+	uint32_t alignSize = 1u << alignment;
+	uint32_t alignMask = alignSize - 1;
+
+	assume(sect.align <= 16); // Left-shifting by 32 or more would be UB
+	uint32_t sectAlignSize = 1u << sect.align;
+	uint32_t sectAlignMask = sectAlignSize - 1;
 
 	// Fragments only need "compatible" constraints, and they end up with the strictest
 	// combination of both.
@@ -183,10 +197,10 @@ static unsigned int
 			sectError(
 			    "Section already declared as fixed at incompatible address $%04" PRIx32, sect.org
 			);
-		} else if (sect.align != 0 && (mask(sect.align) & (curOrg - sect.alignOfs))) {
+		} else if (sect.align != 0 && ((curOrg - sect.alignOfs) & sectAlignMask)) {
 			sectError(
-			    "Section already declared as aligned to %u bytes (offset %" PRIu16 ")",
-			    1U << sect.align,
+			    "Section already declared as aligned to %" PRIu32 " bytes (offset %" PRIu16 ")",
+			    sectAlignSize,
 			    sect.alignOfs
 			);
 		} else {
@@ -195,25 +209,26 @@ static unsigned int
 		}
 
 	} else if (alignment != 0) {
-		int32_t curOfs = (alignOffset - sect.size) % (1U << alignment);
+		int32_t curOfs = (alignOffset - sect.size) % alignSize;
 
 		if (curOfs < 0) {
-			curOfs += 1U << alignment;
+			curOfs += alignSize;
 		}
 
 		// Make sure any fixed address given is compatible
 		if (sect.org != UINT32_MAX) {
-			if ((sect.org - curOfs) & mask(alignment)) {
+			if ((sect.org - curOfs) & alignMask) {
 				sectError(
 				    "Section already declared as fixed at incompatible address $%04" PRIx32,
 				    sect.org
 				);
 			}
 			// Check if alignment offsets are compatible
-		} else if ((curOfs & mask(sect.align)) != (sect.alignOfs & mask(alignment))) {
+		} else if ((curOfs & sectAlignMask) != (sect.alignOfs & alignMask)) {
 			sectError(
-			    "Section already declared with incompatible %u-byte alignment (offset %" PRIu16 ")",
-			    1U << sect.align,
+			    "Section already declared with incompatible %" PRIu32
+			    "-byte alignment (offset %" PRIu16 ")",
+			    sectAlignSize,
 			    sect.alignOfs
 			);
 		} else if (alignment > sect.align) {
@@ -356,6 +371,10 @@ static Section *getSection(
 	uint8_t alignment = attrs.alignment;
 	uint16_t alignOffset = attrs.alignOfs;
 
+	assume(alignment <= 16); // Should be ensured by the caller
+	uint32_t alignSize = 1u << alignment;
+	uint32_t alignMask = alignSize - 1;
+
 	// First, validate parameters, and normalize them if applicable
 
 	if (bank != UINT32_MAX) {
@@ -377,11 +396,11 @@ static Section *getSection(
 		bank = sectionTypeInfo[type].firstBank;
 	}
 
-	if (alignOffset >= 1 << alignment) {
+	if (alignOffset >= alignSize) {
 		error(
-		    "Alignment offset (%" PRIu16 ") must be smaller than alignment size (%u)",
+		    "Alignment offset (%" PRIu16 ") must be smaller than alignment size (%" PRIu32 ")",
 		    alignOffset,
-		    1U << alignment
+		    alignSize
 		);
 		alignOffset = 0;
 	}
@@ -400,19 +419,13 @@ static Section *getSection(
 	}
 
 	if (alignment != 0) {
-		if (alignment > 16) {
-			error("Alignment must be between 0 and 16, not %u", alignment);
-			alignment = 16;
-		}
 		// It doesn't make sense to have both alignment and org set
-		uint32_t mask = mask(alignment);
-
 		if (org != UINT32_MAX) {
-			if ((org - alignOffset) & mask) {
+			if ((org - alignOffset) & alignMask) {
 				error("Section \"%s\"'s fixed address doesn't match its alignment", name.c_str());
 			}
 			alignment = 0; // Ignore it if it's satisfied
-		} else if (sectionTypeInfo[type].startAddr & mask) {
+		} else if (sectionTypeInfo[type].startAddr & alignMask) {
 			error(
 			    "Section \"%s\"'s alignment cannot be attained in %s",
 			    name.c_str(),
@@ -609,8 +622,12 @@ void sect_AlignPC(uint8_t alignment, uint16_t offset) {
 		return;
 	}
 
+	assume(alignment <= 16); // Should be ensured by the caller
+	uint32_t alignSize = 1u << alignment;
+
 	Section *sect = sect_GetSymbolSection();
-	uint32_t alignSize = 1 << alignment; // Size of an aligned "block"
+	assume(sect->align <= 16); // Left-shifting by 32 or more would be UB
+	uint32_t sectAlignSize = 1u << sect->align;
 
 	if (sect->org != UINT32_MAX) {
 		if (uint32_t actualOffset = (sect->org + curOffset) % alignSize; actualOffset != offset) {
@@ -624,33 +641,26 @@ void sect_AlignPC(uint8_t alignment, uint16_t offset) {
 			    actualOffset
 			);
 		}
-	} else {
-		if (uint32_t actualOffset = (sect->alignOfs + curOffset) % alignSize,
-		    sectAlignSize = 1 << sect->align;
-		    sect->align != 0 && actualOffset % sectAlignSize != offset % sectAlignSize) {
-			error(
-			    "Section is misaligned ($%04" PRIx32
-			    " bytes into the section, expected ALIGN[%" PRIu32 ", %" PRIu32
-			    "], got ALIGN[%" PRIu32 ", %" PRIu32 "])",
-			    curOffset,
-			    alignment,
-			    offset,
-			    alignment,
-			    actualOffset
-			);
-		} else if (alignment >= 16) {
-			// Treat an alignment large enough as fixing the address.
-			// Note that this also ensures that a section's alignment never becomes 16 or greater.
-			if (alignment > 16) {
-				error("Alignment must be between 0 and 16, not %u", alignment);
-			}
-			sect->align = 0; // Reset the alignment, since we're fixing the address.
-			sect->org = offset - curOffset;
-		} else if (alignment > sect->align) {
-			sect->align = alignment;
-			// We need `(sect->alignOfs + curOffset) % alignSize == offset`
-			sect->alignOfs = (offset - curOffset) % alignSize;
-		}
+	} else if (uint32_t actualOffset = (sect->alignOfs + curOffset) % alignSize;
+	           sect->align != 0 && actualOffset % sectAlignSize != offset % sectAlignSize) {
+		error(
+		    "Section is misaligned ($%04" PRIx32 " bytes into the section, expected ALIGN[%" PRIu32
+		    ", %" PRIu32 "], got ALIGN[%" PRIu32 ", %" PRIu32 "])",
+		    curOffset,
+		    alignment,
+		    offset,
+		    alignment,
+		    actualOffset
+		);
+	} else if (alignment == 16) {
+		// Treat an alignment large enough as fixing the address.
+		// Note that this also ensures that a section's alignment never becomes 16 or greater.
+		sect->align = 0; // Reset the alignment, since we're fixing the address.
+		sect->org = offset - curOffset;
+	} else if (alignment > sect->align) {
+		sect->align = alignment;
+		// We need `(sect->alignOfs + curOffset) % alignSize == offset`
+		sect->alignOfs = (offset - curOffset) % alignSize;
 	}
 }
 
