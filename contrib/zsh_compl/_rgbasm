@@ -43,6 +43,7 @@ local args=(
 	-w'[Disable all warnings]'
 
 	'(-b --binary-digits)'{-b,--binary-digits}'+[Change chars for binary constants]:digit spec:'
+	--color'[Whether to use color in output]:color:(auto always never)'
 	'*'{-D,--define}'+[Define a string symbol]:name + value (default 1):'
 	'(-g --gfx-chars)'{-g,--gfx-chars}'+[Change chars for gfx constants]:chars spec:'
 	'(-I --include)'{-I,--include}'+[Add an include directory]:include path:_files -/'

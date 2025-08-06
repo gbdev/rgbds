@@ -63,6 +63,7 @@ local args=(
 	'(-f --fix-spec -v --validate)'{-v,--validate}'[Shorthand for -f lhg]'
 	-w'[Disable all warnings]'
 
+	--color'[Whether to use color in output]:color:(auto always never)'
 	'(-f --fix-spec -v --validate)'{-f,--fix-spec}'+[Fix or trash some header values]:fix spec:'
 	'(-i --game-id)'{-i,--game-id}'+[Set game ID string]:4-char game ID:'
 	'(-k --new-licensee)'{-k,--new-licensee}'+[Set new licensee string]:2-char licensee ID:'
