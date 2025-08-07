@@ -25,6 +25,7 @@ Diagnostics<WarningLevel, WarningID> warnings = {
     },
     .paramWarnings = {},
     .state = DiagnosticsState<WarningID>(),
+    .traceDepth = 0,
     .nbErrors = 0,
 };
 // clang-format on
@@ -41,18 +42,18 @@ static void printDiag(
 ) {
 	style_Set(stderr, color, true);
 	fprintf(stderr, "%s: ", type);
-	if (src) {
-		src->dump(lineNo);
-		fputs(": ", stderr);
-	}
-	if (flagfmt) {
-		style_Set(stderr, color, true);
-		fprintf(stderr, flagfmt, flag);
-		fputs("\n    ", stderr);
-	}
 	style_Reset(stderr);
 	vfprintf(stderr, fmt, args);
+	if (flagfmt) {
+		style_Set(stderr, color, true);
+		putc(' ', stderr);
+		fprintf(stderr, flagfmt, flag);
+	}
 	putc('\n', stderr);
+
+	if (src) {
+		src->printBacktrace(lineNo);
+	}
 }
 
 [[noreturn]]
@@ -101,26 +102,15 @@ void error(char const *fmt, ...) {
 	warnings.incrementErrors();
 }
 
-void errorNoDump(char const *fmt, ...) {
-	va_list args;
-	style_Set(stderr, STYLE_RED, true);
-	fputs("error: ", stderr);
-	style_Reset(stderr);
-	va_start(args, fmt);
-	vfprintf(stderr, fmt, args);
-	va_end(args);
-
-	warnings.incrementErrors();
-}
-
 void scriptError(char const *name, uint32_t lineNo, char const *fmt, va_list args) {
 	style_Set(stderr, STYLE_RED, true);
 	fputs("error: ", stderr);
 	style_Set(stderr, STYLE_CYAN, true);
 	fputs(name, stderr);
 	style_Set(stderr, STYLE_CYAN, false);
-	fprintf(stderr, "(%" PRIu32 "): ", lineNo);
+	fprintf(stderr, "(%" PRIu32 ")", lineNo);
 	style_Reset(stderr);
+	fputs(": ", stderr);
 	vfprintf(stderr, fmt, args);
 	putc('\n', stderr);
 
@@ -144,6 +134,32 @@ void fatal(char const *fmt, ...) {
 	va_start(args, fmt);
 	printDiag(nullptr, 0, fmt, args, "FATAL", STYLE_RED, nullptr, nullptr);
 	va_end(args);
+
+	warnings.incrementErrors();
+	abortLinking(nullptr);
+}
+
+[[noreturn]]
+void fatalTwo(
+    FileStackNode const &src1,
+    uint32_t lineNo1,
+    FileStackNode const &src2,
+    uint32_t lineNo2,
+    char const *fmt,
+    ...
+) {
+	va_list args;
+	style_Set(stderr, STYLE_RED, true);
+	fputs("FATAL: ", stderr);
+	style_Reset(stderr);
+	va_start(args, fmt);
+	vfprintf(stderr, fmt, args);
+	va_end(args);
+	putc('\n', stderr);
+
+	src1.printBacktrace(lineNo1);
+	fputs("    and also:\n", stderr);
+	src2.printBacktrace(lineNo2);
 
 	warnings.incrementErrors();
 	abortLinking(nullptr);

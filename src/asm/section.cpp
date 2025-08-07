@@ -281,9 +281,12 @@ static void mergeSections(
 			break;
 
 		case SECTION_NORMAL:
-			sectError([&]() {
-				fputs("Section already defined previously at ", stderr);
-				sect.src->dump(sect.fileLine);
+			errorNoTrace([&]() {
+				fputs("Section already defined previously\n", stderr);
+				fstk_TraceCurrent();
+				fputs("    and also:\n", stderr);
+				sect.src->printBacktrace(sect.fileLine);
+				++nbSectErrors;
 			});
 			break;
 		}

@@ -838,16 +838,16 @@ uint32_t lexer_GetLineNo() {
 	return lexerState->lineNo;
 }
 
-void lexer_DumpStringExpansions() {
+void lexer_TraceStringExpansions() {
 	if (!lexerState) {
 		return;
 	}
 
 	for (Expansion &exp : lexerState->expansions) {
-		// Only register EQUS expansions, not string args
+		// Only print EQUS expansions, not string args
 		if (exp.name) {
 			style_Set(stderr, STYLE_CYAN, false);
-			fputs("while expanding symbol \"", stderr);
+			fputs("    while expanding symbol \"", stderr);
 			style_Set(stderr, STYLE_CYAN, true);
 			fputs(exp.name->c_str(), stderr);
 			style_Set(stderr, STYLE_CYAN, false);

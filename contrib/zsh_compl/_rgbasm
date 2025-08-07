@@ -42,6 +42,7 @@ local args=(
 	'(-v --verbose)'{-v,--verbose}'[Enable verbose output]'
 	-w'[Disable all warnings]'
 
+	'(-B --backtrace)'{-B,--backtrace}'+[Set backtrace depth or style]:depth:'
 	'(-b --binary-digits)'{-b,--binary-digits}'+[Change chars for binary constants]:digit spec:'
 	--color'[Whether to use color in output]:color:(auto always never)'
 	'*'{-D,--define}'+[Define a string symbol]:name + value (default 1):'

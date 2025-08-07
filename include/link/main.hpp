@@ -52,7 +52,8 @@ struct FileStackNode {
 	std::string &name() { return std::get<std::string>(data); }
 	std::string const &name() const { return std::get<std::string>(data); }
 
-	std::string const &dump(uint32_t curLineNo) const;
+	void printBacktrace(uint32_t curLineNo) const;
+	std::vector<std::pair<std::string, uint32_t>> backtrace(uint32_t curLineNo) const;
 };
 
 #endif // RGBDS_LINK_MAIN_HPP

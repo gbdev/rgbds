@@ -39,24 +39,16 @@ void sym_AddSymbol(Symbol &symbol) {
 
 	// Check if the symbol already exists with a different value
 	if (other && !(symValue && otherValue && *symValue == *otherValue)) {
-		errorNoDump("\"%s\" is defined as ", symbol.name.c_str());
-		if (symValue) {
-			fprintf(stderr, "%" PRId32, *symValue);
-		} else {
-			fputs("a label", stderr);
-		}
-		fputs(" at ", stderr);
-		symbol.src->dump(symbol.lineNo);
-		fputs(", but as ", stderr);
-		if (otherValue) {
-			fprintf(stderr, "%" PRId32, *otherValue);
-		} else {
-			fputs("another label", stderr);
-		}
-		fputs(" at ", stderr);
-		other->src->dump(other->lineNo);
-		putc('\n', stderr);
-		exit(1);
+		std::string symDef = symValue ? std::to_string(*symValue) : "a label";
+		std::string otherDef = otherValue ? std::to_string(*otherValue) : "another label";
+		fatalTwoAt(
+		    symbol,
+		    *other,
+		    "\"%s\" is defined as %s, but also as %s",
+		    symbol.name.c_str(),
+		    symDef.c_str(),
+		    otherDef.c_str()
+		);
 	}
 
 	// If not, add it (potentially replacing the previous same-value symbol)
@@ -68,29 +60,28 @@ Symbol *sym_GetSymbol(std::string const &name) {
 	return search != symbols.end() ? search->second : nullptr;
 }
 
-void sym_DumpLocalAliasedSymbols(std::string const &name) {
+void sym_TraceLocalAliasedSymbols(std::string const &name) {
 	std::vector<Symbol *> const &locals = localSymbols[name];
+	if (locals.empty()) {
+		return;
+	}
+
+	bool plural = locals.size() != 1;
+	fprintf(
+	    stderr,
+	    "    %zu symbol%s with that name %s defined but not exported:\n",
+	    locals.size(),
+	    plural ? "s" : "",
+	    plural ? "are" : "is"
+	);
+
 	int count = 0;
 	for (Symbol *local : locals) {
-		if (count++ == 3) {
-			size_t remaining = locals.size() - 3;
-			bool plural = remaining != 1;
-			fprintf(
-			    stderr,
-			    "    ...and %zu more symbol%s with that name %s defined but not exported\n",
-			    remaining,
-			    plural ? "s" : "",
-			    plural ? "are" : "is"
-			);
+		assume(local->src);
+		local->src->printBacktrace(local->lineNo);
+		if (++count == 3 && locals.size() > 3) {
+			fprintf(stderr, "    ...and %zu more\n", locals.size() - 3);
 			break;
 		}
-		fprintf(
-		    stderr,
-		    "    A %s with that name is defined but not exported at ",
-		    std::holds_alternative<Label>(local->data) ? "label" : "constant"
-		);
-		assume(local->src);
-		local->src->dump(local->lineNo);
-		putc('\n', stderr);
 	}
 }

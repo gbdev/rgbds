@@ -36,7 +36,7 @@ Options options;
 static char const *linkerScriptName = nullptr; // -l
 
 // Short options
-static char const *optstring = "dhl:m:Mn:O:o:p:S:tVvW:wx";
+static char const *optstring = "B:dhl:m:Mn:O:o:p:S:tVvW:wx";
 
 // Variables for the long-only options
 static int longOpt; // `--color`
@@ -49,6 +49,7 @@ static int longOpt; // `--color`
 // This is because long opt matching, even to a single char, is prioritized
 // over short opt matching.
 static option const longopts[] = {
+    {"backtrace",     required_argument, nullptr,  'B'},
     {"dmg",           no_argument,       nullptr,  'd'},
     {"help",          no_argument,       nullptr,  'h'},
     {"linkerscript",  required_argument, nullptr,  'l'},
@@ -73,8 +74,8 @@ static option const longopts[] = {
 static Usage usage = {
     .name = "rgblink",
     .flags = {
-        "[-dhMtVvwx]", "[-l script]", "[-m map_file]", "[-n sym_file]", "[-O overlay_file]",
-        "[-o out_file]", "[-p pad_value]", "[-S spec]", "<file> ...",
+        "[-dhMtVvwx]", "[-B depth]", "[-l script]", "[-m map_file]", "[-n sym_file]",
+        "[-O overlay_file]", "[-o out_file]", "[-p pad_value]", "[-S spec]", "<file> ...",
     },
     .options = {
         {{"-l", "--linkerscript <path>"}, {"set the input linker script"}},
@@ -180,35 +181,57 @@ static void verboseOutputConfig(int argc, char *argv[]) {
 }
 // LCOV_EXCL_STOP
 
-std::string const &FileStackNode::dump(uint32_t curLineNo) const {
+std::vector<std::pair<std::string, uint32_t>> FileStackNode::backtrace(uint32_t curLineNo) const {
 	if (std::holds_alternative<std::vector<uint32_t>>(data)) {
 		assume(parent); // REPT nodes use their parent's name
-		std::string const &lastName = parent->dump(lineNo);
-		style_Set(stderr, STYLE_CYAN, false);
-		fputs(" -> ", stderr);
-		style_Set(stderr, STYLE_CYAN, true);
-		fputs(lastName.c_str(), stderr);
+		std::vector<std::pair<std::string, uint32_t>> nodes = parent->backtrace(lineNo);
+		assume(!nodes.empty());
+		std::string reptChain = nodes.back().first;
 		for (uint32_t iter : iters()) {
-			fprintf(stderr, "::REPT~%" PRIu32, iter);
+			reptChain.append("::REPT~");
+			reptChain.append(std::to_string(iter));
 		}
-		style_Set(stderr, STYLE_CYAN, false);
-		fprintf(stderr, "(%" PRIu32 ")", curLineNo);
-		style_Reset(stderr);
-		return lastName;
+		nodes.emplace_back(reptChain, curLineNo);
+		return nodes;
+	} else if (parent) {
+		std::vector<std::pair<std::string, uint32_t>> nodes = parent->backtrace(lineNo);
+		nodes.emplace_back(name(), curLineNo);
+		return nodes;
 	} else {
-		if (parent) {
-			parent->dump(lineNo);
-			style_Set(stderr, STYLE_CYAN, false);
-			fputs(" -> ", stderr);
-		}
-		std::string const &nodeName = name();
-		style_Set(stderr, STYLE_CYAN, true);
-		fputs(nodeName.c_str(), stderr);
-		style_Set(stderr, STYLE_CYAN, false);
-		fprintf(stderr, "(%" PRIu32 ")", curLineNo);
-		style_Reset(stderr);
-		return nodeName;
+		return {
+		    {name(), curLineNo}
+		};
 	}
+}
+
+static void printNode(std::pair<std::string, uint32_t> const &node) {
+	style_Set(stderr, STYLE_CYAN, true);
+	fputs(node.first.c_str(), stderr);
+	style_Set(stderr, STYLE_CYAN, false);
+	fprintf(stderr, "(%" PRIu32 ")", node.second);
+}
+
+void FileStackNode::printBacktrace(uint32_t curLineNo) const {
+	std::vector<std::pair<std::string, uint32_t>> nodes = backtrace(curLineNo);
+
+	if (warnings.traceDepth == TRACE_COLLAPSE) {
+		fputs("   ", stderr); // Just three spaces; the fourth will be handled by the loop
+		for (size_t i = 0; i < nodes.size(); ++i) {
+			style_Reset(stderr);
+			fprintf(stderr, " %s ", i == 0 ? "at" : "<-");
+			printNode(nodes[nodes.size() - i - 1]);
+		}
+		putc('\n', stderr);
+	} else {
+		for (size_t i = 0; i < nodes.size(); ++i) {
+			style_Reset(stderr);
+			fprintf(stderr, "    %s ", i == 0 ? "at" : "<-");
+			printNode(nodes[nodes.size() - i - 1]);
+			putc('\n', stderr);
+		}
+	}
+
+	style_Reset(stderr);
 }
 
 static void parseScrambleSpec(char *spec) {
@@ -325,6 +348,22 @@ int main(int argc, char *argv[]) {
 	// Parse options
 	for (int ch; (ch = musl_getopt_long_only(argc, argv, optstring, longopts, nullptr)) != -1;) {
 		switch (ch) {
+		case 'B': {
+			if (!strcasecmp(musl_optarg, "collapse")) {
+				warnings.traceDepth = TRACE_COLLAPSE;
+				break;
+			}
+			char *endptr;
+			unsigned long traceDepth = strtoul(musl_optarg, &endptr, 0);
+			if (musl_optarg[0] == '\0' || *endptr != '\0') {
+				fatal("Invalid argument for option 'B'");
+			}
+			if (traceDepth > INT32_MAX) {
+				fatal("Argument for option 'B' is too large");
+			}
+			warnings.traceDepth = static_cast<int32_t>(traceDepth);
+			break;
+		}
 		case 'd':
 			options.isDmgMode = true;
 			options.isWRAM0Mode = true;

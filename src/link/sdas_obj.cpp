@@ -422,14 +422,14 @@ void sdobj_ReadFile(FileStackNode const &src, FILE *file, std::vector<Symbol> &f
 					    || (symbolSection && !symbolSection->isAddressFixed)) {
 						sym_AddSymbol(symbol); // This will error out
 					} else if (otherValue != symbolValue) {
-						errorNoDump(
-						    "\"%s\" is defined as %" PRId32 " at ", symbol.name.c_str(), symbolValue
+						fatalTwoAt(
+						    symbol,
+						    *other,
+						    "\"%s\" is defined as %" PRId32 ", but was already defined as %" PRId32,
+						    symbol.name.c_str(),
+						    symbolValue,
+						    otherValue
 						);
-						symbol.src->dump(symbol.lineNo);
-						fprintf(stderr, ", but as %" PRId32 " at ", otherValue);
-						other->src->dump(other->lineNo);
-						putc('\n', stderr);
-						exit(1);
 					}
 				} else {
 					// Add a new definition

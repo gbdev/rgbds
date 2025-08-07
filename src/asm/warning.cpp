@@ -60,6 +60,7 @@ Diagnostics<WarningLevel, WarningID> warnings = {
         {WARNING_UNMAPPED_CHAR_1,  WARNING_UNMAPPED_CHAR_2,  1},
     },
     .state = DiagnosticsState<WarningID>(),
+    .traceDepth = 0,
     .nbErrors = 0,
 };
 // clang-format on
@@ -74,19 +75,16 @@ static void printDiag(
 ) {
 	style_Set(stderr, color, true);
 	fprintf(stderr, "%s: ", type);
-	if (fstk_DumpCurrent()) {
-		putc(':', stderr);
-		if (flagfmt) {
-			style_Set(stderr, color, true);
-			fprintf(stderr, flagfmt, flag);
-		}
-		fputs("\n    ", stderr);
-	}
 	style_Reset(stderr);
 	vfprintf(stderr, fmt, args);
+	if (flagfmt) {
+		style_Set(stderr, color, true);
+		putc(' ', stderr);
+		fprintf(stderr, flagfmt, flag);
+	}
 	putc('\n', stderr);
 
-	lexer_DumpStringExpansions();
+	fstk_TraceCurrent();
 }
 
 static void incrementErrors() {
@@ -117,16 +115,11 @@ void error(char const *fmt, ...) {
 	incrementErrors();
 }
 
-void error(std::function<void()> callback) {
+void errorNoTrace(std::function<void()> callback) {
 	style_Set(stderr, STYLE_RED, true);
 	fputs("error: ", stderr);
-	if (fstk_DumpCurrent()) {
-		fputs(":\n    ", stderr);
-	}
 	style_Reset(stderr);
 	callback();
-	putc('\n', stderr);
-	lexer_DumpStringExpansions();
 
 	incrementErrors();
 }
@@ -167,11 +160,11 @@ void warning(WarningID id, char const *fmt, ...) {
 		break;
 
 	case WarningBehavior::ENABLED:
-		printDiag(fmt, args, "warning", STYLE_YELLOW, " [-W%s]", flag);
+		printDiag(fmt, args, "warning", STYLE_YELLOW, "[-W%s]", flag);
 		break;
 
 	case WarningBehavior::ERROR:
-		printDiag(fmt, args, "error", STYLE_RED, " [-Werror=%s]", flag);
+		printDiag(fmt, args, "error", STYLE_RED, "[-Werror=%s]", flag);
 		break;
 	}
 
