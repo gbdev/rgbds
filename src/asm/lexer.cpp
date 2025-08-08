@@ -978,6 +978,7 @@ static uint32_t readFractionalPart(uint32_t integer) {
 
 	if (integer >= (1ULL << (32 - precision))) {
 		warning(WARNING_LARGE_CONSTANT, "Magnitude of fixed-point constant is too large");
+		return 0;
 	}
 
 	// Cast to unsigned avoids undefined overflow behavior
@@ -1047,6 +1048,12 @@ static uint32_t readBinaryNumber() {
 		}
 		if (value > (UINT32_MAX - bit) / 2) {
 			warning(WARNING_LARGE_CONSTANT, "Integer constant is too large");
+			// Discard any additional digits
+			skipChars([](int d) {
+				return d == '0' || d == '1' || d == options.binDigits[0]
+				       || d == options.binDigits[1] || d == '_';
+			});
+			return 0;
 		}
 		value = value * 2 + bit;
 
@@ -1075,6 +1082,9 @@ static uint32_t readOctalNumber() {
 
 		if (value > (UINT32_MAX - c) / 8) {
 			warning(WARNING_LARGE_CONSTANT, "Integer constant is too large");
+			// Discard any additional digits
+			skipChars([](int d) { return (d >= '0' && d <= '7') || d == '_'; });
+			return 0;
 		}
 		value = value * 8 + c;
 
@@ -1103,6 +1113,9 @@ static uint32_t readDecimalNumber(int initial) {
 
 		if (value > (UINT32_MAX - c) / 10) {
 			warning(WARNING_LARGE_CONSTANT, "Integer constant is too large");
+			// Discard any additional digits
+			skipChars([](int d) { return (d >= '0' && d <= '9') || d == '_'; });
+			return 0;
 		}
 		value = value * 10 + c;
 	}
@@ -1129,6 +1142,12 @@ static uint32_t readHexNumber() {
 
 		if (value > (UINT32_MAX - c) / 16) {
 			warning(WARNING_LARGE_CONSTANT, "Integer constant is too large");
+			// Discard any additional digits
+			skipChars([](int d) {
+				return (d >= '0' && d <= '9') || (d >= 'a' && d <= 'f') || (d >= 'A' && d <= 'f')
+				       || d == '_';
+			});
+			return 0;
 		}
 		value = value * 16 + c;
 
@@ -1176,7 +1195,7 @@ static uint32_t readGfxConstant() {
 		error("Invalid graphics constant, no digits after '`'");
 	} else if (width == 9) {
 		warning(
-		    WARNING_LARGE_CONSTANT, "Graphics constant is too long, only first 8 pixels considered"
+		    WARNING_LARGE_CONSTANT, "Graphics constant is too large; only first 8 pixels considered"
 		);
 	}
 
