@@ -370,9 +370,9 @@ void fstk_RunMacro(std::string const &macroName, std::shared_ptr<MacroArgs> macr
 
 	if (!macro) {
 		if (sym_IsPurgedExact(macroName)) {
-			error("Macro \"%s\" not defined; it was purged", macroName.c_str());
+			error("Undefined macro \"%s\"; it was purged", macroName.c_str());
 		} else {
-			error("Macro \"%s\" not defined", macroName.c_str());
+			error("Undefined macro \"%s\"", macroName.c_str());
 		}
 		return;
 	}

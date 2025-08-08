@@ -1,17 +1,17 @@
 error: null-outside-string.asm(3):
-    Invalid character after line continuation '0'
+    Invalid character '0' after line continuation
 error: null-outside-string.asm(3):
     syntax error, unexpected number
 error: null-outside-string.asm(4):
-    Invalid character after line continuation '0'
+    Invalid character '0' after line continuation
 error: null-outside-string.asm(4):
     syntax error, unexpected number
 error: null-outside-string.asm(6):
-    Invalid character after line continuation 'X'
+    Invalid character 'X' after line continuation
 error: null-outside-string.asm(6):
     syntax error, unexpected symbol
 error: null-outside-string.asm(7):
-    Invalid character after line continuation 'X'
+    Invalid character 'X' after line continuation
 error: null-outside-string.asm(7):
     syntax error, unexpected symbol
 Assembly aborted with 8 errors!

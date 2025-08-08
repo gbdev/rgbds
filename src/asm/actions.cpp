@@ -594,9 +594,9 @@ std::string act_SectionName(std::string const &symName) {
 	Symbol *sym = sym_FindScopedValidSymbol(symName);
 	if (!sym) {
 		if (sym_IsPurgedScoped(symName)) {
-			fatal("Unknown symbol \"%s\"; it was purged", symName.c_str());
+			fatal("Undefined symbol \"%s\"; it was purged", symName.c_str());
 		} else {
-			fatal("Unknown symbol \"%s\"", symName.c_str());
+			fatal("Undefined symbol \"%s\"", symName.c_str());
 		}
 	}
 

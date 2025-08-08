@@ -13,6 +13,10 @@ bool isNewline(int c) {
 	return c == '\r' || c == '\n';
 }
 
+bool isPrintable(int c) {
+	return c >= ' ' && c <= '~';
+}
+
 bool startsIdentifier(int c) {
 	// This returns false for anonymous labels, which internally start with a '!',
 	// and for section fragment literal labels, which internally start with a '$'.
@@ -34,7 +38,7 @@ char const *printChar(int c) {
 	}
 
 	// Handle printable ASCII characters
-	if (c >= ' ' && c <= '~') {
+	if (isPrintable(c)) {
 		buf[0] = '\'';
 		buf[1] = c;
 		buf[2] = '\'';

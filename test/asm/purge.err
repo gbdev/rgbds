@@ -5,5 +5,5 @@ error: purge.asm(9):
 warning: purge.asm(12): [-Wpurge]
     Purging an exported symbol "Exported"
 error: purge.asm(15):
-    'Undefined' not defined
+    Undefined symbol 'Undefined'
 Assembly aborted with 2 errors!

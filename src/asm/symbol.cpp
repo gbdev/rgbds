@@ -284,9 +284,9 @@ void sym_Purge(std::string const &symName) {
 
 	if (!sym) {
 		if (sym_IsPurgedScoped(symName)) {
-			error("'%s' was already purged", symName.c_str());
+			error("Undefined symbol '%s' was already purged", symName.c_str());
 		} else {
-			error("'%s' not defined", symName.c_str());
+			error("Undefined symbol '%s'", symName.c_str());
 		}
 	} else if (sym->isBuiltin) {
 		error("Built-in symbol '%s' cannot be purged", symName.c_str());

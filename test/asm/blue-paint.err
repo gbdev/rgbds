@@ -1,15 +1,15 @@
 error: blue-paint.asm(9) -> blue-paint.asm::arg_to_arg(7):
-    Invalid character after line continuation '3'
+    Invalid character '3' after line continuation
 error: blue-paint.asm(9) -> blue-paint.asm::arg_to_arg(7):
     syntax error, unexpected number
 error: blue-paint.asm(9) -> blue-paint.asm::arg_to_arg(7):
-    Unknown character '}'
+    Invalid character '}'
 error: blue-paint.asm(15) -> blue-paint.asm::arg_to_interp(13):
-    Unknown character '{'
+    Invalid character '{'
 error: blue-paint.asm(15) -> blue-paint.asm::arg_to_interp(13):
-    Unknown character '}'
+    Invalid character '}'
 error: blue-paint.asm(26) -> blue-paint.asm::endless(24):
-    Invalid character after line continuation '1'
+    Invalid character '1' after line continuation
 error: blue-paint.asm(26) -> blue-paint.asm::endless(24):
     syntax error, unexpected number
 FATAL: blue-paint.asm(30):

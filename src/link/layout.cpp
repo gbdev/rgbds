@@ -223,7 +223,7 @@ void layout_PlaceSection(std::string const &name, bool isOptional) {
 	Section *section = sect_GetSection(name.c_str());
 	if (!section) {
 		if (!isOptional) {
-			lexer_Error("Unknown section \"%s\"", name.c_str());
+			lexer_Error("Undefined section \"%s\"", name.c_str());
 		}
 		return;
 	}

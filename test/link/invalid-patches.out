@@ -1,9 +1,9 @@
 error: invalid-patches.asm(10): JR target must be between -128 and 127 bytes away, not 190; use JP instead
 error: invalid-patches.asm(9): Address $0 for LDH is not in HRAM range
-error: invalid-patches.asm(8): Requested SIZEOF() of section "NonexistentSection", which was not found
-error: invalid-patches.asm(7): Requested STARTOF() of section "NonexistentSection", which was not found
-error: invalid-patches.asm(6): Requested BANK() of section "NonexistentSection", which was not found
-error: invalid-patches.asm(5): Requested BANK() of symbol "NonexistentSymbol", which was not found
+error: invalid-patches.asm(8): Requested SIZEOF() of undefined section "NonexistentSection"
+error: invalid-patches.asm(7): Requested STARTOF() of undefined section "NonexistentSection"
+error: invalid-patches.asm(6): Requested BANK() of undefined section "NonexistentSection"
+error: invalid-patches.asm(5): Requested BANK() of undefined symbol "NonexistentSymbol"
 error: invalid-patches.asm(4): Exponent by negative value -1
 error: invalid-patches.asm(3): Modulo by 0
 Linking failed with 8 errors

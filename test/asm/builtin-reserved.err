@@ -1,5 +1,5 @@
 error: builtin-reserved.asm(3):
-    '_NARG' not defined
+    Undefined symbol '_NARG'
 error: builtin-reserved.asm(5):
     '_NARG' is reserved for a built-in symbol
 error: builtin-reserved.asm(6):
@@ -15,7 +15,7 @@ error: builtin-reserved.asm(12):
 error: builtin-reserved.asm(15):
     '_NARG' is reserved for a built-in symbol
 error: builtin-reserved.asm(20):
-    '.' not defined
+    Undefined symbol '.'
 error: builtin-reserved.asm(22):
     '.' is reserved for a built-in symbol
 error: builtin-reserved.asm(23):

@@ -579,7 +579,7 @@ static uint32_t readBracketedMacroArgNum() {
 
 	c = bumpChar();
 	if (c != '>') {
-		error("Invalid character in bracketed macro argument %s", printChar(c));
+		error("Invalid character %s in bracketed macro argument", printChar(c));
 		return 0;
 	} else if (empty) {
 		error("Empty bracketed macro argument");
@@ -911,7 +911,7 @@ static void discardLineContinuation() {
 			error("Invalid line continuation at end of file");
 			break;
 		} else {
-			error("Invalid character after line continuation %s", printChar(c));
+			error("Invalid character %s after line continuation", printChar(c));
 			break;
 		}
 	}
@@ -1568,17 +1568,19 @@ static bool isGarbageCharacter(int c) {
 static void reportGarbageCharacters(int c) {
 	// '#' can be garbage if it doesn't start a raw string or identifier
 	assume(isGarbageCharacter(c) || c == '#');
+	bool isAscii = isPrintable(c);
 	if (isGarbageCharacter(peek())) {
 		// At least two characters are garbage; group them into one error report
 		std::string garbage = printChar(c);
 		while (isGarbageCharacter(peek())) {
 			c = bumpChar();
+			isAscii &= isPrintable(c);
 			garbage += ", ";
 			garbage += printChar(c);
 		}
-		error("Unknown characters %s", garbage.c_str());
+		error("Invalid characters %s%s", garbage.c_str(), isAscii ? "" : " (is the file UTF-8?)");
 	} else {
-		error("Unknown character %s", printChar(c));
+		error("Invalid character %s%s", printChar(c), isAscii ? "" : " (is the file UTF-8?)");
 	}
 }
 

@@ -277,7 +277,7 @@ static int32_t computeRPNExpr(Patch const &patch, std::vector<Symbol> const &fil
 			if (Symbol const *symbol = getSymbol(fileSymbols, value); !symbol) {
 				errorAt(
 				    patch,
-				    "Requested BANK() of symbol \"%s\", which was not found",
+				    "Requested BANK() of undefined symbol \"%s\"",
 				    fileSymbols[value].name.c_str()
 				);
 				isError = true;
@@ -302,7 +302,7 @@ static int32_t computeRPNExpr(Patch const &patch, std::vector<Symbol> const &fil
 			while (getRPNByte(expression, size, patch)) {}
 
 			if (Section const *sect = sect_GetSection(name); !sect) {
-				errorAt(patch, "Requested BANK() of section \"%s\", which was not found", name);
+				errorAt(patch, "Requested BANK() of undefined section \"%s\"", name);
 				isError = true;
 				value = 1;
 			} else {
@@ -327,7 +327,7 @@ static int32_t computeRPNExpr(Patch const &patch, std::vector<Symbol> const &fil
 			while (getRPNByte(expression, size, patch)) {}
 
 			if (Section const *sect = sect_GetSection(name); !sect) {
-				errorAt(patch, "Requested SIZEOF() of section \"%s\", which was not found", name);
+				errorAt(patch, "Requested SIZEOF() of undefined section \"%s\"", name);
 				isError = true;
 				value = 1;
 			} else {
@@ -342,7 +342,7 @@ static int32_t computeRPNExpr(Patch const &patch, std::vector<Symbol> const &fil
 			while (getRPNByte(expression, size, patch)) {}
 
 			if (Section const *sect = sect_GetSection(name); !sect) {
-				errorAt(patch, "Requested STARTOF() of section \"%s\", which was not found", name);
+				errorAt(patch, "Requested STARTOF() of undefined section \"%s\"", name);
 				isError = true;
 				value = 1;
 			} else {
@@ -427,7 +427,7 @@ static int32_t computeRPNExpr(Patch const &patch, std::vector<Symbol> const &fil
 					isError = true;
 				}
 			} else if (Symbol const *symbol = getSymbol(fileSymbols, value); !symbol) {
-				errorAt(patch, "Unknown symbol \"%s\"", fileSymbols[value].name.c_str());
+				errorAt(patch, "Undefined symbol \"%s\"", fileSymbols[value].name.c_str());
 				sym_DumpLocalAliasedSymbols(fileSymbols[value].name);
 				isError = true;
 			} else if (std::holds_alternative<Label>(symbol->data)) {

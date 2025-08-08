@@ -1,4 +1,4 @@
-error: symbols/unknown/a.asm(2): Unknown symbol "Label"
+error: symbols/unknown/a.asm(2): Undefined symbol "Label"
     A label with that name is defined but not exported at symbols/unknown/b.asm(2)
     A constant with that name is defined but not exported at symbols/unknown/c.asm(1)
     A constant with that name is defined but not exported at symbols/unknown/d.asm(1)

@@ -1,5 +1,5 @@
 error: use-purged-symbol.asm(6):
-    Macro "m" not defined; it was purged
+    Undefined macro "m"; it was purged
 error: use-purged-symbol.asm(13) -> use-purged-symbol.asm::m2(10):
     Bracketed symbol "argi" does not exist; it was purged
 error: use-purged-symbol.asm(15):
@@ -15,4 +15,4 @@ error: use-purged-symbol.asm(22):
 warning: use-purged-symbol.asm(25): [-Wpurge]
     Purging an exported symbol "Label2"
 FATAL: use-purged-symbol.asm(26):
-    Unknown symbol "Label2"; it was purged
+    Undefined symbol "Label2"; it was purged

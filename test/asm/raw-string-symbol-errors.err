@@ -25,7 +25,7 @@ error: raw-string-symbol-errors.asm(23):
 error: raw-string-symbol-errors.asm(24):
     'u' is not a string symbol
 error: raw-string-symbol-errors.asm(27):
-    's' was already purged
+    Undefined symbol 's' was already purged
 error: raw-string-symbol-errors.asm(29):
     's' is not a string symbol
 Assembly aborted with 13 errors!

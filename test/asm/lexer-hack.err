@@ -3,7 +3,7 @@ error: lexer-hack.asm(22):
 error: lexer-hack.asm(24):
     'mac' already defined at lexer-hack.asm(1)
 error: lexer-hack.asm(27):
-    Macro "undef" not defined
+    Undefined macro "undef"
 error: lexer-hack.asm(28):
-    Macro "undef" not defined
+    Undefined macro "undef"
 Assembly aborted with 4 errors!

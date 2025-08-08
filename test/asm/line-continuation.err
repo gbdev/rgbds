@@ -1,5 +1,5 @@
 error: line-continuation.asm(3):
-    Invalid character after line continuation 's'
+    Invalid character 's' after line continuation
 warning: line-continuation.asm(6) -> line-continuation.asm::spam(4): [-Wuser]
     spam
 error: line-continuation.asm(14):

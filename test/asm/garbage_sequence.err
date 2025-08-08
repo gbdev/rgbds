@@ -1,11 +1,11 @@
 error: garbage_sequence.asm(1):
-    Unknown character '#'
+    Invalid character '#'
 error: garbage_sequence.asm(2):
-    Unknown characters '?', 0xFF
+    Invalid characters '?', 0xFF (is the file UTF-8?)
 error: garbage_sequence.asm(3):
-    Unknown characters '?', 0xFF, '?'
+    Invalid characters '?', 0xFF, '?' (is the file UTF-8?)
 error: garbage_sequence.asm(3):
-    Unknown character '#'
+    Invalid character '#'
 error: garbage_sequence.asm(3):
-    Unknown characters '#', '?', '?'
+    Invalid characters '#', '?', '?'
 Assembly aborted with 5 errors!
