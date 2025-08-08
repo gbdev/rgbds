@@ -5,4 +5,4 @@ warning: overflow.asm(24): [-Wdiv]
 warning: overflow.asm(44): [-Wlarge-constant]
     Integer constant is too large
 warning: overflow.asm(47): [-Wlarge-constant]
-    Graphics constant is too long, only first 8 pixels considered
+    Graphics constant is too large; only first 8 pixels considered

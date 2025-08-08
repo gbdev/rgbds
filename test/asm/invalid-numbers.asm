@@ -1,20 +1,29 @@
+macro try
+	def x = \1
+	if _NARG > 1
+		assert x == \2
+	else
+		assert x == 0
+	endc
+endm
+
 ; no digits
-def x = $
-def x = `
-def x = 0b
-def x = 0o
-def x = 0x
+try $
+try `
+try 0b
+try 0o
+try 0x
 
 ; too large
-def x = 9_876_543_210
-def x = $f_0000_0000
-def x = &400_0000_0000
-def x = %1_00000000_00000000_00000000_00000000
-def x = 65537.0q16
+try 999_876_543_210
+try $ffff_0000_0000
+try &7777_0000_0000_0000
+try %1111_00000000_00000000_00000000_00000000
+try `0123_3210_0123, `0123_3210
+try 99999.0q16
 
 ; no precision suffix
-def x = 3.14q
+try 3.14q, 3.14
 
 ; invalid precision suffix
-def x = 3.14q40
-
+try 3.14q40, 3.14
