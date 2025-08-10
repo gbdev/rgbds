@@ -1,6 +1,6 @@
-warning: preinclude.asm(0) -> preinclude-2.inc(0) -> preinclude-1.inc(1): [-Wuser]
-    pre-included file
-warning: preinclude.asm(0) -> preinclude-2.inc(1): [-Wuser]
-    another pre-included file
-warning: preinclude.asm(1): [-Wuser]
-    main file
+warning: pre-included file [-Wuser]
+    at preinclude-1.inc(1) <- preinclude-2.inc(0) <- preinclude.asm(0)
+warning: another pre-included file [-Wuser]
+    at preinclude-2.inc(1) <- preinclude.asm(0)
+warning: main file [-Wuser]
+    at preinclude.asm(1)

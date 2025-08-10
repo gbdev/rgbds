@@ -1,4 +1,4 @@
-warning: continues-after-missing-include/a.asm(7): [-Wuser]
-    still going!
-warning: continues-after-missing-include/a.asm(9): [-Wuser]
-    and going!
+warning: still going! [-Wuser]
+    at continues-after-missing-include/a.asm(7)
+warning: and going! [-Wuser]
+    at continues-after-missing-include/a.asm(9)

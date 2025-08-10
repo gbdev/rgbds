@@ -1,7 +1,7 @@
 FATAL: Section "different section sizes" is of type ROM0, which cannot be unionized
 Linking aborted with 1 error
 ---
-error: <stdin>(16):
-    Cannot declare ROM sections as UNION
-FATAL: <stdin>(16):
-    Cannot create section "different section sizes" (1 error)
+error: Cannot declare ROM sections as UNION
+    at <stdin>(16)
+FATAL: Cannot create section "different section sizes" (1 error)
+    at <stdin>(16)

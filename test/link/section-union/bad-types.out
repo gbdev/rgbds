@@ -1,6 +1,10 @@
-error: Section "conflicting types" is defined with type HRAM at section-union/bad-types.asm(7), but with type WRAM0 at section-union/bad-types.asm(7)
+FATAL: Section "conflicting types" is defined with type HRAM, but also with type WRAM0
+    at section-union/bad-types.asm(7)
+    and also:
+    at section-union/bad-types.asm(7)
+Linking aborted with 1 error
 ---
-error: <stdin>(18):
-    Section already exists but with type HRAM
-FATAL: <stdin>(18):
-    Cannot create section "conflicting types" (1 error)
+error: Section already exists but with type HRAM
+    at <stdin>(18)
+FATAL: Cannot create section "conflicting types" (1 error)
+    at <stdin>(18)

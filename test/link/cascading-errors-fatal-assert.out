@@ -1,3 +1,5 @@
-error: cascading-errors-fatal-assert.asm(1): Undefined symbol "UnknownSymbol"
-FATAL: cascading-errors-fatal-assert.asm(1): Failed to evaluate assertion
+error: Undefined symbol "UnknownSymbol"
+    at cascading-errors-fatal-assert.asm(1)
+FATAL: Failed to evaluate assertion
+    at cascading-errors-fatal-assert.asm(1)
 Linking aborted with 2 errors

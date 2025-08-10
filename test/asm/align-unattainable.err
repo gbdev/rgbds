@@ -1,3 +1,3 @@
-error: align-unattainable.asm(3):
-    Section "X"'s alignment cannot be attained in WRAM0
+error: Section "X"'s alignment cannot be attained in WRAM0
+    at align-unattainable.asm(3)
 Assembly aborted with 1 error!

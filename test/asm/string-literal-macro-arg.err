@@ -1,9 +1,9 @@
-error: string-literal-macro-arg.asm(6):
-    Illegal character escape 'w'
-error: string-literal-macro-arg.asm(11):
-    Illegal character escape at end of input
-error: string-literal-macro-arg.asm(11):
-    Unterminated string
-error: string-literal-macro-arg.asm(11) -> string-literal-macro-arg.asm::mac(4):
-    Unterminated string
+error: Illegal character escape 'w'
+    at string-literal-macro-arg.asm(6)
+error: Illegal character escape at end of input
+    at string-literal-macro-arg.asm(11)
+error: Unterminated string
+    at string-literal-macro-arg.asm(11)
+error: Unterminated string
+    at string-literal-macro-arg.asm::mac(4) <- string-literal-macro-arg.asm(11)
 Assembly aborted with 4 errors!

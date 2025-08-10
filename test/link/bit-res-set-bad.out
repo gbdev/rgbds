@@ -1,4 +1,7 @@
-error: bit-res-set-bad.asm(5): Value $ff00 is not a bit index
-error: bit-res-set-bad.asm(4): Value $8 is not a bit index
-error: bit-res-set-bad.asm(3): Value $ffffffff is not a bit index
+error: Value $ff00 is not a bit index
+    at bit-res-set-bad.asm(5)
+error: Value $8 is not a bit index
+    at bit-res-set-bad.asm(4)
+error: Value $ffffffff is not a bit index
+    at bit-res-set-bad.asm(3)
 Linking failed with 3 errors

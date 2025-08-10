@@ -1,2 +1,2 @@
-warning: strrpl.asm(4): [-Wempty-strrpl]
-    STRRPL: Cannot replace an empty string
+warning: STRRPL: Cannot replace an empty string [-Wempty-strrpl]
+    at strrpl.asm(4)

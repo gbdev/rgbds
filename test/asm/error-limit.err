@@ -1,3 +1,5 @@
-error: error-limit.asm(2):
-    'x' already defined at error-limit.asm(1)
+error: 'x' already defined
+    at error-limit.asm(2)
+    and also:
+    at error-limit.asm(1)
 Assembly aborted after the maximum of 1 error! (configure with '-X/--max-errors')

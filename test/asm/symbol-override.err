@@ -1,7 +1,13 @@
-error: symbol-override.asm(6):
-    'W' already defined as constant at symbol-override.asm(5)
-error: symbol-override.asm(10):
-    'X' already defined as constant at symbol-override.asm(9)
-error: symbol-override.asm(14):
-    'Y' already defined as label at symbol-override.asm(13)
+error: 'W' already defined as constant
+    at symbol-override.asm(6)
+    and also:
+    at symbol-override.asm(5)
+error: 'X' already defined as constant
+    at symbol-override.asm(10)
+    and also:
+    at symbol-override.asm(9)
+error: 'Y' already defined as label
+    at symbol-override.asm(14)
+    and also:
+    at symbol-override.asm(13)
 Assembly aborted with 3 errors!

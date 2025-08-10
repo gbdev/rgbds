@@ -1,2 +1,2 @@
-FATAL: opt-r-decrease.asm(11) -> opt-r-decrease.asm::m(7) -> opt-r-decrease.asm::m(7) -> opt-r-decrease.asm::m(7) -> opt-r-decrease.asm::m(7) -> opt-r-decrease.asm::m(7) -> opt-r-decrease.asm::m(7) -> opt-r-decrease.asm::m(7) -> opt-r-decrease.asm::m(7) -> opt-r-decrease.asm::m(7) -> opt-r-decrease.asm::m(4):
-    Recursion limit (9) exceeded
+FATAL: Recursion limit (9) exceeded
+    at opt-r-decrease.asm::m(4) <- opt-r-decrease.asm::m(7) <- opt-r-decrease.asm::m(7) <- opt-r-decrease.asm::m(7) <- opt-r-decrease.asm::m(7) <- opt-r-decrease.asm::m(7) <- opt-r-decrease.asm::m(7) <- opt-r-decrease.asm::m(7) <- opt-r-decrease.asm::m(7) <- opt-r-decrease.asm::m(7) <- opt-r-decrease.asm(11)

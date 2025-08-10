@@ -1,1 +1,5 @@
-error: "SAME" is defined as 2 at symbols/conflict/b.asm(1), but as 1 at symbols/conflict/a.asm(1)
+FATAL: "SAME" is defined as 2, but also as 1
+    at symbols/conflict/b.asm(1)
+    and also:
+    at symbols/conflict/a.asm(1)
+Linking aborted with 1 error

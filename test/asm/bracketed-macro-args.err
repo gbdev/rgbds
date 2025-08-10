@@ -1,13 +1,13 @@
-error: bracketed-macro-args.asm(33) -> bracketed-macro-args.asm::bad(26):
-    Bracketed symbol "nonnumeric" is not numeric
-error: bracketed-macro-args.asm(33) -> bracketed-macro-args.asm::bad(27):
-    Invalid bracketed macro argument '\<0>'
-error: bracketed-macro-args.asm(33) -> bracketed-macro-args.asm::bad(28):
-    Bracketed symbol "undefined" does not exist
-error: bracketed-macro-args.asm(33) -> bracketed-macro-args.asm::bad(29):
-    Macro argument '\<2>' not defined
-error: bracketed-macro-args.asm(33) -> bracketed-macro-args.asm::bad(30):
-    Macro argument '\<2>' not defined
-error: bracketed-macro-args.asm(39) -> bracketed-macro-args.asm::toolong(36):
-    Bracketed symbol "abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz" does not exist
+error: Bracketed symbol "nonnumeric" is not numeric
+    at bracketed-macro-args.asm::bad(26) <- bracketed-macro-args.asm(33)
+error: Invalid bracketed macro argument '\<0>'
+    at bracketed-macro-args.asm::bad(27) <- bracketed-macro-args.asm(33)
+error: Bracketed symbol "undefined" does not exist
+    at bracketed-macro-args.asm::bad(28) <- bracketed-macro-args.asm(33)
+error: Macro argument '\<2>' not defined
+    at bracketed-macro-args.asm::bad(29) <- bracketed-macro-args.asm(33)
+error: Macro argument '\<2>' not defined
+    at bracketed-macro-args.asm::bad(30) <- bracketed-macro-args.asm(33)
+error: Bracketed symbol "abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz" does not exist
+    at bracketed-macro-args.asm::toolong(36) <- bracketed-macro-args.asm(39)
 Assembly aborted with 6 errors!

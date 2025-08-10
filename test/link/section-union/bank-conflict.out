@@ -1,6 +1,10 @@
-error: Section "conflicting banks" is defined with bank 4 at section-union/bank-conflict.asm(5), but with bank 1 at section-union/bank-conflict.asm(5)
+FATAL: Section "conflicting banks" is defined with bank 4, but also with bank 1
+    at section-union/bank-conflict.asm(5)
+    and also:
+    at section-union/bank-conflict.asm(5)
+Linking aborted with 1 error
 ---
-error: <stdin>(14):
-    Section already declared with different bank 4
-FATAL: <stdin>(14):
-    Cannot create section "conflicting banks" (1 error)
+error: Section already declared with different bank 4
+    at <stdin>(14)
+FATAL: Cannot create section "conflicting banks" (1 error)
+    at <stdin>(14)

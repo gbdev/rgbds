@@ -1,2 +1,2 @@
-FATAL: elif-after-taken-if.asm(21):
-    Division by zero
+FATAL: Division by zero
+    at elif-after-taken-if.asm(21)

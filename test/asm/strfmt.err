@@ -1,11 +1,11 @@
-error: strfmt.asm(16):
-    Formatting number as type 's'
-error: strfmt.asm(16):
-    STRFMT: 1 unformatted argument(s)
-error: strfmt.asm(24):
-    STRFMT: Illegal '%' at end of format string
-error: strfmt.asm(26):
-    STRFMT: Invalid format spec for argument 1
-error: strfmt.asm(28):
-    STRFMT: Not enough arguments for format spec, got: 1, need: 3
+error: Formatting number as type 's'
+    at strfmt.asm(16)
+error: STRFMT: 1 unformatted argument(s)
+    at strfmt.asm(16)
+error: STRFMT: Illegal '%' at end of format string
+    at strfmt.asm(24)
+error: STRFMT: Invalid format spec for argument 1
+    at strfmt.asm(26)
+error: STRFMT: Not enough arguments for format spec, got: 1, need: 3
+    at strfmt.asm(28)
 Assembly aborted with 5 errors!

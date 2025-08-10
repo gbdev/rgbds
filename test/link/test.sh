@@ -71,7 +71,7 @@ tryCmpRomSize () {
 }
 
 rgblinkQuiet () {
-	out="$(env $RGBLINK -Weverything "$@")" || return $?
+	out="$(env $RGBLINK -Weverything -B collapse "$@")" || return $?
 	if [[ -n "$out" ]]; then
 		echo "$bold${red}Linking shouldn't produce anything on stdout!${rescolors}${resbold}"
 		false

@@ -1,6 +1,6 @@
-warning: empty-data-directive.asm(6): [-Wempty-data-directive]
-    DB directive without data in ROM
-warning: empty-data-directive.asm(7): [-Wempty-data-directive]
-    DW directive without data in ROM
-warning: empty-data-directive.asm(8): [-Wempty-data-directive]
-    DL directive without data in ROM
+warning: DB directive without data in ROM [-Wempty-data-directive]
+    at empty-data-directive.asm(6)
+warning: DW directive without data in ROM [-Wempty-data-directive]
+    at empty-data-directive.asm(7)
+warning: DL directive without data in ROM [-Wempty-data-directive]
+    at empty-data-directive.asm(8)

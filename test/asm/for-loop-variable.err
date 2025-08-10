@@ -1,3 +1,5 @@
-error: for-loop-variable.asm(12):
-    'y' already defined as constant at for-loop-variable.asm(8)
+error: 'y' already defined as constant
+    at for-loop-variable.asm(12)
+    and also:
+    at for-loop-variable.asm(8)
 Assembly aborted with 1 error!

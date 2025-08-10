@@ -1,5 +1,5 @@
-error: macro-@.asm(1):
-    Label "foo" created outside of a SECTION
-error: macro-@.asm(1):
-    "@" is not a macro
+error: Label "foo" created outside of a SECTION
+    at macro-@.asm(1)
+error: "@" is not a macro
+    at macro-@.asm(1)
 Assembly aborted with 2 errors!

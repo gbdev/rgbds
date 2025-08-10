@@ -1,15 +1,15 @@
-error: fixed-oob.asm(1):
-    Section "ROM0"'s fixed address $babe is outside of range [$0000; $7fff]
-error: fixed-oob.asm(3):
-    Section "ROMX"'s fixed address $beef is outside of range [$4000; $7fff]
-error: fixed-oob.asm(5):
-    Section "VRAM"'s fixed address $c0de is outside of range [$8000; $9fff]
-error: fixed-oob.asm(7):
-    Section "SRAM"'s fixed address $cafe is outside of range [$a000; $bfff]
-error: fixed-oob.asm(11):
-    Section "WRAMX"'s fixed address $0dad is outside of range [$d000; $dfff]
-error: fixed-oob.asm(13):
-    Section "OAM"'s fixed address $0cab is outside of range [$fe00; $fe9f]
-error: fixed-oob.asm(15):
-    Section "HRAM"'s fixed address $0bad is outside of range [$ff80; $fffe]
+error: Section "ROM0"'s fixed address $babe is outside of range [$0000; $7fff]
+    at fixed-oob.asm(1)
+error: Section "ROMX"'s fixed address $beef is outside of range [$4000; $7fff]
+    at fixed-oob.asm(3)
+error: Section "VRAM"'s fixed address $c0de is outside of range [$8000; $9fff]
+    at fixed-oob.asm(5)
+error: Section "SRAM"'s fixed address $cafe is outside of range [$a000; $bfff]
+    at fixed-oob.asm(7)
+error: Section "WRAMX"'s fixed address $0dad is outside of range [$d000; $dfff]
+    at fixed-oob.asm(11)
+error: Section "OAM"'s fixed address $0cab is outside of range [$fe00; $fe9f]
+    at fixed-oob.asm(13)
+error: Section "HRAM"'s fixed address $0bad is outside of range [$ff80; $fffe]
+    at fixed-oob.asm(15)
 Assembly aborted with 7 errors!

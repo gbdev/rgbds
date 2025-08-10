@@ -1,5 +1,7 @@
-warning: assert.asm(5): [-Wassert]
-    Worry about me, but not too much.
-error: assert.asm(6): Okay, this is getting serious!
-FATAL: assert.asm(7): It all ends now.
+warning: Worry about me, but not too much. [-Wassert]
+    at assert.asm(5)
+error: Okay, this is getting serious!
+    at assert.asm(6)
+FATAL: It all ends now.
+    at assert.asm(7)
 Linking aborted with 2 errors

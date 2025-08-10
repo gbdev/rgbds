@@ -1,18 +1,18 @@
-warning: patch-diagnostics.asm(10): [-Wshift-amount]
-    Shifting right by large amount 32
-warning: patch-diagnostics.asm(9): [-Wshift-amount]
-    Shifting right by negative amount -1
-warning: patch-diagnostics.asm(8): [-Wshift-amount]
-    Shifting right by large amount 32
-warning: patch-diagnostics.asm(7): [-Wshift-amount]
-    Shifting right by negative amount -1
-warning: patch-diagnostics.asm(6): [-Wshift]
-    Shifting right negative value -1
-warning: patch-diagnostics.asm(5): [-Wshift-amount]
-    Shifting left by large amount 32
-warning: patch-diagnostics.asm(4): [-Wshift-amount]
-    Shifting left by negative amount -1
-warning: patch-diagnostics.asm(3): [-Wdiv]
-    Division of -2147483648 by -1 yields -2147483648
-warning: patch-diagnostics.asm(3): [-Wtruncation]
-    Value $80000000 (may be negative?) is not 8-bit
+warning: Shifting right by large amount 32 [-Wshift-amount]
+    at patch-diagnostics.asm(10)
+warning: Shifting right by negative amount -1 [-Wshift-amount]
+    at patch-diagnostics.asm(9)
+warning: Shifting right by large amount 32 [-Wshift-amount]
+    at patch-diagnostics.asm(8)
+warning: Shifting right by negative amount -1 [-Wshift-amount]
+    at patch-diagnostics.asm(7)
+warning: Shifting right negative value -1 [-Wshift]
+    at patch-diagnostics.asm(6)
+warning: Shifting left by large amount 32 [-Wshift-amount]
+    at patch-diagnostics.asm(5)
+warning: Shifting left by negative amount -1 [-Wshift-amount]
+    at patch-diagnostics.asm(4)
+warning: Division of -2147483648 by -1 yields -2147483648 [-Wdiv]
+    at patch-diagnostics.asm(3)
+warning: Value $80000000 (may be negative?) is not 8-bit [-Wtruncation]
+    at patch-diagnostics.asm(3)

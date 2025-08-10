@@ -1,2 +1,2 @@
-FATAL: multiple-dots-local.asm(6):
-    'Parent...spare' is a nonsensical reference to a nested local label
+FATAL: 'Parent...spare' is a nonsensical reference to a nested local label
+    at multiple-dots-local.asm(6)

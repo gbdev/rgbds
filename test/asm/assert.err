@@ -1,12 +1,12 @@
-error: assert.asm(4):
-    Assertion failed
-error: assert.asm(7):
-    Assertion failed: @ ain't 0 now? (Hint: it's $1)
-warning: assert.asm(10): [-Wassert]
-    Assertion failed
-error: assert.asm(18):
-    Expected constant expression: 'FloatingBase' is not constant at assembly time
-error: assert.asm(18):
-    Assertion failed
-FATAL: assert.asm(21):
-    Assertion failed
+error: Assertion failed
+    at assert.asm(4)
+error: Assertion failed: @ ain't 0 now? (Hint: it's $1)
+    at assert.asm(7)
+warning: Assertion failed [-Wassert]
+    at assert.asm(10)
+error: Expected constant expression: 'FloatingBase' is not constant at assembly time
+    at assert.asm(18)
+error: Assertion failed
+    at assert.asm(18)
+FATAL: Assertion failed
+    at assert.asm(21)

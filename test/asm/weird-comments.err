@@ -1,2 +1,2 @@
-warning: weird-comments.asm(2): [-Wnested-comment]
-    /* in block comment
+warning: /* in block comment [-Wnested-comment]
+    at weird-comments.asm(2)

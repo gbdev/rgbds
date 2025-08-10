@@ -1,39 +1,39 @@
-error: invalid-opt.asm(1):
-    Must specify exactly 2 characters for option 'b'
-error: invalid-opt.asm(2):
-    Invalid digit for binary constant '_'
-error: invalid-opt.asm(3):
-    Changed digit for binary constant '1'
-error: invalid-opt.asm(4):
-    Repeated digit for binary constant '0'
-error: invalid-opt.asm(5):
-    Must specify exactly 4 characters for option 'g'
-error: invalid-opt.asm(6):
-    Invalid digit for graphics constant '_'
-error: invalid-opt.asm(7):
-    Invalid digit for graphics constant '$'
-error: invalid-opt.asm(8):
-    Changed digit for graphics constant '2'
-error: invalid-opt.asm(9):
-    Repeated digit for graphics constant 'x'
-error: invalid-opt.asm(10):
-    Repeated digit for graphics constant 'y'
-error: invalid-opt.asm(11):
-    Invalid argument for option 'p'
-error: invalid-opt.asm(12):
-    Invalid argument for option 'p'
-error: invalid-opt.asm(13):
-    Invalid argument for option 'Q'
-error: invalid-opt.asm(14):
-    Invalid argument for option 'Q'
-error: invalid-opt.asm(15):
-    Argument for option 'Q' must be between 1 and 31
-error: invalid-opt.asm(16):
-    Argument to 'r' is out of range ("99999999999999999999999999")
-error: invalid-opt.asm(17):
-    Must specify an argument for option 'W'
-error: invalid-opt.asm(18):
-    syntax error, unexpected end of line, expecting string
-error: invalid-opt.asm(19):
-    No entries in the option stack
+error: Must specify exactly 2 characters for option 'b'
+    at invalid-opt.asm(1)
+error: Invalid digit for binary constant '_'
+    at invalid-opt.asm(2)
+error: Changed digit for binary constant '1'
+    at invalid-opt.asm(3)
+error: Repeated digit for binary constant '0'
+    at invalid-opt.asm(4)
+error: Must specify exactly 4 characters for option 'g'
+    at invalid-opt.asm(5)
+error: Invalid digit for graphics constant '_'
+    at invalid-opt.asm(6)
+error: Invalid digit for graphics constant '$'
+    at invalid-opt.asm(7)
+error: Changed digit for graphics constant '2'
+    at invalid-opt.asm(8)
+error: Repeated digit for graphics constant 'x'
+    at invalid-opt.asm(9)
+error: Repeated digit for graphics constant 'y'
+    at invalid-opt.asm(10)
+error: Invalid argument for option 'p'
+    at invalid-opt.asm(11)
+error: Invalid argument for option 'p'
+    at invalid-opt.asm(12)
+error: Invalid argument for option 'Q'
+    at invalid-opt.asm(13)
+error: Invalid argument for option 'Q'
+    at invalid-opt.asm(14)
+error: Argument for option 'Q' must be between 1 and 31
+    at invalid-opt.asm(15)
+error: Argument to 'r' is out of range ("99999999999999999999999999")
+    at invalid-opt.asm(16)
+error: Must specify an argument for option 'W'
+    at invalid-opt.asm(17)
+error: syntax error, unexpected end of line, expecting string
+    at invalid-opt.asm(18)
+error: No entries in the option stack
+    at invalid-opt.asm(19)
 Assembly aborted with 19 errors!

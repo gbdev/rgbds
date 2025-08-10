@@ -1,2 +1,2 @@
-FATAL: modzero-instr.asm(2):
-    Modulo by zero
+FATAL: Modulo by zero
+    at modzero-instr.asm(2)

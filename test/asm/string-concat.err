@@ -1,9 +1,9 @@
-warning: string-concat.asm(21): [-Wobsolete]
-    Treating strings as numbers is deprecated
-warning: string-concat.asm(21): [-Wobsolete]
-    Treating strings as numbers is deprecated
-error: string-concat.asm(25):
-    syntax error, unexpected ++
-error: string-concat.asm(26):
-    syntax error, unexpected ++, expecting ] or + or -
+warning: Treating strings as numbers is deprecated [-Wobsolete]
+    at string-concat.asm(21)
+warning: Treating strings as numbers is deprecated [-Wobsolete]
+    at string-concat.asm(21)
+error: syntax error, unexpected ++
+    at string-concat.asm(25)
+error: syntax error, unexpected ++, expecting ] or + or -
+    at string-concat.asm(26)
 Assembly aborted with 2 errors!

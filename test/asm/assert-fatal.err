@@ -1,2 +1,2 @@
-FATAL: assert-fatal.asm(1):
-    Assertion failed: there are four lights
+FATAL: Assertion failed: there are four lights
+    at assert-fatal.asm(1)

@@ -1,2 +1,2 @@
-FATAL: nested-interpolation-recursion.asm(2):
-    Recursion limit (64) exceeded
+FATAL: Recursion limit (64) exceeded
+    at nested-interpolation-recursion.asm(2)

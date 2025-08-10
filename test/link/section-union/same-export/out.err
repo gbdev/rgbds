@@ -1,1 +1,5 @@
-error: "Same" is defined as a label at section-union/same-export/b.asm(2), but as another label at section-union/same-export/a.asm(2)
+FATAL: "Same" is defined as a label, but also as another label
+    at section-union/same-export/b.asm(2)
+    and also:
+    at section-union/same-export/a.asm(2)
+Linking aborted with 1 error

@@ -1,59 +1,59 @@
-error: invalid-utf-8-strings.asm(16):
-    STRLEN: Invalid UTF-8 byte 0xA3
-error: invalid-utf-8-strings.asm(16):
-    STRLEN: Invalid UTF-8 byte 0xA4
-error: invalid-utf-8-strings.asm(16):
-    STRLEN: Invalid UTF-8 byte 0xF0
-error: invalid-utf-8-strings.asm(16):
-    STRLEN: Invalid UTF-8 byte 0xA2
-error: invalid-utf-8-strings.asm(17):
-    STRSLICE: Invalid UTF-8 byte 0xA3
-error: invalid-utf-8-strings.asm(17):
-    STRSLICE: Invalid UTF-8 byte 0xA4
-error: invalid-utf-8-strings.asm(17):
-    STRSLICE: Invalid UTF-8 byte 0xF0
-error: invalid-utf-8-strings.asm(17):
-    STRSLICE: Invalid UTF-8 byte 0xA2
-error: invalid-utf-8-strings.asm(22):
-    STRSLICE: Invalid UTF-8 byte 0xA3
-error: invalid-utf-8-strings.asm(22):
-    STRSLICE: Invalid UTF-8 byte 0xA4
-error: invalid-utf-8-strings.asm(35):
-    STRLEN: Invalid UTF-8 byte 0xFE
-error: invalid-utf-8-strings.asm(35):
-    STRLEN: Invalid UTF-8 byte 0x81
-error: invalid-utf-8-strings.asm(35):
-    STRLEN: Invalid UTF-8 byte 0xFF
-error: invalid-utf-8-strings.asm(36):
-    Input string is not valid UTF-8
-error: invalid-utf-8-strings.asm(36):
-    Input string is not valid UTF-8
-error: invalid-utf-8-strings.asm(36):
-    Input string is not valid UTF-8
-error: invalid-utf-8-strings.asm(39):
-    Input string is not valid UTF-8
-error: invalid-utf-8-strings.asm(39):
-    Input string is not valid UTF-8
-error: invalid-utf-8-strings.asm(39):
-    Input string is not valid UTF-8
-error: invalid-utf-8-strings.asm(39):
-    Input string is not valid UTF-8
-error: invalid-utf-8-strings.asm(39):
-    Input string is not valid UTF-8
-error: invalid-utf-8-strings.asm(40):
-    Input string is not valid UTF-8
-error: invalid-utf-8-strings.asm(40):
-    Input string is not valid UTF-8
-error: invalid-utf-8-strings.asm(40):
-    Input string is not valid UTF-8
-error: invalid-utf-8-strings.asm(40):
-    Input string is not valid UTF-8
-error: invalid-utf-8-strings.asm(40):
-    Input string is not valid UTF-8
-error: invalid-utf-8-strings.asm(40):
-    Input string is not valid UTF-8
-error: invalid-utf-8-strings.asm(50):
-    STRLEN: Incomplete UTF-8 character
-error: invalid-utf-8-strings.asm(54):
-    STRSLICE: Incomplete UTF-8 character
+error: STRLEN: Invalid UTF-8 byte 0xA3
+    at invalid-utf-8-strings.asm(16)
+error: STRLEN: Invalid UTF-8 byte 0xA4
+    at invalid-utf-8-strings.asm(16)
+error: STRLEN: Invalid UTF-8 byte 0xF0
+    at invalid-utf-8-strings.asm(16)
+error: STRLEN: Invalid UTF-8 byte 0xA2
+    at invalid-utf-8-strings.asm(16)
+error: STRSLICE: Invalid UTF-8 byte 0xA3
+    at invalid-utf-8-strings.asm(17)
+error: STRSLICE: Invalid UTF-8 byte 0xA4
+    at invalid-utf-8-strings.asm(17)
+error: STRSLICE: Invalid UTF-8 byte 0xF0
+    at invalid-utf-8-strings.asm(17)
+error: STRSLICE: Invalid UTF-8 byte 0xA2
+    at invalid-utf-8-strings.asm(17)
+error: STRSLICE: Invalid UTF-8 byte 0xA3
+    at invalid-utf-8-strings.asm(22)
+error: STRSLICE: Invalid UTF-8 byte 0xA4
+    at invalid-utf-8-strings.asm(22)
+error: STRLEN: Invalid UTF-8 byte 0xFE
+    at invalid-utf-8-strings.asm(35)
+error: STRLEN: Invalid UTF-8 byte 0x81
+    at invalid-utf-8-strings.asm(35)
+error: STRLEN: Invalid UTF-8 byte 0xFF
+    at invalid-utf-8-strings.asm(35)
+error: Input string is not valid UTF-8
+    at invalid-utf-8-strings.asm(36)
+error: Input string is not valid UTF-8
+    at invalid-utf-8-strings.asm(36)
+error: Input string is not valid UTF-8
+    at invalid-utf-8-strings.asm(36)
+error: Input string is not valid UTF-8
+    at invalid-utf-8-strings.asm(39)
+error: Input string is not valid UTF-8
+    at invalid-utf-8-strings.asm(39)
+error: Input string is not valid UTF-8
+    at invalid-utf-8-strings.asm(39)
+error: Input string is not valid UTF-8
+    at invalid-utf-8-strings.asm(39)
+error: Input string is not valid UTF-8
+    at invalid-utf-8-strings.asm(39)
+error: Input string is not valid UTF-8
+    at invalid-utf-8-strings.asm(40)
+error: Input string is not valid UTF-8
+    at invalid-utf-8-strings.asm(40)
+error: Input string is not valid UTF-8
+    at invalid-utf-8-strings.asm(40)
+error: Input string is not valid UTF-8
+    at invalid-utf-8-strings.asm(40)
+error: Input string is not valid UTF-8
+    at invalid-utf-8-strings.asm(40)
+error: Input string is not valid UTF-8
+    at invalid-utf-8-strings.asm(40)
+error: STRLEN: Incomplete UTF-8 character
+    at invalid-utf-8-strings.asm(50)
+error: STRSLICE: Incomplete UTF-8 character
+    at invalid-utf-8-strings.asm(54)
 Assembly aborted with 29 errors!

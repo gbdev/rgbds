@@ -1,15 +1,15 @@
-error: charval.asm(23):
-    CHARVAL: Character mapping for "b" must have a single value
-error: charval.asm(24):
-    CHARVAL: No character mapping for "ab"
-error: charval.asm(25):
-    CHARVAL: No character mapping for "abc"
-error: charval.asm(26):
-    CHARVAL: No character mapping for "cd"
-error: charval.asm(27):
-    CHARVAL: No character mapping for "xyz"
-warning: charval.asm(28): [-Wbuiltin-args]
-    CHARVAL: Index starts at 0
-warning: charval.asm(29): [-Wbuiltin-args]
-    CHARVAL: Index 10 is past the end of the character mapping
+error: CHARVAL: Character mapping for "b" must have a single value
+    at charval.asm(23)
+error: CHARVAL: No character mapping for "ab"
+    at charval.asm(24)
+error: CHARVAL: No character mapping for "abc"
+    at charval.asm(25)
+error: CHARVAL: No character mapping for "cd"
+    at charval.asm(26)
+error: CHARVAL: No character mapping for "xyz"
+    at charval.asm(27)
+warning: CHARVAL: Index starts at 0 [-Wbuiltin-args]
+    at charval.asm(28)
+warning: CHARVAL: Index 10 is past the end of the character mapping [-Wbuiltin-args]
+    at charval.asm(29)
 Assembly aborted with 5 errors!

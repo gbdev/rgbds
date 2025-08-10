@@ -1,27 +1,27 @@
-error: invalid-numbers.asm(11) -> invalid-numbers.asm::try(2):
-    Invalid integer constant, no digits after '$'
-error: invalid-numbers.asm(12) -> invalid-numbers.asm::try(2):
-    Invalid graphics constant, no digits after '`'
-error: invalid-numbers.asm(13) -> invalid-numbers.asm::try(2):
-    Invalid integer constant, no digits after '%'
-error: invalid-numbers.asm(14) -> invalid-numbers.asm::try(2):
-    Invalid integer constant, no digits after '&'
-error: invalid-numbers.asm(15) -> invalid-numbers.asm::try(2):
-    Invalid integer constant, no digits after '$'
-warning: invalid-numbers.asm(18) -> invalid-numbers.asm::try(2): [-Wlarge-constant]
-    Integer constant is too large
-warning: invalid-numbers.asm(19) -> invalid-numbers.asm::try(2): [-Wlarge-constant]
-    Integer constant is too large
-warning: invalid-numbers.asm(20) -> invalid-numbers.asm::try(2): [-Wlarge-constant]
-    Integer constant is too large
-warning: invalid-numbers.asm(21) -> invalid-numbers.asm::try(2): [-Wlarge-constant]
-    Integer constant is too large
-warning: invalid-numbers.asm(22) -> invalid-numbers.asm::try(2): [-Wlarge-constant]
-    Graphics constant is too large; only first 8 pixels considered
-warning: invalid-numbers.asm(23) -> invalid-numbers.asm::try(2): [-Wlarge-constant]
-    Magnitude of fixed-point constant is too large
-error: invalid-numbers.asm(26) -> invalid-numbers.asm::try(2):
-    Invalid fixed-point constant, no significant digits after 'q'
-error: invalid-numbers.asm(29) -> invalid-numbers.asm::try(2):
-    Fixed-point constant precision must be between 1 and 31
+error: Invalid integer constant, no digits after '$'
+    at invalid-numbers.asm::try(2) <- invalid-numbers.asm(11)
+error: Invalid graphics constant, no digits after '`'
+    at invalid-numbers.asm::try(2) <- invalid-numbers.asm(12)
+error: Invalid integer constant, no digits after '%'
+    at invalid-numbers.asm::try(2) <- invalid-numbers.asm(13)
+error: Invalid integer constant, no digits after '&'
+    at invalid-numbers.asm::try(2) <- invalid-numbers.asm(14)
+error: Invalid integer constant, no digits after '$'
+    at invalid-numbers.asm::try(2) <- invalid-numbers.asm(15)
+warning: Integer constant is too large [-Wlarge-constant]
+    at invalid-numbers.asm::try(2) <- invalid-numbers.asm(18)
+warning: Integer constant is too large [-Wlarge-constant]
+    at invalid-numbers.asm::try(2) <- invalid-numbers.asm(19)
+warning: Integer constant is too large [-Wlarge-constant]
+    at invalid-numbers.asm::try(2) <- invalid-numbers.asm(20)
+warning: Integer constant is too large [-Wlarge-constant]
+    at invalid-numbers.asm::try(2) <- invalid-numbers.asm(21)
+warning: Graphics constant is too large; only first 8 pixels considered [-Wlarge-constant]
+    at invalid-numbers.asm::try(2) <- invalid-numbers.asm(22)
+warning: Magnitude of fixed-point constant is too large [-Wlarge-constant]
+    at invalid-numbers.asm::try(2) <- invalid-numbers.asm(23)
+error: Invalid fixed-point constant, no significant digits after 'q'
+    at invalid-numbers.asm::try(2) <- invalid-numbers.asm(26)
+error: Fixed-point constant precision must be between 1 and 31
+    at invalid-numbers.asm::try(2) <- invalid-numbers.asm(29)
 Assembly aborted with 7 errors!

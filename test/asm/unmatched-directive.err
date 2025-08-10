@@ -1,6 +1,6 @@
-warning: unmatched-directive.asm(5): [-Wunmatched-directive]
-    `PUSHC` without corresponding `POPC`
-warning: unmatched-directive.asm(5): [-Wunmatched-directive]
-    `PUSHO` without corresponding `POPO`
-warning: unmatched-directive.asm(5): [-Wunmatched-directive]
-    `PUSHS` without corresponding `POPS`
+warning: `PUSHC` without corresponding `POPC` [-Wunmatched-directive]
+    at unmatched-directive.asm(5)
+warning: `PUSHO` without corresponding `POPO` [-Wunmatched-directive]
+    at unmatched-directive.asm(5)
+warning: `PUSHS` without corresponding `POPS` [-Wunmatched-directive]
+    at unmatched-directive.asm(5)

@@ -1,3 +1,3 @@
-error: max-errors.asm(3):
-    Expected constant expression: PC is not constant at assembly time
+error: Expected constant expression: PC is not constant at assembly time
+    at max-errors.asm(3)
 Assembly aborted after the maximum of 1 error! (configure with '-X/--max-errors')

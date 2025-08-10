@@ -1,4 +1,4 @@
-warning: invalid-strchar.asm(1): [-Wbuiltin-args]
-    STRCHAR: Index 3 is past the end of the string
-warning: invalid-strchar.asm(2): [-Wbuiltin-args]
-    STRCHAR: Index starts at 0
+warning: STRCHAR: Index 3 is past the end of the string [-Wbuiltin-args]
+    at invalid-strchar.asm(1)
+warning: STRCHAR: Index starts at 0 [-Wbuiltin-args]
+    at invalid-strchar.asm(2)

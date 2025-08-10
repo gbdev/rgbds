@@ -1,4 +1,5 @@
-error: redef-equ.asm(25):
-    'N' already defined as non-EQU at redef-equ.asm(24)
-    (should it be {interpolated} to define its contents "X"?)
+error: 'N' already defined as non-EQU (should it be {interpolated} to define its contents "X"?)
+    at redef-equ.asm(25)
+    and also:
+    at redef-equ.asm(24)
 Assembly aborted with 1 error!

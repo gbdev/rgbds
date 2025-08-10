@@ -1,5 +1,5 @@
-error: ds-bad.asm(3):
-    Expected constant expression: 'unknown' is not constant at assembly time
-warning: ds-bad.asm(4): [-Wtruncation]
-    Expression must be 8-bit; use LOW() to force 8-bit
+error: Expected constant expression: 'unknown' is not constant at assembly time
+    at ds-bad.asm(3)
+warning: Expression must be 8-bit; use LOW() to force 8-bit [-Wtruncation]
+    at ds-bad.asm(4)
 Assembly aborted with 1 error!
