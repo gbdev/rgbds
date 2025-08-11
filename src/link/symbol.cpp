@@ -9,7 +9,7 @@
 
 #include "helpers.hpp" // assume
 
-#include "link/main.hpp"
+#include "link/fstack.hpp"
 #include "link/section.hpp"
 #include "link/warning.hpp"
 

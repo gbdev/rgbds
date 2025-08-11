@@ -83,6 +83,7 @@ src/asm/lexer.o src/asm/main.o: src/asm/parser.hpp
 rgblink_obj := \
 	${common_obj} \
 	src/link/assign.o \
+	src/link/fstack.o \
 	src/link/lexer.o \
 	src/link/layout.o \
 	src/link/main.o \

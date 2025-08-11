@@ -14,6 +14,7 @@
 #include "platform.hpp"
 
 #include "link/assign.hpp"
+#include "link/fstack.hpp"
 #include "link/main.hpp"
 #include "link/section.hpp"
 #include "link/symbol.hpp"

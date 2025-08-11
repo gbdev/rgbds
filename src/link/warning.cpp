@@ -7,7 +7,7 @@
 
 #include "style.hpp"
 
-#include "link/main.hpp"
+#include "link/fstack.hpp"
 
 // clang-format off: nested initializers
 Diagnostics<WarningLevel, WarningID> warnings = {

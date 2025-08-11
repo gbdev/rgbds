@@ -21,6 +21,7 @@
 #include "version.hpp"
 
 #include "link/assign.hpp"
+#include "link/fstack.hpp"
 #include "link/main.hpp"
 #include "link/patch.hpp"
 #include "link/sdas_obj.hpp"
