@@ -1,4 +1,4 @@
-error: Section already defined previously
+error: Section already defined
     at duplicate-section.asm(4)
     and also:
     at duplicate-section.asm(2)

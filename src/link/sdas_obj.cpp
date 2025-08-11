@@ -281,7 +281,7 @@ void sdobj_ReadFile(FileStackNode const &src, FILE *file, std::vector<Symbol> &f
 			// The following is required for fragment offsets to be reliably predicted
 			for (FileSection &entry : fileSections) {
 				if (!strcmp(token, entry.section->name.c_str())) {
-					fatalAt(where, "Area \"%s\" already defined earlier", token);
+					fatalAt(where, "Area \"%s\" already defined", token);
 				}
 			}
 			char const *sectName = token; // We'll deal with the section's name depending on type
