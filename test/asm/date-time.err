@@ -1,0 +1,4 @@
+warning: date-time.asm(2): [-Wobsolete]
+    `__DATE__` is deprecated; use `__ISO_8601_LOCAL__`
+warning: date-time.asm(3): [-Wobsolete]
+    `__TIME__` is deprecated; use `__ISO_8601_LOCAL__`
