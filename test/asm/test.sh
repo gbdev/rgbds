@@ -64,7 +64,7 @@ for i in *.asm notexist.asm; do
 	flags=${i%.asm}.flags
 	RGBASMFLAGS=-Weverything
 	if [ -f "$flags" ]; then
-		RGBASMFLAGS="$(head -n 1 "$flags")" # Allow other lines to serve as comments
+		RGBASMFLAGS="$RGBASMFLAGS $(head -n 1 "$flags")" # Allow other lines to serve as comments
 	fi
 	for variant in '' ' piped'; do
 		(( tests++ ))
