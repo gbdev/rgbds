@@ -213,20 +213,38 @@ static void printNode(std::pair<std::string, uint32_t> const &node) {
 
 void FileStackNode::printBacktrace(uint32_t curLineNo) const {
 	std::vector<std::pair<std::string, uint32_t>> nodes = backtrace(curLineNo);
+	size_t n = nodes.size();
 
 	if (warnings.traceDepth == TRACE_COLLAPSE) {
 		fputs("   ", stderr); // Just three spaces; the fourth will be handled by the loop
-		for (size_t i = 0; i < nodes.size(); ++i) {
+		for (size_t i = 0; i < n; ++i) {
 			style_Reset(stderr);
 			fprintf(stderr, " %s ", i == 0 ? "at" : "<-");
-			printNode(nodes[nodes.size() - i - 1]);
+			printNode(nodes[n - i - 1]);
 		}
 		putc('\n', stderr);
-	} else {
-		for (size_t i = 0; i < nodes.size(); ++i) {
+	} else if (warnings.traceDepth == 0 || static_cast<size_t>(warnings.traceDepth) >= n) {
+		for (size_t i = 0; i < n; ++i) {
 			style_Reset(stderr);
 			fprintf(stderr, "    %s ", i == 0 ? "at" : "<-");
-			printNode(nodes[nodes.size() - i - 1]);
+			printNode(nodes[n - i - 1]);
+			putc('\n', stderr);
+		}
+	} else {
+		size_t last = warnings.traceDepth / 2;
+		size_t first = warnings.traceDepth - last;
+		for (size_t i = 0; i < first; ++i) {
+			style_Reset(stderr);
+			fprintf(stderr, "    %s ", i == 0 ? "at" : "<-");
+			printNode(nodes[n - i - 1]);
+			putc('\n', stderr);
+		}
+		style_Reset(stderr);
+		fprintf(stderr, "    ...%zu more%s\n", n - warnings.traceDepth, last ? "..." : "");
+		for (size_t i = n - last; i < n; ++i) {
+			style_Reset(stderr);
+			fputs("    <- ", stderr);
+			printNode(nodes[n - i - 1]);
 			putc('\n', stderr);
 		}
 	}
