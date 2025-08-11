@@ -9,3 +9,5 @@ Label: nop :: call z, .local :: ld b, a
 
 Label2::jr Label2::ret
 .local2::call nz, .local2::ret
+
+Label3:: db 1, 2 :: dw 3, 4 :: dl 5, 6 :: ds 7, 8 :: ret

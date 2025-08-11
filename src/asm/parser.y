@@ -480,7 +480,7 @@ else:
 
 plain_directive:
 	  label
-	| label cpu_commands
+	| label data
 	| label macro
 	| label directive
 ;
@@ -562,10 +562,6 @@ directive:
 	| println
 	| export
 	| export_def
-	| db
-	| dw
-	| dl
-	| ds
 	| section
 	| rsreset
 	| rsset
@@ -887,56 +883,6 @@ endu:
 	POP_ENDU {
 		sect_EndUnion();
 	}
-;
-
-ds:
-	POP_DS uconst {
-		sect_Skip($2, true);
-	}
-	| POP_DS uconst COMMA ds_args trailing_comma {
-		sect_RelBytes($2, $4);
-	}
-	| POP_DS POP_ALIGN LBRACK align_spec RBRACK trailing_comma {
-		uint32_t n = sect_GetAlignBytes($4.alignment, $4.alignOfs);
-		sect_Skip(n, true);
-		sect_AlignPC($4.alignment, $4.alignOfs);
-	}
-	| POP_DS POP_ALIGN LBRACK align_spec RBRACK COMMA ds_args trailing_comma {
-		uint32_t n = sect_GetAlignBytes($4.alignment, $4.alignOfs);
-		sect_RelBytes(n, $7);
-		sect_AlignPC($4.alignment, $4.alignOfs);
-	}
-;
-
-ds_args:
-	reloc_8bit {
-		$$.push_back(std::move($1));
-	}
-	| ds_args COMMA reloc_8bit {
-		$$ = std::move($1);
-		$$.push_back(std::move($3));
-	}
-;
-
-db:
-	POP_DB {
-		sect_Skip(1, false);
-	}
-	| POP_DB constlist_8bit trailing_comma
-;
-
-dw:
-	POP_DW {
-		sect_Skip(2, false);
-	}
-	| POP_DW constlist_16bit trailing_comma
-;
-
-dl:
-	POP_DL {
-		sect_Skip(4, false);
-	}
-	| POP_DL constlist_32bit trailing_comma
 ;
 
 def_equ:
@@ -1775,15 +1721,19 @@ sect_attrs:
 	}
 ;
 
-// CPU commands.
+// CPU instructions and data declarations
 
-cpu_commands:
-	  cpu_command
-	| cpu_command DOUBLE_COLON cpu_commands
+data:
+	  datum
+	| datum DOUBLE_COLON data
 ;
 
-cpu_command:
-	  sm83_adc
+datum:
+	  db
+	| dw
+	| dl
+	| ds
+	| sm83_adc
 	| sm83_add
 	| sm83_and
 	| sm83_bit
@@ -1829,6 +1779,56 @@ cpu_command:
 	| sm83_sub
 	| sm83_swap
 	| sm83_xor
+;
+
+ds:
+	POP_DS uconst {
+		sect_Skip($2, true);
+	}
+	| POP_DS uconst COMMA ds_args trailing_comma {
+		sect_RelBytes($2, $4);
+	}
+	| POP_DS POP_ALIGN LBRACK align_spec RBRACK trailing_comma {
+		uint32_t n = sect_GetAlignBytes($4.alignment, $4.alignOfs);
+		sect_Skip(n, true);
+		sect_AlignPC($4.alignment, $4.alignOfs);
+	}
+	| POP_DS POP_ALIGN LBRACK align_spec RBRACK COMMA ds_args trailing_comma {
+		uint32_t n = sect_GetAlignBytes($4.alignment, $4.alignOfs);
+		sect_RelBytes(n, $7);
+		sect_AlignPC($4.alignment, $4.alignOfs);
+	}
+;
+
+ds_args:
+	reloc_8bit {
+		$$.push_back(std::move($1));
+	}
+	| ds_args COMMA reloc_8bit {
+		$$ = std::move($1);
+		$$.push_back(std::move($3));
+	}
+;
+
+db:
+	POP_DB {
+		sect_Skip(1, false);
+	}
+	| POP_DB constlist_8bit trailing_comma
+;
+
+dw:
+	POP_DW {
+		sect_Skip(2, false);
+	}
+	| POP_DW constlist_16bit trailing_comma
+;
+
+dl:
+	POP_DL {
+		sect_Skip(4, false);
+	}
+	| POP_DL constlist_32bit trailing_comma
 ;
 
 sm83_adc:
