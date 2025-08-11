@@ -1,10 +1,5 @@
-warning: [-Woverwrite]
-    Overwrote a non-zero byte in the cartridge type
-warning: [-Woverwrite]
-    Overwrote a non-zero byte in the TPP1 identification code
-warning: [-Woverwrite]
-    Overwrote a non-zero byte in the TPP1 revision number
-warning: [-Woverwrite]
-    Overwrote a non-zero byte in the RAM size
-warning: [-Woverwrite]
-    Overwrote a non-zero byte in the TPP1 feature flags
+warning: Overwrote a non-zero byte in the cartridge type [-Woverwrite]
+warning: Overwrote a non-zero byte in the TPP1 identification code [-Woverwrite]
+warning: Overwrote a non-zero byte in the TPP1 revision number [-Woverwrite]
+warning: Overwrote a non-zero byte in the RAM size [-Woverwrite]
+warning: Overwrote a non-zero byte in the TPP1 feature flags [-Woverwrite]

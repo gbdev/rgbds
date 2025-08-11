@@ -1,2 +1,1 @@
-warning: [-Wmbc]
-    MBC "(unknown)" has no RAM, but RAM size was set to 2
+warning: MBC "(unknown)" has no RAM, but RAM size was set to 2 [-Wmbc]

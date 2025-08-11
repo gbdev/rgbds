@@ -1,4 +1,2 @@
-warning: [-Woverwrite]
-    Overwrote a non-zero byte in the cartridge type
-warning: [-Woverwrite]
-    Overwrote a non-zero byte in the RAM size
+warning: Overwrote a non-zero byte in the cartridge type [-Woverwrite]
+warning: Overwrote a non-zero byte in the RAM size [-Woverwrite]

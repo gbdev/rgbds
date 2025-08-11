@@ -1,2 +1,1 @@
-warning: [-Wtrim-nonempty]
-    Trimming a nonempty tile (configure with '-x/--trim-end')
+warning: Trimming a nonempty tile (configure with '-x/--trim-end') [-Wtrim-nonempty]

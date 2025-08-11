@@ -1,4 +1,2 @@
-warning: [-Woverwrite]
-    Overwrote a non-zero byte in the CGB flag
-warning: [-Woverwrite]
-    Overwrote a non-zero byte in the header checksum
+warning: Overwrote a non-zero byte in the CGB flag [-Woverwrite]
+warning: Overwrote a non-zero byte in the header checksum [-Woverwrite]

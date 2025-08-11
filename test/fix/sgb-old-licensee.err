@@ -1,4 +1,2 @@
-warning: [-Woverwrite]
-    Overwrote a non-zero byte in the SGB flag
-warning: [-Wsgb]
-    SGB compatibility enabled, but old licensee was 0xc5, not 0x33
+warning: Overwrote a non-zero byte in the SGB flag [-Woverwrite]
+warning: SGB compatibility enabled, but old licensee was 0xc5, not 0x33 [-Wsgb]

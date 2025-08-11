@@ -1,2 +1,1 @@
-warning: [-Wmbc]
-    MBC "ROM+RAM+BATTERY" is under-specified and poorly supported
+warning: MBC "ROM+RAM+BATTERY" is under-specified and poorly supported [-Wmbc]

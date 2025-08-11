@@ -1,4 +1,2 @@
-warning: [-Wtruncation]
-    Truncating game ID "FOUR!" to 4 chars
-warning: [-Woverwrite]
-    Overwrote a non-zero byte in the manufacturer code
+warning: Truncating game ID "FOUR!" to 4 chars [-Wtruncation]
+warning: Overwrote a non-zero byte in the manufacturer code [-Woverwrite]

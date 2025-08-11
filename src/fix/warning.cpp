@@ -75,22 +75,26 @@ void warning(WarningID id, char const *fmt, ...) {
 
 	case WarningBehavior::ENABLED:
 		style_Set(stderr, STYLE_YELLOW, true);
-		fprintf(stderr, "warning: [-W%s]\n    ", flag);
+		fputs("warning: ", stderr);
 		style_Reset(stderr);
 		va_start(ap, fmt);
 		vfprintf(stderr, fmt, ap);
 		va_end(ap);
-		putc('\n', stderr);
+		style_Set(stderr, STYLE_YELLOW, true);
+		fprintf(stderr, " [-W%s]\n", flag);
+		style_Reset(stderr);
 		break;
 
 	case WarningBehavior::ERROR:
 		style_Set(stderr, STYLE_RED, true);
-		fprintf(stderr, "error: [-Werror=%s]\n    ", flag);
+		fputs("error: ", stderr);
 		style_Reset(stderr);
 		va_start(ap, fmt);
 		vfprintf(stderr, fmt, ap);
 		va_end(ap);
-		putc('\n', stderr);
+		style_Set(stderr, STYLE_RED, true);
+		fprintf(stderr, " [-Werror=%s]\n", flag);
+		style_Reset(stderr);
 
 		warnings.incrementErrors();
 		break;
