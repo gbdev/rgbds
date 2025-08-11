@@ -377,7 +377,11 @@ static int32_t computeRPNExpr(Patch const &patch, std::vector<Symbol> const &fil
 		case RPN_HRAM:
 			value = popRPN(patch);
 			if (value < 0xFF00 || value > 0xFFFF) {
-				firstErrorAt(patch, "Address $%" PRIx32 " for LDH is not in HRAM range", value);
+				firstErrorAt(
+				    patch,
+				    "Address $%" PRIx32 " for LDH is not in HRAM range; use LD instead",
+				    value
+				);
 				value = 0;
 			}
 			value &= 0xFF;
@@ -387,7 +391,9 @@ static int32_t computeRPNExpr(Patch const &patch, std::vector<Symbol> const &fil
 			value = popRPN(patch);
 			// Acceptable values are 0x00, 0x08, 0x10, ..., 0x38
 			if (value & ~0x38) {
-				firstErrorAt(patch, "Value $%" PRIx32 " is not a RST vector", value);
+				firstErrorAt(
+				    patch, "Value $%" PRIx32 " is not a RST vector; use CALL instead", value
+				);
 				value = 0;
 			}
 			value |= 0xC7;

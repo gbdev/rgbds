@@ -1,6 +1,6 @@
 error: JR target must be between -128 and 127 bytes away, not 190; use JP instead
     at invalid-patches.asm(10)
-error: Address $0 for LDH is not in HRAM range
+error: Address $0 for LDH is not in HRAM range; use LD instead
     at invalid-patches.asm(9)
 error: Requested SIZEOF() of undefined section "NonexistentSection"
     at invalid-patches.asm(8)
