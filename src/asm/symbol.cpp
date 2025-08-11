@@ -696,8 +696,22 @@ void sym_Init(time_t now) {
 	    time_utc
 	);
 
-	sym_AddString("__TIME__"s, std::make_shared<std::string>(savedTIME))->isBuiltin = true;
-	sym_AddString("__DATE__"s, std::make_shared<std::string>(savedDATE))->isBuiltin = true;
+	Symbol *timeSymbol = &createSymbol("__TIME__"s);
+	timeSymbol->type = SYM_EQUS;
+	timeSymbol->data = []() {
+		warning(WARNING_OBSOLETE, "`__TIME__` is deprecated; use `__ISO_8601_LOCAL__`");
+		return std::make_shared<std::string>(savedTIME);
+	};
+	timeSymbol->isBuiltin = true;
+
+	Symbol *dateSymbol = &createSymbol("__DATE__"s);
+	dateSymbol->type = SYM_EQUS;
+	dateSymbol->data = []() {
+		warning(WARNING_OBSOLETE, "`__DATE__` is deprecated; use `__ISO_8601_LOCAL__`");
+		return std::make_shared<std::string>(savedDATE);
+	};
+	dateSymbol->isBuiltin = true;
+
 	sym_AddString(
 	    "__ISO_8601_LOCAL__"s, std::make_shared<std::string>(savedTIMESTAMP_ISO8601_LOCAL)
 	)
