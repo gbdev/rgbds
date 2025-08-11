@@ -107,6 +107,7 @@ void FileStackNode::printBacktrace(uint32_t curLineNo) const {
 	} else {
 		size_t last = warnings.traceDepth / 2;
 		size_t first = warnings.traceDepth - last;
+		size_t skipped = n - warnings.traceDepth;
 		for (size_t i = 0; i < first; ++i) {
 			style_Reset(stderr);
 			fprintf(stderr, "    %s ", i == 0 ? "at" : "<-");
@@ -114,7 +115,7 @@ void FileStackNode::printBacktrace(uint32_t curLineNo) const {
 			putc('\n', stderr);
 		}
 		style_Reset(stderr);
-		fprintf(stderr, "    ...%zu more%s\n", n - warnings.traceDepth, last ? "..." : "");
+		fprintf(stderr, "    ...%zu more%s\n", skipped, last ? "..." : "");
 		for (size_t i = n - last; i < n; ++i) {
 			style_Reset(stderr);
 			fputs("    <- ", stderr);

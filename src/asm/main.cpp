@@ -309,17 +309,15 @@ int main(int argc, char *argv[]) {
 				break;
 			}
 
-			unsigned long traceDepth = strtoul(musl_optarg, &endptr, 0);
+			warnings.traceDepth = strtoul(musl_optarg, &endptr, 0);
 
 			if (musl_optarg[0] == '\0' || *endptr != '\0') {
 				fatal("Invalid argument for option 'B'");
 			}
 
-			if (traceDepth > INT32_MAX) {
+			if (warnings.traceDepth >= UINT64_MAX) {
 				fatal("Argument for option 'B' is too large");
 			}
-
-			warnings.traceDepth = static_cast<int32_t>(traceDepth);
 			break;
 		}
 

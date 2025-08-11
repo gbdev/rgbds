@@ -233,6 +233,7 @@ void FileStackNode::printBacktrace(uint32_t curLineNo) const {
 	} else {
 		size_t last = warnings.traceDepth / 2;
 		size_t first = warnings.traceDepth - last;
+		size_t skipped = n - warnings.traceDepth;
 		for (size_t i = 0; i < first; ++i) {
 			style_Reset(stderr);
 			fprintf(stderr, "    %s ", i == 0 ? "at" : "<-");
@@ -240,7 +241,7 @@ void FileStackNode::printBacktrace(uint32_t curLineNo) const {
 			putc('\n', stderr);
 		}
 		style_Reset(stderr);
-		fprintf(stderr, "    ...%zu more%s\n", n - warnings.traceDepth, last ? "..." : "");
+		fprintf(stderr, "    ...%zu more%s\n", skipped, last ? "..." : "");
 		for (size_t i = n - last; i < n; ++i) {
 			style_Reset(stderr);
 			fputs("    <- ", stderr);
@@ -372,14 +373,13 @@ int main(int argc, char *argv[]) {
 				break;
 			}
 			char *endptr;
-			unsigned long traceDepth = strtoul(musl_optarg, &endptr, 0);
+			warnings.traceDepth = strtoul(musl_optarg, &endptr, 0);
 			if (musl_optarg[0] == '\0' || *endptr != '\0') {
 				fatal("Invalid argument for option 'B'");
 			}
-			if (traceDepth > INT32_MAX) {
+			if (warnings.traceDepth >= UINT64_MAX) {
 				fatal("Argument for option 'B' is too large");
 			}
-			warnings.traceDepth = static_cast<int32_t>(traceDepth);
 			break;
 		}
 		case 'd':
