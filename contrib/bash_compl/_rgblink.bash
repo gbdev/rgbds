@@ -12,6 +12,7 @@ _rgblink_completions() {
 		[W]="warning:warning"
 		[M]="no-sym-in-map:normal"
 		[d]="dmg:normal"
+		[B]="backtrace:unk"
 		[l]="linkerscript:glob-*"
 		[m]="map:glob-*.map"
 		[n]="sym:glob-*.sym"

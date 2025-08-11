@@ -1,2 +1,2 @@
-FATAL: section-name-undefined.asm(1):
-    Undefined symbol "Undefined"
+FATAL: Undefined symbol "Undefined"
+    at section-name-undefined.asm(1)

@@ -1,7 +1,7 @@
-warning: rept-shift.asm(15) -> rept-shift.asm::m(10): [-Wmacro-shift]
-    Cannot shift macro arguments past their end
-warning: rept-shift.asm(15) -> rept-shift.asm::m(11): [-Wmacro-shift]
-    Cannot shift macro arguments past their end
-error: rept-shift.asm(15) -> rept-shift.asm::m(12):
-    Macro argument '\1' not defined
+warning: Cannot shift macro arguments past their end [-Wmacro-shift]
+    at rept-shift.asm::m(10) <- rept-shift.asm(15)
+warning: Cannot shift macro arguments past their end [-Wmacro-shift]
+    at rept-shift.asm::m(11) <- rept-shift.asm(15)
+error: Macro argument '\1' not defined
+    at rept-shift.asm::m(12) <- rept-shift.asm(15)
 Assembly aborted with 1 error!

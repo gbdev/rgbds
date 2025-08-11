@@ -1,7 +1,7 @@
-error: def-scoped.asm(10):
-    syntax error, unexpected local label, expecting symbol
-error: def-scoped.asm(13):
-    syntax error, unexpected local label, expecting symbol
-error: def-scoped.asm(16):
-    syntax error, unexpected local label, expecting symbol
+error: syntax error, unexpected local label, expecting symbol
+    at def-scoped.asm(10)
+error: syntax error, unexpected local label, expecting symbol
+    at def-scoped.asm(13)
+error: syntax error, unexpected local label, expecting symbol
+    at def-scoped.asm(16)
 Assembly aborted with 3 errors!

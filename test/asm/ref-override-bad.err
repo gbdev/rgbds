@@ -1,5 +1,9 @@
-error: ref-override-bad.asm(8):
-    'X' already referenced at ref-override-bad.asm(7)
-error: ref-override-bad.asm(13):
-    'Y' already referenced at ref-override-bad.asm(10)
+error: 'X' already referenced
+    at ref-override-bad.asm(8)
+    and also:
+    at ref-override-bad.asm(7)
+error: 'Y' already referenced
+    at ref-override-bad.asm(13)
+    and also:
+    at ref-override-bad.asm(10)
 Assembly aborted with 2 errors!

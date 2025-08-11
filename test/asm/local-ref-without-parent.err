@@ -1,2 +1,2 @@
-FATAL: local-ref-without-parent.asm(3):
-    Unqualified local label '.test' in main scope
+FATAL: Unqualified local label '.test' in main scope
+    at local-ref-without-parent.asm(3)

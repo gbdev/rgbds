@@ -8,9 +8,12 @@
 
 #include "diagnostics.hpp"
 
-#define warningAt(where, ...) warning(where.src, where.lineNo, __VA_ARGS__)
-#define errorAt(where, ...)   error(where.src, where.lineNo, __VA_ARGS__)
-#define fatalAt(where, ...)   fatal(where.src, where.lineNo, __VA_ARGS__)
+#define warningAt(where, ...) warning((where).src, (where).lineNo, __VA_ARGS__)
+#define errorAt(where, ...)   error((where).src, (where).lineNo, __VA_ARGS__)
+#define fatalAt(where, ...)   fatal((where).src, (where).lineNo, __VA_ARGS__)
+
+#define fatalTwoAt(where1, where2, ...) \
+	fatalTwo(*(where1).src, (where1).lineNo, *(where2).src, (where2).lineNo, __VA_ARGS__)
 
 enum WarningLevel {
 	LEVEL_DEFAULT,    // Warnings that are enabled by default
@@ -46,8 +49,6 @@ void warning(char const *fmt, ...);
 void error(FileStackNode const *src, uint32_t lineNo, char const *fmt, ...);
 [[gnu::format(printf, 1, 2)]]
 void error(char const *fmt, ...);
-[[gnu::format(printf, 1, 2)]]
-void errorNoDump(char const *fmt, ...);
 
 void scriptError(char const *name, uint32_t lineNo, char const *fmt, va_list args);
 
@@ -55,6 +56,16 @@ void scriptError(char const *name, uint32_t lineNo, char const *fmt, va_list arg
 void fatal(FileStackNode const *src, uint32_t lineNo, char const *fmt, ...);
 [[gnu::format(printf, 1, 2), noreturn]]
 void fatal(char const *fmt, ...);
+
+[[gnu::format(printf, 5, 6), noreturn]]
+void fatalTwo(
+    FileStackNode const &src1,
+    uint32_t lineNo1,
+    FileStackNode const &src2,
+    uint32_t lineNo2,
+    char const *fmt,
+    ...
+);
 
 void requireZeroErrors();
 

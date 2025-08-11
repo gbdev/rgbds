@@ -1,9 +1,9 @@
-error: interpolation.asm(18):
-    Interpolated symbol "undef" does not exist
-error: interpolation.asm(22):
-    Interpolated symbol "label" does not exist
-error: interpolation.asm(29):
-    Interpolated symbol "foo" is not a numeric or string symbol
-error: interpolation.asm(32):
-    Interpolated symbol "xor" is a reserved keyword; add a '#' prefix to use it as a raw symbol
+error: Interpolated symbol "undef" does not exist
+    at interpolation.asm(18)
+error: Interpolated symbol "label" does not exist
+    at interpolation.asm(22)
+error: Interpolated symbol "foo" is not a numeric or string symbol
+    at interpolation.asm(29)
+error: Interpolated symbol "xor" is a reserved keyword; add a '#' prefix to use it as a raw symbol
+    at interpolation.asm(32)
 Assembly aborted with 4 errors!

@@ -36,7 +36,7 @@ Options options;
 static char const *linkerScriptName = nullptr; // -l
 
 // Short options
-static char const *optstring = "dhl:m:Mn:O:o:p:S:tVvW:wx";
+static char const *optstring = "B:dhl:m:Mn:O:o:p:S:tVvW:wx";
 
 // Variables for the long-only options
 static int longOpt; // `--color`
@@ -49,6 +49,7 @@ static int longOpt; // `--color`
 // This is because long opt matching, even to a single char, is prioritized
 // over short opt matching.
 static option const longopts[] = {
+    {"backtrace",     required_argument, nullptr,  'B'},
     {"dmg",           no_argument,       nullptr,  'd'},
     {"help",          no_argument,       nullptr,  'h'},
     {"linkerscript",  required_argument, nullptr,  'l'},
@@ -73,8 +74,8 @@ static option const longopts[] = {
 static Usage usage = {
     .name = "rgblink",
     .flags = {
-        "[-dhMtVvwx]", "[-l script]", "[-m map_file]", "[-n sym_file]", "[-O overlay_file]",
-        "[-o out_file]", "[-p pad_value]", "[-S spec]", "<file> ...",
+        "[-dhMtVvwx]", "[-B depth]", "[-l script]", "[-m map_file]", "[-n sym_file]",
+        "[-O overlay_file]", "[-o out_file]", "[-p pad_value]", "[-S spec]", "<file> ...",
     },
     .options = {
         {{"-l", "--linkerscript <path>"}, {"set the input linker script"}},
@@ -179,37 +180,6 @@ static void verboseOutputConfig(int argc, char *argv[]) {
 	style_Reset(stderr);
 }
 // LCOV_EXCL_STOP
-
-std::string const &FileStackNode::dump(uint32_t curLineNo) const {
-	if (std::holds_alternative<std::vector<uint32_t>>(data)) {
-		assume(parent); // REPT nodes use their parent's name
-		std::string const &lastName = parent->dump(lineNo);
-		style_Set(stderr, STYLE_CYAN, false);
-		fputs(" -> ", stderr);
-		style_Set(stderr, STYLE_CYAN, true);
-		fputs(lastName.c_str(), stderr);
-		for (uint32_t iter : iters()) {
-			fprintf(stderr, "::REPT~%" PRIu32, iter);
-		}
-		style_Set(stderr, STYLE_CYAN, false);
-		fprintf(stderr, "(%" PRIu32 ")", curLineNo);
-		style_Reset(stderr);
-		return lastName;
-	} else {
-		if (parent) {
-			parent->dump(lineNo);
-			style_Set(stderr, STYLE_CYAN, false);
-			fputs(" -> ", stderr);
-		}
-		std::string const &nodeName = name();
-		style_Set(stderr, STYLE_CYAN, true);
-		fputs(nodeName.c_str(), stderr);
-		style_Set(stderr, STYLE_CYAN, false);
-		fprintf(stderr, "(%" PRIu32 ")", curLineNo);
-		style_Reset(stderr);
-		return nodeName;
-	}
-}
 
 static void parseScrambleSpec(char *spec) {
 	// clang-format off: vertically align nested initializers
@@ -325,6 +295,21 @@ int main(int argc, char *argv[]) {
 	// Parse options
 	for (int ch; (ch = musl_getopt_long_only(argc, argv, optstring, longopts, nullptr)) != -1;) {
 		switch (ch) {
+		case 'B': {
+			if (!strcasecmp(musl_optarg, "collapse")) {
+				warnings.traceDepth = TRACE_COLLAPSE;
+				break;
+			}
+			char *endptr;
+			warnings.traceDepth = strtoul(musl_optarg, &endptr, 0);
+			if (musl_optarg[0] == '\0' || *endptr != '\0') {
+				fatal("Invalid argument for option 'B'");
+			}
+			if (warnings.traceDepth >= UINT64_MAX) {
+				fatal("Argument for option 'B' is too large");
+			}
+			break;
+		}
 		case 'd':
 			options.isDmgMode = true;
 			options.isWRAM0Mode = true;

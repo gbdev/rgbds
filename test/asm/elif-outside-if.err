@@ -1,2 +1,2 @@
-FATAL: elif-outside-if.asm(1):
-    Found ELIF outside of an IF construct
+FATAL: Found ELIF outside of an IF construct
+    at elif-outside-if.asm(1)

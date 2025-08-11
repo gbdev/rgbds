@@ -1,4 +1,4 @@
-warning: patch-overflow.asm(3): [-Wtruncation]
-    Value $14000 is not 16-bit
-warning: patch-overflow.asm(2): [-Wtruncation]
-    Value $4000 is not 8-bit
+warning: Value $14000 is not 16-bit [-Wtruncation]
+    at patch-overflow.asm(3)
+warning: Value $4000 is not 8-bit [-Wtruncation]
+    at patch-overflow.asm(2)

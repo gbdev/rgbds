@@ -1,13 +1,13 @@
-error: label-scope.asm(3):
-    Undefined symbol '@'
-error: label-scope.asm(3):
-    Undefined symbol '.'
-error: label-scope.asm(3):
-    Undefined symbol '..'
-error: label-scope.asm(12):
-    Built-in symbol '@' cannot be purged
-error: label-scope.asm(12):
-    Built-in symbol '.' cannot be purged
-error: label-scope.asm(12):
-    Built-in symbol '..' cannot be purged
+error: Undefined symbol '@'
+    at label-scope.asm(3)
+error: Undefined symbol '.'
+    at label-scope.asm(3)
+error: Undefined symbol '..'
+    at label-scope.asm(3)
+error: Built-in symbol '@' cannot be purged
+    at label-scope.asm(12)
+error: Built-in symbol '.' cannot be purged
+    at label-scope.asm(12)
+error: Built-in symbol '..' cannot be purged
+    at label-scope.asm(12)
 Assembly aborted with 6 errors!

@@ -1,2 +1,2 @@
-FATAL: endc-outside-if.asm(1):
-    Found ENDC outside of an IF construct
+FATAL: Found ENDC outside of an IF construct
+    at endc-outside-if.asm(1)

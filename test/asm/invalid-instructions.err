@@ -1,35 +1,35 @@
-error: invalid-instructions.asm(1):
-    Address $10000 is not 16-bit
-error: invalid-instructions.asm(2):
-    LD [HL], [HL] is not a valid instruction
-error: invalid-instructions.asm(3):
-    Base value must be equal to $FF00 for $FF00+C
-error: invalid-instructions.asm(4):
-    syntax error, unexpected c, expecting hl
-error: invalid-instructions.asm(5):
-    syntax error, unexpected bc, expecting hl
-error: invalid-instructions.asm(6):
-    syntax error, unexpected number, expecting hl
-warning: invalid-instructions.asm(7): [-Wtruncation]
-    Expression must be 3-bit
-error: invalid-instructions.asm(7):
-    Invalid bit index 8 for BIT
-error: invalid-instructions.asm(8):
-    Invalid address $40 for RST
-error: invalid-instructions.asm(10):
-    LD BC, BC is not a valid instruction; use LD B, B and LD C, C
-error: invalid-instructions.asm(11):
-    LD DE, HL is not a valid instruction; use LD D, H and LD E, L
-error: invalid-instructions.asm(12):
-    LD HL, DE is not a valid instruction; use LD H, D and LD L, E
-error: invalid-instructions.asm(14):
-    LD HL, SP is not a valid instruction; use LD HL, SP + 0
-error: invalid-instructions.asm(17):
-    LD SP, BC is not a valid instruction
-error: invalid-instructions.asm(18):
-    syntax error, unexpected sp
-error: invalid-instructions.asm(20):
-    syntax error, unexpected af
-error: invalid-instructions.asm(21):
-    syntax error, unexpected af
+error: Address $10000 is not 16-bit
+    at invalid-instructions.asm(1)
+error: LD [HL], [HL] is not a valid instruction
+    at invalid-instructions.asm(2)
+error: Base value must be equal to $FF00 for $FF00+C
+    at invalid-instructions.asm(3)
+error: syntax error, unexpected c, expecting hl
+    at invalid-instructions.asm(4)
+error: syntax error, unexpected bc, expecting hl
+    at invalid-instructions.asm(5)
+error: syntax error, unexpected number, expecting hl
+    at invalid-instructions.asm(6)
+warning: Expression must be 3-bit [-Wtruncation]
+    at invalid-instructions.asm(7)
+error: Invalid bit index 8 for BIT
+    at invalid-instructions.asm(7)
+error: Invalid address $40 for RST
+    at invalid-instructions.asm(8)
+error: LD BC, BC is not a valid instruction; use LD B, B and LD C, C
+    at invalid-instructions.asm(10)
+error: LD DE, HL is not a valid instruction; use LD D, H and LD E, L
+    at invalid-instructions.asm(11)
+error: LD HL, DE is not a valid instruction; use LD H, D and LD L, E
+    at invalid-instructions.asm(12)
+error: LD HL, SP is not a valid instruction; use LD HL, SP + 0
+    at invalid-instructions.asm(14)
+error: LD SP, BC is not a valid instruction
+    at invalid-instructions.asm(17)
+error: syntax error, unexpected sp
+    at invalid-instructions.asm(18)
+error: syntax error, unexpected af
+    at invalid-instructions.asm(20)
+error: syntax error, unexpected af
+    at invalid-instructions.asm(21)
 Assembly aborted with 16 errors!

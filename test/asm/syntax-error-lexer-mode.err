@@ -1,5 +1,5 @@
-error: syntax-error-lexer-mode.asm(7):
-    syntax error, unexpected af
-error: syntax-error-lexer-mode.asm(11):
-    syntax error, unexpected af, expecting symbol
+error: syntax error, unexpected af
+    at syntax-error-lexer-mode.asm(7)
+error: syntax error, unexpected af, expecting symbol
+    at syntax-error-lexer-mode.asm(11)
 Assembly aborted with 2 errors!

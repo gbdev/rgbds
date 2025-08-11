@@ -1,23 +1,23 @@
-error: blue-paint.asm(9) -> blue-paint.asm::arg_to_arg(7):
-    Invalid character '3' after line continuation
-error: blue-paint.asm(9) -> blue-paint.asm::arg_to_arg(7):
-    syntax error, unexpected number
-error: blue-paint.asm(9) -> blue-paint.asm::arg_to_arg(7):
-    Invalid character '}'
-error: blue-paint.asm(15) -> blue-paint.asm::arg_to_interp(13):
-    Invalid character '{'
-error: blue-paint.asm(15) -> blue-paint.asm::arg_to_interp(13):
-    Invalid character '}'
-error: blue-paint.asm(26) -> blue-paint.asm::endless(24):
-    Invalid character '1' after line continuation
-error: blue-paint.asm(26) -> blue-paint.asm::endless(24):
-    syntax error, unexpected number
-FATAL: blue-paint.asm(30):
-    Recursion limit (5) exceeded
-while expanding symbol "infinite"
-while expanding symbol "infinite"
-while expanding symbol "infinite"
-while expanding symbol "infinite"
-while expanding symbol "infinite"
-while expanding symbol "infinite"
-while expanding symbol "infinite"
+error: Invalid character '3' after line continuation
+    at blue-paint.asm::arg_to_arg(7) <- blue-paint.asm(9)
+error: syntax error, unexpected number
+    at blue-paint.asm::arg_to_arg(7) <- blue-paint.asm(9)
+error: Invalid character '}'
+    at blue-paint.asm::arg_to_arg(7) <- blue-paint.asm(9)
+error: Invalid character '{'
+    at blue-paint.asm::arg_to_interp(13) <- blue-paint.asm(15)
+error: Invalid character '}'
+    at blue-paint.asm::arg_to_interp(13) <- blue-paint.asm(15)
+error: Invalid character '1' after line continuation
+    at blue-paint.asm::endless(24) <- blue-paint.asm(26)
+error: syntax error, unexpected number
+    at blue-paint.asm::endless(24) <- blue-paint.asm(26)
+FATAL: Recursion limit (5) exceeded
+    at blue-paint.asm(30)
+    while expanding symbol "infinite"
+    while expanding symbol "infinite"
+    while expanding symbol "infinite"
+    while expanding symbol "infinite"
+    while expanding symbol "infinite"
+    while expanding symbol "infinite"
+    while expanding symbol "infinite"

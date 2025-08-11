@@ -1,1 +1,5 @@
-error: Section "Frag" is defined with address $0000 at fragment-align/org-bad/a.asm(2), but with 4-byte alignment (offset 2) at fragment-align/org-bad/b.asm(2)
+FATAL: Section "Frag" is defined with address $0000, but also with 4-byte alignment (offset 2)
+    at fragment-align/org-bad/a.asm(2)
+    and also:
+    at fragment-align/org-bad/b.asm(2)
+Linking aborted with 1 error

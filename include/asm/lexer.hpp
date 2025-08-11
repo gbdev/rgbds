@@ -133,7 +133,7 @@ void lexer_ReachELSEBlock();
 
 void lexer_CheckRecursionDepth();
 uint32_t lexer_GetLineNo();
-void lexer_DumpStringExpansions();
+void lexer_TraceStringExpansions();
 
 struct Capture {
 	uint32_t lineNo;

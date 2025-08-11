@@ -28,6 +28,7 @@ local args=(
 	'(-w --wramx)'{-w,--wramx}'[Disable WRAM banking]'
 	'(-x --nopad)'{-x,--nopad}'[Disable padding the end of the final file]'
 
+	'(-B --backtrace)'{-B,--backtrace}'+[Set backtrace depth or style]:depth:'
 	--color'[Whether to use color in output]:color:(auto always never)'
 	'(-l --linkerscript)'{-l,--linkerscript}"+[Use a linker script]:linker script:_files -g '*.link'"
 	'(-M --no-sym-in-map)'{-M,--no-sym-in-map}'[Do not output symbol names in map file]'

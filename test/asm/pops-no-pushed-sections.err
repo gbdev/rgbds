@@ -1,2 +1,2 @@
-FATAL: pops-no-pushed-sections.asm(1):
-    No entries in the section stack
+FATAL: No entries in the section stack
+    at pops-no-pushed-sections.asm(1)

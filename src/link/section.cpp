@@ -24,30 +24,28 @@ void sect_ForEach(void (*callback)(Section &)) {
 static void checkAgainstFixedAddress(Section const &target, Section const &other, uint16_t org) {
 	if (target.isAddressFixed) {
 		if (target.org != org) {
-			errorNoDump(
-			    "Section \"%s\" is defined with address $%04" PRIx16 " at ",
+			fatalTwoAt(
+			    target,
+			    other,
+			    "Section \"%s\" is defined with address $%04" PRIx16
+			    ", but also with address $%04" PRIx16,
 			    target.name.c_str(),
-			    target.org
+			    target.org,
+			    other.org
 			);
-			target.src->dump(target.lineNo);
-			fprintf(stderr, ", but with address $%04" PRIx16 " at ", other.org);
-			other.src->dump(other.lineNo);
-			putc('\n', stderr);
-			exit(1);
 		}
 	} else if (target.isAlignFixed) {
 		if ((org - target.alignOfs) & target.alignMask) {
-			errorNoDump(
-			    "Section \"%s\" is defined with %d-byte alignment (offset %" PRIu16 ") at ",
+			fatalTwoAt(
+			    target,
+			    other,
+			    "Section \"%s\" is defined with %d-byte alignment (offset %" PRIu16
+			    "), but also with address $%04" PRIx16,
 			    target.name.c_str(),
 			    target.alignMask + 1,
-			    target.alignOfs
+			    target.alignOfs,
+			    other.org
 			);
-			target.src->dump(target.lineNo);
-			fprintf(stderr, ", but with address $%04" PRIx16 " at ", other.org);
-			other.src->dump(other.lineNo);
-			putc('\n', stderr);
-			exit(1);
 		}
 	}
 }
@@ -55,41 +53,31 @@ static void checkAgainstFixedAddress(Section const &target, Section const &other
 static bool checkAgainstFixedAlign(Section const &target, Section const &other, int32_t ofs) {
 	if (target.isAddressFixed) {
 		if ((target.org - ofs) & other.alignMask) {
-			errorNoDump(
-			    "Section \"%s\" is defined with address $%04" PRIx16 " at ",
+			fatalTwoAt(
+			    target,
+			    other,
+			    "Section \"%s\" is defined with address $%04" PRIx16
+			    ", but also with %d-byte alignment (offset %" PRIu16 ")",
 			    target.name.c_str(),
-			    target.org
-			);
-			target.src->dump(target.lineNo);
-			fprintf(
-			    stderr,
-			    ", but with %d-byte alignment (offset %" PRIu16 ") at ",
+			    target.org,
 			    other.alignMask + 1,
 			    other.alignOfs
 			);
-			other.src->dump(other.lineNo);
-			putc('\n', stderr);
-			exit(1);
 		}
 		return false;
 	} else if (target.isAlignFixed
 	           && (other.alignMask & target.alignOfs) != (target.alignMask & ofs)) {
-		errorNoDump(
-		    "Section \"%s\" is defined with %d-byte alignment (offset %" PRIu16 ") at ",
+		fatalTwoAt(
+		    target,
+		    other,
+		    "Section \"%s\" is defined with %d-byte alignment (offset %" PRIu16
+		    "), but also with %d-byte alignment (offset %" PRIu16 ")",
 		    target.name.c_str(),
 		    target.alignMask + 1,
-		    target.alignOfs
-		);
-		target.src->dump(target.lineNo);
-		fprintf(
-		    stderr,
-		    ", but with %d-byte alignment (offset %" PRIu16 ") at ",
+		    target.alignOfs,
 		    other.alignMask + 1,
 		    other.alignOfs
 		);
-		other.src->dump(other.lineNo);
-		putc('\n', stderr);
-		exit(1);
 	} else {
 		return !target.isAlignFixed || (other.alignMask > target.alignMask);
 	}
@@ -129,34 +117,25 @@ static void checkFragmentCompat(Section &target, Section &other) {
 
 static void mergeSections(Section &target, std::unique_ptr<Section> &&other) {
 	if (target.modifier != other->modifier) {
-		errorNoDump(
-		    "Section \"%s\" is defined as SECTION %s at ",
+		fatalTwoAt(
+		    target,
+		    *other,
+		    "Section \"%s\" is defined as SECTION %s, but also as SECTION %s",
 		    target.name.c_str(),
-		    sectionModNames[target.modifier]
+		    sectionModNames[target.modifier],
+		    sectionModNames[other->modifier]
 		);
-		target.src->dump(target.lineNo);
-		fprintf(stderr, ", but as SECTION %s at ", sectionModNames[other->modifier]);
-		other->src->dump(other->lineNo);
-		putc('\n', stderr);
-		exit(1);
 	} else if (other->modifier == SECTION_NORMAL) {
-		errorNoDump("Section \"%s\" is defined at ", target.name.c_str());
-		target.src->dump(target.lineNo);
-		fputs(", but also at ", stderr);
-		other->src->dump(other->lineNo);
-		putc('\n', stderr);
-		exit(1);
+		fatalTwoAt(target, *other, "Section \"%s\" is already defined", target.name.c_str());
 	} else if (target.type != other->type) {
-		errorNoDump(
-		    "Section \"%s\" is defined with type %s at ",
+		fatalTwoAt(
+		    target,
+		    *other,
+		    "Section \"%s\" is defined with type %s, but also with type %s",
 		    target.name.c_str(),
-		    sectionTypeInfo[target.type].name.c_str()
+		    sectionTypeInfo[target.type].name.c_str(),
+		    sectionTypeInfo[other->type].name.c_str()
 		);
-		target.src->dump(target.lineNo);
-		fprintf(stderr, ", but with type %s at ", sectionTypeInfo[other->type].name.c_str());
-		other->src->dump(other->lineNo);
-		putc('\n', stderr);
-		exit(1);
 	}
 
 	if (other->isBankFixed) {
@@ -164,16 +143,14 @@ static void mergeSections(Section &target, std::unique_ptr<Section> &&other) {
 			target.isBankFixed = true;
 			target.bank = other->bank;
 		} else if (target.bank != other->bank) {
-			errorNoDump(
-			    "Section \"%s\" is defined with bank %" PRIu32 " at ",
+			fatalTwoAt(
+			    target,
+			    *other,
+			    "Section \"%s\" is defined with bank %" PRIu32 ", but also with bank %" PRIu32,
 			    target.name.c_str(),
-			    target.bank
+			    target.bank,
+			    other->bank
 			);
-			target.src->dump(target.lineNo);
-			fprintf(stderr, ", but with bank %" PRIu32 " at ", other->bank);
-			other->src->dump(other->lineNo);
-			putc('\n', stderr);
-			exit(1);
 		}
 	}
 

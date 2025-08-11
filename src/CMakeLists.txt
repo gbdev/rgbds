@@ -60,6 +60,7 @@ set(rgbasm_src
 set(rgblink_src
     "${BISON_LINKER_SCRIPT_PARSER_OUTPUT_SOURCE}"
     "link/assign.cpp"
+    "link/fstack.cpp"
     "link/lexer.cpp"
     "link/layout.cpp"
     "link/main.cpp"

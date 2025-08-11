@@ -22,6 +22,7 @@ Diagnostics<WarningLevel, WarningID> warnings = {
     },
     .paramWarnings = {},
     .state = DiagnosticsState<WarningID>(),
+    .traceDepth = 0,
     .nbErrors = 0,
 };
 // clang-format on

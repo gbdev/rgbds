@@ -1,7 +1,7 @@
-error: character-escapes.asm(10) -> character-escapes.asm::m(6):
-    Illegal character escape 'z'
-error: character-escapes.asm(10) -> character-escapes.asm::m(7):
-    Invalid character '\' in bracketed macro argument
-error: character-escapes.asm(10) -> character-escapes.asm::m(8):
-    Invalid character '\t' in bracketed macro argument
+error: Illegal character escape 'z'
+    at character-escapes.asm::m(6) <- character-escapes.asm(10)
+error: Invalid character '\' in bracketed macro argument
+    at character-escapes.asm::m(7) <- character-escapes.asm(10)
+error: Invalid character '\t' in bracketed macro argument
+    at character-escapes.asm::m(8) <- character-escapes.asm(10)
 Assembly aborted with 3 errors!

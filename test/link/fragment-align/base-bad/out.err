@@ -1,1 +1,5 @@
-error: Section "Frag" is defined with 2-byte alignment (offset 1) at fragment-align/base-bad/a.asm(2), but with 4-byte alignment (offset 3) at fragment-align/base-bad/b.asm(2)
+FATAL: Section "Frag" is defined with 2-byte alignment (offset 1), but also with 4-byte alignment (offset 3)
+    at fragment-align/base-bad/a.asm(2)
+    and also:
+    at fragment-align/base-bad/b.asm(2)
+Linking aborted with 1 error

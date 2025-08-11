@@ -1,2 +1,2 @@
-warning: block-comment-contents-error.asm(1): [-Wnested-comment]
-    /* in block comment
+warning: /* in block comment [-Wnested-comment]
+    at block-comment-contents-error.asm(1)

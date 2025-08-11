@@ -1,6 +1,10 @@
-error: Section "conflicting address" is defined with address $beef at section-union/org-conflict.asm(7), but with address $babe at section-union/org-conflict.asm(7)
+FATAL: Section "conflicting address" is defined with address $beef, but also with address $babe
+    at section-union/org-conflict.asm(7)
+    and also:
+    at section-union/org-conflict.asm(7)
+Linking aborted with 1 error
 ---
-error: <stdin>(16):
-    Section already declared as fixed at different address $beef
-FATAL: <stdin>(16):
-    Cannot create section "conflicting address" (1 error)
+error: Section already declared as fixed at different address $beef
+    at <stdin>(16)
+FATAL: Cannot create section "conflicting address" (1 error)
+    at <stdin>(16)

@@ -1,9 +1,9 @@
-error: error-recovery.asm(3):
-    syntax error, unexpected number
-error: error-recovery.asm(5) -> error-recovery.asm::REPT~1(7):
-    syntax error, unexpected symbol
-error: error-recovery.asm(5) -> error-recovery.asm::REPT~2(7):
-    syntax error, unexpected symbol
-error: error-recovery.asm(5) -> error-recovery.asm::REPT~3(7):
-    syntax error, unexpected symbol
+error: syntax error, unexpected number
+    at error-recovery.asm(3)
+error: syntax error, unexpected symbol
+    at error-recovery.asm::REPT~1(7) <- error-recovery.asm(5)
+error: syntax error, unexpected symbol
+    at error-recovery.asm::REPT~2(7) <- error-recovery.asm(5)
+error: syntax error, unexpected symbol
+    at error-recovery.asm::REPT~3(7) <- error-recovery.asm(5)
 Assembly aborted with 4 errors!

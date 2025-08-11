@@ -1,32 +1,32 @@
-error: unique-id.asm(11):
-    '\@' cannot be used outside of a macro or REPT/FOR block
-while expanding symbol "warn_unique"
-warning: unique-id.asm(11): [-Wuser]
-    !
-warning: unique-id.asm(12) -> unique-id.asm::m(4): [-Wuser]
-    _u1!
-warning: unique-id.asm(12) -> unique-id.asm::m(5) -> unique-id.asm::m::REPT~1(6): [-Wuser]
-    _u2!
-warning: unique-id.asm(12) -> unique-id.asm::m(5) -> unique-id.asm::m::REPT~2(6): [-Wuser]
-    _u3!
-warning: unique-id.asm(12) -> unique-id.asm::m(8): [-Wuser]
-    _u1!
-error: unique-id.asm(13):
-    '\@' cannot be used outside of a macro or REPT/FOR block
-while expanding symbol "warn_unique"
-warning: unique-id.asm(13): [-Wuser]
-    !
-warning: unique-id.asm(14) -> unique-id.asm::m(4): [-Wuser]
-    _u4!
-warning: unique-id.asm(14) -> unique-id.asm::m(5) -> unique-id.asm::m::REPT~1(6): [-Wuser]
-    _u5!
-warning: unique-id.asm(14) -> unique-id.asm::m(5) -> unique-id.asm::m::REPT~2(6): [-Wuser]
-    _u6!
-warning: unique-id.asm(14) -> unique-id.asm::m(8): [-Wuser]
-    _u4!
-error: unique-id.asm(15):
-    '\@' cannot be used outside of a macro or REPT/FOR block
-while expanding symbol "warn_unique"
-warning: unique-id.asm(15): [-Wuser]
-    !
+error: '\@' cannot be used outside of a macro or REPT/FOR block
+    at unique-id.asm(11)
+    while expanding symbol "warn_unique"
+warning: ! [-Wuser]
+    at unique-id.asm(11)
+warning: _u1! [-Wuser]
+    at unique-id.asm::m(4) <- unique-id.asm(12)
+warning: _u2! [-Wuser]
+    at unique-id.asm::m::REPT~1(6) <- unique-id.asm::m(5) <- unique-id.asm(12)
+warning: _u3! [-Wuser]
+    at unique-id.asm::m::REPT~2(6) <- unique-id.asm::m(5) <- unique-id.asm(12)
+warning: _u1! [-Wuser]
+    at unique-id.asm::m(8) <- unique-id.asm(12)
+error: '\@' cannot be used outside of a macro or REPT/FOR block
+    at unique-id.asm(13)
+    while expanding symbol "warn_unique"
+warning: ! [-Wuser]
+    at unique-id.asm(13)
+warning: _u4! [-Wuser]
+    at unique-id.asm::m(4) <- unique-id.asm(14)
+warning: _u5! [-Wuser]
+    at unique-id.asm::m::REPT~1(6) <- unique-id.asm::m(5) <- unique-id.asm(14)
+warning: _u6! [-Wuser]
+    at unique-id.asm::m::REPT~2(6) <- unique-id.asm::m(5) <- unique-id.asm(14)
+warning: _u4! [-Wuser]
+    at unique-id.asm::m(8) <- unique-id.asm(14)
+error: '\@' cannot be used outside of a macro or REPT/FOR block
+    at unique-id.asm(15)
+    while expanding symbol "warn_unique"
+warning: ! [-Wuser]
+    at unique-id.asm(15)
 Assembly aborted with 3 errors!

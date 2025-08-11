@@ -28,6 +28,7 @@ _rgbasm_completions() {
 		[V]="version:normal"
 		[W]="warning:warning"
 		[w]=":normal"
+		[B]="backtrace:unk"
 		[b]="binary-digits:unk"
 		[D]="define:unk"
 		[E]="export-all:normal"

@@ -1,2 +1,2 @@
-FATAL: divzero-section-bank.asm(1):
-    Division by zero
+FATAL: Division by zero
+    at divzero-section-bank.asm(1)

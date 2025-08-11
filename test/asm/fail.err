@@ -1,2 +1,2 @@
-FATAL: fail.asm(1):
-    oops
+FATAL: oops
+    at fail.asm(1)

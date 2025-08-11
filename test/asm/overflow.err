@@ -1,8 +1,8 @@
-warning: overflow.asm(23): [-Wdiv]
-    Division of -2147483648 by -1 yields -2147483648
-warning: overflow.asm(24): [-Wdiv]
-    Division of -2147483648 by -1 yields -2147483648
-warning: overflow.asm(44): [-Wlarge-constant]
-    Integer constant is too large
-warning: overflow.asm(47): [-Wlarge-constant]
-    Graphics constant is too large; only first 8 pixels considered
+warning: Division of -2147483648 by -1 yields -2147483648 [-Wdiv]
+    at overflow.asm(23)
+warning: Division of -2147483648 by -1 yields -2147483648 [-Wdiv]
+    at overflow.asm(24)
+warning: Integer constant is too large [-Wlarge-constant]
+    at overflow.asm(44)
+warning: Graphics constant is too large; only first 8 pixels considered [-Wlarge-constant]
+    at overflow.asm(47)

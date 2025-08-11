@@ -74,11 +74,10 @@ void fatal(char const *fmt, ...);
 [[gnu::format(printf, 1, 2)]]
 void error(char const *fmt, ...);
 
-// Used for errors that make it impossible to assemble correctly, but don't
-// affect the following code. The code will fail to assemble but the user will
-// get a list of all errors at the end, making it easier to fix all of them at
-// once.
-void error(std::function<void()> callback);
+// Used for errors that handle their own backtrace output. The code will fail
+// to assemble but the user will get a list of all errors at the end, making it
+// easier to fix all of them at once.
+void errorNoTrace(std::function<void()> callback);
 
 void requireZeroErrors();
 

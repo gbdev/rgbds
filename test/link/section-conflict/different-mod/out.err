@@ -1,1 +1,5 @@
-error: Section "test" is defined as SECTION FRAGMENT at section-conflict/different-mod/a.asm(1), but as SECTION UNION at section-conflict/different-mod/b.asm(1)
+FATAL: Section "test" is defined as SECTION FRAGMENT, but also as SECTION UNION
+    at section-conflict/different-mod/a.asm(1)
+    and also:
+    at section-conflict/different-mod/b.asm(1)
+Linking aborted with 1 error

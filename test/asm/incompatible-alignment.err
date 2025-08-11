@@ -1,4 +1,4 @@
-error: incompatible-alignment.asm(8):
-    Section already declared with incompatible 256-byte alignment (offset 0)
-FATAL: incompatible-alignment.asm(8):
-    Cannot create section "Test" (1 error)
+error: Section already declared with incompatible 256-byte alignment (offset 0)
+    at incompatible-alignment.asm(8)
+FATAL: Cannot create section "Test" (1 error)
+    at incompatible-alignment.asm(8)

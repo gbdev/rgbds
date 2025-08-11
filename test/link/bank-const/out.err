@@ -1,2 +1,3 @@
-error: bank-const/b.asm(2): Requested BANK() of non-label symbol "CONSTANT"
+error: Requested BANK() of non-label symbol "CONSTANT"
+    at bank-const/b.asm(2)
 Linking failed with 1 error

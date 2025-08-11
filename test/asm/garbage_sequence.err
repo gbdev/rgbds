@@ -1,11 +1,11 @@
-error: garbage_sequence.asm(1):
-    Invalid character '#'
-error: garbage_sequence.asm(2):
-    Invalid characters '?', 0xFF (is the file UTF-8?)
-error: garbage_sequence.asm(3):
-    Invalid characters '?', 0xFF, '?' (is the file UTF-8?)
-error: garbage_sequence.asm(3):
-    Invalid character '#'
-error: garbage_sequence.asm(3):
-    Invalid characters '#', '?', '?'
+error: Invalid character '#'
+    at garbage_sequence.asm(1)
+error: Invalid characters '?', 0xFF (is the file UTF-8?)
+    at garbage_sequence.asm(2)
+error: Invalid characters '?', 0xFF, '?' (is the file UTF-8?)
+    at garbage_sequence.asm(3)
+error: Invalid character '#'
+    at garbage_sequence.asm(3)
+error: Invalid characters '#', '?', '?'
+    at garbage_sequence.asm(3)
 Assembly aborted with 5 errors!

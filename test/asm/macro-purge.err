@@ -1,2 +1,2 @@
-warning: macro-purge.asm(6) -> macro-purge.asm::m(4): [-Wuser]
-    Where am I?
+warning: Where am I? [-Wuser]
+    at macro-purge.asm::m(4) <- macro-purge.asm(6)

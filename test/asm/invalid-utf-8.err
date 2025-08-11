@@ -1,3 +1,3 @@
-error: invalid-utf-8.asm(6) -> invalid-utf-8.asm::m(4):
-    Invalid characters 0xCF, 0xD3 (is the file UTF-8?)
+error: Invalid characters 0xCF, 0xD3 (is the file UTF-8?)
+    at invalid-utf-8.asm::m(4) <- invalid-utf-8.asm(6)
 Assembly aborted with 1 error!

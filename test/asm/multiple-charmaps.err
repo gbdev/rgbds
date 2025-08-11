@@ -1,21 +1,21 @@
-error: multiple-charmaps.asm(46) -> multiple-charmaps.asm::print_mapped(34):
-    Strings as numbers must be a single charmap unit
-error: multiple-charmaps.asm(54) -> multiple-charmaps.asm::print_mapped(34):
-    Strings as numbers must be a single charmap unit
-warning: multiple-charmaps.asm(64): [-Wcharmap-redef]
-    Overriding charmap mapping
-error: multiple-charmaps.asm(73) -> multiple-charmaps.asm::print_mapped(34):
-    Strings as numbers must be a single charmap unit
-error: multiple-charmaps.asm(95) -> multiple-charmaps.asm::print_mapped(34):
-    Strings as numbers must be a single charmap unit
-error: multiple-charmaps.asm(96) -> multiple-charmaps.asm::print_mapped(34):
-    Strings as numbers must be a single charmap unit
-error: multiple-charmaps.asm(104) -> multiple-charmaps.asm::print_mapped(34):
-    Strings as numbers must be a single charmap unit
-error: multiple-charmaps.asm(106) -> multiple-charmaps.asm::new_(9):
-    Charmap 'map1' already exists
-error: multiple-charmaps.asm(108) -> multiple-charmaps.asm::set_(15):
-    Charmap 'map5' doesn't exist
-error: multiple-charmaps.asm(110) -> multiple-charmaps.asm::pop_(30):
-    No entries in the charmap stack
+error: Strings as numbers must be a single charmap unit
+    at multiple-charmaps.asm::print_mapped(34) <- multiple-charmaps.asm(46)
+error: Strings as numbers must be a single charmap unit
+    at multiple-charmaps.asm::print_mapped(34) <- multiple-charmaps.asm(54)
+warning: Overriding charmap mapping [-Wcharmap-redef]
+    at multiple-charmaps.asm(64)
+error: Strings as numbers must be a single charmap unit
+    at multiple-charmaps.asm::print_mapped(34) <- multiple-charmaps.asm(73)
+error: Strings as numbers must be a single charmap unit
+    at multiple-charmaps.asm::print_mapped(34) <- multiple-charmaps.asm(95)
+error: Strings as numbers must be a single charmap unit
+    at multiple-charmaps.asm::print_mapped(34) <- multiple-charmaps.asm(96)
+error: Strings as numbers must be a single charmap unit
+    at multiple-charmaps.asm::print_mapped(34) <- multiple-charmaps.asm(104)
+error: Charmap 'map1' already exists
+    at multiple-charmaps.asm::new_(9) <- multiple-charmaps.asm(106)
+error: Charmap 'map5' doesn't exist
+    at multiple-charmaps.asm::set_(15) <- multiple-charmaps.asm(108)
+error: No entries in the charmap stack
+    at multiple-charmaps.asm::pop_(30) <- multiple-charmaps.asm(110)
 Assembly aborted with 9 errors!

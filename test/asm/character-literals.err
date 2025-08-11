@@ -1,19 +1,19 @@
-warning: character-literals.asm(31) -> character-literals.asm::char(13): [-Wunmapped-char]
-    Unmapped character '?'
-error: character-literals.asm(32) -> character-literals.asm::char(13):
-    Character literals must be a single charmap unit
-error: character-literals.asm(33) -> character-literals.asm::char(13):
-    Character literals must be a single charmap unit
-warning: character-literals.asm(34) -> character-literals.asm::char(13): [-Wunmapped-char]
-    Unmapped character '\n'
-warning: character-literals.asm(34) -> character-literals.asm::char(13): [-Wunmapped-char]
-    Unmapped character '\r'
-warning: character-literals.asm(34) -> character-literals.asm::char(13): [-Wunmapped-char]
-    Unmapped character '\t'
-error: character-literals.asm(34) -> character-literals.asm::char(13):
-    Character literals must be a single charmap unit
-error: character-literals.asm(35):
-    Unterminated character
-error: character-literals.asm(35):
-    Character literals must be a single charmap unit
+warning: Unmapped character '?' [-Wunmapped-char]
+    at character-literals.asm::char(13) <- character-literals.asm(31)
+error: Character literals must be a single charmap unit
+    at character-literals.asm::char(13) <- character-literals.asm(32)
+error: Character literals must be a single charmap unit
+    at character-literals.asm::char(13) <- character-literals.asm(33)
+warning: Unmapped character '\n' [-Wunmapped-char]
+    at character-literals.asm::char(13) <- character-literals.asm(34)
+warning: Unmapped character '\r' [-Wunmapped-char]
+    at character-literals.asm::char(13) <- character-literals.asm(34)
+warning: Unmapped character '\t' [-Wunmapped-char]
+    at character-literals.asm::char(13) <- character-literals.asm(34)
+error: Character literals must be a single charmap unit
+    at character-literals.asm::char(13) <- character-literals.asm(34)
+error: Unterminated character
+    at character-literals.asm(35)
+error: Character literals must be a single charmap unit
+    at character-literals.asm(35)
 Assembly aborted with 5 errors!

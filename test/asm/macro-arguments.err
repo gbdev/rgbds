@@ -1,20 +1,20 @@
-warning: macro-arguments.asm(21): [-Wempty-macro-arg]
-    Empty macro argument
-warning: macro-arguments.asm(23): [-Wempty-macro-arg]
-    Empty macro argument
-warning: macro-arguments.asm(24): [-Wempty-macro-arg]
-    Empty macro argument
-warning: macro-arguments.asm(24): [-Wempty-macro-arg]
-    Empty macro argument
-warning: macro-arguments.asm(25): [-Wempty-macro-arg]
-    Empty macro argument
-warning: macro-arguments.asm(26): [-Wempty-macro-arg]
-    Empty macro argument
-warning: macro-arguments.asm(27): [-Wempty-macro-arg]
-    Empty macro argument
-warning: macro-arguments.asm(27): [-Wempty-macro-arg]
-    Empty macro argument
-warning: macro-arguments.asm(27): [-Wempty-macro-arg]
-    Empty macro argument
-warning: macro-arguments.asm(27): [-Wempty-macro-arg]
-    Empty macro argument
+warning: Empty macro argument [-Wempty-macro-arg]
+    at macro-arguments.asm(21)
+warning: Empty macro argument [-Wempty-macro-arg]
+    at macro-arguments.asm(23)
+warning: Empty macro argument [-Wempty-macro-arg]
+    at macro-arguments.asm(24)
+warning: Empty macro argument [-Wempty-macro-arg]
+    at macro-arguments.asm(24)
+warning: Empty macro argument [-Wempty-macro-arg]
+    at macro-arguments.asm(25)
+warning: Empty macro argument [-Wempty-macro-arg]
+    at macro-arguments.asm(26)
+warning: Empty macro argument [-Wempty-macro-arg]
+    at macro-arguments.asm(27)
+warning: Empty macro argument [-Wempty-macro-arg]
+    at macro-arguments.asm(27)
+warning: Empty macro argument [-Wempty-macro-arg]
+    at macro-arguments.asm(27)
+warning: Empty macro argument [-Wempty-macro-arg]
+    at macro-arguments.asm(27)

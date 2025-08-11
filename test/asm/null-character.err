@@ -1,2 +1,2 @@
-warning: null-character.asm(12): [-Wunmapped-char]
-    Unmapped character '\0'
+warning: Unmapped character '\0' [-Wunmapped-char]
+    at null-character.asm(12)

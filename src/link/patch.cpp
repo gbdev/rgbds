@@ -428,7 +428,7 @@ static int32_t computeRPNExpr(Patch const &patch, std::vector<Symbol> const &fil
 				}
 			} else if (Symbol const *symbol = getSymbol(fileSymbols, value); !symbol) {
 				errorAt(patch, "Undefined symbol \"%s\"", fileSymbols[value].name.c_str());
-				sym_DumpLocalAliasedSymbols(fileSymbols[value].name);
+				sym_TraceLocalAliasedSymbols(fileSymbols[value].name);
 				isError = true;
 			} else if (std::holds_alternative<Label>(symbol->data)) {
 				Label const &label = std::get<Label>(symbol->data);

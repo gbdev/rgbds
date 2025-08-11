@@ -43,7 +43,8 @@ struct FileStackNode {
 	FileStackNode(FileStackNodeType type_, std::variant<std::vector<uint32_t>, std::string> data_)
 	    : type(type_), data(data_) {}
 
-	std::string const &dump(uint32_t curLineNo) const;
+	void printBacktrace(uint32_t curLineNo) const;
+	std::vector<std::pair<std::string, uint32_t>> backtrace(uint32_t curLineNo) const;
 	std::string reptChain() const;
 };
 
@@ -51,7 +52,7 @@ struct MacroArgs;
 
 void fstk_VerboseOutputConfig();
 
-bool fstk_DumpCurrent();
+void fstk_TraceCurrent();
 std::shared_ptr<FileStackNode> fstk_GetFileStack();
 std::shared_ptr<std::string> fstk_GetUniqueIDStr();
 MacroArgs *fstk_GetCurrentMacroArgs();

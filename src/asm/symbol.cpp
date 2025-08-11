@@ -113,14 +113,15 @@ std::shared_ptr<std::string> Symbol::getEqus() const {
 	return std::get<std::shared_ptr<std::string>>(data);
 }
 
-static void dumpFilename(Symbol const &sym) {
-	fputs(" at ", stderr);
+// Meant to be called last in an `errorNoTrace` callback
+static void printBacktraces(Symbol const &sym) {
+	putc('\n', stderr);
+	fstk_TraceCurrent();
+	fputs("    and also:\n", stderr);
 	if (sym.src) {
-		sym.src->dump(sym.fileLine);
-	} else if (sym.isBuiltin) {
-		fputs("<builtin>", stderr);
+		sym.src->printBacktrace(sym.fileLine);
 	} else {
-		fputs("<command-line>", stderr);
+		fprintf(stderr, "    at <%s>\n", sym.isBuiltin ? "builtin" : "command-line");
 	}
 }
 
@@ -141,37 +142,52 @@ static bool isValidIdentifier(std::string const &s) {
 }
 
 static void alreadyDefinedError(Symbol const &sym, char const *asType) {
-	if (sym.isBuiltin && !sym_FindScopedValidSymbol(sym.name)) {
-		// `DEF()` would return false, so we should not claim the symbol is already defined
-		error("'%s' is reserved for a built-in symbol", sym.name.c_str());
+	auto suggestion = [&]() {
+		std::string s;
+		if (auto const &contents = sym.type == SYM_EQUS ? sym.getEqus() : nullptr;
+		    contents && isValidIdentifier(*contents)) {
+			s.append(" (should it be {interpolated} to define its contents \"");
+			s.append(*contents);
+			s.append("\"?)");
+		}
+		return s;
+	};
+
+	if (sym.isBuiltin) {
+		if (sym_FindScopedValidSymbol(sym.name)) {
+			if (std::string s = suggestion(); asType) {
+				error("'%s' already defined as built-in %s%s", sym.name.c_str(), asType, s.c_str());
+			} else {
+				error("'%s' already defined as built-in%s", sym.name.c_str(), s.c_str());
+			}
+		} else {
+			// `DEF()` would return false, so we should not claim the symbol is already defined,
+			// nor suggest to interpolate it
+			if (asType) {
+				error("'%s' is reserved for a built-in %s symbol", sym.name.c_str(), asType);
+			} else {
+				error("'%s' is reserved for a built-in symbol", sym.name.c_str());
+			}
+		}
 	} else {
-		error([&]() {
+		errorNoTrace([&]() {
 			fprintf(stderr, "'%s' already defined", sym.name.c_str());
 			if (asType) {
 				fprintf(stderr, " as %s", asType);
 			}
-			dumpFilename(sym);
-			if (sym.type != SYM_EQUS) {
-				return;
-			}
-			if (std::string const &contents = *sym.getEqus(); isValidIdentifier(contents)) {
-				fprintf(
-				    stderr,
-				    "\n    (should it be {interpolated} to define its contents \"%s\"?)",
-				    contents.c_str()
-				);
-			}
+			fputs(suggestion().c_str(), stderr);
+			printBacktraces(sym);
 		});
 	}
 }
 
 static void redefinedError(Symbol const &sym) {
 	assume(sym.isBuiltin);
-	if (!sym_FindScopedValidSymbol(sym.name)) {
+	if (sym_FindScopedValidSymbol(sym.name)) {
+		error("Built-in symbol '%s' cannot be redefined", sym.name.c_str());
+	} else {
 		// `DEF()` would return false, so we should not imply the symbol is already defined
 		error("'%s' is reserved for a built-in symbol", sym.name.c_str());
-	} else {
-		error("Built-in symbol '%s' cannot be redefined", sym.name.c_str());
 	}
 }
 
@@ -376,9 +392,9 @@ static Symbol *createNonrelocSymbol(std::string const &symName, bool numeric) {
 		return nullptr; // Don't allow overriding the symbol, that'd be bad!
 	} else if (!numeric) {
 		// The symbol has already been referenced, but it's not allowed
-		error([&]() {
+		errorNoTrace([&]() {
 			fprintf(stderr, "'%s' already referenced", symName.c_str());
-			dumpFilename(*sym);
+			printBacktraces(*sym);
 		});
 		return nullptr; // Don't allow overriding the symbol, that'd be bad!
 	}
@@ -444,9 +460,9 @@ Symbol *sym_RedefString(std::string const &symName, std::shared_ptr<std::string>
 		if (sym->isDefined()) {
 			alreadyDefinedError(*sym, "non-EQUS");
 		} else {
-			error([&]() {
+			errorNoTrace([&]() {
 				fprintf(stderr, "'%s' already referenced", symName.c_str());
-				dumpFilename(*sym);
+				printBacktraces(*sym);
 			});
 		}
 		return nullptr;

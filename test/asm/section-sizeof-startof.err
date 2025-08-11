@@ -1,11 +1,11 @@
-error: section-sizeof-startof.asm(5):
-    Expected constant expression: Section "sect"'s size is not known
-error: section-sizeof-startof.asm(21):
-    Expected constant expression: Section "sect2"'s bank is not known
-error: section-sizeof-startof.asm(22):
-    Expected constant expression: Section "sect2"'s size is not known
-error: section-sizeof-startof.asm(23):
-    Expected constant expression: Section "sect2"'s start is not known
-error: section-sizeof-startof.asm(30):
-    Expected constant expression: Section "sect3"'s size is not known
+error: Expected constant expression: Section "sect"'s size is not known
+    at section-sizeof-startof.asm(5)
+error: Expected constant expression: Section "sect2"'s bank is not known
+    at section-sizeof-startof.asm(21)
+error: Expected constant expression: Section "sect2"'s size is not known
+    at section-sizeof-startof.asm(22)
+error: Expected constant expression: Section "sect2"'s start is not known
+    at section-sizeof-startof.asm(23)
+error: Expected constant expression: Section "sect3"'s size is not known
+    at section-sizeof-startof.asm(30)
 Assembly aborted with 5 errors!

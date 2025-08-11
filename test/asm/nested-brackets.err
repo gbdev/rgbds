@@ -1,3 +1,3 @@
-error: nested-brackets.asm(5):
-    Missing }
+error: Missing }
+    at nested-brackets.asm(5)
 Assembly aborted with 1 error!

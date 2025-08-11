@@ -34,7 +34,7 @@ static char const *dependFileName = nullptr;                                    
 static std::unordered_map<std::string, std::vector<StateFeature>> stateFileSpecs; // -s
 
 // Short options
-static char const *optstring = "b:D:Eg:hI:M:o:P:p:Q:r:s:VvW:wX:";
+static char const *optstring = "B:b:D:Eg:hI:M:o:P:p:Q:r:s:VvW:wX:";
 
 // Variables for the long-only options
 static int longOpt; // `--color` and variants of `-M`
@@ -47,6 +47,7 @@ static int longOpt; // `--color` and variants of `-M`
 // This is because long opt matching, even to a single char, is prioritized
 // over short opt matching.
 static option const longopts[] = {
+    {"backtrace",       required_argument, nullptr,  'B'},
     {"binary-digits",   required_argument, nullptr,  'b'},
     {"define",          required_argument, nullptr,  'D'},
     {"export-all",      no_argument,       nullptr,  'E'},
@@ -77,7 +78,7 @@ static option const longopts[] = {
 static Usage usage = {
     .name = "rgbasm",
     .flags = {
-        "[-EhVvw]", "[-b chars]", "[-D name[=value]]", "[-g chars]", "[-I path]",
+        "[-EhVvw]", "[-B depth]", "[-b chars]", "[-D name[=value]]", "[-g chars]", "[-I path]",
         "[-M depend_file]", "[-MC]", "[-MG]", "[-MP]", "[-MT target_file]", "[-MQ target_file]",
         "[-o out_file]", "[-P include_file]", "[-p pad_value]", "[-Q precision]", "[-r depth]",
         "[-s features:state_file]", "[-W warning]", "[-X max_errors]", "<file>",
@@ -215,7 +216,6 @@ static void verboseOutputConfig(int argc, char *argv[]) {
 		if (options.generatePhonyDeps) {
 			fputs("\tGenerate phony dependencies\n", stderr);
 		}
-		// [-MG] [-MC]
 	}
 	fputs("Ready.\n", stderr);
 
@@ -302,6 +302,24 @@ int main(int argc, char *argv[]) {
 	for (int ch; (ch = musl_getopt_long_only(argc, argv, optstring, longopts, nullptr)) != -1;) {
 		switch (ch) {
 			char *endptr;
+
+		case 'B': {
+			if (!strcasecmp(musl_optarg, "collapse")) {
+				warnings.traceDepth = TRACE_COLLAPSE;
+				break;
+			}
+
+			warnings.traceDepth = strtoul(musl_optarg, &endptr, 0);
+
+			if (musl_optarg[0] == '\0' || *endptr != '\0') {
+				fatal("Invalid argument for option 'B'");
+			}
+
+			if (warnings.traceDepth >= UINT64_MAX) {
+				fatal("Argument for option 'B' is too large");
+			}
+			break;
+		}
 
 		case 'b':
 			if (strlen(musl_optarg) == 2) {

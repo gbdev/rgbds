@@ -1,9 +1,9 @@
-error: charsize.asm(17):
-    CHARSIZE: No character mapping for ""
-error: charsize.asm(18):
-    CHARSIZE: No character mapping for "hello world"
-error: charsize.asm(19):
-    CHARSIZE: No character mapping for "abcdef"
-error: charsize.asm(20):
-    CHARSIZE: No character mapping for "é"
+error: CHARSIZE: No character mapping for ""
+    at charsize.asm(17)
+error: CHARSIZE: No character mapping for "hello world"
+    at charsize.asm(18)
+error: CHARSIZE: No character mapping for "abcdef"
+    at charsize.asm(19)
+error: CHARSIZE: No character mapping for "é"
+    at charsize.asm(20)
 Assembly aborted with 4 errors!

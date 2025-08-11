@@ -44,6 +44,6 @@ void sym_AddSymbol(Symbol &symbol);
 // Finds a symbol in all the defined symbols.
 Symbol *sym_GetSymbol(std::string const &name);
 
-void sym_DumpLocalAliasedSymbols(std::string const &name);
+void sym_TraceLocalAliasedSymbols(std::string const &name);
 
 #endif // RGBDS_LINK_SYMBOL_HPP
