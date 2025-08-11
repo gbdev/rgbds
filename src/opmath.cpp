@@ -11,15 +11,14 @@
 int32_t op_divide(int32_t dividend, int32_t divisor) {
 	// Adjust division to floor toward negative infinity,
 	// not truncate toward zero
-	return dividend / divisor - ((dividend % divisor < 0) != (divisor < 0));
+	int32_t remainder = dividend % divisor;
+	return dividend / divisor - (remainder != 0 && (remainder < 0) != (divisor < 0));
 }
 
 int32_t op_modulo(int32_t dividend, int32_t divisor) {
-	int32_t remainder = dividend % divisor;
-
 	// Adjust modulo to have the sign of the divisor,
 	// not the sign of the dividend
-	return remainder + divisor * ((remainder < 0) != (divisor < 0));
+	return dividend - op_divide(dividend, divisor) * divisor;
 }
 
 int32_t op_exponent(int32_t base, uint32_t power) {
