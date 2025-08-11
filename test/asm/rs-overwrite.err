@@ -1,19 +1,11 @@
 error: Built-in symbol '_RS' cannot be purged
     at rs-overwrite.asm(1)
-error: '_RS' already defined
+error: '_RS' already defined as built-in
     at rs-overwrite.asm(4)
-    and also:
-    at <builtin>
-error: '_RS' already defined
+error: '_RS' already defined as built-in
     at rs-overwrite.asm(10)
-    and also:
-    at rs-overwrite.asm(7)
-error: '_RS' already defined as non-EQU
+error: '_RS' already defined as built-in non-EQU
     at rs-overwrite.asm(16)
-    and also:
-    at rs-overwrite.asm(13)
-error: '_RS' already defined as non-EQUS
+error: '_RS' already defined as built-in non-EQUS
     at rs-overwrite.asm(19)
-    and also:
-    at rs-overwrite.asm(13)
 Assembly aborted with 5 errors!

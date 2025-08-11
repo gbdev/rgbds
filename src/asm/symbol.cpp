@@ -142,23 +142,40 @@ static bool isValidIdentifier(std::string const &s) {
 }
 
 static void alreadyDefinedError(Symbol const &sym, char const *asType) {
-	if (sym.isBuiltin && !sym_FindScopedValidSymbol(sym.name)) {
-		// `DEF()` would return false, so we should not claim the symbol is already defined
-		error("'%s' is reserved for a built-in symbol", sym.name.c_str());
+	auto suggestion = [&]() {
+		std::string s;
+		if (auto const &contents = sym.type == SYM_EQUS ? sym.getEqus() : nullptr;
+		    contents && isValidIdentifier(*contents)) {
+			s.append(" (should it be {interpolated} to define its contents \"");
+			s.append(*contents);
+			s.append("\"?)");
+		}
+		return s;
+	};
+
+	if (sym.isBuiltin) {
+		if (sym_FindScopedValidSymbol(sym.name)) {
+			if (std::string s = suggestion(); asType) {
+				error("'%s' already defined as built-in %s%s", sym.name.c_str(), asType, s.c_str());
+			} else {
+				error("'%s' already defined as built-in%s", sym.name.c_str(), s.c_str());
+			}
+		} else {
+			// `DEF()` would return false, so we should not claim the symbol is already defined,
+			// nor suggest to interpolate it
+			if (asType) {
+				error("'%s' is reserved for a built-in %s symbol", sym.name.c_str(), asType);
+			} else {
+				error("'%s' is reserved for a built-in symbol", sym.name.c_str());
+			}
+		}
 	} else {
 		errorNoTrace([&]() {
 			fprintf(stderr, "'%s' already defined", sym.name.c_str());
 			if (asType) {
 				fprintf(stderr, " as %s", asType);
 			}
-			if (auto const &contents = sym.type == SYM_EQUS ? sym.getEqus() : nullptr;
-			    contents && isValidIdentifier(*contents)) {
-				fprintf(
-				    stderr,
-				    " (should it be {interpolated} to define its contents \"%s\"?)",
-				    contents->c_str()
-				);
-			}
+			fputs(suggestion().c_str(), stderr);
 			printBacktraces(sym);
 		});
 	}
@@ -166,11 +183,11 @@ static void alreadyDefinedError(Symbol const &sym, char const *asType) {
 
 static void redefinedError(Symbol const &sym) {
 	assume(sym.isBuiltin);
-	if (!sym_FindScopedValidSymbol(sym.name)) {
+	if (sym_FindScopedValidSymbol(sym.name)) {
+		error("Built-in symbol '%s' cannot be redefined", sym.name.c_str());
+	} else {
 		// `DEF()` would return false, so we should not imply the symbol is already defined
 		error("'%s' is reserved for a built-in symbol", sym.name.c_str());
-	} else {
-		error("Built-in symbol '%s' cannot be redefined", sym.name.c_str());
 	}
 }
 
