@@ -8,7 +8,7 @@
 #include <stdlib.h> // getenv
 #include <string.h>
 
-#include "platform.hpp" // isatty
+#include "platform.hpp" // isatty, strcasecmp
 
 #if !STYLE_ANSI
 // clang-format off: maintain `include` order
@@ -36,7 +36,7 @@ static HANDLE getHandle(FILE *file) {
 }
 #endif // !STYLE_ANSI
 
-static Tribool forceStyle = []() {
+static Tribool const envStyle = []() {
 	if (char const *forceColor = getenv("FORCE_COLOR");
 	    forceColor && strcmp(forceColor, "") && strcmp(forceColor, "0")) {
 		return TRI_YES;
@@ -48,6 +48,8 @@ static Tribool forceStyle = []() {
 	return TRI_MAYBE;
 }();
 
+static Tribool argStyle = TRI_MAYBE;
+
 static bool isTerminal(FILE *file) {
 	static bool isOutTerminal = isatty(STDOUT_FILENO);
 	static bool isErrTerminal = isatty(STDERR_FILENO);
@@ -56,11 +58,34 @@ static bool isTerminal(FILE *file) {
 }
 
 static bool allowStyle(FILE *file) {
-	return forceStyle == TRI_YES || (forceStyle == TRI_MAYBE && isTerminal(file));
+	if (argStyle == TRI_YES) {
+		return true;
+	} else if (argStyle == TRI_NO) {
+		return false;
+	}
+
+	if (envStyle == TRI_YES) {
+		return true;
+	} else if (envStyle == TRI_NO) {
+		return false;
+	}
+
+	return isTerminal(file);
 }
 
-void style_Enable(bool enable) {
-	forceStyle = enable ? TRI_YES : TRI_NO;
+bool style_Parse(char const *arg) {
+	if (!strcasecmp(arg, "always")) {
+		argStyle = TRI_YES;
+		return true;
+	} else if (!strcasecmp(arg, "never")) {
+		argStyle = TRI_NO;
+		return true;
+	} else if (!strcasecmp(arg, "auto")) {
+		argStyle = TRI_MAYBE;
+		return true;
+	} else {
+		return false;
+	}
 }
 
 void style_Set(FILE *file, StyleColor color, bool bold) {

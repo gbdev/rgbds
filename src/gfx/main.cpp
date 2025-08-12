@@ -544,14 +544,8 @@ static char *parseArgv(int argc, char *argv[]) {
 			options.columnMajor = true;
 			break;
 		case 0: // Long-only options
-			if (longOpt == 'c') {
-				if (!strcasecmp(musl_optarg, "always")) {
-					style_Enable(true);
-				} else if (!strcasecmp(musl_optarg, "never")) {
-					style_Enable(false);
-				} else if (strcasecmp(musl_optarg, "auto")) {
-					fatal("Invalid argument for option '--color'");
-				}
+			if (longOpt == 'c' && !style_Parse(musl_optarg)) {
+				fatal("Invalid argument for option '--color'");
 			}
 			break;
 		case 1: // Positional argument, requested by leading `-` in opt string

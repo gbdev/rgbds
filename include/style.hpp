@@ -35,7 +35,7 @@ enum StyleColor {
 #endif
 };
 
-void style_Enable(bool enable);
+bool style_Parse(char const *arg);
 void style_Set(FILE *file, StyleColor color, bool bold);
 void style_Reset(FILE *file);
 

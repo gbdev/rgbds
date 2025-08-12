@@ -476,11 +476,7 @@ int main(int argc, char *argv[]) {
 		case 0:
 			switch (longOpt) {
 			case 'c':
-				if (!strcasecmp(musl_optarg, "always")) {
-					style_Enable(true);
-				} else if (!strcasecmp(musl_optarg, "never")) {
-					style_Enable(false);
-				} else if (strcasecmp(musl_optarg, "auto")) {
+				if (!style_Parse(musl_optarg)) {
 					fatal("Invalid argument for option '--color'");
 				}
 				break;
