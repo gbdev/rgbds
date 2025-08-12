@@ -1,33 +1,33 @@
-error: Undefined symbol '_NARG'
+error: Undefined symbol `_NARG`
     at builtin-reserved.asm(3)
-error: '_NARG' is reserved for a built-in symbol
+error: `_NARG` is reserved for a built-in symbol
     at builtin-reserved.asm(5)
-error: '_NARG' is reserved for a built-in symbol
+error: `_NARG` is reserved for a built-in symbol
     at builtin-reserved.asm(6)
-error: '_NARG' is reserved for a built-in constant symbol
+error: `_NARG` is reserved for a built-in constant symbol
     at builtin-reserved.asm(8)
-error: '_NARG' is reserved for a built-in constant symbol
+error: `_NARG` is reserved for a built-in constant symbol
     at builtin-reserved.asm(9)
-error: '_NARG' is reserved for a built-in symbol
+error: `_NARG` is reserved for a built-in symbol
     at builtin-reserved.asm(11)
-error: '_NARG' is reserved for a built-in non-EQUS symbol
+error: `_NARG` is reserved for a built-in non-`EQUS` symbol
     at builtin-reserved.asm(12)
-error: '_NARG' is reserved for a built-in symbol
+error: `_NARG` is reserved for a built-in symbol
     at builtin-reserved.asm(15)
-error: Undefined symbol '.'
+error: Undefined symbol `.`
     at builtin-reserved.asm(20)
-error: '.' is reserved for a built-in symbol
+error: `.` is reserved for a built-in symbol
     at builtin-reserved.asm(22)
-error: '.' is reserved for a built-in non-EQU symbol
+error: `.` is reserved for a built-in non-`EQU` symbol
     at builtin-reserved.asm(23)
-error: '.' is reserved for a built-in constant symbol
+error: `.` is reserved for a built-in constant symbol
     at builtin-reserved.asm(25)
-error: '.' is reserved for a built-in constant symbol
+error: `.` is reserved for a built-in constant symbol
     at builtin-reserved.asm(26)
-error: '.' is reserved for a built-in symbol
+error: `.` is reserved for a built-in symbol
     at builtin-reserved.asm(28)
-error: '.' is reserved for a built-in symbol
+error: `.` is reserved for a built-in symbol
     at builtin-reserved.asm(29)
-error: "." has no value outside of a label scope
+error: `.` has no value outside of a label scope
     at builtin-reserved.asm(32)
 Assembly aborted with 16 errors!

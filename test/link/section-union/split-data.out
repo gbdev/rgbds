@@ -1,7 +1,7 @@
-FATAL: Section "mutually-overlaid data" is of type ROM0, which cannot be unionized
+FATAL: Section "mutually-overlaid data" is of type `ROM0`, which cannot be `UNION`ized
 Linking aborted with 1 error
 ---
-error: Cannot declare ROM sections as UNION
+error: Cannot declare ROM sections as `UNION`
     at <stdin>(18)
 FATAL: Cannot create section "mutually-overlaid data" (1 error)
     at <stdin>(18)

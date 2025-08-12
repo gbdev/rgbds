@@ -1,183 +1,183 @@
 warning: Magnitude of fixed-point constant is too large [-Wlarge-constant]
     at fixed-point-magnitude.asm::REPT~1(12) <- fixed-point-magnitude.asm(1)
-    while expanding symbol "defMinBadValue"
+    while expanding symbol `defMinBadValue`
 warning: Magnitude of fixed-point constant is too large [-Wlarge-constant]
     at fixed-point-magnitude.asm::REPT~2(12) <- fixed-point-magnitude.asm(1)
-    while expanding symbol "defMinBadValue"
+    while expanding symbol `defMinBadValue`
 warning: Magnitude of fixed-point constant is too large [-Wlarge-constant]
     at fixed-point-magnitude.asm::REPT~2(17) <- fixed-point-magnitude.asm(1)
-    while expanding symbol "defWorseValue"
+    while expanding symbol `defWorseValue`
 warning: Magnitude of fixed-point constant is too large [-Wlarge-constant]
     at fixed-point-magnitude.asm::REPT~3(12) <- fixed-point-magnitude.asm(1)
-    while expanding symbol "defMinBadValue"
+    while expanding symbol `defMinBadValue`
 warning: Magnitude of fixed-point constant is too large [-Wlarge-constant]
     at fixed-point-magnitude.asm::REPT~3(17) <- fixed-point-magnitude.asm(1)
-    while expanding symbol "defWorseValue"
+    while expanding symbol `defWorseValue`
 warning: Magnitude of fixed-point constant is too large [-Wlarge-constant]
     at fixed-point-magnitude.asm::REPT~4(12) <- fixed-point-magnitude.asm(1)
-    while expanding symbol "defMinBadValue"
+    while expanding symbol `defMinBadValue`
 warning: Magnitude of fixed-point constant is too large [-Wlarge-constant]
     at fixed-point-magnitude.asm::REPT~4(17) <- fixed-point-magnitude.asm(1)
-    while expanding symbol "defWorseValue"
+    while expanding symbol `defWorseValue`
 warning: Magnitude of fixed-point constant is too large [-Wlarge-constant]
     at fixed-point-magnitude.asm::REPT~5(12) <- fixed-point-magnitude.asm(1)
-    while expanding symbol "defMinBadValue"
+    while expanding symbol `defMinBadValue`
 warning: Magnitude of fixed-point constant is too large [-Wlarge-constant]
     at fixed-point-magnitude.asm::REPT~5(17) <- fixed-point-magnitude.asm(1)
-    while expanding symbol "defWorseValue"
+    while expanding symbol `defWorseValue`
 warning: Magnitude of fixed-point constant is too large [-Wlarge-constant]
     at fixed-point-magnitude.asm::REPT~6(12) <- fixed-point-magnitude.asm(1)
-    while expanding symbol "defMinBadValue"
+    while expanding symbol `defMinBadValue`
 warning: Magnitude of fixed-point constant is too large [-Wlarge-constant]
     at fixed-point-magnitude.asm::REPT~6(17) <- fixed-point-magnitude.asm(1)
-    while expanding symbol "defWorseValue"
+    while expanding symbol `defWorseValue`
 warning: Magnitude of fixed-point constant is too large [-Wlarge-constant]
     at fixed-point-magnitude.asm::REPT~7(12) <- fixed-point-magnitude.asm(1)
-    while expanding symbol "defMinBadValue"
+    while expanding symbol `defMinBadValue`
 warning: Magnitude of fixed-point constant is too large [-Wlarge-constant]
     at fixed-point-magnitude.asm::REPT~7(17) <- fixed-point-magnitude.asm(1)
-    while expanding symbol "defWorseValue"
+    while expanding symbol `defWorseValue`
 warning: Magnitude of fixed-point constant is too large [-Wlarge-constant]
     at fixed-point-magnitude.asm::REPT~8(12) <- fixed-point-magnitude.asm(1)
-    while expanding symbol "defMinBadValue"
+    while expanding symbol `defMinBadValue`
 warning: Magnitude of fixed-point constant is too large [-Wlarge-constant]
     at fixed-point-magnitude.asm::REPT~8(17) <- fixed-point-magnitude.asm(1)
-    while expanding symbol "defWorseValue"
+    while expanding symbol `defWorseValue`
 warning: Magnitude of fixed-point constant is too large [-Wlarge-constant]
     at fixed-point-magnitude.asm::REPT~9(12) <- fixed-point-magnitude.asm(1)
-    while expanding symbol "defMinBadValue"
+    while expanding symbol `defMinBadValue`
 warning: Magnitude of fixed-point constant is too large [-Wlarge-constant]
     at fixed-point-magnitude.asm::REPT~9(17) <- fixed-point-magnitude.asm(1)
-    while expanding symbol "defWorseValue"
+    while expanding symbol `defWorseValue`
 warning: Magnitude of fixed-point constant is too large [-Wlarge-constant]
     at fixed-point-magnitude.asm::REPT~10(12) <- fixed-point-magnitude.asm(1)
-    while expanding symbol "defMinBadValue"
+    while expanding symbol `defMinBadValue`
 warning: Magnitude of fixed-point constant is too large [-Wlarge-constant]
     at fixed-point-magnitude.asm::REPT~10(17) <- fixed-point-magnitude.asm(1)
-    while expanding symbol "defWorseValue"
+    while expanding symbol `defWorseValue`
 warning: Magnitude of fixed-point constant is too large [-Wlarge-constant]
     at fixed-point-magnitude.asm::REPT~11(12) <- fixed-point-magnitude.asm(1)
-    while expanding symbol "defMinBadValue"
+    while expanding symbol `defMinBadValue`
 warning: Magnitude of fixed-point constant is too large [-Wlarge-constant]
     at fixed-point-magnitude.asm::REPT~11(17) <- fixed-point-magnitude.asm(1)
-    while expanding symbol "defWorseValue"
+    while expanding symbol `defWorseValue`
 warning: Magnitude of fixed-point constant is too large [-Wlarge-constant]
     at fixed-point-magnitude.asm::REPT~12(12) <- fixed-point-magnitude.asm(1)
-    while expanding symbol "defMinBadValue"
+    while expanding symbol `defMinBadValue`
 warning: Magnitude of fixed-point constant is too large [-Wlarge-constant]
     at fixed-point-magnitude.asm::REPT~12(17) <- fixed-point-magnitude.asm(1)
-    while expanding symbol "defWorseValue"
+    while expanding symbol `defWorseValue`
 warning: Magnitude of fixed-point constant is too large [-Wlarge-constant]
     at fixed-point-magnitude.asm::REPT~13(12) <- fixed-point-magnitude.asm(1)
-    while expanding symbol "defMinBadValue"
+    while expanding symbol `defMinBadValue`
 warning: Magnitude of fixed-point constant is too large [-Wlarge-constant]
     at fixed-point-magnitude.asm::REPT~13(17) <- fixed-point-magnitude.asm(1)
-    while expanding symbol "defWorseValue"
+    while expanding symbol `defWorseValue`
 warning: Magnitude of fixed-point constant is too large [-Wlarge-constant]
     at fixed-point-magnitude.asm::REPT~14(12) <- fixed-point-magnitude.asm(1)
-    while expanding symbol "defMinBadValue"
+    while expanding symbol `defMinBadValue`
 warning: Magnitude of fixed-point constant is too large [-Wlarge-constant]
     at fixed-point-magnitude.asm::REPT~14(17) <- fixed-point-magnitude.asm(1)
-    while expanding symbol "defWorseValue"
+    while expanding symbol `defWorseValue`
 warning: Magnitude of fixed-point constant is too large [-Wlarge-constant]
     at fixed-point-magnitude.asm::REPT~15(12) <- fixed-point-magnitude.asm(1)
-    while expanding symbol "defMinBadValue"
+    while expanding symbol `defMinBadValue`
 warning: Magnitude of fixed-point constant is too large [-Wlarge-constant]
     at fixed-point-magnitude.asm::REPT~15(17) <- fixed-point-magnitude.asm(1)
-    while expanding symbol "defWorseValue"
+    while expanding symbol `defWorseValue`
 warning: Magnitude of fixed-point constant is too large [-Wlarge-constant]
     at fixed-point-magnitude.asm::REPT~16(12) <- fixed-point-magnitude.asm(1)
-    while expanding symbol "defMinBadValue"
+    while expanding symbol `defMinBadValue`
 warning: Magnitude of fixed-point constant is too large [-Wlarge-constant]
     at fixed-point-magnitude.asm::REPT~16(17) <- fixed-point-magnitude.asm(1)
-    while expanding symbol "defWorseValue"
+    while expanding symbol `defWorseValue`
 warning: Magnitude of fixed-point constant is too large [-Wlarge-constant]
     at fixed-point-magnitude.asm::REPT~17(12) <- fixed-point-magnitude.asm(1)
-    while expanding symbol "defMinBadValue"
+    while expanding symbol `defMinBadValue`
 warning: Magnitude of fixed-point constant is too large [-Wlarge-constant]
     at fixed-point-magnitude.asm::REPT~17(17) <- fixed-point-magnitude.asm(1)
-    while expanding symbol "defWorseValue"
+    while expanding symbol `defWorseValue`
 warning: Magnitude of fixed-point constant is too large [-Wlarge-constant]
     at fixed-point-magnitude.asm::REPT~18(12) <- fixed-point-magnitude.asm(1)
-    while expanding symbol "defMinBadValue"
+    while expanding symbol `defMinBadValue`
 warning: Magnitude of fixed-point constant is too large [-Wlarge-constant]
     at fixed-point-magnitude.asm::REPT~18(17) <- fixed-point-magnitude.asm(1)
-    while expanding symbol "defWorseValue"
+    while expanding symbol `defWorseValue`
 warning: Magnitude of fixed-point constant is too large [-Wlarge-constant]
     at fixed-point-magnitude.asm::REPT~19(12) <- fixed-point-magnitude.asm(1)
-    while expanding symbol "defMinBadValue"
+    while expanding symbol `defMinBadValue`
 warning: Magnitude of fixed-point constant is too large [-Wlarge-constant]
     at fixed-point-magnitude.asm::REPT~19(17) <- fixed-point-magnitude.asm(1)
-    while expanding symbol "defWorseValue"
+    while expanding symbol `defWorseValue`
 warning: Magnitude of fixed-point constant is too large [-Wlarge-constant]
     at fixed-point-magnitude.asm::REPT~20(12) <- fixed-point-magnitude.asm(1)
-    while expanding symbol "defMinBadValue"
+    while expanding symbol `defMinBadValue`
 warning: Magnitude of fixed-point constant is too large [-Wlarge-constant]
     at fixed-point-magnitude.asm::REPT~20(17) <- fixed-point-magnitude.asm(1)
-    while expanding symbol "defWorseValue"
+    while expanding symbol `defWorseValue`
 warning: Magnitude of fixed-point constant is too large [-Wlarge-constant]
     at fixed-point-magnitude.asm::REPT~21(12) <- fixed-point-magnitude.asm(1)
-    while expanding symbol "defMinBadValue"
+    while expanding symbol `defMinBadValue`
 warning: Magnitude of fixed-point constant is too large [-Wlarge-constant]
     at fixed-point-magnitude.asm::REPT~21(17) <- fixed-point-magnitude.asm(1)
-    while expanding symbol "defWorseValue"
+    while expanding symbol `defWorseValue`
 warning: Magnitude of fixed-point constant is too large [-Wlarge-constant]
     at fixed-point-magnitude.asm::REPT~22(12) <- fixed-point-magnitude.asm(1)
-    while expanding symbol "defMinBadValue"
+    while expanding symbol `defMinBadValue`
 warning: Magnitude of fixed-point constant is too large [-Wlarge-constant]
     at fixed-point-magnitude.asm::REPT~22(17) <- fixed-point-magnitude.asm(1)
-    while expanding symbol "defWorseValue"
+    while expanding symbol `defWorseValue`
 warning: Magnitude of fixed-point constant is too large [-Wlarge-constant]
     at fixed-point-magnitude.asm::REPT~23(12) <- fixed-point-magnitude.asm(1)
-    while expanding symbol "defMinBadValue"
+    while expanding symbol `defMinBadValue`
 warning: Magnitude of fixed-point constant is too large [-Wlarge-constant]
     at fixed-point-magnitude.asm::REPT~23(17) <- fixed-point-magnitude.asm(1)
-    while expanding symbol "defWorseValue"
+    while expanding symbol `defWorseValue`
 warning: Magnitude of fixed-point constant is too large [-Wlarge-constant]
     at fixed-point-magnitude.asm::REPT~24(12) <- fixed-point-magnitude.asm(1)
-    while expanding symbol "defMinBadValue"
+    while expanding symbol `defMinBadValue`
 warning: Magnitude of fixed-point constant is too large [-Wlarge-constant]
     at fixed-point-magnitude.asm::REPT~24(17) <- fixed-point-magnitude.asm(1)
-    while expanding symbol "defWorseValue"
+    while expanding symbol `defWorseValue`
 warning: Magnitude of fixed-point constant is too large [-Wlarge-constant]
     at fixed-point-magnitude.asm::REPT~25(12) <- fixed-point-magnitude.asm(1)
-    while expanding symbol "defMinBadValue"
+    while expanding symbol `defMinBadValue`
 warning: Magnitude of fixed-point constant is too large [-Wlarge-constant]
     at fixed-point-magnitude.asm::REPT~25(17) <- fixed-point-magnitude.asm(1)
-    while expanding symbol "defWorseValue"
+    while expanding symbol `defWorseValue`
 warning: Magnitude of fixed-point constant is too large [-Wlarge-constant]
     at fixed-point-magnitude.asm::REPT~26(12) <- fixed-point-magnitude.asm(1)
-    while expanding symbol "defMinBadValue"
+    while expanding symbol `defMinBadValue`
 warning: Magnitude of fixed-point constant is too large [-Wlarge-constant]
     at fixed-point-magnitude.asm::REPT~26(17) <- fixed-point-magnitude.asm(1)
-    while expanding symbol "defWorseValue"
+    while expanding symbol `defWorseValue`
 warning: Magnitude of fixed-point constant is too large [-Wlarge-constant]
     at fixed-point-magnitude.asm::REPT~27(12) <- fixed-point-magnitude.asm(1)
-    while expanding symbol "defMinBadValue"
+    while expanding symbol `defMinBadValue`
 warning: Magnitude of fixed-point constant is too large [-Wlarge-constant]
     at fixed-point-magnitude.asm::REPT~27(17) <- fixed-point-magnitude.asm(1)
-    while expanding symbol "defWorseValue"
+    while expanding symbol `defWorseValue`
 warning: Magnitude of fixed-point constant is too large [-Wlarge-constant]
     at fixed-point-magnitude.asm::REPT~28(12) <- fixed-point-magnitude.asm(1)
-    while expanding symbol "defMinBadValue"
+    while expanding symbol `defMinBadValue`
 warning: Magnitude of fixed-point constant is too large [-Wlarge-constant]
     at fixed-point-magnitude.asm::REPT~28(17) <- fixed-point-magnitude.asm(1)
-    while expanding symbol "defWorseValue"
+    while expanding symbol `defWorseValue`
 warning: Magnitude of fixed-point constant is too large [-Wlarge-constant]
     at fixed-point-magnitude.asm::REPT~29(12) <- fixed-point-magnitude.asm(1)
-    while expanding symbol "defMinBadValue"
+    while expanding symbol `defMinBadValue`
 warning: Magnitude of fixed-point constant is too large [-Wlarge-constant]
     at fixed-point-magnitude.asm::REPT~29(17) <- fixed-point-magnitude.asm(1)
-    while expanding symbol "defWorseValue"
+    while expanding symbol `defWorseValue`
 warning: Magnitude of fixed-point constant is too large [-Wlarge-constant]
     at fixed-point-magnitude.asm::REPT~30(12) <- fixed-point-magnitude.asm(1)
-    while expanding symbol "defMinBadValue"
+    while expanding symbol `defMinBadValue`
 warning: Magnitude of fixed-point constant is too large [-Wlarge-constant]
     at fixed-point-magnitude.asm::REPT~30(17) <- fixed-point-magnitude.asm(1)
-    while expanding symbol "defWorseValue"
+    while expanding symbol `defWorseValue`
 warning: Magnitude of fixed-point constant is too large [-Wlarge-constant]
     at fixed-point-magnitude.asm::REPT~31(12) <- fixed-point-magnitude.asm(1)
-    while expanding symbol "defMinBadValue"
+    while expanding symbol `defMinBadValue`
 warning: Magnitude of fixed-point constant is too large [-Wlarge-constant]
     at fixed-point-magnitude.asm::REPT~31(17) <- fixed-point-magnitude.asm(1)
-    while expanding symbol "defWorseValue"
+    while expanding symbol `defWorseValue`

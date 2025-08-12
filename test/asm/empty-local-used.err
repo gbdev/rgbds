@@ -1,2 +1,2 @@
-FATAL: 'Label.' is a nonsensical reference to an empty local label
+FATAL: `Label.` is a nonsensical reference to an empty local label
     at empty-local-used.asm(4)

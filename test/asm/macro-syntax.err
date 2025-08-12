@@ -1,11 +1,11 @@
-error: Label "old" created outside of a SECTION
+error: Label `old` created outside of a `SECTION`
     at macro-syntax.asm(7)
 error: syntax error, unexpected MACRO
     at macro-syntax.asm(7)
-error: '\1' cannot be used outside of a macro
+error: `\1` cannot be used outside of a macro
     at macro-syntax.asm(8)
 error: syntax error, unexpected ENDM
     at macro-syntax.asm(9)
-error: "old" is not a macro
+error: `old` is not a macro
     at macro-syntax.asm(11)
 Assembly aborted with 5 errors!

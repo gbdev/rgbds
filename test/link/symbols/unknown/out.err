@@ -1,4 +1,4 @@
-error: Undefined symbol "Label"
+error: Undefined symbol `Label`
     at symbols/unknown/a.asm(2)
     4 symbols with that name are defined but not exported:
     at symbols/unknown/b.asm(2)

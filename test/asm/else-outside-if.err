@@ -1,2 +1,2 @@
-FATAL: Found ELSE outside of an IF construct
+FATAL: Found `ELSE` outside of an `IF` construct
     at else-outside-if.asm(1)

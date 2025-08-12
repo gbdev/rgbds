@@ -1,8 +1,8 @@
-error: 'X' already referenced
+error: `X` already referenced
     at ref-override-bad.asm(8)
     and also:
     at ref-override-bad.asm(7)
-error: 'Y' already referenced
+error: `Y` already referenced
     at ref-override-bad.asm(13)
     and also:
     at ref-override-bad.asm(10)

@@ -1,2 +1,2 @@
-FATAL: Found ELSE after an ELSE block
+FATAL: Found `ELSE` after an `ELSE` block
     at multiple-else.asm(11)

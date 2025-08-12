@@ -1,7 +1,7 @@
 error: syntax error, unexpected symbol
     at interpolation-after-string.asm(5)
-    while expanding symbol "greeting"
+    while expanding symbol `greeting`
 error: syntax error, unexpected string
     at interpolation-after-string.asm(8)
-    while expanding symbol "string"
+    while expanding symbol `string`
 Assembly aborted with 2 errors!

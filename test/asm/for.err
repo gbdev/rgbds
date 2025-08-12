@@ -1,16 +1,16 @@
-warning: FOR goes backwards from 2 to 1 by 1 [-Wbackwards-for]
+warning: `FOR` goes backwards from 2 to 1 by 1 [-Wbackwards-for]
     at for.asm(12)
-error: FOR cannot have a step value of 0
+error: `FOR` cannot have a step value of 0
     at for.asm(16)
-warning: FOR goes backwards from 1 to 2 by -1 [-Wbackwards-for]
+warning: `FOR` goes backwards from 1 to 2 by -1 [-Wbackwards-for]
     at for.asm(20)
-error: 's' already defined as constant (should it be {interpolated} to define its contents "x"?)
+error: `s` already defined as constant (should it be {interpolated} to define its contents "x"?)
     at for.asm(46)
     and also:
     at for.asm(39)
-error: 'v' already defined as constant
+error: `v` already defined as constant
     at for.asm::REPT~4(54) <- for.asm(48)
     and also:
     at for.asm::REPT~4(52) <- for.asm(48)
-FATAL: Failed to update FOR symbol value
+FATAL: Failed to update `FOR` symbol value
     at for.asm::REPT~4(54) <- for.asm(48)

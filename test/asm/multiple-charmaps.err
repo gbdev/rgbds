@@ -12,9 +12,9 @@ error: Strings as numbers must be a single charmap unit
     at multiple-charmaps.asm::print_mapped(34) <- multiple-charmaps.asm(96)
 error: Strings as numbers must be a single charmap unit
     at multiple-charmaps.asm::print_mapped(34) <- multiple-charmaps.asm(104)
-error: Charmap 'map1' already exists
+error: Charmap `map1` is already defined
     at multiple-charmaps.asm::new_(9) <- multiple-charmaps.asm(106)
-error: Charmap 'map5' doesn't exist
+error: Undefined charmap `map5`
     at multiple-charmaps.asm::set_(15) <- multiple-charmaps.asm(108)
 error: No entries in the charmap stack
     at multiple-charmaps.asm::pop_(30) <- multiple-charmaps.asm(110)

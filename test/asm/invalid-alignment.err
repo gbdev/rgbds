@@ -6,10 +6,10 @@ error: Alignment must be between 0 and 16, not 20
     at invalid-alignment.asm(13)
 error: Alignment must be between 0 and 16, not 20
     at invalid-alignment.asm(15)
-error: Section "d"'s fixed address doesn't match its alignment
+error: Section "d"'s fixed address does not match its alignment
     at invalid-alignment.asm(19)
-error: Section "e"'s fixed address doesn't match its alignment
+error: Section "e"'s fixed address does not match its alignment
     at invalid-alignment.asm(21)
-error: Section "f"'s fixed address doesn't match its alignment
+error: Section "f"'s fixed address does not match its alignment
     at invalid-alignment.asm(23)
 Assembly aborted with 7 errors!

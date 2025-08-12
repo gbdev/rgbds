@@ -4,7 +4,7 @@ error: Assertion failed: @ ain't 0 now? (Hint: it's $1)
     at assert.asm(7)
 warning: Assertion failed [-Wassert]
     at assert.asm(10)
-error: Expected constant expression: 'FloatingBase' is not constant at assembly time
+error: Expected constant expression: `FloatingBase` is not constant at assembly time
     at assert.asm(18)
 error: Assertion failed
     at assert.asm(18)

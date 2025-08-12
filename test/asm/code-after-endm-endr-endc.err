@@ -1,6 +1,6 @@
 error: syntax error, unexpected PRINTLN, expecting end of line or end of buffer or end of fragment literal
     at code-after-endm-endr-endc.asm(6)
-error: Undefined macro "mac"
+error: Undefined macro `mac`
     at code-after-endm-endr-endc.asm(7)
 error: syntax error, unexpected PRINTLN, expecting end of line or end of buffer or end of fragment literal
     at code-after-endm-endr-endc.asm(12)

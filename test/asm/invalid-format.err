@@ -10,9 +10,9 @@ error: Fixed-point constant precision 0 invalid, defaulting to 16
     at invalid-format.asm(5)
 error: STRFMT: Invalid format spec for argument 2
     at invalid-format.asm(5)
-error: Invalid format spec '5d5'
+error: Invalid format spec "5d5"
     at invalid-format.asm(8)
-error: Invalid format spec 'xx'
+error: Invalid format spec "xx"
     at invalid-format.asm(9)
 error: Formatting string with sign flag '+'
     at invalid-format.asm(11)

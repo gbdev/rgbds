@@ -1,26 +1,26 @@
-error: Invalid bracketed macro argument '\<0>'
+error: Invalid bracketed macro argument "\<0>"
     at negative-macro-args.asm::mac(7) <- negative-macro-args.asm(21)
-error: Invalid bracketed macro argument '\<0>'
+error: Invalid bracketed macro argument "\<0>"
     at negative-macro-args.asm::mac(7) <- negative-macro-args.asm(21)
-error: Macro argument '\<-8>' not defined
+error: Macro argument `\<-8>` not defined
     at negative-macro-args.asm::mac(9) <- negative-macro-args.asm(21)
-error: Macro argument '\<-8>' not defined
+error: Macro argument `\<-8>` not defined
     at negative-macro-args.asm::mac(9) <- negative-macro-args.asm(21)
-error: Macro argument '\<2147483647>' not defined
+error: Macro argument `\<2147483647>` not defined
     at negative-macro-args.asm::mac(11) <- negative-macro-args.asm(21)
-error: Macro argument '\<2147483647>' not defined
+error: Macro argument `\<2147483647>` not defined
     at negative-macro-args.asm::mac(11) <- negative-macro-args.asm(21)
-error: Macro argument '\<-2147483648>' not defined
+error: Macro argument `\<-2147483648>` not defined
     at negative-macro-args.asm::mac(14) <- negative-macro-args.asm(21)
 error: Number in bracketed macro argument is too large
     at negative-macro-args.asm::mac(14) <- negative-macro-args.asm(21)
-    while expanding symbol "i"
-error: Macro argument '\<-2147483648>' not defined
+    while expanding symbol `i`
+error: Macro argument `\<-2147483648>` not defined
     at negative-macro-args.asm::mac(15) <- negative-macro-args.asm(21)
 error: Number in bracketed macro argument is too large
     at negative-macro-args.asm::mac(15) <- negative-macro-args.asm(21)
-    while expanding symbol "i"
+    while expanding symbol `i`
 error: Number in bracketed macro argument is too large
     at negative-macro-args.asm::mac(18) <- negative-macro-args.asm(21)
-    while expanding symbol "i"
+    while expanding symbol `i`
 Assembly aborted with 11 errors!

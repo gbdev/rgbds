@@ -1,17 +1,17 @@
 error: PC has no value outside of a section
     at undefined-builtins.asm(3)
-error: Interpolated symbol "@" does not exist
+error: Interpolated symbol `@` does not exist
     at undefined-builtins.asm(4)
-error: "." has no value outside of a label scope
+error: `.` has no value outside of a label scope
     at undefined-builtins.asm(8)
-error: Interpolated symbol "." does not exist
+error: Interpolated symbol `.` does not exist
     at undefined-builtins.asm(9)
-error: ".." has no value outside of a local label scope
+error: `..` has no value outside of a local label scope
     at undefined-builtins.asm(13)
-error: Interpolated symbol ".." does not exist
+error: Interpolated symbol `..` does not exist
     at undefined-builtins.asm(14)
-error: _NARG has no value outside of a macro
+error: `_NARG` has no value outside of a macro
     at undefined-builtins.asm(18)
-error: Interpolated symbol "_NARG" does not exist
+error: Interpolated symbol `_NARG` does not exist
     at undefined-builtins.asm(19)
 Assembly aborted with 8 errors!

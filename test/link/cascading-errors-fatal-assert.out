@@ -1,4 +1,4 @@
-error: Undefined symbol "UnknownSymbol"
+error: Undefined symbol `UnknownSymbol`
     at cascading-errors-fatal-assert.asm(1)
 FATAL: Failed to evaluate assertion
     at cascading-errors-fatal-assert.asm(1)

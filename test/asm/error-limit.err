@@ -1,4 +1,4 @@
-error: 'x' already defined
+error: `x` already defined
     at error-limit.asm(2)
     and also:
     at error-limit.asm(1)

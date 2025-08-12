@@ -1,9 +1,9 @@
 error: PC has no value outside of a section
     at const-and.asm(2)
-error: Expected constant expression: 'Aligned' is not constant at assembly time
+error: Expected constant expression: `Aligned` is not constant at assembly time
     at const-and.asm(11)
 error: Expected constant expression: PC is not constant at assembly time
     at const-and.asm(17)
-error: Expected constant expression: 'Floating' is not constant at assembly time
+error: Expected constant expression: `Floating` is not constant at assembly time
     at const-and.asm(20)
 Assembly aborted with 4 errors!

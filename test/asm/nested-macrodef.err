@@ -2,6 +2,6 @@ warning: Nested macros shouldn't work, whose argument would be \1? [-Wuser]
     at nested-macrodef.asm::outer(22) <- nested-macrodef.asm(26)
 error: Unterminated macro definition
     at nested-macrodef.asm::outer(24) <- nested-macrodef.asm(26)
-error: Undefined macro "inner"
+error: Undefined macro `inner`
     at nested-macrodef.asm(27)
 Assembly aborted with 2 errors!

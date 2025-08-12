@@ -1,10 +1,10 @@
-FATAL: Section "conflicting types" is defined with type HRAM, but also with type WRAM0
+FATAL: Section "conflicting types" is defined with type `HRAM`, but also with type `WRAM0`
     at section-union/bad-types.asm(7)
     and also:
     at section-union/bad-types.asm(7)
 Linking aborted with 1 error
 ---
-error: Section already exists but with type HRAM
+error: Section already exists but with type `HRAM`
     at <stdin>(18)
 FATAL: Cannot create section "conflicting types" (1 error)
     at <stdin>(18)

@@ -1,17 +1,17 @@
 error: syntax error, unexpected local label, expecting symbol
     at label-macro-arg.asm::test_char(25) <- label-macro-arg.asm(38)
-    while expanding symbol "VAR_DEF"
+    while expanding symbol `VAR_DEF`
 error: syntax error, unexpected local label, expecting symbol
     at label-macro-arg.asm::test_char(26) <- label-macro-arg.asm(38)
-error: Interpolated symbol "sizeof_.something" does not exist
+error: Interpolated symbol `sizeof_.something` does not exist
     at label-macro-arg.asm::test_char(29) <- label-macro-arg.asm(38)
 error: syntax error, unexpected label, expecting symbol
     at label-macro-arg.asm::test_char(25) <- label-macro-arg.asm(39)
-    while expanding symbol "VAR_DEF"
+    while expanding symbol `VAR_DEF`
 error: syntax error, unexpected label, expecting symbol
     at label-macro-arg.asm::test_char(26) <- label-macro-arg.asm(39)
-error: Invalid format spec 'sizeof_'
+error: Invalid format spec "sizeof_"
     at label-macro-arg.asm::test_char(29) <- label-macro-arg.asm(39)
-error: Interpolated symbol "something" does not exist
+error: Interpolated symbol `something` does not exist
     at label-macro-arg.asm::test_char(29) <- label-macro-arg.asm(39)
 Assembly aborted with 7 errors!

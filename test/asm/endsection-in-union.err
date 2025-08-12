@@ -1,2 +1,2 @@
-FATAL: Cannot end the section within a UNION
+FATAL: Cannot end the section within a `UNION`
     at endsection-in-union.asm(3)

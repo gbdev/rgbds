@@ -1,2 +1,2 @@
-FATAL: Ended block with 1 unterminated IF construct
+FATAL: Ended block with 1 unterminated `IF` block
     at unterminated-if-eof.asm(2)

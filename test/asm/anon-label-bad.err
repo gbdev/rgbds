@@ -1,4 +1,4 @@
-error: Label "!0" created outside of a SECTION
+error: Label `!0` created outside of a `SECTION`
     at anon-label-bad.asm(2)
 error: Reference to anonymous label 2 before, when only 1 has been created so far
     at anon-label-bad.asm(6)

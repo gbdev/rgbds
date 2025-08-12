@@ -1,2 +1,2 @@
-FATAL: Unqualified local label '.test' in main scope
+FATAL: Unqualified local label `.test` in main scope
     at empty-local-purged.asm(3)

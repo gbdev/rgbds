@@ -1,4 +1,4 @@
-warning: Unmapped character 'A' not in main charmap [-Wunmapped-char]
+warning: Unmapped character 'A' not in `main` charmap [-Wunmapped-char]
     at unmapped-char.asm(12)
 warning: Unmapped character 'A' [-Wunmapped-char]
     at unmapped-char.asm(15)
