@@ -10,6 +10,7 @@
 #include <string.h>
 #include <utility>
 
+#include "backtrace.hpp"
 #include "diagnostics.hpp"
 #include "extern/getopt.hpp"
 #include "helpers.hpp" // assume
@@ -295,21 +296,11 @@ int main(int argc, char *argv[]) {
 	// Parse options
 	for (int ch; (ch = musl_getopt_long_only(argc, argv, optstring, longopts, nullptr)) != -1;) {
 		switch (ch) {
-		case 'B': {
-			if (!strcasecmp(musl_optarg, "collapse")) {
-				warnings.traceDepth = TRACE_COLLAPSE;
-				break;
-			}
-			char *endptr;
-			warnings.traceDepth = strtoul(musl_optarg, &endptr, 0);
-			if (musl_optarg[0] == '\0' || *endptr != '\0') {
+		case 'B':
+			if (!trace_ParseTraceDepth(musl_optarg)) {
 				fatal("Invalid argument for option '-B'");
 			}
-			if (warnings.traceDepth >= UINT64_MAX) {
-				fatal("Argument for option '-B' is too large");
-			}
 			break;
-		}
 		case 'd':
 			options.isDmgMode = true;
 			options.isWRAM0Mode = true;

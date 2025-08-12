@@ -73,6 +73,7 @@ rgbasm_obj := \
 	src/asm/symbol.o \
 	src/asm/warning.o \
 	src/extern/utf8decoder.o \
+	src/backtrace.o \
 	src/linkdefs.o \
 	src/opmath.o \
 	src/util.o \
@@ -96,6 +97,7 @@ rgblink_obj := \
 	src/link/symbol.o \
 	src/link/warning.o \
 	src/extern/utf8decoder.o \
+	src/backtrace.o \
 	src/linkdefs.o \
 	src/opmath.o \
 	src/util.o \

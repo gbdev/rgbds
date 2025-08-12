@@ -11,6 +11,7 @@
 #include <string.h>
 #include <time.h>
 
+#include "backtrace.hpp"
 #include "diagnostics.hpp"
 #include "extern/getopt.hpp"
 #include "helpers.hpp"
@@ -303,23 +304,11 @@ int main(int argc, char *argv[]) {
 		switch (ch) {
 			char *endptr;
 
-		case 'B': {
-			if (!strcasecmp(musl_optarg, "collapse")) {
-				warnings.traceDepth = TRACE_COLLAPSE;
-				break;
-			}
-
-			warnings.traceDepth = strtoul(musl_optarg, &endptr, 0);
-
-			if (musl_optarg[0] == '\0' || *endptr != '\0') {
+		case 'B':
+			if (!trace_ParseTraceDepth(musl_optarg)) {
 				fatal("Invalid argument for option '-B'");
 			}
-
-			if (warnings.traceDepth >= UINT64_MAX) {
-				fatal("Argument for option '-B' is too large");
-			}
 			break;
-		}
 
 		case 'b':
 			if (strlen(musl_optarg) == 2) {
