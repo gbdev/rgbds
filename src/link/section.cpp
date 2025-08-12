@@ -120,7 +120,7 @@ static void mergeSections(Section &target, std::unique_ptr<Section> &&other) {
 		fatalTwoAt(
 		    target,
 		    *other,
-		    "Section \"%s\" is defined as SECTION %s, but also as SECTION %s",
+		    "Section \"%s\" is defined as `SECTION %s`, but also as `SECTION %s`",
 		    target.name.c_str(),
 		    sectionModNames[target.modifier],
 		    sectionModNames[other->modifier]
@@ -131,7 +131,7 @@ static void mergeSections(Section &target, std::unique_ptr<Section> &&other) {
 		fatalTwoAt(
 		    target,
 		    *other,
-		    "Section \"%s\" is defined with type %s, but also with type %s",
+		    "Section \"%s\" is defined with type `%s`, but also with type `%s`",
 		    target.name.c_str(),
 		    sectionTypeInfo[target.type].name.c_str(),
 		    sectionTypeInfo[other->type].name.c_str()
@@ -197,7 +197,7 @@ void sect_AddSection(std::unique_ptr<Section> &&section) {
 		mergeSections(*target, std::move(section));
 	} else if (section->modifier == SECTION_UNION && sect_HasData(section->type)) {
 		fatal(
-		    "Section \"%s\" is of type %s, which cannot be unionized",
+		    "Section \"%s\" is of type `%s`, which cannot be `UNION`ized",
 		    section->name.c_str(),
 		    sectionTypeInfo[section->type].name.c_str()
 		);
@@ -227,7 +227,7 @@ static void doSanityChecks(Section &section) {
 	if (options.is32kMode && section.type == SECTTYPE_ROMX) {
 		if (section.isBankFixed && section.bank != 1) {
 			error(
-			    "Section \"%s\" has type ROMX, which must be in bank 1 (if any) with option `-t`",
+			    "Section \"%s\" has type `ROMX`, which must be in bank 1 (if any) with option '-t'",
 			    section.name.c_str()
 			);
 		} else {
@@ -237,7 +237,8 @@ static void doSanityChecks(Section &section) {
 	if (options.isWRAM0Mode && section.type == SECTTYPE_WRAMX) {
 		if (section.isBankFixed && section.bank != 1) {
 			error(
-			    "Section \"%s\" has type WRAMX, which must be in bank 1 with options `-w` or `-d`",
+			    "Section \"%s\" has type `WRAMX`, which must be in bank 1 with options '-w' or "
+			    "'-d'",
 			    section.name.c_str()
 			);
 		} else {
@@ -246,7 +247,7 @@ static void doSanityChecks(Section &section) {
 	}
 	if (options.isDmgMode && section.type == SECTTYPE_VRAM && section.bank == 1) {
 		error(
-		    "Section \"%s\" has type VRAM, which must be in bank 0 with option `-d`",
+		    "Section \"%s\" has type `VRAM`, which must be in bank 0 with option '-d'",
 		    section.name.c_str()
 		);
 	}
@@ -260,7 +261,7 @@ static void doSanityChecks(Section &section) {
 	// Too large an alignment may not be satisfiable
 	if (section.isAlignFixed && (section.alignMask & sectionTypeInfo[section.type].startAddr)) {
 		error(
-		    "Section \"%s\" has type %s, which cannot be aligned to $%04x bytes",
+		    "Section \"%s\" has type `%s`, which cannot be aligned to $%04x bytes",
 		    section.name.c_str(),
 		    sectionTypeInfo[section.type].name.c_str(),
 		    section.alignMask + 1
@@ -305,7 +306,7 @@ static void doSanityChecks(Section &section) {
 		if (section.isAlignFixed) {
 			if ((section.org & section.alignMask) != section.alignOfs) {
 				error(
-				    "Section \"%s\"'s fixed address doesn't match its alignment",
+				    "Section \"%s\"'s fixed address does not match its alignment",
 				    section.name.c_str()
 				);
 			}

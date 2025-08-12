@@ -129,9 +129,9 @@ void opt_Parse(char const *s) {
 		unsigned long maxRecursionDepth = strtoul(s, &endptr, 10);
 
 		if (*endptr != '\0') {
-			error("Invalid argument to option 'r' (\"%s\")", s);
+			error("Invalid argument for option 'r' (\"%s\")", s);
 		} else if (errno == ERANGE) {
-			error("Argument to 'r' is out of range (\"%s\")", s);
+			error("Argument for option 'r' is out of range (\"%s\")", s);
 		} else {
 			opt_R(maxRecursionDepth);
 		}

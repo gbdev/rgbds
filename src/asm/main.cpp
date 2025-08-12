@@ -87,7 +87,7 @@ static Usage usage = {
         {{"-E", "--export-all"}, {"export all labels"}},
         {{"-M", "--dependfile <path>"}, {"set the output dependency file"}},
         {{"-o", "--output <path>"}, {"set the output object file"}},
-        {{"-p", "--pad-value <value>"}, {"set the value to use for `ds'"}},
+        {{"-p", "--pad-value <value>"}, {"set the value to use for DS"}},
         {{"-s", "--state <features>:<path>"}, {"set an output state file"}},
         {{"-V", "--version"}, {"print RGBASM version and exit"}},
         {{"-W", "--warning <warning>"}, {"enable or disable warnings"}},
@@ -257,7 +257,7 @@ static std::vector<StateFeature> parseStateFeatures(char *str) {
 		}
 		// A feature must be specified
 		if (*feature == '\0') {
-			fatal("Empty feature for option 's'");
+			fatal("Empty feature for option '-s'");
 		}
 		// Parse the `feature` and update the `features` list
 		static UpperMap<StateFeature> const featureNames{
@@ -269,14 +269,14 @@ static std::vector<StateFeature> parseStateFeatures(char *str) {
 		};
 		if (!strcasecmp(feature, "all")) {
 			if (!features.empty()) {
-				warnx("Redundant feature before \"%s\" for option 's'", feature);
+				warnx("Redundant feature before \"%s\" for option '-s'", feature);
 			}
 			features.assign({STATE_EQU, STATE_VAR, STATE_EQUS, STATE_CHAR, STATE_MACRO});
 		} else if (auto search = featureNames.find(feature); search == featureNames.end()) {
-			fatal("Invalid feature for option 's': \"%s\"", feature);
+			fatal("Invalid feature for option '-s': \"%s\"", feature);
 		} else if (StateFeature value = search->second;
 		           std::find(RANGE(features), value) != features.end()) {
-			warnx("Ignoring duplicate feature for option 's': \"%s\"", feature);
+			warnx("Ignoring duplicate feature for option '-s': \"%s\"", feature);
 		} else {
 			features.push_back(value);
 		}
@@ -312,11 +312,11 @@ int main(int argc, char *argv[]) {
 			warnings.traceDepth = strtoul(musl_optarg, &endptr, 0);
 
 			if (musl_optarg[0] == '\0' || *endptr != '\0') {
-				fatal("Invalid argument for option 'B'");
+				fatal("Invalid argument for option '-B'");
 			}
 
 			if (warnings.traceDepth >= UINT64_MAX) {
-				fatal("Argument for option 'B' is too large");
+				fatal("Argument for option '-B' is too large");
 			}
 			break;
 		}
@@ -325,7 +325,7 @@ int main(int argc, char *argv[]) {
 			if (strlen(musl_optarg) == 2) {
 				opt_B(musl_optarg);
 			} else {
-				fatal("Must specify exactly 2 characters for option 'b'");
+				fatal("Must specify exactly 2 characters for option '-b'");
 			}
 			break;
 
@@ -348,7 +348,7 @@ int main(int argc, char *argv[]) {
 			if (strlen(musl_optarg) == 4) {
 				opt_G(musl_optarg);
 			} else {
-				fatal("Must specify exactly 4 characters for option 'g'");
+				fatal("Must specify exactly 4 characters for option '-g'");
 			}
 			break;
 
@@ -362,7 +362,7 @@ int main(int argc, char *argv[]) {
 		case 'M':
 			if (dependFileName) {
 				warnx(
-				    "Overriding dependency file %s",
+				    "Overriding dependency file \"%s\"",
 				    strcmp(dependFileName, "-") ? dependFileName : "<stdout>"
 				);
 			}
@@ -371,7 +371,7 @@ int main(int argc, char *argv[]) {
 
 		case 'o':
 			if (!options.objectFileName.empty()) {
-				warnx("Overriding output filename %s", options.objectFileName.c_str());
+				warnx("Overriding output file \"%s\"", options.objectFileName.c_str());
 			}
 			options.objectFileName = musl_optarg;
 			break;
@@ -385,11 +385,11 @@ int main(int argc, char *argv[]) {
 			padByte = strtoul(musl_optarg, &endptr, 0);
 
 			if (musl_optarg[0] == '\0' || *endptr != '\0') {
-				fatal("Invalid argument for option 'p'");
+				fatal("Invalid argument for option '-p'");
 			}
 
 			if (padByte > 0xFF) {
-				fatal("Argument for option 'p' must be between 0 and 0xFF");
+				fatal("Argument for option '-p' must be between 0 and 0xFF");
 			}
 
 			opt_P(padByte);
@@ -403,11 +403,11 @@ int main(int argc, char *argv[]) {
 			unsigned long precision = strtoul(precisionArg, &endptr, 0);
 
 			if (musl_optarg[0] == '\0' || *endptr != '\0') {
-				fatal("Invalid argument for option 'Q'");
+				fatal("Invalid argument for option '-Q'");
 			}
 
 			if (precision < 1 || precision > 31) {
-				fatal("Argument for option 'Q' must be between 1 and 31");
+				fatal("Argument for option '-Q' must be between 1 and 31");
 			}
 
 			opt_Q(precision);
@@ -418,7 +418,7 @@ int main(int argc, char *argv[]) {
 			options.maxRecursionDepth = strtoul(musl_optarg, &endptr, 0);
 
 			if (musl_optarg[0] == '\0' || *endptr != '\0') {
-				fatal("Invalid argument for option 'r'");
+				fatal("Invalid argument for option '-r'");
 			}
 			break;
 
@@ -426,14 +426,14 @@ int main(int argc, char *argv[]) {
 			// Split "<features>:<name>" so `musl_optarg` is "<features>" and `name` is "<name>"
 			char *name = strchr(musl_optarg, ':');
 			if (!name) {
-				fatal("Invalid argument for option 's'");
+				fatal("Invalid argument for option '-s'");
 			}
 			*name++ = '\0';
 
 			std::vector<StateFeature> features = parseStateFeatures(musl_optarg);
 
 			if (stateFileSpecs.find(name) != stateFileSpecs.end()) {
-				warnx("Overriding state filename %s", name);
+				warnx("Overriding state file \"%s\"", name);
 			}
 			stateFileSpecs.emplace(name, std::move(features));
 			break;
@@ -461,11 +461,11 @@ int main(int argc, char *argv[]) {
 			uint64_t maxErrors = strtoul(musl_optarg, &endptr, 0);
 
 			if (musl_optarg[0] == '\0' || *endptr != '\0') {
-				fatal("Invalid argument for option 'X'");
+				fatal("Invalid argument for option '-X'");
 			}
 
 			if (maxErrors > UINT64_MAX) {
-				fatal("Argument for option 'X' must be between 0 and %" PRIu64, UINT64_MAX);
+				fatal("Argument for option '-X' must be between 0 and %" PRIu64, UINT64_MAX);
 			}
 
 			options.maxErrors = maxErrors;
@@ -525,14 +525,14 @@ int main(int argc, char *argv[]) {
 	verboseOutputConfig(argc, argv);
 
 	if (argc == musl_optind) {
-		usage.printAndExit("No input file specified (pass `-` to read from standard input)");
+		usage.printAndExit("No input file specified (pass \"-\" to read from standard input)");
 	} else if (argc != musl_optind + 1) {
 		usage.printAndExit("More than one input file specified");
 	}
 
 	std::string mainFileName = argv[musl_optind];
 
-	verbosePrint(VERB_NOTICE, "Assembling %s\n", mainFileName.c_str()); // LCOV_EXCL_LINE
+	verbosePrint(VERB_NOTICE, "Assembling \"%s\"\n", mainFileName.c_str()); // LCOV_EXCL_LINE
 
 	if (dependFileName) {
 		if (strcmp("-", dependFileName)) {
@@ -549,7 +549,7 @@ int main(int argc, char *argv[]) {
 
 	if (options.dependFile && options.targetFileName.empty()) {
 		fatal("Dependency files can only be created if a target file is specified with either "
-		      "-o, -MQ or -MT");
+		      "'-o', '-MQ' or '-MT'");
 	}
 	options.printDep(mainFileName);
 

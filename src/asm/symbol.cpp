@@ -54,14 +54,14 @@ static int32_t NARGCallback() {
 	if (MacroArgs const *macroArgs = fstk_GetCurrentMacroArgs(); macroArgs) {
 		return macroArgs->nbArgs();
 	} else {
-		error("_NARG has no value outside of a macro");
+		error("`_NARG` has no value outside of a macro");
 		return 0;
 	}
 }
 
 static std::shared_ptr<std::string> globalScopeCallback() {
 	if (!globalScope) {
-		error("\".\" has no value outside of a label scope");
+		error("`.` has no value outside of a label scope");
 		return std::make_shared<std::string>("");
 	}
 	return std::make_shared<std::string>(globalScope->name);
@@ -69,7 +69,7 @@ static std::shared_ptr<std::string> globalScopeCallback() {
 
 static std::shared_ptr<std::string> localScopeCallback() {
 	if (!localScope) {
-		error("\"..\" has no value outside of a local label scope");
+		error("`..` has no value outside of a local label scope");
 		return std::make_shared<std::string>("");
 	}
 	return std::make_shared<std::string>(localScope->name);
@@ -156,22 +156,22 @@ static void alreadyDefinedError(Symbol const &sym, char const *asType) {
 	if (sym.isBuiltin) {
 		if (sym_FindScopedValidSymbol(sym.name)) {
 			if (std::string s = suggestion(); asType) {
-				error("'%s' already defined as built-in %s%s", sym.name.c_str(), asType, s.c_str());
+				error("`%s` already defined as built-in %s%s", sym.name.c_str(), asType, s.c_str());
 			} else {
-				error("'%s' already defined as built-in%s", sym.name.c_str(), s.c_str());
+				error("`%s` already defined as built-in%s", sym.name.c_str(), s.c_str());
 			}
 		} else {
 			// `DEF()` would return false, so we should not claim the symbol is already defined,
 			// nor suggest to interpolate it
 			if (asType) {
-				error("'%s' is reserved for a built-in %s symbol", sym.name.c_str(), asType);
+				error("`%s` is reserved for a built-in %s symbol", sym.name.c_str(), asType);
 			} else {
-				error("'%s' is reserved for a built-in symbol", sym.name.c_str());
+				error("`%s` is reserved for a built-in symbol", sym.name.c_str());
 			}
 		}
 	} else {
 		errorNoTrace([&]() {
-			fprintf(stderr, "'%s' already defined", sym.name.c_str());
+			fprintf(stderr, "`%s` already defined", sym.name.c_str());
 			if (asType) {
 				fprintf(stderr, " as %s", asType);
 			}
@@ -184,10 +184,10 @@ static void alreadyDefinedError(Symbol const &sym, char const *asType) {
 static void redefinedError(Symbol const &sym) {
 	assume(sym.isBuiltin);
 	if (sym_FindScopedValidSymbol(sym.name)) {
-		error("Built-in symbol '%s' cannot be redefined", sym.name.c_str());
+		error("Built-in symbol `%s` cannot be redefined", sym.name.c_str());
 	} else {
 		// `DEF()` would return false, so we should not imply the symbol is already defined
-		error("'%s' is reserved for a built-in symbol", sym.name.c_str());
+		error("`%s` is reserved for a built-in symbol", sym.name.c_str());
 	}
 }
 
@@ -236,12 +236,12 @@ static bool isAutoScoped(std::string const &symName) {
 
 	// Check for nothing after the dot
 	if (dotPos == symName.length() - 1) {
-		fatal("'%s' is a nonsensical reference to an empty local label", symName.c_str());
+		fatal("`%s` is a nonsensical reference to an empty local label", symName.c_str());
 	}
 
 	// Check for more than one dot
 	if (symName.find('.', dotPos + 1) != std::string::npos) {
-		fatal("'%s' is a nonsensical reference to a nested local label", symName.c_str());
+		fatal("`%s` is a nonsensical reference to a nested local label", symName.c_str());
 	}
 
 	// Check for already-qualified local label
@@ -251,7 +251,7 @@ static bool isAutoScoped(std::string const &symName) {
 
 	// Check for unqualifiable local label
 	if (!globalScope) {
-		fatal("Unqualified local label '%s' in main scope", symName.c_str());
+		fatal("Unqualified local label `%s` in main scope", symName.c_str());
 	}
 
 	return true;
@@ -300,19 +300,19 @@ void sym_Purge(std::string const &symName) {
 
 	if (!sym) {
 		if (sym_IsPurgedScoped(symName)) {
-			error("Undefined symbol '%s' was already purged", symName.c_str());
+			error("Undefined symbol `%s` was already purged", symName.c_str());
 		} else {
-			error("Undefined symbol '%s'", symName.c_str());
+			error("Undefined symbol `%s`", symName.c_str());
 		}
 	} else if (sym->isBuiltin) {
-		error("Built-in symbol '%s' cannot be purged", symName.c_str());
+		error("Built-in symbol `%s` cannot be purged", symName.c_str());
 	} else if (sym->ID != UINT32_MAX) {
-		error("Symbol \"%s\" is referenced and thus cannot be purged", symName.c_str());
+		error("Symbol `%s` is referenced and thus cannot be purged", symName.c_str());
 	} else {
 		if (sym->isExported) {
-			warning(WARNING_PURGE_1, "Purging an exported symbol \"%s\"", symName.c_str());
+			warning(WARNING_PURGE_1, "Purging an exported symbol `%s`", symName.c_str());
 		} else if (sym->isLabel()) {
-			warning(WARNING_PURGE_2, "Purging a label \"%s\"", symName.c_str());
+			warning(WARNING_PURGE_2, "Purging a label `%s`", symName.c_str());
 		}
 		// Do not keep a reference to the label after purging it
 		if (sym == globalScope) {
@@ -357,7 +357,7 @@ uint32_t Symbol::getConstantValue() const {
 			error("PC does not have a constant value; the current section is not fixed");
 		}
 	} else {
-		error("\"%s\" does not have a constant value", name.c_str());
+		error("`%s` does not have a constant value", name.c_str());
 	}
 	return 0;
 }
@@ -393,7 +393,7 @@ static Symbol *createNonrelocSymbol(std::string const &symName, bool numeric) {
 	} else if (!numeric) {
 		// The symbol has already been referenced, but it's not allowed
 		errorNoTrace([&]() {
-			fprintf(stderr, "'%s' already referenced", symName.c_str());
+			fprintf(stderr, "`%s` already referenced", symName.c_str());
 			printBacktraces(*sym);
 		});
 		return nullptr; // Don't allow overriding the symbol, that'd be bad!
@@ -423,7 +423,7 @@ Symbol *sym_RedefEqu(std::string const &symName, int32_t value) {
 	}
 
 	if (sym->isDefined() && sym->type != SYM_EQU) {
-		alreadyDefinedError(*sym, "non-EQU");
+		alreadyDefinedError(*sym, "non-`EQU`");
 		return nullptr;
 	} else if (sym->isBuiltin) {
 		redefinedError(*sym);
@@ -458,10 +458,10 @@ Symbol *sym_RedefString(std::string const &symName, std::shared_ptr<std::string>
 
 	if (sym->type != SYM_EQUS) {
 		if (sym->isDefined()) {
-			alreadyDefinedError(*sym, "non-EQUS");
+			alreadyDefinedError(*sym, "non-`EQUS`");
 		} else {
 			errorNoTrace([&]() {
-				fprintf(stderr, "'%s' already referenced", symName.c_str());
+				fprintf(stderr, "`%s` already referenced", symName.c_str());
 				printBacktraces(*sym);
 			});
 		}
@@ -518,7 +518,7 @@ static Symbol *addLabel(std::string const &symName) {
 	sym->section = sect_GetSymbolSection();
 
 	if (sym && !sym->section) {
-		error("Label \"%s\" created outside of a SECTION", symName.c_str());
+		error("Label `%s` created outside of a `SECTION`", symName.c_str());
 	}
 
 	return sym;
@@ -588,7 +588,7 @@ std::string sym_MakeAnonLabelName(uint32_t ofs, bool neg) {
 			// LCOV_EXCL_START
 			error(
 			    "Reference to anonymous label %" PRIu32 " after, when only %" PRIu32
-			    " may still be created",
+			    " can still be created",
 			    ofs + 1,
 			    UINT32_MAX - anonLabelID
 			);

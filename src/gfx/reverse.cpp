@@ -122,7 +122,7 @@ void reverse() {
 	if (options.inputSlice.width != 0 && options.inputSlice.width != options.reversedWidth * 8) {
 		warnx(
 		    "Specified input slice width (%" PRIu16
-		    ") doesn't match provided reversing width (%" PRIu16 " * 8)",
+		    ") does not match provided reversing width (%" PRIu16 " * 8)",
 		    options.inputSlice.width,
 		    options.reversedWidth
 		);
@@ -179,7 +179,7 @@ void reverse() {
 		if (options.trim == 0 && !tilemap) {
 			fatal(
 			    "Total number of tiles (%zu) cannot be divided by image width (%zu tiles)\n"
-			    "(To proceed anyway with this image width, try passing `-x %zu`)",
+			    "(To proceed anyway with this image width, try passing \"-x %zu\")",
 			    mapSize,
 			    width,
 			    width - mapSize % width
@@ -242,9 +242,9 @@ void reverse() {
 		}
 
 		if (options.palSpecType == Options::EXPLICIT && palettes != options.palSpec) {
-			warnx("Colors in the palette file do not match those specified with `-c`!");
+			warnx("Colors in the palette file do not match those specified with '-c'!");
 			// This spacing aligns "...versus with `-c`" above the column of `-c` palettes
-			fputs("Colors specified in the palette file:         ...versus with `-c`:\n", stderr);
+			fputs("Colors specified in the palette file:         ...versus with '-c':\n", stderr);
 			for (size_t i = 0; i < palettes.size() && i < options.palSpec.size(); ++i) {
 				if (i < palettes.size()) {
 					printPalette(palettes[i]);
@@ -275,7 +275,7 @@ void reverse() {
 		attrmap = readInto(options.attrmap);
 		if (attrmap->size() != mapSize) {
 			fatal(
-			    "Attribute map size (%zu tiles) doesn't match image's (%zu)",
+			    "Attribute map size (%zu tiles) does not match image size (%zu tiles)",
 			    attrmap->size(),
 			    mapSize
 			);
@@ -396,7 +396,7 @@ void reverse() {
 		palmap = readInto(options.palmap);
 		if (palmap->size() != mapSize) {
 			fatal(
-			    "Palette map size (%zu tiles) doesn't match image size (%zu)",
+			    "Palette map size (%zu tiles) does not match image size (%zu tiles)",
 			    palmap->size(),
 			    mapSize
 			);

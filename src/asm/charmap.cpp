@@ -84,14 +84,14 @@ void charmap_New(std::string const &name, std::string const *baseName) {
 
 	if (baseName != nullptr) {
 		if (auto search = charmapMap.find(*baseName); search == charmapMap.end()) {
-			error("Base charmap '%s' doesn't exist", baseName->c_str());
+			error("Undefined base charmap `%s`", baseName->c_str());
 		} else {
 			baseIdx = search->second;
 		}
 	}
 
 	if (charmapMap.find(name) != charmapMap.end()) {
-		error("Charmap '%s' already exists", name.c_str());
+		error("Charmap `%s` is already defined", name.c_str());
 		return;
 	}
 
@@ -112,7 +112,7 @@ void charmap_New(std::string const &name, std::string const *baseName) {
 
 void charmap_Set(std::string const &name) {
 	if (auto search = charmapMap.find(name); search == charmapMap.end()) {
-		error("Charmap '%s' doesn't exist", name.c_str());
+		error("Undefined charmap `%s`", name.c_str());
 	} else {
 		currentCharmap = &charmapList[search->second];
 	}
@@ -289,7 +289,7 @@ size_t charmap_ConvertNext(std::string_view &input, std::vector<int32_t> *output
 		} else if (charmap.name != DEFAULT_CHARMAP_NAME) {
 			warning(
 			    WARNING_UNMAPPED_CHAR_2,
-			    "Unmapped character %s not in " DEFAULT_CHARMAP_NAME " charmap",
+			    "Unmapped character %s not in `" DEFAULT_CHARMAP_NAME "` charmap",
 			    printChar(firstChar)
 			);
 		}

@@ -27,11 +27,11 @@ void act_If(int32_t condition) {
 
 void act_Elif(int32_t condition) {
 	if (lexer_GetIFDepth() == 0) {
-		fatal("Found ELIF outside of an IF construct");
+		fatal("Found `ELIF` outside of an `IF` construct");
 	}
 	if (lexer_RanIFBlock()) {
 		if (lexer_ReachedELSEBlock()) {
-			fatal("Found ELIF after an ELSE block");
+			fatal("Found `ELIF` after an `ELSE` block");
 		}
 		lexer_SetMode(LEXER_SKIP_TO_ENDC);
 	} else if (condition) {
@@ -43,11 +43,11 @@ void act_Elif(int32_t condition) {
 
 void act_Else() {
 	if (lexer_GetIFDepth() == 0) {
-		fatal("Found ELSE outside of an IF construct");
+		fatal("Found `ELSE` outside of an `IF` construct");
 	}
 	if (lexer_RanIFBlock()) {
 		if (lexer_ReachedELSEBlock()) {
-			fatal("Found ELSE after an ELSE block");
+			fatal("Found `ELSE` after an `ELSE` block");
 		}
 		lexer_SetMode(LEXER_SKIP_TO_ENDC);
 	} else {
@@ -140,14 +140,16 @@ std::optional<std::string> act_ReadFile(std::string const &name, uint32_t maxLen
 		}
 		fseek(file, 0, SEEK_SET);
 	} else if (errno != ESPIPE) {
-		error("Error determining size of READFILE file '%s': %s", name.c_str(), strerror(errno));
+		error(
+		    "Error determining size of `READFILE` file \"%s\": %s", name.c_str(), strerror(errno)
+		);
 	}
 
 	std::string contents;
 	contents.resize(readSize);
 
 	if (fread(&contents[0], 1, readSize, file) < readSize || ferror(file)) {
-		error("Error reading READFILE file '%s': %s", name.c_str(), strerror(errno));
+		error("Error reading `READFILE` file \"%s\": %s", name.c_str(), strerror(errno));
 		return "";
 	}
 
@@ -578,12 +580,13 @@ std::string act_StringFormat(
 	}
 
 	if (argIndex < args.size()) {
-		error("STRFMT: %zu unformatted argument(s)", args.size() - argIndex);
+		size_t extra = args.size() - argIndex;
+		error("STRFMT: %zu unformatted argument%s", extra, extra == 1 ? "" : "s");
 	} else if (argIndex > args.size()) {
 		error(
-		    "STRFMT: Not enough arguments for format spec, got: %zu, need: %zu",
-		    args.size(),
-		    argIndex
+		    "STRFMT: Not enough arguments for format spec (expected %zu, got %zu)",
+		    argIndex,
+		    args.size()
 		);
 	}
 
@@ -594,15 +597,15 @@ std::string act_SectionName(std::string const &symName) {
 	Symbol *sym = sym_FindScopedValidSymbol(symName);
 	if (!sym) {
 		if (sym_IsPurgedScoped(symName)) {
-			fatal("Undefined symbol \"%s\"; it was purged", symName.c_str());
+			fatal("Undefined symbol `%s`; it was purged", symName.c_str());
 		} else {
-			fatal("Undefined symbol \"%s\"", symName.c_str());
+			fatal("Undefined symbol `%s`", symName.c_str());
 		}
 	}
 
 	Section const *section = sym->getSection();
 	if (!section) {
-		fatal("\"%s\" does not belong to any section", sym->name.c_str());
+		fatal("`%s` does not belong to any section", sym->name.c_str());
 	}
 
 	return section->name;

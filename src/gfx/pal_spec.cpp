@@ -70,8 +70,8 @@ void parseInlinePalSpec(char const * const rawArg) {
 		error("%s", msg); // `format_` and `-Wformat-security` would complain about `error(msg);`
 		fprintf(
 		    stderr,
-		    "In inline palette spec: %s\n"
-		    "                        ",
+		    "In inline palette spec: \"%s\"\n" // Vertically align this...
+		    "                        ",        // ...with this
 		    rawArg
 		);
 		for (size_t i = ofs; i; --i) {
@@ -300,7 +300,7 @@ static void parsePSPFile(char const *filename, std::filebuf &file) {
 	size_t n = 0;
 	std::optional<uint16_t> nbColors = parseDec<uint16_t>(line, n);
 	if (!nbColors || n != line.length()) {
-		error("Invalid \"number of colors\" line in PSP file (%s)", line.c_str());
+		error("Invalid \"number of colors\" line in PSP file (\"%s\")", line.c_str());
 		return;
 	}
 
@@ -651,7 +651,7 @@ void parseExternalPalSpec(char const *arg) {
 	// Split both parts, error out if malformed
 	char const *ptr = strchr(arg, ':');
 	if (ptr == nullptr) {
-		error("External palette spec must have format `fmt:path` (missing colon)");
+		error("External palette spec must have format \"fmt:path\" (missing colon)");
 		return;
 	}
 	char const *path = ptr + 1;
@@ -721,7 +721,7 @@ void parseBackgroundPalSpec(char const *arg) {
 	}
 
 	if (arg[0] != '#') {
-		error("Background color specification must be `#rgb`, `#rrggbb`, or `transparent`");
+		error("Background color specification must be \"#rgb\", \"#rrggbb\", or \"transparent\"");
 		return;
 	}
 

@@ -59,7 +59,7 @@ void layout_SetSectionType(SectionType type, uint32_t bank) {
 
 	if (bank < typeInfo.firstBank) {
 		lexer_Error(
-		    "%s bank %" PRIu32 " doesn't exist (the minimum is %" PRIu32 ")",
+		    "%s bank %" PRIu32 " does not exist (the minimum is %" PRIu32 ")",
 		    typeInfo.name.c_str(),
 		    bank,
 		    typeInfo.firstBank
@@ -67,7 +67,7 @@ void layout_SetSectionType(SectionType type, uint32_t bank) {
 		bank = typeInfo.firstBank;
 	} else if (bank > typeInfo.lastBank) {
 		lexer_Error(
-		    "%s bank %" PRIu32 " doesn't exist (the maximum is %" PRIu32 ")",
+		    "%s bank %" PRIu32 " does not exist (the maximum is %" PRIu32 ")",
 		    typeInfo.name.c_str(),
 		    bank,
 		    typeInfo.lastBank
@@ -243,7 +243,7 @@ void layout_PlaceSection(std::string const &name, bool isOptional) {
 			// A section that lacks data can only be assigned to a type that requires data
 			// if it's empty.
 			lexer_Error(
-			    "\"%s\" is specified to be a %s section, but it doesn't contain data",
+			    "\"%s\" is specified to be a %s section, but it does not contain data",
 			    name.c_str(),
 			    typeInfo.name.c_str()
 			);
