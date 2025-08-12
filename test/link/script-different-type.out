@@ -1,2 +1,3 @@
-error: script-different-type.link(2): "ROM1" is specified to be a SRAM section, but it is already a ROMX section
+error: "ROM1" is specified to be a SRAM section, but it is already a ROMX section
+    at script-different-type.link(2)
 Linking failed with 1 error

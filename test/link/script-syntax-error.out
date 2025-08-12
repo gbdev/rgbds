@@ -1,3 +1,5 @@
-error: script-syntax-error.link(2): syntax error, unexpected ORG, expecting end of line or OPTIONAL
-error: script-syntax-error.link(5): syntax error, unexpected string, expecting end of line or FLOATING or number
+error: syntax error, unexpected ORG, expecting end of line or OPTIONAL
+    at script-syntax-error.link(2)
+error: syntax error, unexpected string, expecting end of line or FLOATING or number
+    at script-syntax-error.link(5)
 Linking failed with 2 errors

@@ -1,2 +1,3 @@
-error: script-lone-percent.link(1): No binary digits found after '%'
+error: No binary digits found after '%'
+    at script-lone-percent.link(1)
 Linking failed with 1 error

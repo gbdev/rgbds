@@ -49,8 +49,8 @@ void warning(char const *fmt, ...);
 void error(FileStackNode const *src, uint32_t lineNo, char const *fmt, ...);
 [[gnu::format(printf, 1, 2)]]
 void error(char const *fmt, ...);
-
-void scriptError(char const *name, uint32_t lineNo, char const *fmt, va_list args);
+[[gnu::format(printf, 1, 2)]]
+void scriptError(char const *fmt, ...);
 
 [[gnu::format(printf, 3, 4), noreturn]]
 void fatal(FileStackNode const *src, uint32_t lineNo, char const *fmt, ...);
