@@ -1,4 +1,4 @@
-warning: `LOAD` block without `ENDL` terminated by ENDSECTION [-Wunterminated-load]
+warning: `LOAD` block without `ENDL` terminated by `ENDSECTION` [-Wunterminated-load]
     at endsection-in-load.asm(3)
 error: Found `ENDL` outside of a `LOAD` block
     at endsection-in-load.asm(4)
