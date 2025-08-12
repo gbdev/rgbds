@@ -8,6 +8,7 @@
 #include "style.hpp"
 
 #include "link/fstack.hpp"
+#include "link/lexer.hpp"
 
 // clang-format off: nested initializers
 Diagnostics<WarningLevel, WarningID> warnings = {
@@ -102,17 +103,13 @@ void error(char const *fmt, ...) {
 	warnings.incrementErrors();
 }
 
-void scriptError(char const *name, uint32_t lineNo, char const *fmt, va_list args) {
-	style_Set(stderr, STYLE_RED, true);
-	fputs("error: ", stderr);
-	style_Set(stderr, STYLE_CYAN, true);
-	fputs(name, stderr);
-	style_Set(stderr, STYLE_CYAN, false);
-	fprintf(stderr, "(%" PRIu32 ")", lineNo);
-	style_Reset(stderr);
-	fputs(": ", stderr);
-	vfprintf(stderr, fmt, args);
-	putc('\n', stderr);
+void scriptError(char const *fmt, ...) {
+	va_list args;
+	va_start(args, fmt);
+	printDiag(nullptr, 0, fmt, args, "error", STYLE_RED, nullptr, nullptr);
+	va_end(args);
+
+	lexer_TraceCurrent();
 
 	warnings.incrementErrors();
 }

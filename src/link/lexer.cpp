@@ -11,6 +11,7 @@
 
 #include "helpers.hpp"
 #include "itertools.hpp"
+#include "style.hpp"
 #include "util.hpp"
 
 #include "link/warning.hpp"
@@ -27,12 +28,52 @@ struct LexerStackEntry {
 
 static std::vector<LexerStackEntry> lexerStack;
 
-void lexer_Error(char const *fmt, ...) {
-	LexerStackEntry &context = lexerStack.back();
-	va_list args;
-	va_start(args, fmt);
-	scriptError(context.path.c_str(), context.lineNo, fmt, args);
-	va_end(args);
+static void printStackEntry(LexerStackEntry const &context) {
+	style_Set(stderr, STYLE_CYAN, true);
+	fputs(context.path.c_str(), stderr);
+	style_Set(stderr, STYLE_CYAN, false);
+	fprintf(stderr, "(%" PRIu32 ")", context.lineNo);
+}
+
+void lexer_TraceCurrent() {
+	size_t n = lexerStack.size();
+
+	if (warnings.traceDepth == TRACE_COLLAPSE) {
+		fputs("   ", stderr); // Just three spaces; the fourth will be handled by the loop
+		for (size_t i = 0; i < n; ++i) {
+			style_Reset(stderr);
+			fprintf(stderr, " %s ", i == 0 ? "at" : "<-");
+			printStackEntry(lexerStack[n - i - 1]);
+		}
+		putc('\n', stderr);
+	} else if (warnings.traceDepth == 0 || static_cast<size_t>(warnings.traceDepth) >= n) {
+		for (size_t i = 0; i < n; ++i) {
+			style_Reset(stderr);
+			fprintf(stderr, "    %s ", i == 0 ? "at" : "<-");
+			printStackEntry(lexerStack[n - i - 1]);
+			putc('\n', stderr);
+		}
+	} else {
+		size_t last = warnings.traceDepth / 2;
+		size_t first = warnings.traceDepth - last;
+		size_t skipped = n - warnings.traceDepth;
+		for (size_t i = 0; i < first; ++i) {
+			style_Reset(stderr);
+			fprintf(stderr, "    %s ", i == 0 ? "at" : "<-");
+			printStackEntry(lexerStack[n - i - 1]);
+			putc('\n', stderr);
+		}
+		style_Reset(stderr);
+		fprintf(stderr, "    ...%zu more%s\n", skipped, last ? "..." : "");
+		for (size_t i = n - last; i < n; ++i) {
+			style_Reset(stderr);
+			fputs("    <- ", stderr);
+			printStackEntry(lexerStack[n - i - 1]);
+			putc('\n', stderr);
+		}
+	}
+
+	style_Reset(stderr);
 }
 
 void lexer_IncludeFile(std::string &&path) {
@@ -46,7 +87,7 @@ void lexer_IncludeFile(std::string &&path) {
 		std::string badPath = std::move(newContext.path);
 		lexerStack.pop_back();
 		// This error will occur in `prevContext`, *before* incrementing the line number!
-		lexer_Error(
+		scriptError(
 		    "Failed to open included linker script \"%s\": %s", badPath.c_str(), strerror(errno)
 		);
 	}
@@ -119,7 +160,7 @@ static yy::parser::symbol_type parseBinNumber(char const *prefix) {
 	LexerStackEntry &context = lexerStack.back();
 	int c = context.file.sgetc();
 	if (!isBinDigit(c)) {
-		lexer_Error("No binary digits found after %s", prefix);
+		scriptError("No binary digits found after %s", prefix);
 		return yy::parser::make_number(0);
 	}
 
@@ -142,7 +183,7 @@ static yy::parser::symbol_type parseOctNumber(char const *prefix) {
 	LexerStackEntry &context = lexerStack.back();
 	int c = context.file.sgetc();
 	if (!isOctDigit(c)) {
-		lexer_Error("No octal digits found after %s", prefix);
+		scriptError("No octal digits found after %s", prefix);
 		return yy::parser::make_number(0);
 	}
 
@@ -177,7 +218,7 @@ static yy::parser::symbol_type parseHexNumber(char const *prefix) {
 	LexerStackEntry &context = lexerStack.back();
 	int c = context.file.sgetc();
 	if (!isHexDigit(c)) {
-		lexer_Error("No hexadecimal digits found after %s", prefix);
+		scriptError("No hexadecimal digits found after %s", prefix);
 		return yy::parser::make_number(0);
 	}
 
@@ -225,14 +266,14 @@ static yy::parser::symbol_type parseString() {
 	std::string str;
 	for (; c != '"'; c = context.file.sgetc()) {
 		if (c == EOF || isNewline(c)) {
-			lexer_Error("Unterminated string");
+			scriptError("Unterminated string");
 			break;
 		}
 		context.file.sbumpc();
 		if (c == '\\') {
 			c = context.file.sgetc();
 			if (c == EOF || isNewline(c)) {
-				lexer_Error("Unterminated string");
+				scriptError("Unterminated string");
 				break;
 			} else if (c == 'n') {
 				c = '\n';
@@ -243,7 +284,7 @@ static yy::parser::symbol_type parseString() {
 			} else if (c == '0') {
 				c = '\0';
 			} else if (c != '\\' && c != '"' && c != '\'') {
-				lexer_Error("Cannot escape character %s", printChar(c));
+				scriptError("Cannot escape character %s", printChar(c));
 			}
 			context.file.sbumpc();
 		}
@@ -320,10 +361,10 @@ yy::parser::symbol_type yylex() {
 			return search->second();
 		}
 
-		lexer_Error("Unknown keyword `%s`", ident.c_str());
+		scriptError("Unknown keyword `%s`", ident.c_str());
 		return yylex();
 	} else {
-		lexer_Error("Unexpected character %s", printChar(c));
+		scriptError("Unexpected character %s", printChar(c));
 		// Keep reading characters until the EOL, to avoid reporting too many errors.
 		for (c = context.file.sgetc(); !isNewline(c); c = context.file.sgetc()) {
 			if (c == EOF) {

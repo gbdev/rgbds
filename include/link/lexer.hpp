@@ -3,11 +3,9 @@
 #ifndef RGBDS_LINK_LEXER_HPP
 #define RGBDS_LINK_LEXER_HPP
 
-#include <stdarg.h>
 #include <string>
 
-[[gnu::format(printf, 1, 2)]]
-void lexer_Error(char const *fmt, ...);
+void lexer_TraceCurrent();
 
 void lexer_IncludeFile(std::string &&path);
 void lexer_IncLineNo();
