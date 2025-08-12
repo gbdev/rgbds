@@ -53,15 +53,12 @@ struct DiagnosticsState {
 	bool warningsAreErrors = false;
 };
 
-static constexpr uint64_t TRACE_COLLAPSE = UINT64_MAX;
-
 template<typename L, typename W>
 struct Diagnostics {
 	std::vector<WarningFlag<L>> metaWarnings;
 	std::vector<WarningFlag<L>> warningFlags;
 	std::vector<ParamWarning<W>> paramWarnings;
 	DiagnosticsState<W> state;
-	uint64_t traceDepth;
 	uint64_t nbErrors;
 
 	void incrementErrors() {

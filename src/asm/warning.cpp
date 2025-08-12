@@ -60,7 +60,6 @@ Diagnostics<WarningLevel, WarningID> warnings = {
         {WARNING_UNMAPPED_CHAR_1,  WARNING_UNMAPPED_CHAR_2,  1},
     },
     .state = DiagnosticsState<WarningID>(),
-    .traceDepth = 0,
     .nbErrors = 0,
 };
 // clang-format on
