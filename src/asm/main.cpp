@@ -87,7 +87,7 @@ static Usage usage = {
         {{"-E", "--export-all"}, {"export all labels"}},
         {{"-M", "--dependfile <path>"}, {"set the output dependency file"}},
         {{"-o", "--output <path>"}, {"set the output object file"}},
-        {{"-p", "--pad-value <value>"}, {"set the value to use for DS"}},
+        {{"-p", "--pad-value <value>"}, {"set the value to use for `DS`"}},
         {{"-s", "--state <features>:<path>"}, {"set an output state file"}},
         {{"-V", "--version"}, {"print RGBASM version and exit"}},
         {{"-W", "--warning <warning>"}, {"enable or disable warnings"}},
