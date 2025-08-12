@@ -27,7 +27,7 @@ void act_If(int32_t condition) {
 
 void act_Elif(int32_t condition) {
 	if (lexer_GetIFDepth() == 0) {
-		fatal("Found `ELIF` outside of an `IF` construct");
+		fatal("Found `ELIF` outside of a conditional (not after an `IF`/`ELIF` block)");
 	}
 	if (lexer_RanIFBlock()) {
 		if (lexer_ReachedELSEBlock()) {
@@ -43,7 +43,7 @@ void act_Elif(int32_t condition) {
 
 void act_Else() {
 	if (lexer_GetIFDepth() == 0) {
-		fatal("Found `ELSE` outside of an `IF` construct");
+		fatal("Found `ELSE` outside of a conditional (not after an `IF`/`ELIF` block)");
 	}
 	if (lexer_RanIFBlock()) {
 		if (lexer_ReachedELSEBlock()) {

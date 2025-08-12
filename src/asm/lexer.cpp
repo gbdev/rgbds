@@ -298,7 +298,7 @@ void lexer_IncIFDepth() {
 
 void lexer_DecIFDepth() {
 	if (lexerState->ifStack.empty()) {
-		fatal("Found `ENDC` outside of an `IF` construct");
+		fatal("Found `ENDC` outside of a conditional (not after an `IF`/`ELIF`/`ELSE` block)");
 	}
 
 	lexerState->ifStack.pop_front();

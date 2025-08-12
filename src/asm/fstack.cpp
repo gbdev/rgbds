@@ -227,8 +227,9 @@ bool yywrap() {
 
 	if (ifDepth != 0) {
 		fatal(
-		    "Ended block with %" PRIu32 " unterminated `IF` block%s",
+		    "Ended block with %" PRIu32 " unterminated conditional%s (`IF`/`ELIF`/`ELSE` block%s)",
 		    ifDepth,
+		    ifDepth == 1 ? "" : "s",
 		    ifDepth == 1 ? "" : "s"
 		);
 	}
