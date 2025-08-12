@@ -2,8 +2,8 @@ error: Fractional width 99999999 too long, limiting to 255
     at interpolation-overflow.asm(4)
 warning: Precision of fixed-point constant is too large [-Wlarge-constant]
     at interpolation-overflow.asm(4)
-    while expanding symbol "x"
-error: '\1' cannot be used outside of a macro
+    while expanding symbol `x`
+error: `\1` cannot be used outside of a macro
     at interpolation-overflow.asm(4)
 error: syntax error, unexpected number
     at interpolation-overflow.asm(4)

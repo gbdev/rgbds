@@ -151,7 +151,7 @@ jobs:
           body: |
             Please ensure that the packages below work properly.
             Once that's done, replace this text with the changelog, un-draft the release, and update the `release` branch.
-            By the way, if you forgot to update `include/version.hpp`, RGBASM's version test is gonna fail in the tag's regression testing! (Use `git push --delete origin <tag>` to delete it)
+            By the way, if you forgot to update `include/version.hpp`, RGBASM's version test is going to fail in the tag's regression testing! (Use `git push --delete origin <tag>` to delete it)
           draft: true # Don't publish the release quite yet...
           prerelease: ${{ contains(github.ref, '-rc') }}
           files: |

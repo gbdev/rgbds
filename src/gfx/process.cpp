@@ -312,7 +312,7 @@ static void generatePalSpec(Image const &image) {
 	// Generate a palette spec from the first few colors in the embedded palette
 	std::vector<Rgba> const &embPal = image.png.palette;
 	if (embPal.empty()) {
-		fatal("`-c embedded` was given, but the PNG does not have an embedded palette!");
+		fatal("\"-c embedded\" was given, but the PNG does not have an embedded palette!");
 	}
 
 	// Ignore extraneous colors if they are unused
@@ -794,7 +794,7 @@ static UniqueTiles dedupTiles(
 			if (matchType != TileData::NOPE) {
 				error(
 				    "The input tileset's tile #%hu was deduplicated; please check that your "
-				    "deduplication flags (`-u`, `-m`) are consistent with what was used to "
+				    "deduplication flags ('-u', '-m') are consistent with what was used to "
 				    "generate the input tileset",
 				    tileID
 				);
@@ -815,7 +815,7 @@ static UniqueTiles dedupTiles(
 			if (inputWithoutOutput && matchType == TileData::NOPE) {
 				error(
 				    "Tile at (%" PRIu32 ", %" PRIu32
-				    ") is not within the input tileset, and `-o` was not given!",
+				    ") is not within the input tileset, and '-o' was not given!",
 				    tile.x,
 				    tile.y
 				);
@@ -1078,8 +1078,7 @@ continue_visiting_tiles:;
 
 		// I currently cannot figure out useful semantics for this combination of flags.
 		if (!options.inputTileset.empty()) {
-			fatal("Input tilesets are not supported without `-u`\nPlease consider explaining your "
-			      "use case to RGBDS' developers!");
+			fatal("Input tilesets are not supported without '-u'");
 		}
 
 		if (!options.output.empty()) {

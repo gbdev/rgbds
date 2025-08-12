@@ -75,15 +75,15 @@ static Usage usage = {
         {
             {"-m", "--mbc-type <value>"},
             {
-                "set the MBC type byte to this value; `-m help'",
-                "or `-m list' prints the accepted values",
+                "set the MBC type byte to this value; \"-m help\"",
+                "or \"-m list\" prints the accepted values",
             },
         },
         {{"-p", "--pad-value <value>"}, {"pad to the next valid size using this value"}},
         {{"-r", "--ram-size <code>"}, {"set the cart RAM size byte to this value"}},
         {{"-o", "--output <path>"}, {"set the output file"}},
         {{"-V", "--version"}, {"print RGBFIX version and exit"}},
-        {{"-v", "--validate"}, {"fix the header logo and both checksums (`-f lhg')"}},
+        {{"-v", "--validate"}, {"fix the header logo and both checksums (\"-f lhg\")"}},
         {{"-W", "--warning <warning>"}, {"enable or disable warnings"}},
     },
 };
@@ -353,7 +353,7 @@ static void
 
 			// Update bank count, ONLY IF at least one byte was read
 			if (bankLen) {
-				// We're gonna read another bank, check that it won't be too much
+				// We're going to read another bank, check that it won't be too much
 				static_assert(
 				    0x10000 * BANK_SIZE <= SSIZE_MAX, "Max input file size too large for OS"
 				);
@@ -613,7 +613,7 @@ static bool processFilename(char const *name, char const *outputName) {
 
 static void parseByte(uint16_t &output, char name) {
 	if (musl_optarg[0] == 0) {
-		fatal("Argument to option '%c' may not be empty", name);
+		fatal("Argument to option '-%c' may not be empty", name);
 	}
 
 	char *endptr;
@@ -625,9 +625,9 @@ static void parseByte(uint16_t &output, char name) {
 	}
 
 	if (*endptr) {
-		fatal("Expected number as argument to option '%c', got %s", name, musl_optarg);
+		fatal("Expected number as argument to option '-%c', got \"%s\"", name, musl_optarg);
 	} else if (value > 0xFF) {
-		fatal("Argument to option '%c' is larger than 255: %lu", name, value);
+		fatal("Argument to option '-%c' is larger than 255: %lu", name, value);
 	}
 
 	output = value;
@@ -849,7 +849,7 @@ int main(int argc, char *argv[]) {
 
 	if ((cartridgeType & 0xFF00) == TPP1 && !japanese) {
 		warning(
-		    WARNING_MBC, "TPP1 overwrites region flag for its identification code, ignoring `-j`"
+		    WARNING_MBC, "TPP1 overwrites region flag for its identification code, ignoring '-j'"
 		);
 	}
 
@@ -859,7 +859,7 @@ int main(int argc, char *argv[]) {
 			if (ramSize != 1) {
 				warning(
 				    WARNING_MBC,
-				    "MBC \"%s\" should have 2 KiB of RAM (-r 1)",
+				    "MBC \"%s\" should have 2 KiB of RAM (\"-r 1\")",
 				    mbc_Name(cartridgeType)
 				);
 			}
@@ -899,11 +899,11 @@ int main(int argc, char *argv[]) {
 
 	argv += musl_optind;
 	if (!*argv) {
-		usage.printAndExit("No input file specified (pass `-` to read from standard input)");
+		usage.printAndExit("No input file specified (pass \"-\" to read from standard input)");
 	}
 
 	if (outputFilename && argc != musl_optind + 1) {
-		usage.printAndExit("If `-o` is set then only a single input file may be specified");
+		usage.printAndExit("If '-o' is set then only a single input file may be specified");
 	}
 
 	bool failed = warnings.nbErrors > 0;

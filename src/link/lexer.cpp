@@ -119,7 +119,7 @@ static yy::parser::symbol_type parseBinNumber(char const *prefix) {
 	LexerStackEntry &context = lexerStack.back();
 	int c = context.file.sgetc();
 	if (!isBinDigit(c)) {
-		lexer_Error("No binary digits found after '%s'", prefix);
+		lexer_Error("No binary digits found after %s", prefix);
 		return yy::parser::make_number(0);
 	}
 
@@ -142,7 +142,7 @@ static yy::parser::symbol_type parseOctNumber(char const *prefix) {
 	LexerStackEntry &context = lexerStack.back();
 	int c = context.file.sgetc();
 	if (!isOctDigit(c)) {
-		lexer_Error("No octal digits found after '%s'", prefix);
+		lexer_Error("No octal digits found after %s", prefix);
 		return yy::parser::make_number(0);
 	}
 
@@ -177,7 +177,7 @@ static yy::parser::symbol_type parseHexNumber(char const *prefix) {
 	LexerStackEntry &context = lexerStack.back();
 	int c = context.file.sgetc();
 	if (!isHexDigit(c)) {
-		lexer_Error("No hexadecimal digits found after '%s'", prefix);
+		lexer_Error("No hexadecimal digits found after %s", prefix);
 		return yy::parser::make_number(0);
 	}
 
@@ -198,22 +198,22 @@ static yy::parser::symbol_type parseNumber(int c) {
 		switch (context.file.sgetc()) {
 		case 'x':
 			context.file.sbumpc();
-			return parseHexNumber("0x");
+			return parseHexNumber("\"0x\"");
 		case 'X':
 			context.file.sbumpc();
-			return parseHexNumber("0X");
+			return parseHexNumber("\"0X\"");
 		case 'o':
 			context.file.sbumpc();
-			return parseOctNumber("0o");
+			return parseOctNumber("\"0o\"");
 		case 'O':
 			context.file.sbumpc();
-			return parseOctNumber("0O");
+			return parseOctNumber("\"0O\"");
 		case 'b':
 			context.file.sbumpc();
-			return parseBinNumber("0b");
+			return parseBinNumber("\"0b\"");
 		case 'B':
 			context.file.sbumpc();
-			return parseBinNumber("0B");
+			return parseBinNumber("\"0B");
 		}
 	}
 	return parseDecNumber(c);
@@ -284,11 +284,11 @@ yy::parser::symbol_type yylex() {
 	} else if (c == '"') {
 		return parseString();
 	} else if (c == '$') {
-		return parseHexNumber("$");
+		return parseHexNumber("'$'");
 	} else if (c == '%') {
-		return parseBinNumber("%");
+		return parseBinNumber("'%'");
 	} else if (c == '&') {
-		return parseOctNumber("&");
+		return parseOctNumber("'&'");
 	} else if (isDecDigit(c)) {
 		return parseNumber(c);
 	} else if (isIdentChar(c)) { // Note that we match these *after* digit characters!
@@ -320,7 +320,7 @@ yy::parser::symbol_type yylex() {
 			return search->second();
 		}
 
-		lexer_Error("Unknown keyword \"%s\"", ident.c_str());
+		lexer_Error("Unknown keyword `%s`", ident.c_str());
 		return yylex();
 	} else {
 		lexer_Error("Unexpected character %s", printChar(c));

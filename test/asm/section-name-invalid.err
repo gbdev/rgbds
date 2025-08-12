@@ -1,2 +1,2 @@
-FATAL: "Value" does not belong to any section
+FATAL: `Value` does not belong to any section
     at section-name-invalid.asm(7)

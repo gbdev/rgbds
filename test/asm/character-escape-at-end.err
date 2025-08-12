@@ -1,4 +1,4 @@
-error: Illegal character escape at end of input
+error: Illegal character escape '\' at end of input
     at character-escape-at-end.asm(1)
 error: Unterminated string
     at character-escape-at-end.asm(1)

@@ -206,7 +206,7 @@ static void parseScrambleSpec(char *spec) {
 		spec = regionName + regionNameSkipLen;
 
 		if (*spec != '=' && *spec != ',' && *spec != '\0') {
-			fatal("Unexpected character %s in spec for option 'S'", printChar(*spec));
+			fatal("Unexpected character %s in spec for option '-S'", printChar(*spec));
 		}
 
 		char *regionSize = nullptr;
@@ -225,7 +225,7 @@ static void parseScrambleSpec(char *spec) {
 			spec = regionSize + regionSizeSkipLen;
 
 			if (*spec != ',' && *spec != '\0') {
-				fatal("Unexpected character %s in spec for option 'S'", printChar(*spec));
+				fatal("Unexpected character %s in spec for option '-S'", printChar(*spec));
 			}
 		}
 
@@ -248,16 +248,16 @@ static void parseScrambleSpec(char *spec) {
 		// and whitespace before the next iteration, we guarantee that the region name will not be
 		// empty if it is present at all.
 		if (*regionName == '\0') {
-			fatal("Empty region name in spec for option 'S'");
+			fatal("Empty region name in spec for option '-S'");
 		}
 		if (regionSize && *regionSize == '\0') {
-			fatal("Empty region size limit in spec for option 'S'");
+			fatal("Empty region size limit in spec for option '-S'");
 		}
 
 		// Determine which region type this is.
 		auto search = scrambleSpecs.find(regionName);
 		if (search == scrambleSpecs.end()) {
-			fatal("Unknown region name \"%s\" in spec for option 'S'", regionName);
+			fatal("Unknown region name \"%s\" in spec for option '-S'", regionName);
 		}
 
 		uint16_t limit = search->second.second;
@@ -266,11 +266,11 @@ static void parseScrambleSpec(char *spec) {
 			unsigned long value = strtoul(regionSize, &endptr, 0);
 
 			if (*endptr != '\0') {
-				fatal("Invalid region size limit \"%s\" for option 'S'", regionSize);
+				fatal("Invalid region size limit \"%s\" for option '-S'", regionSize);
 			}
 			if (value > limit) {
 				fatal(
-				    "%s region size for option 'S' must be between 0 and %" PRIu16,
+				    "%s region size for option '-S' must be between 0 and %" PRIu16,
 				    search->first.c_str(),
 				    limit
 				);
@@ -279,11 +279,11 @@ static void parseScrambleSpec(char *spec) {
 			limit = value;
 		} else if (search->second.first != &options.scrambleWRAMX) {
 			// Only WRAMX limit can be implied, since ROMX and SRAM size may vary.
-			fatal("Missing %s region size limit for option 'S'", search->first.c_str());
+			fatal("Missing %s region size limit for option '-S'", search->first.c_str());
 		}
 
 		if (*search->second.first != limit && *search->second.first != 0) {
-			warnx("Overriding %s region size limit for option 'S'", search->first.c_str());
+			warnx("Overriding %s region size limit for option '-S'", search->first.c_str());
 		}
 
 		// Update the scrambling region size limit.
@@ -303,10 +303,10 @@ int main(int argc, char *argv[]) {
 			char *endptr;
 			warnings.traceDepth = strtoul(musl_optarg, &endptr, 0);
 			if (musl_optarg[0] == '\0' || *endptr != '\0') {
-				fatal("Invalid argument for option 'B'");
+				fatal("Invalid argument for option '-B'");
 			}
 			if (warnings.traceDepth >= UINT64_MAX) {
-				fatal("Argument for option 'B' is too large");
+				fatal("Argument for option '-B' is too large");
 			}
 			break;
 		}
@@ -318,7 +318,7 @@ int main(int argc, char *argv[]) {
 			usage.printAndExit(0); // LCOV_EXCL_LINE
 		case 'l':
 			if (linkerScriptName) {
-				warnx("Overriding linker script %s", linkerScriptName);
+				warnx("Overriding linker script file \"%s\"", linkerScriptName);
 			}
 			linkerScriptName = musl_optarg;
 			break;
@@ -327,25 +327,25 @@ int main(int argc, char *argv[]) {
 			break;
 		case 'm':
 			if (options.mapFileName) {
-				warnx("Overriding map file %s", options.mapFileName);
+				warnx("Overriding map file \"%s\"", options.mapFileName);
 			}
 			options.mapFileName = musl_optarg;
 			break;
 		case 'n':
 			if (options.symFileName) {
-				warnx("Overriding sym file %s", options.symFileName);
+				warnx("Overriding sym file \"%s\"", options.symFileName);
 			}
 			options.symFileName = musl_optarg;
 			break;
 		case 'O':
 			if (options.overlayFileName) {
-				warnx("Overriding overlay file %s", options.overlayFileName);
+				warnx("Overriding overlay file \"%s\"", options.overlayFileName);
 			}
 			options.overlayFileName = musl_optarg;
 			break;
 		case 'o':
 			if (options.outputFileName) {
-				warnx("Overriding output file %s", options.outputFileName);
+				warnx("Overriding output file \"%s\"", options.outputFileName);
 			}
 			options.outputFileName = musl_optarg;
 			break;
@@ -354,10 +354,10 @@ int main(int argc, char *argv[]) {
 			unsigned long value = strtoul(musl_optarg, &endptr, 0);
 
 			if (musl_optarg[0] == '\0' || *endptr != '\0') {
-				fatal("Invalid argument for option 'p'");
+				fatal("Invalid argument for option '-p'");
 			}
 			if (value > 0xFF) {
-				fatal("Argument for option 'p' must be between 0 and 0xFF");
+				fatal("Argument for option '-p' must be between 0 and 0xFF");
 			}
 
 			options.padValue = value;
@@ -410,7 +410,7 @@ int main(int argc, char *argv[]) {
 	verboseOutputConfig(argc, argv);
 
 	if (musl_optind == argc) {
-		usage.printAndExit("No input file specified (pass `-` to read from standard input)");
+		usage.printAndExit("No input file specified (pass \"-\" to read from standard input)");
 	}
 
 	// Patch the size array depending on command-line options

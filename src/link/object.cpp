@@ -125,7 +125,7 @@ static void readFileStackNode(
 		uint32_t depth;
 	case NODE_REPT:
 		tryReadLong(
-		    depth, file, "%s: Cannot read node #%" PRIu32 "'s rept depth: %s", fileName, nodeID
+		    depth, file, "%s: Cannot read node #%" PRIu32 "'s REPT depth: %s", fileName, nodeID
 		);
 		node.data = std::vector<uint32_t>(depth);
 		for (uint32_t i = 0; i < depth; ++i) {
@@ -140,7 +140,7 @@ static void readFileStackNode(
 		}
 		if (!node.parent) {
 			fatal(
-			    "%s is not a valid object file: root node (#%" PRIu32 ") may not be REPT",
+			    "%s: Invalid object file: root node (#%" PRIu32 ") may not be REPT",
 			    fileName,
 			    nodeID
 			);
@@ -157,7 +157,7 @@ static void readSymbol(
 	    ExportLevel,
 	    symbol.type,
 	    file,
-	    "%s: Cannot read \"%s\"'s type: %s",
+	    "%s: Cannot read `%s`'s type: %s",
 	    fileName,
 	    symbol.name.c_str()
 	);
@@ -165,27 +165,21 @@ static void readSymbol(
 	if (symbol.type != SYMTYPE_IMPORT) {
 		uint32_t nodeID;
 		tryReadLong(
-		    nodeID, file, "%s: Cannot read \"%s\"'s node ID: %s", fileName, symbol.name.c_str()
+		    nodeID, file, "%s: Cannot read `%s`'s node ID: %s", fileName, symbol.name.c_str()
 		);
 		symbol.src = &fileNodes[nodeID];
 		tryReadLong(
 		    symbol.lineNo,
 		    file,
-		    "%s: Cannot read \"%s\"'s line number: %s",
+		    "%s: Cannot read `%s`'s line number: %s",
 		    fileName,
 		    symbol.name.c_str()
 		);
 		int32_t sectionID, value;
 		tryReadLong(
-		    sectionID,
-		    file,
-		    "%s: Cannot read \"%s\"'s section ID: %s",
-		    fileName,
-		    symbol.name.c_str()
+		    sectionID, file, "%s: Cannot read `%s`'s section ID: %s", fileName, symbol.name.c_str()
 		);
-		tryReadLong(
-		    value, file, "%s: Cannot read \"%s\"'s value: %s", fileName, symbol.name.c_str()
-		);
+		tryReadLong(value, file, "%s: Cannot read `%s`'s value: %s", fileName, symbol.name.c_str());
 		if (sectionID == -1) {
 			symbol.data = value;
 		} else {

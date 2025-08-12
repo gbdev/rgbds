@@ -1,2 +1,2 @@
-FATAL: Cannot change the section within a UNION
+FATAL: Cannot change the section within a `UNION`
     at section-in-union.asm(3)

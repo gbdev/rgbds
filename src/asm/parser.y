@@ -423,12 +423,14 @@ diff_mark:
 	  %empty // OK
 	| OP_ADD {
 		::error(
-		    "syntax error, unexpected + at the beginning of the line (is it a leftover diff mark?)"
+		    "syntax error, unexpected '+' at the beginning of the line (is it a leftover diff "
+		    "mark?)"
 		);
 	}
 	| OP_SUB {
 		::error(
-		    "syntax error, unexpected - at the beginning of the line (is it a leftover diff mark?)"
+		    "syntax error, unexpected '-' at the beginning of the line (is it a leftover diff "
+		    "mark?)"
 		);
 	}
 ;
@@ -1594,7 +1596,7 @@ string:
 		if (Symbol *sym = sym_FindScopedSymbol($1); sym && sym->type == SYM_EQUS) {
 			$$ = *sym->getEqus();
 		} else {
-			::error("'%s' is not a string symbol", $1.c_str());
+			::error("`%s` is not a string symbol", $1.c_str());
 		}
 	}
 ;
@@ -2041,7 +2043,7 @@ ff00_c_ind:
 	LBRACK relocexpr OP_ADD MODE_C RBRACK {
 		// This has to use `relocexpr`, not `iconst`, to avoid a shift/reduce conflict
 		if ($2.getConstVal() != 0xFF00) {
-			::error("Base value must be equal to $FF00 for $FF00+C");
+			::error("Base value must be equal to $FF00 for [$FF00+C]");
 		}
 	}
 ;
@@ -2068,7 +2070,7 @@ sm83_ld_hl:
 	}
 	| SM83_LD MODE_HL COMMA reg_tt_no_af {
 		::error(
-		    "LD HL, %s is not a valid instruction; use LD H, %s and LD L, %s",
+		    "\"LD HL, %s\" is not a valid instruction; use \"LD H, %s\" and \"LD L, %s\"",
 		    reg_tt_names[$4],
 		    reg_tt_high_names[$4],
 		    reg_tt_low_names[$4]
@@ -2081,7 +2083,7 @@ sm83_ld_sp:
 		sect_ConstByte(0xF9);
 	}
 	| SM83_LD MODE_SP COMMA reg_bc_or_de {
-		::error("LD SP, %s is not a valid instruction", reg_tt_names[$4]);
+		::error("\"LD SP, %s\" is not a valid instruction", reg_tt_names[$4]);
 	}
 	| SM83_LD MODE_SP COMMA reloc_16bit {
 		sect_ConstByte(0x01 | (REG_SP << 4));
@@ -2119,7 +2121,7 @@ sm83_ld_r_no_a:
 	}
 	| SM83_LD reg_r_no_a COMMA reg_r {
 		if ($2 == REG_HL_IND && $4 == REG_HL_IND) {
-			::error("LD [HL], [HL] is not a valid instruction");
+			::error("\"LD [HL], [HL]\" is not a valid instruction");
 		} else {
 			sect_ConstByte(0x40 | ($2 << 3) | $4);
 		}
@@ -2153,7 +2155,7 @@ sm83_ld_ss:
 	}
 	| SM83_LD reg_bc_or_de COMMA reg_tt_no_af {
 		::error(
-		    "LD %s, %s is not a valid instruction; use LD %s, %s and LD %s, %s",
+		    "\"LD %s, %s\" is not a valid instruction; use \"LD %s, %s\" and \"LD %s, %s\"",
 		    reg_tt_names[$2],
 		    reg_tt_names[$4],
 		    reg_tt_high_names[$2],
@@ -2407,7 +2409,7 @@ op_sp_offset:
 		$$.checkNBit(8);
 	}
 	| %empty {
-		::error("LD HL, SP is not a valid instruction; use LD HL, SP + 0");
+		::error("\"LD HL, SP\" is not a valid instruction; use \"LD HL, SP + 0\"");
 	}
 ;
 

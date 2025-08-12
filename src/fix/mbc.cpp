@@ -157,7 +157,7 @@ MbcType mbc_ParseName(char const *name, uint8_t &tpp1Major, uint8_t &tpp1Minor) 
 			fatalUnknownMBC(fullName);
 		}
 		if (mbc > 0xFF) {
-			fatal("Specified MBC ID out of range 0-255: %s", fullName);
+			fatal("Specified MBC ID out of range 0-255: \"%s\"", fullName);
 		}
 		return static_cast<MbcType>(mbc);
 	}
@@ -415,7 +415,7 @@ MbcType mbc_ParseName(char const *name, uint8_t &tpp1Major, uint8_t &tpp1Minor) 
 		// Handle timer, which also requires battery
 		if (features & TIMER) {
 			if (!(features & BATTERY)) {
-				warning(WARNING_MBC, "MBC3+TIMER implies BATTERY");
+				warning(WARNING_MBC, "\"MBC3+TIMER\" implies \"BATTERY\"");
 			}
 			features &= ~(TIMER | BATTERY); // Reset those bits
 			mbc = MBC3_TIMER_BATTERY;

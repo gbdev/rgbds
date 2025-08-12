@@ -1,2 +1,2 @@
-warning: FOR goes backwards from -2147483648 to -1 by -2147483648 [-Wbackwards-for]
+warning: `FOR` goes backwards from -2147483648 to -1 by -2147483648 [-Wbackwards-for]
     at for-loop-count.asm::test(12) <- for-loop-count.asm(19)

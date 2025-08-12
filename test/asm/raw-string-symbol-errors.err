@@ -2,30 +2,30 @@ warning: Treating strings as numbers is deprecated [-Wobsolete]
     at raw-string-symbol-errors.asm(7)
 error: Strings as numbers must be a single charmap unit
     at raw-string-symbol-errors.asm(7)
-error: 'm' is not a numeric symbol
+error: `m` is not a numeric symbol
     at raw-string-symbol-errors.asm(8)
-error: 'n' is not a string symbol
+error: `n` is not a string symbol
     at raw-string-symbol-errors.asm(11)
-error: 'm' is not a string symbol
+error: `m` is not a string symbol
     at raw-string-symbol-errors.asm(13)
-error: 'u' is not a string symbol
+error: `u` is not a string symbol
     at raw-string-symbol-errors.asm(14)
 warning: Treating strings as numbers is deprecated [-Wobsolete]
     at raw-string-symbol-errors.asm(17)
 error: Strings as numbers must be a single charmap unit
     at raw-string-symbol-errors.asm(17)
-error: 'm' is not a numeric symbol
+error: `m` is not a numeric symbol
     at raw-string-symbol-errors.asm(18)
-error: Expected constant expression: 'u' is not constant at assembly time
+error: Expected constant expression: `u` is not constant at assembly time
     at raw-string-symbol-errors.asm(19)
-error: 'n' is not a string symbol
+error: `n` is not a string symbol
     at raw-string-symbol-errors.asm(21)
-error: 'm' is not a string symbol
+error: `m` is not a string symbol
     at raw-string-symbol-errors.asm(23)
-error: 'u' is not a string symbol
+error: `u` is not a string symbol
     at raw-string-symbol-errors.asm(24)
-error: Undefined symbol 's' was already purged
+error: Undefined symbol `s` was already purged
     at raw-string-symbol-errors.asm(27)
-error: 's' is not a string symbol
+error: `s` is not a string symbol
     at raw-string-symbol-errors.asm(29)
 Assembly aborted with 13 errors!

@@ -2,7 +2,7 @@ warning: done 5 [-Wuser]
     at break.asm(9)
 warning: OK [-Wuser]
     at break.asm(28)
-error: BREAK can only be used inside a REPT/FOR block
+error: `BREAK` can only be used inside a loop (`REPT`/`FOR` block)
     at break.asm(29)
-FATAL: Ended block with 1 unterminated IF construct
+FATAL: Ended block with 1 unterminated conditional (`IF`/`ELIF`/`ELSE` block)
     at break.asm::REPT~1(34) <- break.asm(30)

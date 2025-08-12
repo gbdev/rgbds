@@ -57,7 +57,7 @@ static bool requireSection() {
 		return true;
 	}
 
-	error("Cannot output data outside of a SECTION");
+	error("Cannot output data outside of a `SECTION`");
 	return false;
 }
 
@@ -72,7 +72,8 @@ static bool requireCodeSection() {
 	}
 
 	error(
-	    "Section '%s' cannot contain code or data (not ROM0 or ROMX)", currentSection->name.c_str()
+	    "Section \"%s\" cannot contain code or data (not `ROM0` or `ROMX`)",
+	    currentSection->name.c_str()
 	);
 	return false;
 }
@@ -91,7 +92,8 @@ void sect_CheckSizes() {
 	for (Section const &sect : sectionList) {
 		if (uint32_t maxSize = sectionTypeInfo[sect.type].size; sect.size > maxSize) {
 			error(
-			    "Section '%s' grew too big (max size = 0x%" PRIX32 " bytes, reached 0x%" PRIX32 ")",
+			    "Section \"%s\" grew too big (max size = 0x%" PRIX32 " bytes, reached 0x%" PRIX32
+			    ")",
 			    sect.name.c_str(),
 			    maxSize,
 			    sect.size
@@ -127,7 +129,7 @@ static unsigned int mergeSectUnion(
 	// Unionized sections only need "compatible" constraints, and they end up with the strictest
 	// combination of both.
 	if (sect_HasData(type)) {
-		sectError("Cannot declare ROM sections as UNION");
+		sectError("Cannot declare ROM sections as `UNION`");
 	}
 
 	if (org != UINT32_MAX) {
@@ -254,12 +256,12 @@ static void mergeSections(
 
 	if (type != sect.type) {
 		sectError(
-		    "Section already exists but with type %s", sectionTypeInfo[sect.type].name.c_str()
+		    "Section already exists but with type `%s`", sectionTypeInfo[sect.type].name.c_str()
 		);
 	}
 
 	if (sect.modifier != mod) {
-		sectError("Section already declared as SECTION %s", sectionModNames[sect.modifier]);
+		sectError("Section already declared as `SECTION %s`", sectionModNames[sect.modifier]);
 	} else {
 		switch (mod) {
 		case SECTION_UNION:
@@ -383,7 +385,7 @@ static Section *getSection(
 	if (bank != UINT32_MAX) {
 		if (type != SECTTYPE_ROMX && type != SECTTYPE_VRAM && type != SECTTYPE_SRAM
 		    && type != SECTTYPE_WRAMX) {
-			error("BANK only allowed for ROMX, WRAMX, SRAM, or VRAM sections");
+			error("`BANK` only allowed for `ROMX`, `WRAMX`, `SRAM`, or `VRAM` sections");
 		} else if (bank < sectionTypeInfo[type].firstBank
 		           || bank > sectionTypeInfo[type].lastBank) {
 			error(
@@ -425,7 +427,7 @@ static Section *getSection(
 		// It doesn't make sense to have both alignment and org set
 		if (org != UINT32_MAX) {
 			if ((org - alignOffset) & alignMask) {
-				error("Section \"%s\"'s fixed address doesn't match its alignment", name.c_str());
+				error("Section \"%s\"'s fixed address does not match its alignment", name.c_str());
 			}
 			alignment = 0; // Ignore it if it's satisfied
 		} else if (sectionTypeInfo[type].startAddr & alignMask) {
@@ -459,7 +461,7 @@ static Section *getSection(
 
 static void changeSection() {
 	if (!currentUnionStack.empty()) {
-		fatal("Cannot change the section within a UNION");
+		fatal("Cannot change the section within a `UNION`");
 	}
 
 	sym_ResetCurrentLabelScopes();
@@ -505,7 +507,7 @@ void sect_NewSection(
 ) {
 	for (SectionStackEntry &entry : sectionStack) {
 		if (entry.section && entry.section->name == name) {
-			fatal("Section '%s' is already on the stack", name.c_str());
+			fatal("Section \"%s\" is already on the stack", name.c_str());
 		}
 	}
 
@@ -710,11 +712,11 @@ void sect_StartUnion() {
 	// your own peril! ^^
 
 	if (!currentSection) {
-		error("UNIONs must be inside a SECTION");
+		error("`UNION`s must be inside a `SECTION`");
 		return;
 	}
 	if (sect_HasData(currentSection->type)) {
-		error("Cannot use UNION inside of ROM0 or ROMX sections");
+		error("Cannot use `UNION` inside of `ROM0` or `ROMX` sections");
 		return;
 	}
 
@@ -733,7 +735,7 @@ static void endUnionMember() {
 
 void sect_NextUnionMember() {
 	if (currentUnionStack.empty()) {
-		error("Found NEXTU outside of a UNION construct");
+		error("Found `NEXTU` outside of a `UNION` construct");
 		return;
 	}
 	endUnionMember();
@@ -741,7 +743,7 @@ void sect_NextUnionMember() {
 
 void sect_EndUnion() {
 	if (currentUnionStack.empty()) {
-		error("Found ENDU outside of a UNION construct");
+		error("Found `ENDU` outside of a `UNION` construct");
 		return;
 	}
 	endUnionMember();
@@ -751,7 +753,7 @@ void sect_EndUnion() {
 
 void sect_CheckUnionClosed() {
 	if (!currentUnionStack.empty()) {
-		error("Unterminated UNION construct");
+		error("Unterminated `UNION` construct");
 	}
 }
 
@@ -816,7 +818,7 @@ void sect_Skip(uint32_t skip, bool ds) {
 		if (!ds) {
 			warning(
 			    WARNING_EMPTY_DATA_DIRECTIVE,
-			    "%s directive without data in ROM",
+			    "`%s` directive without data in ROM",
 			    (skip == 4)   ? "DL"
 			    : (skip == 2) ? "DW"
 			                  : "DB"
@@ -905,8 +907,8 @@ void sect_PCRelByte(Expression const &expr, uint32_t pcShift) {
 
 		if (offset < -128 || offset > 127) {
 			error(
-			    "JR target must be between -128 and 127 bytes away, not %" PRId16
-			    "; use JP instead",
+			    "`JR` target must be between -128 and 127 bytes away, not %" PRId16
+			    "; use `JP` instead",
 			    offset
 			);
 			writeByte(0);
@@ -932,19 +934,23 @@ bool sect_BinaryFile(std::string const &name, uint32_t startPos) {
 
 	if (fseek(file, 0, SEEK_END) == 0) {
 		if (startPos > ftell(file)) {
-			error("Specified start position is greater than length of file '%s'", name.c_str());
+			error("Specified start position is greater than length of file \"%s\"", name.c_str());
 			return false;
 		}
 		// The file is seekable; skip to the specified start position
 		fseek(file, startPos, SEEK_SET);
 	} else {
 		if (errno != ESPIPE) {
-			error("Error determining size of INCBIN file '%s': %s", name.c_str(), strerror(errno));
+			error(
+			    "Error determining size of `INCBIN` file \"%s\": %s", name.c_str(), strerror(errno)
+			);
 		}
 		// The file isn't seekable, so we'll just skip bytes one at a time
 		while (startPos--) {
 			if (fgetc(file) == EOF) {
-				error("Specified start position is greater than length of file '%s'", name.c_str());
+				error(
+				    "Specified start position is greater than length of file \"%s\"", name.c_str()
+				);
 				return false;
 			}
 		}
@@ -955,7 +961,7 @@ bool sect_BinaryFile(std::string const &name, uint32_t startPos) {
 	}
 
 	if (ferror(file)) {
-		error("Error reading INCBIN file '%s': %s", name.c_str(), strerror(errno));
+		error("Error reading `INCBIN` file \"%s\": %s", name.c_str(), strerror(errno));
 	}
 	return false;
 }
@@ -979,11 +985,11 @@ bool sect_BinaryFileSlice(std::string const &name, uint32_t startPos, uint32_t l
 
 	if (fseek(file, 0, SEEK_END) == 0) {
 		if (long fsize = ftell(file); startPos > fsize) {
-			error("Specified start position is greater than length of file '%s'", name.c_str());
+			error("Specified start position is greater than length of file \"%s\"", name.c_str());
 			return false;
 		} else if (startPos + length > fsize) {
 			error(
-			    "Specified range in INCBIN file '%s' is out of bounds (%" PRIu32 " + %" PRIu32
+			    "Specified range in `INCBIN` file \"%s\" is out of bounds (%" PRIu32 " + %" PRIu32
 			    " > %ld)",
 			    name.c_str(),
 			    startPos,
@@ -996,12 +1002,16 @@ bool sect_BinaryFileSlice(std::string const &name, uint32_t startPos, uint32_t l
 		fseek(file, startPos, SEEK_SET);
 	} else {
 		if (errno != ESPIPE) {
-			error("Error determining size of INCBIN file '%s': %s", name.c_str(), strerror(errno));
+			error(
+			    "Error determining size of `INCBIN` file \"%s\": %s", name.c_str(), strerror(errno)
+			);
 		}
 		// The file isn't seekable, so we'll just skip bytes one at a time
 		while (startPos--) {
 			if (fgetc(file) == EOF) {
-				error("Specified start position is greater than length of file '%s'", name.c_str());
+				error(
+				    "Specified start position is greater than length of file \"%s\"", name.c_str()
+				);
 				return false;
 			}
 		}
@@ -1011,10 +1021,10 @@ bool sect_BinaryFileSlice(std::string const &name, uint32_t startPos, uint32_t l
 		if (int byte = fgetc(file); byte != EOF) {
 			writeByte(byte);
 		} else if (ferror(file)) {
-			error("Error reading INCBIN file '%s': %s", name.c_str(), strerror(errno));
+			error("Error reading `INCBIN` file \"%s\": %s", name.c_str(), strerror(errno));
 		} else {
 			error(
-			    "Premature end of INCBIN file '%s' (%" PRId32 " bytes left to read)",
+			    "Premature end of `INCBIN` file \"%s\" (%" PRId32 " bytes left to read)",
 			    name.c_str(),
 			    length + 1
 			);
@@ -1069,11 +1079,11 @@ void sect_CheckStack() {
 
 void sect_EndSection() {
 	if (!currentSection) {
-		fatal("Cannot end the section outside of a SECTION");
+		fatal("Cannot end the section outside of a `SECTION`");
 	}
 
 	if (!currentUnionStack.empty()) {
-		fatal("Cannot end the section within a UNION");
+		fatal("Cannot end the section within a `UNION`");
 	}
 
 	if (currentLoadSection) {
@@ -1090,11 +1100,11 @@ std::string sect_PushSectionFragmentLiteral() {
 
 	// Like `requireCodeSection` but fatal
 	if (!currentSection) {
-		fatal("Cannot output fragment literals outside of a SECTION");
+		fatal("Cannot output fragment literals outside of a `SECTION`");
 	}
 	if (!sect_HasData(currentSection->type)) {
 		fatal(
-		    "Section '%s' cannot contain fragment literals (not ROM0 or ROMX)",
+		    "Section \"%s\" cannot contain fragment literals (not `ROM0` or `ROMX`)",
 		    currentSection->name.c_str()
 		);
 	}

@@ -1,11 +1,11 @@
-error: Symbol "ref" is referenced and thus cannot be purged
+error: Symbol `ref` is referenced and thus cannot be purged
     at purge-ref.asm(4)
-warning: Purging a label "OK" [-Wpurge]
+warning: Purging a label `OK` [-Wpurge]
     at purge-ref.asm(7)
-error: Symbol "NotOK" is referenced and thus cannot be purged
+error: Symbol `NotOK` is referenced and thus cannot be purged
     at purge-ref.asm(11)
-error: Symbol "EvenLessOK" is referenced and thus cannot be purged
+error: Symbol `EvenLessOK` is referenced and thus cannot be purged
     at purge-ref.asm(15)
-warning: Purging a label "Maybe" [-Wpurge]
+warning: Purging a label `Maybe` [-Wpurge]
     at purge-ref.asm(23)
 Assembly aborted with 3 errors!

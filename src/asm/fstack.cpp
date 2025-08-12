@@ -227,8 +227,9 @@ bool yywrap() {
 
 	if (ifDepth != 0) {
 		fatal(
-		    "Ended block with %" PRIu32 " unterminated IF construct%s",
+		    "Ended block with %" PRIu32 " unterminated conditional%s (`IF`/`ELIF`/`ELSE` block%s)",
 		    ifDepth,
+		    ifDepth == 1 ? "" : "s",
 		    ifDepth == 1 ? "" : "s"
 		);
 	}
@@ -255,7 +256,7 @@ bool yywrap() {
 
 			// This error message will refer to the current iteration
 			if (sym->type != SYM_VAR) {
-				fatal("Failed to update FOR symbol value");
+				fatal("Failed to update `FOR` symbol value");
 			}
 		}
 		// Advance to the next iteration
@@ -370,14 +371,14 @@ static Context &newReptContext(int32_t reptLineNo, ContentSpan const &span, uint
 
 bool fstk_FileError(std::string const &path, char const *functionName) {
 	if (options.missingIncludeState == INC_ERROR) {
-		error("Error opening %s file '%s': %s", functionName, path.c_str(), strerror(errno));
+		error("Error opening `%s` file \"%s\": %s", functionName, path.c_str(), strerror(errno));
 	} else {
 		failedOnMissingInclude = true;
 		// LCOV_EXCL_START
 		if (options.missingIncludeState == GEN_EXIT) {
 			verbosePrint(
 			    VERB_NOTICE,
-			    "Aborting (-MG) on %s file '%s' (%s)\n",
+			    "Aborting (-MG) on `%s` file \"%s\": %s\n",
 			    functionName,
 			    path.c_str(),
 			    strerror(errno)
@@ -407,14 +408,14 @@ void fstk_RunMacro(std::string const &macroName, std::shared_ptr<MacroArgs> macr
 
 	if (!macro) {
 		if (sym_IsPurgedExact(macroName)) {
-			error("Undefined macro \"%s\"; it was purged", macroName.c_str());
+			error("Undefined macro `%s`; it was purged", macroName.c_str());
 		} else {
-			error("Undefined macro \"%s\"", macroName.c_str());
+			error("Undefined macro `%s`", macroName.c_str());
 		}
 		return;
 	}
 	if (macro->type != SYM_MACRO) {
-		error("\"%s\" is not a macro", macroName.c_str());
+		error("`%s` is not a macro", macroName.c_str());
 		return;
 	}
 
@@ -447,11 +448,13 @@ void fstk_RunFor(
 	} else if (step < 0 && stop < start) {
 		count = (static_cast<int64_t>(start) - stop - 1) / -static_cast<int64_t>(step) + 1;
 	} else if (step == 0) {
-		error("FOR cannot have a step value of 0");
+		error("`FOR` cannot have a step value of 0");
 	}
 
 	if ((step > 0 && start > stop) || (step < 0 && start < stop)) {
-		warning(WARNING_BACKWARDS_FOR, "FOR goes backwards from %d to %d by %d", start, stop, step);
+		warning(
+		    WARNING_BACKWARDS_FOR, "`FOR` goes backwards from %d to %d by %d", start, stop, step
+		);
 	}
 
 	if (count == 0) {
@@ -467,7 +470,7 @@ void fstk_RunFor(
 
 bool fstk_Break() {
 	if (contextStack.top().fileInfo->type != NODE_REPT) {
-		error("BREAK can only be used inside a REPT/FOR block");
+		error("`BREAK` can only be used inside a loop (`REPT`/`FOR` block)");
 		return false;
 	}
 
@@ -489,7 +492,7 @@ void fstk_Init(std::string const &mainPath) {
 		if (std::optional<std::string> fullPath = fstk_FindFile(name); fullPath) {
 			newFileContext(*fullPath, false);
 		} else {
-			error("Error reading pre-included file '%s': %s", name.c_str(), strerror(errno));
+			error("Error reading pre-included file \"%s\": %s", name.c_str(), strerror(errno));
 		}
 	}
 }

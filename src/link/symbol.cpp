@@ -44,7 +44,7 @@ void sym_AddSymbol(Symbol &symbol) {
 		fatalTwoAt(
 		    symbol,
 		    *other,
-		    "\"%s\" is defined as %s, but also as %s",
+		    "`%s` is defined as %s, but also as %s",
 		    symbol.name.c_str(),
 		    symDef.c_str(),
 		    otherDef.c_str()

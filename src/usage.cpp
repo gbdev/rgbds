@@ -89,11 +89,11 @@ void Usage::printAndExit(int code) const {
 
 	// Print the link for further help information
 	style_Reset(file);
-	fputs("\nFor more help, use `", file);
+	fputs("\nFor more help, use \"", file);
 	style_Set(file, STYLE_CYAN, true);
 	fprintf(file, "man %s", name.c_str());
 	style_Reset(file);
-	fputs("' or go to ", file);
+	fputs("\" or go to ", file);
 	style_Set(file, STYLE_BLUE, true);
 	fputs("https://rgbds.gbdev.io/docs/", file);
 	style_Reset(file);

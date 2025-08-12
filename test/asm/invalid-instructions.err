@@ -1,8 +1,8 @@
 error: Address $10000 is not 16-bit
     at invalid-instructions.asm(1)
-error: LD [HL], [HL] is not a valid instruction
+error: "LD [HL], [HL]" is not a valid instruction
     at invalid-instructions.asm(2)
-error: Base value must be equal to $FF00 for $FF00+C
+error: Base value must be equal to $FF00 for [$FF00+C]
     at invalid-instructions.asm(3)
 error: syntax error, unexpected c, expecting hl
     at invalid-instructions.asm(4)
@@ -12,19 +12,19 @@ error: syntax error, unexpected number, expecting hl
     at invalid-instructions.asm(6)
 warning: Expression must be 3-bit [-Wtruncation]
     at invalid-instructions.asm(7)
-error: Invalid bit index 8 for BIT
+error: Invalid bit index 8 for `BIT`
     at invalid-instructions.asm(7)
-error: Invalid address $40 for RST
+error: Invalid address $40 for `RST`
     at invalid-instructions.asm(8)
-error: LD BC, BC is not a valid instruction; use LD B, B and LD C, C
+error: "LD BC, BC" is not a valid instruction; use "LD B, B" and "LD C, C"
     at invalid-instructions.asm(10)
-error: LD DE, HL is not a valid instruction; use LD D, H and LD E, L
+error: "LD DE, HL" is not a valid instruction; use "LD D, H" and "LD E, L"
     at invalid-instructions.asm(11)
-error: LD HL, DE is not a valid instruction; use LD H, D and LD L, E
+error: "LD HL, DE" is not a valid instruction; use "LD H, D" and "LD L, E"
     at invalid-instructions.asm(12)
-error: LD HL, SP is not a valid instruction; use LD HL, SP + 0
+error: "LD HL, SP" is not a valid instruction; use "LD HL, SP + 0"
     at invalid-instructions.asm(14)
-error: LD SP, BC is not a valid instruction
+error: "LD SP, BC" is not a valid instruction
     at invalid-instructions.asm(17)
 error: syntax error, unexpected sp
     at invalid-instructions.asm(18)

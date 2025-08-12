@@ -208,7 +208,7 @@ static void registerInput(char const *arg) {
 static std::vector<size_t> readAtFile(std::string const &path, std::vector<char> &argPool) {
 	File file;
 	if (!file.open(path, std::ios_base::in)) {
-		fatal("Error reading @%s: %s", file.c_str(path), strerror(errno));
+		fatal("Error reading at-file \"%s\": %s", file.c_str(path), strerror(errno));
 	}
 
 	for (std::vector<size_t> argvOfs;;) {
@@ -267,7 +267,7 @@ static char *parseArgv(int argc, char *argv[]) {
 		case 'a':
 			localOptions.autoAttrmap = false;
 			if (!options.attrmap.empty()) {
-				warnx("Overriding attrmap file %s", options.attrmap.c_str());
+				warnx("Overriding attrmap file \"%s\"", options.attrmap.c_str());
 			}
 			options.attrmap = musl_optarg;
 			break;
@@ -336,7 +336,7 @@ static char *parseArgv(int argc, char *argv[]) {
 		case 'd':
 			options.bitDepth = parseNumber(arg, "Bit depth", 2);
 			if (*arg != '\0') {
-				error("Bit depth (-b) argument must be a valid number, not \"%s\"", musl_optarg);
+				error("Bit depth ('-b') argument must be a valid number, not \"%s\"", musl_optarg);
 			} else if (options.bitDepth != 1 && options.bitDepth != 2) {
 				error("Bit depth must be 1 or 2, not %" PRIu8, options.bitDepth);
 				options.bitDepth = 2;
@@ -346,7 +346,7 @@ static char *parseArgv(int argc, char *argv[]) {
 			usage.printAndExit(0); // LCOV_EXCL_LINE
 		case 'i':
 			if (!options.inputTileset.empty()) {
-				warnx("Overriding input tileset file %s", options.inputTileset.c_str());
+				warnx("Overriding input tileset file \"%s\"", options.inputTileset.c_str());
 			}
 			options.inputTileset = musl_optarg;
 			break;
@@ -441,12 +441,12 @@ static char *parseArgv(int argc, char *argv[]) {
 		case 'n':
 			number = parseNumber(arg, "Number of palettes", 256);
 			if (*arg != '\0') {
-				error("Number of palettes (-n) must be a valid number, not \"%s\"", musl_optarg);
+				error("Number of palettes ('-n') must be a valid number, not \"%s\"", musl_optarg);
 			}
 			if (number > 256) {
-				error("Number of palettes (-n) must not exceed 256!");
+				error("Number of palettes ('-n') must not exceed 256!");
 			} else if (number == 0) {
-				error("Number of palettes (-n) may not be 0!");
+				error("Number of palettes ('-n') may not be 0!");
 			} else {
 				options.nbPalettes = number;
 			}
@@ -484,18 +484,20 @@ static char *parseArgv(int argc, char *argv[]) {
 			localOptions.reverse = true;
 			options.reversedWidth = parseNumber(arg, "Reversed image stride");
 			if (*arg != '\0') {
-				error("Reversed image stride (-r) must be a valid number, not \"%s\"", musl_optarg);
+				error(
+				    "Reversed image stride ('-r') must be a valid number, not \"%s\"", musl_optarg
+				);
 			}
 			break;
 		case 's':
 			options.nbColorsPerPal = parseNumber(arg, "Number of colors per palette", 4);
 			if (*arg != '\0') {
-				error("Palette size (-s) must be a valid number, not \"%s\"", musl_optarg);
+				error("Palette size ('-s') must be a valid number, not \"%s\"", musl_optarg);
 			}
 			if (options.nbColorsPerPal > 4) {
-				error("Palette size (-s) must not exceed 4!");
+				error("Palette size ('-s') must not exceed 4!");
 			} else if (options.nbColorsPerPal == 0) {
-				error("Palette size (-s) may not be 0!");
+				error("Palette size ('-s') may not be 0!");
 			}
 			break;
 		case 'T':
@@ -527,7 +529,7 @@ static char *parseArgv(int argc, char *argv[]) {
 		case 'x':
 			options.trim = parseNumber(arg, "Number of tiles to trim", 0);
 			if (*arg != '\0') {
-				error("Tile trim (-x) argument must be a valid number, not \"%s\"", musl_optarg);
+				error("Tile trim ('-x') argument must be a valid number, not \"%s\"", musl_optarg);
 			}
 			break;
 		case 'X':
@@ -846,7 +848,7 @@ int main(int argc, char *argv[]) {
 	           && !localOptions.reverse) {
 		processPalettes();
 	} else {
-		usage.printAndExit("No input file specified (pass `-` to read from standard input)");
+		usage.printAndExit("No input file specified (pass \"-\" to read from standard input)");
 	}
 
 	requireZeroErrors();

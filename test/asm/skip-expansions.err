@@ -1,7 +1,7 @@
-error: Macro argument '\1' not defined
+error: Macro argument `\1` not defined
     at skip-expansions.asm::mac2(21) <- skip-expansions.asm(31)
 error: syntax error, unexpected (
     at skip-expansions.asm::mac2(21) <- skip-expansions.asm(31)
-error: Macro argument '\2' not defined
+error: Macro argument `\2` not defined
     at skip-expansions.asm::mac2(21) <- skip-expansions.asm(31)
 Assembly aborted with 3 errors!

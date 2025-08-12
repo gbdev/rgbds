@@ -277,7 +277,7 @@ static int32_t computeRPNExpr(Patch const &patch, std::vector<Symbol> const &fil
 			if (Symbol const *symbol = getSymbol(fileSymbols, value); !symbol) {
 				errorAt(
 				    patch,
-				    "Requested BANK() of undefined symbol \"%s\"",
+				    "Requested `BANK()` of undefined symbol `%s`",
 				    fileSymbols[value].name.c_str()
 				);
 				isError = true;
@@ -287,7 +287,7 @@ static int32_t computeRPNExpr(Patch const &patch, std::vector<Symbol> const &fil
 			} else {
 				errorAt(
 				    patch,
-				    "Requested BANK() of non-label symbol \"%s\"",
+				    "Requested `BANK()` of non-label symbol `%s`",
 				    fileSymbols[value].name.c_str()
 				);
 				isError = true;
@@ -302,7 +302,7 @@ static int32_t computeRPNExpr(Patch const &patch, std::vector<Symbol> const &fil
 			while (getRPNByte(expression, size, patch)) {}
 
 			if (Section const *sect = sect_GetSection(name); !sect) {
-				errorAt(patch, "Requested BANK() of undefined section \"%s\"", name);
+				errorAt(patch, "Requested `BANK()` of undefined section \"%s\"", name);
 				isError = true;
 				value = 1;
 			} else {
@@ -327,7 +327,7 @@ static int32_t computeRPNExpr(Patch const &patch, std::vector<Symbol> const &fil
 			while (getRPNByte(expression, size, patch)) {}
 
 			if (Section const *sect = sect_GetSection(name); !sect) {
-				errorAt(patch, "Requested SIZEOF() of undefined section \"%s\"", name);
+				errorAt(patch, "Requested `SIZEOF()` of undefined section \"%s\"", name);
 				isError = true;
 				value = 1;
 			} else {
@@ -342,7 +342,7 @@ static int32_t computeRPNExpr(Patch const &patch, std::vector<Symbol> const &fil
 			while (getRPNByte(expression, size, patch)) {}
 
 			if (Section const *sect = sect_GetSection(name); !sect) {
-				errorAt(patch, "Requested STARTOF() of undefined section \"%s\"", name);
+				errorAt(patch, "Requested `STARTOF()` of undefined section \"%s\"", name);
 				isError = true;
 				value = 1;
 			} else {
@@ -355,7 +355,7 @@ static int32_t computeRPNExpr(Patch const &patch, std::vector<Symbol> const &fil
 		case RPN_SIZEOF_SECTTYPE:
 			value = getRPNByte(expression, size, patch);
 			if (value < 0 || value >= SECTTYPE_INVALID) {
-				errorAt(patch, "Requested SIZEOF() an invalid section type");
+				errorAt(patch, "Requested `SIZEOF()` of an invalid section type");
 				isError = true;
 				value = 0;
 			} else {
@@ -366,7 +366,7 @@ static int32_t computeRPNExpr(Patch const &patch, std::vector<Symbol> const &fil
 		case RPN_STARTOF_SECTTYPE:
 			value = getRPNByte(expression, size, patch);
 			if (value < 0 || value >= SECTTYPE_INVALID) {
-				errorAt(patch, "Requested STARTOF() an invalid section type");
+				errorAt(patch, "Requested `STARTOF()` of an invalid section type");
 				isError = true;
 				value = 0;
 			} else {
@@ -379,7 +379,7 @@ static int32_t computeRPNExpr(Patch const &patch, std::vector<Symbol> const &fil
 			if (value < 0xFF00 || value > 0xFFFF) {
 				firstErrorAt(
 				    patch,
-				    "Address $%" PRIx32 " for LDH is not in HRAM range; use LD instead",
+				    "Address $%" PRIx32 " for `LDH` is not in HRAM range; use `LD` instead",
 				    value
 				);
 				value = 0;
@@ -392,7 +392,7 @@ static int32_t computeRPNExpr(Patch const &patch, std::vector<Symbol> const &fil
 			// Acceptable values are 0x00, 0x08, 0x10, ..., 0x38
 			if (value & ~0x38) {
 				firstErrorAt(
-				    patch, "Value $%" PRIx32 " is not a RST vector; use CALL instead", value
+				    patch, "Value $%" PRIx32 " is not a `RST` vector; use `CALL` instead", value
 				);
 				value = 0;
 			}
@@ -433,7 +433,7 @@ static int32_t computeRPNExpr(Patch const &patch, std::vector<Symbol> const &fil
 					isError = true;
 				}
 			} else if (Symbol const *symbol = getSymbol(fileSymbols, value); !symbol) {
-				errorAt(patch, "Undefined symbol \"%s\"", fileSymbols[value].name.c_str());
+				errorAt(patch, "Undefined symbol `%s`", fileSymbols[value].name.c_str());
 				sym_TraceLocalAliasedSymbols(fileSymbols[value].name);
 				isError = true;
 			} else if (std::holds_alternative<Label>(symbol->data)) {
@@ -538,8 +538,8 @@ static void applyFilePatches(Section &section, Section &dataSection) {
 			if (jumpOffset < -128 || jumpOffset > 127) {
 				firstErrorAt(
 				    patch,
-				    "JR target must be between -128 and 127 bytes away, not %" PRId16
-				    "; use JP instead",
+				    "`JR` target must be between -128 and 127 bytes away, not %" PRId16
+				    "; use `JP` instead",
 				    jumpOffset
 				);
 			}

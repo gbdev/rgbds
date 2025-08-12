@@ -298,7 +298,7 @@ void lexer_IncIFDepth() {
 
 void lexer_DecIFDepth() {
 	if (lexerState->ifStack.empty()) {
-		fatal("Found ENDC outside of an IF construct");
+		fatal("Found `ENDC` outside of a conditional (not after an `IF`/`ELIF`/`ELSE` block)");
 	}
 
 	lexerState->ifStack.pop_front();
@@ -472,7 +472,7 @@ size_t BufferedContent::readMore(size_t startIndex, size_t nbChars) {
 
 	if (nbReadChars == -1) {
 		// LCOV_EXCL_START
-		fatal("Error while reading \"%s\": %s", lexerState->path.c_str(), strerror(errno));
+		fatal("Error reading file \"%s\": %s", lexerState->path.c_str(), strerror(errno));
 		// LCOV_EXCL_STOP
 	}
 
@@ -560,14 +560,14 @@ static uint32_t readBracketedMacroArgNum() {
 
 		if (Symbol const *sym = sym_FindScopedValidSymbol(symName); !sym) {
 			if (sym_IsPurgedScoped(symName)) {
-				error("Bracketed symbol \"%s\" does not exist; it was purged", symName.c_str());
+				error("Bracketed symbol `%s` does not exist; it was purged", symName.c_str());
 			} else {
-				error("Bracketed symbol \"%s\" does not exist", symName.c_str());
+				error("Bracketed symbol `%s` does not exist", symName.c_str());
 			}
 			num = 0;
 			symbolError = true;
 		} else if (!sym->isNumeric()) {
-			error("Bracketed symbol \"%s\" is not numeric", symName.c_str());
+			error("Bracketed symbol `%s` is not numeric", symName.c_str());
 			num = 0;
 			symbolError = true;
 		} else {
@@ -585,7 +585,7 @@ static uint32_t readBracketedMacroArgNum() {
 		error("Empty bracketed macro argument");
 		return 0;
 	} else if (num == 0 && !symbolError) {
-		error("Invalid bracketed macro argument '\\<0>'");
+		error("Invalid bracketed macro argument \"\\<0>\"");
 		return 0;
 	} else {
 		return num;
@@ -596,13 +596,13 @@ static std::shared_ptr<std::string> readMacroArg() {
 	if (int c = bumpChar(); c == '@') {
 		std::shared_ptr<std::string> str = fstk_GetUniqueIDStr();
 		if (!str) {
-			error("'\\@' cannot be used outside of a macro or REPT/FOR block");
+			error("`\\@` cannot be used outside of a macro or loop (`REPT`/`FOR` block)");
 		}
 		return str;
 	} else if (c == '#') {
 		MacroArgs *macroArgs = fstk_GetCurrentMacroArgs();
 		if (!macroArgs) {
-			error("'\\#' cannot be used outside of a macro");
+			error("`\\#` cannot be used outside of a macro");
 			return nullptr;
 		}
 
@@ -618,13 +618,13 @@ static std::shared_ptr<std::string> readMacroArg() {
 
 		MacroArgs *macroArgs = fstk_GetCurrentMacroArgs();
 		if (!macroArgs) {
-			error("'\\<%" PRIu32 ">' cannot be used outside of a macro", num);
+			error("`\\<%" PRIu32 ">` cannot be used outside of a macro", num);
 			return nullptr;
 		}
 
 		std::shared_ptr<std::string> str = macroArgs->getArg(num);
 		if (!str) {
-			error("Macro argument '\\<%" PRId32 ">' not defined", num);
+			error("Macro argument `\\<%" PRId32 ">` not defined", num);
 		}
 		return str;
 	} else {
@@ -632,13 +632,13 @@ static std::shared_ptr<std::string> readMacroArg() {
 
 		MacroArgs *macroArgs = fstk_GetCurrentMacroArgs();
 		if (!macroArgs) {
-			error("'\\%c' cannot be used outside of a macro", c);
+			error("`\\%c` cannot be used outside of a macro", c);
 			return nullptr;
 		}
 
 		std::shared_ptr<std::string> str = macroArgs->getArg(c - '0');
 		if (!str) {
-			error("Macro argument '\\%c' not defined", c);
+			error("Macro argument `\\%c` not defined", c);
 		}
 		return str;
 	}
@@ -847,11 +847,11 @@ void lexer_TraceStringExpansions() {
 		// Only print EQUS expansions, not string args
 		if (exp.name) {
 			style_Set(stderr, STYLE_CYAN, false);
-			fputs("    while expanding symbol \"", stderr);
+			fputs("    while expanding symbol `", stderr);
 			style_Set(stderr, STYLE_CYAN, true);
 			fputs(exp.name->c_str(), stderr);
 			style_Set(stderr, STYLE_CYAN, false);
-			fputs("\"\n", stderr);
+			fputs("`\n", stderr);
 		}
 	}
 	style_Reset(stderr);
@@ -876,7 +876,7 @@ static void discardBlockComment() {
 			continue;
 		case '/':
 			if (peek() == '*') {
-				warning(WARNING_NESTED_COMMENT, "/* in block comment");
+				warning(WARNING_NESTED_COMMENT, "\"/*\" in block comment");
 			}
 			continue;
 		case '*':
@@ -1252,7 +1252,7 @@ static std::pair<Symbol const *, std::shared_ptr<std::string>> readInterpolation
 			}
 			continue; // Restart, reading from the new buffer
 		} else if (int c = peek(); c == EOF || isNewline(c) || c == '"') {
-			error("Missing }");
+			error("Missing '}'");
 			break;
 		} else if (c == '}') {
 			shiftChar();
@@ -1264,7 +1264,7 @@ static std::pair<Symbol const *, std::shared_ptr<std::string>> readInterpolation
 			}
 			fmt.finishCharacters();
 			if (!fmt.isValid()) {
-				error("Invalid format spec '%s'", fmtBuf.c_str());
+				error("Invalid format spec \"%s\"", fmtBuf.c_str());
 			}
 			fmtBuf.clear(); // Now that format has been set, restart at beginning of string
 		} else {
@@ -1279,7 +1279,7 @@ static std::pair<Symbol const *, std::shared_ptr<std::string>> readInterpolation
 	} else if (keywordDict.find(fmtBuf) != keywordDict.end()) {
 		// Don't allow symbols that alias keywords without a '#' prefix.
 		error(
-		    "Interpolated symbol \"%s\" is a reserved keyword; add a '#' prefix to use it as a raw "
+		    "Interpolated symbol `%s` is a reserved keyword; add a '#' prefix to use it as a raw "
 		    "symbol",
 		    fmtBuf.c_str()
 		);
@@ -1288,9 +1288,9 @@ static std::pair<Symbol const *, std::shared_ptr<std::string>> readInterpolation
 
 	if (Symbol const *sym = sym_FindScopedValidSymbol(fmtBuf); !sym || !sym->isDefined()) {
 		if (sym_IsPurgedScoped(fmtBuf)) {
-			error("Interpolated symbol \"%s\" does not exist; it was purged", fmtBuf.c_str());
+			error("Interpolated symbol `%s` does not exist; it was purged", fmtBuf.c_str());
 		} else {
-			error("Interpolated symbol \"%s\" does not exist", fmtBuf.c_str());
+			error("Interpolated symbol `%s` does not exist", fmtBuf.c_str());
 		}
 		return {sym, nullptr};
 	} else if (sym->type == SYM_EQUS) {
@@ -1302,7 +1302,7 @@ static std::pair<Symbol const *, std::shared_ptr<std::string>> readInterpolation
 		fmt.appendNumber(*buf, sym->getConstantValue());
 		return {sym, buf};
 	} else {
-		error("Interpolated symbol \"%s\" is not a numeric or string symbol", fmtBuf.c_str());
+		error("Interpolated symbol `%s` is not a numeric or string symbol", fmtBuf.c_str());
 		return {sym, nullptr};
 	}
 }
@@ -1426,7 +1426,7 @@ static void appendCharInLiteral(std::string &str, int c) {
 		break;
 
 	case EOF: // Can't really print that one
-		error("Illegal character escape at end of input");
+		error("Illegal character escape '\\' at end of input");
 		str += '\\';
 		break;
 
@@ -2061,7 +2061,7 @@ backslash:
 				continue;
 
 			case EOF: // Can't really print that one
-				error("Illegal character escape at end of input");
+				error("Illegal character escape '\\' at end of input");
 				c = '\\';
 				break;
 
@@ -2173,7 +2173,7 @@ static Token skipIfBlock(bool toEndc) {
 		case T_(POP_ELIF):
 			if (lexer_ReachedELSEBlock()) {
 				// This should be redundant, as the parser handles this error first.
-				fatal("Found ELIF after an ELSE block"); // LCOV_EXCL_LINE
+				fatal("Found `ELIF` after an `ELSE` block"); // LCOV_EXCL_LINE
 			}
 			if (!toEndc && lexer_GetIFDepth() == startingDepth) {
 				return token;
@@ -2182,7 +2182,7 @@ static Token skipIfBlock(bool toEndc) {
 
 		case T_(POP_ELSE):
 			if (lexer_ReachedELSEBlock()) {
-				fatal("Found ELSE after an ELSE block");
+				fatal("Found `ELSE` after an `ELSE` block");
 			}
 			lexer_ReachELSEBlock();
 			if (!toEndc && lexer_GetIFDepth() == startingDepth) {
@@ -2260,7 +2260,7 @@ yy::parser::symbol_type yylex() {
 	lexerState->atLineStart = token.type == T_(NEWLINE) || token.type == T_(EOB);
 
 	// LCOV_EXCL_START
-	verbosePrint(VERB_TRACE, "Lexed '%s' token\n", yy::parser::symbol_type(token.type).name());
+	verbosePrint(VERB_TRACE, "Lexed `%s` token\n", yy::parser::symbol_type(token.type).name());
 	// LCOV_EXCL_STOP
 
 	if (std::holds_alternative<uint32_t>(token.value)) {
@@ -2345,7 +2345,7 @@ Capture lexer_CaptureRept() {
 
 		// Just consume characters until EOL or EOF
 		if (int c = skipChars([](int d) { return d != EOF && !isNewline(d); }); c == EOF) {
-			error("Unterminated REPT/FOR block");
+			error("Unterminated loop (`REPT`/`FOR` block)");
 			endCapture(capture);
 			capture.span.ptr = nullptr; // Indicates that it reached EOF before an ENDR
 			return capture;

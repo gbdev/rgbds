@@ -1,5 +1,5 @@
-error: Undefined symbol "nothing"
+error: Undefined symbol `nothing`
     at sym-noexist.asm(3)
-error: Undefined symbol "where"
+error: Undefined symbol `where`
     at sym-noexist.asm(2)
 Linking failed with 2 errors

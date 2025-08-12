@@ -1,4 +1,4 @@
-FATAL: "Same" is defined as a label, but also as another label
+FATAL: `Same` is defined as a label, but also as another label
     at section-union/same-export/b.asm(2)
     and also:
     at section-union/same-export/a.asm(2)

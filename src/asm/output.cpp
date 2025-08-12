@@ -303,7 +303,7 @@ void out_WriteObject() {
 	if (!file) {
 		// LCOV_EXCL_START
 		fatal(
-		    "Failed to open object file '%s': %s", options.objectFileName.c_str(), strerror(errno)
+		    "Failed to open object file \"%s\": %s", options.objectFileName.c_str(), strerror(errno)
 		);
 		// LCOV_EXCL_STOP
 	}
@@ -485,7 +485,7 @@ void out_WriteState(std::string name, std::vector<StateFeature> const &features)
 	}
 	if (!file) {
 		// LCOV_EXCL_START
-		fatal("Failed to open state file '%s': %s", name.c_str(), strerror(errno));
+		fatal("Failed to open state file \"%s\": %s", name.c_str(), strerror(errno));
 		// LCOV_EXCL_STOP
 	}
 	Defer closeFile{[&] { fclose(file); }};

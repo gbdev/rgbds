@@ -1,21 +1,21 @@
-error: Undefined symbol "Foo"
+error: Undefined symbol `Foo`
     at cascading-errors.asm(18)
-error: Undefined symbol "Bar"
+error: Undefined symbol `Bar`
     at cascading-errors.asm(19)
-error: Undefined symbol "hNonExist"
+error: Undefined symbol `hNonExist`
     at cascading-errors.asm(16)
-error: Undefined symbol "NonExist"
+error: Undefined symbol `NonExist`
     at cascading-errors.asm(14)
-error: Undefined symbol "Foo"
+error: Undefined symbol `Foo`
     at cascading-errors.asm(12)
-error: Undefined symbol "Foo"
+error: Undefined symbol `Foo`
     at cascading-errors.asm(10)
 error: Division by 0
     at cascading-errors.asm(10)
-error: Undefined symbol "Foo"
+error: Undefined symbol `Foo`
     at cascading-errors.asm(9)
-error: Undefined symbol "Bar"
+error: Undefined symbol `Bar`
     at cascading-errors.asm(9)
-error: Undefined symbol "Bar"
+error: Undefined symbol `Bar`
     at cascading-errors.asm(8)
 Linking failed with 10 errors

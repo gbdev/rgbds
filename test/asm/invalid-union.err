@@ -1,9 +1,9 @@
-error: Found ENDU outside of a UNION construct
+error: Found `ENDU` outside of a `UNION` construct
     at invalid-union.asm(1)
-error: Found NEXTU outside of a UNION construct
+error: Found `NEXTU` outside of a `UNION` construct
     at invalid-union.asm(2)
-error: UNIONs must be inside a SECTION
+error: `UNION`s must be inside a `SECTION`
     at invalid-union.asm(3)
-error: Unterminated UNION construct
+error: Unterminated `UNION` construct
     at invalid-union.asm(7)
 Assembly aborted with 4 errors!

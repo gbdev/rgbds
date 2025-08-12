@@ -1,11 +1,11 @@
-error: "Label1" is not a macro
+error: `Label1` is not a macro
     at lexer-hack.asm(22)
-error: 'mac' already defined
+error: `mac` already defined
     at lexer-hack.asm(24)
     and also:
     at lexer-hack.asm(1)
-error: Undefined macro "undef"
+error: Undefined macro `undef`
     at lexer-hack.asm(27)
-error: Undefined macro "undef"
+error: Undefined macro `undef`
     at lexer-hack.asm(28)
 Assembly aborted with 4 errors!

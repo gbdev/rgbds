@@ -1,5 +1,5 @@
-error: Label "DisallowedContent" created outside of a SECTION
+error: Label `DisallowedContent` created outside of a `SECTION`
     at pops-restore-no-section.asm(9)
-error: Cannot output data outside of a SECTION
+error: Cannot output data outside of a `SECTION`
     at pops-restore-no-section.asm(10)
 Assembly aborted with 2 errors!

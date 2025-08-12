@@ -1,6 +1,6 @@
 error: Illegal character escape 'w'
     at string-literal-macro-arg.asm(6)
-error: Illegal character escape at end of input
+error: Illegal character escape '\' at end of input
     at string-literal-macro-arg.asm(11)
 error: Unterminated string
     at string-literal-macro-arg.asm(11)

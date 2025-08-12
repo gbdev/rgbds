@@ -1,18 +1,18 @@
-error: Interpolated symbol "a" is a reserved keyword; add a '#' prefix to use it as a raw symbol
+error: Interpolated symbol `a` is a reserved keyword; add a '#' prefix to use it as a raw symbol
     at nested-bad-interpolation.asm(1)
-error: Interpolated symbol "" does not exist
+error: Interpolated symbol `` does not exist
     at nested-bad-interpolation.asm(1)
 error: syntax error, unexpected end of line
     at nested-bad-interpolation.asm(1)
-error: Interpolated symbol "b" is a reserved keyword; add a '#' prefix to use it as a raw symbol
+error: Interpolated symbol `b` is a reserved keyword; add a '#' prefix to use it as a raw symbol
     at nested-bad-interpolation.asm(2)
 warning: Treating strings as numbers is deprecated [-Wobsolete]
     at nested-bad-interpolation.asm(2)
 error: Strings as numbers must be a single charmap unit
     at nested-bad-interpolation.asm(2)
-error: Interpolated symbol "c" is a reserved keyword; add a '#' prefix to use it as a raw symbol
+error: Interpolated symbol `c` is a reserved keyword; add a '#' prefix to use it as a raw symbol
     at nested-bad-interpolation.asm(3)
-error: Interpolated symbol "" does not exist
+error: Interpolated symbol `` does not exist
     at nested-bad-interpolation.asm(3)
 warning: Treating strings as numbers is deprecated [-Wobsolete]
     at nested-bad-interpolation.asm(3)

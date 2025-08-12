@@ -1,2 +1,2 @@
-FATAL: Found ELIF outside of an IF construct
+FATAL: Found `ELIF` outside of a conditional (not after an `IF`/`ELIF` block)
     at elif-outside-if.asm(1)

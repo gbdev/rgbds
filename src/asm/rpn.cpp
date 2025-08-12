@@ -77,15 +77,15 @@ void Expression::makeSymbol(std::string const &symName) {
 		error("PC has no value outside of a section");
 		data = 0;
 	} else if (sym && !sym->isNumeric() && !sym->isLabel()) {
-		error("'%s' is not a numeric symbol", symName.c_str());
+		error("`%s` is not a numeric symbol", symName.c_str());
 		data = 0;
 	} else if (!sym || !sym->isConstant()) {
 		isSymbol = true;
 
 		data = sym_IsPC(sym) ? "PC is not constant at assembly time"
 		       : sym_IsPurgedScoped(symName)
-		           ? "'"s + symName + "' is not constant at assembly time; it was purged"
-		           : "'"s + symName + "' is not constant at assembly time";
+		           ? "`"s + symName + "` is not constant at assembly time; it was purged"
+		           : "`"s + symName + "` is not constant at assembly time";
 		sym = sym_Ref(symName);
 
 		size_t nameLen = sym->name.length() + 1; // Don't forget NUL!
@@ -115,7 +115,7 @@ void Expression::makeBankSymbol(std::string const &symName) {
 		}
 		return;
 	} else if (sym && !sym->isLabel()) {
-		error("BANK argument must be a label");
+		error("`BANK` argument must be a label");
 		data = 1;
 	} else {
 		sym = sym_Ref(symName);
@@ -126,8 +126,8 @@ void Expression::makeBankSymbol(std::string const &symName) {
 			data = static_cast<int32_t>(sym->getSection()->bank);
 		} else {
 			data = sym_IsPurgedScoped(symName)
-			           ? "\""s + symName + "\"'s bank is not known; it was purged"
-			           : "\""s + symName + "\"'s bank is not known";
+			           ? "`"s + symName + "`'s bank is not known; it was purged"
+			           : "`"s + symName + "`'s bank is not known";
 
 			size_t nameLen = sym->name.length() + 1; // Room for NUL!
 
@@ -539,7 +539,7 @@ void Expression::makeCheckRST() {
 		*reserveSpace(1) = RPN_RST;
 	} else if (int32_t val = value(); val & ~0x38) {
 		// A valid RST address must be masked with 0x38
-		error("Invalid address $%" PRIx32 " for RST", val);
+		error("Invalid address $%" PRIx32 " for `RST`", val);
 	}
 }
 
@@ -552,7 +552,7 @@ void Expression::makeCheckBitIndex(uint8_t mask) {
 		*ptr = mask;
 	} else if (int32_t val = value(); val & ~0x07) {
 		// A valid bit index must be masked with 0x07
-		static char const *instructions[4] = {"instruction", "BIT", "RES", "SET"};
+		static char const *instructions[4] = {"instruction", "`BIT`", "`RES`", "`SET`"};
 		error("Invalid bit index %" PRId32 " for %s", val, instructions[mask >> 6]);
 	}
 }
@@ -574,7 +574,7 @@ bool checkNBit(int32_t v, uint8_t n, char const *name) {
 		    "%s must be %u-bit%s",
 		    name ? name : "Expression",
 		    n,
-		    n == 8 && !name ? "; use LOW() to force 8-bit" : ""
+		    n == 8 && !name ? "; use `LOW()` to force 8-bit" : ""
 		);
 		return false;
 	}
@@ -584,7 +584,7 @@ bool checkNBit(int32_t v, uint8_t n, char const *name) {
 		    "%s must be %u-bit%s",
 		    name ? name : "Expression",
 		    n,
-		    n == 8 && !name ? "; use LOW() to force 8-bit" : ""
+		    n == 8 && !name ? "; use `LOW()` to force 8-bit" : ""
 		);
 		return false;
 	}

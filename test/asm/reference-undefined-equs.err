@@ -1,8 +1,8 @@
-error: 's1' already referenced
+error: `s1` already referenced
     at reference-undefined-equs.asm(4)
     and also:
     at reference-undefined-equs.asm(2)
-error: 's2' already referenced
+error: `s2` already referenced
     at reference-undefined-equs.asm(5)
     and also:
     at reference-undefined-equs.asm(2)
