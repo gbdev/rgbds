@@ -1,2 +1,3 @@
-error: section-attributes-mismatch.link(3): The linker script assigns section "sec" to address $0018, but that would be ALIGN[4, 8] instead of the requested ALIGN[4, 2]
+error: The linker script assigns section "sec" to address $0018, but that would be ALIGN[4, 8] instead of the requested ALIGN[4, 2]
+    at section-attributes-mismatch.link(3)
 Linking failed with 1 error

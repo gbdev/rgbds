@@ -1,2 +1,3 @@
-error: script-align-17.link(2): Cannot align: The alignment (17) must be less than 16
+error: Cannot align: The alignment (17) must be less than 16
+    at script-align-17.link(2)
 Linking failed with 1 error
