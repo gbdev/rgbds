@@ -121,7 +121,7 @@ void opt_Parse(char const *s) {
 		}
 
 		if (s[0] == '\0') {
-			error("Missing argument to option 'r'");
+			error("Missing argument for option 'r'");
 			break;
 		}
 

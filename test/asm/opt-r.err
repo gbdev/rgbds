@@ -1,4 +1,4 @@
-error: Missing argument to option 'r'
+error: Missing argument for option 'r'
     at opt-r.asm(5)
 error: Invalid argument for option 'r' ("2a")
     at opt-r.asm(6)
