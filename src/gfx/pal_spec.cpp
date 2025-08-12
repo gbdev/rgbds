@@ -70,13 +70,11 @@ void parseInlinePalSpec(char const * const rawArg) {
 		error("%s", msg); // `format_` and `-Wformat-security` would complain about `error(msg);`
 		fprintf(
 		    stderr,
-		    "In inline palette spec: \"%s\"\n" // Vertically align this...
-		    "                        ",        // ...with this
-		    rawArg
+		    "In inline palette spec: \"%s\"\n%*c",
+		    rawArg,
+		    static_cast<int>(literal_strlen("In inline palette spec: \"") + ofs),
+		    ' '
 		);
-		for (size_t i = ofs; i; --i) {
-			putc(' ', stderr);
-		}
 		for (size_t i = len; i; --i) {
 			putc('^', stderr);
 		}
