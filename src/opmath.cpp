@@ -18,7 +18,9 @@ int32_t op_divide(int32_t dividend, int32_t divisor) {
 int32_t op_modulo(int32_t dividend, int32_t divisor) {
 	// Adjust modulo to have the sign of the divisor,
 	// not the sign of the dividend
-	return dividend - op_divide(dividend, divisor) * divisor;
+	return static_cast<int32_t>(
+	    dividend - static_cast<int64_t>(op_divide(dividend, divisor)) * divisor
+	);
 }
 
 int32_t op_exponent(int32_t base, uint32_t power) {
