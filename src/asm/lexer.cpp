@@ -1561,9 +1561,8 @@ static bool isGarbageCharacter(int c) {
 	if (isWhitespace(c)) {
 		return false;
 	}
-	// Printable characters which are nevertheless garbage: braces should have been interpolated,
-	// and question mark is unused
-	if (c == '{' || c == '}' || c == '?') {
+	// Printable characters which are nevertheless garbage: braces should have been interpolated
+	if (c == '{' || c == '}') {
 		return true;
 	}
 	// All other printable characters are not garbage (i.e. `yylex_NORMAL` handles them), and
@@ -1613,6 +1612,9 @@ static Token yylex_NORMAL() {
 
 		case '~':
 			return Token(T_(OP_NOT));
+
+		case '?':
+			return Token(T_(QUESTIONMARK));
 
 		case '@': {
 			std::string symName("@");
@@ -1926,22 +1928,23 @@ static Token yylex_NORMAL() {
 				}
 			}
 
-			// We need to distinguish between label definitions (which start with `LABEL`) and
-			// macro invocations (which start with `SYMBOL`).
+			// We need to distinguish between:
+			// - label definitions (which are followed by a ':' and use the token `LABEL`)
+			// - quiet macro invocations (which are followed by a '?' and use the token `QMACRO`)
+			// - regular macro invocations (which use the token `SYMBOL`)
 			//
 			// If we had one `IDENTIFIER` token, the parser would need to perform "lookahead" to
 			// determine which rule applies. But since macros need to enter "raw" mode to parse
 			// their arguments, which may not even be valid tokens in "normal" mode, we cannot use
-			// lookahead to check for the presence of a `COLON`.
+			// lookahead to check for the presence of a `COLON` or `QUESTIONMARK`.
 			//
-			// Instead, we have separate `SYMBOL` and `LABEL` tokens, lexing as a `LABEL` if a ':'
-			// character *immediately* follows the identifier. Thus, "Label:" and "mac:" are treated
-			// as label definitions, but "Label :" and "mac :" are treated as macro invocations.
-			//
-			// The alternative would be a "lexer hack" like C, where identifiers would lex as a
-			// `SYMBOL` if they are already defined, otherwise as a `LABEL`.
-			if (token.type == T_(SYMBOL) && peek() == ':') {
-				token.type = T_(LABEL);
+			// Instead, we have separate `SYMBOL`, `LABEL`, and `QMACRO` tokens, and decide which
+			// one to lex depending on the character *immediately* following the identifier.
+			// Thus "name:" is a label definition, and "name?" is a quiet macro invocation, but
+			// "name :" and "name ?" and just "name" are all regular macro invocations.
+			if (token.type == T_(SYMBOL)) {
+				c = peek();
+				token.type = c == ':' ? T_(LABEL) : c == '?' ? T_(QMACRO) : T_(SYMBOL);
 			}
 
 			return token;

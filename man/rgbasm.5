@@ -1681,7 +1681,8 @@ $ rgbasm -o a.o a.asm
 $ rgbasm -o b.o b.asm
 $ rgbasm -o c.o c.asm
 $ rgblink a.o b.o c.o
-error: c.asm(2): Unknown symbol "LabelA"
+error: Undefined symbol "LabelA"
+    at c.asm(2)
 Linking failed with 1 error
 .Ed
 .Pp
@@ -2515,6 +2516,68 @@ PUSHO b.X, g.oOX
     DB %..XXXX..
     DW `..ooOOXX
 POPO
+.Ed
+.Ss Excluding locations from backtraces
+Errors and warnings print
+.Em backtraces
+showing the location in the source file where the problem occurred, tracing the origin of the problem even through a chain of
+.Ic REPT ,
+.Ic FOR ,
+.Ic MACRO ,
+and
+.Ic INCLUDE
+locations.
+Sometimes there are locations you would like to ignore; for example, a common utility macro when you only care about the line where the macro is used, or an
+.Ic INCLUDE
+file that only serves to include other files and is just filler in the backtrace.
+.Pp
+In those cases, you can
+.Em silence
+a location with a question mark
+.Sq \&?
+after the token: all of the locations created by a
+.Sq REPT? ,
+.Sq FOR? ,
+or
+.Sq MACRO?
+will not be printed, and any location created by a
+.Sq INCLUDE? ,
+or a macro invocation whose name is immediately followed by a
+.Sq \&? ,
+will not be printed.
+For example, if this were assembled as
+.Ql example.asm :
+.Bd -literal -offset indent
+MACRO lb
+    assert -128 <= (\e2) && (\e2) < 256, "\e2 is not a byte"
+    assert -128 <= (\e3) && (\e3) < 256, "\e3 is not a byte"
+    ld \e1, (LOW(\e2) << 8) | LOW(\e3)
+ENDM
+SECTION "Code", ROM0
+    lb hl, $123, $45
+.Ed
+.Pp
+This would print an error backtrace:
+.Bd -literal -offset indent
+error: Assertion failed: $123 is not a byte
+    at example.asm::lb(2)
+    <- example.asm(7)
+.Ed
+.Pp
+But if
+.Ql MACRO
+were changed to
+.Ql MACRO? ,
+or
+.Ql lb hl
+were changed to
+.Ql lb? hl ,
+then the error backtrace would not mention the location within the
+.Ql lb
+macro:
+.Bd -literal -offset indent
+error: Assertion failed: $123 is not a byte
+    at example.asm(7)
 .Ed
 .Sh SEE ALSO
 .Xr rgbasm 1 ,

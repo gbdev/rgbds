@@ -9,6 +9,16 @@
 using TraceNode = std::pair<std::string, uint32_t>;
 
 static std::vector<TraceNode> backtrace(FileStackNode const &node, uint32_t curLineNo) {
+	if (node.isQuiet && !tracing.loud) {
+		if (node.parent) {
+			// Quiet REPT nodes will pass their interior line number up to their parent,
+			// which is more precise than the parent's own line number (since that will be
+			// the line number of the "REPT?" or "FOR?" itself).
+			return backtrace(*node.parent, node.type == NODE_REPT ? curLineNo : node.lineNo);
+		}
+		return {}; // LCOV_EXCL_LINE
+	}
+
 	if (!node.parent) {
 		assume(node.type != NODE_REPT && std::holds_alternative<std::string>(node.data));
 		return {

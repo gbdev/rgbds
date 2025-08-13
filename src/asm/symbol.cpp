@@ -205,8 +205,9 @@ static Symbol &createSymbol(std::string const &symName) {
 	Symbol &sym = symbols[symName];
 
 	sym.name = symName;
-	sym.isExported = false;
 	sym.isBuiltin = false;
+	sym.isExported = false;
+	sym.isQuiet = false;
 	sym.section = nullptr;
 	sym.src = fstk_GetFileStack();
 	sym.fileLine = sym.src ? lexer_GetLineNo() : 0;
@@ -616,7 +617,9 @@ void sym_Export(std::string const &symName) {
 	sym->isExported = true;
 }
 
-Symbol *sym_AddMacro(std::string const &symName, int32_t defLineNo, ContentSpan const &span) {
+Symbol *sym_AddMacro(
+    std::string const &symName, int32_t defLineNo, ContentSpan const &span, bool isQuiet
+) {
 	Symbol *sym = createNonrelocSymbol(symName, false);
 
 	if (!sym) {
@@ -625,6 +628,7 @@ Symbol *sym_AddMacro(std::string const &symName, int32_t defLineNo, ContentSpan 
 
 	sym->type = SYM_MACRO;
 	sym->data = span;
+	sym->isQuiet = isQuiet;
 
 	sym->src = fstk_GetFileStack();
 	// The symbol is created at the line after the `ENDM`,

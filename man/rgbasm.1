@@ -9,7 +9,7 @@
 .Sh SYNOPSIS
 .Nm
 .Op Fl EhVvw
-.Op Fl B Ar depth
+.Op Fl B Ar param
 .Op Fl b Ar chars
 .Op Fl \-color Ar when
 .Op Fl D Ar name Ns Op = Ns Ar value
@@ -53,15 +53,29 @@ is invalid because it could also be
 .Fl \-version .
 The arguments are as follows:
 .Bl -tag -width Ds
-.It Fl B Ar depth , Fl \-backtrace Ar depth
-Specifies the maximum depth for which
-.Nm
-will print location backtraces for warnings or errors.
-Deeper backtraces than that will be abbreviated.
-.Fl B Ar 0
-allows unlimited-depth backtraces.
-.Fl B Ar collapse
-will print the entire location trace on one line.
+.It Fl B Ar param , Fl \-backtrace Ar param
+Configures how location backtraces are printed if warnings or errors occur.
+This flag may be specified multiple times with different parameters that combine meaningfully.
+If
+.Ar param
+is a positive number, it specifies the maximum backtrace depth, abbreviating deeper ones.
+Other valid parameter values are the following:
+.Bl -tag -width Ds
+.It Cm 0
+Do not limit the maximum backtrace depth; this is the default.
+.It Cm all
+Force all locations to be printed, even "quiet" ones (see
+.Dq Excluding locations from backtraces
+in
+.Xr rgbasm 5
+for details).
+.It Cm no-all
+Do not print "quieted" locations in backtraces; this is the default.
+.It Cm collapse
+Print all locations on one line.
+.It Cm no-collapse
+Print one location per line; this is the default.
+.El
 .It Fl b Ar chars , Fl \-binary-digits Ar chars
 Allow two characters to be used for binary constants in addition to the default
 .Sq 0

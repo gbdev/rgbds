@@ -63,6 +63,16 @@ static std::string reptChain(FileStackNode const &node) {
 using TraceNode = std::pair<std::string, uint32_t>;
 
 static std::vector<TraceNode> backtrace(FileStackNode const &node, uint32_t curLineNo) {
+	if (node.isQuiet && !tracing.loud) {
+		if (node.parent) {
+			// Quiet REPT nodes will pass their interior line number up to their parent,
+			// which is more precise than the parent's own line number (since that will be
+			// the line number of the "REPT?" or "FOR?" itself).
+			return backtrace(*node.parent, node.type == NODE_REPT ? curLineNo : node.lineNo);
+		}
+		return {}; // LCOV_EXCL_LINE
+	}
+
 	if (!node.parent) {
 		assume(node.type != NODE_REPT && std::holds_alternative<std::string>(node.data));
 		return {
@@ -244,14 +254,14 @@ static void checkRecursionDepth() {
 	}
 }
 
-static void newFileContext(std::string const &filePath, bool updateStateNow) {
+static void newFileContext(std::string const &filePath, bool isQuiet, bool updateStateNow) {
 	checkRecursionDepth();
 
 	std::shared_ptr<std::string> uniqueIDStr = nullptr;
 	std::shared_ptr<MacroArgs> macroArgs = nullptr;
 
 	auto fileInfo =
-	    std::make_shared<FileStackNode>(NODE_FILE, filePath == "-" ? "<stdin>" : filePath);
+	    std::make_shared<FileStackNode>(NODE_FILE, filePath == "-" ? "<stdin>" : filePath, isQuiet);
 	if (!contextStack.empty()) {
 		Context &oldContext = contextStack.top();
 		fileInfo->parent = oldContext.fileInfo;
@@ -269,7 +279,8 @@ static void newFileContext(std::string const &filePath, bool updateStateNow) {
 	context.lexerState.setFileAsNextState(filePath, updateStateNow);
 }
 
-static void newMacroContext(Symbol const &macro, std::shared_ptr<MacroArgs> macroArgs) {
+static void
+    newMacroContext(Symbol const &macro, std::shared_ptr<MacroArgs> macroArgs, bool isQuiet) {
 	checkRecursionDepth();
 
 	Context &oldContext = contextStack.top();
@@ -287,7 +298,7 @@ static void newMacroContext(Symbol const &macro, std::shared_ptr<MacroArgs> macr
 	fileInfoName.append("::");
 	fileInfoName.append(macro.name);
 
-	auto fileInfo = std::make_shared<FileStackNode>(NODE_MACRO, fileInfoName);
+	auto fileInfo = std::make_shared<FileStackNode>(NODE_MACRO, fileInfoName, isQuiet);
 	assume(!contextStack.empty()); // The top level context cannot be a MACRO
 	fileInfo->parent = oldContext.fileInfo;
 	fileInfo->lineNo = lexer_GetLineNo();
@@ -301,7 +312,8 @@ static void newMacroContext(Symbol const &macro, std::shared_ptr<MacroArgs> macr
 	context.lexerState.setViewAsNextState("MACRO", macro.getMacro(), macro.fileLine);
 }
 
-static Context &newReptContext(int32_t reptLineNo, ContentSpan const &span, uint32_t count) {
+static Context &
+    newReptContext(int32_t reptLineNo, ContentSpan const &span, uint32_t count, bool isQuiet) {
 	checkRecursionDepth();
 
 	Context &oldContext = contextStack.top();
@@ -312,7 +324,7 @@ static Context &newReptContext(int32_t reptLineNo, ContentSpan const &span, uint
 		fileInfoIters.insert(fileInfoIters.end(), RANGE(oldContext.fileInfo->iters()));
 	}
 
-	auto fileInfo = std::make_shared<FileStackNode>(NODE_REPT, fileInfoIters);
+	auto fileInfo = std::make_shared<FileStackNode>(NODE_REPT, fileInfoIters, isQuiet);
 	assume(!contextStack.empty()); // The top level context cannot be a REPT
 	fileInfo->parent = oldContext.fileInfo;
 	fileInfo->lineNo = reptLineNo;
@@ -356,15 +368,17 @@ bool fstk_FailedOnMissingInclude() {
 	return failedOnMissingInclude;
 }
 
-bool fstk_RunInclude(std::string const &path) {
+bool fstk_RunInclude(std::string const &path, bool isQuiet) {
 	if (std::optional<std::string> fullPath = fstk_FindFile(path); fullPath) {
-		newFileContext(*fullPath, false);
+		newFileContext(*fullPath, isQuiet, false);
 		return false;
 	}
 	return fstk_FileError(path, "INCLUDE");
 }
 
-void fstk_RunMacro(std::string const &macroName, std::shared_ptr<MacroArgs> macroArgs) {
+void fstk_RunMacro(
+    std::string const &macroName, std::shared_ptr<MacroArgs> macroArgs, bool isQuiet
+) {
 	Symbol *macro = sym_FindExactSymbol(macroName);
 
 	if (!macro) {
@@ -380,15 +394,15 @@ void fstk_RunMacro(std::string const &macroName, std::shared_ptr<MacroArgs> macr
 		return;
 	}
 
-	newMacroContext(*macro, macroArgs);
+	newMacroContext(*macro, macroArgs, isQuiet || macro->isQuiet);
 }
 
-void fstk_RunRept(uint32_t count, int32_t reptLineNo, ContentSpan const &span) {
+void fstk_RunRept(uint32_t count, int32_t reptLineNo, ContentSpan const &span, bool isQuiet) {
 	if (count == 0) {
 		return;
 	}
 
-	newReptContext(reptLineNo, span, count);
+	newReptContext(reptLineNo, span, count, isQuiet);
 }
 
 void fstk_RunFor(
@@ -397,7 +411,8 @@ void fstk_RunFor(
     int32_t stop,
     int32_t step,
     int32_t reptLineNo,
-    ContentSpan const &span
+    ContentSpan const &span,
+    bool isQuiet
 ) {
 	if (Symbol *sym = sym_AddVar(symName, start); sym->type != SYM_VAR) {
 		return;
@@ -422,7 +437,7 @@ void fstk_RunFor(
 		return;
 	}
 
-	Context &context = newReptContext(reptLineNo, span, count);
+	Context &context = newReptContext(reptLineNo, span, count, isQuiet);
 	context.isForLoop = true;
 	context.forValue = start;
 	context.forStep = step;
@@ -447,11 +462,11 @@ void fstk_NewRecursionDepth(size_t newDepth) {
 }
 
 void fstk_Init(std::string const &mainPath) {
-	newFileContext(mainPath, true);
+	newFileContext(mainPath, false, true);
 
 	for (std::string const &name : preIncludeNames) {
 		if (std::optional<std::string> fullPath = fstk_FindFile(name); fullPath) {
-			newFileContext(*fullPath, false);
+			newFileContext(*fullPath, false, false);
 		} else {
 			error("Error reading pre-included file \"%s\": %s", name.c_str(), strerror(errno));
 		}

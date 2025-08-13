@@ -11,58 +11,74 @@
 
 #include "style.hpp"
 
-static constexpr uint64_t TRACE_COLLAPSE = UINT64_MAX;
+struct Tracing {
+	uint64_t depth = 0;
+	bool collapse = false;
+	bool loud = false;
+};
 
-extern uint64_t traceDepth;
+extern Tracing tracing;
 
 bool trace_ParseTraceDepth(char const *arg);
 
 template<typename T, typename M, typename N>
 void trace_PrintBacktrace(std::vector<T> const &stack, M getName, N getLineNo) {
-	auto printLocation = [&](T const &item) {
+	size_t n = stack.size();
+	if (n == 0) {
+		return; // LCOV_EXCL_LINE
+	}
+
+	auto printLocation = [&](size_t i) {
+		T const &item = stack[n - i - 1];
+		style_Reset(stderr);
+		if (!tracing.collapse) {
+			fputs("   ", stderr); // Just three spaces; the fourth will be printed next
+		}
+		fprintf(stderr, " %s ", i == 0 ? "at" : "<-");
 		style_Set(stderr, STYLE_CYAN, true);
 		fputs(getName(item), stderr);
 		style_Set(stderr, STYLE_CYAN, false);
 		fprintf(stderr, "(%" PRIu32 ")", getLineNo(item));
+		if (!tracing.collapse) {
+			putc('\n', stderr);
+		}
 	};
 
-	size_t n = stack.size();
-
-	if (traceDepth == TRACE_COLLAPSE) {
+	if (tracing.collapse) {
 		fputs("   ", stderr); // Just three spaces; the fourth will be handled by the loop
+	}
+
+	if (tracing.depth == 0 || static_cast<size_t>(tracing.depth) >= n) {
 		for (size_t i = 0; i < n; ++i) {
-			style_Reset(stderr);
-			fprintf(stderr, " %s ", i == 0 ? "at" : "<-");
-			printLocation(stack[n - i - 1]);
-		}
-		putc('\n', stderr);
-	} else if (traceDepth == 0 || static_cast<size_t>(traceDepth) >= n) {
-		for (size_t i = 0; i < n; ++i) {
-			style_Reset(stderr);
-			fprintf(stderr, "    %s ", i == 0 ? "at" : "<-");
-			printLocation(stack[n - i - 1]);
-			putc('\n', stderr);
+			printLocation(i);
 		}
 	} else {
-		size_t last = traceDepth / 2;
-		size_t first = traceDepth - last;
-		size_t skipped = n - traceDepth;
+		size_t last = tracing.depth / 2;
+		size_t first = tracing.depth - last;
+		size_t skipped = n - tracing.depth;
 		for (size_t i = 0; i < first; ++i) {
-			style_Reset(stderr);
-			fprintf(stderr, "    %s ", i == 0 ? "at" : "<-");
-			printLocation(stack[n - i - 1]);
-			putc('\n', stderr);
+			printLocation(i);
 		}
 		style_Reset(stderr);
-		fprintf(stderr, "    ...%zu more%s\n", skipped, last ? "..." : "");
-		for (size_t i = n - last; i < n; ++i) {
-			style_Reset(stderr);
-			fputs("    <- ", stderr);
-			printLocation(stack[n - i - 1]);
+
+		if (tracing.collapse) {
+			fputs(" <-", stderr);
+		} else {
+			fputs("   ", stderr); // Just three spaces; the fourth will be printed next
+		}
+		fprintf(stderr, " ...%zu more%s", skipped, last ? "..." : "");
+		if (!tracing.collapse) {
 			putc('\n', stderr);
+		}
+
+		for (size_t i = n - last; i < n; ++i) {
+			printLocation(i);
 		}
 	}
 
+	if (tracing.collapse) {
+		putc('\n', stderr);
+	}
 	style_Reset(stderr);
 }
 

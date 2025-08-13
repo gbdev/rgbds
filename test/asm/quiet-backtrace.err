@@ -1,0 +1,12 @@
+warning: from macro [-Wuser]
+    at quiet-backtrace.asm::mac(2) <- quiet-backtrace.asm(4)
+warning: from quiet macro [-Wuser]
+    at quiet-backtrace.asm(9)
+warning: from quiet rept [-Wuser]
+    at quiet-backtrace.asm(11)
+warning: from quiet for (x=0) [-Wuser]
+    at quiet-backtrace.asm(14)
+warning: from quiet include [-Wuser]
+    at quiet-backtrace.asm(16)
+warning: from macro [-Wuser]
+    at quiet-backtrace.asm(20)

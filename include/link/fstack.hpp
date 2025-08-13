@@ -19,6 +19,7 @@ struct FileStackNode {
 	    std::string            // NODE_FILE, NODE_MACRO
 	    >
 	    data;
+	bool isQuiet; // Whether to omit this node from error reporting
 
 	FileStackNode *parent;
 	// Line at which the parent context was exited; meaningless for the root level

@@ -79,12 +79,16 @@ order, meaning the node with ID 0 is the last one in the list!
 .It Cm LONG Ar ParentLineNo
 Line at which the parent node's context was exited; meaningless for the root node.
 .It Cm BYTE Ar Type
+Bits 0\(en6 indicate the node's type:
 .Bl -column "Value" -compact
 .It Sy Value Ta Sy Meaning
 .It 0 Ta REPT node
 .It 1 Ta File node
 .It 2 Ta Macro node
 .El
+.Pp
+Bit\ 7 being set means that the node is "quieted"
+.Pq see Do Excluding locations from backtraces Dc in Xr rgbasm 5 .
 .It Cm IF Ar Type No \(!= 0
 If the node is not a REPT node...
 .Pp
