@@ -20,10 +20,10 @@
 enum Tribool { TRI_NO, TRI_YES, TRI_MAYBE };
 
 #if !STYLE_ANSI
-static const HANDLE outHandle = GetStdHandle(STD_OUTPUT_HANDLE);
-static const HANDLE errHandle = GetStdHandle(STD_ERROR_HANDLE);
+static HANDLE const outHandle = GetStdHandle(STD_OUTPUT_HANDLE);
+static HANDLE const errHandle = GetStdHandle(STD_ERROR_HANDLE);
 
-static const WORD defaultAttrib = []() {
+static WORD const defaultAttrib = []() {
 	if (CONSOLE_SCREEN_BUFFER_INFO info; GetConsoleScreenBufferInfo(outHandle, &info)
 	                                     || GetConsoleScreenBufferInfo(errHandle, &info)) {
 		return info.wAttributes;
@@ -36,28 +36,28 @@ static HANDLE getHandle(FILE *file) {
 }
 #endif // !STYLE_ANSI
 
-static Tribool const envStyle = []() {
-	if (char const *forceColor = getenv("FORCE_COLOR");
-	    forceColor && strcmp(forceColor, "") && strcmp(forceColor, "0")) {
-		return TRI_YES;
-	}
-	if (char const *noColor = getenv("NO_COLOR");
-	    noColor && strcmp(noColor, "") && strcmp(noColor, "0")) {
-		return TRI_NO;
-	}
-	return TRI_MAYBE;
-}();
-
 static Tribool argStyle = TRI_MAYBE;
 
 static bool isTerminal(FILE *file) {
-	static bool isOutTerminal = isatty(STDOUT_FILENO);
-	static bool isErrTerminal = isatty(STDERR_FILENO);
+	static bool const isOutTerminal = isatty(STDOUT_FILENO);
+	static bool const isErrTerminal = isatty(STDERR_FILENO);
 
 	return (file == stdout && isOutTerminal) || (file == stderr && isErrTerminal);
 }
 
 static bool allowStyle(FILE *file) {
+	static Tribool const envStyle = []() {
+		if (char const *forceColor = getenv("FORCE_COLOR");
+		    forceColor && strcmp(forceColor, "") && strcmp(forceColor, "0")) {
+			return TRI_YES;
+		}
+		if (char const *noColor = getenv("NO_COLOR");
+		    noColor && strcmp(noColor, "") && strcmp(noColor, "0")) {
+			return TRI_NO;
+		}
+		return TRI_MAYBE;
+	}();
+
 	if (argStyle == TRI_YES) {
 		return true;
 	} else if (argStyle == TRI_NO) {
