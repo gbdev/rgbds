@@ -98,6 +98,7 @@
 %token LBRACK "[" RBRACK "]"
 %token LBRACKS "[[" RBRACKS "]]"
 %token LPAREN "(" RPAREN ")"
+%token QUESTIONMARK "?"
 
 // Arithmetic operators
 %token OP_ADD "+" OP_SUB "-"
@@ -322,6 +323,7 @@
 %token <std::string> LABEL "label"
 %token <std::string> LOCAL "local label"
 %token <std::string> ANON "anonymous label"
+%token <std::string> QMACRO "quiet macro"
 
 /******************** Data types ********************/
 
@@ -398,6 +400,7 @@
 %type <SectionType> sect_type
 %type <StrFmtArgList> strfmt_args
 %type <StrFmtArgList> strfmt_va_args
+%type <bool> maybe_quiet
 
 %%
 
@@ -544,7 +547,13 @@ macro:
 		// Parsing 'macro_args' will restore the lexer's normal mode
 		lexer_SetMode(LEXER_RAW);
 	} macro_args {
-		fstk_RunMacro($1, $3);
+		fstk_RunMacro($1, $3, false);
+	}
+	| QMACRO {
+		// Parsing 'macro_args' will restore the lexer's normal mode
+		lexer_SetMode(LEXER_RAW);
+	} macro_args {
+		fstk_RunMacro($1, $3, true);
 	}
 ;
 
@@ -780,10 +789,19 @@ load:
 	}
 ;
 
+maybe_quiet:
+	%empty {
+		$$ = false;
+	}
+	| QUESTIONMARK {
+		$$ = true;
+	}
+;
+
 rept:
-	POP_REPT uconst NEWLINE capture_rept endofline {
-		if ($4.span.ptr) {
-			fstk_RunRept($2, $4.lineNo, $4.span);
+	POP_REPT maybe_quiet uconst NEWLINE capture_rept endofline {
+		if ($5.span.ptr) {
+			fstk_RunRept($3, $5.lineNo, $5.span, $2);
 		}
 	}
 ;
@@ -791,11 +809,11 @@ rept:
 for:
 	POP_FOR {
 		lexer_ToggleStringExpansion(false);
-	} SYMBOL {
+	} maybe_quiet SYMBOL {
 		lexer_ToggleStringExpansion(true);
 	} COMMA for_args NEWLINE capture_rept endofline {
-		if ($8.span.ptr) {
-			fstk_RunFor($3, $6.start, $6.stop, $6.step, $8.lineNo, $8.span);
+		if ($9.span.ptr) {
+			fstk_RunFor($4, $7.start, $7.stop, $7.step, $9.lineNo, $9.span, $3);
 		}
 	}
 ;
@@ -835,11 +853,11 @@ break:
 def_macro:
 	POP_MACRO {
 		lexer_ToggleStringExpansion(false);
-	} SYMBOL {
+	} maybe_quiet SYMBOL {
 		lexer_ToggleStringExpansion(true);
 	} NEWLINE capture_macro endofline {
-		if ($6.span.ptr) {
-			sym_AddMacro($3, $6.lineNo, $6.span);
+		if ($7.span.ptr) {
+			sym_AddMacro($4, $7.lineNo, $7.span, $3);
 		}
 	}
 ;
@@ -1002,8 +1020,8 @@ export_def:
 ;
 
 include:
-	label POP_INCLUDE string endofline {
-		if (fstk_RunInclude($3)) {
+	label POP_INCLUDE maybe_quiet string endofline {
+		if (fstk_RunInclude($4, $3)) {
 			YYACCEPT;
 		}
 	}
