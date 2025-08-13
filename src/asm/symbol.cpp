@@ -351,11 +351,8 @@ uint32_t Symbol::getConstantValue() const {
 	}
 
 	if (sym_IsPC(this)) {
-		if (!getSection()) {
-			error("PC has no value outside of a section");
-		} else {
-			error("PC does not have a constant value; the current section is not fixed");
-		}
+		assume(getSection()); // There's no way to reach here from outside of a section
+		error("PC does not have a constant value; the current section is not fixed");
 	} else {
 		error("`%s` does not have a constant value", name.c_str());
 	}

@@ -26,6 +26,7 @@ rescolors="$(tput op)"
 
 RGBASM=../../rgbasm
 RGBLINK=../../rgblink
+RGBFIX=../../rgbfix
 
 startTest () {
 	echo "${bold}${green}${test} assembling...${rescolors}${resbold}"
@@ -71,7 +72,7 @@ tryCmpRomSize () {
 }
 
 rgblinkQuiet () {
-	out="$(env $RGBLINK -Weverything -B collapse "$@")" || return $?
+	out="$(env "$RGBLINK" -Weverything -B collapse "$@")" || return $?
 	if [[ -n "$out" ]]; then
 		echo "$bold${red}Linking shouldn't produce anything on stdout!${rescolors}${resbold}"
 		false
@@ -247,6 +248,16 @@ startTest
 continueTest
 rgblinkQuiet -o "$gbtemp" -t -O "$test"/overlay.gb "$otemp" 2>"$outtemp"
 tryDiff "$test"/out.err "$outtemp"
+# This test does not trim its output with 'dd' because it needs to verify the correct output size
+tryCmp "$test"/out.gb "$gbtemp"
+evaluateTest
+
+test="pipeline"
+startTest
+continueTest
+("$RGBASM" -Weverything -B collapse -o - - | \
+ "$RGBLINK" -Weverything -B collapse -o - - | \
+ "$RGBFIX" -Weverything -v -p 0xff -) < "$test"/a.asm > "$gbtemp"
 # This test does not trim its output with 'dd' because it needs to verify the correct output size
 tryCmp "$test"/out.gb "$gbtemp"
 evaluateTest

@@ -159,15 +159,10 @@ static void writeRpn(std::vector<uint8_t> &rpnexpr, std::vector<uint8_t> const &
 		case RPN_SYM:
 			// The symbol name is always written expanded
 			sym = sym_FindExactSymbol(getSymName());
-			if (sym->isConstant()) {
-				rpnexpr[rpnptr++] = RPN_CONST;
-				value = sym->getConstantValue();
-			} else {
-				rpnexpr[rpnptr++] = RPN_SYM;
-				registerUnregisteredSymbol(*sym); // Ensure that `sym->ID` is set
-				value = sym->ID;
-			}
+			registerUnregisteredSymbol(*sym); // Ensure that `sym->ID` is set
+			value = sym->ID;
 
+			rpnexpr[rpnptr++] = RPN_SYM;
 			rpnexpr[rpnptr++] = value & 0xFF;
 			rpnexpr[rpnptr++] = value >> 8;
 			rpnexpr[rpnptr++] = value >> 16;

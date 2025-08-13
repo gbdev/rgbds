@@ -337,7 +337,7 @@ bool fstk_FileError(std::string const &path, char const *functionName) {
 		if (options.missingIncludeState == GEN_EXIT) {
 			verbosePrint(
 			    VERB_NOTICE,
-			    "Aborting (-MG) on `%s` file \"%s\": %s\n",
+			    "Aborting due to '-MG' on `%s` file \"%s\": %s\n",
 			    functionName,
 			    path.c_str(),
 			    strerror(errno)

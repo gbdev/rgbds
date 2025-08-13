@@ -1,0 +1,32 @@
+warning: `STRIN` is deprecated; use 0-indexed `STRFIND` instead [-Wobsolete]
+    at deprecated-functions.asm(4)
+warning: `STRRIN` is deprecated; use 0-indexed `STRRFIND` instead [-Wobsolete]
+    at deprecated-functions.asm(5)
+warning: `STRSUB` is deprecated; use 0-indexed `STRSLICE` instead [-Wobsolete]
+    at deprecated-functions.asm(7)
+warning: `STRSUB` is deprecated; use 0-indexed `STRSLICE` instead [-Wobsolete]
+    at deprecated-functions.asm(8)
+warning: `STRSUB` is deprecated; use 0-indexed `STRSLICE` instead [-Wobsolete]
+    at deprecated-functions.asm(9)
+warning: `STRSUB` is deprecated; use 0-indexed `STRSLICE` instead [-Wobsolete]
+    at deprecated-functions.asm(10)
+warning: STRSUB: Length too big: 999 [-Wbuiltin-args]
+    at deprecated-functions.asm(10)
+warning: STRSLICE: Stop index 999 is past the end of the string [-Wbuiltin-args]
+    at deprecated-functions.asm(10)
+warning: `CHARSUB` is deprecated; use 0-indexed `STRCHAR` instead [-Wobsolete]
+    at deprecated-functions.asm(12)
+warning: `CHARSUB` is deprecated; use 0-indexed `STRCHAR` instead [-Wobsolete]
+    at deprecated-functions.asm(13)
+warning: `CHARSUB` is deprecated; use 0-indexed `STRCHAR` instead [-Wobsolete]
+    at deprecated-functions.asm(14)
+warning: CHARSUB: Position starts at 1 [-Wbuiltin-args]
+    at deprecated-functions.asm(14)
+warning: STRCHAR: Index starts at 0 [-Wbuiltin-args]
+    at deprecated-functions.asm(14)
+warning: `CHARSUB` is deprecated; use 0-indexed `STRCHAR` instead [-Wobsolete]
+    at deprecated-functions.asm(15)
+warning: CHARSUB: Position 999 is past the end of the string [-Wbuiltin-args]
+    at deprecated-functions.asm(15)
+warning: STRCHAR: Index 999 is past the end of the string [-Wbuiltin-args]
+    at deprecated-functions.asm(15)
