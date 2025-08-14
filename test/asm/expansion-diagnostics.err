@@ -1,0 +1,14 @@
+warning: hello [-Wuser]
+    at expansion-diagnostics.asm::outer::inner::REPT~1(5)
+    <- expansion-diagnostics.asm::outer::inner(4)
+    <- expansion-diagnostics.asm::outer(3)
+    <- expansion-diagnostics.asm(7)
+warning: hello [-Wuser]
+    at expansion-diagnostics.asm::outer::inner::REPT~1(5)
+    <- expansion-diagnostics.asm::outer::inner(4)
+    <- expansion-diagnostics.asm::outer(5)
+    <- expansion-diagnostics.asm(7)
+warning: hello [-Wuser]
+    at expansion-diagnostics.asm::outer::inner::REPT~1(5)
+    <- expansion-diagnostics.asm::outer::inner(4)
+    <- expansion-diagnostics.asm(8)
