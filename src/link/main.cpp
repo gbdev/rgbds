@@ -182,6 +182,10 @@ static void verboseOutputConfig(int argc, char *argv[]) {
 }
 // LCOV_EXCL_STOP
 
+static size_t skipBlankSpace(char const *str) {
+	return strspn(str, " \t");
+}
+
 static void parseScrambleSpec(char *spec) {
 	// clang-format off: vertically align nested initializers
 	static UpperMap<std::pair<uint16_t *, uint16_t>> scrambleSpecs{
@@ -191,19 +195,19 @@ static void parseScrambleSpec(char *spec) {
 	};
 	// clang-format on
 
-	// Skip leading whitespace before the regions.
-	spec += strspn(spec, " \t");
+	// Skip leading blank space before the regions.
+	spec += skipBlankSpace(spec);
 
 	// The argument to `-S` should be a comma-separated list of regions, allowing a trailing comma.
 	// Each region name is optionally followed by an '=' and a region size.
 	while (*spec) {
 		char *regionName = spec;
 
-		// The region name continues (skipping any whitespace) until a ',' (next region),
+		// The region name continues (skipping any blank space) until a ',' (next region),
 		// '=' (region size), or the end of the string.
 		size_t regionNameLen = strcspn(regionName, "=, \t");
-		// Skip trailing whitespace after the region name.
-		size_t regionNameSkipLen = regionNameLen + strspn(regionName + regionNameLen, " \t");
+		// Skip trailing blank space after the region name.
+		size_t regionNameSkipLen = regionNameLen + skipBlankSpace(regionName + regionNameLen);
 		spec = regionName + regionNameSkipLen;
 
 		if (*spec != '=' && *spec != ',' && *spec != '\0') {
@@ -215,14 +219,14 @@ static void parseScrambleSpec(char *spec) {
 		// The '=' region size limit is optional.
 		if (*spec == '=') {
 			regionSize = spec + 1; // Skip the '='
-			// Skip leading whitespace before the region size.
-			regionSize += strspn(regionSize, " \t");
+			// Skip leading blank space before the region size.
+			regionSize += skipBlankSpace(regionSize);
 
-			// The region size continues (skipping any whitespace) until a ',' (next region)
+			// The region size continues (skipping any blank space) until a ',' (next region)
 			// or the end of the string.
 			regionSizeLen = strcspn(regionSize, ", \t");
-			// Skip trailing whitespace after the region size.
-			size_t regionSizeSkipLen = regionSizeLen + strspn(regionSize + regionSizeLen, " \t");
+			// Skip trailing blank space after the region size.
+			size_t regionSizeSkipLen = regionSizeLen + skipBlankSpace(regionSize + regionSizeLen);
 			spec = regionSize + regionSizeSkipLen;
 
 			if (*spec != ',' && *spec != '\0') {
@@ -234,9 +238,9 @@ static void parseScrambleSpec(char *spec) {
 		if (*spec == ',') {
 			++spec;
 		}
-		// Skip trailing whitespace after the region.
+		// Skip trailing blank space after the region.
 		// `spec` will be the next region name, or the end of the string.
-		spec += strspn(spec, " \t");
+		spec += skipBlankSpace(spec);
 
 		// Terminate the `regionName` and `regionSize` strings.
 		regionName[regionNameLen] = '\0';
@@ -245,8 +249,8 @@ static void parseScrambleSpec(char *spec) {
 		}
 
 		// Check for an empty region name or limit.
-		// Note that by skipping leading whitespace before the loop, and skipping a trailing comma
-		// and whitespace before the next iteration, we guarantee that the region name will not be
+		// Note that by skipping leading blank space before the loop, and skipping a trailing comma
+		// and blank space before the next iteration, we guarantee that the region name will not be
 		// empty if it is present at all.
 		if (*regionName == '\0') {
 			fatal("Empty region name in spec for option '-S'");

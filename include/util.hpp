@@ -12,8 +12,9 @@
 
 #include "helpers.hpp"
 
-bool isWhitespace(int c);
 bool isNewline(int c);
+bool isBlankSpace(int c);
+bool isWhitespace(int c);
 bool isPrintable(int c);
 
 bool startsIdentifier(int c);

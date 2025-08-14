@@ -8,4 +8,6 @@ error: Invalid character '#'
     at garbage_sequence.asm(3)
 error: Invalid characters '#', '?', '?'
     at garbage_sequence.asm(3)
-Assembly aborted with 5 errors!
+error: Invalid characters '#', 0xFF (is the file UTF-8?)
+    at garbage_sequence.asm(5)
+Assembly aborted with 6 errors!

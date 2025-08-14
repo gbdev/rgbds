@@ -250,7 +250,7 @@ static std::vector<StateFeature> parseStateFeatures(char *str) {
 		if (next) {
 			*next++ = '\0';
 		}
-		// Trim whitespace from the beginning of `feature`...
+		// Trim blank spaces from the beginning of `feature`...
 		feature += strspn(feature, " \t");
 		// ...and from the end
 		if (char *end = strpbrk(feature, " \t"); end) {

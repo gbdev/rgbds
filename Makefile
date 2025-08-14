@@ -109,7 +109,8 @@ rgbfix_obj := \
 	${common_obj} \
 	src/fix/main.o \
 	src/fix/mbc.o \
-	src/fix/warning.o
+	src/fix/warning.o \
+	src/util.o
 
 rgbgfx_obj := \
 	${common_obj} \

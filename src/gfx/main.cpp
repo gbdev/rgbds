@@ -186,7 +186,7 @@ static uint16_t parseNumber(char *&string, char const *errPrefix, uint16_t errVa
 	return number;
 }
 
-static void skipWhitespace(char *&arg) {
+static void skipBlankSpace(char *&arg) {
 	arg += strspn(arg, " \t");
 }
 
@@ -214,8 +214,8 @@ static std::vector<size_t> readAtFile(std::string const &path, std::vector<char>
 	for (std::vector<size_t> argvOfs;;) {
 		int c = file->sbumpc();
 
-		// First, discard any leading whitespace
-		while (isWhitespace(c)) {
+		// First, discard any leading blank space
+		while (isBlankSpace(c)) {
 			c = file->sbumpc();
 		}
 
@@ -239,13 +239,13 @@ static std::vector<size_t> readAtFile(std::string const &path, std::vector<char>
 
 			// Read one argument (until the next whitespace char).
 			// We know there is one because we already have its first character in `c`.
-			for (; c != EOF && !isNewline(c) && !isWhitespace(c); c = file->sbumpc()) {
+			for (; c != EOF && !isWhitespace(c); c = file->sbumpc()) {
 				argPool.push_back(c);
 			}
 			argPool.push_back('\0');
 
-			// Discard whitespace until the next argument (candidate)
-			while (isWhitespace(c)) {
+			// Discard blank space until the next argument (candidate)
+			while (isBlankSpace(c)) {
 				c = file->sbumpc();
 			}
 		} while (c != EOF && !isNewline(c)); // End if we reached EOL
@@ -285,7 +285,7 @@ static char *parseArgv(int argc, char *argv[]) {
 				options.baseTileIDs[1] = 0;
 				break;
 			}
-			skipWhitespace(arg);
+			skipBlankSpace(arg);
 			if (*arg != ',') {
 				error(
 				    "Base tile IDs must be one or two comma-separated numbers, not \"%s\"",
@@ -294,7 +294,7 @@ static char *parseArgv(int argc, char *argv[]) {
 				break;
 			}
 			++arg; // Skip comma
-			skipWhitespace(arg);
+			skipBlankSpace(arg);
 			number = parseNumber(arg, "Bank 1 base tile ID", 0);
 			if (number >= 256) {
 				error("Bank 1 base tile ID must be below 256");
@@ -356,23 +356,23 @@ static char *parseArgv(int argc, char *argv[]) {
 				error("Input slice left coordinate is out of range!");
 				break;
 			}
-			skipWhitespace(arg);
+			skipBlankSpace(arg);
 			if (*arg != ',') {
 				error("Missing comma after left coordinate in \"%s\"", musl_optarg);
 				break;
 			}
 			++arg;
-			skipWhitespace(arg);
+			skipBlankSpace(arg);
 			options.inputSlice.top = parseNumber(arg, "Input slice upper coordinate");
-			skipWhitespace(arg);
+			skipBlankSpace(arg);
 			if (*arg != ':') {
 				error("Missing colon after upper coordinate in \"%s\"", musl_optarg);
 				break;
 			}
 			++arg;
-			skipWhitespace(arg);
+			skipBlankSpace(arg);
 			options.inputSlice.width = parseNumber(arg, "Input slice width");
-			skipWhitespace(arg);
+			skipBlankSpace(arg);
 			if (options.inputSlice.width == 0) {
 				error("Input slice width may not be 0!");
 			}
@@ -381,7 +381,7 @@ static char *parseArgv(int argc, char *argv[]) {
 				break;
 			}
 			++arg;
-			skipWhitespace(arg);
+			skipBlankSpace(arg);
 			options.inputSlice.height = parseNumber(arg, "Input slice height");
 			if (options.inputSlice.height == 0) {
 				error("Input slice height may not be 0!");
@@ -416,7 +416,7 @@ static char *parseArgv(int argc, char *argv[]) {
 				options.maxNbTiles[1] = 0;
 				break;
 			}
-			skipWhitespace(arg);
+			skipBlankSpace(arg);
 			if (*arg != ',') {
 				error(
 				    "Bank capacity must be one or two comma-separated numbers, not \"%s\"",
@@ -425,7 +425,7 @@ static char *parseArgv(int argc, char *argv[]) {
 				break;
 			}
 			++arg; // Skip comma
-			skipWhitespace(arg);
+			skipBlankSpace(arg);
 			options.maxNbTiles[1] = parseNumber(arg, "Number of tiles in bank 1", 256);
 			if (options.maxNbTiles[1] > 256) {
 				error("Bank 1 cannot contain more than 256 tiles");

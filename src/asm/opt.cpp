@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: MIT
 
-#include <ctype.h>
 #include <errno.h>
 #include <stack>
 #include <stdio.h>
@@ -8,6 +7,7 @@
 #include <string.h>
 
 #include "helpers.hpp" // assume
+#include "util.hpp"    // isBlankSpace
 
 #include "asm/fixpoint.hpp"
 #include "asm/fstack.hpp"
@@ -116,8 +116,8 @@ void opt_Parse(char const *s) {
 
 	case 'r': {
 		++s; // Skip 'r'
-		while (isblank(*s)) {
-			++s; // Skip leading whitespace
+		while (isBlankSpace(*s)) {
+			++s; // Skip leading blank spaces
 		}
 
 		if (s[0] == '\0') {

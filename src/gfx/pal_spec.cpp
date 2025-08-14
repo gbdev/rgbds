@@ -31,7 +31,7 @@ using namespace std::string_view_literals;
 static char const *hexDigits = "0123456789ABCDEFabcdef";
 
 template<typename Str> // Should be std::string or std::string_view
-static void skipWhitespace(Str const &str, size_t &pos) {
+static void skipBlankSpace(Str const &str, size_t &pos) {
 	pos = std::min(str.find_first_not_of(" \t"sv, pos), str.length());
 }
 
@@ -120,8 +120,8 @@ void parseInlinePalSpec(char const * const rawArg) {
 			n = pos;
 		}
 
-		// Skip whitespace, if any
-		skipWhitespace(arg, n);
+		// Skip trailing space, if any
+		skipBlankSpace(arg, n);
 
 		// Skip comma/semicolon, or end
 		if (n == arg.length()) {
@@ -134,7 +134,7 @@ void parseInlinePalSpec(char const * const rawArg) {
 			++nbColors;
 
 			// A trailing comma may be followed by a semicolon
-			skipWhitespace(arg, n);
+			skipBlankSpace(arg, n);
 			if (n == arg.length()) {
 				break;
 			} else if (arg[n] != ';' && arg[n] != ':') {
@@ -149,7 +149,7 @@ void parseInlinePalSpec(char const * const rawArg) {
 		case ':':
 		case ';':
 			++n;
-			skipWhitespace(arg, n);
+			skipBlankSpace(arg, n);
 
 			nbColors = 0; // Start a new palette
 			// Avoid creating a spurious empty palette
@@ -253,7 +253,7 @@ static std::optional<Rgba> parseColor(std::string const &str, size_t &n, uint16_
 		error("Failed to parse color #%d (\"%s\"): invalid red component", i + 1, str.c_str());
 		return std::nullopt;
 	}
-	skipWhitespace(str, n);
+	skipBlankSpace(str, n);
 	if (n == str.length()) {
 		error("Failed to parse color #%d (\"%s\"): missing green component", i + 1, str.c_str());
 		return std::nullopt;
@@ -263,7 +263,7 @@ static std::optional<Rgba> parseColor(std::string const &str, size_t &n, uint16_
 		error("Failed to parse color #%d (\"%s\"): invalid green component", i + 1, str.c_str());
 		return std::nullopt;
 	}
-	skipWhitespace(str, n);
+	skipBlankSpace(str, n);
 	if (n == str.length()) {
 		error("Failed to parse color #%d (\"%s\"): missing blue component", i + 1, str.c_str());
 		return std::nullopt;
@@ -356,7 +356,7 @@ static void parseGPLFile(char const *filename, std::filebuf &file) {
 		}
 
 		size_t n = 0;
-		skipWhitespace(line, n);
+		skipBlankSpace(line, n);
 		// Skip empty lines, or lines that contain just a comment.
 		if (line.length() == n || line[n] == '#') {
 			continue;
