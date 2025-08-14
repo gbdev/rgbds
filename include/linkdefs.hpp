@@ -9,7 +9,7 @@
 #include "helpers.hpp" // assume
 
 #define RGBDS_OBJECT_VERSION_STRING "RGB9"
-#define RGBDS_OBJECT_REV            12U
+#define RGBDS_OBJECT_REV            13U
 
 enum AssertionType { ASSERT_WARN, ASSERT_ERROR, ASSERT_FATAL };
 
@@ -78,11 +78,17 @@ enum SectionType {
 	SECTTYPE_INVALID
 };
 
+static constexpr uint8_t SECTTYPE_TYPE_MASK = 0b111;
+static constexpr uint8_t SECTTYPE_UNION_BIT = 7;
+static constexpr uint8_t SECTTYPE_FRAGMENT_BIT = 6;
+
 enum FileStackNodeType {
 	NODE_REPT,
 	NODE_FILE,
 	NODE_MACRO,
 };
+
+static constexpr uint8_t FSTACKNODE_QUIET_BIT = 7;
 
 // Nont-`const` members may be patched in RGBLINK depending on CLI flags
 extern struct SectionTypeInfo {

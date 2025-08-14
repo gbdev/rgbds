@@ -1,10 +1,10 @@
 error: syntax error, unexpected label, expecting symbol
     at lex-label.asm(1)
-error: syntax error, unexpected label, expecting symbol
+error: syntax error, unexpected label, expecting ? or symbol
     at lex-label.asm(3)
 error: syntax error, unexpected ENDM
     at lex-label.asm(4)
-error: syntax error, unexpected label, expecting symbol
+error: syntax error, unexpected label, expecting ? or symbol
     at lex-label.asm(6)
 error: syntax error, unexpected ENDR
     at lex-label.asm(7)

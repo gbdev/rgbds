@@ -105,14 +105,12 @@ static void readFileStackNode(
 	tryReadLong(
 	    node.lineNo, file, "%s: Cannot read node #%" PRIu32 "'s line number: %s", fileName, nodeID
 	);
-	tryGetc(
-	    FileStackNodeType,
-	    node.type,
-	    file,
-	    "%s: Cannot read node #%" PRIu32 "'s type: %s",
-	    fileName,
-	    nodeID
-	);
+
+	uint8_t type;
+	tryGetc(uint8_t, type, file, "%s: Cannot read node #%" PRIu32 "'s type: %s", fileName, nodeID);
+	node.type = static_cast<FileStackNodeType>(type & ~(1 << FSTACKNODE_QUIET_BIT));
+	node.isQuiet = (type & (1 << FSTACKNODE_QUIET_BIT)) != 0;
+
 	switch (node.type) {
 	case NODE_FILE:
 	case NODE_MACRO:
@@ -318,14 +316,14 @@ static void readSection(
 	tryGetc(
 	    uint8_t, byte, file, "%s: Cannot read \"%s\"'s type: %s", fileName, section.name.c_str()
 	);
-	if (uint8_t type = byte & 0x3F; type >= SECTTYPE_INVALID) {
+	if (uint8_t type = byte & SECTTYPE_TYPE_MASK; type >= SECTTYPE_INVALID) {
 		fatal("\"%s\" has unknown section type 0x%02x", section.name.c_str(), type);
 	} else {
 		section.type = SectionType(type);
 	}
-	if (byte >> 7) {
+	if (byte & (1 << SECTTYPE_UNION_BIT)) {
 		section.modifier = SECTION_UNION;
-	} else if (byte >> 6) {
+	} else if (byte & (1 << SECTTYPE_FRAGMENT_BIT)) {
 		section.modifier = SECTION_FRAGMENT;
 	} else {
 		section.modifier = SECTION_NORMAL;
@@ -458,6 +456,7 @@ void obj_ReadFile(char const *fileName, unsigned int fileID) {
 		nodes[fileID].push_back({
 		    .type = NODE_FILE,
 		    .data = std::variant<std::monostate, std::vector<uint32_t>, std::string>(fileName),
+		    .isQuiet = false,
 		    .parent = nullptr,
 		    .lineNo = 0,
 		});
