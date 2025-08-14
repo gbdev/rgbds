@@ -55,7 +55,7 @@ std::pair<WarningState, std::optional<uint32_t>> getInitialWarningState(std::str
 	}
 
 	// Is the rest of the string a decimal number?
-	// We want to avoid `strtoul`'s whitespace and sign, so we parse manually
+	// We want to avoid `strtoul`'s whitespace and sign handling, so we parse manually
 	char const *ptr = flag.c_str() + equals + 1;
 	uint32_t param = 0;
 	bool overflowed = false;

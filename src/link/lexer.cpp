@@ -260,8 +260,8 @@ yy::parser::symbol_type yylex() {
 	LexerStackEntry &context = lexerStack.back();
 	int c = context.file.sbumpc();
 
-	// First, skip leading whitespace.
-	while (isWhitespace(c)) {
+	// First, skip leading blank space.
+	while (isBlankSpace(c)) {
 		c = context.file.sbumpc();
 	}
 	// Then, skip a comment if applicable.

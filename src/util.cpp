@@ -5,12 +5,16 @@
 #include <stdint.h>
 #include <stdio.h>
 
-bool isWhitespace(int c) {
+bool isNewline(int c) {
+	return c == '\r' || c == '\n';
+}
+
+bool isBlankSpace(int c) {
 	return c == ' ' || c == '\t';
 }
 
-bool isNewline(int c) {
-	return c == '\r' || c == '\n';
+bool isWhitespace(int c) {
+	return isBlankSpace(c) || isNewline(c);
 }
 
 bool isPrintable(int c) {

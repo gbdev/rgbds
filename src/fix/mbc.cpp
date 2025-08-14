@@ -8,6 +8,7 @@
 
 #include "helpers.hpp"  // unreachable_
 #include "platform.hpp" // strcasecmp
+#include "util.hpp"     // isBlankSpace
 
 #include "fix/warning.hpp"
 
@@ -93,14 +94,14 @@ bool mbc_HasRAM(MbcType type) {
 	return search != mbcData.end() && search->second.second;
 }
 
-static void skipWhitespace(char const *&ptr) {
-	while (*ptr == ' ' || *ptr == '\t') {
+static void skipBlankSpace(char const *&ptr) {
+	while (isBlankSpace(*ptr)) {
 		++ptr;
 	}
 }
 
 static void skipMBCSpace(char const *&ptr) {
-	while (*ptr == ' ' || *ptr == '\t' || *ptr == '_') {
+	while (isBlankSpace(*ptr) || *ptr == '_') {
 		++ptr;
 	}
 }
@@ -166,7 +167,7 @@ MbcType mbc_ParseName(char const *name, uint8_t &tpp1Major, uint8_t &tpp1Minor) 
 	uint16_t mbc;
 	char const *ptr = name;
 
-	skipWhitespace(ptr); // Trim off leading whitespace
+	skipBlankSpace(ptr); // Trim off leading blank space
 
 #define tryReadSlice(expected) \
 	do { \
@@ -318,7 +319,7 @@ MbcType mbc_ParseName(char const *name, uint8_t &tpp1Major, uint8_t &tpp1Minor) 
 	// clang-format on
 
 	for (;;) {
-		skipWhitespace(ptr); // Trim off trailing whitespace
+		skipBlankSpace(ptr); // Trim off trailing blank space
 
 		// If done, start processing "features"
 		if (!*ptr) {
@@ -501,9 +502,9 @@ MbcType mbc_ParseName(char const *name, uint8_t &tpp1Major, uint8_t &tpp1Minor) 
 		break;
 	}
 
-	skipWhitespace(ptr); // Trim off trailing whitespace
+	skipBlankSpace(ptr); // Trim off trailing blank space
 
-	// If there is still something past the whitespace, error out
+	// If there is still something left, error out
 	if (*ptr) {
 		fatalUnknownMBC(fullName);
 	}

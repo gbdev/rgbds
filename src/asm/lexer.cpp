@@ -898,7 +898,7 @@ static void discardComment() {
 
 static void discardLineContinuation() {
 	for (;;) {
-		if (int c = peek(); isWhitespace(c)) {
+		if (int c = peek(); isBlankSpace(c)) {
 			shiftChar();
 		} else if (isNewline(c)) {
 			shiftChar();
@@ -1561,8 +1561,18 @@ static Token yylex_SKIP_TO_ENDC(); // Forward declaration for `yylex_NORMAL`
 
 // Must stay in sync with the `switch` in `yylex_NORMAL`!
 static bool isGarbageCharacter(int c) {
-	return c != EOF && !continuesIdentifier(c)
-	       && (c == '\0' || !strchr("; \t~[](),+-*/|^=!<>:&%`\"\r\n\\", c));
+	// Whitespace characters are not garbage, even the non-"printable" ones
+	if (isWhitespace(c)) {
+		return false;
+	}
+	// Printable characters which are nevertheless garbage: braces should have been interpolated,
+	// and question mark is unused
+	if (c == '{' || c == '}' || c == '?') {
+		return true;
+	}
+	// All other printable characters are not garbage (i.e. `yylex_NORMAL` handles them), and
+	// all other nonprintable characters are garbage (including '\0' and EOF)
+	return !isPrintable(c);
 }
 
 static void reportGarbageCharacters(int c) {
@@ -1594,7 +1604,7 @@ static Token yylex_NORMAL() {
 		int c = bumpChar();
 
 		switch (c) {
-			// Ignore whitespace and comments
+			// Ignore blank space and comments
 
 		case ';':
 			discardComment();
@@ -1949,18 +1959,18 @@ static Token yylex_RAW() {
 	size_t parenDepth = 0;
 	int c;
 
-	// Trim left whitespace (stops at a block comment)
+	// Trim left spaces (stops at a block comment)
 	for (;;) {
 		c = peek();
-		if (isWhitespace(c)) {
+		if (isBlankSpace(c)) {
 			shiftChar();
 		} else if (c == '\\') {
 			c = nextChar();
 			// If not a line continuation, handle as a normal char
-			if (!isWhitespace(c) && !isNewline(c)) {
+			if (!isWhitespace(c)) {
 				goto backslash;
 			}
-			// Line continuations count as "whitespace"
+			// Line continuations count as "space"
 			discardLineContinuation();
 		} else {
 			break;
@@ -2083,8 +2093,8 @@ append:
 	}
 
 finish: // Can't `break` out of a nested `for`-`switch`
-	// Trim right whitespace
-	auto rightPos = std::find_if_not(str.rbegin(), str.rend(), isWhitespace);
+	// Trim right blank space
+	auto rightPos = std::find_if_not(str.rbegin(), str.rend(), isBlankSpace);
 	str.resize(rightPos.base() - str.begin());
 
 	// Returning COMMAs to the parser would mean that two consecutive commas
@@ -2120,7 +2130,7 @@ finish: // Can't `break` out of a nested `for`-`switch`
 static int skipPastEOL() {
 	if (lexerState->atLineStart) {
 		lexerState->atLineStart = false;
-		return skipChars(isWhitespace);
+		return skipChars(isBlankSpace);
 	}
 
 	for (;;) {
@@ -2129,7 +2139,7 @@ static int skipPastEOL() {
 		} else if (isNewline(c)) {
 			handleCRLF(c);
 			nextLine();
-			return skipChars(isWhitespace);
+			return skipChars(isBlankSpace);
 		} else if (c == '\\') {
 			// Unconditionally skip the next char, including line continuations
 			c = bumpChar();
@@ -2323,7 +2333,7 @@ Capture lexer_CaptureRept() {
 		nextLine();
 
 		// We're at line start, so attempt to match a `REPT`, `FOR`, or `ENDR` token
-		if (int c = skipChars(isWhitespace); startsIdentifier(c)) {
+		if (int c = skipChars(isBlankSpace); startsIdentifier(c)) {
 			shiftChar();
 			switch (readIdentifier(c, false).type) {
 			case T_(POP_REPT):
@@ -2365,7 +2375,7 @@ Capture lexer_CaptureMacro() {
 		nextLine();
 
 		// We're at line start, so attempt to match an `ENDM` token
-		if (int c = skipChars(isWhitespace); startsIdentifier(c)) {
+		if (int c = skipChars(isBlankSpace); startsIdentifier(c)) {
 			shiftChar();
 			if (readIdentifier(c, false).type == T_(POP_ENDM)) {
 				endCapture(capture);
