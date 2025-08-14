@@ -10,7 +10,6 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
-#include <tuple>
 #include <unordered_set>
 #include <utility>
 #include <vector>
@@ -330,7 +329,7 @@ static void generatePalSpec(Image const &image) {
 	}
 }
 
-static std::tuple<std::vector<size_t>, std::vector<Palette>>
+static std::pair<std::vector<size_t>, std::vector<Palette>>
     generatePalettes(std::vector<ColorSet> const &colorSets, Image const &image) {
 	// Run a "pagination" problem solver
 	auto [mappings, nbPalettes] = overloadAndRemove(colorSets);
@@ -382,7 +381,7 @@ static std::tuple<std::vector<size_t>, std::vector<Palette>>
 	return {mappings, palettes};
 }
 
-static std::tuple<std::vector<size_t>, std::vector<Palette>>
+static std::pair<std::vector<size_t>, std::vector<Palette>>
     makePalsAsSpecified(std::vector<ColorSet> const &colorSets) {
 	// Convert the palette spec to actual palettes
 	std::vector<Palette> palettes(options.palSpec.size());
@@ -726,19 +725,15 @@ struct UniqueTiles {
 	UniqueTiles(UniqueTiles &&) = default;
 
 	// Adds a tile to the collection, and returns its ID
-	std::tuple<uint16_t, TileData::MatchType> addTile(TileData newTile) {
-		auto [tileData, inserted] = tileset.insert(newTile);
-
-		TileData::MatchType matchType = TileData::NOPE;
-		if (inserted) {
+	std::pair<uint16_t, TileData::MatchType> addTile(TileData newTile) {
+		if (auto [tileData, inserted] = tileset.insert(newTile); inserted) {
 			// Give the new tile the next available unique ID
 			tileData->tileID = static_cast<uint16_t>(tiles.size());
-			// Pointers are never invalidated!
-			tiles.emplace_back(&*tileData);
+			tiles.emplace_back(&*tileData); // Pointers are never invalidated!
+			return {tileData->tileID, TileData::NOPE};
 		} else {
-			matchType = tileData->tryMatching(newTile);
+			return {tileData->tileID, tileData->tryMatching(newTile)};
 		}
-		return {tileData->tileID, matchType};
 	}
 
 	size_t size() const { return tiles.size(); }

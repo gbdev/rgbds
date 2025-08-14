@@ -32,7 +32,6 @@ struct FileStackNode {
 	std::string const &name() const { return std::get<std::string>(data); }
 
 	void printBacktrace(uint32_t curLineNo) const;
-	std::vector<std::pair<std::string, uint32_t>> backtrace(uint32_t curLineNo) const;
 };
 
 #endif // RGBDS_LINK_FSTACK_HPP

@@ -7,7 +7,7 @@
 #include <memory>
 #include <stdint.h>
 #include <string.h>
-#include <tuple>
+#include <utility>
 
 #include "helpers.hpp" // assume, literal_strlen
 #include "linkdefs.hpp"
@@ -409,7 +409,7 @@ void sdobj_ReadFile(FileStackNode const &src, FILE *file, std::vector<Symbol> &f
 				if (other) {
 					// The same symbol can only be defined twice if neither
 					// definition is in a floating section
-					auto checkSymbol = [](Symbol const &sym) -> std::tuple<Section *, int32_t> {
+					auto checkSymbol = [](Symbol const &sym) -> std::pair<Section *, int32_t> {
 						if (std::holds_alternative<Label>(sym.data)) {
 							Label const &label = std::get<Label>(sym.data);
 							return {label.section, label.offset};

@@ -44,8 +44,6 @@ struct FileStackNode {
 	    : type(type_), data(data_) {}
 
 	void printBacktrace(uint32_t curLineNo) const;
-	std::vector<std::pair<std::string, uint32_t>> backtrace(uint32_t curLineNo) const;
-	std::string reptChain() const;
 };
 
 struct MacroArgs;

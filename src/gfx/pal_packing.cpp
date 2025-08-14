@@ -363,7 +363,7 @@ static void decant(std::vector<AssignedSets> &assignments, std::vector<ColorSet>
 	verbosePrint(VERB_DEBUG, "%zu palettes after decanting on color sets\n", assignments.size());
 }
 
-std::tuple<std::vector<size_t>, size_t> overloadAndRemove(std::vector<ColorSet> const &colorSets) {
+std::pair<std::vector<size_t>, size_t> overloadAndRemove(std::vector<ColorSet> const &colorSets) {
 	verbosePrint(VERB_NOTICE, "Paginating palettes using \"overload-and-remove\" strategy...\n");
 
 	// Sort the color sets by size, which improves the packing algorithm's efficiency

@@ -50,9 +50,9 @@ static std::vector<std::string> includePaths = {""}; // -I
 static std::deque<std::string> preIncludeNames;      // -P
 static bool failedOnMissingInclude = false;
 
-std::string FileStackNode::reptChain() const {
+static std::string reptChain(FileStackNode const &node) {
 	std::string chain;
-	std::vector<uint32_t> const &nodeIters = iters();
+	std::vector<uint32_t> const &nodeIters = node.iters();
 	for (uint32_t i = nodeIters.size(); i--;) {
 		chain.append("::REPT~");
 		chain.append(std::to_string(nodeIters[i]));
@@ -60,29 +60,31 @@ std::string FileStackNode::reptChain() const {
 	return chain;
 }
 
-std::vector<std::pair<std::string, uint32_t>> FileStackNode::backtrace(uint32_t curLineNo) const {
-	if (std::holds_alternative<std::vector<uint32_t>>(data)) {
-		assume(parent); // REPT nodes use their parent's name
-		std::vector<std::pair<std::string, uint32_t>> nodes = parent->backtrace(lineNo);
-		assume(!nodes.empty());
-		nodes.emplace_back(nodes.back().first + reptChain(), curLineNo);
-		return nodes;
-	} else if (parent) {
-		std::vector<std::pair<std::string, uint32_t>> nodes = parent->backtrace(lineNo);
-		nodes.emplace_back(name(), curLineNo);
-		return nodes;
-	} else {
+using TraceNode = std::pair<std::string, uint32_t>;
+
+static std::vector<TraceNode> backtrace(FileStackNode const &node, uint32_t curLineNo) {
+	if (!node.parent) {
+		assume(node.type != NODE_REPT && std::holds_alternative<std::string>(node.data));
 		return {
-		    {name(), curLineNo}
+		    {node.name(), curLineNo}
 		};
 	}
+
+	std::vector<TraceNode> traceNodes = backtrace(*node.parent, node.lineNo);
+	if (std::holds_alternative<std::vector<uint32_t>>(node.data)) {
+		assume(!traceNodes.empty()); // REPT nodes use their parent's name
+		traceNodes.emplace_back(traceNodes.back().first + reptChain(node), curLineNo);
+	} else {
+		traceNodes.emplace_back(node.name(), curLineNo);
+	}
+	return traceNodes;
 }
 
 void FileStackNode::printBacktrace(uint32_t curLineNo) const {
 	trace_PrintBacktrace(
-	    backtrace(curLineNo),
-	    [](std::pair<std::string, uint32_t> const &node) { return node.first.c_str(); },
-	    [](std::pair<std::string, uint32_t> const &node) { return node.second; }
+	    backtrace(*this, curLineNo),
+	    [](TraceNode const &node) { return node.first.c_str(); },
+	    [](TraceNode const &node) { return node.second; }
 	);
 }
 
@@ -280,7 +282,7 @@ static void newMacroContext(Symbol const &macro, std::shared_ptr<MacroArgs> macr
 		}
 	}
 	if (macro.src->type == NODE_REPT) {
-		fileInfoName.append(macro.src->reptChain());
+		fileInfoName.append(reptChain(*macro.src));
 	}
 	fileInfoName.append("::");
 	fileInfoName.append(macro.name);
