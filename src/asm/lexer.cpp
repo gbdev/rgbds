@@ -278,13 +278,9 @@ void LexerState::clear(uint32_t lineNo_) {
 }
 
 static void nextLine() {
-	++lexerState->lineNo;
-}
-
-static void nextLineOutsideExpansion() {
 	// Newlines read within an expansion should not increase the line count
 	if (lexerState->expansions.empty()) {
-		nextLine();
+		++lexerState->lineNo;
 	}
 }
 
@@ -872,7 +868,7 @@ static void discardBlockComment() {
 			handleCRLF(c);
 			[[fallthrough]];
 		case '\n':
-			nextLineOutsideExpansion();
+			nextLine();
 			continue;
 		case '/':
 			if (peek() == '*') {
@@ -903,7 +899,7 @@ static void discardLineContinuation() {
 		} else if (isNewline(c)) {
 			shiftChar();
 			handleCRLF(c);
-			nextLineOutsideExpansion();
+			nextLine();
 			break;
 		} else if (c == ';') {
 			discardComment();
@@ -2250,7 +2246,7 @@ yy::parser::symbol_type yylex() {
 		return yy::parser::make_YYEOF();
 	}
 	if (lexerState->atLineStart) {
-		nextLineOutsideExpansion();
+		nextLine();
 	}
 
 	static Token (* const lexerModeFuncs[NB_LEXER_MODES])() = {
