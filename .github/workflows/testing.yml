@@ -373,7 +373,7 @@ jobs:
       - name: Build & test using CMake on FreeBSD
         uses: vmactions/freebsd-vm@v1
         with:
-          release: "15.0"
+          release: "14.3"
           usesh: true
           prepare: |
             pkg install -y \
