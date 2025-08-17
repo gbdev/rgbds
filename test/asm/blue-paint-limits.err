@@ -1,0 +1,3 @@
+error: Invalid character '2' after line continuation
+    at blue-paint-limits.asm::nth(40) <- blue-paint-limits.asm(43)
+Assembly aborted with 1 error!

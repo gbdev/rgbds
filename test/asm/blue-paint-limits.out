@@ -1,0 +1,8 @@
+interp: 1 and red
+interp: 2 and blue
+mac: 1 and \1
+mac: 2 and \1
+concat: 1 and red
+concat: 2 and blue
+("\\1")
+$2
