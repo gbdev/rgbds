@@ -178,8 +178,10 @@ When making a ROM, note that not using this is not a replacement for
 option!
 .El
 .Ss Scrambling algorithm
-The default section placement algorithm tries to minimize the number of banks used;
-.Dq scrambling
+The default section placement algorithm tries to place sections into as few banks as possible.
+(It uses a variation of the "first-fit bin packing" algorithm to do so, although nothing is guaranteed about where it will place any particular section beyond the bank, address, and alignment constraints manually specified for the section.)
+.Pp
+.Dq Scrambling
 instead places sections into a given pool of banks, trying to minimize the number of sections sharing a given bank.
 This is useful to catch broken bank assumptions, such as expecting two different sections to land in the same bank (that is not guaranteed unless both are manually assigned the same bank number).
 .Pp
