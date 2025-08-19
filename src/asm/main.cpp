@@ -300,10 +300,9 @@ int main(int argc, char *argv[]) {
 		options.maxErrors = 100;
 	}
 
+	// Parse CLI options
 	for (int ch; (ch = musl_getopt_long_only(argc, argv, optstring, longopts, nullptr)) != -1;) {
 		switch (ch) {
-			char *endptr;
-
 		case 'B':
 			if (!trace_ParseTraceDepth(musl_optarg)) {
 				fatal("Invalid argument for option '-B'");
@@ -318,9 +317,8 @@ int main(int argc, char *argv[]) {
 			}
 			break;
 
-			char *equals;
-		case 'D':
-			equals = strchr(musl_optarg, '=');
+		case 'D': {
+			char *equals = strchr(musl_optarg, '=');
 			if (equals) {
 				*equals = '\0';
 				sym_AddString(musl_optarg, std::make_shared<std::string>(equals + 1));
@@ -328,6 +326,7 @@ int main(int argc, char *argv[]) {
 				sym_AddString(musl_optarg, std::make_shared<std::string>("1"));
 			}
 			break;
+		}
 
 		case 'E':
 			options.exportAll = true;
@@ -341,8 +340,10 @@ int main(int argc, char *argv[]) {
 			}
 			break;
 
+			// LCOV_EXCL_START
 		case 'h':
-			usage.printAndExit(0); // LCOV_EXCL_LINE
+			usage.printAndExit(0);
+			// LCOV_EXCL_STOP
 
 		case 'I':
 			fstk_AddIncludePath(musl_optarg);
@@ -369,9 +370,9 @@ int main(int argc, char *argv[]) {
 			fstk_AddPreIncludeFile(musl_optarg);
 			break;
 
-			unsigned long padByte;
-		case 'p':
-			padByte = strtoul(musl_optarg, &endptr, 0);
+		case 'p': {
+			char *endptr;
+			unsigned long padByte = strtoul(musl_optarg, &endptr, 0);
 
 			if (musl_optarg[0] == '\0' || *endptr != '\0') {
 				fatal("Invalid argument for option '-p'");
@@ -383,12 +384,14 @@ int main(int argc, char *argv[]) {
 
 			opt_P(padByte);
 			break;
+		}
 
 		case 'Q': {
 			char const *precisionArg = musl_optarg;
 			if (precisionArg[0] == '.') {
 				++precisionArg;
 			}
+			char *endptr;
 			unsigned long precision = strtoul(precisionArg, &endptr, 0);
 
 			if (musl_optarg[0] == '\0' || *endptr != '\0') {
@@ -403,13 +406,15 @@ int main(int argc, char *argv[]) {
 			break;
 		}
 
-		case 'r':
+		case 'r': {
+			char *endptr;
 			options.maxRecursionDepth = strtoul(musl_optarg, &endptr, 0);
 
 			if (musl_optarg[0] == '\0' || *endptr != '\0') {
 				fatal("Invalid argument for option '-r'");
 			}
 			break;
+		}
 
 		case 's': {
 			// Split "<features>:<name>" so `musl_optarg` is "<features>" and `name` is "<name>"
@@ -428,12 +433,12 @@ int main(int argc, char *argv[]) {
 			break;
 		}
 
+			// LCOV_EXCL_START
 		case 'V':
 			printf("rgbasm %s\n", get_package_version_string());
 			exit(0);
 
 		case 'v':
-			// LCOV_EXCL_START
 			incrementVerbosity();
 			break;
 			// LCOV_EXCL_STOP
@@ -447,6 +452,7 @@ int main(int argc, char *argv[]) {
 			break;
 
 		case 'X': {
+			char *endptr;
 			uint64_t maxErrors = strtoul(musl_optarg, &endptr, 0);
 
 			if (musl_optarg[0] == '\0' || *endptr != '\0') {
@@ -461,8 +467,7 @@ int main(int argc, char *argv[]) {
 			break;
 		}
 
-		// Long-only options
-		case 0:
+		case 0: // Long-only options
 			switch (longOpt) {
 			case 'c':
 				if (!style_Parse(musl_optarg)) {

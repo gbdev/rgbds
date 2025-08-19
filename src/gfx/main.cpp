@@ -259,11 +259,12 @@ static std::vector<size_t> readAtFile(std::string const &path, std::vector<char>
 static char *parseArgv(int argc, char *argv[]) {
 	for (int ch; (ch = musl_getopt_long_only(argc, argv, optstring, longopts, nullptr)) != -1;) {
 		char *arg = musl_optarg; // Make a copy for scanning
-		uint16_t number;
+
 		switch (ch) {
 		case 'A':
 			localOptions.autoAttrmap = true;
 			break;
+
 		case 'a':
 			localOptions.autoAttrmap = false;
 			if (!options.attrmap.empty()) {
@@ -271,11 +272,13 @@ static char *parseArgv(int argc, char *argv[]) {
 			}
 			options.attrmap = musl_optarg;
 			break;
+
 		case 'B':
 			parseBackgroundPalSpec(musl_optarg);
 			break;
-		case 'b':
-			number = parseNumber(arg, "Bank 0 base tile ID", 0);
+
+		case 'b': {
+			uint16_t number = parseNumber(arg, "Bank 0 base tile ID", 0);
 			if (number >= 256) {
 				error("Bank 0 base tile ID must be below 256");
 			} else {
@@ -309,9 +312,12 @@ static char *parseArgv(int argc, char *argv[]) {
 				break;
 			}
 			break;
+		}
+
 		case 'C':
 			options.useColorCurve = true;
 			break;
+
 		case 'c':
 			localOptions.externalPalSpec = nullptr; // Allow overriding a previous pal spec
 			if (musl_optarg[0] == '#') {
@@ -333,6 +339,7 @@ static char *parseArgv(int argc, char *argv[]) {
 				localOptions.externalPalSpec = musl_optarg;
 			}
 			break;
+
 		case 'd':
 			options.bitDepth = parseNumber(arg, "Bit depth", 2);
 			if (*arg != '\0') {
@@ -342,14 +349,19 @@ static char *parseArgv(int argc, char *argv[]) {
 				options.bitDepth = 2;
 			}
 			break;
+
+			// LCOV_EXCL_START
 		case 'h':
-			usage.printAndExit(0); // LCOV_EXCL_LINE
+			usage.printAndExit(0);
+			// LCOV_EXCL_STOP
+
 		case 'i':
 			if (!options.inputTileset.empty()) {
 				warnx("Overriding input tileset file \"%s\"", options.inputTileset.c_str());
 			}
 			options.inputTileset = musl_optarg;
 			break;
+
 		case 'L':
 			options.inputSlice.left = parseNumber(arg, "Input slice left coordinate");
 			if (options.inputSlice.left > INT16_MAX) {
@@ -390,8 +402,9 @@ static char *parseArgv(int argc, char *argv[]) {
 				error("Unexpected extra characters after slice spec in \"%s\"", musl_optarg);
 			}
 			break;
-		case 'l':
-			number = parseNumber(arg, "Base palette ID", 0);
+
+		case 'l': {
+			uint16_t number = parseNumber(arg, "Base palette ID", 0);
 			if (*arg != '\0') {
 				error("Base palette ID must be a valid number, not \"%s\"", musl_optarg);
 			} else if (number >= 256) {
@@ -400,13 +413,17 @@ static char *parseArgv(int argc, char *argv[]) {
 				options.basePalID = number;
 			}
 			break;
+		}
+
 		case 'm':
 			options.allowMirroringX = true; // Imply `-X`
 			options.allowMirroringY = true; // Imply `-Y`
 			[[fallthrough]];                // Imply `-u`
+
 		case 'u':
 			options.allowDedup = true;
 			break;
+
 		case 'N':
 			options.maxNbTiles[0] = parseNumber(arg, "Number of tiles in bank 0", 256);
 			if (options.maxNbTiles[0] > 256) {
@@ -438,8 +455,9 @@ static char *parseArgv(int argc, char *argv[]) {
 				break;
 			}
 			break;
-		case 'n':
-			number = parseNumber(arg, "Number of palettes", 256);
+
+		case 'n': {
+			uint16_t number = parseNumber(arg, "Number of palettes", 256);
 			if (*arg != '\0') {
 				error("Number of palettes ('-n') must be a valid number, not \"%s\"", musl_optarg);
 			}
@@ -451,18 +469,23 @@ static char *parseArgv(int argc, char *argv[]) {
 				options.nbPalettes = number;
 			}
 			break;
+		}
+
 		case 'O':
 			localOptions.groupOutputs = true;
 			break;
+
 		case 'o':
 			if (!options.output.empty()) {
 				warnx("Overriding tile data file %s", options.output.c_str());
 			}
 			options.output = musl_optarg;
 			break;
+
 		case 'P':
 			localOptions.autoPalettes = true;
 			break;
+
 		case 'p':
 			localOptions.autoPalettes = false;
 			if (!options.palettes.empty()) {
@@ -470,9 +493,11 @@ static char *parseArgv(int argc, char *argv[]) {
 			}
 			options.palettes = musl_optarg;
 			break;
+
 		case 'Q':
 			localOptions.autoPalmap = true;
 			break;
+
 		case 'q':
 			localOptions.autoPalmap = false;
 			if (!options.palmap.empty()) {
@@ -480,6 +505,7 @@ static char *parseArgv(int argc, char *argv[]) {
 			}
 			options.palmap = musl_optarg;
 			break;
+
 		case 'r':
 			localOptions.reverse = true;
 			options.reversedWidth = parseNumber(arg, "Reversed image stride");
@@ -489,6 +515,7 @@ static char *parseArgv(int argc, char *argv[]) {
 				);
 			}
 			break;
+
 		case 's':
 			options.nbColorsPerPal = parseNumber(arg, "Number of colors per palette", 4);
 			if (*arg != '\0') {
@@ -500,9 +527,11 @@ static char *parseArgv(int argc, char *argv[]) {
 				error("Palette size ('-s') may not be 0!");
 			}
 			break;
+
 		case 'T':
 			localOptions.autoTilemap = true;
 			break;
+
 		case 't':
 			localOptions.autoTilemap = false;
 			if (!options.tilemap.empty()) {
@@ -510,44 +539,52 @@ static char *parseArgv(int argc, char *argv[]) {
 			}
 			options.tilemap = musl_optarg;
 			break;
-		case 'V':
+
 			// LCOV_EXCL_START
+		case 'V':
 			printf("rgbgfx %s\n", get_package_version_string());
 			exit(0);
-			// LCOV_EXCL_STOP
+
 		case 'v':
-			// LCOV_EXCL_START
 			incrementVerbosity();
 			break;
 			// LCOV_EXCL_STOP
+
 		case 'W':
 			warnings.processWarningFlag(musl_optarg);
 			break;
+
 		case 'w':
 			warnings.state.warningsEnabled = false;
 			break;
+
 		case 'x':
 			options.trim = parseNumber(arg, "Number of tiles to trim", 0);
 			if (*arg != '\0') {
 				error("Tile trim ('-x') argument must be a valid number, not \"%s\"", musl_optarg);
 			}
 			break;
+
 		case 'X':
 			options.allowMirroringX = true;
 			options.allowDedup = true; // Imply `-u`
 			break;
+
 		case 'Y':
 			options.allowMirroringY = true;
 			options.allowDedup = true; // Imply `-u`
 			break;
+
 		case 'Z':
 			options.columnMajor = true;
 			break;
+
 		case 0: // Long-only options
 			if (longOpt == 'c' && !style_Parse(musl_optarg)) {
 				fatal("Invalid argument for option '--color'");
 			}
 			break;
+
 		case 1: // Positional argument, requested by leading `-` in opt string
 			if (musl_optarg[0] == '@') {
 				// Instruct the caller to process that at-file
@@ -556,6 +593,7 @@ static char *parseArgv(int argc, char *argv[]) {
 				registerInput(musl_optarg);
 			}
 			break;
+
 		default:
 			usage.printAndExit(1); // LCOV_EXCL_LINE
 		}
@@ -738,6 +776,7 @@ int main(int argc, char *argv[]) {
 	};
 	std::vector<AtFileStackEntry> atFileStack;
 
+	// Parse CLI options
 	int curArgc = argc;
 	char **curArgv = argv;
 	std::vector<std::vector<char>> argPools;

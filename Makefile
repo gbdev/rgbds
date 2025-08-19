@@ -3,7 +3,7 @@
 .SUFFIXES:
 .SUFFIXES: .cpp .y .o
 
-.PHONY: all clean install checkdiff develop debug profile coverage tidy iwyu mingw32 mingw64 wine-shim dist
+.PHONY: all clean install checkdiff develop debug profile coverage format tidy iwyu mingw32 mingw64 wine-shim dist
 
 # User-defined variables
 
@@ -240,6 +240,10 @@ profile:
 coverage:
 	$Qenv ${MAKE} \
 		CXXFLAGS="-ggdb3 -Og --coverage -fno-omit-frame-pointer -fno-optimize-sibling-calls"
+
+# Target used in development to format source code with clang-format.
+format:
+	$Qclang-format -i include/**/*.hpp src/**/*.cpp
 
 # Target used in development to check code with clang-tidy.
 # Requires Bison-generated header files to exist.
