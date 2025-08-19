@@ -24,6 +24,7 @@ struct FileStackNode {
 	    std::string            // NODE_FILE, NODE_MACRO
 	    >
 	    data;
+	bool isQuiet; // Whether to omit this node from error reporting
 
 	std::shared_ptr<FileStackNode> parent; // Pointer to parent node, for error reporting
 	// Line at which the parent context was exited
@@ -40,8 +41,12 @@ struct FileStackNode {
 	std::string &name() { return std::get<std::string>(data); }
 	std::string const &name() const { return std::get<std::string>(data); }
 
-	FileStackNode(FileStackNodeType type_, std::variant<std::vector<uint32_t>, std::string> data_)
-	    : type(type_), data(data_) {}
+	FileStackNode(
+	    FileStackNodeType type_,
+	    std::variant<std::vector<uint32_t>, std::string> data_,
+	    bool isQuiet_
+	)
+	    : type(type_), data(data_), isQuiet(isQuiet_) {}
 
 	void printBacktrace(uint32_t curLineNo) const;
 };
@@ -62,16 +67,19 @@ bool fstk_FileError(std::string const &path, char const *functionName);
 bool fstk_FailedOnMissingInclude();
 
 bool yywrap();
-bool fstk_RunInclude(std::string const &path);
-void fstk_RunMacro(std::string const &macroName, std::shared_ptr<MacroArgs> macroArgs);
-void fstk_RunRept(uint32_t count, int32_t reptLineNo, ContentSpan const &span);
+bool fstk_RunInclude(std::string const &path, bool isQuiet);
+void fstk_RunMacro(
+    std::string const &macroName, std::shared_ptr<MacroArgs> macroArgs, bool isQuiet
+);
+void fstk_RunRept(uint32_t count, int32_t reptLineNo, ContentSpan const &span, bool isQuiet);
 void fstk_RunFor(
     std::string const &symName,
     int32_t start,
     int32_t stop,
     int32_t step,
     int32_t reptLineNo,
-    ContentSpan const &span
+    ContentSpan const &span,
+    bool isQuiet
 );
 bool fstk_Break();
 

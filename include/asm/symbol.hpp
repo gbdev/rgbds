@@ -30,8 +30,9 @@ bool sym_IsPC(Symbol const *sym); // Forward declaration for `getSection`
 struct Symbol {
 	std::string name;
 	SymbolType type;
-	bool isExported; // Whether the symbol is to be exported
-	bool isBuiltin;  // Whether the symbol is a built-in
+	bool isBuiltin;
+	bool isExported; // Not relevant for SYM_MACRO or SYM_EQUS
+	bool isQuiet;    // Only relevant for SYM_MACRO
 	Section *section;
 	std::shared_ptr<FileStackNode> src; // Where the symbol was defined
 	uint32_t fileLine;                  // Line where the symbol was defined
@@ -88,7 +89,9 @@ Symbol *sym_FindScopedSymbol(std::string const &symName);
 // Find a scoped symbol by name; do not return `@` or `_NARG` when they have no value
 Symbol *sym_FindScopedValidSymbol(std::string const &symName);
 Symbol const *sym_GetPC();
-Symbol *sym_AddMacro(std::string const &symName, int32_t defLineNo, ContentSpan const &span);
+Symbol *sym_AddMacro(
+    std::string const &symName, int32_t defLineNo, ContentSpan const &span, bool isQuiet
+);
 Symbol *sym_Ref(std::string const &symName);
 Symbol *sym_AddString(std::string const &symName, std::shared_ptr<std::string> value);
 Symbol *sym_RedefString(std::string const &symName, std::shared_ptr<std::string> value);

@@ -83,10 +83,10 @@ static void writeSection(Section const &sect, FILE *file) {
 
 	putLong(sect.size, file);
 
+	assume((sect.type & SECTTYPE_TYPE_MASK) == sect.type);
 	bool isUnion = sect.modifier == SECTION_UNION;
 	bool isFragment = sect.modifier == SECTION_FRAGMENT;
-
-	putc(sect.type | isUnion << 7 | isFragment << 6, file);
+	putc(sect.type | isUnion << SECTTYPE_UNION_BIT | isFragment << SECTTYPE_FRAGMENT_BIT, file);
 
 	putLong(sect.org, file);
 	putLong(sect.bank, file);
@@ -268,7 +268,9 @@ static void writeAssert(Assertion const &assert, FILE *file) {
 static void writeFileStackNode(FileStackNode const &node, FILE *file) {
 	putLong(node.parent ? node.parent->ID : UINT32_MAX, file);
 	putLong(node.lineNo, file);
-	putc(node.type, file);
+
+	putc(node.type | node.isQuiet << FSTACKNODE_QUIET_BIT, file);
+
 	if (node.type != NODE_REPT) {
 		putString(node.name(), file);
 	} else {
