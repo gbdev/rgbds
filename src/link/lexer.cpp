@@ -82,28 +82,20 @@ static yy::parser::symbol_type yywrap() {
 	return yy::parser::make_YYEOF();
 }
 
-static bool isIdentChar(int c) {
-	return (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9');
-}
-
-static std::string readIdent(int c) {
+static std::string readKeyword(int c) {
 	LexerStackEntry &context = lexerStack.back();
-	std::string ident;
-	ident.push_back(c);
-	for (c = context.file.sgetc(); isIdentChar(c); c = context.file.snextc()) {
-		ident.push_back(c);
+	std::string keyword;
+	keyword.push_back(c);
+	for (c = context.file.sgetc(); isAlphanumeric(c); c = context.file.snextc()) {
+		keyword.push_back(c);
 	}
-	return ident;
-}
-
-static bool isDecDigit(int c) {
-	return c >= '0' && c <= '9';
+	return keyword;
 }
 
 static yy::parser::symbol_type parseDecNumber(int c) {
 	LexerStackEntry &context = lexerStack.back();
 	uint32_t number = c - '0';
-	for (c = context.file.sgetc(); isDecDigit(c) || c == '_'; c = context.file.sgetc()) {
+	for (c = context.file.sgetc(); isDigit(c) || c == '_'; c = context.file.sgetc()) {
 		if (c != '_') {
 			number = number * 10 + (c - '0');
 		}
@@ -135,10 +127,6 @@ static yy::parser::symbol_type parseBinNumber(char const *prefix) {
 	return yy::parser::make_number(number);
 }
 
-static bool isOctDigit(int c) {
-	return c >= '0' && c <= '7';
-}
-
 static yy::parser::symbol_type parseOctNumber(char const *prefix) {
 	LexerStackEntry &context = lexerStack.back();
 	int c = context.file.sgetc();
@@ -158,12 +146,8 @@ static yy::parser::symbol_type parseOctNumber(char const *prefix) {
 	return yy::parser::make_number(number);
 }
 
-static bool isHexDigit(int c) {
-	return (c >= '0' && c <= '9') || (c >= 'A' && c <= 'F') || (c >= 'a' && c <= 'f');
-}
-
 static uint8_t parseHexDigit(int c) {
-	if (c >= '0' && c <= '9') {
+	if (isDigit(c)) {
 		return c - '0';
 	} else if (c >= 'A' && c <= 'F') {
 		return c - 'A' + 10;
@@ -290,10 +274,10 @@ yy::parser::symbol_type yylex() {
 		return parseBinNumber("'%'");
 	} else if (c == '&') {
 		return parseOctNumber("'&'");
-	} else if (isDecDigit(c)) {
+	} else if (isDigit(c)) {
 		return parseNumber(c);
-	} else if (isIdentChar(c)) { // Note that we match these *after* digit characters!
-		std::string ident = readIdent(c);
+	} else if (isLetter(c)) {
+		std::string keyword = readKeyword(c);
 
 		static UpperMap<SectionType> const sectTypes{
 		    {"WRAM0", SECTTYPE_WRAM0},
@@ -305,7 +289,7 @@ yy::parser::symbol_type yylex() {
 		    {"SRAM",  SECTTYPE_SRAM },
 		    {"OAM",   SECTTYPE_OAM  },
 		};
-		if (auto search = sectTypes.find(ident); search != sectTypes.end()) {
+		if (auto search = sectTypes.find(keyword); search != sectTypes.end()) {
 			return yy::parser::make_sect_type(search->second);
 		}
 
@@ -317,11 +301,11 @@ yy::parser::symbol_type yylex() {
 		    {"DS",       yy::parser::make_DS      },
 		    {"OPTIONAL", yy::parser::make_OPTIONAL},
 		};
-		if (auto search = keywords.find(ident); search != keywords.end()) {
+		if (auto search = keywords.find(keyword); search != keywords.end()) {
 			return search->second();
 		}
 
-		scriptError("Unknown keyword `%s`", ident.c_str());
+		scriptError("Unknown keyword `%s`", keyword.c_str());
 		return yylex();
 	} else {
 		scriptError("Unexpected character %s", printChar(c));

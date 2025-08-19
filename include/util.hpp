@@ -16,6 +16,11 @@ bool isNewline(int c);
 bool isBlankSpace(int c);
 bool isWhitespace(int c);
 bool isPrintable(int c);
+bool isLetter(int c);
+bool isDigit(int c);
+bool isOctDigit(int c);
+bool isHexDigit(int c);
+bool isAlphanumeric(int c);
 
 bool startsIdentifier(int c);
 bool continuesIdentifier(int c);

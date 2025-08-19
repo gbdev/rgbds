@@ -21,14 +21,34 @@ bool isPrintable(int c) {
 	return c >= ' ' && c <= '~';
 }
 
+bool isLetter(int c) {
+	return (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z');
+}
+
+bool isDigit(int c) {
+	return c >= '0' && c <= '9';
+}
+
+bool isOctDigit(int c) {
+	return c >= '0' && c <= '7';
+}
+
+bool isHexDigit(int c) {
+	return isDigit(c) || (c >= 'A' && c <= 'F') || (c >= 'a' && c <= 'f');
+}
+
+bool isAlphanumeric(int c) {
+	return isLetter(c) || isDigit(c);
+}
+
 bool startsIdentifier(int c) {
 	// This returns false for anonymous labels, which internally start with a '!',
 	// and for section fragment literal labels, which internally start with a '$'.
-	return (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || c == '.' || c == '_';
+	return isLetter(c) || c == '.' || c == '_';
 }
 
 bool continuesIdentifier(int c) {
-	return startsIdentifier(c) || (c >= '0' && c <= '9') || c == '#' || c == '$' || c == '@';
+	return startsIdentifier(c) || isDigit(c) || c == '#' || c == '$' || c == '@';
 }
 
 char const *printChar(int c) {

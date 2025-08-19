@@ -53,7 +53,8 @@ common_obj := \
 	src/extern/getopt.o \
 	src/diagnostics.o \
 	src/style.o \
-	src/usage.o
+	src/usage.o \
+	src/util.o
 
 rgbasm_obj := \
 	${common_obj} \
@@ -76,7 +77,6 @@ rgbasm_obj := \
 	src/backtrace.o \
 	src/linkdefs.o \
 	src/opmath.o \
-	src/util.o \
 	src/verbosity.o
 
 src/asm/lexer.o src/asm/main.o: src/asm/parser.hpp
@@ -100,7 +100,6 @@ rgblink_obj := \
 	src/backtrace.o \
 	src/linkdefs.o \
 	src/opmath.o \
-	src/util.o \
 	src/verbosity.o
 
 src/link/lexer.o src/link/main.o: src/link/script.hpp
@@ -109,8 +108,7 @@ rgbfix_obj := \
 	${common_obj} \
 	src/fix/main.o \
 	src/fix/mbc.o \
-	src/fix/warning.o \
-	src/util.o
+	src/fix/warning.o
 
 rgbgfx_obj := \
 	${common_obj} \
@@ -124,7 +122,6 @@ rgbgfx_obj := \
 	src/gfx/reverse.o \
 	src/gfx/rgba.o \
 	src/gfx/warning.o \
-	src/util.o \
 	src/verbosity.o
 
 rgbasm: ${rgbasm_obj}

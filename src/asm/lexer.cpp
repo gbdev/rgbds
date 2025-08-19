@@ -533,7 +533,7 @@ static uint32_t readBracketedMacroArgNum() {
 		c = nextChar();
 	}
 
-	if (c >= '0' && c <= '9') {
+	if (isDigit(c)) {
 		uint32_t n = readDecimalNumber(bumpChar());
 		if (n > INT32_MAX) {
 			error("Number in bracketed macro argument is too large");
@@ -940,13 +940,13 @@ static uint32_t readFractionalPart(uint32_t integer) {
 			} else if (c == 'q' || c == 'Q') {
 				state = READFRACTIONALPART_PRECISION;
 				continue;
-			} else if (c < '0' || c > '9') {
+			} else if (!isDigit(c)) {
 				break;
 			}
 			if (divisor > (UINT32_MAX - (c - '0')) / 10) {
 				warning(WARNING_LARGE_CONSTANT, "Precision of fixed-point constant is too large");
 				// Discard any additional digits
-				skipChars([](int d) { return (d >= '0' && d <= '9') || d == '_'; });
+				skipChars([](int d) { return isDigit(d) || d == '_'; });
 				break;
 			}
 			value = value * 10 + (c - '0');
@@ -955,7 +955,7 @@ static uint32_t readFractionalPart(uint32_t integer) {
 			if (c == '.' && state == READFRACTIONALPART_PRECISION) {
 				state = READFRACTIONALPART_PRECISION_DIGITS;
 				continue;
-			} else if (c < '0' || c > '9') {
+			} else if (!isDigit(c)) {
 				break;
 			}
 			precision = precision * 10 + (c - '0');
@@ -985,8 +985,7 @@ static uint32_t readFractionalPart(uint32_t integer) {
 }
 
 static bool isValidDigit(char c) {
-	return (c >= '0' && c <= '9') || (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || c == '.'
-	       || c == '#' || c == '@';
+	return isAlphanumeric(c) || c == '.' || c == '#' || c == '@';
 }
 
 static bool checkDigitErrors(char const *digits, size_t n, char const *type) {
@@ -1070,7 +1069,7 @@ static uint32_t readOctalNumber() {
 	for (int c = peek();; c = nextChar()) {
 		if (c == '_' && !empty) {
 			continue;
-		} else if (c >= '0' && c <= '7') {
+		} else if (isOctDigit(c)) {
 			c = c - '0';
 		} else {
 			break;
@@ -1079,7 +1078,7 @@ static uint32_t readOctalNumber() {
 		if (value > (UINT32_MAX - c) / 8) {
 			warning(WARNING_LARGE_CONSTANT, "Integer constant is too large");
 			// Discard any additional digits
-			skipChars([](int d) { return (d >= '0' && d <= '7') || d == '_'; });
+			skipChars([](int d) { return isOctDigit(d) || d == '_'; });
 			return 0;
 		}
 		value = value * 8 + c;
@@ -1095,13 +1094,13 @@ static uint32_t readOctalNumber() {
 }
 
 static uint32_t readDecimalNumber(int initial) {
-	assume(initial >= '0' && initial <= '9');
+	assume(isDigit(initial));
 	uint32_t value = initial - '0';
 
 	for (int c = peek();; c = nextChar()) {
 		if (c == '_') {
 			continue;
-		} else if (c >= '0' && c <= '9') {
+		} else if (isDigit(c)) {
 			c = c - '0';
 		} else {
 			break;
@@ -1110,7 +1109,7 @@ static uint32_t readDecimalNumber(int initial) {
 		if (value > (UINT32_MAX - c) / 10) {
 			warning(WARNING_LARGE_CONSTANT, "Integer constant is too large");
 			// Discard any additional digits
-			skipChars([](int d) { return (d >= '0' && d <= '9') || d == '_'; });
+			skipChars([](int d) { return isDigit(d) || d == '_'; });
 			return 0;
 		}
 		value = value * 10 + c;
@@ -1130,7 +1129,7 @@ static uint32_t readHexNumber() {
 			c = c - 'a' + 10;
 		} else if (c >= 'A' && c <= 'F') {
 			c = c - 'A' + 10;
-		} else if (c >= '0' && c <= '9') {
+		} else if (isDigit(c)) {
 			c = c - '0';
 		} else {
 			break;
@@ -1139,10 +1138,7 @@ static uint32_t readHexNumber() {
 		if (value > (UINT32_MAX - c) / 16) {
 			warning(WARNING_LARGE_CONSTANT, "Integer constant is too large");
 			// Discard any additional digits
-			skipChars([](int d) {
-				return (d >= '0' && d <= '9') || (d >= 'a' && d <= 'f') || (d >= 'A' && d <= 'f')
-				       || d == '_';
-			});
+			skipChars([](int d) { return isHexDigit(d) || d == '_'; });
 			return 0;
 		}
 		value = value * 16 + c;
@@ -1825,7 +1821,7 @@ static Token yylex_NORMAL() {
 			} else if (c == '&') {
 				shiftChar();
 				return Token(T_(OP_LOGICAND));
-			} else if (c >= '0' && c <= '7') {
+			} else if (isOctDigit(c)) {
 				return Token(T_(NUMBER), readOctalNumber());
 			}
 			return Token(T_(OP_AND));

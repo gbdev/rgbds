@@ -8,7 +8,7 @@
 
 #include "helpers.hpp"  // unreachable_
 #include "platform.hpp" // strcasecmp
-#include "util.hpp"     // isBlankSpace
+#include "util.hpp"     // isBlankSpace, isDigit
 
 #include "fix/warning.hpp"
 
@@ -143,7 +143,7 @@ MbcType mbc_ParseName(char const *name, uint8_t &tpp1Major, uint8_t &tpp1Minor) 
 		exit(0);
 	}
 
-	if ((name[0] >= '0' && name[0] <= '9') || name[0] == '$') {
+	if (isDigit(name[0]) || name[0] == '$') {
 		int base = 0;
 
 		if (name[0] == '$') {

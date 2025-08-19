@@ -3,6 +3,7 @@
 #include "diagnostics.hpp"
 
 #include "style.hpp"
+#include "util.hpp" // isDigit
 
 void warnx(char const *fmt, ...) {
 	va_list ap;
@@ -60,7 +61,7 @@ std::pair<WarningState, std::optional<uint32_t>> getInitialWarningState(std::str
 	uint32_t param = 0;
 	bool overflowed = false;
 
-	for (; *ptr >= '0' && *ptr <= '9'; ++ptr) {
+	for (; isDigit(*ptr); ++ptr) {
 		if (overflowed) {
 			continue;
 		}

@@ -7,6 +7,7 @@ set(common_src
     "diagnostics.cpp"
     "style.cpp"
     "usage.cpp"
+    "util.cpp"
     "_version.cpp"
     )
 
@@ -54,7 +55,6 @@ set(rgbasm_src
     "backtrace.cpp"
     "linkdefs.cpp"
     "opmath.cpp"
-    "util.cpp"
     "verbosity.cpp"
     )
 
@@ -76,7 +76,6 @@ set(rgblink_src
     "backtrace.cpp"
     "linkdefs.cpp"
     "opmath.cpp"
-    "util.cpp"
     "verbosity.cpp"
     )
 
@@ -84,7 +83,6 @@ set(rgbfix_src
     "fix/main.cpp"
     "fix/mbc.cpp"
     "fix/warning.cpp"
-    "util.cpp"
     )
 
 set(rgbgfx_src
@@ -98,7 +96,6 @@ set(rgbgfx_src
     "gfx/reverse.cpp"
     "gfx/rgba.cpp"
     "gfx/warning.cpp"
-    "util.cpp"
     "verbosity.cpp"
     )
 

@@ -20,7 +20,7 @@
 #include "diagnostics.hpp"
 #include "helpers.hpp"
 #include "platform.hpp"
-#include "util.hpp" // UpperMap
+#include "util.hpp" // UpperMap, isDigit
 
 #include "gfx/main.hpp"
 #include "gfx/png.hpp"
@@ -43,7 +43,7 @@ static constexpr uint8_t nibble(char c) {
 		assume(c <= 'F');
 		return c - 'A' + 10;
 	} else {
-		assume(c >= '0' && c <= '9');
+		assume(isDigit(c));
 		return c - '0';
 	}
 }
