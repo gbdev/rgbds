@@ -941,9 +941,11 @@ bool sect_BinaryFile(std::string const &name, uint32_t startPos) {
 		fseek(file, startPos, SEEK_SET);
 	} else {
 		if (errno != ESPIPE) {
+			// LCOV_EXCL_START
 			error(
 			    "Error determining size of `INCBIN` file \"%s\": %s", name.c_str(), strerror(errno)
 			);
+			// LCOV_EXCL_STOP
 		}
 		// The file isn't seekable, so we'll just skip bytes one at a time
 		while (startPos--) {
@@ -961,7 +963,9 @@ bool sect_BinaryFile(std::string const &name, uint32_t startPos) {
 	}
 
 	if (ferror(file)) {
+		// LCOV_EXCL_START
 		error("Error reading `INCBIN` file \"%s\": %s", name.c_str(), strerror(errno));
+		// LCOV_EXCL_STOP
 	}
 	return false;
 }
@@ -1002,9 +1006,11 @@ bool sect_BinaryFileSlice(std::string const &name, uint32_t startPos, uint32_t l
 		fseek(file, startPos, SEEK_SET);
 	} else {
 		if (errno != ESPIPE) {
+			// LCOV_EXCL_START
 			error(
 			    "Error determining size of `INCBIN` file \"%s\": %s", name.c_str(), strerror(errno)
 			);
+			// LCOV_EXCL_STOP
 		}
 		// The file isn't seekable, so we'll just skip bytes one at a time
 		while (startPos--) {
@@ -1021,7 +1027,9 @@ bool sect_BinaryFileSlice(std::string const &name, uint32_t startPos, uint32_t l
 		if (int byte = fgetc(file); byte != EOF) {
 			writeByte(byte);
 		} else if (ferror(file)) {
+			// LCOV_EXCL_START
 			error("Error reading `INCBIN` file \"%s\": %s", name.c_str(), strerror(errno));
+			// LCOV_EXCL_STOP
 		} else {
 			error(
 			    "Premature end of `INCBIN` file \"%s\" (%" PRId32 " bytes left to read)",

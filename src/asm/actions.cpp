@@ -139,18 +139,22 @@ std::optional<std::string> act_ReadFile(std::string const &name, uint32_t maxLen
 			readSize = fileSize;
 		}
 		fseek(file, 0, SEEK_SET);
+		// LCOV_EXCL_START
 	} else if (errno != ESPIPE) {
 		error(
 		    "Error determining size of `READFILE` file \"%s\": %s", name.c_str(), strerror(errno)
 		);
+		// LCOV_EXCL_STOP
 	}
 
 	std::string contents;
 	contents.resize(readSize);
 
 	if (fread(&contents[0], 1, readSize, file) < readSize || ferror(file)) {
+		// LCOV_EXCL_START
 		error("Error reading `READFILE` file \"%s\": %s", name.c_str(), strerror(errno));
 		return "";
+		// LCOV_EXCL_STOP
 	}
 
 	return contents;

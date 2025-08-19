@@ -683,10 +683,10 @@ static void initLogo() {
 
 int main(int argc, char *argv[]) {
 	char const *outputFilename = nullptr;
+
+	// Parse CLI options
 	for (int ch; (ch = musl_getopt_long_only(argc, argv, optstring, longopts, nullptr)) != -1;) {
 		switch (ch) {
-			size_t len;
-
 		case 'C':
 		case 'c':
 			model = ch == 'c' ? BOTH : CGB;
@@ -723,12 +723,14 @@ int main(int argc, char *argv[]) {
 			}
 			break;
 
+			// LCOV_EXCL_START
 		case 'h':
-			usage.printAndExit(0); // LCOV_EXCL_LINE
+			usage.printAndExit(0);
+			// LCOV_EXCL_STOP
 
-		case 'i':
+		case 'i': {
 			gameID = musl_optarg;
-			len = strlen(gameID);
+			size_t len = strlen(gameID);
 			if (len > 4) {
 				len = 4;
 				warning(WARNING_TRUNCATION, "Truncating game ID \"%s\" to 4 chars", gameID);
@@ -739,14 +741,15 @@ int main(int argc, char *argv[]) {
 				warning(WARNING_TRUNCATION, "Truncating title \"%s\" to 11 chars", title);
 			}
 			break;
+		}
 
 		case 'j':
 			japanese = false;
 			break;
 
-		case 'k':
+		case 'k': {
 			newLicensee = musl_optarg;
-			len = strlen(newLicensee);
+			size_t len = strlen(newLicensee);
 			if (len > 2) {
 				len = 2;
 				warning(
@@ -755,6 +758,7 @@ int main(int argc, char *argv[]) {
 			}
 			newLicenseeLen = len;
 			break;
+		}
 
 		case 'L':
 			logoFilename = musl_optarg;
@@ -800,7 +804,7 @@ int main(int argc, char *argv[]) {
 
 		case 't': {
 			title = musl_optarg;
-			len = strlen(title);
+			size_t len = strlen(title);
 			uint8_t maxLen = maxTitleLen();
 
 			if (len > maxLen) {
@@ -811,15 +815,15 @@ int main(int argc, char *argv[]) {
 			break;
 		}
 
-		case 'V':
 			// LCOV_EXCL_START
+		case 'V':
 			printf("rgbfix %s\n", get_package_version_string());
 			exit(0);
-			// LCOV_EXCL_STOP
 
 		case 'v':
 			fixSpec = FIX_LOGO | FIX_HEADER_SUM | FIX_GLOBAL_SUM;
 			break;
+			// LCOV_EXCL_STOP
 
 		case 'W':
 			warnings.processWarningFlag(musl_optarg);
@@ -829,8 +833,7 @@ int main(int argc, char *argv[]) {
 			warnings.state.warningsEnabled = false;
 			break;
 
-		// Long-only options
-		case 0:
+		case 0: // Long-only options
 			if (longOpt == 'c' && !style_Parse(musl_optarg)) {
 				fatal("Invalid argument for option '--color'");
 			}

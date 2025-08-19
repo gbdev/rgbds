@@ -297,7 +297,7 @@ static void parseScrambleSpec(char *spec) {
 }
 
 int main(int argc, char *argv[]) {
-	// Parse options
+	// Parse CLI options
 	for (int ch; (ch = musl_getopt_long_only(argc, argv, optstring, longopts, nullptr)) != -1;) {
 		switch (ch) {
 		case 'B':
@@ -305,45 +305,56 @@ int main(int argc, char *argv[]) {
 				fatal("Invalid argument for option '-B'");
 			}
 			break;
+
 		case 'd':
 			options.isDmgMode = true;
 			options.isWRAM0Mode = true;
 			break;
+
+			// LCOV_EXCL_START
 		case 'h':
-			usage.printAndExit(0); // LCOV_EXCL_LINE
+			usage.printAndExit(0);
+			// LCOV_EXCL_STOP
+
 		case 'l':
 			if (linkerScriptName) {
 				warnx("Overriding linker script file \"%s\"", linkerScriptName);
 			}
 			linkerScriptName = musl_optarg;
 			break;
+
 		case 'M':
 			options.noSymInMap = true;
 			break;
+
 		case 'm':
 			if (options.mapFileName) {
 				warnx("Overriding map file \"%s\"", options.mapFileName);
 			}
 			options.mapFileName = musl_optarg;
 			break;
+
 		case 'n':
 			if (options.symFileName) {
 				warnx("Overriding sym file \"%s\"", options.symFileName);
 			}
 			options.symFileName = musl_optarg;
 			break;
+
 		case 'O':
 			if (options.overlayFileName) {
 				warnx("Overriding overlay file \"%s\"", options.overlayFileName);
 			}
 			options.overlayFileName = musl_optarg;
 			break;
+
 		case 'o':
 			if (options.outputFileName) {
 				warnx("Overriding output file \"%s\"", options.outputFileName);
 			}
 			options.outputFileName = musl_optarg;
 			break;
+
 		case 'p': {
 			char *endptr;
 			unsigned long value = strtoul(musl_optarg, &endptr, 0);
@@ -359,38 +370,45 @@ int main(int argc, char *argv[]) {
 			options.hasPadValue = true;
 			break;
 		}
+
 		case 'S':
 			parseScrambleSpec(musl_optarg);
 			break;
+
 		case 't':
 			options.is32kMode = true;
 			break;
-		case 'V':
+
 			// LCOV_EXCL_START
+		case 'V':
 			printf("rgblink %s\n", get_package_version_string());
 			exit(0);
-			// LCOV_EXCL_STOP
+
 		case 'v':
-			// LCOV_EXCL_START
 			incrementVerbosity();
 			break;
 			// LCOV_EXCL_STOP
+
 		case 'W':
 			warnings.processWarningFlag(musl_optarg);
 			break;
+
 		case 'w':
 			options.isWRAM0Mode = true;
 			break;
+
 		case 'x':
 			options.disablePadding = true;
 			// implies tiny mode
 			options.is32kMode = true;
 			break;
+
 		case 0: // Long-only options
 			if (longOpt == 'c' && !style_Parse(musl_optarg)) {
 				fatal("Invalid argument for option '--color'");
 			}
 			break;
+
 		default:
 			usage.printAndExit(1); // LCOV_EXCL_LINE
 		}
