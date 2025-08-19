@@ -193,7 +193,10 @@ option!
 .El
 .Ss Scrambling algorithm
 The default section placement algorithm tries to place sections into as few banks as possible.
-(It uses a variation of the "first-fit bin packing" algorithm to do so, although nothing is guaranteed about where it will place any particular section beyond the bank, address, and alignment constraints manually specified for the section.)
+(It turns out that section placement is an NP-complete problem known as "bin packing", so
+.Nm
+does not attempt to find the optimal solution, but instead uses a "first-fit" heuristic to find a good one in a reasonable amount of time.
+There are no guarantees about where this algorithm will place sections, apart from the bank, address, and alignment constraints manually specified for the sections.)
 .Pp
 .Dq Scrambling
 instead places sections into a given pool of banks, trying to minimize the number of sections sharing a given bank.

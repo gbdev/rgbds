@@ -633,9 +633,10 @@ behavior depends on an internal detail of how the PNG is saved, specifically its
 chunk.
 Since few image editors (such as GIMP) expose that detail, this behavior is only kept for compatibility and should be considered deprecated.
 .Pp
-It turns out that palette generation is an NP-complete problem, so
+It turns out that palette generation is an NP-complete problem known as "pagination", so
 .Nm
-does not attempt to find the optimal solution, but instead to find a good one in a reasonable amount of time.
+does not attempt to find the optimal solution, but instead uses an "overload-and-remove" heuristic to find a good one in a reasonable amount of time.
+(There are no guarantees about how this algorithm will generate palettes, apart from the constraints documented above.)
 It is possible to compute the optimal solution externally (using a solver, for example), and then provide it to
 .Nm
 via
