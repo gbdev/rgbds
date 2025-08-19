@@ -2282,7 +2282,8 @@ yy::parser::symbol_type yylex() {
 	}
 }
 
-static Capture startCapture() {
+template<typename F>
+static Capture makeCapture(char const *name, F callback) {
 	// Due to parser internals, it reads the EOL after the expression before calling this.
 	// Thus, we don't need to keep one in the buffer afterwards.
 	// The following assumption checks that.
@@ -2292,109 +2293,74 @@ static Capture startCapture() {
 	lexerState->capturing = true;
 	lexerState->captureSize = 0;
 
-	uint32_t lineNo = lexer_GetLineNo();
+	Capture capture = {
+	    .lineNo = lexer_GetLineNo(), .span = {.ptr = nullptr, .size = 0}
+	};
 	if (std::holds_alternative<ViewedContent>(lexerState->content)
 	    && lexerState->expansions.empty()) {
 		auto &view = std::get<ViewedContent>(lexerState->content);
-		return {
-		    .lineNo = lineNo, .span = {.ptr = view.makeSharedContentPtr(), .size = 0}
-		};
+		capture.span.ptr = view.makeSharedContentPtr();
 	} else {
 		assume(lexerState->captureBuf == nullptr);
 		lexerState->captureBuf = std::make_shared<std::vector<char>>();
-		// `.span.ptr == nullptr`; indicates to retrieve the capture buffer when done capturing
-		return {
-		    .lineNo = lineNo, .span = {.ptr = nullptr, .size = 0}
-		};
+		// We'll retrieve the capture buffer when done capturing
+		assume(capture.span.ptr == nullptr);
 	}
-}
-
-static void endCapture(Capture &capture) {
-	// This being `nullptr` means we're capturing from the capture buffer, which is reallocated
-	// during the whole capture process, and so MUST be retrieved at the end
-	if (!capture.span.ptr) {
-		capture.span.ptr = lexerState->makeSharedCaptureBufPtr();
-	}
-	capture.span.size = lexerState->captureSize;
-
-	// ENDR/ENDM or EOF puts us past the start of the line
-	lexerState->atLineStart = false;
-
-	lexerState->capturing = false;
-	lexerState->captureBuf = nullptr;
-}
-
-Capture lexer_CaptureRept() {
-	Capture capture = startCapture();
-
-	Defer reenableExpansions = scopedDisableExpansions();
-	for (size_t depth = 0;;) {
-		nextLine();
-
-		// We're at line start, so attempt to match a `REPT`, `FOR`, or `ENDR` token
-		if (int c = skipChars(isBlankSpace); startsIdentifier(c)) {
-			shiftChar();
-			switch (readIdentifier(c, false).type) {
-			case T_(POP_REPT):
-			case T_(POP_FOR):
-				++depth;
-				break; // Ignore the rest of that line
-			case T_(POP_ENDR):
-				if (depth) {
-					--depth;
-					break; // Ignore the rest of that line
-				}
-				endCapture(capture);
-				// The final ENDR has been captured, but we don't want it!
-				// We know we have read exactly "ENDR", not e.g. an EQUS
-				capture.span.size -= literal_strlen("ENDR");
-				return capture;
-			}
-		}
-
-		// Just consume characters until EOL or EOF
-		if (int c = skipChars([](int d) { return d != EOF && !isNewline(d); }); c == EOF) {
-			error("Unterminated loop (`REPT`/`FOR` block)");
-			endCapture(capture);
-			capture.span.ptr = nullptr; // Indicates that it reached EOF before an ENDR
-			return capture;
-		} else {
-			assume(isNewline(c));
-			shiftChar();
-			handleCRLF(c);
-		}
-	}
-}
-
-Capture lexer_CaptureMacro() {
-	Capture capture = startCapture();
 
 	Defer reenableExpansions = scopedDisableExpansions();
 	for (;;) {
 		nextLine();
 
-		// We're at line start, so attempt to match an `ENDM` token
 		if (int c = skipChars(isBlankSpace); startsIdentifier(c)) {
 			shiftChar();
-			if (readIdentifier(c, false).type == T_(POP_ENDM)) {
-				endCapture(capture);
-				// The ENDM has been captured, but we don't want it!
-				// We know we have read exactly "ENDM", not e.g. an EQUS
-				capture.span.size -= literal_strlen("ENDM");
-				return capture;
+			int tokenType = readIdentifier(c, false).type;
+			if (size_t endTokenLength = callback(tokenType); endTokenLength > 0) {
+				if (!capture.span.ptr) {
+					// Retrieve the capture buffer now that we're done capturing
+					capture.span.ptr = lexerState->makeSharedCaptureBufPtr();
+				}
+				// Subtract the length of the ending token; we know we have read it exactly, not
+				// e.g. an interpolation or EQUS expansion, since those are disabled.
+				capture.span.size = lexerState->captureSize - endTokenLength;
+				break;
 			}
 		}
 
 		// Just consume characters until EOL or EOF
 		if (int c = skipChars([](int d) { return d != EOF && !isNewline(d); }); c == EOF) {
-			error("Unterminated macro definition");
-			endCapture(capture);
-			capture.span.ptr = nullptr; // Indicates that it reached EOF before an ENDM
-			return capture;
+			error("Unterminated %s", name);
+			capture.span = {.ptr = nullptr, .size = lexerState->captureSize};
+			break;
 		} else {
 			assume(isNewline(c));
 			shiftChar();
 			handleCRLF(c);
 		}
 	}
+
+	lexerState->atLineStart = false; // The ending token or EOF puts us past the start of the line
+	lexerState->capturing = false;
+	lexerState->captureBuf = nullptr;
+	return capture;
+}
+
+Capture lexer_CaptureRept() {
+	size_t depth = 0;
+	return makeCapture("loop (`REPT`/`FOR` block)", [&depth](int tokenType) {
+		if (tokenType == T_(POP_REPT) || tokenType == T_(POP_FOR)) {
+			++depth;
+		} else if (tokenType == T_(POP_ENDR)) {
+			if (depth == 0) {
+				return literal_strlen("ENDR");
+			}
+			--depth;
+		}
+		return 0;
+	});
+}
+
+Capture lexer_CaptureMacro() {
+	return makeCapture("macro definition", [](int tokenType) {
+		return tokenType == T_(POP_ENDM) ? literal_strlen("ENDM") : 0;
+	});
 }
