@@ -10,8 +10,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string>
-#include <vector>
 #include <utility>
+#include <vector>
 
 #include "helpers.hpp"
 #include "itertools.hpp"

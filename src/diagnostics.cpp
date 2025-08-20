@@ -2,12 +2,12 @@
 
 #include "diagnostics.hpp"
 
-#include <string>
+#include <optional>
 #include <stdarg.h>
 #include <stdint.h>
-#include <utility>
-#include <optional>
 #include <stdio.h>
+#include <string>
+#include <utility>
 
 #include "helpers.hpp"
 #include "style.hpp"
