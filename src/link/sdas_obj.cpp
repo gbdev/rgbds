@@ -181,9 +181,9 @@ void sdobj_ReadFile(FileStackNode const &src, FILE *file, std::vector<Symbol> &f
 	} while (0)
 
 	int lineType = nextLine(line, where, file);
-	NumberType numberType;
 
 	// The first letter (thus, the line type) identifies the integer type
+	NumberType numberType;
 	switch (lineType) {
 	case EOF:
 		fatalAt(where, "SDCC object only contains comments and empty lines");
@@ -213,10 +213,15 @@ void sdobj_ReadFile(FileStackNode const &src, FILE *file, std::vector<Symbol> &f
 		fatalAt(where, "Unknown endianness type '%c'", line[0]);
 	}
 
-	// TODO: support 32-bit addresses ("XL4") as of SDCC 4.4.0
-	static constexpr uint8_t ADDR_SIZE = 3;
-
-	if (line[1] != '0' + ADDR_SIZE) {
+	uint8_t addrSize;
+	switch (line[1]) {
+	case '3':
+		addrSize = 3;
+		break;
+	case '4':
+		addrSize = 4;
+		break;
+	default:
 		fatalAt(where, "Unknown or unsupported address size '%c'", line[1]);
 	}
 
@@ -264,7 +269,7 @@ void sdobj_ReadFile(FileStackNode const &src, FILE *file, std::vector<Symbol> &f
 		switch (lineType) {
 		case 'M': // Module name
 		case 'O': // Assembler flags
-			// Ignored
+			// TODO: check the calling convention metadata as of SDCC 4.5.0
 			break;
 
 		case 'A': {
@@ -462,7 +467,7 @@ void sdobj_ReadFile(FileStackNode const &src, FILE *file, std::vector<Symbol> &f
 				data.push_back(parseByte(where, token, numberType));
 			}
 
-			if (data.size() < ADDR_SIZE) {
+			if (data.size() < addrSize) {
 				fatalAt(where, "'T' line is too short");
 			}
 			// Importantly, now we know that there is "pending data" in `data`
@@ -495,7 +500,7 @@ void sdobj_ReadFile(FileStackNode const &src, FILE *file, std::vector<Symbol> &f
 			assume(!fileSections.empty()); // There should be at least one, from the above check
 			Section *section = fileSections[areaIdx].section.get();
 			uint16_t *writeIndex = &fileSections[areaIdx].writeIndex;
-			uint8_t writtenOfs = ADDR_SIZE; // Bytes before this have been written to `->data`
+			uint8_t writtenOfs = addrSize; // Bytes before this have been written to `->data`
 			uint16_t addr = data[0] | data[1] << 8;
 
 			if (section->isAddressFixed) {
@@ -513,7 +518,7 @@ void sdobj_ReadFile(FileStackNode const &src, FILE *file, std::vector<Symbol> &f
 			}
 			// Lines are emitted that violate this check but contain no "payload";
 			// ignore those. "Empty" lines shouldn't trigger allocation, either.
-			if (data.size() != ADDR_SIZE) {
+			if (data.size() != addrSize) {
 				if (addr != *writeIndex) {
 					fatalAt(
 					    where,
@@ -554,12 +559,12 @@ void sdobj_ReadFile(FileStackNode const &src, FILE *file, std::vector<Symbol> &f
 				getToken(nullptr, "Incomplete relocation");
 				uint8_t offset = parseByte(where, token, numberType);
 
-				if (offset < ADDR_SIZE) {
+				if (offset < addrSize) {
 					fatalAt(
 					    where,
 					    "Relocation index cannot point to header (%" PRIu16 " < %u)",
 					    offset,
-					    ADDR_SIZE
+					    addrSize
 					);
 				}
 				if (offset >= data.size()) {
@@ -607,7 +612,7 @@ void sdobj_ReadFile(FileStackNode const &src, FILE *file, std::vector<Symbol> &f
 				patch.pcOffset = patch.offset - 1; // For `jr`s
 
 				patch.type = (flags & 1 << RELOC_SIZE) ? PATCHTYPE_BYTE : PATCHTYPE_WORD;
-				uint8_t nbBaseBytes = patch.type == PATCHTYPE_BYTE ? ADDR_SIZE : 2;
+				uint8_t nbBaseBytes = patch.type == PATCHTYPE_BYTE ? addrSize : 2;
 				uint32_t baseValue = 0;
 
 				assume(offset < data.size());
