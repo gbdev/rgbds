@@ -2,27 +2,34 @@
 
 #include "asm/lexer.hpp"
 #include <sys/stat.h>
-#include <sys/types.h>
 
 #include <algorithm>
 #include <errno.h>
 #include <fcntl.h>
 #include <fstream>
 #include <inttypes.h>
+#include <ios>
 #include <limits.h>
 #include <math.h>
+#include <memory>
 #include <new> // nothrow
+#include <optional>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <string>
 #include <unordered_map>
+#include <utility>
+#include <variant>
+#include <vector>
 
 #include "helpers.hpp"
+#include "platform.hpp"
 #include "style.hpp"
 #include "util.hpp"
 #include "verbosity.hpp"
 
-#include "asm/fixpoint.hpp"
 #include "asm/format.hpp"
 #include "asm/fstack.hpp"
 #include "asm/macro.hpp"

@@ -3,13 +3,19 @@
 #include "link/section.hpp"
 
 #include <inttypes.h>
+#include <memory>
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#include <string>
 #include <unordered_map>
+#include <utility>
+#include <vector>
 
-#include "diagnostics.hpp"
 #include "helpers.hpp"
+#include "linkdefs.hpp"
 
+#include "link/main.hpp"
 #include "link/warning.hpp"
 
 static std::vector<std::unique_ptr<Section>> sectionList;

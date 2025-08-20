@@ -3,15 +3,23 @@
 #include "asm/section.hpp"
 
 #include <algorithm>
+#include <deque>
 #include <errno.h>
 #include <inttypes.h>
+#include <iterator>
+#include <optional>
 #include <stack>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <string>
+#include <unordered_map>
 #include <utility>
+#include <vector>
 
 #include "helpers.hpp"
+#include "linkdefs.hpp"
 
 #include "asm/fstack.hpp"
 #include "asm/lexer.hpp"

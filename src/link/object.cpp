@@ -11,18 +11,18 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <string>
+#include <utility>
+#include <variant>
 #include <vector>
 
-#include "diagnostics.hpp"
 #include "helpers.hpp"
 #include "linkdefs.hpp"
 #include "platform.hpp"
 #include "verbosity.hpp"
 #include "version.hpp"
 
-#include "link/assign.hpp"
 #include "link/fstack.hpp"
-#include "link/main.hpp"
 #include "link/patch.hpp"
 #include "link/sdas_obj.hpp"
 #include "link/section.hpp"

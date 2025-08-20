@@ -2,20 +2,16 @@
 
 #include "asm/warning.hpp"
 
+#include <functional>
 #include <inttypes.h>
 #include <stdarg.h>
-#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 
 #include "diagnostics.hpp"
-#include "helpers.hpp"
-#include "itertools.hpp"
 #include "style.hpp"
 
 #include "asm/fstack.hpp"
-#include "asm/lexer.hpp"
 #include "asm/main.hpp"
 
 // clang-format off: nested initializers

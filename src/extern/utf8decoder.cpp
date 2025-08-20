@@ -6,6 +6,8 @@
 
 #include "extern/utf8decoder.hpp"
 
+#include <stdint.h>
+
 // clang-format off: vertically align values
 static uint8_t const utf8d[] = {
     // The first part of the table maps bytes to character classes that

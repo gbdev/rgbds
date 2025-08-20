@@ -4,6 +4,7 @@
 #define RGBDS_ASM_CHARMAP_HPP
 
 #include <optional>
+#include <stddef.h>
 #include <stdint.h>
 #include <string>
 #include <string_view>

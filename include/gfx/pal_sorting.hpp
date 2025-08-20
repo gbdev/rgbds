@@ -5,6 +5,7 @@
 
 #include <array>
 #include <optional>
+#include <stddef.h>
 #include <vector>
 
 #include "gfx/rgba.hpp"

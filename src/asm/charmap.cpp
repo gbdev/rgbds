@@ -4,12 +4,17 @@
 
 #include <deque>
 #include <map>
+#include <optional>
 #include <stack>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <string>
+#include <string_view>
 #include <unordered_map>
 #include <utility>
+#include <vector>
 
 #include "extern/utf8decoder.hpp"
 #include "helpers.hpp"

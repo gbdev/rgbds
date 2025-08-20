@@ -5,9 +5,16 @@
 #include <algorithm>
 #include <errno.h>
 #include <inttypes.h>
+#include <memory>
+#include <stdint.h>
 #include <stdio.h>
+#include <string.h>
+#include <string>
+#include <time.h>
 #include <unordered_map>
 #include <unordered_set>
+#include <utility>
+#include <variant>
 
 #include "diagnostics.hpp"
 #include "helpers.hpp" // assume
@@ -19,6 +26,7 @@
 #include "asm/macro.hpp"
 #include "asm/main.hpp"
 #include "asm/output.hpp"
+#include "asm/section.hpp"
 #include "asm/warning.hpp"
 
 using namespace std::literals;

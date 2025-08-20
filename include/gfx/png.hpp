@@ -3,8 +3,8 @@
 #ifndef RGBDS_GFX_PNG_HPP
 #define RGBDS_GFX_PNG_HPP
 
-#include <fstream>
 #include <stdint.h>
+#include <streambuf>
 #include <vector>
 
 #include "gfx/rgba.hpp"

@@ -5,13 +5,12 @@
 
 #include <array>
 #include <optional>
+#include <stddef.h>
 #include <stdint.h>
 #include <string>
-#include <utility>
 #include <vector>
 
 #include "helpers.hpp"
-#include "verbosity.hpp"
 
 #include "gfx/rgba.hpp"
 

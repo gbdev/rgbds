@@ -5,10 +5,11 @@
 #include <array>
 #include <bit>
 #include <inttypes.h>
+#include <stdint.h>
 #include <vector>
 
 #include "helpers.hpp"
-#include "util.hpp"
+#include "linkdefs.hpp"
 
 #include "link/section.hpp"
 #include "link/warning.hpp"

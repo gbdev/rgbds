@@ -2,6 +2,8 @@
 
 #include "linkdefs.hpp"
 
+#include <string>
+
 using namespace std::literals;
 
 // The default values are the most lax, as they are used as-is by RGBASM; only RGBLINK has the full

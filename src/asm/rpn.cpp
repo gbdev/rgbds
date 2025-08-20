@@ -5,12 +5,16 @@
 #include <inttypes.h>
 #include <limits.h>
 #include <optional>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <string>
 #include <string_view>
+#include <utility>
 
 #include "helpers.hpp" // assume
+#include "linkdefs.hpp"
 #include "opmath.hpp"
 
 #include "asm/output.hpp"

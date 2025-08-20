@@ -6,10 +6,16 @@
 #include <array>
 #include <errno.h>
 #include <inttypes.h>
+#include <ios>
 #include <math.h>
 #include <optional>
 #include <png.h>
+#include <pngconf.h>
+#include <stdint.h>
+#include <stdio.h>
 #include <string.h>
+#include <string>
+#include <utility>
 #include <vector>
 
 #include "diagnostics.hpp"
@@ -18,6 +24,7 @@
 #include "verbosity.hpp"
 
 #include "gfx/main.hpp"
+#include "gfx/rgba.hpp"
 #include "gfx/warning.hpp"
 
 static std::vector<uint8_t> readInto(std::string const &path) {

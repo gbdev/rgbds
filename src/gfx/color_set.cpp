@@ -3,6 +3,10 @@
 #include "gfx/color_set.hpp"
 
 #include <algorithm>
+#include <iterator>
+#include <stdint.h>
+#include <stdlib.h>
+#include <utility>
 
 #include "helpers.hpp"
 

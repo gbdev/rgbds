@@ -3,13 +3,17 @@
 #include "gfx/process.hpp"
 
 #include <algorithm>
+#include <array>
 #include <errno.h>
 #include <inttypes.h>
+#include <ios>
 #include <optional>
 #include <png.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
+#include <string>
+#include <tuple>
 #include <unordered_set>
 #include <utility>
 #include <vector>
@@ -18,6 +22,7 @@
 #include "file.hpp"
 #include "helpers.hpp"
 #include "itertools.hpp"
+#include "style.hpp"
 #include "verbosity.hpp"
 
 #include "gfx/color_set.hpp"
@@ -25,6 +30,7 @@
 #include "gfx/pal_packing.hpp"
 #include "gfx/pal_sorting.hpp"
 #include "gfx/png.hpp"
+#include "gfx/rgba.hpp"
 #include "gfx/warning.hpp"
 
 static bool isBgColorTransparent() {
@@ -610,7 +616,7 @@ public:
 
 template<>
 struct std::hash<TileData> {
-	std::size_t operator()(TileData const &tile) const { return tile.hash(); }
+	size_t operator()(TileData const &tile) const { return tile.hash(); }
 };
 
 static void outputUnoptimizedTileData(

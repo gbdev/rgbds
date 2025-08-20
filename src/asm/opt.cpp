@@ -1,19 +1,20 @@
 // SPDX-License-Identifier: MIT
 
 #include <errno.h>
+#include <iterator> // std::size
 #include <stack>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
+#include "diagnostics.hpp"
 #include "helpers.hpp" // assume
 #include "util.hpp"    // isBlankSpace
 
-#include "asm/fixpoint.hpp"
 #include "asm/fstack.hpp"
 #include "asm/lexer.hpp"
 #include "asm/main.hpp" // options
-#include "asm/section.hpp"
 #include "asm/warning.hpp"
 
 struct OptStackEntry {

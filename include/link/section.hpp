@@ -3,17 +3,12 @@
 #ifndef RGBDS_LINK_SECTION_HPP
 #define RGBDS_LINK_SECTION_HPP
 
-// GUIDELINE: external code MUST NOT BE AWARE of the data structure used!
-
-#include <deque>
 #include <memory>
 #include <stdint.h>
 #include <string>
 #include <vector>
 
 #include "linkdefs.hpp"
-
-#include "link/main.hpp"
 
 struct FileStackNode;
 struct Section;

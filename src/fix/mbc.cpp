@@ -2,6 +2,8 @@
 
 #include "fix/mbc.hpp"
 
+#include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <unordered_map>
 #include <utility>

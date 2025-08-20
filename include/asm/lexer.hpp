@@ -6,6 +6,7 @@
 #include <deque>
 #include <memory>
 #include <optional>
+#include <stddef.h>
 #include <stdint.h>
 #include <string>
 #include <variant>

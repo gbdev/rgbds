@@ -3,11 +3,16 @@
 #include "gfx/pal_sorting.hpp"
 
 #include <algorithm>
+#include <array>
+#include <optional>
+#include <stdint.h>
+#include <vector>
 
 #include "helpers.hpp"
 #include "verbosity.hpp"
 
 #include "gfx/main.hpp"
+#include "gfx/rgba.hpp"
 
 void sortIndexed(std::vector<Palette> &palettes, std::vector<Rgba> const &embPal) {
 	verbosePrint(VERB_NOTICE, "Sorting palettes using embedded palette...\n");

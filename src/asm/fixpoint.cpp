@@ -6,6 +6,7 @@
 
 #include <math.h>
 #include <numbers>
+#include <stdint.h>
 
 static constexpr double tau = std::numbers::pi * 2;
 

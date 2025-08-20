@@ -5,14 +5,15 @@
 #include <deque>
 #include <inttypes.h>
 #include <stdint.h>
+#include <variant>
 #include <vector>
 
+#include "diagnostics.hpp"
 #include "helpers.hpp" // assume
 #include "linkdefs.hpp"
 #include "opmath.hpp"
 #include "verbosity.hpp"
 
-#include "link/main.hpp"
 #include "link/section.hpp"
 #include "link/symbol.hpp"
 #include "link/warning.hpp"

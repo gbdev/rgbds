@@ -2,11 +2,23 @@
 
 #include "gfx/png.hpp"
 
+#include <array>
+#include <errno.h>
+#include <inttypes.h>
+#include <ios>
 #include <png.h>
+#include <pngconf.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <streambuf>
+#include <string.h>
+#include <vector>
 
+#include "diagnostics.hpp"
+#include "helpers.hpp"
+#include "style.hpp"
 #include "verbosity.hpp"
 
-#include "gfx/main.hpp"
 #include "gfx/rgba.hpp"
 #include "gfx/warning.hpp"
 

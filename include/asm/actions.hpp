@@ -4,14 +4,16 @@
 #define RGBDS_ASM_ACTIONS_HPP
 
 #include <optional>
+#include <stddef.h>
 #include <stdint.h>
 #include <string>
 #include <string_view>
 #include <variant>
 #include <vector>
 
-#include "asm/output.hpp" // AssertionType
-#include "asm/rpn.hpp"    // RPNCommand
+#include "linkdefs.hpp" // AssertionType, RPNCommand
+
+#include "asm/rpn.hpp" // Expression
 
 struct AlignmentSpec {
 	uint8_t alignment;

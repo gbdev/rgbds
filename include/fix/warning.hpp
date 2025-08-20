@@ -3,6 +3,8 @@
 #ifndef RGBDS_FIX_WARNING_HPP
 #define RGBDS_FIX_WARNING_HPP
 
+#include <stdint.h>
+
 #include "diagnostics.hpp"
 
 enum WarningLevel {

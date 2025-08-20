@@ -4,16 +4,16 @@
 
 #include <deque>
 #include <inttypes.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <string>
 #include <vector>
 
-#include "diagnostics.hpp"
 #include "helpers.hpp"
 #include "itertools.hpp"
 #include "linkdefs.hpp"
-#include "platform.hpp"
 #include "verbosity.hpp"
 
 #include "link/main.hpp"

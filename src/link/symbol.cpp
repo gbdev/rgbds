@@ -2,12 +2,17 @@
 
 #include "link/symbol.hpp"
 
-#include <inttypes.h>
+#include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
+#include <string>
 #include <unordered_map>
+#include <utility>
+#include <variant>
 #include <vector>
 
 #include "helpers.hpp" // assume
+#include "linkdefs.hpp"
 
 #include "link/fstack.hpp"
 #include "link/section.hpp"

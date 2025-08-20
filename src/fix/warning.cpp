@@ -2,6 +2,13 @@
 
 #include "fix/warning.hpp"
 
+#include <inttypes.h>
+#include <stdarg.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+
+#include "diagnostics.hpp"
 #include "style.hpp"
 
 // clang-format off: nested initializers
