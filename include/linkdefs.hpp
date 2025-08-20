@@ -101,18 +101,18 @@ extern struct SectionTypeInfo {
 
 // Tells whether a section has data in its object file definition,
 // depending on type.
-static inline bool sect_HasData(SectionType type) {
+static inline bool sectTypeHasData(SectionType type) {
 	assume(type != SECTTYPE_INVALID);
 	return type == SECTTYPE_ROM0 || type == SECTTYPE_ROMX;
 }
 
 // Returns a memory region's end address (last byte), e.g. 0x7FFF
-static inline uint16_t endaddr(SectionType type) {
+static inline uint16_t sectTypeEndAddr(SectionType type) {
 	return sectionTypeInfo[type].startAddr + sectionTypeInfo[type].size - 1;
 }
 
 // Returns a memory region's number of banks, or 1 for regions without banking
-static inline uint32_t nbbanks(SectionType type) {
+static inline uint32_t sectTypeBanks(SectionType type) {
 	return sectionTypeInfo[type].lastBank - sectionTypeInfo[type].firstBank + 1;
 }
 

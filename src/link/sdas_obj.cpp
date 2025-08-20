@@ -866,7 +866,7 @@ void sdobj_ReadFile(FileStackNode const &src, FILE *file, std::vector<Symbol> &f
 			// Otherwise, how would the type already be known at this point?
 			assume(section->isAddressFixed);
 
-			if (!sect_HasData(section->type)) {
+			if (!sectTypeHasData(section->type)) {
 				if (!section->data.empty()) {
 					fatalAt(
 					    where,

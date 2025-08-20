@@ -360,7 +360,7 @@ static void readSection(
 	}
 	section.alignOfs = tmp;
 
-	if (sect_HasData(section.type)) {
+	if (sectTypeHasData(section.type)) {
 		if (section.size) {
 			section.data.resize(section.size);
 			if (fread(section.data.data(), 1, section.size, file) != section.size) {
@@ -549,7 +549,7 @@ void obj_ReadFile(char const *fileName, unsigned int fileID) {
 
 	// Give patches' PC section pointers to their sections
 	for (uint32_t i = 0; i < nbSections; ++i) {
-		if (sect_HasData(fileSections[i]->type)) {
+		if (sectTypeHasData(fileSections[i]->type)) {
 			for (Patch &patch : fileSections[i]->patches) {
 				linkPatchToPCSect(patch, fileSections);
 			}

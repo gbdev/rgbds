@@ -567,7 +567,7 @@ static void applyFilePatches(Section &section, Section &dataSection) {
 
 // Applies all of a section's patches, iterating over "components" of unionized sections
 static void applyPatches(Section &section) {
-	if (!sect_HasData(section.type)) {
+	if (!sectTypeHasData(section.type)) {
 		return;
 	}
 

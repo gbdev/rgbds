@@ -39,7 +39,7 @@ static std::vector<std::deque<FreeSpace>> memory[SECTTYPE_INVALID];
 // Init the free space-modelling structs
 static void initFreeSpace() {
 	for (SectionType type : EnumSeq(SECTTYPE_INVALID)) {
-		memory[type].resize(nbbanks(type));
+		memory[type].resize(sectTypeBanks(type));
 		for (std::deque<FreeSpace> &bankMem : memory[type]) {
 			bankMem.push_back({
 			    .address = sectionTypeInfo[type].startAddr,
@@ -211,7 +211,7 @@ static std::string getSectionDescription(Section const &section) {
 	std::string where;
 
 	char bank[8], addr[8], mask[8], offset[8];
-	if (section.isBankFixed && nbbanks(section.type) != 1) {
+	if (section.isBankFixed && sectTypeBanks(section.type) != 1) {
 		snprintf(bank, sizeof(bank), "%02" PRIx32, section.bank);
 	}
 	if (section.isAddressFixed) {
@@ -222,7 +222,7 @@ static std::string getSectionDescription(Section const &section) {
 		snprintf(offset, sizeof(offset), "%" PRIx16, section.alignOfs);
 	}
 
-	if (section.isBankFixed && nbbanks(section.type) != 1) {
+	if (section.isBankFixed && sectTypeBanks(section.type) != 1) {
 		if (section.isAddressFixed) {
 			where = "at $";
 			where += bank;
@@ -316,7 +316,7 @@ static void placeSection(Section &section) {
 		    sectionTypeInfo[section.type].name.c_str(),
 		    getSectionDescription(section).c_str()
 		);
-	} else if (section.org + section.size > endaddr(section.type) + 1) {
+	} else if (section.org + section.size > sectTypeEndAddr(section.type) + 1) {
 		// If the section just can't fit the bank, report that
 		fatal(
 		    "Unable to place \"%s\" (%s section) %s: section runs past end of region ($%04x > "
@@ -325,7 +325,7 @@ static void placeSection(Section &section) {
 		    sectionTypeInfo[section.type].name.c_str(),
 		    getSectionDescription(section).c_str(),
 		    section.org + section.size,
-		    endaddr(section.type) + 1
+		    sectTypeEndAddr(section.type) + 1
 		);
 	} else {
 		// Otherwise there is overlap with another section

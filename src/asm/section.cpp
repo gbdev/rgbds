@@ -75,7 +75,7 @@ static bool requireCodeSection() {
 		return false;
 	}
 
-	if (sect_HasData(currentSection->type)) {
+	if (sectTypeHasData(currentSection->type)) {
 		return true;
 	}
 
@@ -136,7 +136,7 @@ static unsigned int mergeSectUnion(
 
 	// Unionized sections only need "compatible" constraints, and they end up with the strictest
 	// combination of both.
-	if (sect_HasData(type)) {
+	if (sectTypeHasData(type)) {
 		sectError("Cannot declare ROM sections as `UNION`");
 	}
 
@@ -341,7 +341,7 @@ static Section *createSection(
 	out_RegisterNode(sect.src);
 
 	// It is only needed to allocate memory for ROM sections.
-	if (sect_HasData(type)) {
+	if (sectTypeHasData(type)) {
 		sect.data.resize(sectionTypeInfo[type].size);
 	}
 
@@ -367,7 +367,7 @@ static Section *createSectionFragmentLiteral(Section const &parent) {
 	out_RegisterNode(sect.src);
 
 	// Section fragment literals must be ROM sections.
-	assume(sect_HasData(sect.type));
+	assume(sectTypeHasData(sect.type));
 	sect.data.resize(sectionTypeInfo[sect.type].size);
 
 	return &sect;
@@ -404,7 +404,7 @@ static Section *getSection(
 			    sectionTypeInfo[type].lastBank
 			);
 		}
-	} else if (nbbanks(type) == 1) {
+	} else if (sectTypeBanks(type) == 1) {
 		// If the section type only has a single bank, implicitly force it
 		bank = sectionTypeInfo[type].firstBank;
 	}
@@ -419,14 +419,14 @@ static Section *getSection(
 	}
 
 	if (org != UINT32_MAX) {
-		if (org < sectionTypeInfo[type].startAddr || org > endaddr(type)) {
+		if (org < sectionTypeInfo[type].startAddr || org > sectTypeEndAddr(type)) {
 			error(
 			    "Section \"%s\"'s fixed address $%04" PRIx32 " is outside of range [$%04" PRIx16
 			    "; $%04" PRIx16 "]",
 			    name.c_str(),
 			    org,
 			    sectionTypeInfo[type].startAddr,
-			    endaddr(type)
+			    sectTypeEndAddr(type)
 			);
 		}
 	}
@@ -547,7 +547,7 @@ void sect_SetLoadSection(
 		return;
 	}
 
-	if (sect_HasData(type)) {
+	if (sectTypeHasData(type)) {
 		error("`LOAD` blocks cannot create a ROM section");
 		return;
 	}
@@ -723,7 +723,7 @@ void sect_StartUnion() {
 		error("`UNION`s must be inside a `SECTION`");
 		return;
 	}
-	if (sect_HasData(currentSection->type)) {
+	if (sectTypeHasData(currentSection->type)) {
 		error("Cannot use `UNION` inside of `ROM0` or `ROMX` sections");
 		return;
 	}
@@ -820,7 +820,7 @@ void sect_Skip(uint32_t skip, bool ds) {
 		return;
 	}
 
-	if (!sect_HasData(currentSection->type)) {
+	if (!sectTypeHasData(currentSection->type)) {
 		growSection(skip);
 	} else {
 		if (!ds) {
@@ -1118,7 +1118,7 @@ std::string sect_PushSectionFragmentLiteral() {
 	if (!currentSection) {
 		fatal("Cannot output fragment literals outside of a `SECTION`");
 	}
-	if (!sect_HasData(currentSection->type)) {
+	if (!sectTypeHasData(currentSection->type)) {
 		fatal(
 		    "Section \"%s\" cannot contain fragment literals (not `ROM0` or `ROMX`)",
 		    currentSection->name.c_str()

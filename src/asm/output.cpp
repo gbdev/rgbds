@@ -96,7 +96,7 @@ static void writeSection(Section const &sect, FILE *file) {
 	putc(sect.align, file);
 	putLong(sect.alignOfs, file);
 
-	if (sect_HasData(sect.type)) {
+	if (sectTypeHasData(sect.type)) {
 		fwrite(sect.data.data(), 1, sect.size, file);
 		putLong(sect.patches.size(), file);
 
