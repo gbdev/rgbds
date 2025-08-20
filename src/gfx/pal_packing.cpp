@@ -5,15 +5,19 @@
 #include <algorithm>
 #include <deque>
 #include <inttypes.h>
+#include <iterator>
 #include <numeric>
 #include <optional>
 #include <queue>
 #include <stdint.h>
+#include <stdio.h>
 #include <type_traits>
 #include <unordered_set>
 #include <utility>
+#include <vector>
 
 #include "helpers.hpp"
+#include "style.hpp"
 #include "verbosity.hpp"
 
 #include "gfx/color_set.hpp"

@@ -2,16 +2,30 @@
 
 #include "asm/actions.hpp"
 
+#include <errno.h>
+#include <inttypes.h>
+#include <optional>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <string>
+#include <string_view>
+#include <utility>
+#include <variant>
+#include <vector>
 
 #include "extern/utf8decoder.hpp"
 #include "helpers.hpp"
+#include "linkdefs.hpp"
 
 #include "asm/charmap.hpp"
 #include "asm/format.hpp"
 #include "asm/fstack.hpp"
+#include "asm/lexer.hpp"
+#include "asm/output.hpp"
+#include "asm/rpn.hpp" // Expression
+#include "asm/section.hpp"
 #include "asm/symbol.hpp"
 #include "asm/warning.hpp"
 

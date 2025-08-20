@@ -6,13 +6,16 @@
 #include <deque>
 #include <errno.h>
 #include <inttypes.h>
+#include <memory>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <string>
+#include <vector>
 
-#include "diagnostics.hpp"
 #include "helpers.hpp" // assume, Defer
+#include "linkdefs.hpp"
 #include "platform.hpp"
 
 #include "asm/charmap.hpp"
@@ -93,7 +96,7 @@ static void writeSection(Section const &sect, FILE *file) {
 	putc(sect.align, file);
 	putLong(sect.alignOfs, file);
 
-	if (sect_HasData(sect.type)) {
+	if (sectTypeHasData(sect.type)) {
 		fwrite(sect.data.data(), 1, sect.size, file);
 		putLong(sect.patches.size(), file);
 

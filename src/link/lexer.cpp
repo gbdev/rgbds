@@ -2,16 +2,19 @@
 
 #include "link/lexer.hpp"
 
-#include <array>
 #include <errno.h>
 #include <fstream>
-#include <inttypes.h>
+#include <ios>
+#include <stdint.h>
 #include <stdio.h>
+#include <string.h>
+#include <string>
+#include <utility>
 #include <vector>
 
 #include "backtrace.hpp"
 #include "helpers.hpp"
-#include "itertools.hpp"
+#include "linkdefs.hpp"
 #include "util.hpp"
 
 #include "link/warning.hpp"

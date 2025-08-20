@@ -4,18 +4,25 @@
 
 #include <algorithm>
 #include <errno.h>
-#include <limits.h>
+#include <inttypes.h>
 #include <memory>
 #include <stdarg.h>
+#include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <string>
 #include <time.h>
+#include <unordered_map>
+#include <utility>
+#include <vector>
 
 #include "backtrace.hpp"
 #include "diagnostics.hpp"
 #include "extern/getopt.hpp"
 #include "helpers.hpp"
 #include "parser.hpp" // Generated from parser.y
+#include "platform.hpp"
 #include "style.hpp"
 #include "usage.hpp"
 #include "util.hpp" // UpperMap
@@ -26,6 +33,7 @@
 #include "asm/fstack.hpp"
 #include "asm/opt.hpp"
 #include "asm/output.hpp"
+#include "asm/section.hpp"
 #include "asm/symbol.hpp"
 #include "asm/warning.hpp"
 

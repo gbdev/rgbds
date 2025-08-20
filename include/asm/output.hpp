@@ -6,7 +6,6 @@
 #include <memory>
 #include <stdint.h>
 #include <string>
-#include <unordered_map>
 #include <vector>
 
 #include "linkdefs.hpp"

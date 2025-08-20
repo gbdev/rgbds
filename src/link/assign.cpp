@@ -4,16 +4,17 @@
 
 #include <deque>
 #include <inttypes.h>
+#include <optional>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <string>
 #include <vector>
 
-#include "diagnostics.hpp"
 #include "helpers.hpp"
 #include "itertools.hpp"
 #include "linkdefs.hpp"
-#include "platform.hpp"
 #include "verbosity.hpp"
 
 #include "link/main.hpp"
@@ -38,7 +39,7 @@ static std::vector<std::deque<FreeSpace>> memory[SECTTYPE_INVALID];
 // Init the free space-modelling structs
 static void initFreeSpace() {
 	for (SectionType type : EnumSeq(SECTTYPE_INVALID)) {
-		memory[type].resize(nbbanks(type));
+		memory[type].resize(sectTypeBanks(type));
 		for (std::deque<FreeSpace> &bankMem : memory[type]) {
 			bankMem.push_back({
 			    .address = sectionTypeInfo[type].startAddr,
@@ -114,8 +115,8 @@ static MemoryLocation getStartLocation(Section const &section) {
 }
 
 // Returns a suitable free space index into `memory[section->type]` at which to place the given
-// section, or -1 if none was found.
-static ssize_t getPlacement(Section const &section, MemoryLocation &location) {
+// section, or `std::nullopt` if none was found.
+static std::optional<size_t> getPlacement(Section const &section, MemoryLocation &location) {
 	SectionTypeInfo const &typeInfo = sectionTypeInfo[section.type];
 
 	// Switch to the beginning of the next bank
@@ -169,7 +170,7 @@ static ssize_t getPlacement(Section const &section, MemoryLocation &location) {
 	// Try scrambled banks in descending order until no bank in the scrambled range is
 	// available. Otherwise, try in ascending order.
 	if (section.isBankFixed) {
-		return -1;
+		return std::nullopt;
 	} else if (options.scrambleROMX && section.type == SECTTYPE_ROMX
 	           && location.bank <= options.scrambleROMX) {
 		if (location.bank > typeInfo.firstBank) {
@@ -177,7 +178,7 @@ static ssize_t getPlacement(Section const &section, MemoryLocation &location) {
 		} else if (options.scrambleROMX < typeInfo.lastBank) {
 			location.bank = options.scrambleROMX + 1;
 		} else {
-			return -1;
+			return std::nullopt;
 		}
 	} else if (options.scrambleWRAMX && section.type == SECTTYPE_WRAMX
 	           && location.bank <= options.scrambleWRAMX) {
@@ -186,7 +187,7 @@ static ssize_t getPlacement(Section const &section, MemoryLocation &location) {
 		} else if (options.scrambleWRAMX < typeInfo.lastBank) {
 			location.bank = options.scrambleWRAMX + 1;
 		} else {
-			return -1;
+			return std::nullopt;
 		}
 	} else if (options.scrambleSRAM && section.type == SECTTYPE_SRAM
 	           && location.bank <= options.scrambleSRAM) {
@@ -195,12 +196,12 @@ static ssize_t getPlacement(Section const &section, MemoryLocation &location) {
 		} else if (options.scrambleSRAM < typeInfo.lastBank) {
 			location.bank = options.scrambleSRAM + 1;
 		} else {
-			return -1;
+			return std::nullopt;
 		}
 	} else if (location.bank < typeInfo.lastBank) {
 		++location.bank;
 	} else {
-		return -1;
+		return std::nullopt;
 	}
 
 	return getPlacement(section, location); // Tail recursion
@@ -210,7 +211,7 @@ static std::string getSectionDescription(Section const &section) {
 	std::string where;
 
 	char bank[8], addr[8], mask[8], offset[8];
-	if (section.isBankFixed && nbbanks(section.type) != 1) {
+	if (section.isBankFixed && sectTypeBanks(section.type) != 1) {
 		snprintf(bank, sizeof(bank), "%02" PRIx32, section.bank);
 	}
 	if (section.isAddressFixed) {
@@ -221,7 +222,7 @@ static std::string getSectionDescription(Section const &section) {
 		snprintf(offset, sizeof(offset), "%" PRIx16, section.alignOfs);
 	}
 
-	if (section.isBankFixed && nbbanks(section.type) != 1) {
+	if (section.isBankFixed && sectTypeBanks(section.type) != 1) {
 		if (section.isAddressFixed) {
 			where = "at $";
 			where += bank;
@@ -272,10 +273,10 @@ static void placeSection(Section &section) {
 	// Place section using first-fit decreasing algorithm
 	// https://en.wikipedia.org/wiki/Bin_packing_problem#First-fit_algorithm
 	MemoryLocation location = getStartLocation(section);
-	if (ssize_t spaceIdx = getPlacement(section, location); spaceIdx != -1) {
+	if (std::optional<size_t> spaceIdx = getPlacement(section, location); spaceIdx) {
 		std::deque<FreeSpace> &bankMem =
 		    memory[section.type][location.bank - sectionTypeInfo[section.type].firstBank];
-		FreeSpace &freeSpace = bankMem[spaceIdx];
+		FreeSpace &freeSpace = bankMem[*spaceIdx];
 
 		assignSection(section, location);
 
@@ -285,17 +286,17 @@ static void placeSection(Section &section) {
 		bool noRightSpace = freeSpace.address + freeSpace.size == sectionEnd;
 		if (noLeftSpace && noRightSpace) {
 			// The free space is entirely deleted
-			bankMem.erase(bankMem.begin() + spaceIdx);
+			bankMem.erase(bankMem.begin() + *spaceIdx);
 		} else if (!noLeftSpace && !noRightSpace) {
 			// The free space is split in two
 			// Append the new space after the original one
 			uint16_t size = static_cast<uint16_t>(freeSpace.address + freeSpace.size - sectionEnd);
-			bankMem.insert(bankMem.begin() + spaceIdx + 1, {.address = sectionEnd, .size = size});
+			bankMem.insert(bankMem.begin() + *spaceIdx + 1, {.address = sectionEnd, .size = size});
 			// **`freeSpace` cannot be reused from this point on, because `bankMem.insert`
 			// invalidates all references to itself!**
 
 			// Resize the original space (address is unmodified)
-			bankMem[spaceIdx].size = section.org - bankMem[spaceIdx].address;
+			bankMem[*spaceIdx].size = section.org - bankMem[*spaceIdx].address;
 		} else {
 			// The amount of free spaces doesn't change: resize!
 			freeSpace.size -= section.size;
@@ -315,7 +316,7 @@ static void placeSection(Section &section) {
 		    sectionTypeInfo[section.type].name.c_str(),
 		    getSectionDescription(section).c_str()
 		);
-	} else if (section.org + section.size > endaddr(section.type) + 1) {
+	} else if (section.org + section.size > sectTypeEndAddr(section.type) + 1) {
 		// If the section just can't fit the bank, report that
 		fatal(
 		    "Unable to place \"%s\" (%s section) %s: section runs past end of region ($%04x > "
@@ -324,7 +325,7 @@ static void placeSection(Section &section) {
 		    sectionTypeInfo[section.type].name.c_str(),
 		    getSectionDescription(section).c_str(),
 		    section.org + section.size,
-		    endaddr(section.type) + 1
+		    sectTypeEndAddr(section.type) + 1
 		);
 	} else {
 		// Otherwise there is overlap with another section

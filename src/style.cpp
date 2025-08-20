@@ -5,6 +5,7 @@
 
 #include "style.hpp"
 
+#include <stdio.h>
 #include <stdlib.h> // getenv
 #include <string.h>
 

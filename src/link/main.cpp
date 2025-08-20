@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: MIT
 
-#include <sys/stat.h>
-#include <sys/types.h>
+#include "link/main.hpp"
 
 #include <inttypes.h>
 #include <limits.h>
 #include <stdarg.h>
+#include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <utility>
@@ -13,9 +14,7 @@
 #include "backtrace.hpp"
 #include "diagnostics.hpp"
 #include "extern/getopt.hpp"
-#include "helpers.hpp" // assume
-#include "itertools.hpp"
-#include "platform.hpp"
+#include "linkdefs.hpp"
 #include "script.hpp" // Generated from script.y
 #include "style.hpp"
 #include "usage.hpp"
@@ -29,7 +28,6 @@
 #include "link/output.hpp"
 #include "link/patch.hpp"
 #include "link/section.hpp"
-#include "link/symbol.hpp"
 #include "link/warning.hpp"
 
 Options options;

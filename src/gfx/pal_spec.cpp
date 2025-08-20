@@ -3,19 +3,20 @@
 #include "gfx/pal_spec.hpp"
 
 #include <algorithm>
+#include <array>
 #include <charconv>
 #include <errno.h>
 #include <fstream>
 #include <inttypes.h>
-#include <limits.h>
+#include <ios>
 #include <optional>
 #include <stdint.h>
 #include <stdio.h>
-#include <streambuf>
 #include <string.h>
 #include <string>
 #include <string_view>
 #include <utility>
+#include <vector>
 
 #include "diagnostics.hpp"
 #include "helpers.hpp"
@@ -24,6 +25,7 @@
 
 #include "gfx/main.hpp"
 #include "gfx/png.hpp"
+#include "gfx/rgba.hpp"
 #include "gfx/warning.hpp"
 
 using namespace std::string_view_literals;

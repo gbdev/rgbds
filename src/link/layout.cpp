@@ -5,10 +5,11 @@
 #include <array>
 #include <bit>
 #include <inttypes.h>
+#include <stdint.h>
 #include <vector>
 
 #include "helpers.hpp"
-#include "util.hpp"
+#include "linkdefs.hpp"
 
 #include "link/section.hpp"
 #include "link/warning.hpp"
@@ -30,7 +31,7 @@ static void setActiveTypeAndIdx(SectionType type, uint32_t idx) {
 }
 
 void layout_SetFloatingSectionType(SectionType type) {
-	if (nbbanks(type) == 1) {
+	if (sectTypeBanks(type) == 1) {
 		// There is only a single bank anyway, so just set the index to 0.
 		setActiveTypeAndIdx(type, 0);
 	} else {
@@ -45,7 +46,7 @@ void layout_SetFloatingSectionType(SectionType type) {
 }
 
 void layout_SetSectionType(SectionType type) {
-	if (nbbanks(type) != 1) {
+	if (sectTypeBanks(type) != 1) {
 		scriptError("A bank number must be specified for %s", sectionTypeInfo[type].name.c_str());
 		// Keep going with a default value for the bank index.
 	}
@@ -91,14 +92,14 @@ void layout_SetAddr(uint32_t addr) {
 
 	if (addr < pc) {
 		scriptError("Cannot decrease the current address (from $%04x to $%04x)", pc, addr);
-	} else if (addr > endaddr(activeType)) { // Allow "one past the end" sections.
+	} else if (addr > sectTypeEndAddr(activeType)) { // Allow "one past the end" sections.
 		scriptError(
 		    "Cannot set the current address to $%04" PRIx32 ": %s ends at $%04" PRIx16,
 		    addr,
 		    typeInfo.name.c_str(),
-		    endaddr(activeType)
+		    sectTypeEndAddr(activeType)
 		);
-		pc = endaddr(activeType);
+		pc = sectTypeEndAddr(activeType);
 	} else {
 		pc = addr;
 	}
@@ -178,7 +179,7 @@ void layout_AlignTo(uint32_t alignment, uint32_t alignOfs) {
 		    ", past $%04" PRIx16,
 		    pc,
 		    static_cast<uint16_t>(pc + length),
-		    static_cast<uint16_t>(endaddr(activeType) + 1)
+		    static_cast<uint16_t>(sectTypeEndAddr(activeType) + 1)
 		);
 		return;
 	}
@@ -206,7 +207,7 @@ void layout_Pad(uint32_t length) {
 		    "Cannot increase the current address by %u bytes: only %u bytes to $%04" PRIx16,
 		    length,
 		    typeInfo.size - offset,
-		    static_cast<uint16_t>(endaddr(activeType) + 1)
+		    static_cast<uint16_t>(sectTypeEndAddr(activeType) + 1)
 		);
 	} else {
 		pc += length;
@@ -232,13 +233,13 @@ void layout_PlaceSection(std::string const &name, bool isOptional) {
 	// Check that the linker script doesn't contradict what the code says.
 	if (section->type == SECTTYPE_INVALID) {
 		// A section that has data must get assigned a type that requires data.
-		if (!sect_HasData(activeType) && !section->data.empty()) {
+		if (!sectTypeHasData(activeType) && !section->data.empty()) {
 			scriptError(
 			    "\"%s\" is specified to be a %s section, but it contains data",
 			    name.c_str(),
 			    typeInfo.name.c_str()
 			);
-		} else if (sect_HasData(activeType) && section->data.empty() && section->size != 0) {
+		} else if (sectTypeHasData(activeType) && section->data.empty() && section->size != 0) {
 			// A section that lacks data can only be assigned to a type that requires data
 			// if it's empty.
 			scriptError(

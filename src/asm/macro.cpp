@@ -2,6 +2,8 @@
 
 #include "asm/macro.hpp"
 
+#include <memory>
+#include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 #include <string>

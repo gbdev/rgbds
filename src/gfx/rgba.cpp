@@ -3,6 +3,7 @@
 #include "gfx/rgba.hpp"
 
 #include <algorithm>
+#include <array>
 #include <math.h>
 #include <stdint.h>
 

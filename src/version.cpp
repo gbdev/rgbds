@@ -2,8 +2,6 @@
 
 #include "version.hpp"
 
-#include <string.h>
-
 #include "helpers.hpp"
 
 // We do not build `make develop` with `-fsanitize=leak` because macOS clang++ does not support it.

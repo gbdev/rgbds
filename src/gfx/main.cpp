@@ -4,10 +4,11 @@
 
 #include <algorithm>
 #include <ctype.h>
+#include <errno.h>
 #include <inttypes.h>
 #include <ios>
-#include <limits>
 #include <stdarg.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -17,6 +18,7 @@
 #include "diagnostics.hpp"
 #include "extern/getopt.hpp"
 #include "file.hpp"
+#include "helpers.hpp"
 #include "platform.hpp"
 #include "style.hpp"
 #include "usage.hpp"
@@ -27,6 +29,7 @@
 #include "gfx/pal_spec.hpp"
 #include "gfx/process.hpp"
 #include "gfx/reverse.hpp"
+#include "gfx/rgba.hpp"
 #include "gfx/warning.hpp"
 
 using namespace std::literals::string_view_literals;

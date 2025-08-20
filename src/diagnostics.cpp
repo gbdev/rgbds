@@ -2,6 +2,14 @@
 
 #include "diagnostics.hpp"
 
+#include <optional>
+#include <stdarg.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <string>
+#include <utility>
+
+#include "helpers.hpp"
 #include "style.hpp"
 #include "util.hpp" // isDigit
 

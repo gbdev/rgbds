@@ -7,15 +7,20 @@
 #include <errno.h>
 #include <inttypes.h>
 #include <memory>
+#include <optional>
 #include <stack>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <string>
+#include <utility>
+#include <variant>
+#include <vector>
 
 #include "backtrace.hpp"
-#include "diagnostics.hpp"
 #include "helpers.hpp"
 #include "linkdefs.hpp"
-#include "platform.hpp" // S_ISDIR (stat macro)
 #include "verbosity.hpp"
 
 #include "asm/lexer.hpp"

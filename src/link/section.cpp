@@ -3,13 +3,19 @@
 #include "link/section.hpp"
 
 #include <inttypes.h>
+#include <memory>
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#include <string>
 #include <unordered_map>
+#include <utility>
+#include <vector>
 
-#include "diagnostics.hpp"
 #include "helpers.hpp"
+#include "linkdefs.hpp"
 
+#include "link/main.hpp"
 #include "link/warning.hpp"
 
 static std::vector<std::unique_ptr<Section>> sectionList;
@@ -167,7 +173,7 @@ static void mergeSections(Section &target, std::unique_ptr<Section> &&other) {
 		// Append `other` to `target`
 		other->offset = target.size;
 		target.size += other->size;
-		// Normally we'd check that `sect_HasData`, but SDCC areas may be `_INVALID` here
+		// Normally we'd check that `sectTypeHasData`, but SDCC areas may be `_INVALID` here
 		if (!other->data.empty()) {
 			target.data.insert(target.data.end(), RANGE(other->data));
 			// Adjust patches' PC offsets
@@ -195,7 +201,7 @@ void sect_AddSection(std::unique_ptr<Section> &&section) {
 	// Check if the section already exists
 	if (Section *target = sect_GetSection(section->name); target) {
 		mergeSections(*target, std::move(section));
-	} else if (section->modifier == SECTION_UNION && sect_HasData(section->type)) {
+	} else if (section->modifier == SECTION_UNION && sectTypeHasData(section->type)) {
 		fatal(
 		    "Section \"%s\" is of type `%s`, which cannot be `UNION`ized",
 		    section->name.c_str(),
@@ -315,23 +321,23 @@ static void doSanityChecks(Section &section) {
 
 		// Ensure the target address is valid
 		if (section.org < sectionTypeInfo[section.type].startAddr
-		    || section.org > endaddr(section.type)) {
+		    || section.org > sectTypeEndAddr(section.type)) {
 			error(
 			    "Section \"%s\"'s fixed address $%04" PRIx16 " is outside of range [$%04" PRIx16
 			    "; $%04" PRIx16 "]",
 			    section.name.c_str(),
 			    section.org,
 			    sectionTypeInfo[section.type].startAddr,
-			    endaddr(section.type)
+			    sectTypeEndAddr(section.type)
 			);
 		}
 
-		if (section.org + section.size > endaddr(section.type) + 1) {
+		if (section.org + section.size > sectTypeEndAddr(section.type) + 1) {
 			error(
 			    "Section \"%s\"'s end address $%04x is greater than last address $%04x",
 			    section.name.c_str(),
 			    section.org + section.size,
-			    endaddr(section.type) + 1
+			    sectTypeEndAddr(section.type) + 1
 			);
 		}
 	}

@@ -2,10 +2,10 @@
 
 #include <algorithm>
 #include <array>
-#include <cassert>
-#include <cinttypes>
+#include <assert.h>
 #include <fcntl.h>
 #include <fstream>
+#include <inttypes.h>
 #include <limits>
 #include <png.h>
 #include <stdarg.h>

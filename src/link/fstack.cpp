@@ -1,8 +1,14 @@
 #include "link/fstack.hpp"
 
-#include <inttypes.h>
+#include <stdint.h>
+#include <string>
+#include <utility>
+#include <variant>
+#include <vector>
 
 #include "backtrace.hpp"
+#include "helpers.hpp"
+#include "linkdefs.hpp"
 
 #include "link/warning.hpp"
 

@@ -8,6 +8,8 @@
 #include <stdint.h>
 #include <stdio.h>
 
+#include "style.hpp"
+
 static Verbosity verbosity = VERB_NONE;
 
 bool checkVerbosity(Verbosity level) {

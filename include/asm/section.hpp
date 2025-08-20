@@ -6,9 +6,9 @@
 #include <deque>
 #include <memory>
 #include <optional>
+#include <stddef.h>
 #include <stdint.h>
 #include <string>
-#include <unordered_map>
 #include <vector>
 
 #include "linkdefs.hpp"

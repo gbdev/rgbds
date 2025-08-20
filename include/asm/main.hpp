@@ -7,8 +7,6 @@
 #include <stdio.h>
 #include <string>
 
-#include "verbosity.hpp"
-
 enum MissingInclude {
 	INC_ERROR,    // A missing included file is an error that halts assembly
 	GEN_EXIT,     // A missing included file is assumed to be generated; exit normally

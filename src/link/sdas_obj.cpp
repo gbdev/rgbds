@@ -6,16 +6,17 @@
 #include <inttypes.h>
 #include <memory>
 #include <stdint.h>
+#include <stdio.h>
 #include <string.h>
 #include <utility>
+#include <variant>
+#include <vector>
 
 #include "helpers.hpp" // assume, literal_strlen
 #include "linkdefs.hpp"
 #include "platform.hpp"
 
-#include "link/assign.hpp"
 #include "link/fstack.hpp"
-#include "link/main.hpp"
 #include "link/section.hpp"
 #include "link/symbol.hpp"
 #include "link/warning.hpp"
@@ -865,7 +866,7 @@ void sdobj_ReadFile(FileStackNode const &src, FILE *file, std::vector<Symbol> &f
 			// Otherwise, how would the type already be known at this point?
 			assume(section->isAddressFixed);
 
-			if (!sect_HasData(section->type)) {
+			if (!sectTypeHasData(section->type)) {
 				if (!section->data.empty()) {
 					fatalAt(
 					    where,
