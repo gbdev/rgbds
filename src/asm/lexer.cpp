@@ -1592,6 +1592,26 @@ static void reportGarbageCharacters(int c) {
 	}
 }
 
+static Token oneOrTwo(int c, int longer, int shorter) {
+	if (peek() == c) {
+		shiftChar();
+		return Token(longer);
+	}
+	return Token(shorter);
+}
+
+static Token oneOrTwo(int c1, int longer1, int c2, int longer2, int shorter) {
+	if (int c = peek(); c == c1) {
+		shiftChar();
+		return Token(longer1);
+	} else if (c == c2) {
+		shiftChar();
+		return Token(longer2);
+	} else {
+		return Token(shorter);
+	}
+}
+
 static Token yylex_NORMAL() {
 	if (int nextToken = lexerState->nextToken; nextToken) {
 		lexerState->nextToken = 0;
@@ -1607,6 +1627,7 @@ static Token yylex_NORMAL() {
 		case ';':
 			discardComment();
 			[[fallthrough]];
+
 		case ' ':
 		case '\t':
 			continue;
@@ -1626,19 +1647,17 @@ static Token yylex_NORMAL() {
 
 		case '(':
 			return Token(T_(LPAREN));
+
 		case ')':
 			return Token(T_(RPAREN));
+
 		case ',':
 			return Token(T_(COMMA));
 
 			// Handle ambiguous 1- or 2-char tokens
 
 		case '[': // Either [ or [[
-			if (peek() == '[') {
-				shiftChar();
-				return Token(T_(LBRACKS));
-			}
-			return Token(T_(LBRACK));
+			return oneOrTwo('[', T_(LBRACKS), T_(LBRACK));
 
 		case ']': // Either ] or ]]
 			if (peek() == ']') {
@@ -1651,135 +1670,57 @@ static Token yylex_NORMAL() {
 			return Token(T_(RBRACK));
 
 		case '+': // Either +=, ADD, or CAT
-			switch (peek()) {
-			case '=':
-				shiftChar();
-				return Token(T_(POP_ADDEQ));
-			case '+':
-				shiftChar();
-				return Token(T_(OP_CAT));
-			default:
-				return Token(T_(OP_ADD));
-			}
+			return oneOrTwo('=', T_(POP_ADDEQ), '+', T_(OP_CAT), T_(OP_ADD));
 
 		case '-': // Either -= or SUB
-			if (peek() == '=') {
-				shiftChar();
-				return Token(T_(POP_SUBEQ));
-			}
-			return Token(T_(OP_SUB));
+			return oneOrTwo('=', T_(POP_SUBEQ), T_(OP_SUB));
 
 		case '*': // Either *=, MUL, or EXP
-			switch (peek()) {
-			case '=':
-				shiftChar();
-				return Token(T_(POP_MULEQ));
-			case '*':
-				shiftChar();
-				return Token(T_(OP_EXP));
-			default:
-				return Token(T_(OP_MUL));
-			}
+			return oneOrTwo('=', T_(POP_MULEQ), '*', T_(OP_EXP), T_(OP_MUL));
 
 		case '/': // Either /=, DIV, or a block comment
-			switch (peek()) {
-			case '=':
-				shiftChar();
-				return Token(T_(POP_DIVEQ));
-			case '*':
+			if (peek() == '*') {
 				shiftChar();
 				discardBlockComment();
 				continue;
-			default:
-				return Token(T_(OP_DIV));
 			}
+			return oneOrTwo('=', T_(POP_DIVEQ), T_(OP_DIV));
 
 		case '|': // Either |=, binary OR, or logical OR
-			switch (peek()) {
-			case '=':
-				shiftChar();
-				return Token(T_(POP_OREQ));
-			case '|':
-				shiftChar();
-				return Token(T_(OP_LOGICOR));
-			default:
-				return Token(T_(OP_OR));
-			}
+			return oneOrTwo('=', T_(POP_OREQ), '|', T_(OP_LOGICOR), T_(OP_OR));
 
 		case '^': // Either ^= or XOR
-			if (peek() == '=') {
-				shiftChar();
-				return Token(T_(POP_XOREQ));
-			}
-			return Token(T_(OP_XOR));
+			return oneOrTwo('=', T_(POP_XOREQ), T_(OP_XOR));
 
 		case '=': // Either assignment or EQ
-			if (peek() == '=') {
-				shiftChar();
-				return Token(T_(OP_LOGICEQU));
-			}
-			return Token(T_(POP_EQUAL));
+			return oneOrTwo('=', T_(OP_LOGICEQU), T_(POP_EQUAL));
 
 		case '!': // Either a NEQ or negation
-			if (peek() == '=') {
-				shiftChar();
-				return Token(T_(OP_LOGICNE));
-			}
-			return Token(T_(OP_LOGICNOT));
+			return oneOrTwo('=', T_(OP_LOGICNE), T_(OP_LOGICNOT));
 
 			// Handle ambiguous 1-, 2-, or 3-char tokens
 
 		case '<': // Either <<=, LT, LTE, or left shift
-			switch (peek()) {
-			case '=':
+			if (peek() == '<') {
 				shiftChar();
-				return Token(T_(OP_LOGICLE));
-			case '<':
-				shiftChar();
-				if (peek() == '=') {
-					shiftChar();
-					return Token(T_(POP_SHLEQ));
-				}
-				return Token(T_(OP_SHL));
-			default:
-				return Token(T_(OP_LOGICLT));
+				return oneOrTwo('=', T_(POP_SHLEQ), T_(OP_SHL));
 			}
+			return oneOrTwo('=', T_(OP_LOGICLE), T_(OP_LOGICLT));
 
 		case '>': // Either >>=, GT, GTE, or either kind of right shift
-			switch (peek()) {
-			case '=':
+			if (peek() == '>') {
 				shiftChar();
-				return Token(T_(OP_LOGICGE));
-			case '>':
-				shiftChar();
-				switch (peek()) {
-				case '=':
-					shiftChar();
-					return Token(T_(POP_SHREQ));
-				case '>':
-					shiftChar();
-					return Token(T_(OP_USHR));
-				default:
-					return Token(T_(OP_SHR));
-				}
-			default:
-				return Token(T_(OP_LOGICGT));
+				return oneOrTwo('=', T_(POP_SHREQ), '>', T_(OP_USHR), T_(OP_SHR));
 			}
+			return oneOrTwo('=', T_(OP_LOGICGE), T_(OP_LOGICGT));
 
 		case ':': // Either :, ::, or an anonymous label ref
 			c = peek();
-			switch (c) {
-			case ':':
-				shiftChar();
-				return Token(T_(DOUBLE_COLON));
-			case '+':
-			case '-': {
+			if (c == '+' || c == '-') {
 				std::string symName = readAnonLabelRef(c);
 				return Token(T_(ANON), symName);
 			}
-			default:
-				return Token(T_(COLON));
-			}
+			return oneOrTwo(':', T_(DOUBLE_COLON), T_(COLON));
 
 			// Handle numbers
 
@@ -1822,27 +1763,17 @@ static Token yylex_NORMAL() {
 
 		case '&': // Either &=, binary AND, logical AND, or an octal constant
 			c = peek();
-			if (c == '=') {
-				shiftChar();
-				return Token(T_(POP_ANDEQ));
-			} else if (c == '&') {
-				shiftChar();
-				return Token(T_(OP_LOGICAND));
-			} else if (isOctDigit(c)) {
+			if (isOctDigit(c)) {
 				return Token(T_(NUMBER), readOctalNumber());
 			}
-			return Token(T_(OP_AND));
+			return oneOrTwo('=', T_(POP_ANDEQ), '&', T_(OP_LOGICAND), T_(OP_AND));
 
 		case '%': // Either %=, MOD, or a binary constant
 			c = peek();
-			if (c == '=') {
-				shiftChar();
-				return Token(T_(POP_MODEQ));
-			} else if (c == '0' || c == '1' || c == options.binDigits[0]
-			           || c == options.binDigits[1]) {
+			if (c == '0' || c == '1' || c == options.binDigits[0] || c == options.binDigits[1]) {
 				return Token(T_(NUMBER), readBinaryNumber());
 			}
-			return Token(T_(OP_MOD));
+			return oneOrTwo('=', T_(POP_MODEQ), T_(OP_MOD));
 
 		case '$': // Hex constant
 			return Token(T_(NUMBER), readHexNumber());
