@@ -611,7 +611,7 @@ void sym_Export(std::string const &symName) {
 	if (symName.starts_with('!')) {
 		// LCOV_EXCL_START
 		// The parser does not accept anonymous labels for an `EXPORT` directive
-		error("Anonymous labels cannot be exported");
+		error("Cannot export anonymous label");
 		return;
 		// LCOV_EXCL_STOP
 	}
@@ -620,8 +620,10 @@ void sym_Export(std::string const &symName) {
 
 	// If the symbol doesn't exist, create a ref that can be purged
 	if (!sym) {
+		warning(WARNING_EXPORT_UNDEFINED, "Exporting an undefined symbol `%s`", symName.c_str());
 		sym = sym_Ref(symName);
 	}
+
 	sym->isExported = true;
 }
 

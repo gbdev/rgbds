@@ -1,3 +1,12 @@
+warning: Exporting an undefined symbol `undefined` [-Wexport-undefined]
+    at export.asm(1)
+warning: Exporting an undefined symbol `hello` [-Wexport-undefined]
+    at export.asm(17)
+    while expanding symbol `equs_sym`
 error: syntax error, unexpected EQUS
     at export.asm(18)
+warning: Purging an exported symbol `equ_sym` [-Wpurge]
+    at export.asm(20)
+warning: Exporting an undefined symbol `equ_sym` [-Wexport-undefined]
+    at export.asm(21)
 Assembly aborted with 1 error!

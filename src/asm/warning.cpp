@@ -30,6 +30,7 @@ Diagnostics<WarningLevel, WarningID> warnings = {
         {"empty-data-directive", LEVEL_ALL       },
         {"empty-macro-arg",      LEVEL_EXTRA     },
         {"empty-strrpl",         LEVEL_ALL       },
+        {"export-undefined",     LEVEL_ALL       },
         {"large-constant",       LEVEL_DEFAULT   },
         {"macro-shift",          LEVEL_EXTRA     },
         {"nested-comment",       LEVEL_DEFAULT   },

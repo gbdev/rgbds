@@ -16,3 +16,6 @@ EXPORT REDEF variable = 1234
 DEF equs_sym EQUS "hello"
 EXPORT equs_sym ; exports undefined symbol `hello` due to EQUS expansion
 EXPORT DEF string EQUS "goodbye" ; invalid syntax
+
+PURGE equ_sym
+EXPORT equ_sym

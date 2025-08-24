@@ -16,6 +16,7 @@ _rgbasm_warnings() {
 		'empty-data-directive:Warn on arg-less d[bwl] in ROM'
 		'empty-macro-arg:Warn on empty macro arg'
 		'empty-strrpl:Warn on calling STRRPL with empty pattern'
+		'export-undefined:Warn on EXPORT of an undefined symbol'
 		'large-constant:Warn on constants too large for a signed 32-bit int'
 		'macro-shift:Warn when shifting macro args part their limits'
 		'nested-comment:Warn on "/*" inside block comments'

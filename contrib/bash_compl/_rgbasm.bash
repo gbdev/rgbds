@@ -184,6 +184,7 @@ _rgbasm_completions() {
 				empty-data-directive
 				empty-macro-arg
 				empty-strrpl
+				export-undefined
 				large-constant
 				macro-shift
 				nested-comment

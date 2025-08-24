@@ -23,6 +23,7 @@ enum WarningID {
 	WARNING_EMPTY_DATA_DIRECTIVE, // `db`, `dw` or `dl` directive without data in ROM
 	WARNING_EMPTY_MACRO_ARG,      // Empty macro argument
 	WARNING_EMPTY_STRRPL,         // Empty second argument in `STRRPL`
+	WARNING_EXPORT_UNDEFINED,     // `EXPORT` of an undefined symbol
 	WARNING_LARGE_CONSTANT,       // Constants too large
 	WARNING_MACRO_SHIFT,          // `SHIFT` past available arguments in macro
 	WARNING_NESTED_COMMENT,       // Comment-start delimiter in a block comment
