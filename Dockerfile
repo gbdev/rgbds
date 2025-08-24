@@ -12,7 +12,7 @@ RUN apt-get update && \
 RUN ./.github/scripts/install_deps.sh ubuntu-22.04
 RUN make -j CXXFLAGS="-O3 -flto -DNDEBUG -static" PKG_CONFIG="pkg-config --static" Q=
 
-# Create an archive with the compiled executables and all the necessary to install it, 
+# Create an archive with the compiled executables and all the necessary to install it,
 # so it can be copied outside of the container and installed/used in another system
 RUN tar caf rgbds-linux-x86_64.tar.xz --transform='s#.*/##' rgbasm rgblink rgbfix rgbgfx man/* .github/scripts/install.sh
 

@@ -44,5 +44,5 @@ RGBGFX generates palettes using algorithms found in the paper
 ([GitHub](https://github.com/pagination-problem/pagination), MIT license),
 by Aristide Grange, Imed Kacem, and Sébastien Martin.
 
-RGBGFX's color palette was taken from [SameBoy](https://sameboy.github.io), with permission and help
-by [LIJI](https://github.com/LIJI32).
+RGBGFX's color palette was taken from [SameBoy](https://sameboy.github.io), with
+permission and help by [LIJI](https://github.com/LIJI32).
