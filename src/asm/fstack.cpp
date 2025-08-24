@@ -21,6 +21,7 @@
 #include "backtrace.hpp"
 #include "helpers.hpp"
 #include "linkdefs.hpp"
+#include "platform.hpp" // strncasecmp
 #include "verbosity.hpp"
 
 #include "asm/lexer.hpp"
@@ -381,6 +382,26 @@ bool fstk_RunInclude(std::string const &path, bool isQuiet) {
 	return fstk_FileError(path, "INCLUDE");
 }
 
+static char const *suggestDef(std::shared_ptr<MacroArgs> const macroArgs) {
+	std::shared_ptr<std::string> arg = macroArgs->getArg(1);
+	if (!arg) {
+		return nullptr;
+	}
+
+	char const *str = arg->c_str();
+	static char const *types[] = {"EQUS", "EQU", "RB", "RW", "RL", "="};
+	for (size_t i = 0; i < std::size(types); ++i) {
+		if (char const *type = types[i]; strncasecmp(str, type, strlen(type)) == 0) {
+			return type;
+		}
+	}
+	if (strncasecmp(str, "SET", literal_strlen("SET")) == 0) {
+		return "=";
+	}
+
+	return nullptr;
+}
+
 void fstk_RunMacro(
     std::string const &macroName, std::shared_ptr<MacroArgs> macroArgs, bool isQuiet
 ) {
@@ -389,6 +410,13 @@ void fstk_RunMacro(
 	if (!macro) {
 		if (sym_IsPurgedExact(macroName)) {
 			error("Undefined macro `%s`; it was purged", macroName.c_str());
+		} else if (char const *defType = suggestDef(macroArgs); defType) {
+			error(
+			    "Undefined macro `%s` (did you mean \"DEF %s %s ...\"?)",
+			    macroName.c_str(),
+			    macroName.c_str(),
+			    defType
+			);
 		} else {
 			error("Undefined macro `%s`", macroName.c_str());
 		}
