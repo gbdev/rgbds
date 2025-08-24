@@ -92,9 +92,8 @@ void opt_Parse(char const *s) {
 		}
 		break;
 
-		char const *precisionArg;
-	case 'Q':
-		precisionArg = &s[1];
+	case 'Q': {
+		char const *precisionArg = &s[1];
 		if (precisionArg[0] == '.') {
 			++precisionArg;
 		}
@@ -114,6 +113,7 @@ void opt_Parse(char const *s) {
 			error("Invalid argument for option 'Q'");
 		}
 		break;
+	}
 
 	case 'r': {
 		++s; // Skip 'r'

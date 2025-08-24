@@ -120,8 +120,8 @@ static void readFileStackNode(
 		);
 		break;
 
+	case NODE_REPT: {
 		uint32_t depth;
-	case NODE_REPT:
 		tryReadLong(
 		    depth, file, "%s: Cannot read node #%" PRIu32 "'s REPT depth: %s", fileName, nodeID
 		);
@@ -143,6 +143,7 @@ static void readFileStackNode(
 			    nodeID
 			);
 		}
+	}
 	}
 }
 
