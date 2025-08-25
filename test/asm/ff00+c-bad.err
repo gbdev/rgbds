@@ -1,6 +1,6 @@
 error: Base value must be equal to $FF00 for [$FF00+C]
     at ff00+c-bad.asm(8)
-error: Expected constant expression: `xyz` is not constant at assembly time
+error: Expected constant expression: undefined symbol `xyz`
     at ff00+c-bad.asm(9)
 error: Base value must be equal to $FF00 for [$FF00+C]
     at ff00+c-bad.asm(9)

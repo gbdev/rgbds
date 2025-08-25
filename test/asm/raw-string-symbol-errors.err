@@ -16,7 +16,7 @@ error: Strings as numbers must be a single charmap unit
     at raw-string-symbol-errors.asm(17)
 error: `m` is not a numeric symbol
     at raw-string-symbol-errors.asm(18)
-error: Expected constant expression: `u` is not constant at assembly time
+error: Expected constant expression: undefined symbol `u`
     at raw-string-symbol-errors.asm(19)
 error: `n` is not a string symbol
     at raw-string-symbol-errors.asm(21)

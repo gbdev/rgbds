@@ -2,13 +2,13 @@ error: Undefined macro `m`; it was purged
     at use-purged-symbol.asm(6)
 error: Bracketed symbol `argi` does not exist; it was purged
     at use-purged-symbol.asm::m2(10) <- use-purged-symbol.asm(13)
-error: Expected constant expression: `argi` is not constant at assembly time; it was purged
+error: Expected constant expression: undefined symbol `argi`; it was purged
     at use-purged-symbol.asm(15)
 error: Interpolated symbol `argi` does not exist; it was purged
     at use-purged-symbol.asm(17)
 warning: Purging an exported symbol `Label` [-Wpurge]
     at use-purged-symbol.asm(20)
-error: Expected constant expression: `Label` is not constant at assembly time; it was purged
+error: Expected constant expression: undefined symbol `Label`; it was purged
     at use-purged-symbol.asm(21)
 error: Expected constant expression: `Label`'s bank is not known; it was purged
     at use-purged-symbol.asm(22)

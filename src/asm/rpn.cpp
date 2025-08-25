@@ -87,9 +87,10 @@ void Expression::makeSymbol(std::string const &symName) {
 		isSymbol = true;
 
 		data = sym_IsPC(sym) ? "PC is not constant at assembly time"
-		       : sym_IsPurgedScoped(symName)
-		           ? "`"s + symName + "` is not constant at assembly time; it was purged"
-		           : "`"s + symName + "` is not constant at assembly time";
+		                     : (sym && sym->isDefined()
+		                            ? "`"s + symName + "` is not constant at assembly time"
+		                            : "undefined symbol `"s + symName + "`")
+		                           + (sym_IsPurgedScoped(symName) ? "; it was purged" : "");
 		sym = sym_Ref(symName);
 
 		size_t nameLen = sym->name.length() + 1; // Don't forget NUL!
