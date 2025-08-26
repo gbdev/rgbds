@@ -13,16 +13,16 @@
 #include <vector>
 
 #include "helpers.hpp"
+#include "itertools.hpp" // InsertionOrderedMap
 #include "linkdefs.hpp"
 
 #include "link/main.hpp"
 #include "link/warning.hpp"
 
-static std::vector<std::unique_ptr<Section>> sectionList;
-static std::unordered_map<std::string, size_t> sectionMap; // Indexes into `sectionList`
+static InsertionOrderedMap<std::unique_ptr<Section>> sections;
 
 void sect_ForEach(void (*callback)(Section &)) {
-	for (std::unique_ptr<Section> &ptr : sectionList) {
+	for (std::unique_ptr<Section> &ptr : sections) {
 		callback(*ptr);
 	}
 }
@@ -198,7 +198,7 @@ static void mergeSections(Section &target, std::unique_ptr<Section> &&other) {
 }
 
 void sect_AddSection(std::unique_ptr<Section> &&section) {
-	// Check if the section already exists
+	// Check if the section already exists; if not, add it
 	if (Section *target = sect_GetSection(section->name); target) {
 		mergeSections(*target, std::move(section));
 	} else if (section->modifier == SECTION_UNION && sectTypeHasData(section->type)) {
@@ -208,15 +208,13 @@ void sect_AddSection(std::unique_ptr<Section> &&section) {
 		    sectionTypeInfo[section->type].name.c_str()
 		);
 	} else {
-		// If not, add it
-		sectionMap.emplace(section->name, sectionList.size());
-		sectionList.push_back(std::move(section));
+		sections.add(section->name, std::move(section));
 	}
 }
 
 Section *sect_GetSection(std::string const &name) {
-	auto search = sectionMap.find(name);
-	return search != sectionMap.end() ? sectionList[search->second].get() : nullptr;
+	auto index = sections.findIndex(name);
+	return index ? sections[*index].get() : nullptr;
 }
 
 static void doSanityChecks(Section &section) {

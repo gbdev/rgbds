@@ -2,7 +2,6 @@
 
 #include "asm/charmap.hpp"
 
-#include <deque>
 #include <map>
 #include <optional>
 #include <stack>
@@ -12,12 +11,12 @@
 #include <string.h>
 #include <string>
 #include <string_view>
-#include <unordered_map>
 #include <utility>
 #include <vector>
 
 #include "extern/utf8decoder.hpp"
 #include "helpers.hpp"
+#include "itertools.hpp" // InsertionOrderedMap
 #include "util.hpp"
 
 #include "asm/warning.hpp"
@@ -59,8 +58,7 @@ bool forEachChar(Charmap const &charmap, F callback) {
 	return true;
 }
 
-static std::deque<Charmap> charmapList;
-static std::unordered_map<std::string, size_t> charmapMap; // Indexes into `charmapList`
+static InsertionOrderedMap<Charmap> charmaps;
 
 static Charmap *currentCharmap;
 static std::stack<Charmap *> charmapStack;
@@ -69,7 +67,7 @@ bool charmap_ForEach(
     void (*mapFunc)(std::string const &),
     void (*charFunc)(std::string const &, std::vector<int32_t>)
 ) {
-	for (Charmap const &charmap : charmapList) {
+	for (Charmap const &charmap : charmaps) {
 		std::map<size_t, std::string> mappings;
 		forEachChar(charmap, [&mappings](size_t nodeIdx, std::string const &mapping) {
 			mappings[nodeIdx] = mapping;
@@ -81,45 +79,41 @@ bool charmap_ForEach(
 			charFunc(mapping, charmap.nodes[nodeIdx].value);
 		}
 	}
-	return !charmapList.empty();
+	return !charmaps.empty();
 }
 
 void charmap_New(std::string const &name, std::string const *baseName) {
-	size_t baseIdx = SIZE_MAX;
+	std::optional<size_t> baseIdx = std::nullopt;
 
 	if (baseName != nullptr) {
-		if (auto search = charmapMap.find(*baseName); search == charmapMap.end()) {
+		baseIdx = charmaps.findIndex(*baseName);
+		if (!baseIdx) {
 			error("Undefined base charmap `%s`", baseName->c_str());
-		} else {
-			baseIdx = search->second;
 		}
 	}
 
-	if (charmapMap.find(name) != charmapMap.end()) {
+	if (charmaps.contains(name)) {
 		error("Charmap `%s` is already defined", name.c_str());
 		return;
 	}
 
 	// Init the new charmap's fields
-	charmapMap[name] = charmapList.size();
-	Charmap &charmap = charmapList.emplace_back();
-
-	if (baseIdx != SIZE_MAX) {
-		charmap.nodes = charmapList[baseIdx].nodes; // Copies `charmapList[baseIdx].nodes`
+	Charmap &charmap = charmaps.add(name);
+	charmap.name = name;
+	if (baseIdx) {
+		charmap.nodes = charmaps[*baseIdx].nodes; // Copies `charmaps[*baseIdx].nodes`
 	} else {
 		charmap.nodes.emplace_back(); // Zero-init the root node
 	}
-
-	charmap.name = name;
 
 	currentCharmap = &charmap;
 }
 
 void charmap_Set(std::string const &name) {
-	if (auto search = charmapMap.find(name); search == charmapMap.end()) {
-		error("Undefined charmap `%s`", name.c_str());
+	if (auto index = charmaps.findIndex(name); index) {
+		currentCharmap = &charmaps[*index];
 	} else {
-		currentCharmap = &charmapList[search->second];
+		error("Undefined charmap `%s`", name.c_str());
 	}
 }
 

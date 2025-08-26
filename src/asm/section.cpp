@@ -14,11 +14,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <string>
-#include <unordered_map>
 #include <utility>
 #include <vector>
 
 #include "helpers.hpp"
+#include "itertools.hpp" // InsertionOrderedMap
 #include "linkdefs.hpp"
 
 #include "asm/fstack.hpp"
@@ -46,8 +46,7 @@ struct SectionStackEntry {
 };
 
 static Section *currentSection = nullptr;
-static std::deque<Section> sectionList;
-static std::unordered_map<std::string, size_t> sectionMap; // Indexes into `sectionList`
+static InsertionOrderedMap<Section> sections;
 
 static uint32_t curOffset; // Offset into the current section (see `sect_GetSymbolOffset`)
 
@@ -87,17 +86,17 @@ static bool requireCodeSection() {
 }
 
 size_t sect_CountSections() {
-	return sectionList.size();
+	return sections.size();
 }
 
 void sect_ForEach(void (*callback)(Section &)) {
-	for (Section &sect : sectionList) {
+	for (Section &sect : sections) {
 		callback(sect);
 	}
 }
 
 void sect_CheckSizes() {
-	for (Section const &sect : sectionList) {
+	for (Section const &sect : sections) {
 		if (uint32_t maxSize = sectionTypeInfo[sect.type].size; sect.size > maxSize) {
 			error(
 			    "Section \"%s\" grew too big (max size = 0x%" PRIX32 " bytes, reached 0x%" PRIX32
@@ -111,8 +110,8 @@ void sect_CheckSizes() {
 }
 
 Section *sect_FindSectionByName(std::string const &name) {
-	auto search = sectionMap.find(name);
-	return search != sectionMap.end() ? &sectionList[search->second] : nullptr;
+	auto index = sections.findIndex(name);
+	return index ? &sections[*index] : nullptr;
 }
 
 #define sectError(...) \
@@ -324,8 +323,7 @@ static Section *createSection(
     SectionModifier mod
 ) {
 	// Add the new section to the list
-	Section &sect = sectionList.emplace_back();
-	sectionMap.emplace(name, sectionMap.size());
+	Section &sect = sections.add(name);
 
 	sect.name = name;
 	sect.type = type;
@@ -349,9 +347,8 @@ static Section *createSection(
 }
 
 static Section *createSectionFragmentLiteral(Section const &parent) {
-	// Add the new section to the list, but do not update the map
-	Section &sect = sectionList.emplace_back();
-	assume(sectionMap.find(parent.name) != sectionMap.end());
+	assume(sections.contains(parent.name));
+	Section &sect = sections.addAnonymous();
 
 	sect.name = parent.name;
 	sect.type = parent.type;
@@ -478,9 +475,9 @@ static void changeSection() {
 uint32_t Section::getID() const {
 	// Section fragments share the same name but have different IDs, so search by identity
 	if (auto search =
-	        std::find_if(RANGE(sectionList), [this](Section const &s) { return &s == this; });
-	    search != sectionList.end()) {
-		return static_cast<uint32_t>(std::distance(sectionList.begin(), search));
+	        std::find_if(RANGE(sections), [this](Section const &s) { return &s == this; });
+	    search != sections.end()) {
+		return static_cast<uint32_t>(std::distance(sections.begin(), search));
 	}
 	return UINT32_MAX; // LCOV_EXCL_LINE
 }

@@ -3,8 +3,56 @@
 #ifndef RGBDS_ITERTOOLS_HPP
 #define RGBDS_ITERTOOLS_HPP
 
+#include <deque>
+#include <optional>
+#include <stddef.h>
+#include <string>
 #include <tuple>
+#include <unordered_map>
 #include <utility>
+
+template<typename T>
+class InsertionOrderedMap {
+	std::deque<T> list;
+	std::unordered_map<std::string, size_t> map; // Indexes into `list`
+
+public:
+	size_t size() const { return list.size(); }
+
+	bool empty() const { return list.empty(); }
+
+	bool contains(std::string const &name) const { return map.find(name) != map.end(); }
+
+	T &operator[](size_t i) { return list[i]; }
+
+	typename decltype(list)::iterator begin() { return list.begin(); }
+	typename decltype(list)::iterator end() { return list.end(); }
+	typename decltype(list)::const_iterator begin() const { return list.begin(); }
+	typename decltype(list)::const_iterator end() const { return list.end(); }
+
+	T &add(std::string const &name) {
+		map[name] = list.size();
+		return list.emplace_back();
+	}
+
+	T &add(std::string const &name, T &&value) {
+		map[name] = list.size();
+		list.emplace_back(std::move(value));
+		return list.back();
+	}
+
+	T &addAnonymous() {
+		// Add the new item to the list, but do not update the map
+		return list.emplace_back();
+	}
+
+	std::optional<size_t> findIndex(std::string const &name) const {
+		if (auto search = map.find(name); search != map.end()) {
+			return search->second;
+		}
+		return std::nullopt;
+	}
+};
 
 template<typename T>
 class EnumSeq {
