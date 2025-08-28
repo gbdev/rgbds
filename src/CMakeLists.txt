@@ -80,6 +80,7 @@ set(rgblink_src
     )
 
 set(rgbfix_src
+    "fix/fix.cpp"
     "fix/main.cpp"
     "fix/mbc.cpp"
     "fix/warning.cpp"

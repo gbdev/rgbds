@@ -106,6 +106,7 @@ src/link/lexer.o src/link/main.o: src/link/script.hpp
 
 rgbfix_obj := \
 	${common_obj} \
+	src/fix/fix.o \
 	src/fix/main.o \
 	src/fix/mbc.o \
 	src/fix/warning.o
