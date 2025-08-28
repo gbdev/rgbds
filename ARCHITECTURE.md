@@ -59,7 +59,7 @@ rgbds/
 - **`include/`:**  
   Header files for the respective source files in `src`.
 - **`man/`:**  
-  Manual pages to be read with `man`.
+  Manual pages to be read with `man`, written in the [`mandoc`](https://mandoc.bsd.lv) dialect.
 - **`src/`:**  
   Source code of RGBDS.
   * **`asm/`:**  
