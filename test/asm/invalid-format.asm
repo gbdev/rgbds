@@ -2,7 +2,7 @@ println STRFMT("%+d %++d", 42, 42)
 println STRFMT("%#x %##x", 42, 42)
 println STRFMT("%-4d %--4d", 42, 42)
 println STRFMT("%.f %..f", 42.0, 42.0)
-println STRFMT("%qf %q.16f", 42.0, 42.0)
+println STRFMT("%qf %q.16f %qq16f", 42.0, 42.0, 42.0)
 
 DEF N = 42
 println "{5d:N} {5d5:N}"
