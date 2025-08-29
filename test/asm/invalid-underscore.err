@@ -1,0 +1,29 @@
+error: Invalid integer constant, '_' after another '_'
+    at invalid-underscore.asm(14)
+error: Invalid integer constant, '_' after another '_'
+    at invalid-underscore.asm(15)
+error: Invalid integer constant, '_' after another '_'
+    at invalid-underscore.asm(16)
+error: Invalid integer constant, '_' after another '_'
+    at invalid-underscore.asm(17)
+error: Invalid integer constant, '_' after another '_'
+    at invalid-underscore.asm(18)
+error: Invalid integer constant, '_' after another '_'
+    at invalid-underscore.asm(19)
+error: Invalid integer constant, '_' after another '_'
+    at invalid-underscore.asm(20)
+error: Invalid integer constant, trailing '_'
+    at invalid-underscore.asm(23)
+error: Invalid integer constant, trailing '_'
+    at invalid-underscore.asm(24)
+error: Invalid integer constant, trailing '_'
+    at invalid-underscore.asm(25)
+error: Invalid integer constant, trailing '_'
+    at invalid-underscore.asm(26)
+error: Invalid graphics constant, trailing '_'
+    at invalid-underscore.asm(27)
+error: Invalid integer constant, trailing '_'
+    at invalid-underscore.asm(30)
+error: Invalid integer constant, '_' after another '_'
+    at invalid-underscore.asm(31)
+Assembly aborted with 14 errors!

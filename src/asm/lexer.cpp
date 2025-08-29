@@ -939,17 +939,27 @@ static uint32_t readFractionalPart(uint32_t integer) {
 		READFRACTIONALPART_PRECISION,
 		READFRACTIONALPART_PRECISION_DIGITS,
 	} state = READFRACTIONALPART_DIGITS;
+	bool nonDigit = true;
 
 	for (int c = peek();; c = nextChar()) {
 		if (state == READFRACTIONALPART_DIGITS) {
 			if (c == '_') {
+				if (nonDigit) {
+					error("Invalid integer constant, '_' after another '_'");
+				}
+				nonDigit = true;
 				continue;
-			} else if (c == 'q' || c == 'Q') {
+			}
+
+			if (c == 'q' || c == 'Q') {
 				state = READFRACTIONALPART_PRECISION;
+				nonDigit = false; // '_' is allowed before 'q'/'Q'
 				continue;
 			} else if (!isDigit(c)) {
 				break;
 			}
+			nonDigit = false;
+
 			if (divisor > (UINT32_MAX - (c - '0')) / 10) {
 				warning(WARNING_LARGE_CONSTANT, "Precision of fixed-point constant is too large");
 				// Discard any additional digits
@@ -965,6 +975,7 @@ static uint32_t readFractionalPart(uint32_t integer) {
 			} else if (!isDigit(c)) {
 				break;
 			}
+
 			precision = precision * 10 + (c - '0');
 		}
 	}
@@ -977,6 +988,9 @@ static uint32_t readFractionalPart(uint32_t integer) {
 	} else if (precision > 31) {
 		error("Fixed-point constant precision must be between 1 and 31");
 		precision = options.fixPrecision;
+	}
+	if (nonDigit) {
+		error("Invalid fixed-point constant, trailing '_'");
 	}
 
 	if (integer >= (1ULL << (32 - precision))) {
@@ -1032,22 +1046,31 @@ void lexer_SetGfxDigits(char const digits[4]) {
 	}
 }
 
-static uint32_t readBinaryNumber() {
+static uint32_t readBinaryNumber(char const *prefix) {
 	uint32_t value = 0;
 	bool empty = true;
+	bool nonDigit = false;
 
 	for (int c = peek();; c = nextChar()) {
-		int bit;
-
-		if (c == '_' && !empty) {
+		if (c == '_') {
+			if (nonDigit) {
+				error("Invalid integer constant, '_' after another '_'");
+			}
+			nonDigit = true;
 			continue;
-		} else if (c == '0' || c == options.binDigits[0]) {
+		}
+
+		int bit;
+		if (c == '0' || c == options.binDigits[0]) {
 			bit = 0;
 		} else if (c == '1' || c == options.binDigits[1]) {
 			bit = 1;
 		} else {
 			break;
 		}
+		empty = false;
+		nonDigit = false;
+
 		if (value > (UINT32_MAX - bit) / 2) {
 			warning(WARNING_LARGE_CONSTANT, "Integer constant is too large");
 			// Discard any additional digits
@@ -1058,29 +1081,39 @@ static uint32_t readBinaryNumber() {
 			return 0;
 		}
 		value = value * 2 + bit;
-
-		empty = false;
 	}
 
 	if (empty) {
-		error("Invalid integer constant, no digits after '%%'");
+		error("Invalid integer constant, no digits after %s", prefix);
+	}
+	if (nonDigit) {
+		error("Invalid integer constant, trailing '_'");
 	}
 
 	return value;
 }
 
-static uint32_t readOctalNumber() {
+static uint32_t readOctalNumber(char const *prefix) {
 	uint32_t value = 0;
 	bool empty = true;
+	bool nonDigit = false;
 
 	for (int c = peek();; c = nextChar()) {
-		if (c == '_' && !empty) {
+		if (c == '_') {
+			if (nonDigit) {
+				error("Invalid integer constant, '_' after another '_'");
+			}
+			nonDigit = true;
 			continue;
-		} else if (isOctDigit(c)) {
+		}
+
+		if (isOctDigit(c)) {
 			c = c - '0';
 		} else {
 			break;
 		}
+		empty = false;
+		nonDigit = false;
 
 		if (value > (UINT32_MAX - c) / 8) {
 			warning(WARNING_LARGE_CONSTANT, "Integer constant is too large");
@@ -1089,12 +1122,13 @@ static uint32_t readOctalNumber() {
 			return 0;
 		}
 		value = value * 8 + c;
-
-		empty = false;
 	}
 
 	if (empty) {
-		error("Invalid integer constant, no digits after '&'");
+		error("Invalid integer constant, no digits after %s", prefix);
+	}
+	if (nonDigit) {
+		error("Invalid integer constant, trailing '_'");
 	}
 
 	return value;
@@ -1103,15 +1137,23 @@ static uint32_t readOctalNumber() {
 static uint32_t readDecimalNumber(int initial) {
 	assume(isDigit(initial));
 	uint32_t value = initial - '0';
+	bool nonDigit = false;
 
 	for (int c = peek();; c = nextChar()) {
 		if (c == '_') {
+			if (nonDigit) {
+				error("Invalid integer constant, '_' after another '_'");
+			}
+			nonDigit = true;
 			continue;
-		} else if (isDigit(c)) {
+		}
+
+		if (isDigit(c)) {
 			c = c - '0';
 		} else {
 			break;
 		}
+		nonDigit = false;
 
 		if (value > (UINT32_MAX - c) / 10) {
 			warning(WARNING_LARGE_CONSTANT, "Integer constant is too large");
@@ -1122,17 +1164,28 @@ static uint32_t readDecimalNumber(int initial) {
 		value = value * 10 + c;
 	}
 
+	if (nonDigit) {
+		error("Invalid integer constant, trailing '_'");
+	}
+
 	return value;
 }
 
-static uint32_t readHexNumber() {
+static uint32_t readHexNumber(char const *prefix) {
 	uint32_t value = 0;
 	bool empty = true;
+	bool nonDigit = false;
 
 	for (int c = peek();; c = nextChar()) {
-		if (c == '_' && !empty) {
+		if (c == '_') {
+			if (nonDigit) {
+				error("Invalid integer constant, '_' after another '_'");
+			}
+			nonDigit = true;
 			continue;
-		} else if (c >= 'a' && c <= 'f') {
+		}
+
+		if (c >= 'a' && c <= 'f') {
 			c = c - 'a' + 10;
 		} else if (c >= 'A' && c <= 'F') {
 			c = c - 'A' + 10;
@@ -1141,6 +1194,8 @@ static uint32_t readHexNumber() {
 		} else {
 			break;
 		}
+		empty = false;
+		nonDigit = false;
 
 		if (value > (UINT32_MAX - c) / 16) {
 			warning(WARNING_LARGE_CONSTANT, "Integer constant is too large");
@@ -1149,12 +1204,13 @@ static uint32_t readHexNumber() {
 			return 0;
 		}
 		value = value * 16 + c;
-
-		empty = false;
 	}
 
 	if (empty) {
-		error("Invalid integer constant, no digits after '$'");
+		error("Invalid integer constant, no digits after %s", prefix);
+	}
+	if (nonDigit) {
+		error("Invalid integer constant, trailing '_'");
 	}
 
 	return value;
@@ -1163,13 +1219,19 @@ static uint32_t readHexNumber() {
 static uint32_t readGfxConstant() {
 	uint32_t bitPlaneLower = 0, bitPlaneUpper = 0;
 	uint8_t width = 0;
+	bool nonDigit = false;
 
 	for (int c = peek();; c = nextChar()) {
-		uint32_t pixel;
-
-		if (c == '_' && width > 0) {
+		if (c == '_') {
+			if (nonDigit) {
+				error("Invalid integer constant, '_' after another '_'");
+			}
+			nonDigit = true;
 			continue;
-		} else if (c == '0' || c == options.gfxDigits[0]) {
+		}
+
+		uint32_t pixel;
+		if (c == '0' || c == options.gfxDigits[0]) {
 			pixel = 0;
 		} else if (c == '1' || c == options.gfxDigits[1]) {
 			pixel = 1;
@@ -1180,6 +1242,7 @@ static uint32_t readGfxConstant() {
 		} else {
 			break;
 		}
+		nonDigit = false;
 
 		if (width < 8) {
 			bitPlaneLower = bitPlaneLower << 1 | (pixel & 1);
@@ -1196,6 +1259,9 @@ static uint32_t readGfxConstant() {
 		warning(
 		    WARNING_LARGE_CONSTANT, "Graphics constant is too large; only first 8 pixels considered"
 		);
+	}
+	if (nonDigit) {
+		error("Invalid graphics constant, trailing '_'");
 	}
 
 	return bitPlaneUpper << 8 | bitPlaneLower;
@@ -1729,15 +1795,15 @@ static Token yylex_NORMAL() {
 			case 'x':
 			case 'X':
 				shiftChar();
-				return Token(T_(NUMBER), readHexNumber());
+				return Token(T_(NUMBER), readHexNumber("\"0x\""));
 			case 'o':
 			case 'O':
 				shiftChar();
-				return Token(T_(NUMBER), readOctalNumber());
+				return Token(T_(NUMBER), readOctalNumber("\"0o\""));
 			case 'b':
 			case 'B':
 				shiftChar();
-				return Token(T_(NUMBER), readBinaryNumber());
+				return Token(T_(NUMBER), readBinaryNumber("\"0b\""));
 			}
 			[[fallthrough]];
 
@@ -1764,19 +1830,19 @@ static Token yylex_NORMAL() {
 		case '&': // Either &=, binary AND, logical AND, or an octal constant
 			c = peek();
 			if (isOctDigit(c)) {
-				return Token(T_(NUMBER), readOctalNumber());
+				return Token(T_(NUMBER), readOctalNumber("'&'"));
 			}
 			return oneOrTwo('=', T_(POP_ANDEQ), '&', T_(OP_LOGICAND), T_(OP_AND));
 
 		case '%': // Either %=, MOD, or a binary constant
 			c = peek();
 			if (c == '0' || c == '1' || c == options.binDigits[0] || c == options.binDigits[1]) {
-				return Token(T_(NUMBER), readBinaryNumber());
+				return Token(T_(NUMBER), readBinaryNumber("'%'"));
 			}
 			return oneOrTwo('=', T_(POP_MODEQ), T_(OP_MOD));
 
 		case '$': // Hex constant
-			return Token(T_(NUMBER), readHexNumber());
+			return Token(T_(NUMBER), readHexNumber("'$'"));
 
 		case '`': // Gfx constant
 			return Token(T_(NUMBER), readGfxConstant());

@@ -2,11 +2,11 @@ error: Invalid integer constant, no digits after '$'
     at invalid-numbers.asm::try(2) <- invalid-numbers.asm(11)
 error: Invalid graphics constant, no digits after '`'
     at invalid-numbers.asm::try(2) <- invalid-numbers.asm(12)
-error: Invalid integer constant, no digits after '%'
+error: Invalid integer constant, no digits after "0b"
     at invalid-numbers.asm::try(2) <- invalid-numbers.asm(13)
-error: Invalid integer constant, no digits after '&'
+error: Invalid integer constant, no digits after "0o"
     at invalid-numbers.asm::try(2) <- invalid-numbers.asm(14)
-error: Invalid integer constant, no digits after '$'
+error: Invalid integer constant, no digits after "0x"
     at invalid-numbers.asm::try(2) <- invalid-numbers.asm(15)
 warning: Integer constant is too large [-Wlarge-constant]
     at invalid-numbers.asm::try(2) <- invalid-numbers.asm(18)
