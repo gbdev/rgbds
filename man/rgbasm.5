@@ -196,12 +196,19 @@ If specified, pads right-aligned numbers with zeros instead of spaces.
 If specified, pads the value to this width, right-aligned with spaces by default.
 .It Ql <frac> Ta May be
 .Ql \&.
-followed by one or more
+followed by zero or more
 .Ql 0
 \[en]
 .Ql 9 .
 If specified, prints this many fractional digits of a fixed-point number.
 Defaults to 5 digits, maximum 255 digits.
+(A
+.Ql \&.
+followed by zero
+.Ql 0
+\[en]
+.Ql 9
+prints zero fractional digits.)
 .It Ql <prec> Ta May be
 .Ql q
 followed by one or more

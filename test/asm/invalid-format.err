@@ -10,6 +10,8 @@ error: Fixed-point constant precision 0 invalid, defaulting to 16
     at invalid-format.asm(5)
 error: STRFMT: Invalid format spec for argument 2
     at invalid-format.asm(5)
+error: STRFMT: Invalid format spec for argument 3
+    at invalid-format.asm(5)
 error: Invalid format spec "5d5"
     at invalid-format.asm(8)
 error: Invalid format spec "xx"
@@ -28,4 +30,4 @@ error: Formatting type 'd' with fractional width
     at invalid-format.asm(17)
 error: Formatting type 'd' with fractional precision
     at invalid-format.asm(18)
-Assembly aborted with 15 errors!
+Assembly aborted with 16 errors!

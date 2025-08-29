@@ -77,9 +77,9 @@ void FormatSpec::useCharacter(int c) {
 		}
 		return;
 
-	// width
+	// frac
 	case '.':
-		if (state > FORMAT_WIDTH) {
+		if (state >= FORMAT_FRAC) {
 			break;
 		}
 		state = FORMAT_FRAC;
@@ -88,7 +88,7 @@ void FormatSpec::useCharacter(int c) {
 
 	// prec
 	case 'q':
-		if (state > FORMAT_PREC) {
+		if (state >= FORMAT_PREC) {
 			break;
 		}
 		state = FORMAT_PREC;
