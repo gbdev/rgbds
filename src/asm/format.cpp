@@ -11,91 +11,70 @@
 #include <string.h>
 #include <string>
 
+#include "util.hpp" // isDigit
+
 #include "asm/main.hpp" // options
 #include "asm/warning.hpp"
 
-void FormatSpec::useCharacter(int c) {
-	if (state == FORMAT_INVALID) {
-		return;
+static size_t parseNumber(char const *spec, size_t &value) {
+	size_t i = 0;
+
+	value = 0;
+	for (; isDigit(spec[i]); ++i) {
+		value = value * 10 + (spec[i] - '0');
 	}
 
-	switch (c) {
-	// sign
-	case ' ':
-	case '+':
-		if (state > FORMAT_SIGN) {
-			break;
-		}
-		state = FORMAT_EXACT;
+	return i;
+}
+
+size_t FormatSpec::parseSpec(char const *spec) {
+	size_t i = 0;
+
+	// <sign>
+	if (char c = spec[i]; c == ' ' || c == '+') {
+		++i;
 		sign = c;
-		return;
+	}
 
-	// exact
-	case '#':
-		if (state > FORMAT_EXACT) {
-			break;
-		}
-		state = FORMAT_ALIGN;
+	// <exact>
+	if (spec[i] == '#') {
+		++i;
 		exact = true;
-		return;
+	}
 
-	// align
-	case '-':
-		if (state > FORMAT_ALIGN) {
-			break;
-		}
-		state = FORMAT_WIDTH;
+	// <align>
+	if (spec[i] == '-') {
+		++i;
 		alignLeft = true;
-		return;
+	}
 
-	// pad, width, and prec values
-	case '0':
-		if (state < FORMAT_WIDTH) {
-			padZero = true;
-		}
-		[[fallthrough]];
-	case '1':
-	case '2':
-	case '3':
-	case '4':
-	case '5':
-	case '6':
-	case '7':
-	case '8':
-	case '9':
-		if (state < FORMAT_WIDTH) {
-			state = FORMAT_WIDTH;
-			width = c - '0';
-		} else if (state == FORMAT_WIDTH) {
-			width = width * 10 + (c - '0');
-		} else if (state == FORMAT_FRAC) {
-			fracWidth = fracWidth * 10 + (c - '0');
-		} else if (state == FORMAT_PREC) {
-			precision = precision * 10 + (c - '0');
-		} else {
-			break;
-		}
-		return;
+	// <pad>
+	if (spec[i] == '0') {
+		++i;
+		padZero = true;
+	}
 
-	// frac
-	case '.':
-		if (state >= FORMAT_FRAC) {
-			break;
-		}
-		state = FORMAT_FRAC;
+	// <width>
+	if (isDigit(spec[i])) {
+		i += parseNumber(&spec[i], width);
+	}
+
+	// <frac>
+	if (spec[i] == '.') {
+		++i;
 		hasFrac = true;
-		return;
+		i += parseNumber(&spec[i], fracWidth);
+	}
 
-	// prec
-	case 'q':
-		if (state >= FORMAT_PREC) {
-			break;
-		}
-		state = FORMAT_PREC;
+	// <prec>
+	if (spec[i] == 'q') {
+		++i;
 		hasPrec = true;
-		return;
+		i += parseNumber(&spec[i], precision);
+	}
 
-	// type
+	// <type>
+	switch (char c = spec[i]; c) {
 	case 'd':
 	case 'u':
 	case 'X':
@@ -104,26 +83,13 @@ void FormatSpec::useCharacter(int c) {
 	case 'o':
 	case 'f':
 	case 's':
-		if (state >= FORMAT_DONE) {
-			break;
-		}
-		state = FORMAT_DONE;
-		valid = true;
+		++i;
 		type = c;
-		return;
-
-	default:
 		break;
 	}
 
-	state = FORMAT_INVALID;
-	valid = false;
-}
-
-void FormatSpec::finishCharacters() {
-	if (!isValid()) {
-		state = FORMAT_INVALID;
-	}
+	parsed = true;
+	return i;
 }
 
 static std::string escapeString(std::string const &str) {
@@ -158,7 +124,7 @@ static std::string escapeString(std::string const &str) {
 
 void FormatSpec::appendString(std::string &str, std::string const &value) const {
 	int useType = type;
-	if (isEmpty()) {
+	if (!useType) {
 		// No format was specified
 		useType = 's';
 	}
@@ -197,7 +163,7 @@ void FormatSpec::appendString(std::string &str, std::string const &value) const 
 void FormatSpec::appendNumber(std::string &str, uint32_t value) const {
 	int useType = type;
 	bool useExact = exact;
-	if (isEmpty()) {
+	if (!useType) {
 		// No format was specified; default to uppercase $hex
 		useType = 'X';
 		useExact = true;

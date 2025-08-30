@@ -8,5 +8,5 @@ void are 0
 3.141586304 ~ three
 1 -> 1.235 -> 1.23456
 1 eol %
-invalid % spec
+invalid %w spec
 one=1 two=% three=%

@@ -1305,7 +1305,7 @@ static std::pair<Symbol const *, std::shared_ptr<std::string>> readInterpolation
 		fatal("Recursion limit (%zu) exceeded", options.maxRecursionDepth);
 	}
 
-	std::string fmtBuf;
+	std::string identifier;
 	FormatSpec fmt{};
 
 	for (;;) {
@@ -1322,40 +1322,37 @@ static std::pair<Symbol const *, std::shared_ptr<std::string>> readInterpolation
 		} else if (c == '}') {
 			shiftChar();
 			break;
-		} else if (c == ':' && !fmt.isFinished()) { // Format spec, only once
+		} else if (c == ':' && !fmt.isParsed()) { // Format spec, only once
 			shiftChar();
-			for (char f : fmtBuf) {
-				fmt.useCharacter(f);
+			size_t n = fmt.parseSpec(identifier.c_str());
+			if (!fmt.isValid() || n != identifier.length()) {
+				error("Invalid format spec \"%s\"", identifier.c_str());
 			}
-			fmt.finishCharacters();
-			if (!fmt.isValid()) {
-				error("Invalid format spec \"%s\"", fmtBuf.c_str());
-			}
-			fmtBuf.clear(); // Now that format has been set, restart at beginning of string
+			identifier.clear(); // Now that format has been set, restart at beginning of string
 		} else {
 			shiftChar();
-			fmtBuf += c;
+			identifier += c;
 		}
 	}
 
-	if (fmtBuf.starts_with('#')) {
+	if (identifier.starts_with('#')) {
 		// Skip a '#' raw symbol prefix, but after expanding any nested interpolations.
-		fmtBuf.erase(0, 1);
-	} else if (keywordDict.find(fmtBuf) != keywordDict.end()) {
+		identifier.erase(0, 1);
+	} else if (keywordDict.find(identifier) != keywordDict.end()) {
 		// Don't allow symbols that alias keywords without a '#' prefix.
 		error(
 		    "Interpolated symbol `%s` is a reserved keyword; add a '#' prefix to use it as a raw "
 		    "symbol",
-		    fmtBuf.c_str()
+		    identifier.c_str()
 		);
 		return {nullptr, nullptr};
 	}
 
-	if (Symbol const *sym = sym_FindScopedValidSymbol(fmtBuf); !sym || !sym->isDefined()) {
-		if (sym_IsPurgedScoped(fmtBuf)) {
-			error("Interpolated symbol `%s` does not exist; it was purged", fmtBuf.c_str());
+	if (Symbol const *sym = sym_FindScopedValidSymbol(identifier); !sym || !sym->isDefined()) {
+		if (sym_IsPurgedScoped(identifier)) {
+			error("Interpolated symbol `%s` does not exist; it was purged", identifier.c_str());
 		} else {
-			error("Interpolated symbol `%s` does not exist", fmtBuf.c_str());
+			error("Interpolated symbol `%s` does not exist", identifier.c_str());
 		}
 		return {sym, nullptr};
 	} else if (sym->type == SYM_EQUS) {
@@ -1367,7 +1364,7 @@ static std::pair<Symbol const *, std::shared_ptr<std::string>> readInterpolation
 		fmt.appendNumber(*buf, sym->getConstantValue());
 		return {sym, buf};
 	} else {
-		error("Interpolated symbol `%s` is not a numeric or string symbol", fmtBuf.c_str());
+		error("Interpolated symbol `%s` is not a numeric or string symbol", identifier.c_str());
 		return {sym, nullptr};
 	}
 }

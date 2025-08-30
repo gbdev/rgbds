@@ -551,40 +551,30 @@ std::string act_StringFormat(
 	std::string str;
 	size_t argIndex = 0;
 
-	for (size_t i = 0; spec[i] != '\0'; ++i) {
-		int c = spec[i];
-
-		if (c != '%') {
+	for (size_t i = 0; spec[i] != '\0';) {
+		if (int c = spec[i]; c != '%') {
 			str += c;
+			++i;
 			continue;
 		}
 
-		c = spec[++i];
-
-		if (c == '%') {
+		if (int c = spec[++i]; c == '%') {
 			str += c;
+			++i;
 			continue;
-		}
-
-		FormatSpec fmt{};
-
-		while (c != '\0') {
-			fmt.useCharacter(c);
-			if (fmt.isFinished()) {
-				break;
-			}
-			c = spec[++i];
-		}
-
-		if (fmt.isEmpty()) {
+		} else if (c == '\0') {
 			error("STRFMT: Illegal '%%' at end of format string");
 			str += '%';
 			break;
 		}
 
+		FormatSpec fmt{};
+		size_t n = fmt.parseSpec(spec.c_str() + i);
+		i += n;
+
 		if (!fmt.isValid()) {
 			error("STRFMT: Invalid format spec for argument %zu", argIndex + 1);
-			str += '%';
+			str += spec.substr(i - n - 1, n + 1); // include the '%'
 		} else if (argIndex >= args.size()) {
 			// Will warn after formatting is done.
 			str += '%';
