@@ -1829,14 +1829,15 @@ static Token yylex_NORMAL() {
 
 		case '&': // Either &=, binary AND, logical AND, or an octal constant
 			c = peek();
-			if (isOctDigit(c)) {
+			if (isOctDigit(c) || c == '_') {
 				return Token(T_(NUMBER), readOctalNumber("'&'"));
 			}
 			return oneOrTwo('=', T_(POP_ANDEQ), '&', T_(OP_LOGICAND), T_(OP_AND));
 
 		case '%': // Either %=, MOD, or a binary constant
 			c = peek();
-			if (c == '0' || c == '1' || c == options.binDigits[0] || c == options.binDigits[1]) {
+			if (c == '0' || c == '1' || c == options.binDigits[0] || c == options.binDigits[1]
+			    || c == '_') {
 				return Token(T_(NUMBER), readBinaryNumber("'%'"));
 			}
 			return oneOrTwo('=', T_(POP_MODEQ), T_(OP_MOD));

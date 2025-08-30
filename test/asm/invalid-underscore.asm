@@ -1,8 +1,8 @@
 ; good
 println 123_456
-println %1010_1010
+println %_1010_1010
 println 0b_1010_1010
-println &555_555
+println &_555_555
 println 0o_777_777
 println $_dead_beef
 println 0x_cafe_babe
