@@ -14,15 +14,15 @@ _1234::
 
 ; with underscores
 	dw _1234 ; label
-	db 123, 1_23, 1__23 ; decimal
+	db 123, 1_23, 12_3 ; decimal
 	dw 12_345 ; decimal
 	dw $ab_cd ; hex
-	db &2_0_0_ ; octal
+	db &2_0_0 ; octal
 	db %1111_0000, %1_0 ; binary
-	dl 6_._283_185 ; fixed point
-	dw `0123_3210, `00_33_22_11_ ; gfx
+	dl 6.283_185 ; fixed point
+	dw `0123_3210, `_00_33_22_11 ; gfx
 
 ; underscores with custom digits
 	opt g.ABC, b.X
-	db %.X.X_..XX_
-	dw `.A.B_.C.._
+	db %.X.X_..XX
+	dw `.A.B_.C..
