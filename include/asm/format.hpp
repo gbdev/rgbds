@@ -15,6 +15,7 @@ class FormatSpec {
 	size_t width;
 	bool hasFrac;
 	size_t fracWidth;
+	bool group;
 	bool hasPrec;
 	size_t precision;
 	int type;

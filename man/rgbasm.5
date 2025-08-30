@@ -165,7 +165,7 @@ It's possible to change the way symbols are printed by specifying a print format
 The
 .Ql fmt
 specifier consists of these parts:
-.Ql <sign><exact><align><pad><width><frac><prec><type> .
+.Ql <sign><exact><align><pad><width><group><frac><prec><type> .
 These parts are:
 .Bl -column "<exact>"
 .It Sy Part Ta Sy Meaning
@@ -194,6 +194,9 @@ If specified, pads right-aligned numbers with zeros instead of spaces.
 \[en]
 .Ql 9 .
 If specified, pads the value to this width, right-aligned with spaces by default.
+.It Ql <group> Ta May be
+.Ql _ .
+If specified, groups digits separated by underscores, with three digits per group for decimal numbers or four for non-decimal.
 .It Ql <frac> Ta May be
 .Ql \&.
 followed by zero or more

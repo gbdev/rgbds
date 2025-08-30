@@ -29,50 +29,47 @@ static size_t parseNumber(char const *spec, size_t &value) {
 
 size_t FormatSpec::parseSpec(char const *spec) {
 	size_t i = 0;
-
 	// <sign>
 	if (char c = spec[i]; c == ' ' || c == '+') {
 		++i;
 		sign = c;
 	}
-
 	// <exact>
 	if (spec[i] == '#') {
 		++i;
 		exact = true;
 	}
-
 	// <align>
 	if (spec[i] == '-') {
 		++i;
 		alignLeft = true;
 	}
-
 	// <pad>
 	if (spec[i] == '0') {
 		++i;
 		padZero = true;
 	}
-
 	// <width>
 	if (isDigit(spec[i])) {
 		i += parseNumber(&spec[i], width);
 	}
-
+	// <group>
+	if (spec[i] == '_') {
+		++i;
+		group = true;
+	}
 	// <frac>
 	if (spec[i] == '.') {
 		++i;
 		hasFrac = true;
 		i += parseNumber(&spec[i], fracWidth);
 	}
-
 	// <prec>
 	if (spec[i] == 'q') {
 		++i;
 		hasPrec = true;
 		i += parseNumber(&spec[i], precision);
 	}
-
 	// <type>
 	switch (char c = spec[i]; c) {
 	case 'd':
@@ -87,7 +84,7 @@ size_t FormatSpec::parseSpec(char const *spec) {
 		type = c;
 		break;
 	}
-
+	// Done parsing
 	parsed = true;
 	return i;
 }
@@ -138,6 +135,9 @@ void FormatSpec::appendString(std::string &str, std::string const &value) const 
 	if (hasFrac) {
 		error("Formatting string with fractional width");
 	}
+	if (group) {
+		error("Formatting string with group flag '_'");
+	}
 	if (hasPrec) {
 		error("Formatting string with fractional precision");
 	}
@@ -158,6 +158,30 @@ void FormatSpec::appendString(std::string &str, std::string const &value) const 
 		str.append(padLen, ' ');
 		str.append(useValue);
 	}
+}
+
+static void formatGrouped(char *valueBuf, uint32_t value, uint32_t base, bool uppercase = false) {
+	char const *digits = uppercase ? "0123456789ABCDEF" : "0123456789abcdef";
+	assume(base >= 2 && base <= strlen(digits));
+
+	size_t groupSize = base == 10 ? 3 : 4;
+	char *ptr = valueBuf;
+
+	// Buffer the digits from least to greatest, then reverse them
+	size_t n = 0;
+	do {
+		if (n == groupSize) {
+			*ptr++ = '_';
+			n = 0;
+		}
+		*ptr++ = digits[value % base];
+		value /= base;
+		++n;
+	} while (value);
+
+	// Reverse the digits and terminate the string
+	std::reverse(valueBuf, ptr);
+	*ptr = '\0';
 }
 
 void FormatSpec::appendNumber(std::string &str, uint32_t value) const {
@@ -188,7 +212,7 @@ void FormatSpec::appendNumber(std::string &str, uint32_t value) const {
 	if (useType == 'd' || useType == 'f') {
 		if (int32_t v = value; v < 0) {
 			signChar = '-';
-			if (v != INT32_MIN) {
+			if (v != INT32_MIN) { // -INT32_MIN is UB
 				value = -v;
 			}
 		}
@@ -201,21 +225,24 @@ void FormatSpec::appendNumber(std::string &str, uint32_t value) const {
 	                  : useType == 'o' ? '&'
 	                                   : 0;
 
-	char valueBuf[262]; // Max 5 digits + decimal + 255 fraction digits + terminator
+	char valueBuf[270]; // Max 10 digits with 3 underscores + '.' + 255 fraction digits + '\0'
 
 	if (useType == 'b') {
-		// Special case for binary
-		char *ptr = valueBuf;
+		// Special case for binary, since `printf` doesn't support it
+		if (group) {
+			formatGrouped(valueBuf, value, 2);
+		} else {
+			// Buffer the digits from least to greatest
+			char *ptr = valueBuf;
+			do {
+				*ptr++ = (value & 1) + '0';
+				value >>= 1;
+			} while (value);
 
-		do {
-			*ptr++ = (value & 1) + '0';
-			value >>= 1;
-		} while (value);
-
-		// Reverse the digits
-		std::reverse(valueBuf, ptr);
-
-		*ptr = '\0';
+			// Reverse the digits and terminate the string
+			std::reverse(valueBuf, ptr);
+			*ptr = '\0';
+		}
 	} else if (useType == 'f') {
 		// Special case for fixed-point
 
@@ -238,26 +265,46 @@ void FormatSpec::appendNumber(std::string &str, uint32_t value) const {
 		}
 
 		double fval = fabs(value / pow(2.0, usePrec));
-		if (int fracWidthArg = static_cast<int>(useFracWidth); useExact) {
-			snprintf(valueBuf, sizeof(valueBuf), "%.*fq%zu", fracWidthArg, fval, usePrec);
+		int fracWidthArg = static_cast<int>(useFracWidth);
+
+		if (group) {
+			double ival;
+			fval = modf(fval, &ival);
+
+			formatGrouped(valueBuf, static_cast<uint32_t>(ival), 10);
+
+			char fracBuf[258]; // Max "0." + 255 fraction digits + '\0'
+			snprintf(fracBuf, sizeof(fracBuf), "%.*f", fracWidthArg, fval);
+			assume(fracBuf[0] == '0' && fracBuf[1] == '.');
+
+			snprintf(valueBuf, sizeof(valueBuf), "%s%s", valueBuf, &fracBuf[1]);
 		} else {
 			snprintf(valueBuf, sizeof(valueBuf), "%.*f", fracWidthArg, fval);
 		}
-	} else if (useType == 'd') {
-		// Decimal numbers may be formatted with a '-' sign by `snprintf`, so `abs` prevents that,
-		// with a special case for `INT32_MIN` since `labs(INT32_MIN)` is UB. The sign will be
-		// printed later from `signChar`.
-		uint32_t uval =
-		    value != static_cast<uint32_t>(INT32_MIN) ? labs(static_cast<int32_t>(value)) : value;
-		snprintf(valueBuf, sizeof(valueBuf), "%" PRIu32, uval);
-	} else {
-		char const *spec = useType == 'u'   ? "%" PRIu32
-		                   : useType == 'X' ? "%" PRIX32
-		                   : useType == 'x' ? "%" PRIx32
-		                   : useType == 'o' ? "%" PRIo32
-		                                    : "%" PRIu32;
 
-		snprintf(valueBuf, sizeof(valueBuf), spec, value);
+		if (useExact) {
+			snprintf(valueBuf, sizeof(valueBuf), "%sq%zu", valueBuf, usePrec);
+		}
+	} else if (useType == 'd') {
+		// `value` has already been made non-negative for types 'd' and 'f'.
+		// The sign will be printed later from `signChar`.
+		if (group) {
+			formatGrouped(valueBuf, value, 10);
+		} else {
+			snprintf(valueBuf, sizeof(valueBuf), "%" PRIu32, value);
+		}
+	} else {
+		if (group) {
+			uint32_t base = useType == 'X' || useType == 'x' ? 16 : useType == 'o' ? 8 : 10;
+			formatGrouped(valueBuf, value, base, useType == 'X');
+		} else {
+			char const *spec = useType == 'u'   ? "%" PRIu32
+			                   : useType == 'X' ? "%" PRIX32
+			                   : useType == 'x' ? "%" PRIx32
+			                   : useType == 'o' ? "%" PRIo32
+			                                    : "%" PRIu32;
+			snprintf(valueBuf, sizeof(valueBuf), spec, value);
+		}
 	}
 
 	size_t valueLen = strlen(valueBuf);
