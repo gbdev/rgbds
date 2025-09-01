@@ -341,7 +341,7 @@ void LexerState::setFileAsNextState(std::string const &filePath, bool updateStat
 		}
 		path = filePath;
 
-		if (size_t size = static_cast<size_t>(statBuf.st_size); statBuf.st_size > 0) {
+		if (std::streamsize size = statBuf.st_size; statBuf.st_size > 0) {
 			// Read the entire file for better performance
 			// Ideally we'd use C++20 `auto ptr = std::make_shared<char[]>(size)`,
 			// but it has insufficient compiler support
@@ -351,7 +351,7 @@ void LexerState::setFileAsNextState(std::string const &filePath, bool updateStat
 				// LCOV_EXCL_START
 				fatal("Failed to open file \"%s\": %s", path.c_str(), strerror(errno));
 				// LCOV_EXCL_STOP
-			} else if (!fs.read(ptr.get(), size)) {
+			} else if (!fs.read(ptr.get(), size) || fs.gcount() != size) {
 				// LCOV_EXCL_START
 				fatal("Failed to read file \"%s\": %s", path.c_str(), strerror(errno));
 				// LCOV_EXCL_STOP
@@ -1375,6 +1375,7 @@ static void appendExpandedString(std::string &str, std::string const &expanded) 
 		return;
 	}
 
+	str.reserve(str.length() + expanded.length());
 	for (char c : expanded) {
 		// Escape characters that need escaping
 		switch (c) {
