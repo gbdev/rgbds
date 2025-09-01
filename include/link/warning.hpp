@@ -27,11 +27,14 @@ enum WarningID {
 	WARNING_OBSOLETE,     // Obsolete/deprecated things
 	WARNING_SHIFT,        // Undefined `SHIFT` behavior
 	WARNING_SHIFT_AMOUNT, // Strange `SHIFT` amount
-	WARNING_TRUNCATION,   // Implicit truncation loses some bits
 
 	NB_PLAIN_WARNINGS,
 
-	NB_WARNINGS = NB_PLAIN_WARNINGS,
+	// Implicit truncation loses some bits
+	WARNING_TRUNCATION_1 = NB_PLAIN_WARNINGS,
+	WARNING_TRUNCATION_2,
+
+	NB_WARNINGS,
 };
 
 extern Diagnostics<WarningLevel, WarningID> warnings;

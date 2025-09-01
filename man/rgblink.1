@@ -318,11 +318,20 @@ This warning is enabled by
 Warn when a shift's operand is negative or greater than 32.
 This warning is enabled by
 .Fl Wall .
-.It Fl Wno-truncation
+.It Fl Wtruncation=
 Warn when an implicit truncation (for example,
 .Ic db
 to an 8-bit value) loses some bits.
-This occurs when an N-bit value is 2**N or greater, or less than -2**N.
+.Fl Wtruncation=0
+or
+.Fl Wno-truncation
+disables this warning.
+.Fl Wtruncation=1
+warns when an N-bit value is 2**N or greater, or less than -2**N.
+.Fl Wtruncation=2
+or just
+.Fl Wtruncation
+also warns when an N-bit value is less than -2**(N-1), which will not fit in two's complement encoding.
 .El
 .Sh EXAMPLES
 All you need for a basic ROM is an object file, which can be made into a ROM image like so:

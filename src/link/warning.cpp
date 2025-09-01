@@ -26,9 +26,13 @@ Diagnostics<WarningLevel, WarningID> warnings = {
         {"obsolete",     LEVEL_DEFAULT   },
         {"shift",        LEVEL_ALL       },
         {"shift-amount", LEVEL_ALL       },
+        // Parametric warnings
         {"truncation",   LEVEL_DEFAULT   },
+        {"truncation",   LEVEL_EVERYTHING},
     },
-    .paramWarnings = {},
+    .paramWarnings = {
+        {WARNING_TRUNCATION_1, WARNING_TRUNCATION_2, 2},
+    },
     .state = DiagnosticsState<WarningID>(),
     .nbErrors = 0,
 };

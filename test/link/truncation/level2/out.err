@@ -1,0 +1,4 @@
+warning: Value $fffe8000 (may be negative?) is not 16-bit [-Wtruncation]
+    at truncation/level2/a.asm(3)
+warning: Value $ffff4000 (may be negative?) is not 16-bit [-Wtruncation]
+    at truncation/level2/a.asm(2)
