@@ -4,6 +4,7 @@
 
 #include <deque>
 #include <inttypes.h>
+#include <limits.h>
 #include <stdint.h>
 #include <variant>
 #include <vector>
@@ -503,6 +504,30 @@ void patch_CheckAssertions() {
 	}
 }
 
+static void checkPatchSize(Patch const &patch, int32_t v, uint8_t n) {
+	static constexpr unsigned m = CHAR_BIT * sizeof(int);
+	if (n < m && (v < -(1 << n) || v >= 1 << n)) {
+		diagnosticAt(
+		    patch,
+		    WARNING_TRUNCATION_1,
+		    "Value $%" PRIx32 "%s is not %u-bit",
+		    v,
+		    v < 0 ? " (may be negative?)" : "",
+		    n
+		);
+		return;
+	} else if (n < m + 1 && v < -(1 << (n - 1))) {
+		diagnosticAt(
+		    patch,
+		    WARNING_TRUNCATION_2,
+		    "Value $%" PRIx32 "%s is not %u-bit",
+		    v,
+		    v < 0 ? " (may be negative?)" : "",
+		    n
+		);
+	}
+}
+
 // Applies all of a section's patches to a data section
 static void applyFilePatches(Section &section, Section &dataSection) {
 	verbosePrint(VERB_INFO, "Patching section \"%s\"...\n", section.name.c_str());
@@ -510,23 +535,19 @@ static void applyFilePatches(Section &section, Section &dataSection) {
 		int32_t value = computeRPNExpr(patch, *section.fileSymbols);
 		uint16_t offset = patch.offset + section.offset;
 
-		struct {
-			uint8_t size;
-			int32_t min;
-			int32_t max;
-		} const types[PATCHTYPE_INVALID] = {
-		    {1, -128,      255      }, // PATCHTYPE_BYTE
-		    {2, -32768,    65536    }, // PATCHTYPE_WORD
-		    {4, INT32_MIN, INT32_MAX}, // PATCHTYPE_LONG
-		    {1, 0,         0        }, // PATCHTYPE_JR
+		uint8_t typeSizes[PATCHTYPE_INVALID] = {
+		    1, // PATCHTYPE_BYTE
+		    2, // PATCHTYPE_WORD
+		    4, // PATCHTYPE_LONG
+		    1, // PATCHTYPE_JR
 		};
-		auto const &type = types[patch.type];
+		uint8_t typeSize = typeSizes[patch.type];
 
-		if (dataSection.data.size() < offset + type.size) {
+		if (dataSection.data.size() < offset + typeSize) {
 			errorAt(
 			    patch,
 			    "Patch would write %zu bytes past the end of section \"%s\" (%zu bytes long)",
-			    offset + type.size - dataSection.data.size(),
+			    offset + typeSize - dataSection.data.size(),
 			    dataSection.name.c_str(),
 			    dataSection.data.size()
 			);
@@ -547,17 +568,8 @@ static void applyFilePatches(Section &section, Section &dataSection) {
 			dataSection.data[offset] = jumpOffset & 0xFF;
 		} else {
 			// Patch a certain number of bytes
-			if (value < type.min || value > type.max) {
-				diagnosticAt(
-				    patch,
-				    WARNING_TRUNCATION,
-				    "Value $%" PRIx32 "%s is not %u-bit",
-				    value,
-				    value < 0 ? " (may be negative?)" : "",
-				    type.size * 8U
-				);
-			}
-			for (uint8_t i = 0; i < type.size; ++i) {
+			checkPatchSize(patch, value, typeSize * 8);
+			for (uint8_t i = 0; i < typeSize; ++i) {
 				dataSection.data[offset + i] = value & 0xFF;
 				value >>= 8;
 			}
