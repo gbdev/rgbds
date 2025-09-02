@@ -132,90 +132,6 @@ static void registerUnregisteredSymbol(Symbol &sym) {
 	}
 }
 
-static void writeRpn(std::vector<uint8_t> &rpnexpr, std::vector<uint8_t> const &rpn) {
-	size_t rpnptr = 0;
-
-	for (size_t offset = 0; offset < rpn.size();) {
-		uint8_t rpndata = rpn[offset++];
-
-		auto getSymName = [&]() {
-			std::string symName;
-			for (uint8_t c; (c = rpn[offset++]) != 0;) {
-				symName += c;
-			}
-			return symName;
-		};
-
-		switch (rpndata) {
-			Symbol *sym;
-			uint32_t value;
-			uint8_t b;
-
-		case RPN_CONST:
-			rpnexpr[rpnptr++] = RPN_CONST;
-			rpnexpr[rpnptr++] = rpn[offset++];
-			rpnexpr[rpnptr++] = rpn[offset++];
-			rpnexpr[rpnptr++] = rpn[offset++];
-			rpnexpr[rpnptr++] = rpn[offset++];
-			break;
-
-		case RPN_SYM:
-			// The symbol name is always written expanded
-			sym = sym_FindExactSymbol(getSymName());
-			registerUnregisteredSymbol(*sym); // Ensure that `sym->ID` is set
-			value = sym->ID;
-
-			rpnexpr[rpnptr++] = RPN_SYM;
-			rpnexpr[rpnptr++] = value & 0xFF;
-			rpnexpr[rpnptr++] = value >> 8;
-			rpnexpr[rpnptr++] = value >> 16;
-			rpnexpr[rpnptr++] = value >> 24;
-			break;
-
-		case RPN_BANK_SYM:
-			// The symbol name is always written expanded
-			sym = sym_FindExactSymbol(getSymName());
-			registerUnregisteredSymbol(*sym); // Ensure that `sym->ID` is set
-			value = sym->ID;
-
-			rpnexpr[rpnptr++] = RPN_BANK_SYM;
-			rpnexpr[rpnptr++] = value & 0xFF;
-			rpnexpr[rpnptr++] = value >> 8;
-			rpnexpr[rpnptr++] = value >> 16;
-			rpnexpr[rpnptr++] = value >> 24;
-			break;
-
-		case RPN_BANK_SECT:
-			rpnexpr[rpnptr++] = RPN_BANK_SECT;
-			do {
-				b = rpn[offset++];
-				rpnexpr[rpnptr++] = b;
-			} while (b != 0);
-			break;
-
-		case RPN_SIZEOF_SECT:
-			rpnexpr[rpnptr++] = RPN_SIZEOF_SECT;
-			do {
-				b = rpn[offset++];
-				rpnexpr[rpnptr++] = b;
-			} while (b != 0);
-			break;
-
-		case RPN_STARTOF_SECT:
-			rpnexpr[rpnptr++] = RPN_STARTOF_SECT;
-			do {
-				b = rpn[offset++];
-				rpnexpr[rpnptr++] = b;
-			} while (b != 0);
-			break;
-
-		default:
-			rpnexpr[rpnptr++] = rpndata;
-			break;
-		}
-	}
-}
-
 static void initPatch(Patch &patch, uint32_t type, Expression const &expr, uint32_t ofs) {
 	patch.type = type;
 	patch.src = fstk_GetFileStack();
@@ -235,9 +151,77 @@ static void initPatch(Patch &patch, uint32_t type, Expression const &expr, uint3
 		patch.rpn[2] = val >> 8;
 		patch.rpn[3] = val >> 16;
 		patch.rpn[4] = val >> 24;
-	} else {
-		patch.rpn.resize(expr.rpnPatchSize);
-		writeRpn(patch.rpn, expr.rpn);
+		return;
+	}
+
+	// If the RPN expr's value is not known, its RPN patch buffer size is known
+	patch.rpn.resize(expr.rpnPatchSize);
+
+	for (size_t exprIdx = 0, patchIdx = 0; exprIdx < expr.rpn.size();) {
+		// Every command starts with its own ID
+		assume(patchIdx < patch.rpn.size());
+		uint8_t cmd = expr.rpn[exprIdx++];
+		patch.rpn[patchIdx++] = cmd;
+
+		switch (cmd) {
+		case RPN_CONST:
+			// The command ID is followed by a four-byte integer
+			assume(exprIdx + 3 < expr.rpn.size());
+			assume(patchIdx + 3 < patch.rpn.size());
+			patch.rpn[patchIdx++] = expr.rpn[exprIdx++];
+			patch.rpn[patchIdx++] = expr.rpn[exprIdx++];
+			patch.rpn[patchIdx++] = expr.rpn[exprIdx++];
+			patch.rpn[patchIdx++] = expr.rpn[exprIdx++];
+			break;
+
+		case RPN_SYM:
+		case RPN_BANK_SYM: {
+			// The command ID is followed by a four-byte symbol ID
+			std::string symName;
+			for (;;) {
+				assume(exprIdx < expr.rpn.size());
+				uint8_t c = expr.rpn[exprIdx++];
+				if (!c) {
+					break;
+				}
+				symName += c;
+			}
+			// The symbol name is always written expanded
+			Symbol *sym = sym_FindExactSymbol(symName);
+			registerUnregisteredSymbol(*sym); // Ensure that `sym->ID` is set
+			assume(patchIdx + 3 < patch.rpn.size());
+			patch.rpn[patchIdx++] = sym->ID & 0xFF;
+			patch.rpn[patchIdx++] = sym->ID >> 8;
+			patch.rpn[patchIdx++] = sym->ID >> 16;
+			patch.rpn[patchIdx++] = sym->ID >> 24;
+			break;
+		}
+
+		case RPN_BANK_SECT:
+		case RPN_SIZEOF_SECT:
+		case RPN_STARTOF_SECT: {
+			// The command ID is followed by a NUL-terminated section name string
+			for (;;) {
+				assume(exprIdx < expr.rpn.size());
+				assume(patchIdx < patch.rpn.size());
+				uint8_t b = expr.rpn[exprIdx++];
+				patch.rpn[patchIdx++] = b;
+				if (!b) {
+					break;
+				}
+			}
+			break;
+		}
+
+		case RPN_SIZEOF_SECTTYPE:
+		case RPN_STARTOF_SECTTYPE:
+		case RPN_BIT_INDEX:
+			// The command ID is followed by a byte value
+			assume(exprIdx < expr.rpn.size());
+			assume(patchIdx < patch.rpn.size());
+			patch.rpn[patchIdx++] = expr.rpn[exprIdx++];
+			break;
+		}
 	}
 }
 

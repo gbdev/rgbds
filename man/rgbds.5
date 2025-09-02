@@ -405,9 +405,6 @@ Checks if the value is a valid bit index
 .Pq see e.g. Do BIT u3, r8 Dc in Xr gbz80 7 ,
 that is, from 0 to 7.
 The value is then ORed with the instruction's mask.
-.It Li $80 Ta Integer literal; followed by the
-.Cm LONG
-integer.
 .It Li $70 Ta Cm HIGH
 byte.
 .It Li $71 Ta Cm LOW
@@ -416,6 +413,9 @@ byte.
 value.
 .It Li $73 Ta Cm TZCOUNT
 value.
+.It Li $80 Ta Integer literal; followed by the
+.Cm LONG
+integer.
 .It Li $81 Ta A symbol's value; followed by the symbol's
 .Cm LONG
 ID.
