@@ -186,11 +186,11 @@ void warning(FileStackNode const *src, uint32_t lineNo, WarningID id, char const
 		break;
 
 	case WarningBehavior::ENABLED:
-		printDiag(src, lineNo, fmt, args, "warning", STYLE_RED, "[-W%s]", flag);
+		printDiag(src, lineNo, fmt, args, "warning", STYLE_YELLOW, "[-W%s]", flag);
 		break;
 
 	case WarningBehavior::ERROR:
-		printDiag(src, lineNo, fmt, args, "error", STYLE_YELLOW, "[-Werror=%s]", flag);
+		printDiag(src, lineNo, fmt, args, "error", STYLE_RED, "[-Werror=%s]", flag);
 
 		warnings.incrementErrors();
 		break;

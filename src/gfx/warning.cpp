@@ -101,7 +101,7 @@ void warning(WarningID id, char const *fmt, ...) {
 		va_start(ap, fmt);
 		vfprintf(stderr, fmt, ap);
 		va_end(ap);
-		style_Set(stderr, STYLE_YELLOW, true);
+		style_Set(stderr, STYLE_RED, true);
 		fprintf(stderr, " [-Werror=%s]\n", flag);
 		style_Reset(stderr);
 
