@@ -371,7 +371,7 @@ Deprecated in 1.0.0.
 .Pp
 Instead, use
 .Dl -Wno-overwrite .
-.Ss rgbgfx -h
+.Ss rgbgfx -h/--horizontal
 Removed in 0.6.0.
 .Pp
 Instead, use
@@ -491,6 +491,13 @@ Instead, use
 .Ql Label:
 and
 .Ql Label:: .
+.Ss Extra underscores in integer constants
+Fixed in 1.0.0.
+.Pp
+Underscores, the optional digit separators in integer constants, used to allow more than one in sequence, or trailing without digits on either side.
+Now only one underscore is allowed between two digits, or between the base prefix and a digit, or between a digit and the
+.Ql q
+fixed-point precision suffix.
 .Ss ADD r16 with implicit first HL operand
 Fixed in 0.5.0.
 .Pp
