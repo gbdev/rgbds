@@ -12,6 +12,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <string>
+#include <variant>
 #include <vector>
 
 #include "helpers.hpp" // assume, Defer
@@ -154,46 +155,37 @@ static void initPatch(Patch &patch, uint32_t type, Expression const &expr, uint3
 		return;
 	}
 
-	// If the RPN expr's value is not known, its RPN patch buffer size is known
-	patch.rpn.resize(expr.rpnPatchSize);
+	// If the RPN expr's value is not known, serialize its RPN values
+	patch.rpn.clear();
+	patch.rpn.reserve(expr.rpn.size() * 2); // Rough estimate of the serialized size
 
-	for (size_t exprIdx = 0, patchIdx = 0; exprIdx < expr.rpn.size();) {
+	for (RPNValue const &value : expr.rpn) {
 		// Every command starts with its own ID
-		assume(patchIdx < patch.rpn.size());
-		uint8_t cmd = expr.rpn[exprIdx++];
-		patch.rpn[patchIdx++] = cmd;
+		patch.rpn.push_back(value.command);
 
-		switch (cmd) {
-		case RPN_CONST:
+		switch (value.command) {
+		case RPN_CONST: {
 			// The command ID is followed by a four-byte integer
-			assume(exprIdx + 3 < expr.rpn.size());
-			assume(patchIdx + 3 < patch.rpn.size());
-			patch.rpn[patchIdx++] = expr.rpn[exprIdx++];
-			patch.rpn[patchIdx++] = expr.rpn[exprIdx++];
-			patch.rpn[patchIdx++] = expr.rpn[exprIdx++];
-			patch.rpn[patchIdx++] = expr.rpn[exprIdx++];
+			assume(std::holds_alternative<uint32_t>(value.data));
+			uint32_t v = std::get<uint32_t>(value.data);
+			patch.rpn.push_back(v & 0xFF);
+			patch.rpn.push_back(v >> 8);
+			patch.rpn.push_back(v >> 16);
+			patch.rpn.push_back(v >> 24);
 			break;
+		}
 
 		case RPN_SYM:
 		case RPN_BANK_SYM: {
 			// The command ID is followed by a four-byte symbol ID
-			std::string symName;
-			for (;;) {
-				assume(exprIdx < expr.rpn.size());
-				uint8_t c = expr.rpn[exprIdx++];
-				if (!c) {
-					break;
-				}
-				symName += c;
-			}
+			assume(std::holds_alternative<std::string>(value.data));
 			// The symbol name is always written expanded
-			Symbol *sym = sym_FindExactSymbol(symName);
+			Symbol *sym = sym_FindExactSymbol(std::get<std::string>(value.data));
 			registerUnregisteredSymbol(*sym); // Ensure that `sym->ID` is set
-			assume(patchIdx + 3 < patch.rpn.size());
-			patch.rpn[patchIdx++] = sym->ID & 0xFF;
-			patch.rpn[patchIdx++] = sym->ID >> 8;
-			patch.rpn[patchIdx++] = sym->ID >> 16;
-			patch.rpn[patchIdx++] = sym->ID >> 24;
+			patch.rpn.push_back(sym->ID & 0xFF);
+			patch.rpn.push_back(sym->ID >> 8);
+			patch.rpn.push_back(sym->ID >> 16);
+			patch.rpn.push_back(sym->ID >> 24);
 			break;
 		}
 
@@ -201,15 +193,11 @@ static void initPatch(Patch &patch, uint32_t type, Expression const &expr, uint3
 		case RPN_SIZEOF_SECT:
 		case RPN_STARTOF_SECT: {
 			// The command ID is followed by a NUL-terminated section name string
-			for (;;) {
-				assume(exprIdx < expr.rpn.size());
-				assume(patchIdx < patch.rpn.size());
-				uint8_t b = expr.rpn[exprIdx++];
-				patch.rpn[patchIdx++] = b;
-				if (!b) {
-					break;
-				}
+			assume(std::holds_alternative<std::string>(value.data));
+			for (char c : std::get<std::string>(value.data)) {
+				patch.rpn.push_back(c);
 			}
+			patch.rpn.push_back('\0');
 			break;
 		}
 
@@ -217,9 +205,13 @@ static void initPatch(Patch &patch, uint32_t type, Expression const &expr, uint3
 		case RPN_STARTOF_SECTTYPE:
 		case RPN_BIT_INDEX:
 			// The command ID is followed by a byte value
-			assume(exprIdx < expr.rpn.size());
-			assume(patchIdx < patch.rpn.size());
-			patch.rpn[patchIdx++] = expr.rpn[exprIdx++];
+			assume(std::holds_alternative<uint8_t>(value.data));
+			patch.rpn.push_back(std::get<uint8_t>(value.data));
+			break;
+
+		default:
+			// Other command IDs are not followed by anything
+			assume(std::holds_alternative<std::monostate>(value.data));
 			break;
 		}
 	}
