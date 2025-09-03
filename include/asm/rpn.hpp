@@ -12,15 +12,18 @@
 
 struct Symbol;
 
+struct RPNValue {
+	RPNCommand command;
+	std::variant<std::monostate, uint8_t, uint32_t, std::string> data;
+};
+
 struct Expression {
 	std::variant<
 	    int32_t,    // If the expression's value is known, it's here
 	    std::string // Why the expression is not known, if it isn't
 	    >
 	    data = 0;
-	bool isSymbol = false; // Whether the expression represents a symbol suitable for const diffing
-	std::vector<uint8_t> rpn{}; // Bytes serializing the RPN expression
-	uint32_t rpnPatchSize = 0;  // Size the expression will take in the object file
+	std::vector<RPNValue> rpn{}; // Values to be serialized into the RPN expression
 
 	bool isKnown() const { return std::holds_alternative<int32_t>(data); }
 	int32_t value() const { return std::get<int32_t>(data); }
@@ -45,11 +48,6 @@ struct Expression {
 	void makeCheckBitIndex(uint8_t mask);
 
 	void checkNBit(uint8_t n) const;
-
-private:
-	void clear();
-	uint8_t *reserveSpace(uint32_t size);
-	uint8_t *reserveSpace(uint32_t size, uint32_t patchSize);
 };
 
 bool checkNBit(int32_t v, uint8_t n, char const *name);

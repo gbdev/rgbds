@@ -12,6 +12,7 @@
 #include <string>
 #include <string_view>
 #include <utility>
+#include <variant>
 
 #include "helpers.hpp" // assume
 #include "linkdefs.hpp"
@@ -24,24 +25,6 @@
 
 using namespace std::literals;
 
-void Expression::clear() {
-	data = 0;
-	isSymbol = false;
-	rpn.clear();
-	rpnPatchSize = 0;
-}
-
-uint8_t *Expression::reserveSpace(uint32_t size) {
-	return reserveSpace(size, size);
-}
-
-uint8_t *Expression::reserveSpace(uint32_t size, uint32_t patchSize) {
-	rpnPatchSize += patchSize;
-	size_t curSize = rpn.size();
-	rpn.resize(curSize + size);
-	return &rpn[curSize];
-}
-
 int32_t Expression::getConstVal() const {
 	if (!isKnown()) {
 		error("Expected constant expression: %s", std::get<std::string>(data).c_str());
@@ -51,10 +34,10 @@ int32_t Expression::getConstVal() const {
 }
 
 Symbol const *Expression::symbolOf() const {
-	if (!isSymbol) {
+	if (rpn.size() != 1 || rpn[0].command != RPN_SYM) {
 		return nullptr;
 	}
-	return sym_FindScopedSymbol(reinterpret_cast<char const *>(&rpn[1]));
+	return sym_FindScopedSymbol(std::get<std::string>(rpn[0].data));
 }
 
 bool Expression::isDiffConstant(Symbol const *sym) const {
@@ -71,12 +54,12 @@ bool Expression::isDiffConstant(Symbol const *sym) const {
 }
 
 void Expression::makeNumber(uint32_t value) {
-	clear();
+	rpn.clear();
 	data = static_cast<int32_t>(value);
 }
 
 void Expression::makeSymbol(std::string const &symName) {
-	clear();
+	rpn.clear();
 	if (Symbol *sym = sym_FindScopedSymbol(symName); sym_IsPC(sym) && !sect_GetSymbolSection()) {
 		error("PC has no value outside of a section");
 		data = 0;
@@ -84,28 +67,20 @@ void Expression::makeSymbol(std::string const &symName) {
 		error("`%s` is not a numeric symbol", symName.c_str());
 		data = 0;
 	} else if (!sym || !sym->isConstant()) {
-		isSymbol = true;
-
 		data = sym_IsPC(sym) ? "PC is not constant at assembly time"
 		                     : (sym && sym->isDefined()
 		                            ? "`"s + symName + "` is not constant at assembly time"
 		                            : "undefined symbol `"s + symName + "`")
 		                           + (sym_IsPurgedScoped(symName) ? "; it was purged" : "");
 		sym = sym_Ref(symName);
-
-		size_t nameLen = sym->name.length() + 1; // Don't forget NUL!
-
-		// 1-byte opcode + 4-byte symbol ID
-		uint8_t *ptr = reserveSpace(nameLen + 1, 5);
-		*ptr++ = RPN_SYM;
-		memcpy(ptr, sym->name.c_str(), nameLen);
+		rpn.push_back({.command = RPN_SYM, .data = sym->name});
 	} else {
 		data = static_cast<int32_t>(sym->getConstantValue());
 	}
 }
 
 void Expression::makeBankSymbol(std::string const &symName) {
-	clear();
+	rpn.clear();
 	if (Symbol const *sym = sym_FindScopedSymbol(symName); sym_IsPC(sym)) {
 		// The @ symbol is treated differently.
 		if (std::optional<uint32_t> outputBank = sect_GetOutputBank(); !outputBank) {
@@ -113,19 +88,16 @@ void Expression::makeBankSymbol(std::string const &symName) {
 			data = 1;
 		} else if (*outputBank == UINT32_MAX) {
 			data = "Current section's bank is not known";
-
-			*reserveSpace(1) = RPN_BANK_SELF;
+			rpn.push_back({.command = RPN_BANK_SELF, .data = std::monostate{}});
 		} else {
 			data = static_cast<int32_t>(*outputBank);
 		}
-		return;
 	} else if (sym && !sym->isLabel()) {
 		error("`BANK` argument must be a label");
 		data = 1;
 	} else {
 		sym = sym_Ref(symName);
 		assume(sym); // If the symbol didn't exist, it should have been created
-
 		if (sym->getSection() && sym->getSection()->bank != UINT32_MAX) {
 			// Symbol's section is known and bank is fixed
 			data = static_cast<int32_t>(sym->getSection()->bank);
@@ -133,78 +105,51 @@ void Expression::makeBankSymbol(std::string const &symName) {
 			data = sym_IsPurgedScoped(symName)
 			           ? "`"s + symName + "`'s bank is not known; it was purged"
 			           : "`"s + symName + "`'s bank is not known";
-
-			size_t nameLen = sym->name.length() + 1; // Room for NUL!
-
-			// 1-byte opcode + 4-byte sect ID
-			uint8_t *ptr = reserveSpace(nameLen + 1, 5);
-			*ptr++ = RPN_BANK_SYM;
-			memcpy(ptr, sym->name.c_str(), nameLen);
+			rpn.push_back({.command = RPN_BANK_SYM, .data = sym->name});
 		}
 	}
 }
 
 void Expression::makeBankSection(std::string const &sectName) {
-	clear();
+	rpn.clear();
 	if (Section *sect = sect_FindSectionByName(sectName); sect && sect->bank != UINT32_MAX) {
 		data = static_cast<int32_t>(sect->bank);
 	} else {
 		data = "Section \""s + sectName + "\"'s bank is not known";
-
-		size_t nameLen = sectName.length() + 1; // Room for NUL!
-
-		uint8_t *ptr = reserveSpace(nameLen + 1);
-		*ptr++ = RPN_BANK_SECT;
-		memcpy(ptr, sectName.data(), nameLen);
+		rpn.push_back({.command = RPN_BANK_SECT, .data = sectName});
 	}
 }
 
 void Expression::makeSizeOfSection(std::string const &sectName) {
-	clear();
+	rpn.clear();
 	if (Section *sect = sect_FindSectionByName(sectName); sect && sect->isSizeKnown()) {
 		data = static_cast<int32_t>(sect->size);
 	} else {
 		data = "Section \""s + sectName + "\"'s size is not known";
-
-		size_t nameLen = sectName.length() + 1; // Room for NUL!
-
-		uint8_t *ptr = reserveSpace(nameLen + 1);
-		*ptr++ = RPN_SIZEOF_SECT;
-		memcpy(ptr, sectName.data(), nameLen);
+		rpn.push_back({.command = RPN_SIZEOF_SECT, .data = sectName});
 	}
 }
 
 void Expression::makeStartOfSection(std::string const &sectName) {
-	clear();
+	rpn.clear();
 	if (Section *sect = sect_FindSectionByName(sectName); sect && sect->org != UINT32_MAX) {
 		data = static_cast<int32_t>(sect->org);
 	} else {
 		data = "Section \""s + sectName + "\"'s start is not known";
-
-		size_t nameLen = sectName.length() + 1; // Room for NUL!
-
-		uint8_t *ptr = reserveSpace(nameLen + 1);
-		*ptr++ = RPN_STARTOF_SECT;
-		memcpy(ptr, sectName.data(), nameLen);
+		rpn.push_back({.command = RPN_STARTOF_SECT, .data = sectName});
 	}
 }
 
 void Expression::makeSizeOfSectionType(SectionType type) {
-	clear();
+	rpn.clear();
 	data = "Section type's size is not known";
-
-	uint8_t *ptr = reserveSpace(2);
-	*ptr++ = RPN_SIZEOF_SECTTYPE;
-	*ptr = type;
+	rpn.push_back({.command = RPN_SIZEOF_SECTTYPE, .data = static_cast<uint8_t>(type)});
 }
 
 void Expression::makeStartOfSectionType(SectionType type) {
-	clear();
+	rpn.clear();
 	data = "Section type's start is not known";
-
-	uint8_t *ptr = reserveSpace(2);
-	*ptr++ = RPN_STARTOF_SECTTYPE;
-	*ptr = type;
+	rpn.push_back({.command = RPN_STARTOF_SECTTYPE, .data = static_cast<uint8_t>(type)});
 }
 
 static bool tryConstZero(Expression const &lhs, Expression const &rhs) {
@@ -302,7 +247,7 @@ static int32_t tryConstMask(Expression const &lhs, Expression const &rhs) {
 }
 
 void Expression::makeUnaryOp(RPNCommand op, Expression &&src) {
-	clear();
+	rpn.clear();
 	// First, check if the expression is known
 	if (src.isKnown()) {
 		// If the expressions is known, just compute the value
@@ -339,16 +284,15 @@ void Expression::makeUnaryOp(RPNCommand op, Expression &&src) {
 	} else if (int32_t constVal; op == RPN_LOW && (constVal = tryConstLow(src)) != -1) {
 		data = constVal;
 	} else {
-		// If it's not known, just reuse its RPN buffer and append the operator
-		rpnPatchSize = src.rpnPatchSize;
-		std::swap(rpn, src.rpn);
+		// If it's not known, just reuse its RPN vector and append the operator
 		data = std::move(src.data);
-		*reserveSpace(1) = op;
+		std::swap(rpn, src.rpn);
+		rpn.push_back({.command = op, .data = std::monostate{}});
 	}
 }
 
 void Expression::makeBinaryOp(RPNCommand op, Expression &&src1, Expression const &src2) {
-	clear();
+	rpn.clear();
 	// First, check if the expressions are known
 	if (src1.isKnown() && src2.isKnown()) {
 		// If both expressions are known, just compute the value
@@ -480,57 +424,32 @@ void Expression::makeBinaryOp(RPNCommand op, Expression &&src1, Expression const
 		// Convert the left-hand expression if it's constant
 		if (src1.isKnown()) {
 			uint32_t lval = src1.value();
-			uint8_t bytes[] = {
-			    RPN_CONST,
-			    static_cast<uint8_t>(lval),
-			    static_cast<uint8_t>(lval >> 8),
-			    static_cast<uint8_t>(lval >> 16),
-			    static_cast<uint8_t>(lval >> 24),
-			};
-			rpn.clear();
-			rpnPatchSize = 0;
-			memcpy(reserveSpace(sizeof(bytes)), bytes, sizeof(bytes));
-
 			// Use the other expression's un-const reason
 			data = std::move(src2.data);
+			rpn.push_back({.command = RPN_CONST, .data = lval});
 		} else {
-			// Otherwise just reuse its RPN buffer
-			rpnPatchSize = src1.rpnPatchSize;
-			std::swap(rpn, src1.rpn);
+			// Otherwise just reuse its RPN vector
 			data = std::move(src1.data);
+			std::swap(rpn, src1.rpn);
 		}
 
 		// Now, merge the right expression into the left one
 		if (src2.isKnown()) {
-			// If the right expression is constant, append a shim instead
+			// If the right expression is constant, append its value
 			uint32_t rval = src2.value();
-			uint8_t bytes[] = {
-			    RPN_CONST,
-			    static_cast<uint8_t>(rval),
-			    static_cast<uint8_t>(rval >> 8),
-			    static_cast<uint8_t>(rval >> 16),
-			    static_cast<uint8_t>(rval >> 24),
-			};
-			uint8_t *ptr = reserveSpace(sizeof(bytes) + 1, sizeof(bytes) + 1);
-			memcpy(ptr, bytes, sizeof(bytes));
-			ptr[sizeof(bytes)] = op;
+			rpn.push_back({.command = RPN_CONST, .data = rval});
 		} else {
-			// Copy the right RPN and append the operator
-			uint32_t rightRpnSize = src2.rpn.size();
-			uint8_t *ptr = reserveSpace(rightRpnSize + 1, src2.rpnPatchSize + 1);
-			if (rightRpnSize > 0) {
-				// If `rightRpnSize == 0`, then `memcpy(ptr, nullptr, rightRpnSize)` would be UB
-				memcpy(ptr, src2.rpn.data(), rightRpnSize);
-			}
-			ptr[rightRpnSize] = op;
+			// Otherwise just extend with its RPN vector
+			rpn.insert(rpn.end(), RANGE(src2.rpn));
 		}
+		// Append the operator
+		rpn.push_back({.command = op, .data = std::monostate{}});
 	}
 }
 
 void Expression::makeCheckHRAM() {
-	isSymbol = false;
 	if (!isKnown()) {
-		*reserveSpace(1) = RPN_HRAM;
+		rpn.push_back({.command = RPN_HRAM, .data = std::monostate{}});
 	} else if (int32_t val = value(); val >= 0xFF00 && val <= 0xFFFF) {
 		// That range is valid; only keep the lower byte
 		data = val & 0xFF;
@@ -541,7 +460,7 @@ void Expression::makeCheckHRAM() {
 
 void Expression::makeCheckRST() {
 	if (!isKnown()) {
-		*reserveSpace(1) = RPN_RST;
+		rpn.push_back({.command = RPN_RST, .data = std::monostate{}});
 	} else if (int32_t val = value(); val & ~0x38) {
 		// A valid RST address must be masked with 0x38
 		error("Invalid address $%" PRIx32 " for `RST`", val);
@@ -550,11 +469,8 @@ void Expression::makeCheckRST() {
 
 void Expression::makeCheckBitIndex(uint8_t mask) {
 	assume((mask & 0xC0) != 0x00); // The high two bits must correspond to BIT, RES, or SET
-
 	if (!isKnown()) {
-		uint8_t *ptr = reserveSpace(2);
-		*ptr++ = RPN_BIT_INDEX;
-		*ptr = mask;
+		rpn.push_back({.command = RPN_BIT_INDEX, .data = mask});
 	} else if (int32_t val = value(); val & ~0x07) {
 		// A valid bit index must be masked with 0x07
 		static char const *instructions[4] = {"instruction", "`BIT`", "`RES`", "`SET`"};
