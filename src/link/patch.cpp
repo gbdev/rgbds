@@ -505,8 +505,10 @@ void patch_CheckAssertions() {
 }
 
 static void checkPatchSize(Patch const &patch, int32_t v, uint8_t n) {
-	static constexpr unsigned m = CHAR_BIT * sizeof(int);
-	if (n < m && (v < -(1 << n) || v >= 1 << n)) {
+	assume(n != 0);                     // That doesn't make sense
+	assume(n < CHAR_BIT * sizeof(int)); // Otherwise `1 << n` is UB
+
+	if (v < -(1 << n) || v >= 1 << n) {
 		diagnosticAt(
 		    patch,
 		    WARNING_TRUNCATION_1,
@@ -515,8 +517,7 @@ static void checkPatchSize(Patch const &patch, int32_t v, uint8_t n) {
 		    v < 0 ? " (may be negative?)" : "",
 		    n
 		);
-		return;
-	} else if (n < m + 1 && v < -(1 << (n - 1))) {
+	} else if (v < -(1 << (n - 1))) {
 		diagnosticAt(
 		    patch,
 		    WARNING_TRUNCATION_2,
@@ -568,7 +569,9 @@ static void applyFilePatches(Section &section, Section &dataSection) {
 			dataSection.data[offset] = jumpOffset & 0xFF;
 		} else {
 			// Patch a certain number of bytes
-			checkPatchSize(patch, value, typeSize * 8);
+			if (typeSize < sizeof(int)) {
+				checkPatchSize(patch, value, typeSize * 8);
+			}
 			for (uint8_t i = 0; i < typeSize; ++i) {
 				dataSection.data[offset + i] = value & 0xFF;
 				value >>= 8;
