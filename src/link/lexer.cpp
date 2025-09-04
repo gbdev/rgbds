@@ -13,7 +13,6 @@
 #include <vector>
 
 #include "backtrace.hpp"
-#include "helpers.hpp"
 #include "linkdefs.hpp"
 #include "util.hpp"
 

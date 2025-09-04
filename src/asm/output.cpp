@@ -12,7 +12,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <string>
-#include <variant>
 #include <vector>
 
 #include "helpers.hpp" // assume, Defer

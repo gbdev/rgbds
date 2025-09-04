@@ -8,11 +8,11 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include <string>
 #include <string_view>
 #include <utility>
 #include <variant>
+#include <vector>
 
 #include "helpers.hpp" // assume
 #include "linkdefs.hpp"
