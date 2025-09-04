@@ -1,4 +1,4 @@
-warning: Treating strings as numbers is deprecated [-Wobsolete]
+warning: Treating strings as numbers is deprecated; use character literals or `CHARVAL` instead [-Wobsolete]
     at raw-string-symbol-errors.asm(7)
 error: Strings as numbers must be a single charmap unit
     at raw-string-symbol-errors.asm(7)
@@ -10,7 +10,7 @@ error: `m` is not a string symbol
     at raw-string-symbol-errors.asm(13)
 error: `u` is not a string symbol
     at raw-string-symbol-errors.asm(14)
-warning: Treating strings as numbers is deprecated [-Wobsolete]
+warning: Treating strings as numbers is deprecated; use character literals or `CHARVAL` instead [-Wobsolete]
     at raw-string-symbol-errors.asm(17)
 error: Strings as numbers must be a single charmap unit
     at raw-string-symbol-errors.asm(17)

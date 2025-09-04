@@ -1,4 +1,4 @@
-warning: Treating strings as numbers is deprecated [-Wobsolete]
+warning: Treating strings as numbers is deprecated; use character literals or `CHARVAL` instead [-Wobsolete]
     at empty-strings.asm(5)
 error: Strings as numbers must be a single charmap unit
     at empty-strings.asm(5)

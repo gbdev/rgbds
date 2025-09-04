@@ -1,6 +1,6 @@
-warning: Treating strings as numbers is deprecated [-Wobsolete]
+warning: Treating strings as numbers is deprecated; use character literals or `CHARVAL` instead [-Wobsolete]
     at string-concat.asm(21)
-warning: Treating strings as numbers is deprecated [-Wobsolete]
+warning: Treating strings as numbers is deprecated; use character literals or `CHARVAL` instead [-Wobsolete]
     at string-concat.asm(21)
 error: syntax error, unexpected ++
     at string-concat.asm(25)
