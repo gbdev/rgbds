@@ -16,6 +16,11 @@ struct RPNValue {
 	RPNCommand command;                                                // The RPN_* command ID
 	std::variant<std::monostate, uint8_t, uint32_t, std::string> data; // Data after the ID, if any
 
+	RPNValue(RPNCommand cmd);
+	RPNValue(RPNCommand cmd, uint8_t val);
+	RPNValue(RPNCommand cmd, uint32_t val);
+	RPNValue(RPNCommand cmd, std::string const &name);
+
 	void appendEncoded(std::vector<uint8_t> &buffer) const;
 };
 

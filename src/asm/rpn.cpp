@@ -73,7 +73,7 @@ void Expression::makeSymbol(std::string const &symName) {
 		                            : "undefined symbol `"s + symName + "`")
 		                           + (sym_IsPurgedScoped(symName) ? "; it was purged" : "");
 		sym = sym_Ref(symName);
-		rpn.push_back({.command = RPN_SYM, .data = sym->name});
+		rpn.emplace_back(RPN_SYM, sym->name);
 	} else {
 		data = static_cast<int32_t>(sym->getConstantValue());
 	}
@@ -88,7 +88,7 @@ void Expression::makeBankSymbol(std::string const &symName) {
 			data = 1;
 		} else if (*outputBank == UINT32_MAX) {
 			data = "Current section's bank is not known";
-			rpn.push_back({.command = RPN_BANK_SELF, .data = std::monostate{}});
+			rpn.emplace_back(RPN_BANK_SELF);
 		} else {
 			data = static_cast<int32_t>(*outputBank);
 		}
@@ -105,7 +105,7 @@ void Expression::makeBankSymbol(std::string const &symName) {
 			data = sym_IsPurgedScoped(symName)
 			           ? "`"s + symName + "`'s bank is not known; it was purged"
 			           : "`"s + symName + "`'s bank is not known";
-			rpn.push_back({.command = RPN_BANK_SYM, .data = sym->name});
+			rpn.emplace_back(RPN_BANK_SYM, sym->name);
 		}
 	}
 }
@@ -116,7 +116,7 @@ void Expression::makeBankSection(std::string const &sectName) {
 		data = static_cast<int32_t>(sect->bank);
 	} else {
 		data = "Section \""s + sectName + "\"'s bank is not known";
-		rpn.push_back({.command = RPN_BANK_SECT, .data = sectName});
+		rpn.emplace_back(RPN_BANK_SECT, sectName);
 	}
 }
 
@@ -126,7 +126,7 @@ void Expression::makeSizeOfSection(std::string const &sectName) {
 		data = static_cast<int32_t>(sect->size);
 	} else {
 		data = "Section \""s + sectName + "\"'s size is not known";
-		rpn.push_back({.command = RPN_SIZEOF_SECT, .data = sectName});
+		rpn.emplace_back(RPN_SIZEOF_SECT, sectName);
 	}
 }
 
@@ -136,20 +136,20 @@ void Expression::makeStartOfSection(std::string const &sectName) {
 		data = static_cast<int32_t>(sect->org);
 	} else {
 		data = "Section \""s + sectName + "\"'s start is not known";
-		rpn.push_back({.command = RPN_STARTOF_SECT, .data = sectName});
+		rpn.emplace_back(RPN_STARTOF_SECT, sectName);
 	}
 }
 
 void Expression::makeSizeOfSectionType(SectionType type) {
 	assume(rpn.empty());
 	data = "Section type's size is not known";
-	rpn.push_back({.command = RPN_SIZEOF_SECTTYPE, .data = static_cast<uint8_t>(type)});
+	rpn.emplace_back(RPN_SIZEOF_SECTTYPE, static_cast<uint8_t>(type));
 }
 
 void Expression::makeStartOfSectionType(SectionType type) {
 	assume(rpn.empty());
 	data = "Section type's start is not known";
-	rpn.push_back({.command = RPN_STARTOF_SECTTYPE, .data = static_cast<uint8_t>(type)});
+	rpn.emplace_back(RPN_STARTOF_SECTTYPE, static_cast<uint8_t>(type));
 }
 
 static bool tryConstZero(Expression const &lhs, Expression const &rhs) {
@@ -287,7 +287,7 @@ void Expression::makeUnaryOp(RPNCommand op, Expression &&src) {
 		// If it's not known, just reuse its RPN vector and append the operator
 		data = std::move(src.data);
 		std::swap(rpn, src.rpn);
-		rpn.push_back({.command = op, .data = std::monostate{}});
+		rpn.emplace_back(op);
 	}
 }
 
@@ -426,7 +426,7 @@ void Expression::makeBinaryOp(RPNCommand op, Expression &&src1, Expression const
 			uint32_t lval = src1.value();
 			// Use the other expression's un-const reason
 			data = std::move(src2.data);
-			rpn.push_back({.command = RPN_CONST, .data = lval});
+			rpn.emplace_back(RPN_CONST, lval);
 		} else {
 			// Otherwise just reuse its RPN vector
 			data = std::move(src1.data);
@@ -437,19 +437,19 @@ void Expression::makeBinaryOp(RPNCommand op, Expression &&src1, Expression const
 		if (src2.isKnown()) {
 			// If the right expression is constant, append its value
 			uint32_t rval = src2.value();
-			rpn.push_back({.command = RPN_CONST, .data = rval});
+			rpn.emplace_back(RPN_CONST, rval);
 		} else {
 			// Otherwise just extend with its RPN vector
 			rpn.insert(rpn.end(), RANGE(src2.rpn));
 		}
 		// Append the operator
-		rpn.push_back({.command = op, .data = std::monostate{}});
+		rpn.emplace_back(op);
 	}
 }
 
 void Expression::addCheckHRAM() {
 	if (!isKnown()) {
-		rpn.push_back({.command = RPN_HRAM, .data = std::monostate{}});
+		rpn.emplace_back(RPN_HRAM);
 	} else if (int32_t val = value(); val >= 0xFF00 && val <= 0xFFFF) {
 		// That range is valid; only keep the lower byte
 		data = val & 0xFF;
@@ -460,7 +460,7 @@ void Expression::addCheckHRAM() {
 
 void Expression::addCheckRST() {
 	if (!isKnown()) {
-		rpn.push_back({.command = RPN_RST, .data = std::monostate{}});
+		rpn.emplace_back(RPN_RST);
 	} else if (int32_t val = value(); val & ~0x38) {
 		// A valid RST address must be masked with 0x38
 		error("Invalid address $%" PRIx32 " for `RST`", val);
@@ -470,7 +470,7 @@ void Expression::addCheckRST() {
 void Expression::addCheckBitIndex(uint8_t mask) {
 	assume((mask & 0xC0) != 0x00); // The high two bits must correspond to BIT, RES, or SET
 	if (!isKnown()) {
-		rpn.push_back({.command = RPN_BIT_INDEX, .data = mask});
+		rpn.emplace_back(RPN_BIT_INDEX, mask);
 	} else if (int32_t val = value(); val & ~0x07) {
 		// A valid bit index must be masked with 0x07
 		static char const *instructions[4] = {"instruction", "`BIT`", "`RES`", "`SET`"};
@@ -532,6 +532,29 @@ void Expression::encode(std::vector<uint8_t> &buffer) const {
 			val.appendEncoded(buffer);
 		}
 	}
+}
+
+RPNValue::RPNValue(RPNCommand cmd) : command(cmd), data(std::monostate{}) {
+	assume(
+	    cmd != RPN_SIZEOF_SECTTYPE && cmd != RPN_STARTOF_SECTTYPE && cmd != RPN_BIT_INDEX
+	    && cmd != RPN_CONST && cmd != RPN_SYM && cmd != RPN_BANK_SYM && cmd != RPN_BANK_SECT
+	    && cmd != RPN_SIZEOF_SECT && cmd != RPN_STARTOF_SECT
+	);
+}
+
+RPNValue::RPNValue(RPNCommand cmd, uint8_t val) : command(cmd), data(val) {
+	assume(cmd == RPN_SIZEOF_SECTTYPE || cmd == RPN_STARTOF_SECTTYPE || cmd == RPN_BIT_INDEX);
+}
+
+RPNValue::RPNValue(RPNCommand cmd, uint32_t val) : command(cmd), data(val) {
+	assume(cmd == RPN_CONST);
+}
+
+RPNValue::RPNValue(RPNCommand cmd, std::string const &name) : command(cmd), data(name) {
+	assume(
+	    cmd == RPN_SYM || cmd == RPN_BANK_SYM || cmd == RPN_BANK_SECT || cmd == RPN_SIZEOF_SECT
+	    || cmd == RPN_STARTOF_SECT
+	);
 }
 
 void RPNValue::appendEncoded(std::vector<uint8_t> &buffer) const {
