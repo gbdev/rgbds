@@ -29,50 +29,42 @@ static size_t parseNumber(char const *spec, size_t &value) {
 
 size_t FormatSpec::parseSpec(char const *spec) {
 	size_t i = 0;
-
 	// <sign>
 	if (char c = spec[i]; c == ' ' || c == '+') {
 		++i;
 		sign = c;
 	}
-
 	// <exact>
 	if (spec[i] == '#') {
 		++i;
 		exact = true;
 	}
-
 	// <align>
 	if (spec[i] == '-') {
 		++i;
 		alignLeft = true;
 	}
-
 	// <pad>
 	if (spec[i] == '0') {
 		++i;
 		padZero = true;
 	}
-
 	// <width>
 	if (isDigit(spec[i])) {
 		i += parseNumber(&spec[i], width);
 	}
-
 	// <frac>
 	if (spec[i] == '.') {
 		++i;
 		hasFrac = true;
 		i += parseNumber(&spec[i], fracWidth);
 	}
-
 	// <prec>
 	if (spec[i] == 'q') {
 		++i;
 		hasPrec = true;
 		i += parseNumber(&spec[i], precision);
 	}
-
 	// <type>
 	switch (char c = spec[i]; c) {
 	case 'd':
@@ -87,7 +79,7 @@ size_t FormatSpec::parseSpec(char const *spec) {
 		type = c;
 		break;
 	}
-
+	// Done parsing
 	parsed = true;
 	return i;
 }
@@ -188,36 +180,32 @@ void FormatSpec::appendNumber(std::string &str, uint32_t value) const {
 	if (useType == 'd' || useType == 'f') {
 		if (int32_t v = value; v < 0) {
 			signChar = '-';
-			if (v != INT32_MIN) {
+			if (v != INT32_MIN) { // -INT32_MIN is UB
 				value = -v;
 			}
 		}
 	}
 
-	char prefixChar = !useExact        ? 0
-	                  : useType == 'X' ? '$'
-	                  : useType == 'x' ? '$'
-	                  : useType == 'b' ? '%'
-	                  : useType == 'o' ? '&'
-	                                   : 0;
-
-	char valueBuf[262]; // Max 5 digits + decimal + 255 fraction digits + terminator
-
+	// The longest possible formatted number is fixed-point with 10 digits, 255 fractional digits,
+	// and a precision suffix, for 270 total bytes (counting the NUL terminator).
+	// (Actually 269 since a 2-digit precision cannot reach 10 integer digits.)
+	// Make the buffer somewhat larger just in case.
+	char valueBuf[300];
 	if (useType == 'b') {
-		// Special case for binary
-		char *ptr = valueBuf;
+		// Special case for binary (since `snprintf` doesn't support it)
 
+		// Buffer the digits from least to greatest
+		char *ptr = valueBuf;
 		do {
 			*ptr++ = (value & 1) + '0';
 			value >>= 1;
 		} while (value);
 
-		// Reverse the digits
+		// Reverse the digits and terminate the string
 		std::reverse(valueBuf, ptr);
-
 		*ptr = '\0';
 	} else if (useType == 'f') {
-		// Special case for fixed-point
+		// Special case for fixed-point (since it needs fractional part and precision)
 
 		// Default fractional width (C++'s is 6 for "%f"; here 5 is enough for Q16.16)
 		size_t useFracWidth = hasFrac ? fracWidth : 5;
@@ -226,6 +214,7 @@ void FormatSpec::appendNumber(std::string &str, uint32_t value) const {
 			useFracWidth = 255;
 		}
 
+		// Default precision taken from default `-Q` option
 		size_t defaultPrec = options.fixPrecision;
 		size_t usePrec = hasPrec ? precision : defaultPrec;
 		if (usePrec < 1 || usePrec > 31) {
@@ -237,28 +226,29 @@ void FormatSpec::appendNumber(std::string &str, uint32_t value) const {
 			usePrec = defaultPrec;
 		}
 
+		// Floating-point formatting works for all fixed-point values
 		double fval = fabs(value / pow(2.0, usePrec));
 		if (int fracWidthArg = static_cast<int>(useFracWidth); useExact) {
 			snprintf(valueBuf, sizeof(valueBuf), "%.*fq%zu", fracWidthArg, fval, usePrec);
 		} else {
 			snprintf(valueBuf, sizeof(valueBuf), "%.*f", fracWidthArg, fval);
 		}
-	} else if (useType == 'd') {
-		// Decimal numbers may be formatted with a '-' sign by `snprintf`, so `abs` prevents that,
-		// with a special case for `INT32_MIN` since `labs(INT32_MIN)` is UB. The sign will be
-		// printed later from `signChar`.
-		uint32_t uval =
-		    value != static_cast<uint32_t>(INT32_MIN) ? labs(static_cast<int32_t>(value)) : value;
-		snprintf(valueBuf, sizeof(valueBuf), "%" PRIu32, uval);
 	} else {
-		char const *spec = useType == 'u'   ? "%" PRIu32
-		                   : useType == 'X' ? "%" PRIX32
-		                   : useType == 'x' ? "%" PRIx32
-		                   : useType == 'o' ? "%" PRIo32
-		                                    : "%" PRIu32;
-
+		// `value` has already been made non-negative, so type 'd' is OK here even for `INT32_MIN`.
+		// The sign will be printed later from `signChar`.
+		char const *spec = useType == 'd' || useType == 'u' ? "%" PRIu32
+		                   : useType == 'X'                 ? "%" PRIX32
+		                   : useType == 'x'                 ? "%" PRIx32
+		                   : useType == 'o'                 ? "%" PRIo32
+		                                                    : "%" PRIu32;
 		snprintf(valueBuf, sizeof(valueBuf), spec, value);
 	}
+
+	char prefixChar = !useExact                          ? 0
+	                  : useType == 'X' || useType == 'x' ? '$'
+	                  : useType == 'b'                   ? '%'
+	                  : useType == 'o'                   ? '&'
+	                                                     : 0;
 
 	size_t valueLen = strlen(valueBuf);
 	size_t numLen = (signChar != 0) + (prefixChar != 0) + valueLen;

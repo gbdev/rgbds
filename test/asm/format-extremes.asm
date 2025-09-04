@@ -6,3 +6,5 @@ ENDM
 	test $8000_0000 ; INT32_MIN
 	test $0000_0000 ; UINT32_MIN
 	test $ffff_ffff ; UINT32_MAX
+
+println strfmt("%#.255q1f", $7fff_ffff)
