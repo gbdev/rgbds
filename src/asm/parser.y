@@ -1891,7 +1891,7 @@ sm83_and:
 sm83_bit:
 	SM83_BIT reloc_3bit COMMA reg_r {
 		uint8_t mask = static_cast<uint8_t>(0x40 | $4);
-		$2.makeCheckBitIndex(mask);
+		$2.addCheckBitIndex(mask);
 		sect_ConstByte(0xCB);
 		if (!$2.isKnown()) {
 			sect_RelByte($2, 0);
@@ -2024,7 +2024,7 @@ sm83_ldd:
 
 sm83_ldh:
 	SM83_LDH MODE_A COMMA op_mem_ind {
-		$4.makeCheckHRAM();
+		$4.addCheckHRAM();
 		sect_ConstByte(0xF0);
 		if (!$4.isKnown()) {
 			sect_RelByte($4, 1);
@@ -2033,7 +2033,7 @@ sm83_ldh:
 		}
 	}
 	| SM83_LDH op_mem_ind COMMA MODE_A {
-		$2.makeCheckHRAM();
+		$2.addCheckHRAM();
 		sect_ConstByte(0xE0);
 		if (!$2.isKnown()) {
 			sect_RelByte($2, 1);
@@ -2217,7 +2217,7 @@ sm83_push:
 sm83_res:
 	SM83_RES reloc_3bit COMMA reg_r {
 		uint8_t mask = static_cast<uint8_t>(0x80 | $4);
-		$2.makeCheckBitIndex(mask);
+		$2.addCheckBitIndex(mask);
 		sect_ConstByte(0xCB);
 		if (!$2.isKnown()) {
 			sect_RelByte($2, 0);
@@ -2296,7 +2296,7 @@ sm83_rrca:
 
 sm83_rst:
 	SM83_RST reloc_8bit {
-		$2.makeCheckRST();
+		$2.addCheckRST();
 		if (!$2.isKnown()) {
 			sect_RelByte($2, 0);
 		} else {
@@ -2324,7 +2324,7 @@ sm83_scf:
 sm83_set:
 	SM83_SET reloc_3bit COMMA reg_r {
 		uint8_t mask = static_cast<uint8_t>(0xC0 | $4);
-		$2.makeCheckBitIndex(mask);
+		$2.addCheckBitIndex(mask);
 		sect_ConstByte(0xCB);
 		if (!$2.isKnown()) {
 			sect_RelByte($2, 0);

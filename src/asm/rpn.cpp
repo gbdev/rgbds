@@ -54,12 +54,12 @@ bool Expression::isDiffConstant(Symbol const *sym) const {
 }
 
 void Expression::makeNumber(uint32_t value) {
-	rpn.clear();
+	assume(rpn.empty());
 	data = static_cast<int32_t>(value);
 }
 
 void Expression::makeSymbol(std::string const &symName) {
-	rpn.clear();
+	assume(rpn.empty());
 	if (Symbol *sym = sym_FindScopedSymbol(symName); sym_IsPC(sym) && !sect_GetSymbolSection()) {
 		error("PC has no value outside of a section");
 		data = 0;
@@ -80,7 +80,7 @@ void Expression::makeSymbol(std::string const &symName) {
 }
 
 void Expression::makeBankSymbol(std::string const &symName) {
-	rpn.clear();
+	assume(rpn.empty());
 	if (Symbol const *sym = sym_FindScopedSymbol(symName); sym_IsPC(sym)) {
 		// The @ symbol is treated differently.
 		if (std::optional<uint32_t> outputBank = sect_GetOutputBank(); !outputBank) {
@@ -111,7 +111,7 @@ void Expression::makeBankSymbol(std::string const &symName) {
 }
 
 void Expression::makeBankSection(std::string const &sectName) {
-	rpn.clear();
+	assume(rpn.empty());
 	if (Section *sect = sect_FindSectionByName(sectName); sect && sect->bank != UINT32_MAX) {
 		data = static_cast<int32_t>(sect->bank);
 	} else {
@@ -121,7 +121,7 @@ void Expression::makeBankSection(std::string const &sectName) {
 }
 
 void Expression::makeSizeOfSection(std::string const &sectName) {
-	rpn.clear();
+	assume(rpn.empty());
 	if (Section *sect = sect_FindSectionByName(sectName); sect && sect->isSizeKnown()) {
 		data = static_cast<int32_t>(sect->size);
 	} else {
@@ -131,7 +131,7 @@ void Expression::makeSizeOfSection(std::string const &sectName) {
 }
 
 void Expression::makeStartOfSection(std::string const &sectName) {
-	rpn.clear();
+	assume(rpn.empty());
 	if (Section *sect = sect_FindSectionByName(sectName); sect && sect->org != UINT32_MAX) {
 		data = static_cast<int32_t>(sect->org);
 	} else {
@@ -141,13 +141,13 @@ void Expression::makeStartOfSection(std::string const &sectName) {
 }
 
 void Expression::makeSizeOfSectionType(SectionType type) {
-	rpn.clear();
+	assume(rpn.empty());
 	data = "Section type's size is not known";
 	rpn.push_back({.command = RPN_SIZEOF_SECTTYPE, .data = static_cast<uint8_t>(type)});
 }
 
 void Expression::makeStartOfSectionType(SectionType type) {
-	rpn.clear();
+	assume(rpn.empty());
 	data = "Section type's start is not known";
 	rpn.push_back({.command = RPN_STARTOF_SECTTYPE, .data = static_cast<uint8_t>(type)});
 }
@@ -247,7 +247,7 @@ static int32_t tryConstMask(Expression const &lhs, Expression const &rhs) {
 }
 
 void Expression::makeUnaryOp(RPNCommand op, Expression &&src) {
-	rpn.clear();
+	assume(rpn.empty());
 	// First, check if the expression is known
 	if (src.isKnown()) {
 		// If the expressions is known, just compute the value
@@ -292,7 +292,7 @@ void Expression::makeUnaryOp(RPNCommand op, Expression &&src) {
 }
 
 void Expression::makeBinaryOp(RPNCommand op, Expression &&src1, Expression const &src2) {
-	rpn.clear();
+	assume(rpn.empty());
 	// First, check if the expressions are known
 	if (src1.isKnown() && src2.isKnown()) {
 		// If both expressions are known, just compute the value
@@ -447,7 +447,7 @@ void Expression::makeBinaryOp(RPNCommand op, Expression &&src1, Expression const
 	}
 }
 
-void Expression::makeCheckHRAM() {
+void Expression::addCheckHRAM() {
 	if (!isKnown()) {
 		rpn.push_back({.command = RPN_HRAM, .data = std::monostate{}});
 	} else if (int32_t val = value(); val >= 0xFF00 && val <= 0xFFFF) {
@@ -458,7 +458,7 @@ void Expression::makeCheckHRAM() {
 	}
 }
 
-void Expression::makeCheckRST() {
+void Expression::addCheckRST() {
 	if (!isKnown()) {
 		rpn.push_back({.command = RPN_RST, .data = std::monostate{}});
 	} else if (int32_t val = value(); val & ~0x38) {
@@ -467,7 +467,7 @@ void Expression::makeCheckRST() {
 	}
 }
 
-void Expression::makeCheckBitIndex(uint8_t mask) {
+void Expression::addCheckBitIndex(uint8_t mask) {
 	assume((mask & 0xC0) != 0x00); // The high two bits must correspond to BIT, RES, or SET
 	if (!isKnown()) {
 		rpn.push_back({.command = RPN_BIT_INDEX, .data = mask});
