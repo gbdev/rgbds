@@ -108,7 +108,7 @@ static yy::parser::symbol_type parseDecNumber(int c) {
 }
 
 static bool isBinDigit(int c) {
-	return c >= '0' && c <= '1';
+	return c == '0' || c == '1';
 }
 
 static yy::parser::symbol_type parseBinNumber(char const *prefix) {
@@ -147,18 +147,6 @@ static yy::parser::symbol_type parseOctNumber(char const *prefix) {
 		context.file.sbumpc();
 	}
 	return yy::parser::make_number(number);
-}
-
-static uint8_t parseHexDigit(int c) {
-	if (isDigit(c)) {
-		return c - '0';
-	} else if (c >= 'A' && c <= 'F') {
-		return c - 'A' + 10;
-	} else if (c >= 'a' && c <= 'f') {
-		return c - 'a' + 10;
-	} else {
-		unreachable_(); // LCOV_EXCL_LINE
-	}
 }
 
 static yy::parser::symbol_type parseHexNumber(char const *prefix) {

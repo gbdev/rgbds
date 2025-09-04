@@ -5,6 +5,8 @@
 #include <stdint.h>
 #include <stdio.h>
 
+#include "helpers.hpp" // assume
+
 bool isNewline(int c) {
 	return c == '\r' || c == '\n';
 }
@@ -49,6 +51,17 @@ bool startsIdentifier(int c) {
 
 bool continuesIdentifier(int c) {
 	return startsIdentifier(c) || isDigit(c) || c == '#' || c == '$' || c == '@';
+}
+
+uint8_t parseHexDigit(int c) {
+	if (c >= 'A' && c <= 'F') {
+		return c - 'A' + 10;
+	} else if (c >= 'a' && c <= 'f') {
+		return c - 'a' + 10;
+	} else {
+		assume(isDigit(c));
+		return c - '0';
+	}
 }
 
 char const *printChar(int c) {

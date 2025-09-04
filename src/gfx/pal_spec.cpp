@@ -37,24 +37,11 @@ static void skipBlankSpace(Str const &str, size_t &pos) {
 	pos = std::min(str.find_first_not_of(" \t"sv, pos), str.length());
 }
 
-static constexpr uint8_t nibble(char c) {
-	if (c >= 'a') {
-		assume(c <= 'f');
-		return c - 'a' + 10;
-	} else if (c >= 'A') {
-		assume(c <= 'F');
-		return c - 'A' + 10;
-	} else {
-		assume(isDigit(c));
-		return c - '0';
-	}
+static uint8_t toHex(char c1, char c2) {
+	return parseHexDigit(c1) * 16 + parseHexDigit(c2);
 }
 
-static constexpr uint8_t toHex(char c1, char c2) {
-	return nibble(c1) * 16 + nibble(c2);
-}
-
-static constexpr uint8_t singleToHex(char c) {
+static uint8_t singleToHex(char c) {
 	return toHex(c, c);
 }
 

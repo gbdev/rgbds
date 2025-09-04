@@ -7,6 +7,7 @@
 #include <ctype.h>
 #include <numeric>
 #include <stddef.h>
+#include <stdint.h>
 #include <string>
 #include <unordered_map>
 
@@ -24,6 +25,8 @@ bool isAlphanumeric(int c);
 
 bool startsIdentifier(int c);
 bool continuesIdentifier(int c);
+
+uint8_t parseHexDigit(int c);
 
 char const *printChar(int c);
 
