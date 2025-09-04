@@ -512,3 +512,81 @@ bool checkNBit(int32_t v, uint8_t n, char const *name) {
 
 	return true;
 }
+
+void Expression::encode(std::vector<uint8_t> &buffer) const {
+	assume(buffer.empty());
+
+	if (isKnown()) {
+		// If the RPN expression's value is known, output a constant directly
+		uint32_t val = value();
+		buffer.resize(5);
+		buffer[0] = RPN_CONST;
+		buffer[1] = val & 0xFF;
+		buffer[2] = val >> 8;
+		buffer[3] = val >> 16;
+		buffer[4] = val >> 24;
+	} else {
+		// If the RPN expression's value is not known, serialize its RPN values
+		buffer.reserve(rpn.size() * 2); // Rough estimate of the serialized size
+		for (RPNValue const &val : rpn) {
+			val.appendEncoded(buffer);
+		}
+	}
+}
+
+void RPNValue::appendEncoded(std::vector<uint8_t> &buffer) const {
+	// Every command starts with its own ID
+	buffer.push_back(command);
+
+	switch (command) {
+	case RPN_CONST: {
+		// The command ID is followed by a four-byte integer
+		assume(std::holds_alternative<uint32_t>(data));
+		uint32_t val = std::get<uint32_t>(data);
+		buffer.push_back(val & 0xFF);
+		buffer.push_back(val >> 8);
+		buffer.push_back(val >> 16);
+		buffer.push_back(val >> 24);
+		break;
+	}
+
+	case RPN_SYM:
+	case RPN_BANK_SYM: {
+		// The command ID is followed by a four-byte symbol ID
+		assume(std::holds_alternative<std::string>(data));
+		// The symbol name is always written expanded
+		Symbol *sym = sym_FindExactSymbol(std::get<std::string>(data));
+		out_RegisterSymbol(*sym); // Ensure that `sym->ID` is set
+		buffer.push_back(sym->ID & 0xFF);
+		buffer.push_back(sym->ID >> 8);
+		buffer.push_back(sym->ID >> 16);
+		buffer.push_back(sym->ID >> 24);
+		break;
+	}
+
+	case RPN_BANK_SECT:
+	case RPN_SIZEOF_SECT:
+	case RPN_STARTOF_SECT: {
+		// The command ID is followed by a NUL-terminated section name string
+		assume(std::holds_alternative<std::string>(data));
+		std::string const &name = std::get<std::string>(data);
+		buffer.reserve(buffer.size() + name.length() + 1);
+		buffer.insert(buffer.end(), RANGE(name));
+		buffer.push_back('\0');
+		break;
+	}
+
+	case RPN_SIZEOF_SECTTYPE:
+	case RPN_STARTOF_SECTTYPE:
+	case RPN_BIT_INDEX:
+		// The command ID is followed by a byte value
+		assume(std::holds_alternative<uint8_t>(data));
+		buffer.push_back(std::get<uint8_t>(data));
+		break;
+
+	default:
+		// Other command IDs are not followed by anything
+		assume(std::holds_alternative<std::monostate>(data));
+		break;
+	}
+}

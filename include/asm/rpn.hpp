@@ -13,8 +13,10 @@
 struct Symbol;
 
 struct RPNValue {
-	RPNCommand command;
-	std::variant<std::monostate, uint8_t, uint32_t, std::string> data;
+	RPNCommand command;                                                // The RPN_* command ID
+	std::variant<std::monostate, uint8_t, uint32_t, std::string> data; // Data after the ID, if any
+
+	void appendEncoded(std::vector<uint8_t> &buffer) const;
 };
 
 struct Expression {
@@ -48,6 +50,8 @@ struct Expression {
 	void addCheckBitIndex(uint8_t mask);
 
 	void checkNBit(uint8_t n) const;
+
+	void encode(std::vector<uint8_t> &buffer) const;
 };
 
 bool checkNBit(int32_t v, uint8_t n, char const *name);

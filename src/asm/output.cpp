@@ -124,7 +124,7 @@ static void writeSymbol(Symbol const &sym, FILE *file) {
 	}
 }
 
-static void registerUnregisteredSymbol(Symbol &sym) {
+void out_RegisterSymbol(Symbol &sym) {
 	// Check for `sym.src`, to skip any built-in symbol from rgbasm
 	if (sym.src && sym.ID == UINT32_MAX && !sym_IsPC(&sym)) {
 		sym.ID = objectSymbols.size(); // Set the symbol's ID within the object file
@@ -142,79 +142,7 @@ static void initPatch(Patch &patch, uint32_t type, Expression const &expr, uint3
 	patch.offset = ofs;
 	patch.pcSection = sect_GetSymbolSection();
 	patch.pcOffset = sect_GetSymbolOffset();
-
-	if (expr.isKnown()) {
-		// If the RPN expr's value is known, output a constant directly
-		uint32_t val = expr.value();
-		patch.rpn.resize(5);
-		patch.rpn[0] = RPN_CONST;
-		patch.rpn[1] = val & 0xFF;
-		patch.rpn[2] = val >> 8;
-		patch.rpn[3] = val >> 16;
-		patch.rpn[4] = val >> 24;
-		return;
-	}
-
-	// If the RPN expr's value is not known, serialize its RPN values
-	patch.rpn.clear();
-	patch.rpn.reserve(expr.rpn.size() * 2); // Rough estimate of the serialized size
-
-	for (RPNValue const &value : expr.rpn) {
-		// Every command starts with its own ID
-		patch.rpn.push_back(value.command);
-
-		switch (value.command) {
-		case RPN_CONST: {
-			// The command ID is followed by a four-byte integer
-			assume(std::holds_alternative<uint32_t>(value.data));
-			uint32_t v = std::get<uint32_t>(value.data);
-			patch.rpn.push_back(v & 0xFF);
-			patch.rpn.push_back(v >> 8);
-			patch.rpn.push_back(v >> 16);
-			patch.rpn.push_back(v >> 24);
-			break;
-		}
-
-		case RPN_SYM:
-		case RPN_BANK_SYM: {
-			// The command ID is followed by a four-byte symbol ID
-			assume(std::holds_alternative<std::string>(value.data));
-			// The symbol name is always written expanded
-			Symbol *sym = sym_FindExactSymbol(std::get<std::string>(value.data));
-			registerUnregisteredSymbol(*sym); // Ensure that `sym->ID` is set
-			patch.rpn.push_back(sym->ID & 0xFF);
-			patch.rpn.push_back(sym->ID >> 8);
-			patch.rpn.push_back(sym->ID >> 16);
-			patch.rpn.push_back(sym->ID >> 24);
-			break;
-		}
-
-		case RPN_BANK_SECT:
-		case RPN_SIZEOF_SECT:
-		case RPN_STARTOF_SECT: {
-			// The command ID is followed by a NUL-terminated section name string
-			assume(std::holds_alternative<std::string>(value.data));
-			for (char c : std::get<std::string>(value.data)) {
-				patch.rpn.push_back(c);
-			}
-			patch.rpn.push_back('\0');
-			break;
-		}
-
-		case RPN_SIZEOF_SECTTYPE:
-		case RPN_STARTOF_SECTTYPE:
-		case RPN_BIT_INDEX:
-			// The command ID is followed by a byte value
-			assume(std::holds_alternative<uint8_t>(value.data));
-			patch.rpn.push_back(std::get<uint8_t>(value.data));
-			break;
-
-		default:
-			// Other command IDs are not followed by anything
-			assume(std::holds_alternative<std::monostate>(value.data));
-			break;
-		}
-	}
+	expr.encode(patch.rpn);
 }
 
 void out_CreatePatch(uint32_t type, Expression const &expr, uint32_t ofs, uint32_t pcShift) {
@@ -286,7 +214,7 @@ void out_WriteObject() {
 	Defer closeFile{[&] { fclose(file); }};
 
 	// Also write symbols that weren't written above
-	sym_ForEach(registerUnregisteredSymbol);
+	sym_ForEach(out_RegisterSymbol);
 
 	fputs(RGBDS_OBJECT_VERSION_STRING, file);
 	putLong(RGBDS_OBJECT_REV, file);
