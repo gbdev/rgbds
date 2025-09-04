@@ -22,8 +22,10 @@ error: Invalid integer constant, trailing '_'
     at invalid-underscore.asm(26)
 error: Invalid graphics constant, trailing '_'
     at invalid-underscore.asm(27)
+error: Invalid fixed-point constant, trailing '_'
+    at invalid-underscore.asm(28)
 error: Invalid integer constant, trailing '_'
-    at invalid-underscore.asm(30)
-error: Invalid integer constant, '_' after another '_'
     at invalid-underscore.asm(31)
-Assembly aborted with 14 errors!
+error: Invalid integer constant, '_' after another '_'
+    at invalid-underscore.asm(32)
+Assembly aborted with 15 errors!

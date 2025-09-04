@@ -47,7 +47,9 @@ void act_Elif(int32_t condition) {
 		if (lexer_ReachedELSEBlock()) {
 			fatal("Found `ELIF` after an `ELSE` block");
 		}
-		lexer_SetMode(LEXER_SKIP_TO_ENDC);
+		// This should be redundant, as the lexer will have skipped to `ENDC` since
+		// an `ELIF` after a taken `IF` needs to not evaluate its condition.
+		lexer_SetMode(LEXER_SKIP_TO_ENDC); // LCOV_EXCL_LINE
 	} else if (condition) {
 		lexer_RunIFBlock();
 	} else {
@@ -61,7 +63,8 @@ void act_Else() {
 	}
 	if (lexer_RanIFBlock()) {
 		if (lexer_ReachedELSEBlock()) {
-			fatal("Found `ELSE` after an `ELSE` block");
+			// This should be redundant, as the lexer handles this error first.
+			fatal("Found `ELSE` after an `ELSE` block"); // LCOV_EXCL_LINE
 		}
 		lexer_SetMode(LEXER_SKIP_TO_ENDC);
 	} else {

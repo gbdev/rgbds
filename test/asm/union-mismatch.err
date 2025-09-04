@@ -1,0 +1,4 @@
+error: Section already declared as fixed at incompatible address $c001
+    at union-mismatch.asm(2)
+FATAL: Cannot create section "fixed" (1 error)
+    at union-mismatch.asm(2)

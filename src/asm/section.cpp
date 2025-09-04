@@ -406,13 +406,16 @@ static Section *getSection(
 		bank = sectionTypeInfo[type].firstBank;
 	}
 
+	// This should be redundant, as the parser guarantees that `AlignmentSpec` will be valid.
 	if (alignOffset >= alignSize) {
+		// LCOV_EXCL_START
 		error(
 		    "Alignment offset (%" PRIu16 ") must be smaller than alignment size (%" PRIu32 ")",
 		    alignOffset,
 		    alignSize
 		);
 		alignOffset = 0;
+		// LCOV_EXCL_STOP
 	}
 
 	if (org != UINT32_MAX) {

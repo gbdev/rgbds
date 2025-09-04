@@ -1,0 +1,4 @@
+error: Section already declared as fixed at incompatible address $c002
+    at fragment-align-mismatch.asm(2)
+FATAL: Cannot create section "aligned" (1 error)
+    at fragment-align-mismatch.asm(2)

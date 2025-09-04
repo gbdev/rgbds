@@ -25,6 +25,7 @@ println 0b101010_
 println 0o123456_
 println 0xabcdef_
 println `01230123_
+println 123.456_
 
 ; bad ('_' next to '.')
 println 1_.618

@@ -1,0 +1,2 @@
+FATAL: Cannot output fragment literals outside of a `SECTION`
+    at fragment-literal-outside-section.asm(1)
