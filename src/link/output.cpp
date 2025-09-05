@@ -317,12 +317,12 @@ static bool compareSymbols(SortedSymbol const &sym1, SortedSymbol const &sym2) {
 template<typename F>
 static void forEachSortedSection(SortedSections const &bankSections, F callback) {
 	for (Section const *sect : bankSections.zeroLenSections) {
-		for (; sect; sect = sect->nextu.get()) {
+		for (; sect != nullptr; sect = sect->nextPiece.get()) {
 			callback(*sect);
 		}
 	}
 	for (Section const *sect : bankSections.sections) {
-		for (; sect; sect = sect->nextu.get()) {
+		for (; sect != nullptr; sect = sect->nextPiece.get()) {
 			callback(*sect);
 		}
 	}
@@ -349,13 +349,14 @@ static void writeSymBank(SortedSections const &bankSections, SectionType type, u
 			if (sym->name.empty() || !startsIdentifier(sym->name[0])) {
 				continue;
 			}
-			uint16_t addr = static_cast<uint16_t>(sym->label().offset + sect.org);
+			assume(std::holds_alternative<Label>(sym->data));
+			uint16_t addr = static_cast<uint16_t>(std::get<Label>(sym->data).offset + sect.org);
 			uint16_t parentAddr = addr;
 			if (auto pos = sym->name.find('.'); pos != std::string::npos) {
 				std::string parentName = sym->name.substr(0, pos);
 				if (Symbol const *parentSym = sym_GetSymbol(parentName);
 				    parentSym && std::holds_alternative<Label>(parentSym->data)) {
-					Label const &parentLabel = parentSym->label();
+					Label const &parentLabel = std::get<Label>(parentSym->data);
 					Section const &parentSection = *parentLabel.section;
 					parentAddr = static_cast<uint16_t>(parentLabel.offset + parentSection.org);
 				}
@@ -435,7 +436,7 @@ uint16_t forEachSection(SortedSections const &sectList, F callback) {
 static void writeMapSymbols(Section const *sect) {
 	uint16_t org = sect->org;
 
-	for (bool announced = true; sect; sect = sect->nextu.get(), announced = false) {
+	for (bool announced = true; sect != nullptr; sect = sect->nextPiece.get(), announced = false) {
 		for (Symbol *sym : sect->symbols) {
 			// Don't output symbols that begin with an illegal character
 			if (sym->name.empty() || !startsIdentifier(sym->name[0])) {
@@ -450,8 +451,10 @@ static void writeMapSymbols(Section const *sect) {
 				}
 				announced = true;
 			}
+			assume(std::holds_alternative<Label>(sym->data));
+			uint32_t address = std::get<Label>(sym->data).offset + org;
 			// Space matches "\tSECTION: $xxxx ..."
-			fprintf(mapFile, "\t         $%04" PRIx32 " = ", sym->label().offset + org);
+			fprintf(mapFile, "\t         $%04" PRIx32 " = ", address);
 			writeSymName(sym->name, mapFile);
 			putc('\n', mapFile);
 		}

@@ -390,25 +390,6 @@ static void readSection(
 	}
 }
 
-// Links a symbol to a section, keeping the section's symbol list sorted.
-static void linkSymToSect(Symbol &symbol, Section &section) {
-	uint32_t a = 0, b = section.symbols.size();
-	int32_t symbolOffset = symbol.label().offset;
-
-	while (a != b) {
-		uint32_t c = (a + b) / 2;
-		int32_t otherOffset = section.symbols[c]->label().offset;
-
-		if (otherOffset > symbolOffset) {
-			b = c;
-		} else {
-			a = c + 1;
-		}
-	}
-
-	section.symbols.insert(section.symbols.begin() + a, &symbol);
-}
-
 // Reads an assertion from a file.
 static void readAssertion(
     FILE *file,
@@ -512,15 +493,11 @@ void obj_ReadFile(char const *fileName, unsigned int fileID) {
 	std::vector<uint32_t> nbSymPerSect(nbSections, 0);
 
 	verbosePrint(VERB_INFO, "Reading %" PRIu32 " symbols...\n", nbSymbols);
-	for (uint32_t i = 0; i < nbSymbols; ++i) {
-		// Read symbol
-		Symbol &symbol = fileSymbols[i];
-
-		readSymbol(file, symbol, fileName, nodes[fileID]);
-
-		sym_AddSymbol(symbol);
-		if (std::holds_alternative<Label>(symbol.data)) {
-			++nbSymPerSect[std::get<Label>(symbol.data).sectionID];
+	for (Symbol &sym : fileSymbols) {
+		readSymbol(file, sym, fileName, nodes[fileID]);
+		sym_AddSymbol(sym);
+		if (std::holds_alternative<Label>(sym.data)) {
+			++nbSymPerSect[std::get<Label>(sym.data).sectionID];
 		}
 	}
 
@@ -529,9 +506,8 @@ void obj_ReadFile(char const *fileName, unsigned int fileID) {
 
 	verbosePrint(VERB_INFO, "Reading %" PRIu32 " sections...\n", nbSections);
 	for (uint32_t i = 0; i < nbSections; ++i) {
-		// Read section
 		fileSections[i] = std::make_unique<Section>();
-		fileSections[i]->nextu = nullptr;
+		fileSections[i]->nextPiece = nullptr;
 		readSection(file, *fileSections[i], fileName, nodes[fileID]);
 		fileSections[i]->fileSymbols = &fileSymbols;
 		fileSections[i]->symbols.reserve(nbSymPerSect[i]);
@@ -549,21 +525,18 @@ void obj_ReadFile(char const *fileName, unsigned int fileID) {
 	}
 
 	// Give patches' PC section pointers to their sections
-	for (uint32_t i = 0; i < nbSections; ++i) {
-		if (sectTypeHasData(fileSections[i]->type)) {
-			for (Patch &patch : fileSections[i]->patches) {
+	for (std::unique_ptr<Section> const &sect : fileSections) {
+		if (sectTypeHasData(sect->type)) {
+			for (Patch &patch : sect->patches) {
 				linkPatchToPCSect(patch, fileSections);
 			}
 		}
 	}
 
 	// Give symbols' section pointers to their sections
-	for (uint32_t i = 0; i < nbSymbols; ++i) {
-		if (std::holds_alternative<Label>(fileSymbols[i].data)) {
-			Label &label = std::get<Label>(fileSymbols[i].data);
-			label.section = fileSections[label.sectionID].get();
-			// Give the section a pointer to the symbol as well
-			linkSymToSect(fileSymbols[i], *label.section);
+	for (Symbol &sym : fileSymbols) {
+		if (std::holds_alternative<Label>(sym.data)) {
+			sym.linkToSection(*fileSections[std::get<Label>(sym.data).sectionID]);
 		}
 	}
 
@@ -572,23 +545,11 @@ void obj_ReadFile(char const *fileName, unsigned int fileID) {
 		sect_AddSection(std::move(fileSections[i]));
 	}
 
-	// Fix symbols' section pointers to component sections
+	// Fix symbols' section pointers to section "pieces"
 	// This has to run **after** all the `sect_AddSection()` calls,
 	// so that `sect_GetSection()` will work
-	for (uint32_t i = 0; i < nbSymbols; ++i) {
-		if (std::holds_alternative<Label>(fileSymbols[i].data)) {
-			Label &label = std::get<Label>(fileSymbols[i].data);
-			Section *section = label.section;
-			if (section->modifier != SECTION_NORMAL) {
-				// Associate the symbol with the main section, not the "component" one
-				label.section = sect_GetSection(section->name);
-			}
-			if (section->modifier == SECTION_FRAGMENT) {
-				// Add the fragment's offset to the symbol's
-				// (`section->offset` is computed by `sect_AddSection`)
-				label.offset += section->offset;
-			}
-		}
+	for (Symbol &sym : fileSymbols) {
+		sym.fixSectionOffset();
 	}
 }
 

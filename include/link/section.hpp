@@ -48,7 +48,7 @@ struct Section {
 	// Extra info computed during linking
 	std::vector<Symbol> *fileSymbols;
 	std::vector<Symbol *> symbols;
-	std::unique_ptr<Section> nextu; // The next "component" of this unionized sect
+	std::unique_ptr<Section> nextPiece; // The next fragment or union "piece" of this section
 };
 
 // Execute a callback for each section currently registered.

@@ -33,8 +33,8 @@ struct Symbol {
 	    >
 	    data;
 
-	Label &label() { return std::get<Label>(data); }
-	Label const &label() const { return std::get<Label>(data); }
+	void linkToSection(Section &section);
+	void fixSectionOffset();
 };
 
 void sym_ForEach(void (*callback)(Symbol &));

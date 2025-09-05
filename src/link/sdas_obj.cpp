@@ -364,7 +364,7 @@ void sdobj_ReadFile(FileStackNode const &src, FILE *file, std::vector<Symbol> &f
 			}
 			curSection->isAlignFixed = false;       // No such concept!
 			curSection->fileSymbols = &fileSymbols; // IDs are instead per-section
-			curSection->nextu = nullptr;
+			curSection->nextPiece = nullptr;
 
 			fileSections.push_back({.section = std::move(curSection), .writeIndex = 0});
 			break;
@@ -902,21 +902,10 @@ void sdobj_ReadFile(FileStackNode const &src, FILE *file, std::vector<Symbol> &f
 		sect_AddSection(std::move(section));
 	}
 
-	// Fix symbols' section pointers to component sections
+	// Fix symbols' section pointers to section "pieces"
 	// This has to run **after** all the `sect_AddSection()` calls,
 	// so that `sect_GetSection()` will work
 	for (Symbol &sym : fileSymbols) {
-		if (std::holds_alternative<Label>(sym.data)) {
-			Label &label = std::get<Label>(sym.data);
-			if (Section *section = label.section; section->modifier != SECTION_NORMAL) {
-				if (section->modifier == SECTION_FRAGMENT) {
-					// Add the fragment's offset to the symbol's
-					// (`section->offset` is computed by `sect_AddSection`)
-					label.offset += section->offset;
-				}
-				// Associate the symbol with the main section, not the "component" one
-				label.section = sect_GetSection(section->name);
-			}
-		}
+		sym.fixSectionOffset();
 	}
 }

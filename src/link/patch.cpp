@@ -580,14 +580,14 @@ static void applyFilePatches(Section &section, Section &dataSection) {
 	}
 }
 
-// Applies all of a section's patches, iterating over "components" of unionized sections
+// Applies all of a section's patches, iterating over "pieces" of unionized sections
 static void applyPatches(Section &section) {
 	if (!sectTypeHasData(section.type)) {
 		return;
 	}
 
-	for (Section *component = &section; component; component = component->nextu.get()) {
-		applyFilePatches(*component, section);
+	for (Section *piece = &section; piece != nullptr; piece = piece->nextPiece.get()) {
+		applyFilePatches(*piece, section);
 	}
 }
 

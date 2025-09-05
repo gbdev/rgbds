@@ -189,10 +189,10 @@ static void mergeSections(Section &target, std::unique_ptr<Section> &&other) {
 	}
 	// LCOV_EXCL_STOP
 
-	// Note that the order in which fragments are stored in the `nextu` list does not
+	// Note that the order in which fragments are stored in the `nextPiece` list does not
 	// really matter, only that offsets were properly computed above
-	other->nextu = std::move(target.nextu);
-	target.nextu = std::move(other);
+	other->nextPiece = std::move(target.nextPiece);
+	target.nextPiece = std::move(other);
 }
 
 void sect_AddSection(std::unique_ptr<Section> &&section) {

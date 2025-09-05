@@ -90,3 +90,43 @@ void sym_TraceLocalAliasedSymbols(std::string const &name) {
 		}
 	}
 }
+
+void Symbol::linkToSection(Section &section) {
+	assume(std::holds_alternative<Label>(data));
+	Label &label = std::get<Label>(data);
+	// Link the symbol to the section
+	label.section = &section;
+	// Link the section to the symbol, keeping the section's symbol list sorted
+	uint32_t a = 0, b = section.symbols.size();
+	while (a != b) {
+		uint32_t c = (a + b) / 2;
+		assume(std::holds_alternative<Label>(section.symbols[c]->data));
+		Label const &other = std::get<Label>(section.symbols[c]->data);
+		if (other.offset > label.offset) {
+			b = c;
+		} else {
+			a = c + 1;
+		}
+	}
+	section.symbols.insert(section.symbols.begin() + a, this);
+}
+
+void Symbol::fixSectionOffset() {
+	if (!std::holds_alternative<Label>(data)) {
+		return;
+	}
+
+	Label &label = std::get<Label>(data);
+	Section *section = label.section;
+	assume(section);
+
+	if (section->modifier != SECTION_NORMAL) {
+		// Associate the symbol with the main section, not the "piece"
+		label.section = sect_GetSection(section->name);
+	}
+	if (section->modifier == SECTION_FRAGMENT) {
+		// Add the fragment's offset to the symbol's
+		// (`section->offset` is computed by `sect_AddSection`)
+		label.offset += section->offset;
+	}
+}
