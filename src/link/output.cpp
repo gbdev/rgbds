@@ -433,24 +433,27 @@ uint16_t forEachSection(SortedSections const &sectList, F callback) {
 }
 
 static void writeMapSymbols(Section const *sect) {
-	for (uint16_t org = sect->org; sect; sect = sect->nextu.get()) {
+	uint16_t org = sect->org;
+
+	for (bool announced = true; sect; sect = sect->nextu.get(), announced = false) {
 		for (Symbol *sym : sect->symbols) {
 			// Don't output symbols that begin with an illegal character
 			if (sym->name.empty() || !startsIdentifier(sym->name[0])) {
 				continue;
 			}
+			// Announce this "piece" before its contents
+			if (!announced) {
+				if (sect->modifier == SECTION_UNION) {
+					fputs("\t         ; Next union\n", mapFile);
+				} else if (sect->modifier == SECTION_FRAGMENT) {
+					fputs("\t         ; Next fragment\n", mapFile);
+				}
+				announced = true;
+			}
 			// Space matches "\tSECTION: $xxxx ..."
 			fprintf(mapFile, "\t         $%04" PRIx32 " = ", sym->label().offset + org);
 			writeSymName(sym->name, mapFile);
 			putc('\n', mapFile);
-		}
-
-		// Announce the following "piece"
-		if (SectionModifier mod = sect->nextu ? sect->nextu->modifier : SECTION_NORMAL;
-		    mod == SECTION_UNION) {
-			fputs("\t         ; Next union\n", mapFile);
-		} else if (mod == SECTION_FRAGMENT) {
-			fputs("\t         ; Next fragment\n", mapFile);
 		}
 	}
 }

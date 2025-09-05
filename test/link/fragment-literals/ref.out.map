@@ -1,0 +1,10 @@
+SUMMARY:
+	ROM0: 39 bytes used / 16345 free
+
+ROM0 bank #0:
+	SECTION: $0000-$0025 ($0026 bytes) ["PrintNth"]
+	         $0000 = PrintNth
+	SECTION: $0026-$0026 ($0001 byte) ["PrintHL"]
+	         $0026 = PrintHL
+	EMPTY: $0027-$3fff ($3fd9 bytes)
+	TOTAL EMPTY: $3fd9 bytes

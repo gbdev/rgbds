@@ -7,9 +7,6 @@ ROM0 bank #0:
 	         $0000 = Part1
 	         $0004 = Part1End
 	         ; Next fragment
-	         $0010 = Part3
-	         $0014 = Part3End
-	         ; Next fragment
 	         $0004 = Part2
 	         $0010 = Part2End
 	EMPTY: $0014-$3fff ($3fec bytes)

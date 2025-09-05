@@ -174,6 +174,16 @@ for test in fragment-align/*; do
 	evaluateTest
 done
 
+test="fragment-literals"
+startTest
+"$RGBASM" -o "$otemp" "$test"/a.asm
+continueTest
+rgblinkQuiet -o "$gbtemp" -m "$outtemp" -n "$outtemp2" "$otemp"
+tryCmpRom "$test"/ref.out.bin
+tryDiff "$test"/ref.out.map "$outtemp"
+tryDiff "$test"/ref.out.sym "$outtemp2"
+evaluateTest
+
 test="high-low"
 startTest
 "$RGBASM" -o "$otemp" "$test"/a.asm
