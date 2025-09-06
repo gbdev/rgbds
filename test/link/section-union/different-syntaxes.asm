@@ -5,6 +5,6 @@ ELSE
 ENDC
 
 SECTION UNION "different syntaxes", ROM0
-	INSTR
+	{INSTR}
 
 	PURGE INSTR

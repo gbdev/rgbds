@@ -1,6 +1,6 @@
 MACRO outer_ok
 def definition equs "MACRO inner_ok\nPRINTLN \"Hello!\"\nENDM"
-definition
+{definition}
 	PURGE definition
 ENDM
 
@@ -10,7 +10,7 @@ ENDM
 
 MACRO outer_arg
 def definition equs "MACRO inner_arg\nPRINTLN \"outer: \1\\ninner: \\1\"\nENDM"
-definition
+{definition}
 	PURGE definition
 ENDM
 

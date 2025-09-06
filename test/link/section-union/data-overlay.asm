@@ -5,6 +5,6 @@ ELSE
 ENDC
 
 SECTION UNION "overlaid data", ROM0
-	DATA
+	{DATA}
 
 	PURGE DATA

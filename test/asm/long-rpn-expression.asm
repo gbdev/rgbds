@@ -14,20 +14,29 @@ ENDR
 ; string of 127 zeros separated by plus signs
 DEF X EQUS "{X7E}"
 
-    db x+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+\
-       X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+\
-       X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+\
-       X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+\
-       X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+\
-       X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+\
-       X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+\
-       X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X
+    db x+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+\
+         {X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+\
+         {X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+\
+         {X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+\
+         {X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+\
+         {X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+\
+         {X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+\
+         {X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+\
+         {X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+\
+         {X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+\
+         {X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+\
+         {X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+\
+         {X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+\
+         {X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+\
+         {X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+\
+         {X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+{X}+\
+         {X}+{X}+{X}+{X}+{X}+{X}+{X}
 
 x: db 0
 
 ; this tests long RPN expressions being used as the RHS, as this once triggered
 ; a realloc bug
-    db 1+(x+X)
+    db 1+(x+{X})
 
 ; likewise, a long symbol could result in an insufficient *initial* allocation
     db A00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000+0+0

@@ -1,7 +1,7 @@
 macro test
 	; Test the rpn system, as well as the linker...
 	DEF expr EQUS STRRPL(STRRPL("\1 + zero)", "<< ", "<< ("), ">> ", ">> (")
-	dl expr
+	dl {expr}
 	PURGE expr
 
 	; ...as well as the constexpr system

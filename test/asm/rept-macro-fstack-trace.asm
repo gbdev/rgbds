@@ -7,7 +7,7 @@ MACRO outer
         PURGE inner
       ENDC
       DEF s EQUS "\nMACRO inner\nREPT 2\nREPT 2\nWARN \"round \{d:it\}\"\nDEF it += 1\nENDR\nENDR\nENDM"
-      s
+      {s}
       PURGE s
     ENDC
     inner

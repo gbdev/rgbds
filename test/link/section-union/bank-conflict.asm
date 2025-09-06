@@ -2,7 +2,7 @@ IF !DEF(SECOND)
 	def SECOND equs "4"
 ENDC
 
-SECTION UNION "conflicting banks", WRAMX, BANK[SECOND]
+SECTION UNION "conflicting banks", WRAMX, BANK[{SECOND}]
 	db
 
 	PURGE SECOND

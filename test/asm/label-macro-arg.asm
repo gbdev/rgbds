@@ -22,12 +22,12 @@ ENDM
 
 MACRO test_char
 DEF VAR_DEF equs "DEF sizeof_\1something = 0"
-VAR_DEF
+{VAR_DEF}
 DEF sizeof_\1something = 1
 	PURGE VAR_DEF
 
 DEF VAR_PRINT equs "println \"sizeof_\1something equals {sizeof_\1something}\""
-	VAR_PRINT
+	{VAR_PRINT}
 	PURGE VAR_PRINT
 ENDM
 

@@ -12,7 +12,9 @@ MACRO with_each
 	endr
 ENDM
 
-DEF with_each_stat EQUS "with_each HP, ATK, DEF,"
+MACRO with_each_stat
+	with_each HP, ATK, DEF, \1
+ENDM
 
 with_each_stat """
 	println STRFMT("Average ? is %d", (SLIME_? + MIMIC_?) / 2)

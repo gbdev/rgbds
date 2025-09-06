@@ -4,7 +4,7 @@ ELSE
 	def ATTRS equs ",ALIGN[3,6]"
 ENDC
 
-SECTION UNION "conflicting alignment", WRAM0 ATTRS
+SECTION UNION "conflicting alignment", WRAM0 {ATTRS}
 	db
 
 	PURGE ATTRS

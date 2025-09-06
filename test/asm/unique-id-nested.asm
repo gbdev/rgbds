@@ -4,7 +4,7 @@ MACRO m1
 		PRINTLN "Within nested MACRO: \\@"
 		\n ENDM
 		mm"""
-	nested
+	{nested}
 	PURGE nested, mm
 	PRINTLN "Within MACRO: \@"
 ENDM
@@ -22,7 +22,7 @@ MACRO m2
 		PRINTLN "Within nested MACRO: \\@"
 		\n ENDM
 		mm"""
-	nested
+	{nested}
 	PURGE nested, mm
 	PRINTLN "Within MACRO: \@"
 ENDM

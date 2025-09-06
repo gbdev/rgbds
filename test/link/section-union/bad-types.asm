@@ -4,7 +4,7 @@ ELSE
 	def TYPE equs "WRAM0"
 ENDC
 
-SECTION UNION "conflicting types", TYPE
+SECTION UNION "conflicting types", {TYPE}
 	db
 
 	PURGE TYPE

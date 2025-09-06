@@ -1,4 +1,4 @@
 
 def ACT equs "WARN \"First\"\nWARN \"Second\""
-	ACT
+	{ACT}
 	WARN "Third"
