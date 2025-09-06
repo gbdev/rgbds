@@ -7,9 +7,30 @@
 #include <stdlib.h>
 
 #include "helpers.hpp"
+#include "platform.hpp"
 #include "style.hpp"
 
-static constexpr size_t maxLineLen = 79;
+#if defined(_MSC_VER) || defined(__MINGW32__)
+	#define WIN32_LEAN_AND_MEAN // Include less from `windows.h`
+	#include <windows.h>
+#else
+	#include <sys/ioctl.h>
+#endif
+
+// Use the console window width minus 1 as the maximum line length for flags
+static size_t maxLineLen = []() {
+#if defined(_MSC_VER) || defined(__MINGW32__)
+	CONSOLE_SCREEN_BUFFER_INFO csbi;
+	GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi);
+	return csbi.srWindow.Right > csbi.srWindow.Left
+	           ? static_cast<size_t>(csbi.srWindow.Right - csbi.srWindow.Left)
+	           : 79;
+#else
+	struct winsize winSize;
+	ioctl(STDOUT_FILENO, TIOCGWINSZ, &winSize);
+	return winSize.ws_col > 1 ? static_cast<size_t>(winSize.ws_col - 1) : 79;
+#endif
+}();
 
 // LCOV_EXCL_START
 
@@ -34,6 +55,7 @@ void Usage::printAndExit(int code) const {
 		fprintf(file, " %s", flag.c_str());
 		flagsWidth += 1 + flag.length();
 	}
+	style_Reset(file);
 	fputs("\n\n", file);
 
 	// Measure the options' flags
@@ -50,12 +72,13 @@ void Usage::printAndExit(int code) const {
 			padOpts = pad;
 		}
 	}
-	int optIndent = static_cast<int>(literal_strlen("    ") + padOpts);
+	size_t optOffset = literal_strlen("    ") + padOpts;
 
 	// Print the options
 	if (!options.empty()) {
 		style_Set(file, STYLE_GREEN, true);
 		fputs("Useful options:\n", file);
+		style_Reset(file);
 	}
 	for (auto const &[opts, description] : options) {
 		fputs("    ", file);
@@ -64,23 +87,36 @@ void Usage::printAndExit(int code) const {
 		size_t optWidth = 0;
 		for (size_t i = 0; i < opts.size(); ++i) {
 			if (i > 0) {
-				style_Reset(file);
 				fputs(", ", file);
 				optWidth += literal_strlen(", ");
 			}
 			style_Set(file, STYLE_CYAN, false);
 			fputs(opts[i].c_str(), file);
+			style_Reset(file);
 			optWidth += opts[i].length();
 		}
-		if (optWidth < padOpts) {
+
+		// Measure the description lines
+		size_t descLen = 0;
+		for (std::string const &descLine : description) {
+			if (descLine.length() > descLen) {
+				descLen = descLine.length();
+			}
+		}
+
+		// If the description lines would wrap around the console, put them on their own lines
+		size_t optIndent = optOffset;
+		if (optIndent + literal_strlen("  ") + descLen > maxLineLen) {
+			optIndent = 6;
+			fprintf(file, "\n%*c", static_cast<int>(optIndent), ' ');
+		} else if (optWidth < padOpts) {
 			fprintf(file, "%*c", static_cast<int>(padOpts - optWidth), ' ');
 		}
 
 		// Print the description lines, indented to the same level
 		for (size_t i = 0; i < description.size(); ++i) {
-			style_Reset(file);
 			if (i > 0) {
-				fprintf(file, "\n%*c", optIndent, ' ');
+				fprintf(file, "\n%*c", static_cast<int>(optIndent), ' ');
 			}
 			fprintf(file, "  %s", description[i].c_str());
 		}
@@ -88,7 +124,6 @@ void Usage::printAndExit(int code) const {
 	}
 
 	// Print the link for further help information
-	style_Reset(file);
 	fputs("\nFor more help, use \"", file);
 	style_Set(file, STYLE_CYAN, true);
 	fprintf(file, "man %s", name.c_str());
