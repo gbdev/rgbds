@@ -1,0 +1,6 @@
+error: Section already defined
+    at duplicate-section-after-literal.asm(7)
+    and also:
+    at duplicate-section-after-literal.asm(5)
+FATAL: Cannot create section "dup" (1 error)
+    at duplicate-section-after-literal.asm(7)
