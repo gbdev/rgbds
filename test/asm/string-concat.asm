@@ -18,7 +18,7 @@ test "a" ++ """b""" ++ strupr("c") ++ strslice(#str, 0, 0), "abC"
 charmap "a", 1
 charmap "b", 2
 charmap "ab", 12
-assert "a" + "b" == 3
+assert charval("a") + charval("b") == 3
 assert charval("a" ++ "b") == 12
 
 ; errors

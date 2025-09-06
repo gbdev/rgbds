@@ -17,8 +17,8 @@ dl 0 ; separator
 
 charmap "A", $01234567
 charmap "B", $fedcba98
-assert "A" == $01234567
-assert "B" == $fedcba98
+assert 'A' == $01234567
+assert 'B' == $fedcba98
 db "AB" ; db $01234567, $fedcba98 (truncated to $67, $98)
 dl "AB" ; dl $01234567, $fedcba98
 

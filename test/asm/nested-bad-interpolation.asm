@@ -1,3 +1,3 @@
 def p = {{a}}
-def q = "{b}"
-def r = "{{c}}"
+def q = '{b}'
+def r = '{{c}}'
