@@ -1,0 +1,10 @@
+warning: Treating strings as numbers is deprecated; use character literals or `CHARVAL` instead [-Wobsolete]
+    at raw-string-symbols.asm(16)
+warning: Treating strings as numbers is deprecated; use character literals or `CHARVAL` instead [-Wobsolete]
+    at raw-string-symbols.asm(18)
+warning: Treating strings as numbers is deprecated; use character literals or `CHARVAL` instead [-Wobsolete]
+    at raw-string-symbols.asm(20)
+warning: Treating strings as numbers is deprecated; use character literals or `CHARVAL` instead [-Wobsolete]
+    at raw-string-symbols.asm(22)
+warning: Treating strings as numbers is deprecated; use character literals or `CHARVAL` instead [-Wobsolete]
+    at raw-string-symbols.asm(25)

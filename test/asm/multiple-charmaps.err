@@ -1,17 +1,17 @@
-error: Strings as numbers must be a single charmap unit
-    at multiple-charmaps.asm::print_mapped(34) <- multiple-charmaps.asm(46)
-error: Strings as numbers must be a single charmap unit
-    at multiple-charmaps.asm::print_mapped(34) <- multiple-charmaps.asm(54)
+error: CHARVAL: No character mapping for "ab"
+    at multiple-charmaps.asm(46)
+error: CHARVAL: No character mapping for "ab"
+    at multiple-charmaps.asm(54)
 warning: Overriding charmap mapping [-Wcharmap-redef]
     at multiple-charmaps.asm(64)
-error: Strings as numbers must be a single charmap unit
-    at multiple-charmaps.asm::print_mapped(34) <- multiple-charmaps.asm(73)
-error: Strings as numbers must be a single charmap unit
-    at multiple-charmaps.asm::print_mapped(34) <- multiple-charmaps.asm(95)
-error: Strings as numbers must be a single charmap unit
-    at multiple-charmaps.asm::print_mapped(34) <- multiple-charmaps.asm(96)
-error: Strings as numbers must be a single charmap unit
-    at multiple-charmaps.asm::print_mapped(34) <- multiple-charmaps.asm(104)
+error: CHARVAL: No character mapping for "cd"
+    at multiple-charmaps.asm(73)
+error: CHARVAL: No character mapping for "cd"
+    at multiple-charmaps.asm(95)
+error: CHARVAL: No character mapping for "ef"
+    at multiple-charmaps.asm(96)
+error: CHARVAL: No character mapping for "ab"
+    at multiple-charmaps.asm(104)
 error: Charmap `map1` is already defined
     at multiple-charmaps.asm::new_(9) <- multiple-charmaps.asm(106)
 error: Undefined charmap `map5`

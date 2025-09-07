@@ -1,4 +1,4 @@
-opt Wno-unmapped-char, Wno-obsolete
+opt Wno-unmapped-char
 
 MACRO new_
 	IF _NARG > 1
@@ -30,8 +30,8 @@ MACRO pop_
 	popc
 ENDM
 
-MACRO print_mapped
-	def x = \1
+MACRO? print_mapped
+	def x = CHARVAL(\1)
 	println "{x}"
 ENDM
 

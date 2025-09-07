@@ -1,0 +1,24 @@
+warning: Treating strings as numbers is deprecated; use character literals or `CHARVAL` instead [-Wobsolete]
+    at charlen-strchar.asm(16)
+warning: Treating strings as numbers is deprecated; use character literals or `CHARVAL` instead [-Wobsolete]
+    at charlen-strchar.asm(16)
+warning: Treating strings as numbers is deprecated; use character literals or `CHARVAL` instead [-Wobsolete]
+    at charlen-strchar.asm(17)
+warning: Treating strings as numbers is deprecated; use character literals or `CHARVAL` instead [-Wobsolete]
+    at charlen-strchar.asm(17)
+warning: Treating strings as numbers is deprecated; use character literals or `CHARVAL` instead [-Wobsolete]
+    at charlen-strchar.asm(17)
+warning: Treating strings as numbers is deprecated; use character literals or `CHARVAL` instead [-Wobsolete]
+    at charlen-strchar.asm(18)
+warning: Treating strings as numbers is deprecated; use character literals or `CHARVAL` instead [-Wobsolete]
+    at charlen-strchar.asm(26)
+warning: Treating strings as numbers is deprecated; use character literals or `CHARVAL` instead [-Wobsolete]
+    at charlen-strchar.asm(26)
+warning: Treating strings as numbers is deprecated; use character literals or `CHARVAL` instead [-Wobsolete]
+    at charlen-strchar.asm(27)
+warning: Treating strings as numbers is deprecated; use character literals or `CHARVAL` instead [-Wobsolete]
+    at charlen-strchar.asm(27)
+warning: Treating strings as numbers is deprecated; use character literals or `CHARVAL` instead [-Wobsolete]
+    at charlen-strchar.asm(27)
+warning: Treating strings as numbers is deprecated; use character literals or `CHARVAL` instead [-Wobsolete]
+    at charlen-strchar.asm(28)
