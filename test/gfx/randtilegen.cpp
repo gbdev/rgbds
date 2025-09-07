@@ -144,7 +144,7 @@ static void generate_palettes(uint16_t palettes[/* 60 */][4]) {
  * Expand a 5-bit color component to 8 bits with minimal bias
  */
 static uint8_t _5to8(uint8_t five) {
-	return five << 3 | five >> 2;
+	return (five * 255 + 15) / 31;
 }
 
 // Can't mark as `const`, as the array type is otherwise not compatible (augh)
