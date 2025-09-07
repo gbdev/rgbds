@@ -68,7 +68,14 @@ years). If you are adding new files, you need to use the
 5. Format your changes according to `clang-format`, which will reformat the
    coding style according to our standards defined in `.clang-format`.
 6. Create a pull request against the branch `master`.
-7. Be prepared to get some comments about your code and to modify it. Tip: Use
+7. Check the results of the GitHub Actions CI jobs for your pull request. The
+   "Code format checking" and "Regression testing" jobs should all succeed.
+   The "Diff completeness check" and "Static analysis" jobs should be manually
+   checked, as they may output warnings which do not count as failure errors.
+   The "Code coverage report" provides an
+   [LCOV](https://github.com/linux-test-project/lcov)-generated report which
+   can be downloaded and checked to see if your new code has full test coverage.
+8. Be prepared to get some comments about your code and to modify it. Tip: Use
    `git rebase -i origin/master` to modify chains of commits.
 
 ## Adding a test
