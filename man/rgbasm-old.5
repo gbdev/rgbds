@@ -461,6 +461,24 @@ Previously we had
 .Pp
 Instead, now we have
 .Ql p ** q ** r == p ** (q ** r) .
+.Ss 8-bit and 5-bit color conversion
+Changed in 1.0.0.
+.Pp
+RGBGFX takes 8-bit RGB colors as its PNG input, and outputs 5-bit GBC colors.
+Its
+.Ql -r/--reverse
+mode does the opposite 5-bit to 8-bit conversion.
+Instead of the previous inaccurate conversions, we now do accurate rounding to the nearest equivalent.
+.Pp
+Previously to convert an 8-bit color channel to 5-bit, we truncated it as
+.Ql c >> 3 ;
+and to reverse a 5-bit color channel to 8-bit, we extended it as
+.Ql (c << 3) | (c >> 2) .
+.Pp
+Instead, now we round 8-bit to 5-bit as
+.Ql (c * 31 + 127) / 255 ,
+and round 5-bit to 8-bit as
+.Ql (c * 255 + 15) / 31 .
 .Sh BUGS
 These are misfeatures that may have been possible by mistake.
 They do not get deprecated, just fixed.
