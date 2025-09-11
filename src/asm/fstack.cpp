@@ -390,8 +390,8 @@ static char const *suggestDef(std::shared_ptr<MacroArgs> const macroArgs) {
 
 	char const *str = arg->c_str();
 	static char const *types[] = {"EQUS", "EQU", "RB", "RW", "RL", "="};
-	for (size_t i = 0; i < std::size(types); ++i) {
-		if (char const *type = types[i]; strncasecmp(str, type, strlen(type)) == 0) {
+	for (char const *type : types) {
+		if (strncasecmp(str, type, strlen(type)) == 0) {
 			return type;
 		}
 	}
