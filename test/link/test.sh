@@ -58,6 +58,7 @@ tryCmp () {
 tryCmpRom () {
 	# `printf` lets us keep only the first returned word from `wc`.
 	rom_size=$(printf %s $(wc -c <"$1"))
+	# 'rgblink -x' implies '-t', so we cannot use '-x' to trim the ROM output
 	dd if="$gbtemp" count=1 bs="$rom_size" >"$otemp" 2>/dev/null
 	tryCmp "$1" "$otemp"
 }

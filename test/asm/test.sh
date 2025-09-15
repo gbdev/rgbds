@@ -115,12 +115,11 @@ for i in *.asm notexist.asm; do
 
 		desired_binname=${i%.asm}.out.bin
 		if [[ -f "$desired_binname" && $our_rc -eq 0 ]]; then
-			if ! "$RGBLINK" -o "$gb" "$o"; then
-				echo "${bold}${red}\`$RGBLINK -o $gb $o\` failed!${rescolors}${resbold}"
+			# 'rgblink -x' implies '-t', so asm/*.out.bin tests cannot use ROMX past 1
+			if ! "$RGBLINK" -x -o "$gb" "$o"; then
+				echo "${bold}${red}\`$RGBLINK -x -o $gb $o\` failed!${rescolors}${resbold}"
 			else
-				rom_size=$(printf %s $(wc -c <"$desired_binname"))
-				dd if="$gb" count=1 bs="$rom_size" >"$output" 2>/dev/null
-				tryCmp "$desired_binname" "$output" gb
+				tryCmp "$desired_binname" "$gb" gb
 				(( our_rc = our_rc || $? ))
 			fi
 		fi
