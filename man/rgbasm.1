@@ -384,6 +384,15 @@ This warning is enabled by
 .Fl Wall .
 .It Fl Wdiv
 Warn when dividing the smallest negative integer (-2**31) by -1, which yields itself due to integer overflow.
+.It Fl Wempty-data-directive
+Warn when
+.Ic DB ,
+.Ic DW ,
+or
+.Ic DL
+is used without an argument in a ROM section.
+This warning is enabled by
+.Fl Wall .
 .It Fl Wempty-macro-arg
 Warn when a macro argument is empty.
 This warning is enabled by
