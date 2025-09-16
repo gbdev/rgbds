@@ -1,13 +1,13 @@
 def s equs "d"
 
-charmap "A", 1
-charmap "B", 2
-charmap "c{s}e", 3
-charmap "F", 4, 5, 6
+charmap 'A', 1
+charmap 'B', 2
+charmap 'c{s}e', 3
+charmap 'F', 4, 5, 6
 charmap "'", 42
-charmap "\"", 1234
-charmap "\n\r\t\0", 1337
-charmap "',\",\\", 99
+charmap '"', 1234
+charmap '\n\r\t\0', 1337
+charmap '\',\",\\', 99
 
 MACRO char
 	assert (\1) == (\2)

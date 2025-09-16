@@ -1049,6 +1049,9 @@ charmap:
 	POP_CHARMAP string COMMA charmap_args trailing_comma {
 		charmap_Add($2, std::move($4));
 	}
+	| POP_CHARMAP CHARACTER COMMA charmap_args trailing_comma {
+		charmap_Add($2, std::move($4));
+	}
 ;
 
 charmap_args:
