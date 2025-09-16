@@ -638,12 +638,12 @@ and the values of a charmap entry are counted by
 When writing text strings that are meant to be displayed on the Game Boy, the character encoding in the ROM may need to be different than the source file encoding.
 For example, the tiles used for uppercase letters may be placed starting at tile index 128, which differs from ASCII starting at 65.
 .Pp
-Character maps allow mapping strings to arbitrary sequences of numbers:
+Character maps allow mapping strings or character literals to arbitrary sequences of numbers:
 .Bd -literal -offset indent
 CHARMAP "A", 42
-CHARMAP ":)", 39
+CHARMAP ':)', 39
 CHARMAP "<br>", 13, 10
-CHARMAP "&euro;", $20ac
+CHARMAP '&euro;', $20ac
 .Ed
 .Pp
 This would result in
