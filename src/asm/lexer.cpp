@@ -1750,13 +1750,21 @@ static Token yylex_NORMAL() {
 		case '^': // Either ^= or XOR
 			return oneOrTwo('=', T_(POP_XOREQ), T_(OP_XOR));
 
-		case '=': // Either assignment or EQ
-			return oneOrTwo('=', T_(OP_LOGICEQU), T_(POP_EQUAL));
-
-		case '!': // Either a NEQ or negation
-			return oneOrTwo('=', T_(OP_LOGICNE), T_(OP_LOGICNOT));
-
 			// Handle ambiguous 1-, 2-, or 3-char tokens
+
+		case '=': // Either assignment, EQ or string EQ
+			if (peek() == '=') {
+				shiftChar();
+				return oneOrTwo('=', T_(OP_STREQU), T_(OP_LOGICEQU));
+			}
+			return Token(T_(POP_EQUAL));
+
+		case '!': // Either negation, NEQ, or string NEQ
+			if (peek() == '=') {
+				shiftChar();
+				return oneOrTwo('=', T_(OP_STRNE), T_(OP_LOGICNE));
+			}
+			return Token(T_(OP_LOGICNOT));
 
 		case '<': // Either <<=, LT, LTE, or left shift
 			if (peek() == '<') {

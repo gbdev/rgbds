@@ -586,6 +586,19 @@ is equivalent to
 or to
 .Ql STRCAT("str", \&"ing") .
 .Pp
+You can use the 
+.Sq ===
+and
+.Sq !==
+operators to compare two strings.
+.Ql \&"str" === \&"ing"
+is equivalent to
+.Ql STRCMP("str", \&"ing") == 0 ,
+and
+.Ql \&"str" !== \&"ing"
+is equivalent to
+.Ql STRCMP("str", \&"ing") != 0 .
+.Pp
 The following functions operate on string expressions, and return strings themselves.
 .Bl -column "STRSLICE(str, start, stop)"
 .It Sy Name Ta Sy Operation
