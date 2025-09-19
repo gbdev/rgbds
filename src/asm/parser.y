@@ -107,6 +107,7 @@
 
 // String operators
 %token OP_CAT "++"
+%token OP_STREQU "===" OP_STRNE "!=="
 
 // Comparison operators
 %token OP_LOGICEQU "==" OP_LOGICNE "!="
@@ -1286,6 +1287,12 @@ relocexpr_no_str:
 	}
 	| CHARACTER {
 		$$.makeNumber(act_CharToNum($1));
+	}
+	| string OP_STREQU string {
+		$$.makeNumber($1.compare($3) == 0);
+	}
+	| string OP_STRNE string {
+		$$.makeNumber($1.compare($3) != 0);
 	}
 	| OP_LOGICNOT relocexpr %prec NEG {
 		$$.makeUnaryOp(RPN_LOGNOT, std::move($2));
