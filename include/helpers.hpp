@@ -96,7 +96,8 @@ static inline int clz(unsigned int x) {
 #define EXPAND_AND_CAT(x, y) CAT(x, y)
 
 // For lack of <ranges>, this adds some more brevity
-#define RANGE(s) std::begin(s), std::end(s)
+#define RANGE(s)  std::begin(s), std::end(s)
+#define RRANGE(s) std::rbegin(s), std::rend(s)
 
 // MSVC does not inline `strlen()` or `.length()` of a constant string
 template<int N>

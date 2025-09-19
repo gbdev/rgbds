@@ -918,21 +918,17 @@ auto Palette::begin() -> decltype(colors)::iterator {
 auto Palette::end() -> decltype(colors)::iterator {
 	// Return an iterator pointing past the last non-empty element.
 	// Since the palette may contain gaps, we must scan from the end.
-	return std::find_if(
-	           colors.rbegin(), colors.rend(), [](uint16_t c) { return c != UINT16_MAX; }
-	).base();
+	return std::find_if(RRANGE(colors), [](uint16_t c) { return c != UINT16_MAX; }).base();
 }
 
 auto Palette::begin() const -> decltype(colors)::const_iterator {
-	// Skip the first slot if reserved for transparency
+	// Same as the non-const begin().
 	return colors.begin() + options.hasTransparentPixels;
 }
 
 auto Palette::end() const -> decltype(colors)::const_iterator {
 	// Same as the non-const end().
-	return std::find_if(
-	           colors.rbegin(), colors.rend(), [](uint16_t c) { return c != UINT16_MAX; }
-	).base();
+	return std::find_if(RRANGE(colors), [](uint16_t c) { return c != UINT16_MAX; }).base();
 }
 
 uint8_t Palette::size() const {

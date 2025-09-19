@@ -1955,10 +1955,9 @@ static Token yylex_NORMAL() {
 static Token yylex_RAW() {
 	// This is essentially a highly modified `readString`
 	std::string str;
-	size_t parenDepth = 0;
 	int c;
 
-	for (;;) {
+	for (size_t parenDepth = 0;;) {
 		c = peek();
 
 		switch (c) {
@@ -2075,7 +2074,7 @@ append:
 finish: // Can't `break` out of a nested `for`-`switch`
 	// Trim left and right blank space
 	str.erase(str.begin(), std::find_if_not(RANGE(str), isBlankSpace));
-	str.erase(std::find_if_not(str.rbegin(), str.rend(), isBlankSpace).base(), str.end());
+	str.erase(std::find_if_not(RRANGE(str), isBlankSpace).base(), str.end());
 
 	// Returning COMMAs to the parser would mean that two consecutive commas
 	// (i.e. an empty argument) need to return two different tokens (STRING
