@@ -1950,24 +1950,6 @@ static Token yylex_RAW() {
 	size_t parenDepth = 0;
 	int c;
 
-	// Trim left spaces (stops at a block comment)
-	for (;;) {
-		c = peek();
-		if (isBlankSpace(c)) {
-			shiftChar();
-		} else if (c == '\\') {
-			c = nextChar();
-			// If not a line continuation, handle as a normal char
-			if (!isWhitespace(c)) {
-				goto backslash;
-			}
-			// Line continuations count as "space"
-			discardLineContinuation();
-		} else {
-			break;
-		}
-	}
-
 	for (;;) {
 		c = peek();
 
@@ -2029,7 +2011,6 @@ static Token yylex_RAW() {
 		case '\\': // Character escape
 			c = nextChar();
 
-backslash:
 			switch (c) {
 			case ',': // Escapes only valid inside a macro arg
 			case '(':
@@ -2084,9 +2065,9 @@ append:
 	}
 
 finish: // Can't `break` out of a nested `for`-`switch`
-	// Trim right blank space
-	auto rightPos = std::find_if_not(str.rbegin(), str.rend(), isBlankSpace);
-	str.resize(rightPos.base() - str.begin());
+	// Trim left and right blank space
+	str.erase(str.begin(), std::find_if_not(RANGE(str), isBlankSpace));
+	str.erase(std::find_if_not(str.rbegin(), str.rend(), isBlankSpace).base(), str.end());
 
 	// Returning COMMAs to the parser would mean that two consecutive commas
 	// (i.e. an empty argument) need to return two different tokens (STRING
