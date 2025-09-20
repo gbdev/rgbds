@@ -107,11 +107,11 @@ if ! "$external"; then
 fi
 
 if "$nonfree"; then
-	action pret  pokecrystal      2025-07-21 306d1497c15d00631516781fba1606d9e78eb2e1
-	action pret  pokered          2025-07-21 fd86bcaa06fd81911e88eb6d0253715ad79866a8
+	action pret  pokecrystal      2025-09-05 d138ed1bd4db80cf8caa549878600448fedf674e
+	action pret  pokered          2025-09-09 59da8c8122ebb8fcc334d4e5421e4fb333eea730
 	action zladx LADX-Disassembly 2025-07-26 3ab7b582f67b4302a4f6371f9309f0de167e78ee
 fi
 action AntonioND ucity          2025-08-07 d1880a2a112d7c26f16c0fc06a15b6c32fdc9137
-action pinobatch libbet         2025-05-20 bb6cfc026644aa1034eee6d9c49bb4705601c9f6
-action LIJI32    SameBoy        2025-07-26 410719854885b60df8566a444c81bc767965f477
-action ISSOtm    gb-starter-kit 2025-06-13 3cce3215b0bcb559a5cf4ca5916e2d817d53ff29
+action pinobatch libbet         2025-08-31 e42c0036b18e6e715987b88b4973389b283974c9
+action LIJI32    SameBoy        2025-09-13 6b38c535755b4ff2b069efac404b2844292249b7
+action ISSOtm    gb-starter-kit 2025-09-19 746b3d29640037c41fa3220b38feab2452f81dcf
