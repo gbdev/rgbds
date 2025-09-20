@@ -20,15 +20,15 @@ error: Repeated digit for graphics constant 'y'
     at invalid-opt.asm(10)
 error: Invalid argument for option 'p'
     at invalid-opt.asm(11)
-error: Invalid argument for option 'p'
+error: Argument for option 'p' must be between 0 and 0xFF
     at invalid-opt.asm(12)
 error: Invalid argument for option 'Q'
     at invalid-opt.asm(13)
-error: Invalid argument for option 'Q'
+error: Argument for option 'Q' must be between 1 and 31
     at invalid-opt.asm(14)
 error: Argument for option 'Q' must be between 1 and 31
     at invalid-opt.asm(15)
-error: Argument for option 'r' is out of range ("99999999999999999999999999")
+error: Argument for option 'r' is out of range
     at invalid-opt.asm(16)
 error: Must specify an argument for option 'W'
     at invalid-opt.asm(17)
