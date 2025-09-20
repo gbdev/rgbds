@@ -402,7 +402,7 @@ int main(int argc, char *argv[]) {
 			char *endptr;
 			unsigned long precision = strtoul(precisionArg, &endptr, 0);
 
-			if (musl_optarg[0] == '\0' || *endptr != '\0') {
+			if (precisionArg[0] == '\0' || *endptr != '\0') {
 				fatal("Invalid argument for option '-Q'");
 			}
 

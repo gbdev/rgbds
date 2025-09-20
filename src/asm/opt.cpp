@@ -55,84 +55,71 @@ void opt_W(char const *flag) {
 
 void opt_Parse(char const *s) {
 	if (s[0] == '-') {
-		++s;
+		++s; // Skip a leading '-'
 	}
-	switch (s[0]) {
+
+	char c = *s++;
+
+	while (isBlankSpace(*s)) {
+		++s; // Skip leading blank spaces
+	}
+
+	switch (c) {
 	case 'b':
-		if (strlen(&s[1]) == 2) {
-			opt_B(&s[1]);
+		if (strlen(s) == 2) {
+			opt_B(s);
 		} else {
 			error("Must specify exactly 2 characters for option 'b'");
 		}
 		break;
 
 	case 'g':
-		if (strlen(&s[1]) == 4) {
-			opt_G(&s[1]);
+		if (strlen(s) == 4) {
+			opt_G(s);
 		} else {
 			error("Must specify exactly 4 characters for option 'g'");
 		}
 		break;
 
-	case 'p':
-		if (strlen(&s[1]) <= 2) {
-			int result;
-			unsigned int padByte;
+	case 'p': {
+		char *endptr;
+		unsigned long padByte = strtoul(s, &endptr, 0);
 
-			result = sscanf(&s[1], "%x", &padByte);
-			if (result != 1) {
-				error("Invalid argument for option 'p'");
-			} else {
-				// Two characters cannot be scanned as a hex number greater than 0xFF
-				assume(padByte <= 0xFF);
-				opt_P(padByte);
-			}
-		} else {
+		if (s[0] == '\0' || *endptr != '\0') {
 			error("Invalid argument for option 'p'");
+		} else if (padByte > 0xFF) {
+			error("Argument for option 'p' must be between 0 and 0xFF");
+		} else {
+			opt_P(padByte);
 		}
 		break;
+	}
 
 	case 'Q': {
-		char const *precisionArg = &s[1];
-		if (precisionArg[0] == '.') {
-			++precisionArg;
+		if (s[0] == '.') {
+			++s; // Skip leading '.'
 		}
-		if (strlen(precisionArg) <= 2) {
-			int result;
-			unsigned int fixPrecision;
+		char *endptr;
+		unsigned long precision = strtoul(s, &endptr, 0);
 
-			result = sscanf(precisionArg, "%u", &fixPrecision);
-			if (result != 1) {
-				error("Invalid argument for option 'Q'");
-			} else if (fixPrecision < 1 || fixPrecision > 31) {
-				error("Argument for option 'Q' must be between 1 and 31");
-			} else {
-				opt_Q(fixPrecision);
-			}
-		} else {
+		if (s[0] == '\0' || *endptr != '\0') {
 			error("Invalid argument for option 'Q'");
+		} else if (precision < 1 || precision > 31) {
+			error("Argument for option 'Q' must be between 1 and 31");
+		} else {
+			opt_Q(precision);
 		}
 		break;
 	}
 
 	case 'r': {
-		++s; // Skip 'r'
-		while (isBlankSpace(*s)) {
-			++s; // Skip leading blank spaces
-		}
-
-		if (s[0] == '\0') {
-			error("Missing argument for option 'r'");
-			break;
-		}
-
 		char *endptr;
-		unsigned long maxRecursionDepth = strtoul(s, &endptr, 10);
+		unsigned long maxRecursionDepth = strtoul(s, &endptr, 0);
 
-		if (*endptr != '\0') {
-			error("Invalid argument for option 'r' (\"%s\")", s);
+		if (s[0] == '\0' || *endptr != '\0') {
+			error("Invalid argument for option 'r'");
 		} else if (errno == ERANGE) {
-			error("Argument for option 'r' is out of range (\"%s\")", s);
+			error("Argument for option 'r' is out of range");
 		} else {
 			opt_R(maxRecursionDepth);
 		}
@@ -140,15 +127,15 @@ void opt_Parse(char const *s) {
 	}
 
 	case 'W':
-		if (strlen(&s[1]) > 0) {
-			opt_W(&s[1]);
+		if (strlen(s) > 0) {
+			opt_W(s);
 		} else {
 			error("Must specify an argument for option 'W'");
 		}
 		break;
 
 	default:
-		error("Unknown option '%c'", s[0]);
+		error("Unknown option '%c'", c);
 		break;
 	}
 }
