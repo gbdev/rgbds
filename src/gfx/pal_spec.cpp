@@ -32,8 +32,7 @@ using namespace std::string_view_literals;
 
 static char const *hexDigits = "0123456789ABCDEFabcdef";
 
-template<typename Str> // Should be std::string or std::string_view
-static void skipBlankSpace(Str const &str, size_t &pos) {
+static void skipBlankSpace(std::string_view const &str, size_t &pos) {
 	pos = std::min(str.find_first_not_of(" \t"sv, pos), str.length());
 }
 
@@ -43,6 +42,10 @@ static uint8_t toHex(char c1, char c2) {
 
 static uint8_t singleToHex(char c) {
 	return toHex(c, c);
+}
+
+static uint16_t toWord(uint8_t low, uint8_t high) {
+	return high << 8 | low;
 }
 
 void parseInlinePalSpec(char const * const rawArg) {
@@ -161,24 +164,6 @@ void parseInlinePalSpec(char const * const rawArg) {
 			return;
 		}
 	}
-}
-
-template<typename T, typename U>
-static T readBE(U const *bytes) {
-	T val = 0;
-	for (size_t i = 0; i < sizeof(val); ++i) {
-		val = val << 8 | static_cast<uint8_t>(bytes[i]);
-	}
-	return val;
-}
-
-template<typename T, typename U>
-static T readLE(U const *bytes) {
-	T val = 0;
-	for (size_t i = 0; i < sizeof(val); ++i) {
-		val |= static_cast<uint8_t>(bytes[i]) << (i * 8);
-	}
-	return val;
 }
 
 // Appends the first line read from `file` to the end of the provided `buffer`.
@@ -423,7 +408,7 @@ static void parseACTFile(char const *filename, std::filebuf &file) {
 
 	uint16_t nbColors = 256;
 	if (len == 772) {
-		nbColors = readBE<uint16_t>(&buf[768]);
+		nbColors = toWord(buf[769], buf[768]);
 		if (nbColors > 256 || nbColors == 0) {
 			error("Invalid number of colors in ACT file \"%s\" (%" PRIu16 ")", filename, nbColors);
 			return;
@@ -474,7 +459,7 @@ static void parseACOFile(char const *filename, std::filebuf &file) {
 		error("Failed to read ACO file version");
 		return;
 	}
-	if (readBE<uint16_t>(buf) != 1) {
+	if (toWord(buf[1], buf[0]) != 1) {
 		error("File \"%s\" is not a valid ACO v1 file", filename);
 		return;
 	}
@@ -483,7 +468,7 @@ static void parseACOFile(char const *filename, std::filebuf &file) {
 		error("Failed to read number of colors in palette file");
 		return;
 	}
-	uint16_t nbColors = readBE<uint16_t>(buf);
+	uint16_t nbColors = toWord(buf[1], buf[0]);
 
 	if (uint16_t maxNbColors = options.maxNbColors(); nbColors > maxNbColors) {
 		warnExtraColors("ACO", filename, nbColors, maxNbColors);
@@ -503,7 +488,7 @@ static void parseACOFile(char const *filename, std::filebuf &file) {
 		}
 
 		std::optional<Rgba> &color = options.palSpec.back()[i % options.nbColorsPerPal];
-		uint16_t colorType = readBE<uint16_t>(buf);
+		uint16_t colorType = toWord(buf[1], buf[0]);
 		switch (colorType) {
 		case 0: // RGB
 			// Only keep the MSB of the (big-endian) 16-bit values.
@@ -549,10 +534,10 @@ static void parseGBCFile(char const *filename, std::filebuf &file) {
 		}
 
 		options.palSpec.push_back({
-		    Rgba::fromCGBColor(readLE<uint16_t>(&buf[0])),
-		    Rgba::fromCGBColor(readLE<uint16_t>(&buf[2])),
-		    Rgba::fromCGBColor(readLE<uint16_t>(&buf[4])),
-		    Rgba::fromCGBColor(readLE<uint16_t>(&buf[6])),
+		    Rgba::fromCGBColor(toWord(buf[0], buf[1])),
+		    Rgba::fromCGBColor(toWord(buf[2], buf[3])),
+		    Rgba::fromCGBColor(toWord(buf[4], buf[5])),
+		    Rgba::fromCGBColor(toWord(buf[6], buf[7])),
 		});
 	}
 }

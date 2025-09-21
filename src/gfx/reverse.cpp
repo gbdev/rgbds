@@ -235,7 +235,7 @@ void reverse() {
 			    palette.begin() + options.nbColorsPerPal,
 			    [&buf, i = 0]() mutable {
 				    i += 2;
-				    return Rgba::fromCGBColor(buf[i - 2] + (buf[i - 1] << 8));
+				    return Rgba::fromCGBColor(buf[i - 2] | buf[i - 1] << 8); // little-endian
 			    }
 			);
 		}
