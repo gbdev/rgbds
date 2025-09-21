@@ -42,9 +42,11 @@ struct ColorSetAttrs {
 	std::vector<bool> bannedPages;
 
 	explicit ColorSetAttrs(size_t index) : colorSetIndex(index) {}
+
 	bool isBannedFrom(size_t index) const {
 		return index < bannedPages.size() && bannedPages[index];
 	}
+
 	void banFrom(size_t index) {
 		if (bannedPages.size() <= index) {
 			bannedPages.resize(index + 1);
@@ -62,9 +64,8 @@ class AssignedSets {
 	std::vector<ColorSet> const *_colorSets;
 
 public:
-	template<typename... Ts>
-	AssignedSets(std::vector<ColorSet> const &colorSets, Ts &&...elems)
-	    : _assigned{std::forward<Ts>(elems)...}, _colorSets{&colorSets} {}
+	AssignedSets(std::vector<ColorSet> const &colorSets, std::optional<ColorSetAttrs> &&attrs)
+	    : _assigned{attrs}, _colorSets{&colorSets} {}
 
 private:
 	template<typename Inner, template<typename> typename Constness>
@@ -119,34 +120,34 @@ private:
 			std::swap(lhs._iter, rhs._iter);
 		}
 	};
+
 public:
 	using iterator = Iter<decltype(_assigned)::iterator, std::remove_const_t>;
 	iterator begin() { return iterator{&_assigned, _assigned.begin()}.skipEmpty(); }
 	iterator end() { return iterator{&_assigned, _assigned.end()}; }
+
 	using const_iterator = Iter<decltype(_assigned)::const_iterator, std::add_const_t>;
 	const_iterator begin() const {
 		return const_iterator{&_assigned, _assigned.begin()}.skipEmpty();
 	}
 	const_iterator end() const { return const_iterator{&_assigned, _assigned.end()}; }
 
-	// Assigns a new ColorSetAttrs in a free slot, assuming there is one
-	// Args are passed to the `ColorSetAttrs`'s constructor
-	template<typename... Ts>
-	void assign(Ts &&...args) {
+	void assign(ColorSetAttrs const &&attrs) {
 		auto freeSlot =
 		    std::find_if_not(RANGE(_assigned), [](std::optional<ColorSetAttrs> const &slot) {
 			    return slot.has_value();
 		    });
-
-		if (freeSlot == _assigned.end()) { // We are full, use a new slot
-			_assigned.emplace_back(std::forward<Ts>(args)...);
-		} else { // Reuse a free slot
-			freeSlot->emplace(std::forward<Ts>(args)...);
+		if (freeSlot == _assigned.end()) {
+			_assigned.emplace_back(attrs); // We are full, use a new slot
+		} else {
+			freeSlot->emplace(attrs); // Reuse a free slot
 		}
 	}
+
 	void remove(iterator const &iter) {
 		iter._iter->reset(); // This time, we want to access the `optional` itself
 	}
+
 	void clear() { _assigned.clear(); }
 
 	bool empty() const {
@@ -171,6 +172,7 @@ private:
 			colors.insert(RANGE(colorSet));
 		}
 	}
+
 	// This function should stay private because it returns a reference to a unique object
 	std::unordered_set<uint16_t> &uniqueColors() const {
 		// We check for *distinct* colors by stuffing them into a `set`; this should be
@@ -181,9 +183,11 @@ private:
 		addUniqueColors(colors, RANGE(*this), *_colorSets);
 		return colors;
 	}
+
 public:
 	// Returns the number of distinct colors
 	size_t volume() const { return uniqueColors().size(); }
+
 	bool canFit(ColorSet const &colorSet) const {
 		std::unordered_set<uint16_t> &colors = uniqueColors();
 		colors.insert(RANGE(colorSet));
@@ -239,6 +243,7 @@ public:
 		addUniqueColors(colors, std::forward<Iter>(begin), end, colorSets);
 		return colors.size();
 	}
+
 	// Computes the "relative size" of a set of colors on this palette
 	template<typename Iter>
 	size_t combinedVolume(Iter &&begin, Iter &&end) const {
@@ -302,7 +307,7 @@ static void decant(std::vector<AssignedSets> &assignments, std::vector<ColorSet>
 		// If the entire palettes can be merged, move all of `from`'s color sets
 		if (to.combinedVolume(RANGE(from), colorSets) <= options.maxOpaqueColors()) {
 			for (ColorSetAttrs &attrs : from) {
-				to.assign(attrs.colorSetIndex);
+				to.assign(std::move(attrs));
 			}
 			from.clear();
 		}
