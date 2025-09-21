@@ -1,0 +1,2 @@
+warning: Grouping outputs ('-O') is enabled, but without any automatic output paths ('-A', '-P', '-Q', or '-T')
+warning: Grouping outputs ('-O') is enabled, but without an output tile data file ('-o')
