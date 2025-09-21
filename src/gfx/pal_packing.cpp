@@ -68,23 +68,27 @@ public:
 	    : _assigned{attrs}, _colorSets{&colorSets} {}
 
 private:
-	template<typename Inner, template<typename> typename Constness>
-	class Iter {
+	// Template class for both const and non-const iterators over the non-empty `_assigned` slots
+	template<typename I, template<typename> typename Constness>
+	class AssignedSetsIter {
 	public:
 		friend class AssignedSets;
+
 		// For `iterator_traits`
-		using difference_type = typename std::iterator_traits<Inner>::difference_type;
 		using value_type = ColorSetAttrs;
-		using pointer = Constness<value_type> *;
+		using difference_type = ptrdiff_t;
 		using reference = Constness<value_type> &;
+		using pointer = Constness<value_type> *;
 		using iterator_category = std::forward_iterator_tag;
 
 	private:
 		Constness<decltype(_assigned)> *_array = nullptr;
-		Inner _iter{};
+		I _iter{};
 
-		Iter(decltype(_array) array, decltype(_iter) &&iter) : _array(array), _iter(iter) {}
-		Iter &skipEmpty() {
+		AssignedSetsIter(decltype(_array) array, decltype(_iter) &&iter)
+		    : _array(array), _iter(iter) {}
+
+		AssignedSetsIter &skipEmpty() {
 			while (_iter != _array->end() && !_iter->has_value()) {
 				++_iter;
 			}
@@ -92,17 +96,17 @@ private:
 		}
 
 	public:
-		Iter() = default;
+		AssignedSetsIter() = default;
 
-		bool operator==(Iter const &rhs) const { return _iter == rhs._iter; }
+		bool operator==(AssignedSetsIter const &rhs) const { return _iter == rhs._iter; }
 
-		Iter &operator++() {
+		AssignedSetsIter &operator++() {
 			++_iter;
 			skipEmpty();
 			return *this;
 		}
-		Iter operator++(int) {
-			Iter it = *this;
+		AssignedSetsIter operator++(int) {
+			AssignedSetsIter it = *this;
 			++(*this);
 			return it;
 		}
@@ -115,18 +119,18 @@ private:
 			return &(**this); // Invokes the operator above, not quite a no-op!
 		}
 
-		friend void swap(Iter &lhs, Iter &rhs) {
+		friend void swap(AssignedSetsIter &lhs, AssignedSetsIter &rhs) {
 			std::swap(lhs._array, rhs._array);
 			std::swap(lhs._iter, rhs._iter);
 		}
 	};
 
 public:
-	using iterator = Iter<decltype(_assigned)::iterator, std::remove_const_t>;
+	using iterator = AssignedSetsIter<decltype(_assigned)::iterator, std::remove_const_t>;
 	iterator begin() { return iterator{&_assigned, _assigned.begin()}.skipEmpty(); }
 	iterator end() { return iterator{&_assigned, _assigned.end()}; }
 
-	using const_iterator = Iter<decltype(_assigned)::const_iterator, std::add_const_t>;
+	using const_iterator = AssignedSetsIter<decltype(_assigned)::const_iterator, std::add_const_t>;
 	const_iterator begin() const {
 		return const_iterator{&_assigned, _assigned.begin()}.skipEmpty();
 	}
@@ -151,20 +155,19 @@ public:
 	void clear() { _assigned.clear(); }
 
 	bool empty() const {
-		return std::find_if(
-		           RANGE(_assigned),
-		           [](std::optional<ColorSetAttrs> const &slot) { return slot.has_value(); }
-		       )
-		       == _assigned.end();
+		return std::none_of(RANGE(_assigned), [](std::optional<ColorSetAttrs> const &slot) {
+			return slot.has_value();
+		});
 	}
+
 	size_t nbColorSets() const { return std::distance(RANGE(*this)); }
 
 private:
-	template<typename Iter>
+	template<typename I>
 	static void addUniqueColors(
 	    std::unordered_set<uint16_t> &colors,
-	    Iter iter,
-	    Iter const &end,
+	    I iter,
+	    I const &end,
 	    std::vector<ColorSet> const &colorSets
 	) {
 		for (; iter != end; ++iter) {
@@ -236,19 +239,18 @@ public:
 	}
 
 	// Computes the "relative size" of a set of color sets on this palette
-	template<typename Iter>
-	size_t combinedVolume(Iter &&begin, Iter const &end, std::vector<ColorSet> const &colorSets)
-	    const {
+	template<typename I>
+	size_t combinedVolume(I &&begin, I const &end, std::vector<ColorSet> const &colorSets) const {
 		std::unordered_set<uint16_t> &colors = uniqueColors();
-		addUniqueColors(colors, std::forward<Iter>(begin), end, colorSets);
+		addUniqueColors(colors, std::forward<I>(begin), end, colorSets);
 		return colors.size();
 	}
 
 	// Computes the "relative size" of a set of colors on this palette
-	template<typename Iter>
-	size_t combinedVolume(Iter &&begin, Iter &&end) const {
+	template<typename I>
+	size_t combinedVolume(I &&begin, I &&end) const {
 		std::unordered_set<uint16_t> &colors = uniqueColors();
-		colors.insert(std::forward<Iter>(begin), std::forward<Iter>(end));
+		colors.insert(std::forward<I>(begin), std::forward<I>(end));
 		return colors.size();
 	}
 };
@@ -321,23 +323,23 @@ static void decant(std::vector<AssignedSets> &assignments, std::vector<ColorSet>
 		// We do this by adding the first available color set, and then looking for palettes with
 		// common colors. (As an optimization, we know we can skip palettes already scanned.)
 		std::vector<bool> processed(from.nbColorSets(), false);
-		for (std::vector<bool>::iterator iter;
-		     (iter = std::find(RANGE(processed), false)) != processed.end();) {
+		for (std::vector<bool>::iterator wasProcessed;
+		     (wasProcessed = std::find(RANGE(processed), false)) != processed.end();) {
 			auto attrs = from.begin();
-			std::advance(attrs, iter - processed.begin());
+			std::advance(attrs, wasProcessed - processed.begin());
 
 			std::unordered_set<uint16_t> colors(RANGE(colorSets[attrs->colorSetIndex]));
-			std::vector<size_t> members = {static_cast<size_t>(iter - processed.begin())};
-			*iter = true; // Mark the first color set as processed
+			std::vector<size_t> members = {static_cast<size_t>(wasProcessed - processed.begin())};
+			*wasProcessed = true; // Mark the first color set as processed
 
 			// Build up the "component"...
-			for (; ++iter != processed.end(); ++attrs) {
+			for (; ++wasProcessed != processed.end(); ++attrs) {
 				// If at least one color matches, add it
 				if (ColorSet const &colorSet = colorSets[attrs->colorSetIndex];
 				    std::find_first_of(RANGE(colors), RANGE(colorSet)) != colors.end()) {
 					colors.insert(RANGE(colorSet));
-					members.push_back(iter - processed.begin());
-					*iter = true; // Mark that color set as processed
+					members.push_back(wasProcessed - processed.begin());
+					*wasProcessed = true; // Mark that color set as processed
 				}
 			}
 
@@ -362,10 +364,10 @@ static void decant(std::vector<AssignedSets> &assignments, std::vector<ColorSet>
 
 	// Decant on individual color sets
 	decantOn([&colorSets](AssignedSets &to, AssignedSets &from) {
-		for (auto iter = from.begin(); iter != from.end(); ++iter) {
-			if (to.canFit(colorSets[iter->colorSetIndex])) {
-				to.assign(std::move(*iter));
-				from.remove(iter);
+		for (auto it = from.begin(); it != from.end(); ++it) {
+			if (to.canFit(colorSets[it->colorSetIndex])) {
+				to.assign(std::move(*it));
+				from.remove(it);
 			}
 		}
 	});
@@ -530,10 +532,10 @@ std::pair<std::vector<size_t>, size_t> overloadAndRemove(std::vector<ColorSet> c
 	// Place back any color sets now in the queue via first-fit
 	for (ColorSetAttrs const &attrs : overloadQueue) {
 		ColorSet const &colorSet = colorSets[attrs.colorSetIndex];
-		auto iter = std::find_if(RANGE(assignments), [&colorSet](AssignedSets const &pal) {
+		auto palette = std::find_if(RANGE(assignments), [&colorSet](AssignedSets const &pal) {
 			return pal.canFit(colorSet);
 		});
-		if (iter == assignments.end()) { // No such page, create a new one
+		if (palette == assignments.end()) { // No such page, create a new one
 			verbosePrint(
 			    VERB_DEBUG,
 			    "Adding new palette (%zu) for overflowing color set %zu\n",
@@ -546,9 +548,9 @@ std::pair<std::vector<size_t>, size_t> overloadAndRemove(std::vector<ColorSet> c
 			    VERB_DEBUG,
 			    "Assigning overflowing color set %zu to palette %zu\n",
 			    attrs.colorSetIndex,
-			    iter - assignments.begin()
+			    palette - assignments.begin()
 			);
-			iter->assign(std::move(attrs));
+			palette->assign(std::move(attrs));
 		}
 	}
 
