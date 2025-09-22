@@ -2,8 +2,11 @@
 
 #include "util.hpp"
 
+#include <errno.h>
+#include <optional>
 #include <stdint.h>
 #include <stdio.h>
+#include <string.h> // strspn
 
 #include "helpers.hpp" // assume
 
@@ -29,6 +32,10 @@ bool isLetter(int c) {
 
 bool isDigit(int c) {
 	return c >= '0' && c <= '9';
+}
+
+bool isBinDigit(int c) {
+	return c == '0' || c == '1';
 }
 
 bool isOctDigit(int c) {
@@ -62,6 +69,97 @@ uint8_t parseHexDigit(int c) {
 		assume(isDigit(c));
 		return c - '0';
 	}
+}
+
+// Parses a number from a string, moving the pointer to skip the parsed characters.
+std::optional<uint64_t> parseNumber(char const *&str, NumberBase base) {
+	// Identify the base if not specified
+	// Does *not* support '+' or '-' sign prefix (unlike `strtoul` and `std::from_chars`)
+	if (base == BASE_AUTO) {
+		// Skips leading blank space (like `strtoul`)
+		str += strspn(str, " \t");
+
+		// Supports traditional ("0b", "0o", "0x") and RGBASM ('%', '&', '$') base prefixes
+		switch (str[0]) {
+		case '%':
+			base = BASE_2;
+			++str;
+			break;
+		case '&':
+			base = BASE_8;
+			++str;
+			break;
+		case '$':
+			base = BASE_16;
+			++str;
+			break;
+		case '0':
+			switch (str[1]) {
+			case 'B':
+			case 'b':
+				base = BASE_2;
+				str += 2;
+				break;
+			case 'O':
+			case 'o':
+				base = BASE_8;
+				str += 2;
+				break;
+			case 'X':
+			case 'x':
+				base = BASE_16;
+				str += 2;
+				break;
+			default:
+				base = BASE_10;
+				break;
+			}
+			break;
+		default:
+			base = BASE_10;
+			break;
+		}
+	}
+	assume(base != BASE_AUTO);
+
+	// Get the digit-condition function corresponding to the base
+	bool (*canParseDigit)(int c) = base == BASE_2    ? isBinDigit
+	                               : base == BASE_8  ? isOctDigit
+	                               : base == BASE_10 ? isDigit
+	                               : base == BASE_16 ? isHexDigit
+	                                                 : nullptr; // LCOV_EXCL_LINE
+	assume(canParseDigit != nullptr);
+
+	char const * const startDigits = str;
+
+	// Parse the number one digit at a time
+	// Does *not* support '_' digit separators
+	uint64_t result = 0;
+	for (; canParseDigit(str[0]); ++str) {
+		uint8_t digit = parseHexDigit(str[0]);
+		if (result > (UINT64_MAX - digit) / base) {
+			// Skip remaining digits and set errno = ERANGE on overflow
+			while (canParseDigit(str[0])) {
+				++str;
+			}
+			result = UINT64_MAX;
+			errno = ERANGE;
+			break;
+		}
+		result = result * base + digit;
+	}
+
+	// Return the parsed number if there were any digit characters
+	if (str - startDigits == 0) {
+		return std::nullopt;
+	}
+	return result;
+}
+
+// Parses a number from an entire string, returning nothing if there are more unparsed characters.
+std::optional<uint64_t> parseWholeNumber(char const *str, NumberBase base) {
+	std::optional<uint64_t> result = parseNumber(str, base);
+	return str[0] == '\0' ? result : std::nullopt;
 }
 
 char const *printChar(int c) {

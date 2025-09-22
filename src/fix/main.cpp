@@ -3,7 +3,9 @@
 #include "fix/main.hpp"
 
 #include <errno.h>
+#include <inttypes.h>
 #include <limits.h>
+#include <optional>
 #include <stdarg.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -16,6 +18,7 @@
 #include "platform.hpp"
 #include "style.hpp"
 #include "usage.hpp"
+#include "util.hpp"
 #include "version.hpp"
 
 #include "fix/fix.hpp"
@@ -89,25 +92,17 @@ static Usage usage = {
 // clang-format on
 
 static void parseByte(uint16_t &output, char name) {
-	if (musl_optarg[0] == 0) {
+	if (musl_optarg[0] == '\0') {
 		fatal("Argument to option '-%c' may not be empty", name);
 	}
 
-	char *endptr;
-	unsigned long value;
-	if (musl_optarg[0] == '$') {
-		value = strtoul(&musl_optarg[1], &endptr, 16);
-	} else {
-		value = strtoul(musl_optarg, &endptr, 0);
-	}
-
-	if (*endptr) {
+	if (std::optional<uint64_t> value = parseWholeNumber(musl_optarg); !value) {
 		fatal("Expected number as argument to option '-%c', got \"%s\"", name, musl_optarg);
 	} else if (value > 0xFF) {
-		fatal("Argument to option '-%c' is larger than 255: %lu", name, value);
+		fatal("Argument to option '-%c' is larger than 255: %" PRIu64, name, *value);
+	} else {
+		output = *value;
 	}
-
-	output = value;
 }
 
 static uint8_t const nintendoLogo[] = {

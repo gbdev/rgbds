@@ -1009,8 +1009,8 @@ static bool isValidDigit(char c) {
 	return isAlphanumeric(c) || c == '.' || c == '#' || c == '@';
 }
 
-static bool isBinDigit(int c) {
-	return c == '0' || c == '1' || c == options.binDigits[0] || c == options.binDigits[1];
+static bool isCustomBinDigit(int c) {
+	return isBinDigit(c) || c == options.binDigits[0] || c == options.binDigits[1];
 }
 
 static bool checkDigitErrors(char const *digits, size_t n, char const *type) {
@@ -1078,7 +1078,7 @@ static uint32_t readBinaryNumber(char const *prefix) {
 		if (value > (UINT32_MAX - bit) / 2) {
 			warning(WARNING_LARGE_CONSTANT, "Integer constant is too large");
 			// Discard any additional digits
-			skipChars([](int d) { return isBinDigit(d) || d == '_'; });
+			skipChars([](int d) { return isCustomBinDigit(d) || d == '_'; });
 			return 0;
 		}
 		value = value * 2 + bit;
@@ -1836,7 +1836,7 @@ static Token yylex_NORMAL() {
 
 		case '%': // Either %=, MOD, or a binary constant
 			c = peek();
-			if (isBinDigit(c) || c == '_') {
+			if (isCustomBinDigit(c) || c == '_') {
 				return Token(T_(NUMBER), readBinaryNumber("'%'"));
 			}
 			return oneOrTwo('=', T_(POP_MODEQ), T_(OP_MOD));

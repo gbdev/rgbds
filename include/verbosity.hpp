@@ -3,6 +3,8 @@
 #ifndef RGBDS_VERBOSITY_HPP
 #define RGBDS_VERBOSITY_HPP
 
+#include <stdio.h>
+
 #include "style.hpp"
 
 // This macro does not evaluate its arguments unless the condition is true.

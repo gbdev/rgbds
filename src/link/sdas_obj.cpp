@@ -2,9 +2,9 @@
 
 #include "link/sdas_obj.hpp"
 
-#include <ctype.h>
 #include <inttypes.h>
 #include <memory>
+#include <optional>
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
@@ -15,17 +15,12 @@
 #include "helpers.hpp" // assume, literal_strlen
 #include "linkdefs.hpp"
 #include "platform.hpp"
+#include "util.hpp" // parseWholeNumber
 
 #include "link/fstack.hpp"
 #include "link/section.hpp"
 #include "link/symbol.hpp"
 #include "link/warning.hpp"
-
-enum NumberType {
-	HEX = 16, // X
-	DEC = 10, // D
-	OCT = 8,  // Q
-};
 
 struct Location {
 	FileStackNode const *src;
@@ -84,36 +79,26 @@ static int nextLine(std::vector<char> &lineBuf, Location &where, FILE *file) {
 	}
 }
 
-static uint32_t readNumber(char const *str, char const *&endptr, NumberType base) {
-	for (uint32_t res = 0;;) {
-		static char const *digits = "0123456789ABCDEF";
-		char const *ptr = strchr(digits, toupper(*str));
+static uint64_t readNumber(Location const &where, char const *str, NumberBase base) {
+	std::optional<uint64_t> res = parseWholeNumber(str, base);
 
-		if (!ptr || ptr - digits >= base) {
-			endptr = str;
-			return res;
-		}
-		++str;
-		res = res * base + (ptr - digits);
-	}
-}
-
-static uint32_t parseNumber(Location const &where, char const *str, NumberType base) {
-	if (str[0] == '\0') {
-		fatalAt(where, "Expected number, got empty string");
-	}
-
-	char const *endptr;
-	uint32_t res = readNumber(str, endptr, base);
-
-	if (*endptr != '\0') {
+	if (!res) {
 		fatalAt(where, "Expected number, got \"%s\"", str);
 	}
-	return res;
+	return *res;
 }
 
-static uint8_t parseByte(Location const &where, char const *str, NumberType base) {
-	uint32_t num = parseNumber(where, str, base);
+static uint32_t readInt(Location const &where, char const *str, NumberBase base) {
+	uint64_t num = readNumber(where, str, base);
+
+	if (num > UINT32_MAX) {
+		fatalAt(where, "\"%s\" is not an int", str);
+	}
+	return num;
+}
+
+static uint8_t readByte(Location const &where, char const *str, NumberBase base) {
+	uint64_t num = readNumber(where, str, base);
 
 	if (num > UINT8_MAX) {
 		fatalAt(where, "\"%s\" is not a byte", str);
@@ -184,18 +169,18 @@ void sdobj_ReadFile(FileStackNode const &src, FILE *file, std::vector<Symbol> &f
 	int lineType = nextLine(line, where, file);
 
 	// The first letter (thus, the line type) identifies the integer type
-	NumberType numberType;
+	NumberBase numberBase;
 	switch (lineType) {
 	case EOF:
 		fatalAt(where, "SDCC object only contains comments and empty lines");
 	case 'X':
-		numberType = HEX;
+		numberBase = BASE_16;
 		break;
 	case 'D':
-		numberType = DEC;
+		numberBase = BASE_10;
 		break;
 	case 'Q':
-		numberType = OCT;
+		numberBase = BASE_8;
 		break;
 	default:
 		fatalAt(
@@ -239,12 +224,12 @@ void sdobj_ReadFile(FileStackNode const &src, FILE *file, std::vector<Symbol> &f
 	// Expected format: "A areas S global symbols"
 
 	getToken(line.data(), "Empty 'H' line");
-	uint32_t expectedNbAreas = parseNumber(where, token, numberType);
+	uint32_t expectedNbAreas = readInt(where, token, numberBase);
 
 	expectToken("areas", 'H');
 
 	getToken(nullptr, "'H' line is too short");
-	uint32_t expectedNbSymbols = parseNumber(where, token, numberType);
+	uint32_t expectedNbSymbols = readInt(where, token, numberBase);
 	fileSymbols.reserve(expectedNbSymbols);
 
 	expectToken("global", 'H');
@@ -296,7 +281,7 @@ void sdobj_ReadFile(FileStackNode const &src, FILE *file, std::vector<Symbol> &f
 
 			getToken(nullptr, "'A' line is too short");
 
-			uint32_t tmp = parseNumber(where, token, numberType);
+			uint32_t tmp = readInt(where, token, numberBase);
 
 			if (tmp > UINT16_MAX) {
 				fatalAt(
@@ -310,7 +295,7 @@ void sdobj_ReadFile(FileStackNode const &src, FILE *file, std::vector<Symbol> &f
 			expectToken("flags", 'A');
 
 			getToken(nullptr, "'A' line is too short");
-			tmp = parseNumber(where, token, numberType);
+			tmp = readInt(where, token, numberBase);
 			if (tmp & (1 << AREA_PAGING)) {
 				fatalAt(where, "Paging is not supported");
 			}
@@ -329,7 +314,7 @@ void sdobj_ReadFile(FileStackNode const &src, FILE *file, std::vector<Symbol> &f
 			expectToken("addr", 'A');
 
 			getToken(nullptr, "'A' line is too short");
-			tmp = parseNumber(where, token, numberType);
+			tmp = readInt(where, token, numberBase);
 			curSection->org = tmp; // Truncation keeps the address portion only
 			curSection->bank = tmp >> 16;
 
@@ -386,7 +371,7 @@ void sdobj_ReadFile(FileStackNode const &src, FILE *file, std::vector<Symbol> &f
 
 			getToken(nullptr, "'S' line is too short");
 
-			if (int32_t value = parseNumber(where, &token[3], numberType); !fileSections.empty()) {
+			if (int32_t value = readInt(where, &token[3], numberBase); !fileSections.empty()) {
 				// Symbols in sections are labels; their value is an offset
 				Section *section = fileSections.back().section.get();
 				if (section->isAddressFixed) {
@@ -465,7 +450,7 @@ void sdobj_ReadFile(FileStackNode const &src, FILE *file, std::vector<Symbol> &f
 
 			data.clear();
 			for (token = strtok(line.data(), delim); token; token = strtok(nullptr, delim)) {
-				data.push_back(parseByte(where, token, numberType));
+				data.push_back(readByte(where, token, numberBase));
 			}
 
 			if (data.size() < addrSize) {
@@ -487,9 +472,9 @@ void sdobj_ReadFile(FileStackNode const &src, FILE *file, std::vector<Symbol> &f
 			uint16_t areaIdx;
 
 			getToken(nullptr, "'R' line is too short");
-			areaIdx = parseByte(where, token, numberType);
+			areaIdx = readByte(where, token, numberBase);
 			getToken(nullptr, "'R' line is too short");
-			areaIdx |= static_cast<uint16_t>(parseByte(where, token, numberType)) << 8;
+			areaIdx |= static_cast<uint16_t>(readByte(where, token, numberBase)) << 8;
 			if (areaIdx >= fileSections.size()) {
 				fatalAt(
 				    where,
@@ -549,16 +534,16 @@ void sdobj_ReadFile(FileStackNode const &src, FILE *file, std::vector<Symbol> &f
 			// appropriate RPN expression (depending on flags), plus an addition for the
 			// bytes being patched over.
 			while ((token = strtok(nullptr, delim)) != nullptr) {
-				uint16_t flags = parseByte(where, token, numberType);
+				uint16_t flags = readByte(where, token, numberBase);
 
 				if ((flags & 0xF0) == 0xF0) {
 					getToken(nullptr, "Incomplete relocation");
 					flags = (flags & 0x0F)
-					        | static_cast<uint16_t>(parseByte(where, token, numberType)) << 4;
+					        | static_cast<uint16_t>(readByte(where, token, numberBase)) << 4;
 				}
 
 				getToken(nullptr, "Incomplete relocation");
-				uint8_t offset = parseByte(where, token, numberType);
+				uint8_t offset = readByte(where, token, numberBase);
 
 				if (offset < addrSize) {
 					fatalAt(
@@ -578,10 +563,10 @@ void sdobj_ReadFile(FileStackNode const &src, FILE *file, std::vector<Symbol> &f
 				}
 
 				getToken(nullptr, "Incomplete relocation");
-				uint16_t idx = parseByte(where, token, numberType);
+				uint16_t idx = readByte(where, token, numberBase);
 
 				getToken(nullptr, "Incomplete relocation");
-				idx |= static_cast<uint16_t>(parseByte(where, token, numberType));
+				idx |= static_cast<uint16_t>(readByte(where, token, numberBase));
 
 				// Loudly fail on unknown flags
 				if (flags & (1 << RELOC_ZPAGE | 1 << RELOC_NPAGE)) {

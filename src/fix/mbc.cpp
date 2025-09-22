@@ -2,9 +2,11 @@
 
 #include "fix/mbc.hpp"
 
+#include <optional>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unordered_map>
 #include <utility>
 
@@ -97,15 +99,11 @@ bool mbc_HasRAM(MbcType type) {
 }
 
 static void skipBlankSpace(char const *&ptr) {
-	while (isBlankSpace(*ptr)) {
-		++ptr;
-	}
+	ptr += strspn(ptr, " \t");
 }
 
 static void skipMBCSpace(char const *&ptr) {
-	while (isBlankSpace(*ptr) || *ptr == '_') {
-		++ptr;
-	}
+	ptr += strspn(ptr, " \t_");
 }
 
 static char normalizeMBCChar(char c) {
@@ -128,53 +126,42 @@ static bool readMBCSlice(char const *&name, char const *expected) {
 }
 
 [[noreturn]]
-static void fatalUnknownMBC(char const *fullName) {
-	fatal("Unknown MBC \"%s\"\n%s", fullName, acceptedMBCNames);
+static void fatalUnknownMBC(char const *name) {
+	fatal("Unknown MBC \"%s\"\n%s", name, acceptedMBCNames);
 }
 
 [[noreturn]]
-static void fatalWrongMBCFeatures(char const *fullName) {
-	fatal("Features incompatible with MBC (\"%s\")\n%s", fullName, acceptedMBCNames);
+static void fatalWrongMBCFeatures(char const *name) {
+	fatal("Features incompatible with MBC (\"%s\")\n%s", name, acceptedMBCNames);
 }
 
 MbcType mbc_ParseName(char const *name, uint8_t &tpp1Major, uint8_t &tpp1Minor) {
-	char const *fullName = name;
+	char const *ptr = name;
+	skipBlankSpace(ptr); // Trim off leading blank space
 
-	if (!strcasecmp(name, "help") || !strcasecmp(name, "list")) {
+	if (!strcasecmp(ptr, "help") || !strcasecmp(ptr, "list")) {
 		puts(acceptedMBCNames); // Outputs to stdout and appends a newline
 		exit(0);
 	}
 
-	if (isDigit(name[0]) || name[0] == '$') {
-		int base = 0;
-
-		if (name[0] == '$') {
-			++name;
-			base = 16;
+	// Parse numeric MBC and return it as-is (unless it's too large)
+	if (char c = *ptr; isDigit(c) || c == '$' || c == '&' || c == '%') {
+		if (std::optional<uint64_t> mbc = parseWholeNumber(ptr); !mbc) {
+			fatalUnknownMBC(name);
+		} else if (*mbc > 0xFF) {
+			fatal("Specified MBC ID out of range 0-255: \"%s\"", name);
+		} else {
+			return static_cast<MbcType>(*mbc);
 		}
-		// Parse number, and return it as-is (unless it's too large)
-		char *endptr;
-		unsigned long mbc = strtoul(name, &endptr, base);
-
-		if (*endptr) {
-			fatalUnknownMBC(fullName);
-		}
-		if (mbc > 0xFF) {
-			fatal("Specified MBC ID out of range 0-255: \"%s\"", fullName);
-		}
-		return static_cast<MbcType>(mbc);
 	}
 
 	// Begin by reading the MBC type:
 	uint16_t mbc;
-	char const *ptr = name;
-
-	skipBlankSpace(ptr); // Trim off leading blank space
 
 #define tryReadSlice(expected) \
 	do { \
 		if (!readMBCSlice(ptr, expected)) { \
-			fatalUnknownMBC(fullName); \
+			fatalUnknownMBC(name); \
 		} \
 	} while (0)
 
@@ -201,7 +188,7 @@ MbcType mbc_ParseName(char const *name, uint8_t &tpp1Major, uint8_t &tpp1Minor) 
 			case 'c':
 				break;
 			default:
-				fatalUnknownMBC(fullName);
+				fatalUnknownMBC(name);
 			}
 			switch (*ptr++) {
 			case '1':
@@ -223,7 +210,7 @@ MbcType mbc_ParseName(char const *name, uint8_t &tpp1Major, uint8_t &tpp1Minor) 
 				mbc = MBC7_SENSOR_RUMBLE_RAM_BATTERY;
 				break;
 			default:
-				fatalUnknownMBC(fullName);
+				fatalUnknownMBC(name);
 			}
 			break;
 		case 'M':
@@ -232,7 +219,7 @@ MbcType mbc_ParseName(char const *name, uint8_t &tpp1Major, uint8_t &tpp1Minor) 
 			mbc = MMM01;
 			break;
 		default:
-			fatalUnknownMBC(fullName);
+			fatalUnknownMBC(name);
 		}
 		break;
 
@@ -260,33 +247,27 @@ MbcType mbc_ParseName(char const *name, uint8_t &tpp1Major, uint8_t &tpp1Minor) 
 			// Parse version
 			skipMBCSpace(ptr);
 			// Major
-			char *endptr;
-			unsigned long val = strtoul(ptr, &endptr, 10);
-
-			if (endptr == ptr) {
+			if (std::optional<uint64_t> major = parseNumber(ptr, BASE_10); !major) {
 				fatal("Failed to parse TPP1 major revision number");
-			}
-			ptr = endptr;
-			if (val != 1) {
+			} else if (*major != 1) {
 				fatal("RGBFIX only supports TPP1 version 1.0");
+			} else {
+				tpp1Major = *major;
 			}
-			tpp1Major = val;
 			tryReadSlice(".");
 			// Minor
-			val = strtoul(ptr, &endptr, 10);
-			if (endptr == ptr) {
+			if (std::optional<uint64_t> minor = parseNumber(ptr, BASE_10); !minor) {
 				fatal("Failed to parse TPP1 minor revision number");
-			}
-			ptr = endptr;
-			if (val > 0xFF) {
+			} else if (*minor > 0xFF) {
 				fatal("TPP1 minor revision number must be 8-bit");
+			} else {
+				tpp1Minor = *minor;
 			}
-			tpp1Minor = val;
 			mbc = TPP1;
 			break;
 		}
 		default:
-			fatalUnknownMBC(fullName);
+			fatalUnknownMBC(name);
 		}
 		break;
 
@@ -301,12 +282,12 @@ MbcType mbc_ParseName(char const *name, uint8_t &tpp1Major, uint8_t &tpp1Minor) 
 			mbc = HUC3;
 			break;
 		default:
-			fatalUnknownMBC(fullName);
+			fatalUnknownMBC(name);
 		}
 		break;
 
 	default:
-		fatalUnknownMBC(fullName);
+		fatalUnknownMBC(name);
 	}
 
 	// Read "additional features"
@@ -330,7 +311,7 @@ MbcType mbc_ParseName(char const *name, uint8_t &tpp1Major, uint8_t &tpp1Minor) 
 		// We expect a '+' at this point
 		skipMBCSpace(ptr);
 		if (*ptr++ != '+') {
-			fatalUnknownMBC(fullName);
+			fatalUnknownMBC(name);
 		}
 		skipMBCSpace(ptr);
 
@@ -361,7 +342,7 @@ MbcType mbc_ParseName(char const *name, uint8_t &tpp1Major, uint8_t &tpp1Minor) 
 				features |= RAM;
 				break;
 			default:
-				fatalUnknownMBC(fullName);
+				fatalUnknownMBC(name);
 			}
 			break;
 
@@ -378,7 +359,7 @@ MbcType mbc_ParseName(char const *name, uint8_t &tpp1Major, uint8_t &tpp1Minor) 
 			break;
 
 		default:
-			fatalUnknownMBC(fullName);
+			fatalUnknownMBC(name);
 		}
 	}
 #undef tryReadSlice
@@ -402,7 +383,7 @@ MbcType mbc_ParseName(char const *name, uint8_t &tpp1Major, uint8_t &tpp1Minor) 
 		} else if (features == (RAM | BATTERY)) {
 			mbc += 2;
 		} else if (features) {
-			fatalWrongMBCFeatures(fullName);
+			fatalWrongMBCFeatures(name);
 		}
 		break;
 
@@ -410,7 +391,7 @@ MbcType mbc_ParseName(char const *name, uint8_t &tpp1Major, uint8_t &tpp1Minor) 
 		if (features == BATTERY) {
 			mbc = MBC2_BATTERY;
 		} else if (features) {
-			fatalWrongMBCFeatures(fullName);
+			fatalWrongMBCFeatures(name);
 		}
 		break;
 
@@ -434,7 +415,7 @@ MbcType mbc_ParseName(char const *name, uint8_t &tpp1Major, uint8_t &tpp1Minor) 
 		} else if (features == (RAM | BATTERY)) {
 			mbc += 2;
 		} else if (features) {
-			fatalWrongMBCFeatures(fullName);
+			fatalWrongMBCFeatures(name);
 		}
 		break;
 
@@ -452,7 +433,7 @@ MbcType mbc_ParseName(char const *name, uint8_t &tpp1Major, uint8_t &tpp1Minor) 
 		} else if (features == (RAM | BATTERY)) {
 			mbc += 2;
 		} else if (features) {
-			fatalWrongMBCFeatures(fullName);
+			fatalWrongMBCFeatures(name);
 		}
 		break;
 
@@ -462,19 +443,19 @@ MbcType mbc_ParseName(char const *name, uint8_t &tpp1Major, uint8_t &tpp1Minor) 
 	case HUC3:
 		// No extra features accepted
 		if (features) {
-			fatalWrongMBCFeatures(fullName);
+			fatalWrongMBCFeatures(name);
 		}
 		break;
 
 	case MBC7_SENSOR_RUMBLE_RAM_BATTERY:
 		if (features != (SENSOR | RUMBLE | RAM | BATTERY)) {
-			fatalWrongMBCFeatures(fullName);
+			fatalWrongMBCFeatures(name);
 		}
 		break;
 
 	case HUC1_RAM_BATTERY:
 		if (features != (RAM | BATTERY)) { // HuC1 expects RAM+BATTERY
-			fatalWrongMBCFeatures(fullName);
+			fatalWrongMBCFeatures(name);
 		}
 		break;
 
@@ -495,7 +476,7 @@ MbcType mbc_ParseName(char const *name, uint8_t &tpp1Major, uint8_t &tpp1Minor) 
 			mbc |= 0x01;
 		}
 		if (features & SENSOR) {
-			fatalWrongMBCFeatures(fullName);
+			fatalWrongMBCFeatures(name);
 		}
 		// Multiple rumble speeds imply rumble
 		if (mbc & 0x01) {
@@ -508,7 +489,7 @@ MbcType mbc_ParseName(char const *name, uint8_t &tpp1Major, uint8_t &tpp1Minor) 
 
 	// If there is still something left, error out
 	if (*ptr) {
-		fatalUnknownMBC(fullName);
+		fatalUnknownMBC(name);
 	}
 
 	return static_cast<MbcType>(mbc);

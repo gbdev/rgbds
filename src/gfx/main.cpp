@@ -3,10 +3,10 @@
 #include "gfx/main.hpp"
 
 #include <algorithm>
-#include <ctype.h>
 #include <errno.h>
 #include <inttypes.h>
 #include <ios>
+#include <optional>
 #include <stdarg.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -122,76 +122,19 @@ static Usage usage = {
 
 // Parses a number at the beginning of a string, moving the pointer to skip the parsed characters.
 // Returns the provided errVal on error.
-static uint16_t parseNumber(char *&string, char const *errPrefix, uint16_t errVal = UINT16_MAX) {
-	uint8_t base = 10;
-	if (*string == '\0') {
+static uint16_t readNumber(char const *&str, char const *errPrefix, uint16_t errVal = UINT16_MAX) {
+	if (std::optional<uint64_t> number = parseNumber(str); !number) {
 		error("%s: expected number, but found nothing", errPrefix);
 		return errVal;
-	} else if (*string == '$') {
-		base = 16;
-		++string;
-	} else if (*string == '%') {
-		base = 2;
-		++string;
-	} else if (*string == '0' && string[1] != '\0') {
-		// Check if we have a "0x" or "0b" here
-		if (string[1] == 'x' || string[1] == 'X') {
-			base = 16;
-			string += 2;
-		} else if (string[1] == 'b' || string[1] == 'B') {
-			base = 2;
-			string += 2;
-		}
-	}
-
-	// Turns a digit into its numeric value in the current base, if it has one.
-	// Maximum is inclusive. The string_view is modified to "consume" all digits.
-	// Returns 255 on parse failure (including wrong char for base), in which case
-	// the string_view may be pointing on garbage.
-	auto charIndex = [&base](unsigned char c) -> uint8_t {
-		unsigned char index = c - '0'; // Use wrapping semantics
-		if (base == 2 && index >= 2) {
-			return 255;
-		} else if (index < 10) {
-			return index;
-		} else if (base != 16) {
-			return 255; // Letters are only valid in hex
-		}
-		index = tolower(c) - 'a'; // OK because we pass an `unsigned char`
-		if (index < 6) {
-			return index + 10;
-		}
-		return 255;
-	};
-
-	if (charIndex(*string) == 255) {
-		error(
-		    "%s: expected digit%s, but found nothing", errPrefix, base != 10 ? " after base" : ""
-		);
+	} else if (*number > UINT16_MAX) {
+		error("%s: the number is too large!", errPrefix);
 		return errVal;
+	} else {
+		return *number;
 	}
-	uint16_t number = 0;
-	do {
-		// Read a character, and check if it's valid in the given base
-		uint8_t index = charIndex(*string);
-		if (index == 255) {
-			break; // Found an invalid character, end
-		}
-		++string;
-
-		number *= base;
-		number += index;
-		// The lax check covers the addition on top of the multiplication
-		if (number >= UINT16_MAX / base) {
-			error("%s: the number is too large!", errPrefix);
-			return errVal;
-		}
-	} while (*string != '\0'); // No more characters?
-
-	return number;
 }
 
-static void skipBlankSpace(char *&arg) {
+static void skipBlankSpace(char const *&arg) {
 	arg += strspn(arg, " \t");
 }
 
@@ -263,7 +206,7 @@ static std::vector<size_t> readAtFile(std::string const &path, std::vector<char>
 // to an "at-file" path if one is encountered.
 static char *parseArgv(int argc, char *argv[]) {
 	for (int ch; (ch = musl_getopt_long_only(argc, argv, optstring, longopts, nullptr)) != -1;) {
-		char *arg = musl_optarg; // Make a copy for scanning
+		char const *arg = musl_optarg; // Make a copy for scanning
 
 		switch (ch) {
 		case 'A':
@@ -283,7 +226,7 @@ static char *parseArgv(int argc, char *argv[]) {
 			break;
 
 		case 'b': {
-			uint16_t number = parseNumber(arg, "Bank 0 base tile ID", 0);
+			uint16_t number = readNumber(arg, "Bank 0 base tile ID", 0);
 			if (number >= 256) {
 				error("Bank 0 base tile ID must be below 256");
 			} else {
@@ -303,7 +246,7 @@ static char *parseArgv(int argc, char *argv[]) {
 			}
 			++arg; // Skip comma
 			skipBlankSpace(arg);
-			number = parseNumber(arg, "Bank 1 base tile ID", 0);
+			number = readNumber(arg, "Bank 1 base tile ID", 0);
 			if (number >= 256) {
 				error("Bank 1 base tile ID must be below 256");
 			} else {
@@ -346,7 +289,7 @@ static char *parseArgv(int argc, char *argv[]) {
 			break;
 
 		case 'd':
-			options.bitDepth = parseNumber(arg, "Bit depth", 2);
+			options.bitDepth = readNumber(arg, "Bit depth", 2);
 			if (*arg != '\0') {
 				error("Bit depth ('-b') argument must be a valid number, not \"%s\"", musl_optarg);
 			} else if (options.bitDepth != 1 && options.bitDepth != 2) {
@@ -368,7 +311,7 @@ static char *parseArgv(int argc, char *argv[]) {
 			break;
 
 		case 'L':
-			options.inputSlice.left = parseNumber(arg, "Input slice left coordinate");
+			options.inputSlice.left = readNumber(arg, "Input slice left coordinate");
 			if (options.inputSlice.left > INT16_MAX) {
 				error("Input slice left coordinate is out of range!");
 				break;
@@ -380,7 +323,7 @@ static char *parseArgv(int argc, char *argv[]) {
 			}
 			++arg;
 			skipBlankSpace(arg);
-			options.inputSlice.top = parseNumber(arg, "Input slice upper coordinate");
+			options.inputSlice.top = readNumber(arg, "Input slice upper coordinate");
 			skipBlankSpace(arg);
 			if (*arg != ':') {
 				error("Missing colon after upper coordinate in \"%s\"", musl_optarg);
@@ -388,7 +331,7 @@ static char *parseArgv(int argc, char *argv[]) {
 			}
 			++arg;
 			skipBlankSpace(arg);
-			options.inputSlice.width = parseNumber(arg, "Input slice width");
+			options.inputSlice.width = readNumber(arg, "Input slice width");
 			skipBlankSpace(arg);
 			if (options.inputSlice.width == 0) {
 				error("Input slice width may not be 0!");
@@ -399,7 +342,7 @@ static char *parseArgv(int argc, char *argv[]) {
 			}
 			++arg;
 			skipBlankSpace(arg);
-			options.inputSlice.height = parseNumber(arg, "Input slice height");
+			options.inputSlice.height = readNumber(arg, "Input slice height");
 			if (options.inputSlice.height == 0) {
 				error("Input slice height may not be 0!");
 			}
@@ -409,7 +352,7 @@ static char *parseArgv(int argc, char *argv[]) {
 			break;
 
 		case 'l': {
-			uint16_t number = parseNumber(arg, "Base palette ID", 0);
+			uint16_t number = readNumber(arg, "Base palette ID", 0);
 			if (*arg != '\0') {
 				error("Base palette ID must be a valid number, not \"%s\"", musl_optarg);
 			} else if (number >= 256) {
@@ -430,7 +373,7 @@ static char *parseArgv(int argc, char *argv[]) {
 			break;
 
 		case 'N':
-			options.maxNbTiles[0] = parseNumber(arg, "Number of tiles in bank 0", 256);
+			options.maxNbTiles[0] = readNumber(arg, "Number of tiles in bank 0", 256);
 			if (options.maxNbTiles[0] > 256) {
 				error("Bank 0 cannot contain more than 256 tiles");
 			}
@@ -448,7 +391,7 @@ static char *parseArgv(int argc, char *argv[]) {
 			}
 			++arg; // Skip comma
 			skipBlankSpace(arg);
-			options.maxNbTiles[1] = parseNumber(arg, "Number of tiles in bank 1", 256);
+			options.maxNbTiles[1] = readNumber(arg, "Number of tiles in bank 1", 256);
 			if (options.maxNbTiles[1] > 256) {
 				error("Bank 1 cannot contain more than 256 tiles");
 			}
@@ -462,7 +405,7 @@ static char *parseArgv(int argc, char *argv[]) {
 			break;
 
 		case 'n': {
-			uint16_t number = parseNumber(arg, "Number of palettes", 256);
+			uint16_t number = readNumber(arg, "Number of palettes", 256);
 			if (*arg != '\0') {
 				error("Number of palettes ('-n') must be a valid number, not \"%s\"", musl_optarg);
 			}
@@ -513,7 +456,7 @@ static char *parseArgv(int argc, char *argv[]) {
 
 		case 'r':
 			localOptions.reverse = true;
-			options.reversedWidth = parseNumber(arg, "Reversed image stride");
+			options.reversedWidth = readNumber(arg, "Reversed image stride");
 			if (*arg != '\0') {
 				error(
 				    "Reversed image stride ('-r') must be a valid number, not \"%s\"", musl_optarg
@@ -522,7 +465,7 @@ static char *parseArgv(int argc, char *argv[]) {
 			break;
 
 		case 's':
-			options.nbColorsPerPal = parseNumber(arg, "Number of colors per palette", 4);
+			options.nbColorsPerPal = readNumber(arg, "Number of colors per palette", 4);
 			if (*arg != '\0') {
 				error("Palette size ('-s') must be a valid number, not \"%s\"", musl_optarg);
 			}
@@ -564,7 +507,7 @@ static char *parseArgv(int argc, char *argv[]) {
 			break;
 
 		case 'x':
-			options.trim = parseNumber(arg, "Number of tiles to trim", 0);
+			options.trim = readNumber(arg, "Number of tiles to trim", 0);
 			if (*arg != '\0') {
 				error("Tile trim ('-x') argument must be a valid number, not \"%s\"", musl_optarg);
 			}

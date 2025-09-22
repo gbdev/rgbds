@@ -63,25 +63,9 @@ std::pair<WarningState, std::optional<uint32_t>> getInitialWarningState(std::str
 		return {state, std::nullopt};
 	}
 
-	// Is the rest of the string a decimal number?
-	// We want to avoid `strtoul`'s whitespace and sign handling, so we parse manually
+	// If the rest of the string is a decimal number, it's the parameter value
 	char const *ptr = flag.c_str() + equals + 1;
-	uint32_t param = 0;
-	bool overflowed = false;
-
-	for (; isDigit(*ptr); ++ptr) {
-		if (overflowed) {
-			continue;
-		}
-
-		uint32_t c = *ptr - '0';
-		if (param > (UINT32_MAX - c) / 10) {
-			overflowed = true;
-			param = UINT32_MAX;
-			continue;
-		}
-		param = param * 10 + c;
-	}
+	uint64_t param = parseNumber(ptr, BASE_10).value_or(0);
 
 	// If we reached the end of the string, truncate it at the '='
 	if (*ptr == '\0') {
@@ -92,5 +76,5 @@ std::pair<WarningState, std::optional<uint32_t>> getInitialWarningState(std::str
 		}
 	}
 
-	return {state, param};
+	return {state, param > UINT32_MAX ? UINT32_MAX : param};
 }

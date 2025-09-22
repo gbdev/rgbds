@@ -6,6 +6,7 @@
 #include <errno.h>
 #include <inttypes.h>
 #include <memory>
+#include <optional>
 #include <stdarg.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -299,6 +300,8 @@ int main(int argc, char *argv[]) {
 	// https://reproducible-builds.org/docs/source-date-epoch/
 	time_t now = time(nullptr);
 	if (char const *sourceDateEpoch = getenv("SOURCE_DATE_EPOCH"); sourceDateEpoch) {
+		// Use `strtoul`, not `parseWholeNumber`, because SOURCE_DATE_EPOCH does
+		// not conventionally support our custom base prefixes
 		now = static_cast<time_t>(strtoul(sourceDateEpoch, nullptr, 0));
 	}
 	sym_Init(now);
@@ -378,51 +381,41 @@ int main(int argc, char *argv[]) {
 			fstk_AddPreIncludeFile(musl_optarg);
 			break;
 
-		case 'p': {
-			char *endptr;
-			unsigned long padByte = strtoul(musl_optarg, &endptr, 0);
-
-			if (musl_optarg[0] == '\0' || *endptr != '\0') {
+		case 'p':
+			if (std::optional<uint64_t> padByte = parseWholeNumber(musl_optarg); !padByte) {
 				fatal("Invalid argument for option '-p'");
-			}
-
-			if (padByte > 0xFF) {
+			} else if (*padByte > 0xFF) {
 				fatal("Argument for option '-p' must be between 0 and 0xFF");
+			} else {
+				opt_P(*padByte);
 			}
-
-			opt_P(padByte);
 			break;
-		}
 
 		case 'Q': {
 			char const *precisionArg = musl_optarg;
 			if (precisionArg[0] == '.') {
 				++precisionArg;
 			}
-			char *endptr;
-			unsigned long precision = strtoul(precisionArg, &endptr, 0);
 
-			if (precisionArg[0] == '\0' || *endptr != '\0') {
+			if (std::optional<uint64_t> precision = parseWholeNumber(precisionArg); !precision) {
 				fatal("Invalid argument for option '-Q'");
-			}
-
-			if (precision < 1 || precision > 31) {
+			} else if (*precision < 1 || *precision > 31) {
 				fatal("Argument for option '-Q' must be between 1 and 31");
+			} else {
+				opt_Q(*precision);
 			}
-
-			opt_Q(precision);
 			break;
 		}
 
-		case 'r': {
-			char *endptr;
-			options.maxRecursionDepth = strtoul(musl_optarg, &endptr, 0);
-
-			if (musl_optarg[0] == '\0' || *endptr != '\0') {
+		case 'r':
+			if (std::optional<uint64_t> maxDepth = parseWholeNumber(musl_optarg); !maxDepth) {
 				fatal("Invalid argument for option '-r'");
+			} else if (errno == ERANGE) {
+				fatal("Argument for option '-r' is out of range");
+			} else {
+				options.maxRecursionDepth = *maxDepth;
 			}
 			break;
-		}
 
 		case 's': {
 			// Split "<features>:<name>" so `musl_optarg` is "<features>" and `name` is "<name>"
@@ -459,21 +452,15 @@ int main(int argc, char *argv[]) {
 			warnings.state.warningsEnabled = false;
 			break;
 
-		case 'X': {
-			char *endptr;
-			uint64_t maxErrors = strtoul(musl_optarg, &endptr, 0);
-
-			if (musl_optarg[0] == '\0' || *endptr != '\0') {
+		case 'X':
+			if (std::optional<uint64_t> maxErrors = parseWholeNumber(musl_optarg); !maxErrors) {
 				fatal("Invalid argument for option '-X'");
-			}
-
-			if (maxErrors > UINT64_MAX) {
+			} else if (*maxErrors > UINT64_MAX) {
 				fatal("Argument for option '-X' must be between 0 and %" PRIu64, UINT64_MAX);
+			} else {
+				options.maxErrors = *maxErrors;
 			}
-
-			options.maxErrors = maxErrors;
 			break;
-		}
 
 		case 0: // Long-only options
 			switch (longOpt) {
