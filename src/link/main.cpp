@@ -4,6 +4,7 @@
 
 #include <inttypes.h>
 #include <limits.h>
+#include <optional>
 #include <stdarg.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -265,21 +266,18 @@ static void parseScrambleSpec(char *spec) {
 
 		uint16_t limit = search->second.second;
 		if (regionSize) {
-			char *endptr;
-			unsigned long value = strtoul(regionSize, &endptr, 0);
-
-			if (*endptr != '\0') {
+			char const *ptr = regionSize + skipBlankSpace(regionSize);
+			if (std::optional<uint64_t> value = parseWholeNumber(ptr); !value) {
 				fatal("Invalid region size limit \"%s\" for option '-S'", regionSize);
-			}
-			if (value > limit) {
+			} else if (*value > limit) {
 				fatal(
 				    "%s region size for option '-S' must be between 0 and %" PRIu16,
 				    search->first.c_str(),
 				    limit
 				);
+			} else {
+				limit = *value;
 			}
-
-			limit = value;
 		} else if (search->second.first != &options.scrambleWRAMX) {
 			// Only WRAMX limit can be implied, since ROMX and SRAM size may vary.
 			fatal("Missing %s region size limit for option '-S'", search->first.c_str());
@@ -353,21 +351,16 @@ int main(int argc, char *argv[]) {
 			options.outputFileName = musl_optarg;
 			break;
 
-		case 'p': {
-			char *endptr;
-			unsigned long value = strtoul(musl_optarg, &endptr, 0);
-
-			if (musl_optarg[0] == '\0' || *endptr != '\0') {
+		case 'p':
+			if (std::optional<uint64_t> value = parseWholeNumber(musl_optarg); !value) {
 				fatal("Invalid argument for option '-p'");
-			}
-			if (value > 0xFF) {
+			} else if (*value > 0xFF) {
 				fatal("Argument for option '-p' must be between 0 and 0xFF");
+			} else {
+				options.padValue = *value;
+				options.hasPadValue = true;
 			}
-
-			options.padValue = value;
-			options.hasPadValue = true;
 			break;
-		}
 
 		case 'S':
 			parseScrambleSpec(musl_optarg);

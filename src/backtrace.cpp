@@ -2,9 +2,11 @@
 
 #include "backtrace.hpp"
 
-#include <stdlib.h> // strtoul
+#include <optional>
+#include <stdint.h>
 
 #include "platform.hpp" // strcasecmp
+#include "util.hpp"     // parseWholeNumber
 
 Tracing tracing;
 
@@ -22,8 +24,10 @@ bool trace_ParseTraceDepth(char const *arg) {
 		tracing.loud = false;
 		return true;
 	} else {
-		char *endptr;
-		tracing.depth = strtoul(arg, &endptr, 0);
-		return arg[0] != '\0' && *endptr == '\0';
+		std::optional<uint64_t> depth = parseWholeNumber(arg);
+		if (depth) {
+			tracing.depth = *depth;
+		}
+		return depth.has_value();
 	}
 }

@@ -11,24 +11,21 @@
 #include <string.h>
 #include <string>
 
-#include "util.hpp" // isDigit
+#include "util.hpp" // parseNumber
 
 #include "asm/main.hpp" // options
 #include "asm/warning.hpp"
 
-static size_t parseNumber(char const *spec, size_t &value) {
-	size_t i = 0;
-
-	value = 0;
-	for (; isDigit(spec[i]); ++i) {
-		value = value * 10 + (spec[i] - '0');
-	}
-
-	return i;
-}
-
 size_t FormatSpec::parseSpec(char const *spec) {
 	size_t i = 0;
+
+	auto parseSpecNumber = [&spec, &i]() {
+		char const *end = &spec[i];
+		size_t number = parseNumber(end, BASE_10).value_or(0);
+		i += end - &spec[i];
+		return number;
+	};
+
 	// <sign>
 	if (char c = spec[i]; c == ' ' || c == '+') {
 		++i;
@@ -51,19 +48,19 @@ size_t FormatSpec::parseSpec(char const *spec) {
 	}
 	// <width>
 	if (isDigit(spec[i])) {
-		i += parseNumber(&spec[i], width);
+		width = parseSpecNumber();
 	}
 	// <frac>
 	if (spec[i] == '.') {
 		++i;
 		hasFrac = true;
-		i += parseNumber(&spec[i], fracWidth);
+		fracWidth = parseSpecNumber();
 	}
 	// <prec>
 	if (spec[i] == 'q') {
 		++i;
 		hasPrec = true;
-		i += parseNumber(&spec[i], precision);
+		precision = parseSpecNumber();
 	}
 	// <type>
 	switch (char c = spec[i]; c) {

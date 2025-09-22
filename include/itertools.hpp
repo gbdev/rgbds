@@ -8,6 +8,7 @@
 #include <stddef.h>
 #include <string>
 #include <tuple>
+#include <type_traits>
 #include <unordered_map>
 #include <utility>
 

@@ -106,10 +106,6 @@ static yy::parser::symbol_type parseDecNumber(int c) {
 	return yy::parser::make_number(number);
 }
 
-static bool isBinDigit(int c) {
-	return c == '0' || c == '1';
-}
-
 static yy::parser::symbol_type parseBinNumber(char const *prefix) {
 	LexerStackEntry &context = lexerStack.back();
 	int c = context.file.sgetc();
@@ -167,7 +163,7 @@ static yy::parser::symbol_type parseHexNumber(char const *prefix) {
 	return yy::parser::make_number(number);
 }
 
-static yy::parser::symbol_type parseNumber(int c) {
+static yy::parser::symbol_type parseAnyNumber(int c) {
 	LexerStackEntry &context = lexerStack.back();
 	if (c == '0') {
 		switch (context.file.sgetc()) {
@@ -265,7 +261,7 @@ yy::parser::symbol_type yylex() {
 	} else if (c == '&') {
 		return parseOctNumber("'&'");
 	} else if (isDigit(c)) {
-		return parseNumber(c);
+		return parseAnyNumber(c);
 	} else if (isLetter(c)) {
 		std::string keyword = readKeyword(c);
 

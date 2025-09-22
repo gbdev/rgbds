@@ -9,6 +9,7 @@
 #include <numeric>
 #include <optional>
 #include <queue>
+#include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <type_traits>

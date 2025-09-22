@@ -2,6 +2,7 @@
 
 #include <errno.h>
 #include <iterator> // std::size
+#include <optional>
 #include <stack>
 #include <stdint.h>
 #include <stdio.h>
@@ -9,8 +10,7 @@
 #include <string.h>
 
 #include "diagnostics.hpp"
-#include "helpers.hpp" // assume
-#include "util.hpp"    // isBlankSpace
+#include "util.hpp"
 
 #include "asm/fstack.hpp"
 #include "asm/lexer.hpp"
@@ -81,50 +81,38 @@ void opt_Parse(char const *s) {
 		}
 		break;
 
-	case 'p': {
-		char *endptr;
-		unsigned long padByte = strtoul(s, &endptr, 0);
-
-		if (s[0] == '\0' || *endptr != '\0') {
+	case 'p':
+		if (std::optional<uint64_t> padByte = parseWholeNumber(s); !padByte) {
 			error("Invalid argument for option 'p'");
-		} else if (padByte > 0xFF) {
+		} else if (*padByte > 0xFF) {
 			error("Argument for option 'p' must be between 0 and 0xFF");
 		} else {
-			opt_P(padByte);
+			opt_P(*padByte);
 		}
 		break;
-	}
 
-	case 'Q': {
+	case 'Q':
 		if (s[0] == '.') {
 			++s; // Skip leading '.'
 		}
-		char *endptr;
-		unsigned long precision = strtoul(s, &endptr, 0);
-
-		if (s[0] == '\0' || *endptr != '\0') {
+		if (std::optional<uint64_t> precision = parseWholeNumber(s); !precision) {
 			error("Invalid argument for option 'Q'");
-		} else if (precision < 1 || precision > 31) {
+		} else if (*precision < 1 || *precision > 31) {
 			error("Argument for option 'Q' must be between 1 and 31");
 		} else {
-			opt_Q(precision);
+			opt_Q(*precision);
 		}
 		break;
-	}
 
-	case 'r': {
-		char *endptr;
-		unsigned long maxRecursionDepth = strtoul(s, &endptr, 0);
-
-		if (s[0] == '\0' || *endptr != '\0') {
+	case 'r':
+		if (std::optional<uint64_t> maxRecursionDepth = parseWholeNumber(s); !maxRecursionDepth) {
 			error("Invalid argument for option 'r'");
 		} else if (errno == ERANGE) {
 			error("Argument for option 'r' is out of range");
 		} else {
-			opt_R(maxRecursionDepth);
+			opt_R(*maxRecursionDepth);
 		}
 		break;
-	}
 
 	case 'W':
 		if (strlen(s) > 0) {
