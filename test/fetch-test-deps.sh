@@ -53,9 +53,9 @@ done
 
 case "$actionname" in
 	--get-deps)
-		action() { # _ repo _ _
+		action() { # _ _ repo _ _
 			# libbet depends on PIL to build
-			if [ "$2" = "libbet" ]; then
+			if [ "$3" = "libbet" ]; then
 				case "${osname%-*}" in
 					ubuntu | debian)
 						sudo apt-get install python3-pil
@@ -75,28 +75,28 @@ case "$actionname" in
 		;;
 
 	--get-hash)
-		action() { # _ repo _ commit
-			printf "%s@%s-" "$2" "$4"
+		action() { # _ _ repo _ commit
+			printf "%s@%s-" "$3" "$5"
 		}
 		;;
 
 	--get-paths)
-		action() { # _ repo
-			printf "test/%s," "$2"
+		action() { # _ _ repo _ _
+			printf "test/%s," "$3"
 		}
 		;;
 
 	*)
 		echo "Fetching test dependency repositories"
 
-		action() { # owner repo shallow-since commit
-			if [ ! -d "$2" ]; then
-				git clone "https://github.com/$1/$2.git" --recursive --shallow-since="$3" --single-branch
+		action() { # domain owner repo shallow-since commit
+			if [ ! -d "$3" ]; then
+				git clone "https://$1/$2/$3.git" --recursive --shallow-since="$4" --single-branch
 			fi
-			pushd "$2"
-			git checkout -f "$4"
-			if [ -f "../patches/$2.patch" ]; then
-				git apply --ignore-whitespace "../patches/$2.patch"
+			pushd "$3"
+			git checkout -f "$5"
+			if [ -f "../patches/$3.patch" ]; then
+				git apply --ignore-whitespace "../patches/$3.patch"
 			fi
 			popd
 		}
@@ -107,11 +107,11 @@ if ! "$external"; then
 fi
 
 if "$nonfree"; then
-	action pret  pokecrystal      2025-09-05 d138ed1bd4db80cf8caa549878600448fedf674e
-	action pret  pokered          2025-09-09 59da8c8122ebb8fcc334d4e5421e4fb333eea730
-	action zladx LADX-Disassembly 2025-07-26 3ab7b582f67b4302a4f6371f9309f0de167e78ee
+	action github.com pret  pokecrystal      2025-09-05 d138ed1bd4db80cf8caa549878600448fedf674e
+	action github.com pret  pokered          2025-09-09 59da8c8122ebb8fcc334d4e5421e4fb333eea730
+	action github.com zladx LADX-Disassembly 2025-07-26 3ab7b582f67b4302a4f6371f9309f0de167e78ee
 fi
-action AntonioND ucity          2025-08-07 d1880a2a112d7c26f16c0fc06a15b6c32fdc9137
-action pinobatch libbet         2025-08-31 e42c0036b18e6e715987b88b4973389b283974c9
-action LIJI32    SameBoy        2025-09-13 6b38c535755b4ff2b069efac404b2844292249b7
-action ISSOtm    gb-starter-kit 2025-09-19 746b3d29640037c41fa3220b38feab2452f81dcf
+action github.com   AntonioND ucity          2025-08-07 d1880a2a112d7c26f16c0fc06a15b6c32fdc9137
+action github.com   pinobatch libbet         2025-08-31 e42c0036b18e6e715987b88b4973389b283974c9
+action github.com   LIJI32    SameBoy        2025-09-13 6b38c535755b4ff2b069efac404b2844292249b7
+action codeberg.org ISSOtm    gb-starter-kit 2025-09-22 43dcf3980e169be9ac973fd00b4dfc7ca133d4c6
