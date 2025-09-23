@@ -218,14 +218,8 @@ static unsigned int
 		}
 
 	} else if (alignment != 0) {
-		int32_t curOfs = (alignOffset - sect.size) % alignSize;
-
-		if (curOfs < 0) {
-			curOfs += alignSize;
-		}
-
 		// Make sure any fixed address given is compatible
-		if (sect.org != UINT32_MAX) {
+		if (uint32_t curOfs = (alignOffset - sect.size) & alignMask; sect.org != UINT32_MAX) {
 			if ((sect.org - curOfs) & alignMask) {
 				sectError(
 				    "Section already declared as fixed at incompatible address $%04" PRIx32,
@@ -624,10 +618,10 @@ uint32_t sect_GetAlignBytes(uint8_t alignment, uint16_t offset) {
 		return 0;
 	}
 
-	// We need `(pcValue + curOffset + return value) % (1 << alignment) == offset`
+	// We need `(pcValue + curOffset + return value) & minAlignMask == offset`
 	uint16_t pcValue = isFixed ? sect->org : sect->alignOfs;
-	return static_cast<uint16_t>(offset - curOffset - pcValue)
-	       % (1u << std::min(alignment, curAlignment));
+	uint32_t minAlignMask = (1u << std::min(alignment, curAlignment)) - 1;
+	return static_cast<uint16_t>(offset - curOffset - pcValue) & minAlignMask;
 }
 
 void sect_AlignPC(uint8_t alignment, uint16_t offset) {
@@ -637,13 +631,15 @@ void sect_AlignPC(uint8_t alignment, uint16_t offset) {
 
 	assume(alignment <= 16); // Should be ensured by the caller
 	uint32_t alignSize = 1u << alignment;
+	uint32_t alignMask = alignSize - 1;
 
 	Section *sect = sect_GetSymbolSection();
 	assume(sect->align <= 16); // Left-shifting by 32 or more would be UB
 	uint32_t sectAlignSize = 1u << sect->align;
+	uint32_t sectAlignMask = sectAlignSize - 1;
 
 	if (sect->org != UINT32_MAX) {
-		if (uint32_t actualOffset = (sect->org + curOffset) % alignSize; actualOffset != offset) {
+		if (uint32_t actualOffset = (sect->org + curOffset) & alignMask; actualOffset != offset) {
 			error(
 			    "Section is misaligned (at PC = $%04" PRIx32 ", expected ALIGN[%" PRIu32
 			    ", %" PRIu32 "], got ALIGN[%" PRIu32 ", %" PRIu32 "])",
@@ -654,8 +650,8 @@ void sect_AlignPC(uint8_t alignment, uint16_t offset) {
 			    actualOffset
 			);
 		}
-	} else if (uint32_t actualOffset = (sect->alignOfs + curOffset) % alignSize;
-	           sect->align != 0 && actualOffset % sectAlignSize != offset % sectAlignSize) {
+	} else if (uint32_t actualOffset = (sect->alignOfs + curOffset) & alignMask;
+	           sect->align != 0 && (actualOffset & sectAlignMask) != (offset & sectAlignMask)) {
 		error(
 		    "Section is misaligned ($%04" PRIx32 " bytes into the section, expected ALIGN[%" PRIu32
 		    ", %" PRIu32 "], got ALIGN[%" PRIu32 ", %" PRIu32 "])",
@@ -672,8 +668,8 @@ void sect_AlignPC(uint8_t alignment, uint16_t offset) {
 		sect->org = offset - curOffset;
 	} else if (alignment > sect->align) {
 		sect->align = alignment;
-		// We need `(sect->alignOfs + curOffset) % alignSize == offset`
-		sect->alignOfs = (offset - curOffset) % alignSize;
+		// We need `(sect->alignOfs + curOffset) & alignMask == offset`
+		sect->alignOfs = (offset - curOffset) & alignMask;
 	}
 }
 
@@ -948,12 +944,11 @@ bool sect_BinaryFile(std::string const &name, uint32_t startPos) {
 		// The file is seekable; skip to the specified start position
 		fseek(file, startPos, SEEK_SET);
 	} else {
+		// LCOV_EXCL_START
 		if (errno != ESPIPE) {
-			// LCOV_EXCL_START
 			error(
 			    "Error determining size of `INCBIN` file \"%s\": %s", name.c_str(), strerror(errno)
 			);
-			// LCOV_EXCL_STOP
 		}
 		// The file isn't seekable, so we'll just skip bytes one at a time
 		while (startPos--) {
@@ -964,6 +959,7 @@ bool sect_BinaryFile(std::string const &name, uint32_t startPos) {
 				return false;
 			}
 		}
+		// LCOV_EXCL_STOP
 	}
 
 	for (int byte; (byte = fgetc(file)) != EOF;) {
@@ -1013,12 +1009,11 @@ bool sect_BinaryFileSlice(std::string const &name, uint32_t startPos, uint32_t l
 		// The file is seekable; skip to the specified start position
 		fseek(file, startPos, SEEK_SET);
 	} else {
+		// LCOV_EXCL_START
 		if (errno != ESPIPE) {
-			// LCOV_EXCL_START
 			error(
 			    "Error determining size of `INCBIN` file \"%s\": %s", name.c_str(), strerror(errno)
 			);
-			// LCOV_EXCL_STOP
 		}
 		// The file isn't seekable, so we'll just skip bytes one at a time
 		while (startPos--) {
@@ -1029,21 +1024,22 @@ bool sect_BinaryFileSlice(std::string const &name, uint32_t startPos, uint32_t l
 				return false;
 			}
 		}
+		// LCOV_EXCL_STOP
 	}
 
 	while (length--) {
 		if (int byte = fgetc(file); byte != EOF) {
 			writeByte(byte);
-		} else if (ferror(file)) {
 			// LCOV_EXCL_START
+		} else if (ferror(file)) {
 			error("Error reading `INCBIN` file \"%s\": %s", name.c_str(), strerror(errno));
-			// LCOV_EXCL_STOP
 		} else {
 			error(
 			    "Premature end of `INCBIN` file \"%s\" (%" PRId32 " bytes left to read)",
 			    name.c_str(),
 			    length + 1
 			);
+			// LCOV_EXCL_STOP
 		}
 	}
 	return false;

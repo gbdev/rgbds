@@ -30,3 +30,26 @@ warning: CHARSUB: Position 999 is past the end of the string [-Wbuiltin-args]
     at deprecated-functions.asm(15)
 warning: STRCHAR: Index 999 is past the end of the string [-Wbuiltin-args]
     at deprecated-functions.asm(15)
+warning: `STRSUB` is deprecated; use 0-indexed `STRSLICE` instead [-Wobsolete]
+    at deprecated-functions.asm(26)
+error: STRSUB: Invalid UTF-8 byte 0xA3
+    at deprecated-functions.asm(26)
+error: STRSUB: Incomplete UTF-8 character
+    at deprecated-functions.asm(26)
+warning: `STRSUB` is deprecated; use 0-indexed `STRSLICE` instead [-Wobsolete]
+    at deprecated-functions.asm(27)
+error: STRSUB: Invalid UTF-8 byte 0xA3
+    at deprecated-functions.asm(27)
+warning: STRSUB: Position 9 is past the end of the string [-Wbuiltin-args]
+    at deprecated-functions.asm(27)
+error: STRSUB: Incomplete UTF-8 character
+    at deprecated-functions.asm(27)
+warning: `STRSUB` is deprecated; use 0-indexed `STRSLICE` instead [-Wobsolete]
+    at deprecated-functions.asm(28)
+error: STRSUB: Invalid UTF-8 byte 0xA3
+    at deprecated-functions.asm(28)
+warning: STRSUB: Position 12 is past the end of the string [-Wbuiltin-args]
+    at deprecated-functions.asm(28)
+error: STRSUB: Incomplete UTF-8 character
+    at deprecated-functions.asm(28)
+Assembly aborted with 6 errors!

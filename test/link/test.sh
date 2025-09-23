@@ -401,7 +401,7 @@ tryDiff "$test"/out.err "$outtemp"
 tryCmpRom "$test"/ref.out.bin
 evaluateTest
 
-for i in section-union/*.asm; do
+for i in section-union/*.asm section-fragment/*.asm; do
 	test=${i%.asm}
 	startTest
 	"$RGBASM" -o "$otemp" "${test}.asm"

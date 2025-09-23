@@ -54,7 +54,7 @@ static void checkAgainstFixedAddress(Section const &target, Section const &other
 	}
 }
 
-static bool checkAgainstFixedAlign(Section const &target, Section const &other, int32_t ofs) {
+static bool checkAgainstFixedAlign(Section const &target, Section const &other, uint32_t ofs) {
 	if (target.isAddressFixed) {
 		if ((target.org - ofs) & other.alignMask) {
 			fatalTwoAt(
@@ -107,10 +107,7 @@ static void checkFragmentCompat(Section &target, Section &other) {
 		target.isAddressFixed = true;
 		target.org = org;
 	} else if (other.isAlignFixed) {
-		int32_t ofs = (other.alignOfs - target.size) % (other.alignMask + 1);
-		if (ofs < 0) {
-			ofs += other.alignMask + 1;
-		}
+		uint32_t ofs = (other.alignOfs - target.size) & other.alignMask;
 		if (checkAgainstFixedAlign(target, other, ofs)) {
 			target.isAlignFixed = true;
 			target.alignMask = other.alignMask;

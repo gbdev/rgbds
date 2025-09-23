@@ -128,6 +128,7 @@ void layout_AlignTo(uint32_t alignment, uint32_t alignOfs) {
 			layout_SetAddr(floatingAlignOffset);
 		} else {
 			uint32_t alignSize = 1u << alignment;
+			uint32_t alignMask = alignSize - 1;
 
 			if (alignOfs >= alignSize) {
 				scriptError(
@@ -139,8 +140,8 @@ void layout_AlignTo(uint32_t alignment, uint32_t alignOfs) {
 				return;
 			}
 
-			floatingAlignMask = alignSize - 1;
-			floatingAlignOffset = alignOfs % alignSize;
+			floatingAlignMask = alignMask;
+			floatingAlignOffset = alignOfs & alignMask;
 		}
 		return;
 	}
@@ -158,6 +159,7 @@ void layout_AlignTo(uint32_t alignment, uint32_t alignOfs) {
 
 	if (alignment < 16) {
 		uint32_t alignSize = 1u << alignment;
+		uint32_t alignMask = alignSize - 1;
 
 		if (alignOfs >= alignSize) {
 			scriptError(
@@ -170,7 +172,7 @@ void layout_AlignTo(uint32_t alignment, uint32_t alignOfs) {
 		}
 
 		assume(pc >= typeInfo.startAddr);
-		length %= alignSize;
+		length &= alignMask;
 	}
 
 	if (uint16_t offset = pc - typeInfo.startAddr; length > typeInfo.size - offset) {
