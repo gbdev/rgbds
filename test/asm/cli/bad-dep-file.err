@@ -1,0 +1,1 @@
+FATAL: Dependency files can only be created if a target file is specified with either '-o', '-MQ' or '-MT'

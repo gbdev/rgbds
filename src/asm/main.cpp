@@ -308,7 +308,7 @@ int main(int argc, char *argv[]) {
 
 	// Maximum of 100 errors only applies if rgbasm is printing errors to a terminal
 	if (isatty(STDERR_FILENO)) {
-		options.maxErrors = 100;
+		options.maxErrors = 100; // LCOV_EXCL_LINE
 	}
 
 	// Parse CLI options
@@ -497,9 +497,10 @@ int main(int argc, char *argv[]) {
 			}
 			break;
 
-		// Unrecognized options
+			// LCOV_EXCL_START
 		default:
-			usage.printAndExit(1); // LCOV_EXCL_LINE
+			usage.printAndExit(1);
+			// LCOV_EXCL_STOP
 		}
 	}
 
@@ -520,6 +521,11 @@ int main(int argc, char *argv[]) {
 	verbosePrint(VERB_NOTICE, "Assembling \"%s\"\n", mainFileName.c_str()); // LCOV_EXCL_LINE
 
 	if (dependFileName) {
+		if (options.targetFileName.empty()) {
+			fatal("Dependency files can only be created if a target file is specified with either "
+			      "'-o', '-MQ' or '-MT'");
+		}
+
 		if (strcmp("-", dependFileName)) {
 			options.dependFile = fopen(dependFileName, "w");
 			if (options.dependFile == nullptr) {
@@ -532,10 +538,6 @@ int main(int argc, char *argv[]) {
 		}
 	}
 
-	if (options.dependFile && options.targetFileName.empty()) {
-		fatal("Dependency files can only be created if a target file is specified with either "
-		      "'-o', '-MQ' or '-MT'");
-	}
 	options.printDep(mainFileName);
 
 	charmap_New(DEFAULT_CHARMAP_NAME, nullptr);
@@ -545,27 +547,25 @@ int main(int argc, char *argv[]) {
 
 	// Perform parse (`yy::parser` is auto-generated from `parser.y`)
 	if (yy::parser parser; parser.parse() != 0) {
-		if (warnings.nbErrors == 0) {
-			warnings.nbErrors = 1;
-		}
+		// Exited due to YYABORT or YYNOMEM
+		fatal("Unrecoverable error while parsing"); // LCOV_EXCL_LINE
 	}
 
-	if (!fstk_FailedOnMissingInclude()) {
-		sect_CheckUnionClosed();
-		sect_CheckLoadClosed();
-		sect_CheckSizes();
-
-		charmap_CheckStack();
-		opt_CheckStack();
-		sect_CheckStack();
-	}
-
-	requireZeroErrors();
-
-	// If parse aborted due to missing an include, and `-MG` was given, exit normally
+	// If parse aborted without errors due to a missing INCLUDE, and `-MG` was given, exit normally
 	if (fstk_FailedOnMissingInclude()) {
+		requireZeroErrors();
 		return 0;
 	}
+
+	sect_CheckUnionClosed();
+	sect_CheckLoadClosed();
+	sect_CheckSizes();
+
+	charmap_CheckStack();
+	opt_CheckStack();
+	sect_CheckStack();
+
+	requireZeroErrors();
 
 	out_WriteObject();
 

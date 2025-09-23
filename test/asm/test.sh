@@ -132,6 +132,34 @@ for i in *.asm notexist.asm; do
 	done
 done
 
+for i in cli/*.flags; do
+	RGBASMFLAGS="$(head -n 1 "$i")" # Allow other lines to serve as comments
+	(( tests++ ))
+	echo "${bold}${green}${i%.flags}...${rescolors}${resbold}"
+	if [ -e "${i%.flags}.out" ]; then
+		desired_output=${i%.flags}.out
+	else
+		desired_output=/dev/null
+	fi
+	if [ -e "${i%.flags}.err" ]; then
+		desired_errput=${i%.flags}.err
+	else
+		desired_errput=/dev/null
+	fi
+	"$RGBASM" $RGBASMFLAGS >"$output" 2>"$errput"
+
+	tryDiff "$desired_output" "$output" out
+	our_rc=$?
+	tryDiff "$desired_errput" "$errput" err
+	(( our_rc = our_rc || $? ))
+
+	(( rc = rc || our_rc ))
+	if [[ $our_rc -ne 0 ]]; then
+		(( failed++ ))
+		break
+	fi
+done
+
 # These tests do their own thing
 
 i="continues-after-missing-include"

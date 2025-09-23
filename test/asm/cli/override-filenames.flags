@@ -1,0 +1,1 @@
+-M one -M two -o one -o two -s equ:only -s var:only

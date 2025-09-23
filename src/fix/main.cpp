@@ -325,8 +325,10 @@ int main(int argc, char *argv[]) {
 			}
 			break;
 
+			// LCOV_EXCL_START
 		default:
-			usage.printAndExit(1); // LCOV_EXCL_LINE
+			usage.printAndExit(1);
+			// LCOV_EXCL_STOP
 		}
 	}
 
