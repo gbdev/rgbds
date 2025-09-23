@@ -88,8 +88,16 @@ doesn't fit the existing scheme(s).
 
 ### RGBASM
 
+There are two kinds of test.
+
+#### Simple tests
+
 Each `.asm` file corresponds to one test.
 RGBASM will be invoked on the `.asm` file with all warnings enabled.
+
+If a `.flags` file exists, its first line contains flags to pass to RGBASM.
+(There may be more lines, which will be ignored; they can serve as comments to
+explain what the test is about.)
 
 If a `.out` file exists, RGBASM's output (`print`, `println`, etc.) must match
 its contents.
@@ -99,6 +107,18 @@ its contents.
 If a `.out.bin` file exists, the object file will be linked, and the generated
 ROM truncated to the length of the `.out.bin` file.
 After that, the ROM must match the `.out.bin` file.
+
+#### CLI tests
+
+Each `.flags` file in `cli/` corresponds to one test.
+RGBASM will be invoked, passing it the first line of the `.flags` file.
+(There may be more lines, which will be ignored; they can serve as comments to
+explain what the test is about.)
+
+If a `.out` file exists, RGBASM's output (`print`, `println`, etc.) must match
+its contents.
+If a `.err` file exists, RGBASM's error output (`warn`, errors, etc.) must match
+its contents.
 
 ### RGBLINK
 

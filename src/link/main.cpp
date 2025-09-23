@@ -400,8 +400,10 @@ int main(int argc, char *argv[]) {
 			}
 			break;
 
+			// LCOV_EXCL_START
 		default:
-			usage.printAndExit(1); // LCOV_EXCL_LINE
+			usage.printAndExit(1);
+			// LCOV_EXCL_STOP
 		}
 	}
 
@@ -435,10 +437,10 @@ int main(int argc, char *argv[]) {
 		verbosePrint(VERB_NOTICE, "Reading linker script...\n");
 
 		if (lexer_Init(linkerScriptName)) {
-			yy::parser parser;
-			// We don't care about the return value, as any error increments the global error count,
-			// which is what `main` checks.
-			(void)parser.parse();
+			if (yy::parser parser; parser.parse() != 0) {
+				// Exited due to YYABORT or YYNOMEM
+				fatal("Unrecoverable error while reading linker script"); // LCOV_EXCL_LINE
+			}
 		}
 
 		// If the linker script produced any errors, some sections may be in an invalid state

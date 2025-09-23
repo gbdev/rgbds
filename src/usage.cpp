@@ -17,25 +17,37 @@
 	#include <sys/ioctl.h>
 #endif
 
-// Use the console window width minus 1 as the maximum line length for flags
-static size_t maxLineLen = []() {
-#if defined(_MSC_VER) || defined(__MINGW32__)
-	CONSOLE_SCREEN_BUFFER_INFO csbi;
-	GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi);
-	return csbi.srWindow.Right > csbi.srWindow.Left
-	           ? static_cast<size_t>(csbi.srWindow.Right - csbi.srWindow.Left)
-	           : 79;
-#else
-	struct winsize winSize;
-	ioctl(STDOUT_FILENO, TIOCGWINSZ, &winSize);
-	return winSize.ws_col > 1 ? static_cast<size_t>(winSize.ws_col - 1) : 79;
-#endif
-}();
-
-// LCOV_EXCL_START
-
 void Usage::printAndExit(int code) const {
-	FILE *file = code ? stderr : stdout;
+	FILE *file;
+	bool isTerminal;
+	if (code) {
+		file = stderr;
+		isTerminal = isatty(STDERR_FILENO);
+	} else {
+		file = stdout;
+		isTerminal = isatty(STDOUT_FILENO);
+	}
+
+	// Use the console window width minus 1 as the maximum line length for flags,
+	// or the historically common 80 minus 1 if the output is not to a console TTY
+	size_t maxLineLen = 79;
+	if (isTerminal) {
+		// LCOV_EXCL_START
+#if defined(_MSC_VER) || defined(__MINGW32__)
+		CONSOLE_SCREEN_BUFFER_INFO csbi;
+		GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi);
+		if (csbi.srWindow.Right > csbi.srWindow.Left) {
+			maxLineLen = static_cast<size_t>(csbi.srWindow.Right - csbi.srWindow.Left);
+		}
+#else
+		struct winsize winSize;
+		ioctl(STDOUT_FILENO, TIOCGWINSZ, &winSize);
+		if (winSize.ws_col > 1) {
+			maxLineLen = static_cast<size_t>(winSize.ws_col - 1);
+		}
+#endif
+		// LCOV_EXCL_STOP
+	}
 
 	// Print "Usage: <program name>"
 	style_Set(file, STYLE_GREEN, true);
@@ -149,5 +161,3 @@ void Usage::printAndExit(char const *fmt, ...) const {
 
 	printAndExit(1);
 }
-
-// LCOV_EXCL_STOP
