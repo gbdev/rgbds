@@ -26,8 +26,16 @@ bool isPrintable(int c) {
 	return c >= ' ' && c <= '~';
 }
 
+bool isUpper(int c) {
+	return c >= 'A' && c <= 'Z';
+}
+
+bool isLower(int c) {
+	return c >= 'a' && c <= 'z';
+}
+
 bool isLetter(int c) {
-	return (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z');
+	return isUpper(c) || isLower(c);
 }
 
 bool isDigit(int c) {

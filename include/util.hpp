@@ -26,6 +26,8 @@ bool isNewline(int c);
 bool isBlankSpace(int c);
 bool isWhitespace(int c);
 bool isPrintable(int c);
+bool isUpper(int c);
+bool isLower(int c);
 bool isLetter(int c);
 bool isDigit(int c);
 bool isBinDigit(int c);
