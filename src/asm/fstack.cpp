@@ -382,68 +382,53 @@ bool fstk_RunInclude(std::string const &path, bool isQuiet) {
 	return fstk_FileError(path, "INCLUDE");
 }
 
-static char const *suggestDef(std::shared_ptr<MacroArgs> const macroArgs) {
-	std::shared_ptr<std::string> arg = macroArgs->getArg(1);
-	if (!arg) {
-		return nullptr;
-	}
-
-	char const *str = arg->c_str();
-	static char const *types[] = {"EQUS", "EQU", "RB", "RW", "RL", "="};
-	for (char const *type : types) {
-		if (strncasecmp(str, type, strlen(type)) == 0) {
-			return type;
-		}
-	}
-	if (strncasecmp(str, "SET", literal_strlen("SET")) == 0) {
-		return "=";
-	}
-
-	return nullptr;
-}
-
 void fstk_RunMacro(
     std::string const &macroName, std::shared_ptr<MacroArgs> macroArgs, bool isQuiet
 ) {
-	Symbol *macro = sym_FindExactSymbol(macroName);
+	auto makeSuggestion = [&macroName, &macroArgs]() -> std::optional<std::string> {
+		std::shared_ptr<std::string> arg = macroArgs->getArg(1);
+		if (!arg) {
+			return std::nullopt;
+		}
 
-	if (!macro) {
+		char const *str = arg->c_str();
+		static char const *types[] = {"EQUS", "EQU", "RB", "RW", "RL", "="};
+		for (char const *type : types) {
+			if (strncasecmp(str, type, strlen(type)) == 0) {
+				return "\"DEF "s + macroName + " " + type + " ...\"";
+			}
+		}
+		if (strncasecmp(str, "SET", literal_strlen("SET")) == 0) {
+			return "\"DEF "s + macroName + " = ...\"";
+		}
+		if (str[0] == ':') {
+			return "a label \""s + macroName + (str[1] == ':' ? "::" : ":") + "\"";
+		}
+
+		return std::nullopt;
+	};
+
+	if (Symbol *macro = sym_FindExactSymbol(macroName); !macro) {
 		if (sym_IsPurgedExact(macroName)) {
 			error("Undefined macro `%s`; it was purged", macroName.c_str());
-		} else if (char const *defType = suggestDef(macroArgs); defType) {
+		} else if (std::optional<std::string> suggestion = makeSuggestion(); suggestion) {
 			error(
-			    "Undefined macro `%s` (did you mean \"DEF %s %s ...\"?)",
-			    macroName.c_str(),
-			    macroName.c_str(),
-			    defType
-			);
-		} else if (std::shared_ptr<std::string> firstArg = macroArgs->getArg(1);
-		           firstArg && firstArg->starts_with(':')) {
-			error(
-			    "Undefined macro `%s` (did you mean a label \"%s%s\"?)",
-			    macroName.c_str(),
-			    macroName.c_str(),
-			    firstArg->starts_with("::") ? "::" : ":"
+			    "Undefined macro `%s` (did you mean %s?)", macroName.c_str(), suggestion->c_str()
 			);
 		} else {
 			error("Undefined macro `%s`", macroName.c_str());
 		}
-		return;
-	}
-	if (macro->type != SYM_MACRO) {
+	} else if (macro->type != SYM_MACRO) {
 		error("`%s` is not a macro", macroName.c_str());
-		return;
+	} else {
+		newMacroContext(*macro, macroArgs, isQuiet || macro->isQuiet);
 	}
-
-	newMacroContext(*macro, macroArgs, isQuiet || macro->isQuiet);
 }
 
 void fstk_RunRept(uint32_t count, int32_t reptLineNo, ContentSpan const &span, bool isQuiet) {
-	if (count == 0) {
-		return;
+	if (count) {
+		newReptContext(reptLineNo, span, count, isQuiet);
 	}
-
-	newReptContext(reptLineNo, span, count, isQuiet);
 }
 
 void fstk_RunFor(

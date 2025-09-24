@@ -12,4 +12,8 @@ error: Undefined macro `word` (did you mean "DEF word RW ..."?)
     at suggest-def.asm(7)
 error: Undefined macro `long` (did you mean "DEF long RL ..."?)
     at suggest-def.asm(8)
-Assembly aborted with 7 errors!
+error: Undefined macro `label` (did you mean a label "label:"?)
+    at suggest-def.asm(9)
+error: Undefined macro `exported` (did you mean a label "exported::"?)
+    at suggest-def.asm(10)
+Assembly aborted with 9 errors!

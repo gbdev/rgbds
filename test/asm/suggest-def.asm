@@ -6,3 +6,5 @@ string equs "four"
 byte rb 1
 word rw 1
 long rl 1
+label :
+exported ::
