@@ -23,6 +23,6 @@ Label2: ld d, 4
 ; and a label definition when already defined as a macro
 mac: ld e, 5
 
-; the space before the colon matters!
+; the space before the colon matters! the space before the macro does not
 	undef :
-undef :
+undef ::

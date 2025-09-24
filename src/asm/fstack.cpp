@@ -417,6 +417,14 @@ void fstk_RunMacro(
 			    macroName.c_str(),
 			    defType
 			);
+		} else if (std::shared_ptr<std::string> firstArg = macroArgs->getArg(1);
+		           firstArg && firstArg->starts_with(':')) {
+			error(
+			    "Undefined macro `%s` (did you mean a label \"%s%s\"?)",
+			    macroName.c_str(),
+			    macroName.c_str(),
+			    firstArg->starts_with("::") ? "::" : ":"
+			);
 		} else {
 			error("Undefined macro `%s`", macroName.c_str());
 		}
