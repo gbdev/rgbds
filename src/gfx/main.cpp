@@ -632,7 +632,8 @@ static void verboseOutputConfig() {
 		fputs("\t]\n", stderr);
 	}
 	// -L/--slice
-	if (options.inputSlice.specified()) {
+	if (options.inputSlice.width || options.inputSlice.height || options.inputSlice.left
+	    || options.inputSlice.top) {
 		fprintf(
 		    stderr,
 		    "\tInput image slice: %" PRIu16 "x%" PRIu16 " pixels starting at (%" PRIu16 ", %" PRIu16

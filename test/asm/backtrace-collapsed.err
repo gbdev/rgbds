@@ -1,0 +1,4 @@
+warning: You're in too deep! [-Wuser]
+    at backtrace-collapsed.asm::careful(3) <- backtrace-collapsed.asm::careful(5) <- backtrace-collapsed.asm::careful(5) <- ...16 more... <- backtrace-collapsed.asm::careful(5) <- backtrace-collapsed.asm(8)
+FATAL: Recursion limit (64) exceeded
+    at backtrace-collapsed.asm::recurse(11) <- backtrace-collapsed.asm::recurse(11) <- backtrace-collapsed.asm::recurse(11) <- ...60 more... <- backtrace-collapsed.asm::REPT~1(14) <- backtrace-collapsed.asm(13)

@@ -84,10 +84,11 @@ for i in *.asm notexist.asm; do
 			desired_output=$desired_outname
 			desired_errput=$desired_errname
 		else
-			# `include-recursion.asm` refers to its own name inside the test code.
-			# "notexist" doesn't exist, so there's no point in trying to `cat` it.
-			# Skip testing with stdin input for those file.
-			if [[ "$i" = include-recursion.asm || "$i" = notexist.asm ]]; then
+			# "include-recursion.asm" refers to its own name inside the test code.
+			# "make-deps.asm" refers to its output filename in its desired output.
+			# "notexist.asm" doesn't exist, so there's no point in trying to `cat` it.
+			# Skip testing with stdin input for those files.
+			if [[ "$i" = include-recursion.asm || "$i" = make-deps.asm || "$i" = notexist.asm ]]; then
 				continue
 			fi
 
@@ -193,18 +194,20 @@ i="state-file"
 if which cygpath &>/dev/null; then
 	# MinGW translates path names before passing them as command-line arguments,
 	# but does not do so when they are prefixed, so we have to do it ourselves.
-	RGBASMFLAGS="-Weverything -Bcollapse -s all:$(cygpath -w "$o")"
+	state_outname="$(cygpath -w "$o")"
 else
-	RGBASMFLAGS="-Weverything -Bcollapse -s all:$o"
+	state_outname="$o"
 fi
+state_features="  all  " # Test trimming whitespace
+RGBASMFLAGS="-Weverything -Bcollapse"
 for variant in '' '.pipe'; do
 	(( tests++ ))
 	echo "${bold}${green}${i%.asm}${variant}...${rescolors}${resbold}"
 	if [ -z "$variant" ]; then
-		"$RGBASM" $RGBASMFLAGS "$i"/a.asm >"$output" 2>"$errput"
+		"$RGBASM" $RGBASMFLAGS -s "$state_features:$state_outname" "$i"/a.asm >"$output" 2>"$errput"
 	else
 		# shellcheck disable=SC2002
-		cat "$i"/a.asm | "$RGBASM" $RGBASMFLAGS - >"$output" 2>"$errput"
+		cat "$i"/a.asm | "$RGBASM" $RGBASMFLAGS -s "$state_features:$state_outname" - >"$output" 2>"$errput"
 	fi
 
 	tryDiff /dev/null "$output" out

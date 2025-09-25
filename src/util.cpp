@@ -84,6 +84,8 @@ std::optional<uint64_t> parseNumber(char const *&str, NumberBase base) {
 	// Identify the base if not specified
 	// Does *not* support '+' or '-' sign prefix (unlike `strtoul` and `std::from_chars`)
 	if (base == BASE_AUTO) {
+		base = BASE_10;
+
 		// Skips leading blank space (like `strtoul`)
 		str += strspn(str, " \t");
 
@@ -118,17 +120,10 @@ std::optional<uint64_t> parseNumber(char const *&str, NumberBase base) {
 				base = BASE_16;
 				str += 2;
 				break;
-			default:
-				base = BASE_10;
-				break;
 			}
-			break;
-		default:
-			base = BASE_10;
 			break;
 		}
 	}
-	assume(base != BASE_AUTO);
 
 	// Get the digit-condition function corresponding to the base
 	bool (*canParseDigit)(int c) = base == BASE_2    ? isBinDigit

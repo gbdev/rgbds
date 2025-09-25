@@ -1,1 +1,1 @@
---color yes
+--color=always --color=never --color=auto --color=yes

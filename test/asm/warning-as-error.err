@@ -1,0 +1,10 @@
+warning: Shifting right negative value -99 [-Wshift]
+    at warning-as-error.asm(1)
+error: Integer constant is too large [-Werror=large-constant]
+    at warning-as-error.asm(2)
+warning: warning or error? [-Wuser]
+    at warning-as-error.asm::test(5) <- warning-as-error.asm(8)
+error: warning or error? [-Werror=user]
+    at warning-as-error.asm::test(5) <- warning-as-error.asm(11)
+warning: warning or error? [-Wuser]
+    at warning-as-error.asm::test(5) <- warning-as-error.asm(14)

@@ -1,0 +1,2 @@
+warning: Ignoring duplicate feature for option '-s': "equ"
+warning: Redundant feature before "all" for option '-s'
