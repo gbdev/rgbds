@@ -1,0 +1,2 @@
+FATAL: Found `ENDC` outside of a conditional (not after an `IF`/`ELIF`/`ELSE` block)
+    at misleading-indentation.asm::REPT~1(3) <- misleading-indentation.asm(2)
