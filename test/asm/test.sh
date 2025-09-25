@@ -62,7 +62,7 @@ fi
 
 for i in *.asm notexist.asm; do
 	flags=${i%.asm}.flags
-	RGBASMFLAGS="-Weverything -B collapse"
+	RGBASMFLAGS="-Weverything -Bcollapse"
 	if [ -f "$flags" ]; then
 		RGBASMFLAGS="$RGBASMFLAGS $(head -n 1 "$flags")" # Allow other lines to serve as comments
 	fi
@@ -163,7 +163,7 @@ done
 # These tests do their own thing
 
 i="continues-after-missing-include"
-RGBASMFLAGS="-Weverything -B collapse -M - -MG -MC"
+RGBASMFLAGS="-Weverything -Bcollapse -M - -MG -MC"
 # Piping the .asm file to rgbasm would not make sense for dependency generation,
 # so just test the normal variant
 (( tests++ ))
@@ -193,9 +193,9 @@ i="state-file"
 if which cygpath &>/dev/null; then
 	# MinGW translates path names before passing them as command-line arguments,
 	# but does not do so when they are prefixed, so we have to do it ourselves.
-	RGBASMFLAGS="-Weverything -B collapse -s all:$(cygpath -w "$o")"
+	RGBASMFLAGS="-Weverything -Bcollapse -s all:$(cygpath -w "$o")"
 else
-	RGBASMFLAGS="-Weverything -B collapse -s all:$o"
+	RGBASMFLAGS="-Weverything -Bcollapse -s all:$o"
 fi
 for variant in '' '.pipe'; do
 	(( tests++ ))

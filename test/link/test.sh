@@ -73,7 +73,7 @@ tryCmpRomSize () {
 }
 
 rgblinkQuiet () {
-	out="$(env "$RGBLINK" -Weverything -B collapse "$@")" || return $?
+	out="$(env "$RGBLINK" -Weverything -Bcollapse "$@")" || return $?
 	if [[ -n "$out" ]]; then
 		echo "$bold${red}Linking shouldn't produce anything on stdout!${rescolors}${resbold}"
 		false
@@ -266,8 +266,8 @@ evaluateTest
 test="pipeline"
 startTest
 continueTest
-("$RGBASM" -Weverything -B collapse -o - - | \
- "$RGBLINK" -Weverything -B collapse -o - - | \
+("$RGBASM" -Weverything -Bcollapse -o - - | \
+ "$RGBLINK" -Weverything -Bcollapse -o - - | \
  "$RGBFIX" -Weverything -v -p 0xff -) < "$test"/a.asm > "$gbtemp"
 # This test does not trim its output with 'dd' because it needs to verify the correct output size
 tryCmp "$test"/out.gb "$gbtemp"
