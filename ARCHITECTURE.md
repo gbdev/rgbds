@@ -121,14 +121,14 @@ These files in the `src/` directory are shared across multiple programs: often a
 - **`backtrace.cpp`:**  
   Generic printing of location backtraces for RGBASM and RGBLINK. Allows configuring backtrace styles with a command-line flag (conventionally `-B/--backtrace`). Renders warnings in yellow, errors in red, and locations in cyan.
 - **`diagnostics.cpp`:**  
-  Generic warning/error diagnostic support for all programs. Allows command-line flags (conventionally `-W`) to have `no-`, `error=`, or `no-error=` prefixes, `=` level suffixes; allows "meta" flags to affect groups of individual flags; and counts how many total errors there have been. Every program has its own `warning.cpp` file that uses this.
+  Generic warning/error diagnostic support for all programs. Allows command-line flags (conventionally `-W`) to have `no-`, `error=`, or `no-error=` prefixes, and `=` level suffixes; allows "meta" flags to affect groups of individual flags; and counts how many total errors there have been. Every program has its own `warning.cpp` file that uses this.
 - **`linkdefs.cpp`:**  
   Constants, data, and functions related to RGBDS object files, which are used for RGBASM output and RGBLINK input.  
   This file defines two *global* variables, `sectionTypeInfo` (metadata about each section type) and `sectionModNames` (names of section modifiers, for error reporting). RGBLINK may change some values in `sectionTypeInfo` depending on its command-line options (this only affects RGBLINK; `sectionTypeInfo` is immutable in RGBASM).
 - **`opmath.cpp`:**  
   Functions for mathematical operations in RGBASM and RGBLINK that aren't trivially equivalent to built-in C++ ones, such as division and modulo with well-defined results for negative values.
 - **`style.cpp`:**  
-  Generic printing of cross-platform colored or bold text. Obeys the `FORCE_COLOR` or `NO_COLOR` environment variables, and allows configuring with a command-line flag (conventionally `--color`).
+  Generic printing of cross-platform colored or bold text. Obeys the [`FORCE_COLOR`](https://force-color.org/) and [`NO_COLOR`](https://no-color.org/) environment variables, and allows configuring with a command-line flag (conventionally `--color`).
 - **`usage.cpp`:**  
   Generic printing of usage information. Renders headings in green, flags in cyan, and URLs in blue. Every program has its own `main.cpp` file that uses this.
 - **`util.cpp`:**  
