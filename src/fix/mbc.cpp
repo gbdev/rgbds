@@ -98,10 +98,6 @@ bool mbc_HasRAM(MbcType type) {
 	return search != mbcData.end() && search->second.second;
 }
 
-static void skipBlankSpace(char const *&ptr) {
-	ptr += strspn(ptr, " \t");
-}
-
 static void skipMBCSpace(char const *&ptr) {
 	ptr += strspn(ptr, " \t_");
 }
@@ -115,16 +111,6 @@ static char normalizeMBCChar(char c) {
 	return c;
 }
 
-static bool readMBCSlice(char const *&name, char const *expected) {
-	while (*expected) {
-		// If `name` is too short, the character will be '\0' and this will return `false`
-		if (normalizeMBCChar(*name++) != *expected++) {
-			return false;
-		}
-	}
-	return true;
-}
-
 [[noreturn]]
 static void fatalUnknownMBC(char const *name) {
 	fatal("Unknown MBC \"%s\"\n%s", name, acceptedMBCNames);
@@ -136,8 +122,7 @@ static void fatalWrongMBCFeatures(char const *name) {
 }
 
 MbcType mbc_ParseName(char const *name, uint8_t &tpp1Major, uint8_t &tpp1Minor) {
-	char const *ptr = name;
-	skipBlankSpace(ptr); // Trim off leading blank space
+	char const *ptr = name + strspn(name, " \t"); // Skip leading blank space
 
 	if (!strcasecmp(ptr, "help") || !strcasecmp(ptr, "list")) {
 		puts(acceptedMBCNames); // Outputs to stdout and appends a newline
@@ -156,14 +141,16 @@ MbcType mbc_ParseName(char const *name, uint8_t &tpp1Major, uint8_t &tpp1Minor) 
 	}
 
 	// Begin by reading the MBC type:
-	uint16_t mbc;
+	uint16_t mbc = UINT16_MAX;
 
-#define tryReadSlice(expected) \
-	do { \
-		if (!readMBCSlice(ptr, expected)) { \
-			fatalUnknownMBC(name); \
-		} \
-	} while (0)
+	auto tryReadSlice = [&ptr, &name](char const *expected) {
+		while (*expected) {
+			// If `name` is too short, the character will be '\0' and this will return `false`
+			if (normalizeMBCChar(*ptr++) != *expected++) {
+				fatalUnknownMBC(name);
+			}
+		}
+	};
 
 	switch (*ptr++) {
 	case 'R': // ROM / ROM_ONLY
@@ -183,13 +170,7 @@ MbcType mbc_ParseName(char const *name, uint8_t &tpp1Major, uint8_t &tpp1Minor) 
 		switch (*ptr++) {
 		case 'B':
 		case 'b':
-			switch (*ptr++) {
-			case 'C':
-			case 'c':
-				break;
-			default:
-				fatalUnknownMBC(name);
-			}
+			tryReadSlice("C");
 			switch (*ptr++) {
 			case '1':
 				mbc = MBC1;
@@ -209,8 +190,6 @@ MbcType mbc_ParseName(char const *name, uint8_t &tpp1Major, uint8_t &tpp1Minor) 
 			case '7':
 				mbc = MBC7_SENSOR_RUMBLE_RAM_BATTERY;
 				break;
-			default:
-				fatalUnknownMBC(name);
 			}
 			break;
 		case 'M':
@@ -218,8 +197,6 @@ MbcType mbc_ParseName(char const *name, uint8_t &tpp1Major, uint8_t &tpp1Minor) 
 			tryReadSlice("M01");
 			mbc = MMM01;
 			break;
-		default:
-			fatalUnknownMBC(name);
 		}
 		break;
 
@@ -242,7 +219,7 @@ MbcType mbc_ParseName(char const *name, uint8_t &tpp1Major, uint8_t &tpp1Minor) 
 			tryReadSlice("MA5");
 			mbc = BANDAI_TAMA5;
 			break;
-		case 'P': {
+		case 'P':
 			tryReadSlice("P1");
 			// Parse version
 			skipMBCSpace(ptr);
@@ -266,9 +243,6 @@ MbcType mbc_ParseName(char const *name, uint8_t &tpp1Major, uint8_t &tpp1Minor) 
 			mbc = TPP1;
 			break;
 		}
-		default:
-			fatalUnknownMBC(name);
-		}
 		break;
 
 	case 'H': // HuC{1, 3}
@@ -281,12 +255,11 @@ MbcType mbc_ParseName(char const *name, uint8_t &tpp1Major, uint8_t &tpp1Minor) 
 		case '3':
 			mbc = HUC3;
 			break;
-		default:
-			fatalUnknownMBC(name);
 		}
 		break;
+	}
 
-	default:
+	if (mbc == UINT16_MAX) {
 		fatalUnknownMBC(name);
 	}
 
@@ -301,18 +274,10 @@ MbcType mbc_ParseName(char const *name, uint8_t &tpp1Major, uint8_t &tpp1Minor) 
 	static constexpr uint8_t MULTIRUMBLE = 1 << 2;
 	// clang-format on
 
-	for (;;) {
-		skipBlankSpace(ptr); // Trim off trailing blank space
-
-		// If done, start processing "features"
-		if (!*ptr) {
-			break;
-		}
+	while (*ptr) {
 		// We expect a '+' at this point
 		skipMBCSpace(ptr);
-		if (*ptr++ != '+') {
-			fatalUnknownMBC(name);
-		}
+		tryReadSlice("+");
 		skipMBCSpace(ptr);
 
 		switch (*ptr++) {
@@ -341,8 +306,6 @@ MbcType mbc_ParseName(char const *name, uint8_t &tpp1Major, uint8_t &tpp1Minor) 
 				tryReadSlice("M");
 				features |= RAM;
 				break;
-			default:
-				fatalUnknownMBC(name);
 			}
 			break;
 
@@ -357,12 +320,8 @@ MbcType mbc_ParseName(char const *name, uint8_t &tpp1Major, uint8_t &tpp1Minor) 
 			tryReadSlice("IMER");
 			features |= TIMER;
 			break;
-
-		default:
-			fatalUnknownMBC(name);
 		}
 	}
-#undef tryReadSlice
 
 	switch (mbc) {
 	case ROM:
@@ -459,37 +418,34 @@ MbcType mbc_ParseName(char const *name, uint8_t &tpp1Major, uint8_t &tpp1Minor) 
 		}
 		break;
 
-	case TPP1:
+	case TPP1: {
+		// clang-format off: vertically align values
+		static constexpr uint8_t BATTERY_TPP1     = 1 << 3;
+		static constexpr uint8_t TIMER_TPP1       = 1 << 2;
+		static constexpr uint8_t MULTIRUMBLE_TPP1 = 1 << 1;
+		static constexpr uint8_t RUMBLE_TPP1      = 1 << 0;
+		// clang-format on
+
 		if (features & RAM) {
 			warning(WARNING_MBC, "TPP1 requests RAM implicitly if given a non-zero RAM size");
 		}
 		if (features & BATTERY) {
-			mbc |= 0x08;
+			mbc |= BATTERY_TPP1;
 		}
 		if (features & TIMER) {
-			mbc |= 0x04;
-		}
-		if (features & MULTIRUMBLE) {
-			mbc |= 0x03; // Also set the rumble flag
+			mbc |= TIMER_TPP1;
 		}
 		if (features & RUMBLE) {
-			mbc |= 0x01;
+			mbc |= RUMBLE_TPP1;
 		}
 		if (features & SENSOR) {
 			fatalWrongMBCFeatures(name);
 		}
-		// Multiple rumble speeds imply rumble
-		if (mbc & 0x01) {
-			assume(mbc & 0x02);
+		if (features & MULTIRUMBLE) {
+			mbc |= MULTIRUMBLE_TPP1 | RUMBLE_TPP1; // Multiple rumble speeds imply rumble
 		}
 		break;
 	}
-
-	skipBlankSpace(ptr); // Trim off trailing blank space
-
-	// If there is still something left, error out
-	if (*ptr) {
-		fatalUnknownMBC(name);
 	}
 
 	return static_cast<MbcType>(mbc);

@@ -122,7 +122,9 @@ static void initLogo() {
 			logoFile = stdin;
 		}
 		if (!logoFile) {
+			// LCOV_EXCL_START
 			fatal("Failed to open \"%s\" for reading: %s", options.logoFilename, strerror(errno));
+			// LCOV_EXCL_STOP
 		}
 		Defer closeLogo{[&] { fclose(logoFile); }};
 

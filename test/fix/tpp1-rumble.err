@@ -1,0 +1,6 @@
+warning: TPP1 requests RAM implicitly if given a non-zero RAM size [-Wmbc]
+warning: Overwrote a non-zero byte in the cartridge type [-Woverwrite]
+warning: Overwrote a non-zero byte in the TPP1 identification code [-Woverwrite]
+warning: Overwrote a non-zero byte in the TPP1 revision number [-Woverwrite]
+warning: Overwrote a non-zero byte in the RAM size [-Woverwrite]
+warning: Overwrote a non-zero byte in the TPP1 feature flags [-Woverwrite]

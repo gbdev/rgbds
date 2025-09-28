@@ -240,16 +240,17 @@ static void
 	std::vector<uint8_t> romx; // Buffer of ROMX bank data
 	uint32_t nbBanks = 1;      // Number of banks *targeted*, including ROM0
 	size_t totalRomxLen = 0;   // *Actual* size of ROMX data
-	uint8_t bank[BANK_SIZE];   // Temp buffer used to store a whole bank's worth of data
 
 	// Handle ROMX
+	auto errorTooLarge = [&name]() {
+		error("\"%s\" has more than 65536 banks", name); // LCOV_EXCL_LINE
+	};
+	static constexpr off_t NB_BANKS_LIMIT = 0x10000;
+	static_assert(NB_BANKS_LIMIT * BANK_SIZE <= SSIZE_MAX, "Max input file size too large for OS");
 	if (input == output) {
-		if (fileSize >= 0x10000 * BANK_SIZE) {
-			error("\"%s\" has more than 65536 banks", name);
-			return;
+		if (fileSize >= NB_BANKS_LIMIT * BANK_SIZE) {
+			return errorTooLarge(); // LCOV_EXCL_LINE
 		}
-		// This should be guaranteed from the size cap...
-		static_assert(0x10000 * BANK_SIZE <= SSIZE_MAX, "Max input file size too large for OS");
 		// Compute number of banks and ROMX len from file size
 		nbBanks = (fileSize + (BANK_SIZE - 1)) / BANK_SIZE; // ceil(fileSize / BANK_SIZE)
 		totalRomxLen = fileSize >= BANK_SIZE ? fileSize - BANK_SIZE : 0;
@@ -258,19 +259,13 @@ static void
 		for (;;) {
 			romx.resize(nbBanks * BANK_SIZE);
 			ssize_t bankLen = readBytes(input, &romx[(nbBanks - 1) * BANK_SIZE], BANK_SIZE);
-
 			// Update bank count, ONLY IF at least one byte was read
 			if (bankLen) {
 				// We're going to read another bank, check that it won't be too much
-				static_assert(
-				    0x10000 * BANK_SIZE <= SSIZE_MAX, "Max input file size too large for OS"
-				);
-				if (nbBanks == 0x10000) {
-					error("\"%s\" has more than 65536 banks", name);
-					return;
+				if (nbBanks == NB_BANKS_LIMIT) {
+					return errorTooLarge(); // LCOV_EXCL_LINE
 				}
 				++nbBanks;
-
 				// Update global checksum, too
 				for (uint16_t i = 0; i < bankLen; ++i) {
 					globalSum += romx[totalRomxLen + i];
@@ -341,6 +336,7 @@ static void
 		// Pipes have already read ROMX and updated globalSum, but not regular files
 		if (input == output) {
 			for (;;) {
+				uint8_t bank[BANK_SIZE];
 				ssize_t bankLen = readBytes(input, bank, sizeof(bank));
 
 				for (uint16_t i = 0; i < bankLen; ++i) {
@@ -432,8 +428,9 @@ static void
 				// LCOV_EXCL_STOP
 			}
 		}
+		uint8_t bank[BANK_SIZE];
 		memset(bank, options.padValue, sizeof(bank));
-		size_t len = (nbBanks - 1) * BANK_SIZE - totalRomxLen; // Don't count ROM0!
+		size_t len = (nbBanks - 1) * sizeof(bank) - totalRomxLen; // Don't count ROM0!
 
 		while (len) {
 			static_assert(sizeof(bank) <= SSIZE_MAX, "Bank too large for reading");
@@ -470,8 +467,10 @@ bool fix_ProcessFile(char const *name, char const *outputName) {
 		} else {
 			output = open(outputName, O_WRONLY | O_BINARY | O_CREAT, 0600);
 			if (output == -1) {
+				// LCOV_EXCL_START
 				error("Failed to open \"%s\" for writing: %s", outputName, strerror(errno));
 				return true;
+				// LCOV_EXCL_STOP
 			}
 			openedOutput = true;
 		}

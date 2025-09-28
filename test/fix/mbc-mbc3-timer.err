@@ -1,0 +1,1 @@
+warning: "MBC3+TIMER" implies "BATTERY" [-Wmbc]

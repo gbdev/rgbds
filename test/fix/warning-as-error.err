@@ -1,0 +1,2 @@
+error: Overwrote a non-zero byte in the mask ROM version number [-Werror=overwrite]
+Fixing "<filename>" failed with 1 error
