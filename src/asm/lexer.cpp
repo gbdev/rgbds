@@ -879,7 +879,11 @@ static void discardBlockComment() {
 			continue;
 		case '/':
 			if (peek() == '*') {
-				warning(WARNING_NESTED_COMMENT, "\"/*\" in block comment");
+				warning(
+				    WARNING_NESTED_COMMENT,
+				    "\"/" // Prevent simple syntax highlighters from seeing this as a comment
+				    "*\" in block comment"
+				);
 			}
 			continue;
 		case '*':
