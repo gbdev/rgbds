@@ -1,0 +1,2 @@
+warning: MBC "rom+ram" is under-specified and poorly supported [-Wmbc]
+warning: MBC "ROM+RAM" should have 2 KiB of RAM ("-r 1") [-Wmbc]

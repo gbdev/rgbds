@@ -1,0 +1,1 @@
+warning: RAM size 1 (2 KiB) was specified for MBC "MBC1+RAM" [-Wmbc]

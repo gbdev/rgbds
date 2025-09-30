@@ -1,0 +1,17 @@
+FATAL: No input file specified (pass "-" to read from standard input)
+Usage: rgbfix [-hjOsVvw] [-C | -c] [-f <fix_spec>] [-i <game_id>]
+              [-k <licensee>] [-L <logo_file>] [-l <licensee_byte>]
+              [-m <mbc_type>] [-n <rom_version>] [-p <pad_value>]
+              [-r <ram_size>] [-t <title_str>] [-W warning] <file> ...
+
+Useful options:
+    -m, --mbc-type <value>   set the MBC type byte to this value; "-m help"
+                             or "-m list" prints the accepted values
+    -p, --pad-value <value>  pad to the next valid size using this value
+    -r, --ram-size <code>    set the cart RAM size byte to this value
+    -o, --output <path>      set the output file
+    -V, --version            print RGBFIX version and exit
+    -v, --validate           fix the header logo and both checksums ("-f lhg")
+    -W, --warning <warning>  enable or disable warnings
+
+For more help, use "man rgbfix" or go to https://rgbds.gbdev.io/docs/

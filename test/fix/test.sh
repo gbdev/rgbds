@@ -12,6 +12,16 @@ cd "$tmpdir" || exit
 # shellcheck disable=SC2064
 trap "cd; rm -rf ${tmpdir@Q}" EXIT
 
+if which cygpath &>/dev/null; then
+	# MinGW needs the Windows path substituted but with forward slash separators;
+	# Cygwin has `cygpath` but just needs the original path substituted.
+	subst1="$(printf '%s\n' "$src" | sed 's:[][\/.^$*]:\\&:g')"
+	subst2="$(printf '%s\n' "$(cygpath -w "$src")" | sed -e 's:\\:/:g' -e 's:[][\/.^$*]:\\&:g')"
+	src_subst="$src/\\|$subst1/\\|$subst2/"
+else
+	src_subst="$src/"
+fi
+
 tests=0
 failed=0
 rc=0
@@ -83,9 +93,9 @@ runTest () {
 		else
 			desired_errname=/dev/null
 		fi
-		sed "s/$subst/<filename>/g" out.out | tryDiff "$desired_outname" - "$1.out${variant}"
+		sed -e "s/$subst/<filename>/g" -e "s#$src_subst##g" out.out | tryDiff "$desired_outname" - "$1.out${variant}"
 		(( our_rc = our_rc || $? ))
-		sed "s/$subst/<filename>/g" out.err | tryDiff "$desired_errname" - "$1.err${variant}"
+		sed -e "s/$subst/<filename>/g" -e "s#$src_subst##g" out.err | tryDiff "$desired_errname" - "$1.err${variant}"
 		(( our_rc = our_rc || $? ))
 
 		if [[ -r "$2/$1.gb" ]]; then
@@ -101,12 +111,31 @@ runTest () {
 	done
 }
 
+runSpecialTest () {
+	name="$1"
+	shift
+	echo "${bold}${green}${name}...${rescolors}${resbold}"
+	eval "$RGBFIX" "$@" '2>out.err'
+	rc=$((rc || $? != 1))
+	tryDiff "$src/${name}.err" out.err "${name}.err"
+	rc=$((rc || $?))
+}
+
 rm -f padding*_* # Delete padding test cases generated but not deleted (e.g. interrupted)
 
 progress=1
 for i in "$src"/*.flags; do
 	runTest "$(basename "$i" .flags)" "$src"
 done
+
+# Check that RGBFIX errors out when inputting a non-existent file
+runSpecialTest no-exist no-exist
+
+# Check that RGBFIX errors out when not inputting any file
+runSpecialTest no-input
+
+# Check that RGBFIX errors out when inputting multiple files with an output file
+runSpecialTest multiple-to-one one two three -o multiple-to-one
 
 # Check the result with all different padding bytes
 echo "${bold}Checking padding...${resbold}"
@@ -123,12 +152,6 @@ for (( i=0; i < 10; ++i )); do
 	done
 done
 echo "${bold}Done checking padding!${resbold}"
-
-# Check that RGBFIX errors out when inputting a non-existent file...
-$RGBFIX noexist 2>out.err
-rc=$((rc || $? != 1))
-tryDiff "$src/noexist.err" out.err noexist.err
-rc=$((rc || $?))
 
 if [[ "$failed" -eq 0 ]]; then
 	echo "${bold}${green}All ${tests} tests passed!${rescolors}${resbold}"

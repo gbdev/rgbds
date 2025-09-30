@@ -92,14 +92,10 @@ static Usage usage = {
 // clang-format on
 
 static void parseByte(uint16_t &output, char name) {
-	if (musl_optarg[0] == '\0') {
-		fatal("Argument to option '-%c' may not be empty", name);
-	}
-
 	if (std::optional<uint64_t> value = parseWholeNumber(musl_optarg); !value) {
-		fatal("Expected number as argument to option '-%c', got \"%s\"", name, musl_optarg);
-	} else if (value > 0xFF) {
-		fatal("Argument to option '-%c' is larger than 255: %" PRIu64, name, *value);
+		fatal("Invalid argument for option '-%c'", name);
+	} else if (*value > 0xFF) {
+		fatal("Argument for option '-%c' must be between 0 and 0xFF", name);
 	} else {
 		output = *value;
 	}
@@ -117,9 +113,11 @@ static void initLogo() {
 		if (strcmp(options.logoFilename, "-")) {
 			logoFile = fopen(options.logoFilename, "rb");
 		} else {
+			// LCOV_EXCL_START
 			options.logoFilename = "<stdin>";
 			(void)setmode(STDIN_FILENO, O_BINARY);
 			logoFile = stdin;
+			// LCOV_EXCL_STOP
 		}
 		if (!logoFile) {
 			// LCOV_EXCL_START

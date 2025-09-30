@@ -1,0 +1,2 @@
+error: Failed to open "no-exist" for reading+writing: No such file or directory
+Fixing "no-exist" failed with 1 error

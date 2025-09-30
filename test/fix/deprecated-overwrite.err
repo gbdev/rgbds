@@ -1,0 +1,1 @@
+warning: '-O' is deprecated; use '-Wno-overwrite' instead [-Wobsolete]
