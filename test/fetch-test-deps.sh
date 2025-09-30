@@ -108,10 +108,10 @@ fi
 
 if "$nonfree"; then
 	action github.com pret  pokecrystal      2025-09-05 d138ed1bd4db80cf8caa549878600448fedf674e
-	action github.com pret  pokered          2025-09-09 59da8c8122ebb8fcc334d4e5421e4fb333eea730
-	action github.com zladx LADX-Disassembly 2025-07-26 3ab7b582f67b4302a4f6371f9309f0de167e78ee
+	action github.com pret  pokered          2025-09-25 628797baffe7ea7dd4b224116d9704c7ae1b9c29
+	action github.com zladx LADX-Disassembly 2025-09-20 e09ee3259acbdecb89a0eba6cbc438281c174e85
 fi
 action github.com   AntonioND ucity          2025-08-07 d1880a2a112d7c26f16c0fc06a15b6c32fdc9137
 action github.com   pinobatch libbet         2025-08-31 e42c0036b18e6e715987b88b4973389b283974c9
-action github.com   LIJI32    SameBoy        2025-09-13 6b38c535755b4ff2b069efac404b2844292249b7
-action codeberg.org ISSOtm    gb-starter-kit 2025-09-22 43dcf3980e169be9ac973fd00b4dfc7ca133d4c6
+action github.com   LIJI32    SameBoy        2025-09-27 91006369a6510c5db029a440691dd4becaa6208b
+action codeberg.org ISSOtm    gb-starter-kit 2025-09-23 6aeb2508ab75c15724b177a1437b939357bc5d6f
