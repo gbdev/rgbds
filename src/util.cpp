@@ -58,6 +58,14 @@ bool isAlphanumeric(int c) {
 	return isLetter(c) || isDigit(c);
 }
 
+char toLower(char c) {
+	return isUpper(c) ? c - 'A' + 'a' : c;
+}
+
+char toUpper(char c) {
+	return isLower(c) ? c - 'a' + 'A' : c;
+}
+
 bool startsIdentifier(int c) {
 	// This returns false for anonymous labels, which internally start with a '!',
 	// and for section fragment literal labels, which internally start with a '$'.

@@ -12,7 +12,7 @@
 
 #include "helpers.hpp"  // unreachable_
 #include "platform.hpp" // strcasecmp
-#include "util.hpp"     // isBlankSpace, isLower, isDigit
+#include "util.hpp"
 
 #include "fix/warning.hpp"
 
@@ -103,12 +103,10 @@ static void skipMBCSpace(char const *&ptr) {
 }
 
 static char normalizeMBCChar(char c) {
-	if (isLower(c)) {
-		c = c - 'a' + 'A'; // Uppercase for comparison with `mbc_Name`s
-	} else if (c == '_') {
-		c = ' '; // Treat underscores as spaces
+	if (c == '_') {
+		return ' '; // Treat underscores as spaces
 	}
-	return c;
+	return toUpper(c); // Uppercase for comparison with `mbc_Name`s
 }
 
 [[noreturn]]

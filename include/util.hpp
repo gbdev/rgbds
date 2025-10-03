@@ -4,7 +4,6 @@
 #define RGBDS_UTIL_HPP
 
 #include <algorithm>
-#include <ctype.h> // toupper
 #include <numeric>
 #include <optional>
 #include <stddef.h>
@@ -22,6 +21,7 @@ enum NumberBase {
 	BASE_16 = 16,
 };
 
+// Locale-independent character class functions
 bool isNewline(int c);
 bool isBlankSpace(int c);
 bool isWhitespace(int c);
@@ -34,6 +34,10 @@ bool isBinDigit(int c);
 bool isOctDigit(int c);
 bool isHexDigit(int c);
 bool isAlphanumeric(int c);
+
+// Locale-independent character transform functions
+char toLower(char c);
+char toUpper(char c);
 
 bool startsIdentifier(int c);
 bool continuesIdentifier(int c);
@@ -48,14 +52,14 @@ struct Uppercase {
 	// FNV-1a hash of an uppercased string
 	constexpr size_t operator()(std::string const &str) const {
 		return std::accumulate(RANGE(str), 0x811C9DC5, [](size_t hash, char c) {
-			return (hash ^ toupper(c)) * 16777619;
+			return (hash ^ toUpper(c)) * 16777619;
 		});
 	}
 
 	// Compare two strings without case-sensitivity (by converting to uppercase)
 	constexpr bool operator()(std::string const &str1, std::string const &str2) const {
 		return std::equal(RANGE(str1), RANGE(str2), [](char c1, char c2) {
-			return toupper(c1) == toupper(c2);
+			return toUpper(c1) == toUpper(c2);
 		});
 	}
 };

@@ -32,7 +32,6 @@
 
 %code {
 	#include <algorithm>
-	#include <ctype.h>
 	#include <inttypes.h>
 	#include <optional>
 	#include <stdio.h>
@@ -42,6 +41,7 @@
 
 	#include "extern/utf8decoder.hpp"
 	#include "helpers.hpp"
+	#include "util.hpp" // toLower, toUpper
 
 	#include "asm/charmap.hpp"
 	#include "asm/fixpoint.hpp"
@@ -1599,11 +1599,11 @@ string_literal:
 	}
 	| OP_STRUPR LPAREN string RPAREN {
 		$$ = std::move($3);
-		std::transform(RANGE($$), $$.begin(), [](char c) { return toupper(c); });
+		std::transform(RANGE($$), $$.begin(), toUpper);
 	}
 	| OP_STRLWR LPAREN string RPAREN {
 		$$ = std::move($3);
-		std::transform(RANGE($$), $$.begin(), [](char c) { return tolower(c); });
+		std::transform(RANGE($$), $$.begin(), toLower);
 	}
 	| OP_STRRPL LPAREN string COMMA string COMMA string RPAREN {
 		$$ = act_StringReplace($3, $5, $7);
