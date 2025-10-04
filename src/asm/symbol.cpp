@@ -39,6 +39,7 @@ static Symbol const *localScope = nullptr;  // Current section's local label sco
 
 static Symbol *PCSymbol;
 static Symbol *NARGSymbol;
+static Symbol *SCOPESymbol;
 static Symbol *globalScopeSymbol;
 static Symbol *localScopeSymbol;
 static Symbol *RSSymbol;
@@ -64,6 +65,19 @@ static int32_t NARGCallback() {
 	} else {
 		error("`_NARG` has no value outside of a macro");
 		return 0;
+	}
+}
+
+static std::shared_ptr<std::string> SCOPECallback() {
+	if (localScope) {
+		return std::make_shared<std::string>("..");
+	} else if (globalScope) {
+		return std::make_shared<std::string>(".");
+	} else {
+		if (!sect_GetSymbolSection()) {
+			error("`__SCOPE__` has no value outside of a section");
+		}
+		return std::make_shared<std::string>("");
 	}
 }
 
@@ -294,6 +308,10 @@ Symbol *sym_FindScopedValidSymbol(std::string const &symName) {
 	}
 	// `..` has no value outside of a local label scope
 	if (sym == localScopeSymbol && !localScope) {
+		return nullptr;
+	}
+	// `__SCOPE__` has no value outside of a section
+	if (sym == SCOPESymbol && !sect_GetSymbolSection()) {
 		return nullptr;
 	}
 
@@ -682,6 +700,11 @@ void sym_Init(time_t now) {
 	localScopeSymbol->type = SYM_EQUS;
 	localScopeSymbol->data = localScopeCallback;
 	localScopeSymbol->isBuiltin = true;
+
+	SCOPESymbol = &createSymbol("__SCOPE__"s);
+	SCOPESymbol->type = SYM_EQUS;
+	SCOPESymbol->data = SCOPECallback;
+	SCOPESymbol->isBuiltin = true;
 
 	RSSymbol = sym_AddVar("_RS"s, 0);
 	RSSymbol->isBuiltin = true;
