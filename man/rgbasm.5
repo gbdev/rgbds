@@ -1729,6 +1729,7 @@ The following symbols are defined by the assembler:
 .It Dv @ Ta Ic EQU Ta PC value (essentially, the current memory address)
 .It Dv . Ta Ic EQUS Ta The current global label scope
 .It Dv .. Ta Ic EQUS Ta The current local label scope
+.It Dv __SCOPE__ Ta Ic EQUS Ta The innermost current label scope level (empty, ".", or "..")
 .It Dv _RS Ta Ic = Ta _RS Counter
 .It Dv _NARG Ta Ic EQU Ta Number of arguments passed to macro, updated by Ic SHIFT
 .It Dv __ISO_8601_LOCAL__ Ta Ic EQUS Ta ISO 8601 timestamp (local)
