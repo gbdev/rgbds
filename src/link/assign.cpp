@@ -53,9 +53,9 @@ static void initFreeSpace() {
 static void assignSection(Section &section, MemoryLocation const &location) {
 	// Propagate the assigned location to all UNIONs/FRAGMENTs
 	// so `jr` patches in them will have the correct offset
-	for (Section *piece = &section; piece != nullptr; piece = piece->nextPiece.get()) {
-		piece->org = location.address;
-		piece->bank = location.bank;
+	for (Section &piece : section.pieces()) {
+		piece.org = location.address;
+		piece.bank = location.bank;
 	}
 	out_AddSection(section);
 }

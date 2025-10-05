@@ -251,8 +251,8 @@ void layout_PlaceSection(std::string const &name, bool isOptional) {
 			);
 		} else {
 			// SDCC areas don't have a type assigned yet, so the linker script gives them one.
-			for (Section *piece = section; piece != nullptr; piece = piece->nextPiece.get()) {
-				piece->type = activeType;
+			for (Section &piece : section->pieces()) {
+				piece.type = activeType;
 			}
 		}
 	} else if (section->type != activeType) {

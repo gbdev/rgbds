@@ -223,12 +223,10 @@ void out_WriteObject() {
 
 	putLong(fileStackNodes.size(), file);
 	for (auto it = fileStackNodes.begin(); it != fileStackNodes.end(); ++it) {
-		FileStackNode const &node = **it;
-
-		writeFileStackNode(node, file);
+		writeFileStackNode(**it, file);
 
 		// The list is supposed to have decrementing IDs
-		assume(it + 1 == fileStackNodes.end() || it[1]->ID == node.ID - 1);
+		assume(it + 1 == fileStackNodes.end() || it[1]->ID == it[0]->ID - 1);
 	}
 
 	for (Symbol const *sym : objectSymbols) {

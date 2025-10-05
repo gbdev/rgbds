@@ -317,13 +317,13 @@ static bool compareSymbols(SortedSymbol const &sym1, SortedSymbol const &sym2) {
 template<typename F>
 static void forEachSortedSection(SortedSections const &bankSections, F callback) {
 	for (Section const *sect : bankSections.zeroLenSections) {
-		for (; sect != nullptr; sect = sect->nextPiece.get()) {
-			callback(*sect);
+		for (Section const &piece : sect->pieces()) {
+			callback(piece);
 		}
 	}
 	for (Section const *sect : bankSections.sections) {
-		for (; sect != nullptr; sect = sect->nextPiece.get()) {
-			callback(*sect);
+		for (Section const &piece : sect->pieces()) {
+			callback(piece);
 		}
 	}
 }
@@ -433,31 +433,32 @@ uint16_t forEachSection(SortedSections const &sectList, F callback) {
 	return used;
 }
 
-static void writeMapSymbols(Section const *sect) {
-	uint16_t org = sect->org;
-
-	for (bool announced = true; sect != nullptr; sect = sect->nextPiece.get(), announced = false) {
-		for (Symbol *sym : sect->symbols) {
+static void writeMapSymbols(Section const &sect) {
+	bool announced = true;
+	for (Section const &piece : sect.pieces()) {
+		for (Symbol *sym : piece.symbols) {
 			// Don't output symbols that begin with an illegal character
 			if (sym->name.empty() || !startsIdentifier(sym->name[0])) {
 				continue;
 			}
 			// Announce this "piece" before its contents
 			if (!announced) {
-				if (sect->modifier == SECTION_UNION) {
+				assume(sect.modifier == piece.modifier);
+				if (sect.modifier == SECTION_UNION) {
 					fputs("\t         ; Next union\n", mapFile);
-				} else if (sect->modifier == SECTION_FRAGMENT) {
+				} else if (sect.modifier == SECTION_FRAGMENT) {
 					fputs("\t         ; Next fragment\n", mapFile);
 				}
 				announced = true;
 			}
 			assume(std::holds_alternative<Label>(sym->data));
-			uint32_t address = std::get<Label>(sym->data).offset + org;
+			uint32_t address = std::get<Label>(sym->data).offset + sect.org;
 			// Space matches "\tSECTION: $xxxx ..."
 			fprintf(mapFile, "\t         $%04" PRIx32 " = ", address);
 			writeSymName(sym->name, mapFile);
 			putc('\n', mapFile);
 		}
+		announced = false;
 	}
 }
 
@@ -487,7 +488,7 @@ static void writeMapBank(SortedSections const &sectList, SectionType type, uint3
 
 		if (!options.noSymInMap) {
 			// Also print symbols in the following "pieces"
-			writeMapSymbols(&sect);
+			writeMapSymbols(sect);
 		}
 	});
 

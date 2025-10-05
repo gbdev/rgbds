@@ -586,8 +586,8 @@ static void applyPatches(Section &section) {
 		return;
 	}
 
-	for (Section *piece = &section; piece != nullptr; piece = piece->nextPiece.get()) {
-		applyFilePatches(*piece, section);
+	for (Section &piece : section.pieces()) {
+		applyFilePatches(piece, section);
 	}
 }
 

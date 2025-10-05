@@ -49,6 +49,39 @@ struct Section {
 	std::vector<Symbol> *fileSymbols;
 	std::vector<Symbol *> symbols;
 	std::unique_ptr<Section> nextPiece; // The next fragment or union "piece" of this section
+
+private:
+	// Template class for both const and non-const iterators over the "pieces" of this section
+	template<typename T>
+	class PiecesIterable {
+		T *_firstPiece;
+
+		class Iterator {
+			T *_piece;
+
+		public:
+			explicit Iterator(T *piece) : _piece(piece) {}
+
+			Iterator &operator++() {
+				_piece = _piece->nextPiece.get();
+				return *this;
+			}
+
+			T &operator*() const { return *_piece; }
+
+			bool operator==(Iterator const &rhs) const { return _piece == rhs._piece; }
+		};
+
+	public:
+		explicit PiecesIterable(T *firstPiece) : _firstPiece(firstPiece) {}
+
+		Iterator begin() { return Iterator(_firstPiece); }
+		Iterator end() { return Iterator(nullptr); }
+	};
+
+public:
+	PiecesIterable<Section> pieces() { return PiecesIterable(this); }
+	PiecesIterable<Section const> pieces() const { return PiecesIterable(this); }
 };
 
 // Execute a callback for each section currently registered.
