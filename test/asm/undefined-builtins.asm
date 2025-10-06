@@ -3,6 +3,11 @@ assert !DEF(@)
 println @
 println "{@}?"
 
+; not inside a section
+assert !DEF(__SCOPE__)
+println __SCOPE__
+println "{__SCOPE__}?"
+
 ; not inside a global scope
 assert !DEF(.)
 println .
@@ -22,6 +27,10 @@ SECTION "s", ROM0[$42]
 assert DEF(@)
 println @
 println "{@}!"
+
+assert DEF(__SCOPE__)
+println __SCOPE__
+println "{__SCOPE__}!"
 
 GlobalScope:
 assert DEF(.)
