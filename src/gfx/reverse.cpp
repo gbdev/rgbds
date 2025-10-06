@@ -61,16 +61,16 @@ static std::vector<uint8_t> readInto(std::string const &path) {
 [[noreturn]]
 static void pngError(png_structp png, char const *msg) {
 	fatal(
-	    "Error writing reversed image (\"%s\"): %s",
-	    static_cast<char const *>(png_get_error_ptr(png)),
+	    "libpng error while writing reversed image (\"%s\"): %s",
+	    reinterpret_cast<char const *>(png_get_error_ptr(png)),
 	    msg
 	);
 }
 
 static void pngWarning(png_structp png, char const *msg) {
 	warnx(
-	    "While writing reversed image (\"%s\"): %s",
-	    static_cast<char const *>(png_get_error_ptr(png)),
+	    "libpng found while writing reversed image (\"%s\"): %s",
+	    reinterpret_cast<char const *>(png_get_error_ptr(png)),
 	    msg
 	);
 }

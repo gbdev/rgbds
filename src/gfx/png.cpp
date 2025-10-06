@@ -31,15 +31,19 @@ struct Input {
 
 [[noreturn]]
 static void handleError(png_structp png, char const *msg) {
-	Input const &input = *reinterpret_cast<Input *>(png_get_error_ptr(png));
-
-	fatal("Error reading PNG image (\"%s\"): %s", input.filename, msg);
+	fatal(
+	    "libpng error while reading PNG image (\"%s\"): %s",
+	    reinterpret_cast<Input *>(png_get_error_ptr(png))->filename,
+	    msg
+	);
 }
 
 static void handleWarning(png_structp png, char const *msg) {
-	Input const &input = *reinterpret_cast<Input *>(png_get_error_ptr(png));
-
-	warnx("In PNG image (\"%s\"): %s", input.filename, msg);
+	warnx(
+	    "libpng found while reading PNG image (\"%s\"): %s",
+	    reinterpret_cast<Input *>(png_get_error_ptr(png))->filename,
+	    msg
+	);
 }
 
 static void readData(png_structp png, png_bytep data, size_t length) {
