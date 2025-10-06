@@ -13,6 +13,26 @@
 #include <utility>
 
 template<typename T>
+struct ReversedIterable {
+	T &_iterable;
+};
+
+template<typename T>
+auto begin(ReversedIterable<T> r) {
+	return std::rbegin(r._iterable);
+}
+
+template<typename T>
+auto end(ReversedIterable<T> r) {
+	return std::rend(r._iterable);
+}
+
+template<typename T>
+ReversedIterable<T> reversed(T &&_iterable) {
+	return {_iterable};
+}
+
+template<typename T>
 class InsertionOrderedMap {
 	std::deque<T> list;
 	std::unordered_map<std::string, size_t> map; // Indexes into `list`

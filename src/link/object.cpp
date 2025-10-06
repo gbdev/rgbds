@@ -484,8 +484,8 @@ void obj_ReadFile(char const *fileName, unsigned int fileID) {
 	tryReadLong(nbNodes, file, "%s: Cannot read number of nodes: %s", fileName);
 	nodes[fileID].resize(nbNodes);
 	verbosePrint(VERB_INFO, "Reading %u nodes...\n", nbNodes);
-	for (uint32_t i = nbNodes; i--;) {
-		readFileStackNode(file, nodes[fileID], i, fileName);
+	for (uint32_t nodeID = nbNodes; nodeID--;) {
+		readFileStackNode(file, nodes[fileID], nodeID, fileName);
 	}
 
 	// This file's symbols, kept to link sections to them

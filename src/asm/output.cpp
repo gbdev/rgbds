@@ -184,8 +184,8 @@ static void writeFileStackNode(FileStackNode const &node, FILE *file) {
 
 		putLong(nodeIters.size(), file);
 		// Iters are stored by decreasing depth, so reverse the order for output
-		for (uint32_t i = nodeIters.size(); i--;) {
-			putLong(nodeIters[i], file);
+		for (uint32_t iter : reversed(nodeIters)) {
+			putLong(iter, file);
 		}
 	}
 }

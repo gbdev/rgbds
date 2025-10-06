@@ -20,6 +20,7 @@
 
 #include "backtrace.hpp"
 #include "helpers.hpp"
+#include "itertools.hpp" // reversed
 #include "linkdefs.hpp"
 #include "platform.hpp" // strncasecmp
 #include "verbosity.hpp"
@@ -295,9 +296,9 @@ static void
 	}
 	if (macro.src->type == NODE_REPT) {
 		std::vector<uint32_t> const &srcIters = macro.src->iters();
-		for (uint32_t i = srcIters.size(); i--;) {
+		for (uint32_t iter : reversed(srcIters)) {
 			fileInfoName.append(NODE_SEPARATOR REPT_NODE_PREFIX);
-			fileInfoName.append(std::to_string(srcIters[i]));
+			fileInfoName.append(std::to_string(iter));
 		}
 	}
 	fileInfoName.append(NODE_SEPARATOR);
