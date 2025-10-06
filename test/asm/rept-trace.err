@@ -1,0 +1,17 @@
+error: Assertion failed
+    at rept-trace.asm::REPT~4::REPT~3::REPT~2::REPT~1::m(10)
+    <- rept-trace.asm::REPT~4::REPT~3::REPT~2::REPT~1::REPT~1(15)
+    <- rept-trace.asm::REPT~4::REPT~3::REPT~2::REPT~1(14)
+    <- rept-trace.asm::REPT~4::REPT~3::REPT~2(13)
+    <- rept-trace.asm::REPT~4::REPT~3(6)
+    <- rept-trace.asm::REPT~4(4)
+    <- rept-trace.asm(2)
+error: Assertion failed
+    at rept-trace.asm::REPT~4::REPT~3::REPT~2::REPT~1::m(10)
+    <- rept-trace.asm::REPT~4::REPT~3::REPT~2::REPT~1::REPT~2(15)
+    <- rept-trace.asm::REPT~4::REPT~3::REPT~2::REPT~1(14)
+    <- rept-trace.asm::REPT~4::REPT~3::REPT~2(13)
+    <- rept-trace.asm::REPT~4::REPT~3(6)
+    <- rept-trace.asm::REPT~4(4)
+    <- rept-trace.asm(2)
+Assembly aborted with 2 errors!

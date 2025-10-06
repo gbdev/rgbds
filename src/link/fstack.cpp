@@ -35,12 +35,12 @@ static std::vector<TraceNode> backtrace(FileStackNode const &node, uint32_t curL
 	std::vector<TraceNode> traceNodes = backtrace(*node.parent, node.lineNo);
 	if (std::holds_alternative<std::vector<uint32_t>>(node.data)) {
 		assume(!traceNodes.empty()); // REPT nodes use their parent's name
-		std::string reptChain = traceNodes.back().first;
-		for (uint32_t iter : node.iters()) {
-			reptChain.append("::REPT~");
-			reptChain.append(std::to_string(iter));
+		std::string reptName = traceNodes.back().first;
+		if (std::vector<uint32_t> const &nodeIters = node.iters(); !nodeIters.empty()) {
+			reptName.append(NODE_SEPARATOR REPT_NODE_PREFIX);
+			reptName.append(std::to_string(nodeIters.back()));
 		}
-		traceNodes.emplace_back(reptChain, curLineNo);
+		traceNodes.emplace_back(reptName, curLineNo);
 	} else {
 		traceNodes.emplace_back(node.name(), curLineNo);
 	}

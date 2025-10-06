@@ -11,6 +11,10 @@
 
 #include "style.hpp"
 
+#define TRACE_SEPARATOR  "<-"
+#define NODE_SEPARATOR   "::"
+#define REPT_NODE_PREFIX "REPT~"
+
 struct Tracing {
 	uint64_t depth = 0;
 	bool collapse = false;
@@ -34,7 +38,7 @@ void trace_PrintBacktrace(std::vector<T> const &stack, M getName, N getLineNo) {
 		if (!tracing.collapse) {
 			fputs("   ", stderr); // Just three spaces; the fourth will be printed next
 		}
-		fprintf(stderr, " %s ", i == 0 ? "at" : "<-");
+		fprintf(stderr, " %s ", i == 0 ? "at" : TRACE_SEPARATOR);
 		style_Set(stderr, STYLE_CYAN, true);
 		fputs(getName(item), stderr);
 		style_Set(stderr, STYLE_CYAN, false);
@@ -62,7 +66,7 @@ void trace_PrintBacktrace(std::vector<T> const &stack, M getName, N getLineNo) {
 		style_Reset(stderr);
 
 		if (tracing.collapse) {
-			fputs(" <-", stderr);
+			fputs(" " TRACE_SEPARATOR, stderr);
 		} else {
 			fputs("   ", stderr); // Just three spaces; the fourth will be printed next
 		}

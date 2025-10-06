@@ -9,10 +9,10 @@ warning: Line 5 [-Wuser]
 warning: Line 8 [-Wuser]
     at rept-line-no.asm(8)
 warning: Line 12 [-Wuser]
-    at rept-line-no.asm::REPT~1::REPT~1::REPT~1(12) <- rept-line-no.asm::REPT~1(11) <- rept-line-no.asm(10)
+    at rept-line-no.asm::REPT~1::REPT~1(12) <- rept-line-no.asm::REPT~1(11) <- rept-line-no.asm(10)
 warning: Line 12 [-Wuser]
-    at rept-line-no.asm::REPT~1::REPT~1::REPT~2(12) <- rept-line-no.asm::REPT~1(11) <- rept-line-no.asm(10)
+    at rept-line-no.asm::REPT~1::REPT~2(12) <- rept-line-no.asm::REPT~1(11) <- rept-line-no.asm(10)
 warning: Line 12 [-Wuser]
-    at rept-line-no.asm::REPT~2::REPT~2::REPT~1(12) <- rept-line-no.asm::REPT~2(11) <- rept-line-no.asm(10)
+    at rept-line-no.asm::REPT~2::REPT~1(12) <- rept-line-no.asm::REPT~2(11) <- rept-line-no.asm(10)
 warning: Line 12 [-Wuser]
-    at rept-line-no.asm::REPT~2::REPT~2::REPT~2(12) <- rept-line-no.asm::REPT~2(11) <- rept-line-no.asm(10)
+    at rept-line-no.asm::REPT~2::REPT~2(12) <- rept-line-no.asm::REPT~2(11) <- rept-line-no.asm(10)

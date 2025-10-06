@@ -266,11 +266,17 @@ evaluateTest
 test="pipeline"
 startTest
 continueTest
-("$RGBASM" -Weverything -Bcollapse -o - - | \
- "$RGBLINK" -Weverything -Bcollapse -o - - | \
- "$RGBFIX" -Weverything -v -p 0xff -) < "$test"/a.asm > "$gbtemp"
+("$RGBASM" -o - - | "$RGBLINK" -o - - | "$RGBFIX" -v -p 0xff -) < "$test"/a.asm > "$gbtemp"
 # This test does not trim its output with 'dd' because it needs to verify the correct output size
 tryCmp "$test"/out.gb "$gbtemp"
+evaluateTest
+
+test="rept-trace"
+startTest
+"$RGBASM" -o "$otemp" "$test"/a.asm
+continueTest
+rgblinkQuiet -Bno-collapse -o "$gbtemp" "$otemp" 2>"$outtemp"
+tryDiff "$test"/out.err "$outtemp"
 evaluateTest
 
 test="same-consts"

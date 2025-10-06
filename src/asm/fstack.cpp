@@ -56,16 +56,6 @@ static std::vector<std::string> includePaths = {""}; // -I
 static std::deque<std::string> preIncludeNames;      // -P
 static bool failedOnMissingInclude = false;
 
-static std::string reptChain(FileStackNode const &node) {
-	std::string chain;
-	std::vector<uint32_t> const &nodeIters = node.iters();
-	for (uint32_t i = nodeIters.size(); i--;) {
-		chain.append("::REPT~");
-		chain.append(std::to_string(nodeIters[i]));
-	}
-	return chain;
-}
-
 using TraceNode = std::pair<std::string, uint32_t>;
 
 static std::vector<TraceNode> backtrace(FileStackNode const &node, uint32_t curLineNo) {
@@ -89,7 +79,12 @@ static std::vector<TraceNode> backtrace(FileStackNode const &node, uint32_t curL
 	std::vector<TraceNode> traceNodes = backtrace(*node.parent, node.lineNo);
 	if (std::holds_alternative<std::vector<uint32_t>>(node.data)) {
 		assume(!traceNodes.empty()); // REPT nodes use their parent's name
-		traceNodes.emplace_back(traceNodes.back().first + reptChain(node), curLineNo);
+		std::string reptName = traceNodes.back().first;
+		if (std::vector<uint32_t> const &nodeIters = node.iters(); !nodeIters.empty()) {
+			reptName.append(NODE_SEPARATOR REPT_NODE_PREFIX);
+			reptName.append(std::to_string(nodeIters.front()));
+		}
+		traceNodes.emplace_back(reptName, curLineNo);
 	} else {
 		traceNodes.emplace_back(node.name(), curLineNo);
 	}
@@ -299,9 +294,13 @@ static void
 		}
 	}
 	if (macro.src->type == NODE_REPT) {
-		fileInfoName.append(reptChain(*macro.src));
+		std::vector<uint32_t> const &srcIters = macro.src->iters();
+		for (uint32_t i = srcIters.size(); i--;) {
+			fileInfoName.append(NODE_SEPARATOR REPT_NODE_PREFIX);
+			fileInfoName.append(std::to_string(srcIters[i]));
+		}
 	}
-	fileInfoName.append("::");
+	fileInfoName.append(NODE_SEPARATOR);
 	fileInfoName.append(macro.name);
 
 	auto fileInfo = std::make_shared<FileStackNode>(NODE_MACRO, fileInfoName, isQuiet);
