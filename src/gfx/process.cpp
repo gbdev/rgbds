@@ -695,12 +695,6 @@ static void outputUnoptimizedMaps(
 	uint8_t tileID = 0;
 	uint8_t bank = 0;
 	for (AttrmapEntry const &attr : attrmap) {
-		if (tileID == options.maxNbTiles[bank]) {
-			assume(bank == 0);
-			bank = 1;
-			tileID = 0;
-		}
-
 		if (tilemapOutput.has_value()) {
 			(*tilemapOutput)
 			    ->sputc((attr.isBackgroundTile() ? 0 : tileID) + options.baseTileIDs[bank]);
@@ -714,8 +708,17 @@ static void outputUnoptimizedMaps(
 		}
 
 		// Background tiles are skipped in the tile data, so they should be skipped in the maps too.
-		if (!attr.isBackgroundTile()) {
+		if (attr.isBackgroundTile()) {
+			continue;
+		}
+
+		// Compare with `maxNbTiles` *before* incrementing, due to unsigned overflow!
+		if (tileID + 1 < options.maxNbTiles[bank]) {
 			++tileID;
+		} else {
+			assume(bank == 0);
+			bank = 1;
+			tileID = 0;
 		}
 	}
 }
