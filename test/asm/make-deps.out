@@ -1,1 +1,3 @@
 preserve$dollars$$ escape$$dollars$$$$: make-deps.asm
+preserve$dollars$$ escape$$dollars$$$$: data.bin
+data.bin:

@@ -1,0 +1,5 @@
+error: Expected constant expression: `Gamma` is not constant at assembly time
+    at const-low.asm(10)
+error: Assertion failed
+    at const-low.asm(10)
+Assembly aborted with 2 errors!

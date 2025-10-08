@@ -1,2 +1,2 @@
 section "test", rom0
-incbin "data.bin"
+dl 3.14159
