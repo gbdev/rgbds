@@ -19,6 +19,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <string>
+#include <string_view>
 #include <unordered_map>
 #include <utility>
 #include <variant>
@@ -56,7 +57,7 @@ struct Token {
 
 // This map lists all RGBASM keywords which `yylex_NORMAL` lexes as identifiers.
 // All non-identifier tokens are lexed separately.
-static UpperMap<int> const keywordDict{
+static UpperMap<int> const keywords{
     {"ADC",           T_(SM83_ADC)         },
     {"ADD",           T_(SM83_ADD)         },
     {"AND",           T_(SM83_AND)         },
@@ -1269,21 +1270,27 @@ static uint32_t readGfxConstant() {
 
 static Token readIdentifier(char firstChar, bool raw) {
 	std::string identifier(1, firstChar);
+	bool keywordBeforeLocal = false;
 	int tokenType = firstChar == '.' ? T_(LOCAL) : T_(SYMBOL);
 
 	// Continue reading while the char is in the identifier charset
 	for (int c = peek(); continuesIdentifier(c); c = nextChar()) {
-		identifier += c;
-
 		// If the char was a dot, the identifier is a local label
 		if (c == '.') {
+			// Check for a keyword before a non-raw local label
+			if (!raw && tokenType != T_(LOCAL) && keywords.find(identifier) != keywords.end()) {
+				keywordBeforeLocal = true;
+			}
+
 			tokenType = T_(LOCAL);
 		}
+
+		identifier += c;
 	}
 
-	// Attempt to check for a keyword if the identifier is not raw or a local label
+	// Check for a keyword if the identifier is not raw and not a local label
 	if (!raw && tokenType != T_(LOCAL)) {
-		if (auto search = keywordDict.find(identifier); search != keywordDict.end()) {
+		if (auto search = keywords.find(identifier); search != keywords.end()) {
 			return Token(search->second);
 		}
 	}
@@ -1291,6 +1298,14 @@ static Token readIdentifier(char firstChar, bool raw) {
 	// Label scopes `.` and `..` are the only nonlocal identifiers that start with a dot
 	if (identifier.find_first_not_of('.') == identifier.npos) {
 		tokenType = T_(SYMBOL);
+	}
+
+	// A keyword before a non-raw local label is an error
+	if (keywordBeforeLocal) {
+		error(
+		    "Identifier \"%s\" begins with a keyword; did you mean to put a space between them?",
+		    identifier.c_str()
+		);
 	}
 
 	return Token(tokenType, identifier);
@@ -1336,7 +1351,7 @@ static std::pair<Symbol const *, std::shared_ptr<std::string>> readInterpolation
 	if (identifier.starts_with('#')) {
 		// Skip a '#' raw symbol prefix, but after expanding any nested interpolations.
 		identifier.erase(0, 1);
-	} else if (keywordDict.find(identifier) != keywordDict.end()) {
+	} else if (keywords.find(identifier) != keywords.end()) {
 		// Don't allow symbols that alias keywords without a '#' prefix.
 		error(
 		    "Interpolated symbol `%s` is a reserved keyword; add a '#' prefix to use it as a raw "
