@@ -57,8 +57,10 @@
 
 	yy::parser::symbol_type yylex(); // Provided by lexer.cpp
 
-	template <typename N, typename S>
-	static auto handleSymbolByType(std::string const &symName, N numCallback, S strCallback) {
+	template<typename NumCallbackFnT, typename StrCallbackFnT>
+	static auto handleSymbolByType(
+	    std::string const &symName, NumCallbackFnT numCallback, StrCallbackFnT strCallback
+	) {
 		if (Symbol *sym = sym_FindScopedSymbol(symName); sym && sym->type == SYM_EQUS) {
 			return strCallback(*sym->getEqus());
 		} else {

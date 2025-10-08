@@ -38,8 +38,8 @@ struct Charmap {
 };
 
 // Traverse the trie depth-first to derive the character mappings in definition order
-template<typename F>
-bool forEachChar(Charmap const &charmap, F callback) {
+template<typename CallbackFnT>
+bool forEachChar(Charmap const &charmap, CallbackFnT callback) {
 	// clang-format off: nested initializers
 	for (std::stack<std::pair<size_t, std::string>> prefixes({{0, ""}}); !prefixes.empty();) {
 		// clang-format on

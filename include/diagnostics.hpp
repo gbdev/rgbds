@@ -30,35 +30,35 @@ struct WarningState {
 
 std::pair<WarningState, std::optional<uint32_t>> getInitialWarningState(std::string &flag);
 
-template<typename L>
+template<typename LevelEnumT>
 struct WarningFlag {
 	char const *name;
-	L level;
+	LevelEnumT level;
 };
 
 enum WarningBehavior { DISABLED, ENABLED, ERROR };
 
-template<typename W>
+template<typename WarningEnumT>
 struct ParamWarning {
-	W firstID;
-	W lastID;
+	WarningEnumT firstID;
+	WarningEnumT lastID;
 	uint8_t defaultLevel;
 };
 
-template<typename W>
+template<typename WarningEnumT>
 struct DiagnosticsState {
-	WarningState flagStates[W::NB_WARNINGS];
-	WarningState metaStates[W::NB_WARNINGS];
+	WarningState flagStates[WarningEnumT::NB_WARNINGS];
+	WarningState metaStates[WarningEnumT::NB_WARNINGS];
 	bool warningsEnabled = true;
 	bool warningsAreErrors = false;
 };
 
-template<typename L, typename W>
+template<typename LevelEnumT, typename WarningEnumT>
 struct Diagnostics {
-	std::vector<WarningFlag<L>> metaWarnings;
-	std::vector<WarningFlag<L>> warningFlags;
-	std::vector<ParamWarning<W>> paramWarnings;
-	DiagnosticsState<W> state;
+	std::vector<WarningFlag<LevelEnumT>> metaWarnings;
+	std::vector<WarningFlag<LevelEnumT>> warningFlags;
+	std::vector<ParamWarning<WarningEnumT>> paramWarnings;
+	DiagnosticsState<WarningEnumT> state;
 	uint64_t nbErrors;
 
 	void incrementErrors() {
@@ -67,12 +67,12 @@ struct Diagnostics {
 		}
 	}
 
-	WarningBehavior getWarningBehavior(W id) const;
+	WarningBehavior getWarningBehavior(WarningEnumT id) const;
 	void processWarningFlag(char const *flag);
 };
 
-template<typename L, typename W>
-WarningBehavior Diagnostics<L, W>::getWarningBehavior(W id) const {
+template<typename LevelEnumT, typename WarningEnumT>
+WarningBehavior Diagnostics<LevelEnumT, WarningEnumT>::getWarningBehavior(WarningEnumT id) const {
 	// Check if warnings are globally disabled
 	if (!state.warningsEnabled) {
 		return WarningBehavior::DISABLED;
@@ -112,7 +112,7 @@ WarningBehavior Diagnostics<L, W>::getWarningBehavior(W id) const {
 	}
 
 	// If no meta flag is specified, check the default state of this warning flag
-	if (warningFlags[id].level == L::LEVEL_DEFAULT) { // enabled by default
+	if (warningFlags[id].level == LevelEnumT::LEVEL_DEFAULT) { // enabled by default
 		return enabledBehavior;
 	}
 
@@ -120,8 +120,8 @@ WarningBehavior Diagnostics<L, W>::getWarningBehavior(W id) const {
 	return WarningBehavior::DISABLED;
 }
 
-template<typename L, typename W>
-void Diagnostics<L, W>::processWarningFlag(char const *flag) {
+template<typename LevelEnumT, typename WarningEnumT>
+void Diagnostics<LevelEnumT, WarningEnumT>::processWarningFlag(char const *flag) {
 	std::string rootFlag = flag;
 
 	// Check for `-Werror` or `-Wno-error` to return early
@@ -140,8 +140,8 @@ void Diagnostics<L, W>::processWarningFlag(char const *flag) {
 	// Try to match the flag against a parametric warning
 	// If there was an equals sign, it will have set `param`; if not, `param` will be 0,
 	// which applies to all levels
-	for (ParamWarning<W> const &paramWarning : paramWarnings) {
-		W baseID = paramWarning.firstID;
+	for (ParamWarning<WarningEnumT> const &paramWarning : paramWarnings) {
+		WarningEnumT baseID = paramWarning.firstID;
 		uint8_t maxParam = paramWarning.lastID - baseID + 1;
 		assume(paramWarning.defaultLevel <= maxParam);
 
@@ -183,13 +183,13 @@ void Diagnostics<L, W>::processWarningFlag(char const *flag) {
 	}
 
 	// Try to match against a "meta" warning
-	for (WarningFlag<L> const &metaWarning : metaWarnings) {
+	for (WarningFlag<LevelEnumT> const &metaWarning : metaWarnings) {
 		if (rootFlag != metaWarning.name) {
 			continue;
 		}
 
 		// Set each of the warning flags that meets this level
-		for (W id : EnumSeq(W::NB_WARNINGS)) {
+		for (WarningEnumT id : EnumSeq(WarningEnumT::NB_WARNINGS)) {
 			if (metaWarning.level >= warningFlags[id].level) {
 				state.metaStates[id].update(flagState);
 			}
@@ -198,7 +198,7 @@ void Diagnostics<L, W>::processWarningFlag(char const *flag) {
 	}
 
 	// Try to match against a "normal" flag
-	for (W id : EnumSeq(W::NB_PLAIN_WARNINGS)) {
+	for (WarningEnumT id : EnumSeq(WarningEnumT::NB_PLAIN_WARNINGS)) {
 		if (rootFlag == warningFlags[id].name) {
 			state.flagStates[id].update(flagState);
 			return;

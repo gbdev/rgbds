@@ -70,7 +70,7 @@ public:
 
 private:
 	// Template class for both const and non-const iterators over the non-empty `_assigned` slots
-	template<typename I, template<typename> typename Constness>
+	template<typename IteratorT, template<typename> typename Constness>
 	class AssignedSetsIter {
 	public:
 		friend class AssignedSets;
@@ -84,7 +84,7 @@ private:
 
 	private:
 		Constness<decltype(_assigned)> *_array = nullptr;
-		I _iter{};
+		IteratorT _iter{};
 
 		AssignedSetsIter(decltype(_array) array, decltype(_iter) &&iter)
 		    : _array(array), _iter(iter) {}
@@ -164,11 +164,11 @@ public:
 	size_t nbColorSets() const { return std::distance(RANGE(*this)); }
 
 private:
-	template<typename I>
+	template<typename IteratorT>
 	static void addUniqueColors(
 	    std::unordered_set<uint16_t> &colors,
-	    I iter,
-	    I const &end,
+	    IteratorT iter,
+	    IteratorT const &end,
 	    std::vector<ColorSet> const &colorSets
 	) {
 		for (; iter != end; ++iter) {
@@ -240,18 +240,20 @@ public:
 	}
 
 	// Computes the "relative size" of a set of color sets on this palette
-	template<typename I>
-	size_t combinedVolume(I &&begin, I const &end, std::vector<ColorSet> const &colorSets) const {
+	template<typename IteratorT>
+	size_t combinedVolume(
+	    IteratorT &&begin, IteratorT const &end, std::vector<ColorSet> const &colorSets
+	) const {
 		std::unordered_set<uint16_t> &colors = uniqueColors();
-		addUniqueColors(colors, std::forward<I>(begin), end, colorSets);
+		addUniqueColors(colors, std::forward<IteratorT>(begin), end, colorSets);
 		return colors.size();
 	}
 
 	// Computes the "relative size" of a set of colors on this palette
-	template<typename I>
-	size_t combinedVolume(I &&begin, I &&end) const {
+	template<typename IteratorT>
+	size_t combinedVolume(IteratorT &&begin, IteratorT &&end) const {
 		std::unordered_set<uint16_t> &colors = uniqueColors();
-		colors.insert(std::forward<I>(begin), std::forward<I>(end));
+		colors.insert(std::forward<IteratorT>(begin), std::forward<IteratorT>(end));
 		return colors.size();
 	}
 };

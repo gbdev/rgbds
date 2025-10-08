@@ -816,8 +816,8 @@ static int nextChar() {
 	return peek();
 }
 
-template<typename P>
-static int skipChars(P predicate) {
+template<typename PredicateFnT>
+static int skipChars(PredicateFnT predicate) {
 	int c = peek();
 	while (predicate(c)) {
 		c = nextChar();
@@ -2281,8 +2281,8 @@ yy::parser::symbol_type yylex() {
 	}
 }
 
-template<typename F>
-static Capture makeCapture(char const *name, F callback) {
+template<typename CallbackFnT>
+static Capture makeCapture(char const *name, CallbackFnT callback) {
 	// Due to parser internals, it reads the EOL after the expression before calling this.
 	// Thus, we don't need to keep one in the buffer afterwards.
 	// The following assumption checks that.

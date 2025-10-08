@@ -100,16 +100,16 @@ static inline int clz(unsigned int x) {
 #define RRANGE(s) std::rbegin(s), std::rend(s)
 
 // MSVC does not inline `strlen()` or `.length()` of a constant string
-template<int N>
-static constexpr int literal_strlen(char const (&)[N]) {
-	return N - 1;
+template<int SizeOfString>
+static constexpr int literal_strlen(char const (&)[SizeOfString]) {
+	return SizeOfString - 1; // Don't count the ending '\0'
 }
 
 // For ad-hoc RAII in place of a `defer` statement or cross-platform `__attribute__((cleanup))`
-template<typename T>
+template<typename DeferredFnT>
 struct Defer {
-	T deferred;
-	Defer(T func) : deferred(func) {}
+	DeferredFnT deferred;
+	Defer(DeferredFnT func) : deferred(func) {}
 	~Defer() { deferred(); }
 };
 

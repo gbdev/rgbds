@@ -25,15 +25,15 @@ extern Tracing tracing;
 
 bool trace_ParseTraceDepth(char const *arg);
 
-template<typename T, typename M, typename N>
-void trace_PrintBacktrace(std::vector<T> const &stack, M getName, N getLineNo) {
+template<typename NodeT, typename NameFnT, typename LineNoFnT>
+void trace_PrintBacktrace(std::vector<NodeT> const &stack, NameFnT getName, LineNoFnT getLineNo) {
 	size_t n = stack.size();
 	if (n == 0) {
 		return; // LCOV_EXCL_LINE
 	}
 
 	auto printLocation = [&](size_t i) {
-		T const &item = stack[n - i - 1];
+		NodeT const &item = stack[n - i - 1];
 		style_Reset(stderr);
 		if (!tracing.collapse) {
 			fputs("   ", stderr); // Just three spaces; the fourth will be printed next

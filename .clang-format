@@ -71,6 +71,7 @@ Language: Cpp
 MaxEmptyLinesToKeep: 1
 NamespaceIndentation: None
 PPIndentWidth: -1
+PenaltyBreakScopeResolution: 1000
 PointerAlignment: Right
 QualifierAlignment: Right
 ReflowComments: true

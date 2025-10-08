@@ -12,29 +12,31 @@
 #include <unordered_map>
 #include <utility>
 
-template<typename T>
+// A wrapper around iterables to reverse their iteration order; used in `for`-each loops.
+template<typename IterableT>
 struct ReversedIterable {
-	T &_iterable;
+	IterableT &_iterable;
 };
 
-template<typename T>
-auto begin(ReversedIterable<T> r) {
+template<typename IterableT>
+auto begin(ReversedIterable<IterableT> r) {
 	return std::rbegin(r._iterable);
 }
 
-template<typename T>
-auto end(ReversedIterable<T> r) {
+template<typename IterableT>
+auto end(ReversedIterable<IterableT> r) {
 	return std::rend(r._iterable);
 }
 
-template<typename T>
-ReversedIterable<T> reversed(T &&_iterable) {
+template<typename IterableT>
+ReversedIterable<IterableT> reversed(IterableT &&_iterable) {
 	return {_iterable};
 }
 
-template<typename T>
+// A map from `std::string` keys to `ItemT` items, iterable in the order the items were inserted.
+template<typename ItemT>
 class InsertionOrderedMap {
-	std::deque<T> list;
+	std::deque<ItemT> list;
 	std::unordered_map<std::string, size_t> map; // Indexes into `list`
 
 public:
@@ -44,25 +46,25 @@ public:
 
 	bool contains(std::string const &name) const { return map.find(name) != map.end(); }
 
-	T &operator[](size_t i) { return list[i]; }
+	ItemT &operator[](size_t i) { return list[i]; }
 
 	typename decltype(list)::iterator begin() { return list.begin(); }
 	typename decltype(list)::iterator end() { return list.end(); }
 	typename decltype(list)::const_iterator begin() const { return list.begin(); }
 	typename decltype(list)::const_iterator end() const { return list.end(); }
 
-	T &add(std::string const &name) {
+	ItemT &add(std::string const &name) {
 		map[name] = list.size();
 		return list.emplace_back();
 	}
 
-	T &add(std::string const &name, T &&value) {
+	ItemT &add(std::string const &name, ItemT &&value) {
 		map[name] = list.size();
 		list.emplace_back(std::move(value));
 		return list.back();
 	}
 
-	T &addAnonymous() {
+	ItemT &addAnonymous() {
 		// Add the new item to the list, but do not update the map
 		return list.emplace_back();
 	}
@@ -75,43 +77,45 @@ public:
 	}
 };
 
-template<typename T>
+// An iterable of `enum` values in the half-open range [start, stop).
+template<typename EnumT>
 class EnumSeq {
-	T _start;
-	T _stop;
+	EnumT _start;
+	EnumT _stop;
 
 	class Iterator {
-		T _value;
+		EnumT _value;
 
 	public:
-		explicit Iterator(T value) : _value(value) {}
+		explicit Iterator(EnumT value) : _value(value) {}
 
 		Iterator &operator++() {
-			_value = static_cast<T>(_value + 1);
+			_value = static_cast<EnumT>(_value + 1);
 			return *this;
 		}
 
-		T operator*() const { return _value; }
+		EnumT operator*() const { return _value; }
 
 		bool operator==(Iterator const &rhs) const { return _value == rhs._value; }
 	};
 
 public:
-	explicit EnumSeq(T stop) : _start(static_cast<T>(0)), _stop(stop) {}
-	explicit EnumSeq(T start, T stop) : _start(start), _stop(stop) {}
+	explicit EnumSeq(EnumT stop) : _start(static_cast<EnumT>(0)), _stop(stop) {}
+	explicit EnumSeq(EnumT start, EnumT stop) : _start(start), _stop(stop) {}
 
 	Iterator begin() { return Iterator(_start); }
 	Iterator end() { return Iterator(_stop); }
 };
 
+// Only needed inside `ZipContainer` below.
 // This is not a fully generic implementation; its current use cases only require for-loop behavior.
 // We also assume that all iterators have the same length.
-template<typename... Ts>
+template<typename... IteratorTs>
 class ZipIterator {
-	std::tuple<Ts...> _iters;
+	std::tuple<IteratorTs...> _iters;
 
 public:
-	explicit ZipIterator(std::tuple<Ts...> &&iters) : _iters(iters) {}
+	explicit ZipIterator(std::tuple<IteratorTs...> &&iters) : _iters(iters) {}
 
 	ZipIterator &operator++() {
 		std::apply([](auto &&...it) { (++it, ...); }, _iters);
@@ -129,12 +133,14 @@ public:
 	}
 };
 
-template<typename... Ts>
+// Only needed inside `zip` below.
+template<typename... IterableTs>
 class ZipContainer {
-	std::tuple<Ts...> _containers;
+	std::tuple<IterableTs...> _containers;
 
 public:
-	explicit ZipContainer(Ts &&...containers) : _containers(std::forward<Ts>(containers)...) {}
+	explicit ZipContainer(IterableTs &&...containers)
+	    : _containers(std::forward<IterableTs>(containers)...) {}
 
 	auto begin() {
 		return ZipIterator(std::apply(
@@ -157,15 +163,19 @@ public:
 	}
 };
 
+// Only needed inside `zip` below.
 // Take ownership of objects and rvalue refs passed to us, but not lvalue refs
-template<typename T>
-using Holder = std::
-    conditional_t<std::is_lvalue_reference_v<T>, T, std::remove_cv_t<std::remove_reference_t<T>>>;
+template<typename IterableT>
+using ZipHolder = std::conditional_t<
+    std::is_lvalue_reference_v<IterableT>,
+    IterableT,
+    std::remove_cv_t<std::remove_reference_t<IterableT>>>;
 
+// Iterates over N containers at once, yielding tuples of N items at a time.
 // Does the same number of iterations as the first container's iterator!
-template<typename... Ts>
-static constexpr auto zip(Ts &&...cs) {
-	return ZipContainer<Holder<Ts>...>(std::forward<Ts>(cs)...);
+template<typename... IterableTs>
+static constexpr auto zip(IterableTs &&...containers) {
+	return ZipContainer<ZipHolder<IterableTs>...>(std::forward<IterableTs>(containers)...);
 }
 
 #endif // RGBDS_ITERTOOLS_HPP

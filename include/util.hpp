@@ -64,7 +64,8 @@ struct Uppercase {
 	}
 };
 
-template<typename T>
-using UpperMap = std::unordered_map<std::string, T, Uppercase, Uppercase>;
+// An unordered map from case-insensitive `std::string` keys to `ItemT` items
+template<typename ItemT>
+using UpperMap = std::unordered_map<std::string, ItemT, Uppercase, Uppercase>;
 
 #endif // RGBDS_UTIL_HPP

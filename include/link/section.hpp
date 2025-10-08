@@ -52,28 +52,28 @@ struct Section {
 
 private:
 	// Template class for both const and non-const iterators over the "pieces" of this section
-	template<typename T>
+	template<typename SectionT>
 	class PiecesIterable {
-		T *_firstPiece;
+		SectionT *_firstPiece;
 
 		class Iterator {
-			T *_piece;
+			SectionT *_piece;
 
 		public:
-			explicit Iterator(T *piece) : _piece(piece) {}
+			explicit Iterator(SectionT *piece) : _piece(piece) {}
 
 			Iterator &operator++() {
 				_piece = _piece->nextPiece.get();
 				return *this;
 			}
 
-			T &operator*() const { return *_piece; }
+			SectionT &operator*() const { return *_piece; }
 
 			bool operator==(Iterator const &rhs) const { return _piece == rhs._piece; }
 		};
 
 	public:
-		explicit PiecesIterable(T *firstPiece) : _firstPiece(firstPiece) {}
+		explicit PiecesIterable(SectionT *firstPiece) : _firstPiece(firstPiece) {}
 
 		Iterator begin() { return Iterator(_firstPiece); }
 		Iterator end() { return Iterator(nullptr); }

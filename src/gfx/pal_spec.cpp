@@ -210,15 +210,15 @@ static void warnExtraColors(
 }
 
 // Parses the initial part of a string_view, advancing the "read index" as it does
-template<typename U> // Should be uint*_t
-static std::optional<U> parseDec(std::string const &str, size_t &n) {
+template<typename UintT> // Should be uint*_t
+static std::optional<UintT> parseDec(std::string const &str, size_t &n) {
 	uintmax_t value = 0;
 	auto result = std::from_chars(str.data() + n, str.data() + str.length(), value);
 	if (static_cast<bool>(result.ec)) {
 		return std::nullopt;
 	}
 	n = result.ptr - str.data();
-	return std::optional<U>{value};
+	return std::optional<UintT>{value};
 }
 
 static std::optional<Rgba> parseColor(std::string const &str, size_t &n, uint16_t i) {
