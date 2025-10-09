@@ -177,25 +177,29 @@ private:
 		}
 	}
 
-	// This function should stay private because it returns a reference to a unique object
-	std::unordered_set<uint16_t> &uniqueColors() const {
-		// We check for *distinct* colors by stuffing them into a `set`; this should be
-		// faster than "back-checking" on every element (O(n^2))
-		static std::unordered_set<uint16_t> colors;
-
-		colors.clear();
+public:
+	// Returns the set of distinct colors
+	std::unordered_set<uint16_t> uniqueColors() const {
+		std::unordered_set<uint16_t> colors;
 		addUniqueColors(colors, RANGE(*this), *_colorSets);
 		return colors;
 	}
 
-public:
 	// Returns the number of distinct colors
 	size_t volume() const { return uniqueColors().size(); }
 
 	bool canFit(ColorSet const &colorSet) const {
-		std::unordered_set<uint16_t> &colors = uniqueColors();
+		std::unordered_set<uint16_t> colors = uniqueColors();
 		colors.insert(RANGE(colorSet));
 		return colors.size() <= options.maxOpaqueColors();
+	}
+
+	// Counts how many of our color sets this color also belongs to
+	uint32_t multiplicity(uint16_t color) const {
+		return std::count_if(RANGE(*this), [this, &color](ColorSetAttrs const &attrs) {
+			ColorSet const &pal = (*_colorSets)[attrs.colorSetIndex];
+			return std::find(RANGE(pal), color) != pal.end();
+		});
 	}
 
 	// The `relSizeOf` method below should compute the sum, for each color in `colorSet`, of
@@ -217,24 +221,17 @@ public:
 	// Computes the "relative size" of a color set on this palette;
 	// it's a measure of how much this color set would "cost" to introduce.
 	uint32_t relSizeOf(ColorSet const &colorSet) const {
-		// NOTE: this function must not call `uniqueColors`, or one of its callers will break!
-
 		uint32_t relSize = 0;
 		for (uint16_t color : colorSet) {
-			// How many of our color sets does this color also belong to?
-			uint32_t multiplicity =
-			    std::count_if(RANGE(*this), [this, &color](ColorSetAttrs const &attrs) {
-				    ColorSet const &pal = (*_colorSets)[attrs.colorSetIndex];
-				    return std::find(RANGE(pal), color) != pal.end();
-			    });
+			uint32_t n = multiplicity(color);
 			// We increase the denominator by 1 here; the reference code does this,
 			// but the paper does not. Not adding 1 makes a multiplicity of 0 cause a division by 0
 			// (that is, if the color is not found in any color set), and adding 1 still seems
 			// to preserve the paper's reasoning.
 			//
 			// The scale factor should ensure integer divisions only.
-			assume(scaleFactor % (multiplicity + 1) == 0);
-			relSize += scaleFactor / (multiplicity + 1);
+			assume(scaleFactor % (n + 1) == 0);
+			relSize += scaleFactor / (n + 1);
 		}
 		return relSize;
 	}
@@ -244,7 +241,7 @@ public:
 	size_t combinedVolume(
 	    IteratorT &&begin, IteratorT const &end, std::vector<ColorSet> const &colorSets
 	) const {
-		std::unordered_set<uint16_t> &colors = uniqueColors();
+		std::unordered_set<uint16_t> colors = uniqueColors();
 		addUniqueColors(colors, std::forward<IteratorT>(begin), end, colorSets);
 		return colors.size();
 	}
@@ -252,7 +249,7 @@ public:
 	// Computes the "relative size" of a set of colors on this palette
 	template<typename IteratorT>
 	size_t combinedVolume(IteratorT &&begin, IteratorT &&end) const {
-		std::unordered_set<uint16_t> &colors = uniqueColors();
+		std::unordered_set<uint16_t> colors = uniqueColors();
 		colors.insert(std::forward<IteratorT>(begin), std::forward<IteratorT>(end));
 		return colors.size();
 	}
