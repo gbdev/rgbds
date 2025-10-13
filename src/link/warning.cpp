@@ -31,7 +31,7 @@ Diagnostics<WarningLevel, WarningID> warnings = {
         {"truncation",   LEVEL_EVERYTHING},
     },
     .paramWarnings = {
-        {WARNING_TRUNCATION_1, WARNING_TRUNCATION_2, 2},
+        {WARNING_TRUNCATION_1, WARNING_TRUNCATION_2, 1},
     },
     .state = DiagnosticsState<WarningID>(),
     .nbErrors = 0,

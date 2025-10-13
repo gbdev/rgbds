@@ -7,14 +7,6 @@ warning: Expression must be 16-bit [-Wtruncation]
 warning: Expression must be 16-bit [-Wtruncation]
     at warn-truncation.asm::try(26) <- warn-truncation.asm(35)
 warning: Expression must be 8-bit; use `LOW()` to force 8-bit [-Wtruncation]
-    at warn-truncation.asm::try(28) <- warn-truncation.asm(35)
-warning: Expression must be 16-bit [-Wtruncation]
-    at warn-truncation.asm::try(29) <- warn-truncation.asm(35)
-warning: Expression must be 8-bit; use `LOW()` to force 8-bit [-Wtruncation]
-    at warn-truncation.asm::try(30) <- warn-truncation.asm(35)
-warning: Expression must be 16-bit [-Wtruncation]
-    at warn-truncation.asm::try(31) <- warn-truncation.asm(35)
-warning: Expression must be 8-bit; use `LOW()` to force 8-bit [-Wtruncation]
     at warn-truncation.asm::try(23) <- warn-truncation.asm(37)
 warning: Expression must be 8-bit; use `LOW()` to force 8-bit [-Wtruncation]
     at warn-truncation.asm::try(24) <- warn-truncation.asm(37)
