@@ -52,7 +52,7 @@ Diagnostics<WarningLevel, WarningID> warnings = {
     },
     .paramWarnings = {
         {WARNING_NUMERIC_STRING_1, WARNING_NUMERIC_STRING_2, 1},
-        {WARNING_PURGE_1,          WARNING_PURGE_2,          1},
+        {WARNING_PURGE_1,          WARNING_PURGE_2,          2},
         {WARNING_TRUNCATION_1,     WARNING_TRUNCATION_2,     2},
         {WARNING_UNMAPPED_CHAR_1,  WARNING_UNMAPPED_CHAR_2,  1},
     },

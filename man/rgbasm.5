@@ -1711,15 +1711,21 @@ Note also that only exported symbols will appear in symbol and map files produce
 .Ss Purging symbols
 .Ic PURGE
 allows you to completely remove a symbol from the symbol table, as if it had never been defined.
+.Bd -literal -offset indent
+DEF value EQU 42
+PURGE value
+DEF value EQUS "I'm a string now"
+ASSERT DEF(value)
+PURGE value
+ASSERT !DEF(value)
+.Ed
+.Pp
 Be
 .Em very
-careful when purging symbols, especially labels, because it could result in unpredictable errors if something depends on the missing symbol (for example, expressions the linker needs to calculate).
-.Bd -literal -offset indent
-DEF Kamikaze EQUS "I don't want to live anymore"
-AOLer: DB "Me too lol"
-PURGE Kamikaze, AOLer
-ASSERT !DEF(Kamikaze) && !DEF(AOLer)
-.Ed
+careful when purging symbols that have been referenced in section data, or that have been exported, because it could result in unpredictable errors if something depends on the missing symbol (for example, expressions the linker needs to calculate).
+Purging labels at all is
+.Em not
+recommended.
 .Pp
 String constants are not expanded within the symbol names.
 .Ss Predeclared symbols
