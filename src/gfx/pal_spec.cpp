@@ -188,14 +188,6 @@ static bool readLine(std::filebuf &file, std::string &buffer) {
 	}
 }
 
-#define requireLine(kind, filename, file, buffer) \
-	do { \
-		if (!readLine(file, buffer)) { \
-			error(kind " palette file \"%s\" is shorter than expected", filename); \
-			return; \
-		} \
-	} while (0)
-
 static void warnExtraColors(
     char const *kind, char const *filename, uint16_t nbColors, uint16_t maxNbColors
 ) {
@@ -254,21 +246,28 @@ static std::optional<Rgba> parseColor(std::string const &str, size_t &n, uint16_
 static void parsePSPFile(char const *filename, std::filebuf &file) {
 	// https://www.selapa.net/swatches/colors/fileformats.php#psp_pal
 
+#define requireLine() \
+	do { \
+		line.clear(); \
+		if (!readLine(file, line)) { \
+			error("PSP palette file \"%s\" is shorter than expected", filename); \
+			return; \
+		} \
+	} while (0)
+
 	std::string line;
 	if (!readLine(file, line) || line != "JASC-PAL") {
 		error("File \"%s\" is not a valid PSP palette file", filename);
 		return;
 	}
 
-	line.clear();
-	requireLine("PSP", filename, file, line);
+	requireLine();
 	if (line != "0100") {
 		error("Unsupported PSP palette file version \"%s\"", line.c_str());
 		return;
 	}
 
-	line.clear();
-	requireLine("PSP", filename, file, line);
+	requireLine();
 	size_t n = 0;
 	std::optional<uint16_t> nbColors = parseDec<uint16_t>(line, n);
 	if (!nbColors || n != line.length()) {
@@ -284,8 +283,7 @@ static void parsePSPFile(char const *filename, std::filebuf &file) {
 	options.palSpec.clear();
 
 	for (uint16_t i = 0; i < *nbColors; ++i) {
-		line.clear();
-		requireLine("PSP", filename, file, line);
+		requireLine();
 
 		n = 0;
 		std::optional<Rgba> color = parseColor(line, n, i + 1);
@@ -306,6 +304,8 @@ static void parsePSPFile(char const *filename, std::filebuf &file) {
 		}
 		options.palSpec.back()[i % options.nbColorsPerPal] = *color;
 	}
+
+#undef requireLine
 }
 
 static void parseGPLFile(char const *filename, std::filebuf &file) {

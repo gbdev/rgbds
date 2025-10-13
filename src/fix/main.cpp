@@ -180,21 +180,21 @@ int main(int argc, char *argv[]) {
 			options.fixSpec = 0;
 			while (*musl_optarg) {
 				switch (*musl_optarg) {
-#define OVERRIDE_SPEC(cur, bad, curFlag, badFlag) \
-	case STR(cur)[0]: \
+#define overrideSpec(cur, bad, curFlag, badFlag) \
+	case cur: \
 		if (options.fixSpec & badFlag) { \
-			warnx("'" STR(cur) "' overriding '" STR(bad) "' in fix spec"); \
+			warnx("'%c' overriding '%c' in fix spec", cur, bad); \
 		} \
 		options.fixSpec = (options.fixSpec & ~badFlag) | curFlag; \
 		break
-#define overrideSpecs(fix, fixFlag, trash, trashFlag) \
-	OVERRIDE_SPEC(fix, trash, fixFlag, trashFlag); \
-	OVERRIDE_SPEC(trash, fix, trashFlag, fixFlag)
-					overrideSpecs(l, FIX_LOGO, L, TRASH_LOGO);
-					overrideSpecs(h, FIX_HEADER_SUM, H, TRASH_HEADER_SUM);
-					overrideSpecs(g, FIX_GLOBAL_SUM, G, TRASH_GLOBAL_SUM);
-#undef OVERRIDE_SPEC
-#undef overrideSpecs
+#define overrideSpecPair(fix, fixFlag, trash, trashFlag) \
+	overrideSpec(fix, trash, fixFlag, trashFlag); \
+	overrideSpec(trash, fix, trashFlag, fixFlag)
+					overrideSpecPair('l', FIX_LOGO, 'L', TRASH_LOGO);
+					overrideSpecPair('h', FIX_HEADER_SUM, 'H', TRASH_HEADER_SUM);
+					overrideSpecPair('g', FIX_GLOBAL_SUM, 'G', TRASH_GLOBAL_SUM);
+#undef overrideSpec
+#undef overrideSpecPair
 
 				default:
 					fatal("Invalid character '%c' in fix spec", *musl_optarg);

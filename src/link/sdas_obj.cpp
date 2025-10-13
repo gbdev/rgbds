@@ -138,23 +138,30 @@ void sdobj_ReadFile(FileStackNode const &src, FILE *file, std::vector<Symbol> &f
 	line.reserve(256);
 	char const *token;
 
-#define getToken(ptr, ...) \
-	do { \
-		token = strtok((ptr), delim); \
-		if (!token) { \
-			fatalAt(where, __VA_ARGS__); \
-		} \
-	} while (0)
-#define expectEol(...) \
+#define expectEol(lineType) \
 	do { \
 		token = strtok(nullptr, delim); \
 		if (token) { \
-			fatalAt(where, __VA_ARGS__); \
+			fatalAt(where, "'%c' line is too long", (lineType)); \
+		} \
+	} while (0)
+#define expectNext(ptr, lineType) \
+	do { \
+		token = strtok((ptr), delim); \
+		if (!token) { \
+			fatalAt(where, "'%c' line is too short", (lineType)); \
+		} \
+	} while (0)
+#define expectRelocation() \
+	do { \
+		token = strtok(nullptr, delim); \
+		if (!token) { \
+			fatalAt(where, "Incomplete relocation"); \
 		} \
 	} while (0)
 #define expectToken(expected, lineType) \
 	do { \
-		getToken(nullptr, "'%c' line is too short", (lineType)); \
+		expectNext(nullptr, lineType); \
 		if (strcasecmp(token, (expected)) != 0) { \
 			fatalAt( \
 			    where, \
@@ -223,12 +230,15 @@ void sdobj_ReadFile(FileStackNode const &src, FILE *file, std::vector<Symbol> &f
 	}
 	// Expected format: "A areas S global symbols"
 
-	getToken(line.data(), "Empty 'H' line");
+	token = strtok(line.data(), delim);
+	if (!token) {
+		fatalAt(where, "Empty 'H' line");
+	}
 	uint32_t expectedNbAreas = readInt(where, token, numberBase);
 
 	expectToken("areas", 'H');
 
-	getToken(nullptr, "'H' line is too short");
+	expectNext(nullptr, 'H');
 	uint32_t expectedNbSymbols = readInt(where, token, numberBase);
 	fileSymbols.reserve(expectedNbSymbols);
 
@@ -236,7 +246,7 @@ void sdobj_ReadFile(FileStackNode const &src, FILE *file, std::vector<Symbol> &f
 
 	expectToken("symbols", 'H');
 
-	expectEol("'H' line is too long");
+	expectEol('H');
 
 	// Now, let's parse the rest of the lines as they come!
 
@@ -267,7 +277,7 @@ void sdobj_ReadFile(FileStackNode const &src, FILE *file, std::vector<Symbol> &f
 			curSection->src = where.src;
 			curSection->lineNo = where.lineNo;
 
-			getToken(line.data(), "'A' line is too short");
+			expectNext(line.data(), 'A');
 			assume(strlen(token) != 0); // This should be impossible, tokens are non-empty
 			// The following is required for fragment offsets to be reliably predicted
 			for (FileSection &entry : fileSections) {
@@ -279,7 +289,7 @@ void sdobj_ReadFile(FileStackNode const &src, FILE *file, std::vector<Symbol> &f
 
 			expectToken("size", 'A');
 
-			getToken(nullptr, "'A' line is too short");
+			expectNext(nullptr, 'A');
 
 			uint32_t tmp = readInt(where, token, numberBase);
 
@@ -294,7 +304,7 @@ void sdobj_ReadFile(FileStackNode const &src, FILE *file, std::vector<Symbol> &f
 
 			expectToken("flags", 'A');
 
-			getToken(nullptr, "'A' line is too short");
+			expectNext(nullptr, 'A');
 			tmp = readInt(where, token, numberBase);
 			if (tmp & (1 << AREA_PAGING)) {
 				fatalAt(where, "Paging is not supported");
@@ -313,12 +323,12 @@ void sdobj_ReadFile(FileStackNode const &src, FILE *file, std::vector<Symbol> &f
 
 			expectToken("addr", 'A');
 
-			getToken(nullptr, "'A' line is too short");
+			expectNext(nullptr, 'A');
 			tmp = readInt(where, token, numberBase);
 			curSection->org = tmp; // Truncation keeps the address portion only
 			curSection->bank = tmp >> 16;
 
-			expectEol("'A' line is too long");
+			expectEol('A');
 
 			// Init the rest of the members
 			curSection->offset = 0;
@@ -366,10 +376,10 @@ void sdobj_ReadFile(FileStackNode const &src, FILE *file, std::vector<Symbol> &f
 			symbol.src = where.src;
 			symbol.lineNo = where.lineNo;
 
-			getToken(line.data(), "'S' line is too short");
+			expectNext(line.data(), 'S');
 			symbol.name = token;
 
-			getToken(nullptr, "'S' line is too short");
+			expectNext(nullptr, 'S');
 
 			if (int32_t value = readInt(where, &token[3], numberBase); !fileSections.empty()) {
 				// Symbols in sections are labels; their value is an offset
@@ -438,7 +448,7 @@ void sdobj_ReadFile(FileStackNode const &src, FILE *file, std::vector<Symbol> &f
 				fileSections.back().section->symbols.push_back(&symbol);
 			}
 
-			expectEol("'S' line is too long");
+			expectEol('S');
 			break;
 		}
 
@@ -467,13 +477,13 @@ void sdobj_ReadFile(FileStackNode const &src, FILE *file, std::vector<Symbol> &f
 			}
 
 			// First two bytes are ignored
-			getToken(line.data(), "'R' line is too short");
-			getToken(nullptr, "'R' line is too short");
+			expectNext(line.data(), 'R');
+			expectNext(nullptr, 'R');
 			uint16_t areaIdx;
 
-			getToken(nullptr, "'R' line is too short");
+			expectNext(nullptr, 'R');
 			areaIdx = readByte(where, token, numberBase);
-			getToken(nullptr, "'R' line is too short");
+			expectNext(nullptr, 'R');
 			areaIdx |= static_cast<uint16_t>(readByte(where, token, numberBase)) << 8;
 			if (areaIdx >= fileSections.size()) {
 				fatalAt(
@@ -537,12 +547,12 @@ void sdobj_ReadFile(FileStackNode const &src, FILE *file, std::vector<Symbol> &f
 				uint16_t flags = readByte(where, token, numberBase);
 
 				if ((flags & 0xF0) == 0xF0) {
-					getToken(nullptr, "Incomplete relocation");
+					expectRelocation();
 					flags = (flags & 0x0F)
 					        | static_cast<uint16_t>(readByte(where, token, numberBase)) << 4;
 				}
 
-				getToken(nullptr, "Incomplete relocation");
+				expectRelocation();
 				uint8_t offset = readByte(where, token, numberBase);
 
 				if (offset < addrSize) {
@@ -562,10 +572,10 @@ void sdobj_ReadFile(FileStackNode const &src, FILE *file, std::vector<Symbol> &f
 					);
 				}
 
-				getToken(nullptr, "Incomplete relocation");
+				expectRelocation();
 				uint16_t idx = readByte(where, token, numberBase);
 
-				getToken(nullptr, "Incomplete relocation");
+				expectRelocation();
 				idx |= static_cast<uint16_t>(readByte(where, token, numberBase));
 
 				// Loudly fail on unknown flags
@@ -819,8 +829,9 @@ void sdobj_ReadFile(FileStackNode const &src, FILE *file, std::vector<Symbol> &f
 	}
 
 #undef expectEol
+#undef expectNext
+#undef expectRelocation
 #undef expectToken
-#undef getToken
 
 	if (!data.empty()) {
 		warningAt(where, "Last 'T' line had no 'R' line (ignored)");
