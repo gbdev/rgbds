@@ -3,16 +3,18 @@
 #ifndef RGBDS_LINK_MAIN_HPP
 #define RGBDS_LINK_MAIN_HPP
 
+#include <optional>
 #include <stdint.h>
+#include <string>
 
 struct Options {
-	bool isDmgMode;              // -d
-	char const *mapFileName;     // -m
-	bool noSymInMap;             // -M
-	char const *symFileName;     // -n
-	char const *overlayFileName; // -O
-	char const *outputFileName;  // -o
-	uint8_t padValue;            // -p
+	bool isDmgMode;                             // -d
+	std::optional<std::string> mapFileName;     // -m
+	bool noSymInMap;                            // -M
+	std::optional<std::string> symFileName;     // -n
+	std::optional<std::string> overlayFileName; // -O
+	std::optional<std::string> outputFileName;  // -o
+	uint8_t padValue;                           // -p
 	bool hasPadValue = false;
 	// Setting these three to 0 disables the functionality
 	uint16_t scrambleROMX; // -S

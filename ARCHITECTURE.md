@@ -120,6 +120,9 @@ These files in the `src/` directory are shared across multiple programs: often a
 
 - **`backtrace.cpp`:**  
   Generic printing of location backtraces for RGBASM and RGBLINK. Allows configuring backtrace styles with a command-line flag (conventionally `-B/--backtrace`). Renders warnings in yellow, errors in red, and locations in cyan.
+- **`cli.cpp`:**  
+  A function for parsing command-line options, including RGBDS-specific "at-files" (a filename containing more options, prepended with an "`@`").  
+  This is the only file to use the extern/getopt.cpp variables and functions.
 - **`diagnostics.cpp`:**  
   Generic warning/error diagnostic support for all programs. Allows command-line flags (conventionally `-W`) to have `no-`, `error=`, or `no-error=` prefixes, and `=` level suffixes; allows "meta" flags to affect groups of individual flags; and counts how many total errors there have been. Every program has its own `warning.cpp` file that uses this.
 - **`linkdefs.cpp`:**  

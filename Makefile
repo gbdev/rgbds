@@ -51,6 +51,7 @@ all: rgbasm rgblink rgbfix rgbgfx
 
 common_obj := \
 	src/extern/getopt.o \
+	src/cli.o \
 	src/diagnostics.o \
 	src/style.o \
 	src/usage.o \

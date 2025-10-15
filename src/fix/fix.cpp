@@ -141,7 +141,11 @@ static void
 
 	if (options.title) {
 		overwriteBytes(
-		    rom0, 0x134, reinterpret_cast<uint8_t const *>(options.title), options.titleLen, "title"
+		    rom0,
+		    0x134,
+		    reinterpret_cast<uint8_t const *>(options.title->c_str()),
+		    options.titleLen,
+		    "title"
 		);
 	}
 
@@ -149,7 +153,7 @@ static void
 		overwriteBytes(
 		    rom0,
 		    0x13F,
-		    reinterpret_cast<uint8_t const *>(options.gameID),
+		    reinterpret_cast<uint8_t const *>(options.gameID->c_str()),
 		    options.gameIDLen,
 		    "manufacturer code"
 		);
@@ -163,7 +167,7 @@ static void
 		overwriteBytes(
 		    rom0,
 		    0x144,
-		    reinterpret_cast<uint8_t const *>(options.newLicensee),
+		    reinterpret_cast<uint8_t const *>(options.newLicensee->c_str()),
 		    options.newLicenseeLen,
 		    "new licensee code"
 		);

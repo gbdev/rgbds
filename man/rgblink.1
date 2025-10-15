@@ -235,6 +235,23 @@ You can use this to make binary files that are not a ROM.
 When making a ROM, note that not using this is not a replacement for
 .Xr rgbfix 1 Ap s Fl p
 option!
+.It @ Ns Ar at_file
+Read more options and arguments from a file, as if its contents were given on the command line.
+Arguments are separated by whitespace or newlines.
+Lines starting with a hash sign
+.Pq Ql #
+are considered comments and ignored.
+.Pp
+No shell processing is performed, such as wildcard or variable expansion.
+There is no support for escaping or quoting whitespace to be included in arguments.
+The standard
+.Ql --
+to stop option processing also disables at-file processing.
+Note that while
+.Ql --
+can be used
+.Em inside
+an at-file, it only disables option processing within that at-file, and processing continues in the parent scope.
 .El
 .Ss Scrambling algorithm
 The default section placement algorithm tries to place sections into as few banks as possible.

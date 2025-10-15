@@ -307,10 +307,10 @@ yy::parser::symbol_type yylex() {
 	// Not marking as unreachable; this will generate a warning if any codepath forgets to return.
 }
 
-bool lexer_Init(char const *linkerScriptName) {
+bool lexer_Init(std::string const &linkerScriptName) {
 	if (LexerStackEntry &newContext = lexerStack.emplace_back(std::string(linkerScriptName));
 	    !newContext.file.open(newContext.path, std::ios_base::in)) {
-		error("Failed to open linker script \"%s\"", linkerScriptName);
+		error("Failed to open linker script \"%s\"", linkerScriptName.c_str());
 		lexerStack.clear();
 		return false;
 	}

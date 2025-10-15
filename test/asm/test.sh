@@ -61,10 +61,9 @@ else
 fi
 
 for i in *.asm notexist.asm; do
-	flags=${i%.asm}.flags
 	RGBASMFLAGS="-Weverything -Bcollapse"
-	if [ -f "$flags" ]; then
-		RGBASMFLAGS="$RGBASMFLAGS $(head -n 1 "$flags")" # Allow other lines to serve as comments
+	if [ -f "${i%.asm}.flags" ]; then
+		RGBASMFLAGS="$RGBASMFLAGS @${i%.asm}.flags"
 	fi
 	for variant in '' ' piped'; do
 		(( tests++ ))
@@ -134,7 +133,6 @@ for i in *.asm notexist.asm; do
 done
 
 for i in cli/*.flags; do
-	RGBASMFLAGS="$(head -n 1 "$i")" # Allow other lines to serve as comments
 	(( tests++ ))
 	echo "${bold}${green}${i%.flags}...${rescolors}${resbold}"
 	if [ -e "${i%.flags}.out" ]; then
@@ -147,7 +145,7 @@ for i in cli/*.flags; do
 	else
 		desired_errput=/dev/null
 	fi
-	"$RGBASM" $RGBASMFLAGS >"$output" 2>"$errput"
+	"$RGBASM" "@$i" >"$output" 2>"$errput"
 
 	tryDiff "$desired_output" "$output" out
 	our_rc=$?

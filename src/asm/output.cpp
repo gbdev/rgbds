@@ -191,23 +191,22 @@ static void writeFileStackNode(FileStackNode const &node, FILE *file) {
 }
 
 void out_WriteObject() {
-	if (options.objectFileName.empty()) {
+	if (!options.objectFileName) {
 		return;
 	}
 
 	static FILE *file; // `static` so `sect_ForEach` callback can see it
-	if (options.objectFileName != "-") {
-		file = fopen(options.objectFileName.c_str(), "wb");
+	char const *objectFileName = options.objectFileName->c_str();
+	if (*options.objectFileName != "-") {
+		file = fopen(objectFileName, "wb");
 	} else {
-		options.objectFileName = "<stdout>";
+		objectFileName = "<stdout>";
 		(void)setmode(STDOUT_FILENO, O_BINARY);
 		file = stdout;
 	}
 	if (!file) {
 		// LCOV_EXCL_START
-		fatal(
-		    "Failed to open object file \"%s\": %s", options.objectFileName.c_str(), strerror(errno)
-		);
+		fatal("Failed to open object file \"%s\": %s", objectFileName, strerror(errno));
 		// LCOV_EXCL_STOP
 	}
 	Defer closeFile{[&] { fclose(file); }};
