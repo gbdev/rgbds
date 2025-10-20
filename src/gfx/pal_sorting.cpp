@@ -11,7 +11,7 @@
 #include "helpers.hpp"
 #include "verbosity.hpp"
 
-#include "gfx/main.hpp"
+#include "gfx/palette.hpp"
 #include "gfx/rgba.hpp"
 
 void sortIndexed(std::vector<Palette> &palettes, std::vector<Rgba> const &embPal) {

@@ -23,6 +23,7 @@
 #include "helpers.hpp" // assume
 #include "verbosity.hpp"
 
+#include "gfx/flip.hpp"
 #include "gfx/main.hpp"
 #include "gfx/rgba.hpp"
 #include "gfx/warning.hpp"

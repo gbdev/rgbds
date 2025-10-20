@@ -26,9 +26,11 @@
 #include "verbosity.hpp"
 
 #include "gfx/color_set.hpp"
+#include "gfx/flip.hpp"
 #include "gfx/main.hpp"
 #include "gfx/pal_packing.hpp"
 #include "gfx/pal_sorting.hpp"
+#include "gfx/palette.hpp"
 #include "gfx/png.hpp"
 #include "gfx/rgba.hpp"
 #include "gfx/warning.hpp"

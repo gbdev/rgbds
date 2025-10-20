@@ -220,6 +220,8 @@ These files have been copied ("vendored") from external authors and adapted for 
   Functions for sorting colors within palettes, which works differently for grayscale, RGB, or indexed-color palettes.
 - **`pal_spec.cpp`:**  
   Functions for parsing various formats of palette specifications (from `-c/--colors`).
+- **`palette.cpp`:**  
+  `Palette` methods for working with up to four GBC-native (RGB555) colors.
 - **`png.cpp`:**  
   `Png` methods for reading PNG image files, standardizing them to 8-bit RGBA pixels while also reading their indexed palette if there is one.
 - **`process.cpp`:**  
