@@ -92,6 +92,7 @@ set(rgbgfx_src
     "gfx/pal_packing.cpp"
     "gfx/pal_sorting.cpp"
     "gfx/pal_spec.cpp"
+    "gfx/palette.cpp"
     "gfx/png.cpp"
     "gfx/process.cpp"
     "gfx/reverse.cpp"

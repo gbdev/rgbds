@@ -5,12 +5,11 @@
 
 #include <array>
 #include <optional>
-#include <stddef.h>
 #include <stdint.h>
 #include <string>
 #include <vector>
 
-#include "helpers.hpp"
+#include "helpers.hpp" // assume
 
 #include "gfx/rgba.hpp"
 
@@ -68,36 +67,5 @@ struct Options {
 };
 
 extern Options options;
-
-struct Palette {
-	// An array of 4 GBC-native (RGB555) colors
-	std::array<uint16_t, 4> colors{UINT16_MAX, UINT16_MAX, UINT16_MAX, UINT16_MAX};
-
-	void addColor(uint16_t color);
-	uint8_t indexOf(uint16_t color) const;
-	uint16_t &operator[](size_t index) { return colors[index]; }
-	uint16_t const &operator[](size_t index) const { return colors[index]; }
-
-	decltype(colors)::iterator begin();
-	decltype(colors)::iterator end();
-	decltype(colors)::const_iterator begin() const;
-	decltype(colors)::const_iterator end() const;
-
-	uint8_t size() const;
-};
-
-// Flipping tends to happen fairly often, so take a bite out of dcache to speed it up
-static std::array<uint16_t, 256> flipTable = ([]() constexpr {
-	std::array<uint16_t, 256> table{};
-	for (uint16_t i = 0; i < table.size(); ++i) {
-		// To flip all the bits, we'll flip both nibbles, then each nibble half, etc.
-		uint16_t byte = i;
-		byte = (byte & 0b0000'1111) << 4 | (byte & 0b1111'0000) >> 4;
-		byte = (byte & 0b0011'0011) << 2 | (byte & 0b1100'1100) >> 2;
-		byte = (byte & 0b0101'0101) << 1 | (byte & 0b1010'1010) >> 1;
-		table[i] = byte;
-	}
-	return table;
-})();
 
 #endif // RGBDS_GFX_MAIN_HPP
