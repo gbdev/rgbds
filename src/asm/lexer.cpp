@@ -744,7 +744,7 @@ static int peek() {
 			lexerState->expansionScanDistance += str->length();
 		}
 
-		return peek(); // Tail recursion
+		MUSTTAIL return peek();
 	} else if (c == '{') {
 		// If character is an open brace, do symbol interpolation
 		shiftChar();
@@ -752,7 +752,7 @@ static int peek() {
 			beginExpansion(interp.second, interp.first->name);
 		}
 
-		return peek(); // Tail recursion
+		MUSTTAIL return peek();
 	} else {
 		return c;
 	}
@@ -1695,7 +1695,7 @@ static Token yylex_NORMAL() {
 		return Token(nextToken);
 	}
 
-	for (;; lexerState->atLineStart = false) {
+	for (;;) {
 		int c = bumpChar();
 
 		switch (c) {
@@ -1707,7 +1707,7 @@ static Token yylex_NORMAL() {
 
 		case ' ':
 		case '\t':
-			continue;
+			break;
 
 			// Handle unambiguous single-char tokens
 
@@ -1759,7 +1759,7 @@ static Token yylex_NORMAL() {
 			if (peek() == '*') {
 				shiftChar();
 				discardBlockComment();
-				continue;
+				break;
 			}
 			return oneOrTwo('=', T_(POP_DIVEQ), T_(OP_DIV));
 
@@ -1897,7 +1897,7 @@ static Token yylex_NORMAL() {
 			// Macro args were handled by `peek`, and character escapes do not exist
 			// outside of string literals, so this must be a line continuation.
 			discardLineContinuation();
-			continue;
+			break;
 
 			// Handle raw strings... or fall through if '#' is not followed by '"'
 
@@ -1918,7 +1918,7 @@ static Token yylex_NORMAL() {
 				c = bumpChar();
 			} else if (!startsIdentifier(c)) {
 				reportGarbageCharacters(c);
-				continue;
+				break;
 			}
 
 			Token token = readIdentifier(c, raw);
@@ -1943,7 +1943,9 @@ static Token yylex_NORMAL() {
 				if (Symbol const *sym = sym_FindExactSymbol(std::get<std::string>(token.value));
 				    sym && sym->type == SYM_EQUS) {
 					beginExpansion(sym->getEqus(), sym->name);
-					return yylex_NORMAL(); // Tail recursion
+					// We cannot do `MUSTTAIL return yylex_NORMAL();` because tail call optimization
+					// requires the return value to be "trivially destructible", and `Token` is not.
+					continue; // Restart, reading from the new buffer
 				}
 			}
 
@@ -1968,6 +1970,10 @@ static Token yylex_NORMAL() {
 
 			return token;
 		}
+
+		// If we exited the switch, i.e. read some characters without yet returning a token,
+		// we can't be at the start of the line
+		lexerState->atLineStart = false;
 	}
 }
 
