@@ -15,6 +15,7 @@
 #include "helpers.hpp"
 #include "itertools.hpp"
 #include "linkdefs.hpp"
+#include "platform.hpp" // MUSTTAIL
 #include "verbosity.hpp"
 
 #include "link/main.hpp"
@@ -203,7 +204,7 @@ static std::optional<size_t> getPlacement(Section const &section, MemoryLocation
 		return std::nullopt;
 	}
 
-	return getPlacement(section, location); // Tail recursion
+	MUSTTAIL return getPlacement(section, location);
 }
 
 static std::string getSectionDescription(Section const &section) {
