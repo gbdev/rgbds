@@ -163,32 +163,39 @@ done
 
 # These tests do their own thing
 
-i="continues-after-missing-include"
-RGBASMFLAGS="-Weverything -Bcollapse -M - -MG -MC"
-# Piping the .asm file to rgbasm would not make sense for dependency generation,
-# so just test the normal variant
-(( tests++ ))
-echo "${bold}${green}${i%.asm}...${rescolors}${resbold}"
-"$RGBASM" $RGBASMFLAGS -o "$o" "$i"/a.asm >"$output" 2>"$errput"
-fixed_output="$input"
-if which cygpath &>/dev/null; then
-	# MinGW needs the Windows path substituted but with forward slash separators;
-	# Cygwin has `cygpath` but just needs the original path substituted.
-	subst1="$(printf '%s\n' "$o" | sed 's:[][\/.^$*]:\\&:g')"
-	subst2="$(printf '%s\n' "$(cygpath -w "$o")" | sed -e 's:\\:/:g' -e 's:[][\/.^$*]:\\&:g')"
-	sed -e "s/$subst1/a.o/g" -e "s/$subst2/a.o/g" "$output" >"$fixed_output"
-else
-	subst="$(printf '%s\n' "$o" | sed 's:[][\/.^$*]:\\&:g')"
-	sed "s/$subst/a.o/g" "$output" >"$fixed_output"
-fi
-tryDiff "$i"/a.out "$fixed_output" out
-our_rc=$?
-tryDiff "$i"/a.err "$errput" err
-(( our_rc = our_rc || $? ))
-(( rc = rc || our_rc ))
-if [[ $our_rc -ne 0 ]]; then
-	(( failed++ ))
-fi
+evaluateDepTest () {
+	i="$1"
+	RGBASMFLAGS="-Weverything -Bcollapse -M - $2"
+	# Piping the .asm file to rgbasm would not make sense for dependency generation,
+	# so just test the normal variant
+	(( tests++ ))
+	echo "${bold}${green}${i%.asm}...${rescolors}${resbold}"
+	"$RGBASM" $RGBASMFLAGS -o "$o" "$i"/a.asm >"$output" 2>"$errput"
+
+	fixed_output="$input"
+	if which cygpath &>/dev/null; then
+		# MinGW needs the Windows path substituted but with forward slash separators;
+		# Cygwin has `cygpath` but just needs the original path substituted.
+		subst1="$(printf '%s\n' "$o" | sed 's:[][\/.^$*]:\\&:g')"
+		subst2="$(printf '%s\n' "$(cygpath -w "$o")" | sed -e 's:\\:/:g' -e 's:[][\/.^$*]:\\&:g')"
+		sed -e "s/$subst1/a.o/g" -e "s/$subst2/a.o/g" "$output" >"$fixed_output"
+	else
+		subst="$(printf '%s\n' "$o" | sed 's:[][\/.^$*]:\\&:g')"
+		sed "s/$subst/a.o/g" "$output" >"$fixed_output"
+	fi
+
+	tryDiff "$i"/a.out "$fixed_output" out
+	our_rc=$?
+	tryDiff "$i"/a.err "$errput" err
+	(( our_rc = our_rc || $? ))
+
+	(( rc = rc || our_rc ))
+	if [[ $our_rc -ne 0 ]]; then
+		(( failed++ ))
+	fi
+}
+evaluateDepTest "continues-after-missing-include" "-MG -MC"
+evaluateDepTest "errors-after-missing-include" "-MG"
 
 i="state-file"
 if which cygpath &>/dev/null; then
