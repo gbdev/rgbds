@@ -2,7 +2,6 @@
 
 #include "gfx/main.hpp"
 
-#include <errno.h>
 #include <inttypes.h>
 #include <ios>
 #include <optional>
@@ -11,11 +10,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <string>
 #include <string_view>
 #include <vector>
 
+#include "cli.hpp"
 #include "diagnostics.hpp"
-#include "extern/getopt.hpp"
 #include "file.hpp"
 #include "helpers.hpp"
 #include "platform.hpp"
@@ -35,22 +35,23 @@ using namespace std::literals::string_view_literals;
 
 Options options;
 
+// Flags which must be processed after the option parsing finishes
 static struct LocalOptions {
-	char const *externalPalSpec;
-	bool autoAttrmap;
-	bool autoTilemap;
-	bool autoPalettes;
-	bool autoPalmap;
-	bool groupOutputs;
-	bool reverse;
+	std::optional<std::string> externalPalSpec; // -c
+	bool autoAttrmap;                           // -A
+	bool autoTilemap;                           // -T
+	bool autoPalettes;                          // -P
+	bool autoPalmap;                            // -Q
+	bool groupOutputs;                          // -O
+	bool reverse;                               // -r
 
 	bool autoAny() const { return autoAttrmap || autoTilemap || autoPalettes || autoPalmap; }
 } localOptions;
 
 // Short options
-static char const *optstring = "-Aa:B:b:Cc:d:hi:L:l:mN:n:Oo:Pp:Qq:r:s:Tt:U:uVvW:wXx:YZ";
+static char const *optstring = "Aa:B:b:Cc:d:hi:L:l:mN:n:Oo:Pp:Qq:r:s:Tt:U:uVvW:wXx:YZ";
 
-// Variables for the long-only options
+// Long-only option variable
 static int longOpt; // `--color`
 
 // Equivalent long options
@@ -137,418 +138,339 @@ static void skipBlankSpace(char const *&arg) {
 	arg += strspn(arg, " \t");
 }
 
-static void registerInput(char const *arg) {
-	if (!options.input.empty()) {
-		usage.printAndExit(
-		    "Input image specified more than once! (first \"%s\", then \"%s\")",
-		    options.input.c_str(),
-		    arg
-		);
-	} else if (arg[0] == '\0') { // Empty input path
-		usage.printAndExit("Input image path cannot be empty");
-	} else {
-		options.input = arg;
-	}
-}
+static void parseArg(int ch, char *arg) {
+	char const *argPtr = arg; // Make a copy for scanning
 
-// Turn an at-file's contents into an argv that `getopt` can handle, appending them to `argPool`.
-static std::vector<size_t> readAtFile(std::string const &path, std::vector<char> &argPool) {
-	File file;
-	if (!file.open(path, std::ios_base::in)) {
-		fatal("Error reading at-file \"%s\": %s", file.c_str(path), strerror(errno));
-	}
+	switch (ch) {
+	case 'A':
+		localOptions.autoAttrmap = true;
+		break;
 
-	for (std::vector<size_t> argvOfs;;) {
-		int c = file->sbumpc();
-
-		// First, discard any leading blank space
-		while (isBlankSpace(c)) {
-			c = file->sbumpc();
+	case 'a':
+		localOptions.autoAttrmap = false;
+		if (!options.attrmap.empty()) {
+			warnx("Overriding attrmap file \"%s\"", options.attrmap.c_str());
 		}
+		options.attrmap = arg;
+		break;
 
-		// If it's a comment, discard everything until EOL
-		if (c == '#') {
-			c = file->sbumpc();
-			while (c != EOF && !isNewline(c)) {
-				c = file->sbumpc();
-			}
+	case 'B':
+		parseBackgroundPalSpec(arg);
+		break;
+
+	case 'b': {
+		uint16_t number = readNumber(argPtr, "Bank 0 base tile ID", 0);
+		if (number >= 256) {
+			error("Bank 0 base tile ID must be below 256");
+		} else {
+			options.baseTileIDs[0] = number;
 		}
-
-		if (c == EOF) {
-			return argvOfs;
-		} else if (isNewline(c)) {
-			continue; // Start processing the next line
-		}
-
-		// Alright, now we can parse the line
-		do {
-			argvOfs.push_back(argPool.size());
-
-			// Read one argument (until the next whitespace char).
-			// We know there is one because we already have its first character in `c`.
-			for (; c != EOF && !isWhitespace(c); c = file->sbumpc()) {
-				argPool.push_back(c);
-			}
-			argPool.push_back('\0');
-
-			// Discard blank space until the next argument (candidate)
-			while (isBlankSpace(c)) {
-				c = file->sbumpc();
-			}
-		} while (c != EOF && !isNewline(c)); // End if we reached EOL
-	}
-}
-
-// Parses an arg vector, modifying `options` and `localOptions` as options are read.
-// The `localOptions` struct is for flags which must be processed after the option parsing finishes.
-// Returns `nullptr` if the vector was fully parsed, or a pointer (which is part of the arg vector)
-// to an "at-file" path if one is encountered.
-static char *parseArgv(int argc, char *argv[]) {
-	for (int ch; (ch = musl_getopt_long_only(argc, argv, optstring, longopts, nullptr)) != -1;) {
-		char const *arg = musl_optarg; // Make a copy for scanning
-
-		switch (ch) {
-		case 'A':
-			localOptions.autoAttrmap = true;
-			break;
-
-		case 'a':
-			localOptions.autoAttrmap = false;
-			if (!options.attrmap.empty()) {
-				warnx("Overriding attrmap file \"%s\"", options.attrmap.c_str());
-			}
-			options.attrmap = musl_optarg;
-			break;
-
-		case 'B':
-			parseBackgroundPalSpec(musl_optarg);
-			break;
-
-		case 'b': {
-			uint16_t number = readNumber(arg, "Bank 0 base tile ID", 0);
-			if (number >= 256) {
-				error("Bank 0 base tile ID must be below 256");
-			} else {
-				options.baseTileIDs[0] = number;
-			}
-			if (*arg == '\0') {
-				options.baseTileIDs[1] = 0;
-				break;
-			}
-			skipBlankSpace(arg);
-			if (*arg != ',') {
-				error(
-				    "Base tile IDs must be one or two comma-separated numbers, not \"%s\"",
-				    musl_optarg
-				);
-				break;
-			}
-			++arg; // Skip comma
-			skipBlankSpace(arg);
-			number = readNumber(arg, "Bank 1 base tile ID", 0);
-			if (number >= 256) {
-				error("Bank 1 base tile ID must be below 256");
-			} else {
-				options.baseTileIDs[1] = number;
-			}
-			if (*arg != '\0') {
-				error(
-				    "Base tile IDs must be one or two comma-separated numbers, not \"%s\"",
-				    musl_optarg
-				);
-				break;
-			}
+		if (*argPtr == '\0') {
+			options.baseTileIDs[1] = 0;
 			break;
 		}
-
-		case 'C':
-			options.useColorCurve = true;
-			break;
-
-		case 'c':
-			localOptions.externalPalSpec = nullptr; // Allow overriding a previous pal spec
-			if (musl_optarg[0] == '#') {
-				options.palSpecType = Options::EXPLICIT;
-				parseInlinePalSpec(musl_optarg);
-			} else if (strcasecmp(musl_optarg, "embedded") == 0) {
-				// Use PLTE, error out if missing
-				options.palSpecType = Options::EMBEDDED;
-			} else if (strcasecmp(musl_optarg, "auto") == 0) {
-				options.palSpecType = Options::NO_SPEC;
-			} else if (strcasecmp(musl_optarg, "dmg") == 0) {
-				options.palSpecType = Options::DMG;
-				parseDmgPalSpec(0xE4); // Same darkest-first order as `sortGrayscale`
-			} else if (strncasecmp(musl_optarg, "dmg=", literal_strlen("dmg=")) == 0) {
-				options.palSpecType = Options::DMG;
-				parseDmgPalSpec(&musl_optarg[literal_strlen("dmg=")]);
-			} else {
-				options.palSpecType = Options::EXPLICIT;
-				localOptions.externalPalSpec = musl_optarg;
-			}
-			break;
-
-		case 'd':
-			options.bitDepth = readNumber(arg, "Bit depth", 2);
-			if (*arg != '\0') {
-				error("Bit depth ('-b') argument must be a valid number, not \"%s\"", musl_optarg);
-			} else if (options.bitDepth != 1 && options.bitDepth != 2) {
-				error("Bit depth must be 1 or 2, not %" PRIu8, options.bitDepth);
-				options.bitDepth = 2;
-			}
-			break;
-
-			// LCOV_EXCL_START
-		case 'h':
-			usage.printAndExit(0);
-			// LCOV_EXCL_STOP
-
-		case 'i':
-			if (!options.inputTileset.empty()) {
-				warnx("Overriding input tileset file \"%s\"", options.inputTileset.c_str());
-			}
-			options.inputTileset = musl_optarg;
-			break;
-
-		case 'L':
-			options.inputSlice.left = readNumber(arg, "Input slice left coordinate");
-			if (options.inputSlice.left > INT16_MAX) {
-				error("Input slice left coordinate is out of range!");
-				break;
-			}
-			skipBlankSpace(arg);
-			if (*arg != ',') {
-				error("Missing comma after left coordinate in \"%s\"", musl_optarg);
-				break;
-			}
-			++arg;
-			skipBlankSpace(arg);
-			options.inputSlice.top = readNumber(arg, "Input slice upper coordinate");
-			skipBlankSpace(arg);
-			if (*arg != ':') {
-				error("Missing colon after upper coordinate in \"%s\"", musl_optarg);
-				break;
-			}
-			++arg;
-			skipBlankSpace(arg);
-			options.inputSlice.width = readNumber(arg, "Input slice width");
-			skipBlankSpace(arg);
-			if (options.inputSlice.width == 0) {
-				error("Input slice width may not be 0!");
-			}
-			if (*arg != ',') {
-				error("Missing comma after width in \"%s\"", musl_optarg);
-				break;
-			}
-			++arg;
-			skipBlankSpace(arg);
-			options.inputSlice.height = readNumber(arg, "Input slice height");
-			if (options.inputSlice.height == 0) {
-				error("Input slice height may not be 0!");
-			}
-			if (*arg != '\0') {
-				error("Unexpected extra characters after slice spec in \"%s\"", musl_optarg);
-			}
-			break;
-
-		case 'l': {
-			uint16_t number = readNumber(arg, "Base palette ID", 0);
-			if (*arg != '\0') {
-				error("Base palette ID must be a valid number, not \"%s\"", musl_optarg);
-			} else if (number >= 256) {
-				error("Base palette ID must be below 256");
-			} else {
-				options.basePalID = number;
-			}
+		skipBlankSpace(argPtr);
+		if (*argPtr != ',') {
+			error("Base tile IDs must be one or two comma-separated numbers, not \"%s\"", arg);
 			break;
 		}
-
-		case 'm':
-			options.allowMirroringX = true; // Imply `-X`
-			options.allowMirroringY = true; // Imply `-Y`
-			[[fallthrough]];                // Imply `-u`
-
-		case 'u':
-			options.allowDedup = true;
-			break;
-
-		case 'N':
-			options.maxNbTiles[0] = readNumber(arg, "Number of tiles in bank 0", 256);
-			if (options.maxNbTiles[0] > 256) {
-				error("Bank 0 cannot contain more than 256 tiles");
-			}
-			if (*arg == '\0') {
-				options.maxNbTiles[1] = 0;
-				break;
-			}
-			skipBlankSpace(arg);
-			if (*arg != ',') {
-				error(
-				    "Bank capacity must be one or two comma-separated numbers, not \"%s\"",
-				    musl_optarg
-				);
-				break;
-			}
-			++arg; // Skip comma
-			skipBlankSpace(arg);
-			options.maxNbTiles[1] = readNumber(arg, "Number of tiles in bank 1", 256);
-			if (options.maxNbTiles[1] > 256) {
-				error("Bank 1 cannot contain more than 256 tiles");
-			}
-			if (*arg != '\0') {
-				error(
-				    "Bank capacity must be one or two comma-separated numbers, not \"%s\"",
-				    musl_optarg
-				);
-				break;
-			}
-			break;
-
-		case 'n': {
-			uint16_t number = readNumber(arg, "Number of palettes", 256);
-			if (*arg != '\0') {
-				error("Number of palettes ('-n') must be a valid number, not \"%s\"", musl_optarg);
-			}
-			if (number > 256) {
-				error("Number of palettes ('-n') must not exceed 256!");
-			} else if (number == 0) {
-				error("Number of palettes ('-n') may not be 0!");
-			} else {
-				options.nbPalettes = number;
-			}
+		++argPtr; // Skip comma
+		skipBlankSpace(argPtr);
+		number = readNumber(argPtr, "Bank 1 base tile ID", 0);
+		if (number >= 256) {
+			error("Bank 1 base tile ID must be below 256");
+		} else {
+			options.baseTileIDs[1] = number;
+		}
+		if (*argPtr != '\0') {
+			error("Base tile IDs must be one or two comma-separated numbers, not \"%s\"", arg);
 			break;
 		}
-
-		case 'O':
-			localOptions.groupOutputs = true;
-			break;
-
-		case 'o':
-			if (!options.output.empty()) {
-				warnx("Overriding tile data file %s", options.output.c_str());
-			}
-			options.output = musl_optarg;
-			break;
-
-		case 'P':
-			localOptions.autoPalettes = true;
-			break;
-
-		case 'p':
-			localOptions.autoPalettes = false;
-			if (!options.palettes.empty()) {
-				warnx("Overriding palettes file %s", options.palettes.c_str());
-			}
-			options.palettes = musl_optarg;
-			break;
-
-		case 'Q':
-			localOptions.autoPalmap = true;
-			break;
-
-		case 'q':
-			localOptions.autoPalmap = false;
-			if (!options.palmap.empty()) {
-				warnx("Overriding palette map file %s", options.palmap.c_str());
-			}
-			options.palmap = musl_optarg;
-			break;
-
-		case 'r':
-			localOptions.reverse = true;
-			options.reversedWidth = readNumber(arg, "Reversed image stride");
-			if (*arg != '\0') {
-				error(
-				    "Reversed image stride ('-r') must be a valid number, not \"%s\"", musl_optarg
-				);
-			}
-			break;
-
-		case 's':
-			options.nbColorsPerPal = readNumber(arg, "Number of colors per palette", 4);
-			if (*arg != '\0') {
-				error("Palette size ('-s') must be a valid number, not \"%s\"", musl_optarg);
-			}
-			if (options.nbColorsPerPal > 4) {
-				error("Palette size ('-s') must not exceed 4!");
-			} else if (options.nbColorsPerPal == 0) {
-				error("Palette size ('-s') may not be 0!");
-			}
-			break;
-
-		case 'T':
-			localOptions.autoTilemap = true;
-			break;
-
-		case 't':
-			localOptions.autoTilemap = false;
-			if (!options.tilemap.empty()) {
-				warnx("Overriding tilemap file %s", options.tilemap.c_str());
-			}
-			options.tilemap = musl_optarg;
-			break;
-
-			// LCOV_EXCL_START
-		case 'V':
-			printf("rgbgfx %s\n", get_package_version_string());
-			exit(0);
-
-		case 'v':
-			incrementVerbosity();
-			break;
-			// LCOV_EXCL_STOP
-
-		case 'W':
-			warnings.processWarningFlag(musl_optarg);
-			break;
-
-		case 'w':
-			warnings.state.warningsEnabled = false;
-			break;
-
-		case 'x':
-			options.trim = readNumber(arg, "Number of tiles to trim", 0);
-			if (*arg != '\0') {
-				error("Tile trim ('-x') argument must be a valid number, not \"%s\"", musl_optarg);
-			}
-			break;
-
-		case 'X':
-			options.allowMirroringX = true;
-			options.allowDedup = true; // Imply `-u`
-			break;
-
-		case 'Y':
-			options.allowMirroringY = true;
-			options.allowDedup = true; // Imply `-u`
-			break;
-
-		case 'Z':
-			options.columnMajor = true;
-			break;
-
-		case 0: // Long-only options
-			if (longOpt == 'c' && !style_Parse(musl_optarg)) {
-				fatal("Invalid argument for option '--color'");
-			}
-			break;
-
-		case 1: // Positional argument, requested by leading `-` in opt string
-			if (musl_optarg[0] == '@') {
-				// Instruct the caller to process that at-file
-				return &musl_optarg[1];
-			} else {
-				registerInput(musl_optarg);
-			}
-			break;
-
-			// LCOV_EXCL_START
-		default:
-			usage.printAndExit(1);
-			// LCOV_EXCL_STOP
-		}
+		break;
 	}
 
-	return nullptr; // Done processing this argv
+	case 'C':
+		options.useColorCurve = true;
+		break;
+
+	case 'c':
+		localOptions.externalPalSpec = std::nullopt; // Allow overriding a previous pal spec
+		if (arg[0] == '#') {
+			options.palSpecType = Options::EXPLICIT;
+			parseInlinePalSpec(arg);
+		} else if (strcasecmp(arg, "embedded") == 0) {
+			// Use PLTE, error out if missing
+			options.palSpecType = Options::EMBEDDED;
+		} else if (strcasecmp(arg, "auto") == 0) {
+			options.palSpecType = Options::NO_SPEC;
+		} else if (strcasecmp(arg, "dmg") == 0) {
+			options.palSpecType = Options::DMG;
+			parseDmgPalSpec(0xE4); // Same darkest-first order as `sortGrayscale`
+		} else if (strncasecmp(arg, "dmg=", literal_strlen("dmg=")) == 0) {
+			options.palSpecType = Options::DMG;
+			parseDmgPalSpec(&arg[literal_strlen("dmg=")]);
+		} else {
+			options.palSpecType = Options::EXPLICIT;
+			localOptions.externalPalSpec = arg;
+		}
+		break;
+
+	case 'd':
+		options.bitDepth = readNumber(argPtr, "Bit depth", 2);
+		if (*argPtr != '\0') {
+			error("Bit depth ('-b') argument must be a valid number, not \"%s\"", arg);
+		} else if (options.bitDepth != 1 && options.bitDepth != 2) {
+			error("Bit depth must be 1 or 2, not %" PRIu8, options.bitDepth);
+			options.bitDepth = 2;
+		}
+		break;
+
+		// LCOV_EXCL_START
+	case 'h':
+		usage.printAndExit(0);
+		// LCOV_EXCL_STOP
+
+	case 'i':
+		if (!options.inputTileset.empty()) {
+			warnx("Overriding input tileset file \"%s\"", options.inputTileset.c_str());
+		}
+		options.inputTileset = arg;
+		break;
+
+	case 'L':
+		options.inputSlice.left = readNumber(argPtr, "Input slice left coordinate");
+		if (options.inputSlice.left > INT16_MAX) {
+			error("Input slice left coordinate is out of range!");
+			break;
+		}
+		skipBlankSpace(argPtr);
+		if (*argPtr != ',') {
+			error("Missing comma after left coordinate in \"%s\"", arg);
+			break;
+		}
+		++argPtr;
+		skipBlankSpace(argPtr);
+		options.inputSlice.top = readNumber(argPtr, "Input slice upper coordinate");
+		skipBlankSpace(argPtr);
+		if (*argPtr != ':') {
+			error("Missing colon after upper coordinate in \"%s\"", arg);
+			break;
+		}
+		++argPtr;
+		skipBlankSpace(argPtr);
+		options.inputSlice.width = readNumber(argPtr, "Input slice width");
+		skipBlankSpace(argPtr);
+		if (options.inputSlice.width == 0) {
+			error("Input slice width may not be 0!");
+		}
+		if (*argPtr != ',') {
+			error("Missing comma after width in \"%s\"", arg);
+			break;
+		}
+		++argPtr;
+		skipBlankSpace(argPtr);
+		options.inputSlice.height = readNumber(argPtr, "Input slice height");
+		if (options.inputSlice.height == 0) {
+			error("Input slice height may not be 0!");
+		}
+		if (*argPtr != '\0') {
+			error("Unexpected extra characters after slice spec in \"%s\"", arg);
+		}
+		break;
+
+	case 'l': {
+		uint16_t number = readNumber(argPtr, "Base palette ID", 0);
+		if (*argPtr != '\0') {
+			error("Base palette ID must be a valid number, not \"%s\"", arg);
+		} else if (number >= 256) {
+			error("Base palette ID must be below 256");
+		} else {
+			options.basePalID = number;
+		}
+		break;
+	}
+
+	case 'm':
+		options.allowMirroringX = true; // Imply `-X`
+		options.allowMirroringY = true; // Imply `-Y`
+		[[fallthrough]];                // Imply `-u`
+
+	case 'u':
+		options.allowDedup = true;
+		break;
+
+	case 'N':
+		options.maxNbTiles[0] = readNumber(argPtr, "Number of tiles in bank 0", 256);
+		if (options.maxNbTiles[0] > 256) {
+			error("Bank 0 cannot contain more than 256 tiles");
+		}
+		if (*argPtr == '\0') {
+			options.maxNbTiles[1] = 0;
+			break;
+		}
+		skipBlankSpace(argPtr);
+		if (*argPtr != ',') {
+			error("Bank capacity must be one or two comma-separated numbers, not \"%s\"", arg);
+			break;
+		}
+		++argPtr; // Skip comma
+		skipBlankSpace(argPtr);
+		options.maxNbTiles[1] = readNumber(argPtr, "Number of tiles in bank 1", 256);
+		if (options.maxNbTiles[1] > 256) {
+			error("Bank 1 cannot contain more than 256 tiles");
+		}
+		if (*argPtr != '\0') {
+			error("Bank capacity must be one or two comma-separated numbers, not \"%s\"", arg);
+			break;
+		}
+		break;
+
+	case 'n': {
+		uint16_t number = readNumber(argPtr, "Number of palettes", 256);
+		if (*argPtr != '\0') {
+			error("Number of palettes ('-n') must be a valid number, not \"%s\"", arg);
+		}
+		if (number > 256) {
+			error("Number of palettes ('-n') must not exceed 256!");
+		} else if (number == 0) {
+			error("Number of palettes ('-n') may not be 0!");
+		} else {
+			options.nbPalettes = number;
+		}
+		break;
+	}
+
+	case 'O':
+		localOptions.groupOutputs = true;
+		break;
+
+	case 'o':
+		if (!options.output.empty()) {
+			warnx("Overriding tile data file %s", options.output.c_str());
+		}
+		options.output = arg;
+		break;
+
+	case 'P':
+		localOptions.autoPalettes = true;
+		break;
+
+	case 'p':
+		localOptions.autoPalettes = false;
+		if (!options.palettes.empty()) {
+			warnx("Overriding palettes file %s", options.palettes.c_str());
+		}
+		options.palettes = arg;
+		break;
+
+	case 'Q':
+		localOptions.autoPalmap = true;
+		break;
+
+	case 'q':
+		localOptions.autoPalmap = false;
+		if (!options.palmap.empty()) {
+			warnx("Overriding palette map file %s", options.palmap.c_str());
+		}
+		options.palmap = arg;
+		break;
+
+	case 'r':
+		localOptions.reverse = true;
+		options.reversedWidth = readNumber(argPtr, "Reversed image stride");
+		if (*argPtr != '\0') {
+			error("Reversed image stride ('-r') must be a valid number, not \"%s\"", arg);
+		}
+		break;
+
+	case 's':
+		options.nbColorsPerPal = readNumber(argPtr, "Number of colors per palette", 4);
+		if (*argPtr != '\0') {
+			error("Palette size ('-s') must be a valid number, not \"%s\"", arg);
+		}
+		if (options.nbColorsPerPal > 4) {
+			error("Palette size ('-s') must not exceed 4!");
+		} else if (options.nbColorsPerPal == 0) {
+			error("Palette size ('-s') may not be 0!");
+		}
+		break;
+
+	case 'T':
+		localOptions.autoTilemap = true;
+		break;
+
+	case 't':
+		localOptions.autoTilemap = false;
+		if (!options.tilemap.empty()) {
+			warnx("Overriding tilemap file %s", options.tilemap.c_str());
+		}
+		options.tilemap = arg;
+		break;
+
+		// LCOV_EXCL_START
+	case 'V':
+		printf("rgbgfx %s\n", get_package_version_string());
+		exit(0);
+
+	case 'v':
+		incrementVerbosity();
+		break;
+		// LCOV_EXCL_STOP
+
+	case 'W':
+		warnings.processWarningFlag(arg);
+		break;
+
+	case 'w':
+		warnings.state.warningsEnabled = false;
+		break;
+
+	case 'x':
+		options.trim = readNumber(argPtr, "Number of tiles to trim", 0);
+		if (*argPtr != '\0') {
+			error("Tile trim ('-x') argument must be a valid number, not \"%s\"", arg);
+		}
+		break;
+
+	case 'X':
+		options.allowMirroringX = true;
+		options.allowDedup = true; // Imply `-u`
+		break;
+
+	case 'Y':
+		options.allowMirroringY = true;
+		options.allowDedup = true; // Imply `-u`
+		break;
+
+	case 'Z':
+		options.columnMajor = true;
+		break;
+
+	case 0: // Long-only options
+		if (longOpt == 'c' && !style_Parse(arg)) {
+			fatal("Invalid argument for option '--color'");
+		}
+		break;
+
+	case 1: // Positional argument
+		if (!options.input.empty()) {
+			usage.printAndExit(
+			    "Input image specified more than once! (first \"%s\", then \"%s\")",
+			    options.input.c_str(),
+			    arg
+			);
+		} else if (arg[0] == '\0') { // Empty input path
+			usage.printAndExit("Input image path cannot be empty");
+		} else {
+			options.input = arg;
+		}
+		break;
+
+		// LCOV_EXCL_START
+	default:
+		usage.printAndExit(1);
+		// LCOV_EXCL_STOP
+	}
 }
 
 // LCOV_EXCL_START
@@ -717,70 +639,7 @@ static void replaceExtension(std::string &path, char const *extension) {
 }
 
 int main(int argc, char *argv[]) {
-	struct AtFileStackEntry {
-		int parentInd;            // Saved offset into parent argv
-		std::vector<char *> argv; // This context's arg pointer vec
-
-		AtFileStackEntry(int parentInd_, std::vector<char *> argv_)
-		    : parentInd(parentInd_), argv(argv_) {}
-	};
-	std::vector<AtFileStackEntry> atFileStack;
-
-	// Parse CLI options
-	int curArgc = argc;
-	char **curArgv = argv;
-	std::vector<std::vector<char>> argPools;
-	for (;;) {
-		char *atFileName = parseArgv(curArgc, curArgv);
-		if (atFileName) {
-			// We need to allocate a new arg pool for each at-file, so as not to invalidate pointers
-			// previous at-files may have generated to their own arg pools.
-			// But for the same reason, the arg pool must also outlive the at-file's stack entry!
-			std::vector<char> &argPool = argPools.emplace_back();
-
-			// Copy `argv[0]` for error reporting, and because option parsing skips it
-			AtFileStackEntry &stackEntry =
-			    atFileStack.emplace_back(musl_optind, std::vector{atFileName});
-			// It would be nice to compute the char pointers on the fly, but reallocs don't allow
-			// that; so we must compute the offsets after the pool is fixed
-			std::vector<size_t> offsets = readAtFile(&musl_optarg[1], argPool);
-			stackEntry.argv.reserve(offsets.size() + 2); // Avoid a bunch of reallocs
-			for (size_t ofs : offsets) {
-				stackEntry.argv.push_back(&argPool.data()[ofs]);
-			}
-			stackEntry.argv.push_back(nullptr); // Don't forget the arg vector terminator!
-
-			curArgc = stackEntry.argv.size() - 1;
-			curArgv = stackEntry.argv.data();
-			musl_optind = 1; // Don't use 0 because we're not scanning a different argv per se
-			continue;        // Begin scanning that arg vector
-		}
-
-		if (musl_optind != curArgc) {
-			// This happens if `--` is passed, process the remaining arg(s) as positional
-			assume(musl_optind < curArgc);
-			for (int i = musl_optind; i < curArgc; ++i) {
-				registerInput(argv[i]);
-			}
-		}
-
-		// Pop off the top stack entry, or end parsing if none
-		if (atFileStack.empty()) {
-			break;
-		}
-		// OK to restore `optind` directly, because `optpos` must be 0 right now.
-		// (Providing 0 would be a "proper" reset, but we want to resume parsing)
-		musl_optind = atFileStack.back().parentInd;
-		atFileStack.pop_back();
-		if (atFileStack.empty()) {
-			curArgc = argc;
-			curArgv = argv;
-		} else {
-			std::vector<char *> &vec = atFileStack.back().argv;
-			curArgc = vec.size();
-			curArgv = vec.data();
-		}
-	}
+	cli_ParseArgs(argc, argv, optstring, longopts, parseArg, fatal);
 
 	if (options.nbColorsPerPal == 0) {
 		options.nbColorsPerPal = 1u << options.bitDepth;
@@ -823,7 +682,7 @@ int main(int argc, char *argv[]) {
 
 	// Execute deferred external pal spec parsing, now that all other params are known
 	if (localOptions.externalPalSpec) {
-		parseExternalPalSpec(localOptions.externalPalSpec);
+		parseExternalPalSpec(localOptions.externalPalSpec->c_str());
 	}
 
 	verboseOutputConfig(); // LCOV_EXCL_LINE

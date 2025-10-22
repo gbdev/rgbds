@@ -487,69 +487,53 @@ Implies
 .It Fl Z , Fl \-columns
 Read squares from the PNG in column-major order (column by column), instead of the default row-major order (line by line).
 This primarily affects tile map and attribute map output, although it may also change generated tile data and palettes.
+.It @ Ns Ar at_file
+Read more options and arguments from a file, as if its contents were given on the command line.
+Arguments are separated by whitespace or newlines.
+Lines starting with a hash sign
+.Pq Ql #
+are considered comments and ignored.
+.Pp
+No shell processing is performed, such as wildcard or variable expansion.
+There is no support for escaping or quoting whitespace to be included in arguments.
+The standard
+.Ql --
+to stop option processing also disables at-file processing.
+Note that while
+.Ql --
+can be used
+.Em inside
+an at-file, it only disables option processing within that at-file, and processing continues in the parent scope.
+.Pp
+See
+.Sx At-files
+below for an explanation of how this can be useful.
 .El
 .Ss At-files
 In a given project, many images are to be converted with different flags.
-The traditional way of solving this problem has been to specify the different flags for each image in the Makefile / build script; this can be inconvenient, as it centralizes all those flags away from the images they concern.
+The traditional way of solving this problem has been to specify the different flags for each image in the Makefile or build script; this can be inconvenient, as it centralizes all those flags away from the images they concern.
 .Pp
-To avoid these drawbacks,
-.Nm
-supports
+To avoid these drawbacks, you can use
 .Dq at-files :
 any command-line argument that begins with an at sign
 .Pq Ql @
-is interpreted as one.
-The rest of the argument (without the @, that is) is interpreted as the path to a file, whose contents are interpreted as if given on the command line.
+is interpreted as one, as documented above.
 At-files can be stored right next to the corresponding image, for example:
 .Pp
 .Dl $ rgbgfx -o image.2bpp -t image.tilemap @image.flags image.png
 .Pp
-This will read additional flags from file
+This will read additional flags from the file
 .Ql image.flags ,
-which could contains for example
+which could contain, for example,
 .Ql -b 128
 to specify a base offset for the image's tiles.
 The above command could be generated from the following
 .Xr make 1
-rule, for example:
+rule:
 .Bd -literal -offset indent
 %.2bpp %.tilemap: %.flags %.png
         rgbgfx -o $*.2bpp -t $*.tilemap @$*.flags $*.png
 .Ed
-.Pp
-Since the contents of at-files are interpreted by
-.Nm ,
-.Sy no shell processing is performed ;
-for example, shell variables are not expanded
-.Ql ( $PWD ,
-.Ql %WINDIR% ,
-etc.).
-In at-files, lines that are empty or contain only whitespace are ignored; lines that begin with a hash sign
-.Pq Ql # ,
-optionally preceded by whitespace, are considered comments and also ignored.
-Each line can contain any number of arguments, which are separated by whitespace.
-.Pq \&No quoting feature to prevent this is provided.
-.Pp
-Note that a leading
-.Ql @
-has no special meaning on option arguments, and that the standard
-.Ql --
-to stop option processing also disables at-file processing.
-For example, the following command line reads command-line options from
-.Ql tilesets/town.flags
-then
-.Ql tilesets.flags ,
-but processes
-.Ql @tilesets/town.png
-as the input image and outputs tile data to
-.Ql @tilesets/town.2bpp :
-.Pp
-.Dl $ rgbgfx -o @tilesets/town.2bpp @tilesets/town.flags @tilesets.flags -- @tilesets/town.png
-.Pp
-At-files can also specify the input image directly, and call for more at-files, both using the regular syntax.
-Note that while
-.Ql --
-can be used in an at-file (with identical semantics), it is only effective inside of it\(emnormal option processing continues in the parent scope.
 .Sh PALETTE SPECIFICATION FORMATS
 The following formats are supported:
 .Bl -tag -width Ds

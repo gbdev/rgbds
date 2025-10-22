@@ -10,6 +10,6 @@ void lexer_TraceCurrent();
 void lexer_IncludeFile(std::string &&path);
 void lexer_IncLineNo();
 
-bool lexer_Init(char const *linkerScriptName);
+bool lexer_Init(std::string const &linkerScriptName);
 
 #endif // RGBDS_LINK_LEXER_HPP

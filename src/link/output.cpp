@@ -208,15 +208,16 @@ static void
 
 static void writeROM() {
 	if (options.outputFileName) {
-		if (strcmp(options.outputFileName, "-")) {
-			outputFile = fopen(options.outputFileName, "wb");
+		char const *outputFileName = options.outputFileName->c_str();
+		if (*options.outputFileName != "-") {
+			outputFile = fopen(outputFileName, "wb");
 		} else {
-			options.outputFileName = "<stdout>";
+			outputFileName = "<stdout>";
 			(void)setmode(STDOUT_FILENO, O_BINARY);
 			outputFile = stdout;
 		}
 		if (!outputFile) {
-			fatal("Failed to open output file \"%s\": %s", options.outputFileName, strerror(errno));
+			fatal("Failed to open output file \"%s\": %s", outputFileName, strerror(errno));
 		}
 	}
 	Defer closeOutputFile{[&] {
@@ -226,17 +227,16 @@ static void writeROM() {
 	}};
 
 	if (options.overlayFileName) {
-		if (strcmp(options.overlayFileName, "-")) {
-			overlayFile = fopen(options.overlayFileName, "rb");
+		char const *overlayFileName = options.overlayFileName->c_str();
+		if (*options.overlayFileName != "-") {
+			overlayFile = fopen(overlayFileName, "rb");
 		} else {
-			options.overlayFileName = "<stdin>";
+			overlayFileName = "<stdin>";
 			(void)setmode(STDIN_FILENO, O_BINARY);
 			overlayFile = stdin;
 		}
 		if (!overlayFile) {
-			fatal(
-			    "Failed to open overlay file \"%s\": %s", options.overlayFileName, strerror(errno)
-			);
+			fatal("Failed to open overlay file \"%s\": %s", overlayFileName, strerror(errno));
 		}
 	}
 	Defer closeOverlayFile{[&] {
@@ -548,15 +548,16 @@ static void writeSym() {
 		return;
 	}
 
-	if (strcmp(options.symFileName, "-")) {
-		symFile = fopen(options.symFileName, "w");
+	char const *symFileName = options.symFileName->c_str();
+	if (*options.symFileName != "-") {
+		symFile = fopen(symFileName, "w");
 	} else {
-		options.symFileName = "<stdout>";
+		symFileName = "<stdout>";
 		(void)setmode(STDOUT_FILENO, O_TEXT); // May have been set to O_BINARY previously
 		symFile = stdout;
 	}
 	if (!symFile) {
-		fatal("Failed to open sym file \"%s\": %s", options.symFileName, strerror(errno));
+		fatal("Failed to open sym file \"%s\": %s", symFileName, strerror(errno));
 	}
 	Defer closeSymFile{[&] { fclose(symFile); }};
 
@@ -598,15 +599,16 @@ static void writeMap() {
 		return;
 	}
 
-	if (strcmp(options.mapFileName, "-")) {
-		mapFile = fopen(options.mapFileName, "w");
+	char const *mapFileName = options.mapFileName->c_str();
+	if (*options.mapFileName != "-") {
+		mapFile = fopen(mapFileName, "w");
 	} else {
-		options.mapFileName = "<stdout>";
+		mapFileName = "<stdout>";
 		(void)setmode(STDOUT_FILENO, O_TEXT); // May have been set to O_BINARY previously
 		mapFile = stdout;
 	}
 	if (!mapFile) {
-		fatal("Failed to open map file \"%s\": %s", options.mapFileName, strerror(errno));
+		fatal("Failed to open map file \"%s\": %s", mapFileName, strerror(errno));
 	}
 	Defer closeMapFile{[&] { fclose(mapFile); }};
 

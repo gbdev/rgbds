@@ -351,6 +351,23 @@ disables this behavior.
 The default is 100 if
 .Nm
 is printing errors to a terminal, and 0 otherwise.
+.It @ Ns Ar at_file
+Read more options and arguments from a file, as if its contents were given on the command line.
+Arguments are separated by whitespace or newlines.
+Lines starting with a hash sign
+.Pq Ql #
+are considered comments and ignored.
+.Pp
+No shell processing is performed, such as wildcard or variable expansion.
+There is no support for escaping or quoting whitespace to be included in arguments.
+The standard
+.Ql --
+to stop option processing also disables at-file processing.
+Note that while
+.Ql --
+can be used
+.Em inside
+an at-file, it only disables option processing within that at-file, and processing continues in the parent scope.
 .El
 .Sh DIAGNOSTICS
 Warnings are diagnostic messages that indicate possibly erroneous behavior that does not necessarily compromise the assembling process.

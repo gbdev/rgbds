@@ -12,8 +12,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "cli.hpp"
 #include "diagnostics.hpp"
-#include "extern/getopt.hpp"
 #include "helpers.hpp"
 #include "platform.hpp"
 #include "style.hpp"
@@ -27,10 +27,16 @@
 
 Options options;
 
+// Flags which must be processed after the option parsing finishes
+static struct LocalOptions {
+	std::optional<std::string> outputFileName; // -o
+	std::vector<std::string> inputFileNames;   // <file>...
+} localOptions;
+
 // Short options
 static char const *optstring = "Ccf:hi:jk:L:l:m:n:Oo:p:r:st:VvW:w";
 
-// Variables for the long-only options
+// Long-only option variable
 static int longOpt; // `--color`
 
 // Equivalent long options
@@ -91,13 +97,191 @@ static Usage usage = {
 };
 // clang-format on
 
-static void parseByte(uint16_t &output, char name) {
-	if (std::optional<uint64_t> value = parseWholeNumber(musl_optarg); !value) {
+static uint16_t parseByte(char const *input, char name) {
+	if (std::optional<uint64_t> value = parseWholeNumber(input); !value) {
 		fatal("Invalid argument for option '-%c'", name);
 	} else if (*value > 0xFF) {
 		fatal("Argument for option '-%c' must be between 0 and 0xFF", name);
 	} else {
-		output = *value;
+		return *value;
+	}
+}
+
+static void parseArg(int ch, char *arg) {
+	switch (ch) {
+	case 'C':
+	case 'c':
+		options.model = ch == 'c' ? BOTH : CGB;
+		if (options.titleLen > 15) {
+			options.titleLen = 15;
+			assume(options.title.has_value());
+			warning(
+			    WARNING_TRUNCATION, "Truncating title \"%s\" to 15 chars", options.title->c_str()
+			);
+		}
+		break;
+
+	case 'f':
+		options.fixSpec = 0;
+		while (*arg) {
+			switch (*arg) {
+#define overrideSpec(cur, bad, curFlag, badFlag) \
+	case cur: \
+		if (options.fixSpec & badFlag) { \
+			warnx("'%c' overriding '%c' in fix spec", cur, bad); \
+		} \
+		options.fixSpec = (options.fixSpec & ~badFlag) | curFlag; \
+		break
+#define overrideSpecPair(fix, fixFlag, trash, trashFlag) \
+	overrideSpec(fix, trash, fixFlag, trashFlag); \
+	overrideSpec(trash, fix, trashFlag, fixFlag)
+				overrideSpecPair('l', FIX_LOGO, 'L', TRASH_LOGO);
+				overrideSpecPair('h', FIX_HEADER_SUM, 'H', TRASH_HEADER_SUM);
+				overrideSpecPair('g', FIX_GLOBAL_SUM, 'G', TRASH_GLOBAL_SUM);
+#undef overrideSpec
+#undef overrideSpecPair
+
+			default:
+				fatal("Invalid character '%c' in fix spec", *arg);
+			}
+			++arg;
+		}
+		break;
+
+		// LCOV_EXCL_START
+	case 'h':
+		usage.printAndExit(0);
+		// LCOV_EXCL_STOP
+
+	case 'i': {
+		options.gameID = arg;
+		size_t len = options.gameID->length();
+		if (len > 4) {
+			len = 4;
+			warning(
+			    WARNING_TRUNCATION, "Truncating game ID \"%s\" to 4 chars", options.gameID->c_str()
+			);
+		}
+		options.gameIDLen = len;
+		if (options.titleLen > 11) {
+			options.titleLen = 11;
+			assume(options.title.has_value());
+			warning(
+			    WARNING_TRUNCATION, "Truncating title \"%s\" to 11 chars", options.title->c_str()
+			);
+		}
+		break;
+	}
+
+	case 'j':
+		options.japanese = false;
+		break;
+
+	case 'k': {
+		options.newLicensee = arg;
+		size_t len = options.newLicensee->length();
+		if (len > 2) {
+			len = 2;
+			warning(
+			    WARNING_TRUNCATION,
+			    "Truncating new licensee \"%s\" to 2 chars",
+			    options.newLicensee->c_str()
+			);
+		}
+		options.newLicenseeLen = len;
+		break;
+	}
+
+	case 'L':
+		options.logoFilename = arg;
+		break;
+
+	case 'l':
+		options.oldLicensee = parseByte(arg, 'l');
+		break;
+
+	case 'm':
+		options.cartridgeType = mbc_ParseName(arg, options.tpp1Rev[0], options.tpp1Rev[1]);
+		if (options.cartridgeType == ROM_RAM || options.cartridgeType == ROM_RAM_BATTERY) {
+			warning(WARNING_MBC, "MBC \"%s\" is under-specified and poorly supported", arg);
+		}
+		break;
+
+	case 'n':
+		options.romVersion = parseByte(arg, 'n');
+		break;
+
+	case 'O':
+		warning(WARNING_OBSOLETE, "'-O' is deprecated; use '-Wno-overwrite' instead");
+		warnings.processWarningFlag("no-overwrite");
+		break;
+
+	case 'o':
+		localOptions.outputFileName = arg;
+		break;
+
+	case 'p':
+		options.padValue = parseByte(arg, 'p');
+		break;
+
+	case 'r':
+		options.ramSize = parseByte(arg, 'r');
+		break;
+
+	case 's':
+		options.sgb = true;
+		break;
+
+	case 't': {
+		options.title = arg;
+		size_t len = options.title->length();
+		uint8_t maxLen = options.gameID ? 11 : options.model != DMG ? 15 : 16;
+
+		if (len > maxLen) {
+			len = maxLen;
+			warning(
+			    WARNING_TRUNCATION,
+			    "Truncating title \"%s\" to %u chars",
+			    options.title->c_str(),
+			    maxLen
+			);
+		}
+		options.titleLen = len;
+		break;
+	}
+
+		// LCOV_EXCL_START
+	case 'V':
+		printf("rgbfix %s\n", get_package_version_string());
+		exit(0);
+
+	case 'v':
+		options.fixSpec = FIX_LOGO | FIX_HEADER_SUM | FIX_GLOBAL_SUM;
+		break;
+		// LCOV_EXCL_STOP
+
+	case 'W':
+		warnings.processWarningFlag(arg);
+		break;
+
+	case 'w':
+		warnings.state.warningsEnabled = false;
+		break;
+
+	case 0: // Long-only options
+		if (longOpt == 'c' && !style_Parse(arg)) {
+			fatal("Invalid argument for option '--color'");
+		}
+		break;
+
+	case 1: // Positional arguments
+		localOptions.inputFileNames.push_back(arg);
+		break;
+
+		// LCOV_EXCL_START
+	default:
+		usage.printAndExit(1);
+		// LCOV_EXCL_STOP
 	}
 }
 
@@ -110,18 +294,19 @@ static uint8_t const nintendoLogo[] = {
 static void initLogo() {
 	if (options.logoFilename) {
 		FILE *logoFile;
-		if (strcmp(options.logoFilename, "-")) {
-			logoFile = fopen(options.logoFilename, "rb");
+		char const *logoFilename = options.logoFilename->c_str();
+		if (*options.logoFilename != "-") {
+			logoFile = fopen(logoFilename, "rb");
 		} else {
 			// LCOV_EXCL_START
-			options.logoFilename = "<stdin>";
+			logoFilename = "<stdin>";
 			(void)setmode(STDIN_FILENO, O_BINARY);
 			logoFile = stdin;
 			// LCOV_EXCL_STOP
 		}
 		if (!logoFile) {
 			// LCOV_EXCL_START
-			fatal("Failed to open \"%s\" for reading: %s", options.logoFilename, strerror(errno));
+			fatal("Failed to open \"%s\" for reading: %s", logoFilename, strerror(errno));
 			// LCOV_EXCL_STOP
 		}
 		Defer closeLogo{[&] { fclose(logoFile); }};
@@ -129,7 +314,7 @@ static void initLogo() {
 		uint8_t logoBpp[sizeof(options.logo)];
 		if (size_t nbRead = fread(logoBpp, 1, sizeof(logoBpp), logoFile);
 		    nbRead != sizeof(options.logo) || fgetc(logoFile) != EOF || ferror(logoFile)) {
-			fatal("\"%s\" is not %zu bytes", options.logoFilename, sizeof(options.logo));
+			fatal("\"%s\" is not %zu bytes", logoFilename, sizeof(options.logo));
 		}
 		auto highs = [&logoBpp](size_t i) {
 			return (logoBpp[i * 2] & 0xF0) | ((logoBpp[i * 2 + 1] & 0xF0) >> 4);
@@ -161,176 +346,7 @@ static void initLogo() {
 }
 
 int main(int argc, char *argv[]) {
-	char const *outputFilename = nullptr;
-
-	// Parse CLI options
-	for (int ch; (ch = musl_getopt_long_only(argc, argv, optstring, longopts, nullptr)) != -1;) {
-		switch (ch) {
-		case 'C':
-		case 'c':
-			options.model = ch == 'c' ? BOTH : CGB;
-			if (options.titleLen > 15) {
-				options.titleLen = 15;
-				assume(options.title != nullptr);
-				warning(WARNING_TRUNCATION, "Truncating title \"%s\" to 15 chars", options.title);
-			}
-			break;
-
-		case 'f':
-			options.fixSpec = 0;
-			while (*musl_optarg) {
-				switch (*musl_optarg) {
-#define overrideSpec(cur, bad, curFlag, badFlag) \
-	case cur: \
-		if (options.fixSpec & badFlag) { \
-			warnx("'%c' overriding '%c' in fix spec", cur, bad); \
-		} \
-		options.fixSpec = (options.fixSpec & ~badFlag) | curFlag; \
-		break
-#define overrideSpecPair(fix, fixFlag, trash, trashFlag) \
-	overrideSpec(fix, trash, fixFlag, trashFlag); \
-	overrideSpec(trash, fix, trashFlag, fixFlag)
-					overrideSpecPair('l', FIX_LOGO, 'L', TRASH_LOGO);
-					overrideSpecPair('h', FIX_HEADER_SUM, 'H', TRASH_HEADER_SUM);
-					overrideSpecPair('g', FIX_GLOBAL_SUM, 'G', TRASH_GLOBAL_SUM);
-#undef overrideSpec
-#undef overrideSpecPair
-
-				default:
-					fatal("Invalid character '%c' in fix spec", *musl_optarg);
-				}
-				++musl_optarg;
-			}
-			break;
-
-			// LCOV_EXCL_START
-		case 'h':
-			usage.printAndExit(0);
-			// LCOV_EXCL_STOP
-
-		case 'i': {
-			options.gameID = musl_optarg;
-			size_t len = strlen(options.gameID);
-			if (len > 4) {
-				len = 4;
-				warning(WARNING_TRUNCATION, "Truncating game ID \"%s\" to 4 chars", options.gameID);
-			}
-			options.gameIDLen = len;
-			if (options.titleLen > 11) {
-				options.titleLen = 11;
-				assume(options.title != nullptr);
-				warning(WARNING_TRUNCATION, "Truncating title \"%s\" to 11 chars", options.title);
-			}
-			break;
-		}
-
-		case 'j':
-			options.japanese = false;
-			break;
-
-		case 'k': {
-			options.newLicensee = musl_optarg;
-			size_t len = strlen(options.newLicensee);
-			if (len > 2) {
-				len = 2;
-				warning(
-				    WARNING_TRUNCATION,
-				    "Truncating new licensee \"%s\" to 2 chars",
-				    options.newLicensee
-				);
-			}
-			options.newLicenseeLen = len;
-			break;
-		}
-
-		case 'L':
-			options.logoFilename = musl_optarg;
-			break;
-
-		case 'l':
-			parseByte(options.oldLicensee, 'l');
-			break;
-
-		case 'm':
-			options.cartridgeType =
-			    mbc_ParseName(musl_optarg, options.tpp1Rev[0], options.tpp1Rev[1]);
-			if (options.cartridgeType == ROM_RAM || options.cartridgeType == ROM_RAM_BATTERY) {
-				warning(
-				    WARNING_MBC, "MBC \"%s\" is under-specified and poorly supported", musl_optarg
-				);
-			}
-			break;
-
-		case 'n':
-			parseByte(options.romVersion, 'n');
-			break;
-
-		case 'O':
-			warning(WARNING_OBSOLETE, "'-O' is deprecated; use '-Wno-overwrite' instead");
-			warnings.processWarningFlag("no-overwrite");
-			break;
-
-		case 'o':
-			outputFilename = musl_optarg;
-			break;
-
-		case 'p':
-			parseByte(options.padValue, 'p');
-			break;
-
-		case 'r':
-			parseByte(options.ramSize, 'r');
-			break;
-
-		case 's':
-			options.sgb = true;
-			break;
-
-		case 't': {
-			options.title = musl_optarg;
-			size_t len = strlen(options.title);
-			uint8_t maxLen = options.gameID ? 11 : options.model != DMG ? 15 : 16;
-
-			if (len > maxLen) {
-				len = maxLen;
-				warning(
-				    WARNING_TRUNCATION, "Truncating title \"%s\" to %u chars", options.title, maxLen
-				);
-			}
-			options.titleLen = len;
-			break;
-		}
-
-			// LCOV_EXCL_START
-		case 'V':
-			printf("rgbfix %s\n", get_package_version_string());
-			exit(0);
-
-		case 'v':
-			options.fixSpec = FIX_LOGO | FIX_HEADER_SUM | FIX_GLOBAL_SUM;
-			break;
-			// LCOV_EXCL_STOP
-
-		case 'W':
-			warnings.processWarningFlag(musl_optarg);
-			break;
-
-		case 'w':
-			warnings.state.warningsEnabled = false;
-			break;
-
-		case 0: // Long-only options
-			if (longOpt == 'c' && !style_Parse(musl_optarg)) {
-				fatal("Invalid argument for option '--color'");
-			}
-			break;
-
-			// LCOV_EXCL_START
-		default:
-			usage.printAndExit(1);
-			// LCOV_EXCL_STOP
-		}
-	}
+	cli_ParseArgs(argc, argv, optstring, longopts, parseArg, fatal);
 
 	if ((options.cartridgeType & 0xFF00) == TPP1 && !options.japanese) {
 		warning(
@@ -382,19 +398,20 @@ int main(int argc, char *argv[]) {
 
 	initLogo();
 
-	argv += musl_optind;
-	if (!*argv) {
+	if (localOptions.inputFileNames.empty()) {
 		usage.printAndExit("No input file specified (pass \"-\" to read from standard input)");
 	}
 
-	if (outputFilename && argc != musl_optind + 1) {
+	if (localOptions.outputFileName && localOptions.inputFileNames.size() != 1) {
 		usage.printAndExit("If '-o' is set then only a single input file may be specified");
 	}
 
+	char const *outputFileName =
+	    localOptions.outputFileName ? localOptions.outputFileName->c_str() : nullptr;
 	bool failed = warnings.nbErrors > 0;
-	do {
-		failed |= fix_ProcessFile(*argv, outputFilename);
-	} while (*++argv);
+	for (std::string const &inputFileName : localOptions.inputFileNames) {
+		failed |= fix_ProcessFile(inputFileName.c_str(), outputFileName);
+	}
 
 	return failed;
 }

@@ -405,9 +405,10 @@ static void readAssertion(
 	tryReadString(assert.message, file, "%s: Cannot read assertion's message: %s", fileName);
 }
 
-void obj_ReadFile(char const *fileName, unsigned int fileID) {
+void obj_ReadFile(std::string const &filePath, size_t fileID) {
 	FILE *file;
-	if (strcmp(fileName, "-")) {
+	char const *fileName = filePath.c_str();
+	if (filePath != "-") {
 		file = fopen(fileName, "rb");
 	} else {
 		fileName = "<stdin>";
@@ -553,6 +554,6 @@ void obj_ReadFile(char const *fileName, unsigned int fileID) {
 	}
 }
 
-void obj_Setup(unsigned int nbFiles) {
+void obj_Setup(size_t nbFiles) {
 	nodes.resize(nbFiles);
 }

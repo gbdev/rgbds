@@ -3,7 +3,9 @@
 #ifndef RGBDS_FIX_MAIN_HPP
 #define RGBDS_FIX_MAIN_HPP
 
+#include <optional>
 #include <stdint.h>
+#include <string>
 
 #include "fix/mbc.hpp" // UNSPECIFIED, MbcType
 
@@ -28,19 +30,19 @@ struct Options {
 	uint16_t ramSize = UNSPECIFIED;     // -r
 	bool sgb = false;                   // -s
 
-	char const *gameID = nullptr; // -i
+	std::optional<std::string> gameID; // -i
 	uint8_t gameIDLen;
 
-	char const *newLicensee = nullptr; // -k
+	std::optional<std::string> newLicensee; // -k
 	uint8_t newLicenseeLen;
 
-	char const *logoFilename = nullptr; // -L
+	std::optional<std::string> logoFilename; // -L
 	uint8_t logo[48] = {};
 
 	MbcType cartridgeType = MBC_NONE; // -m
 	uint8_t tpp1Rev[2];
 
-	char const *title = nullptr; // -t
+	std::optional<std::string> title; // -t
 	uint8_t titleLen;
 };
 

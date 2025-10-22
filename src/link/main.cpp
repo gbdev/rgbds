@@ -13,8 +13,8 @@
 #include <utility>
 
 #include "backtrace.hpp"
+#include "cli.hpp"
 #include "diagnostics.hpp"
-#include "extern/getopt.hpp"
 #include "linkdefs.hpp"
 #include "script.hpp" // Generated from script.y
 #include "style.hpp"
@@ -33,12 +33,16 @@
 
 Options options;
 
-static char const *linkerScriptName = nullptr; // -l
+// Flags which must be processed after the option parsing finishes
+static struct LocalOptions {
+	std::optional<std::string> linkerScriptName; // -l
+	std::vector<std::string> inputFileNames;     // <file>...
+} localOptions;
 
 // Short options
 static char const *optstring = "B:dhl:m:Mn:O:o:p:S:tVvW:wx";
 
-// Variables for the long-only options
+// Long-only option variable
 static int longOpt; // `--color`
 
 // Equivalent long options
@@ -89,97 +93,6 @@ static Usage usage = {
     },
 };
 // clang-format on
-
-// LCOV_EXCL_START
-static void verboseOutputConfig(int argc, char *argv[]) {
-	if (!checkVerbosity(VERB_CONFIG)) {
-		return;
-	}
-
-	style_Set(stderr, STYLE_MAGENTA, false);
-
-	fprintf(stderr, "rgblink %s\n", get_package_version_string());
-
-	printVVVVVVerbosity();
-
-	fputs("Options:\n", stderr);
-	// -d/--dmg
-	if (options.isDmgMode) {
-		fputs("\tDMG mode prohibits non-DMG section types\n", stderr);
-	}
-	// -t/--tiny
-	if (options.is32kMode) {
-		fputs("\tROM0 covers the full 32 KiB of ROM\n", stderr);
-	}
-	// -w/--wramx
-	if (options.isWRAM0Mode) {
-		fputs("\tWRAM0 covers the full 8 KiB of WRAM\n", stderr);
-	}
-	// -x/--nopad
-	if (options.disablePadding) {
-		fputs("\tNo padding at the end of the ROM file\n", stderr);
-	}
-	// -p/--pad
-	fprintf(stderr, "\tPad value: 0x%02" PRIx8 "\n", options.padValue);
-	// -S/--scramble
-	if (options.scrambleROMX || options.scrambleWRAMX || options.scrambleSRAM) {
-		fputs("\tScramble: ", stderr);
-		if (options.scrambleROMX) {
-			fprintf(stderr, "ROMX = %" PRIu16, options.scrambleROMX);
-			if (options.scrambleWRAMX || options.scrambleSRAM) {
-				fputs(", ", stderr);
-			}
-		}
-		if (options.scrambleWRAMX) {
-			fprintf(stderr, "WRAMX = %" PRIu16, options.scrambleWRAMX);
-			if (options.scrambleSRAM) {
-				fputs(", ", stderr);
-			}
-		}
-		if (options.scrambleSRAM) {
-			fprintf(stderr, "SRAM = %" PRIu16, options.scrambleSRAM);
-		}
-		putc('\n', stderr);
-	}
-	// file ...
-	if (musl_optind < argc) {
-		fprintf(stderr, "\tInput object files: ");
-		for (int i = musl_optind; i < argc; ++i) {
-			if (i > musl_optind) {
-				fputs(", ", stderr);
-			}
-			if (i - musl_optind == 10) {
-				fprintf(stderr, "and %d more", argc - i);
-				break;
-			}
-			fputs(argv[i], stderr);
-		}
-		putc('\n', stderr);
-	}
-	auto printPath = [](char const *name, char const *path) {
-		if (path) {
-			fprintf(stderr, "\t%s: %s\n", name, path);
-		}
-	};
-	// -O/--overlay
-	printPath("Overlay file", options.overlayFileName);
-	// -l/--linkerscript
-	printPath("Linker script", linkerScriptName);
-	// -o/--output
-	printPath("Output ROM file", options.outputFileName);
-	// -m/--map
-	printPath("Output map file", options.mapFileName);
-	// -M/--no-sym-in-map
-	if (options.mapFileName && options.noSymInMap) {
-		fputs("\tNo symbols in map file\n", stderr);
-	}
-	// -n/--sym
-	printPath("Output sym file", options.symFileName);
-	fputs("Ready.\n", stderr);
-
-	style_Reset(stderr);
-}
-// LCOV_EXCL_STOP
 
 static size_t skipBlankSpace(char const *str) {
 	return strspn(str, " \t");
@@ -292,124 +205,221 @@ static void parseScrambleSpec(char *spec) {
 	}
 }
 
-int main(int argc, char *argv[]) {
-	// Parse CLI options
-	for (int ch; (ch = musl_getopt_long_only(argc, argv, optstring, longopts, nullptr)) != -1;) {
-		switch (ch) {
-		case 'B':
-			if (!trace_ParseTraceDepth(musl_optarg)) {
-				fatal("Invalid argument for option '-B'");
-			}
-			break;
-
-		case 'd':
-			options.isDmgMode = true;
-			options.isWRAM0Mode = true;
-			break;
-
-			// LCOV_EXCL_START
-		case 'h':
-			usage.printAndExit(0);
-			// LCOV_EXCL_STOP
-
-		case 'l':
-			if (linkerScriptName) {
-				warnx("Overriding linker script file \"%s\"", linkerScriptName);
-			}
-			linkerScriptName = musl_optarg;
-			break;
-
-		case 'M':
-			options.noSymInMap = true;
-			break;
-
-		case 'm':
-			if (options.mapFileName) {
-				warnx("Overriding map file \"%s\"", options.mapFileName);
-			}
-			options.mapFileName = musl_optarg;
-			break;
-
-		case 'n':
-			if (options.symFileName) {
-				warnx("Overriding sym file \"%s\"", options.symFileName);
-			}
-			options.symFileName = musl_optarg;
-			break;
-
-		case 'O':
-			if (options.overlayFileName) {
-				warnx("Overriding overlay file \"%s\"", options.overlayFileName);
-			}
-			options.overlayFileName = musl_optarg;
-			break;
-
-		case 'o':
-			if (options.outputFileName) {
-				warnx("Overriding output file \"%s\"", options.outputFileName);
-			}
-			options.outputFileName = musl_optarg;
-			break;
-
-		case 'p':
-			if (std::optional<uint64_t> value = parseWholeNumber(musl_optarg); !value) {
-				fatal("Invalid argument for option '-p'");
-			} else if (*value > 0xFF) {
-				fatal("Argument for option '-p' must be between 0 and 0xFF");
-			} else {
-				options.padValue = *value;
-				options.hasPadValue = true;
-			}
-			break;
-
-		case 'S':
-			parseScrambleSpec(musl_optarg);
-			break;
-
-		case 't':
-			options.is32kMode = true;
-			break;
-
-			// LCOV_EXCL_START
-		case 'V':
-			printf("rgblink %s\n", get_package_version_string());
-			exit(0);
-
-		case 'v':
-			incrementVerbosity();
-			break;
-			// LCOV_EXCL_STOP
-
-		case 'W':
-			warnings.processWarningFlag(musl_optarg);
-			break;
-
-		case 'w':
-			options.isWRAM0Mode = true;
-			break;
-
-		case 'x':
-			options.disablePadding = true;
-			// implies tiny mode
-			options.is32kMode = true;
-			break;
-
-		case 0: // Long-only options
-			if (longOpt == 'c' && !style_Parse(musl_optarg)) {
-				fatal("Invalid argument for option '--color'");
-			}
-			break;
-
-			// LCOV_EXCL_START
-		default:
-			usage.printAndExit(1);
-			// LCOV_EXCL_STOP
+static void parseArg(int ch, char *arg) {
+	switch (ch) {
+	case 'B':
+		if (!trace_ParseTraceDepth(arg)) {
+			fatal("Invalid argument for option '-B'");
 		}
+		break;
+
+	case 'd':
+		options.isDmgMode = true;
+		options.isWRAM0Mode = true;
+		break;
+
+		// LCOV_EXCL_START
+	case 'h':
+		usage.printAndExit(0);
+		// LCOV_EXCL_STOP
+
+	case 'l':
+		if (localOptions.linkerScriptName) {
+			warnx("Overriding linker script file \"%s\"", localOptions.linkerScriptName->c_str());
+		}
+		localOptions.linkerScriptName = arg;
+		break;
+
+	case 'M':
+		options.noSymInMap = true;
+		break;
+
+	case 'm':
+		if (options.mapFileName) {
+			warnx("Overriding map file \"%s\"", options.mapFileName->c_str());
+		}
+		options.mapFileName = arg;
+		break;
+
+	case 'n':
+		if (options.symFileName) {
+			warnx("Overriding sym file \"%s\"", options.symFileName->c_str());
+		}
+		options.symFileName = arg;
+		break;
+
+	case 'O':
+		if (options.overlayFileName) {
+			warnx("Overriding overlay file \"%s\"", options.overlayFileName->c_str());
+		}
+		options.overlayFileName = arg;
+		break;
+
+	case 'o':
+		if (options.outputFileName) {
+			warnx("Overriding output file \"%s\"", options.outputFileName->c_str());
+		}
+		options.outputFileName = arg;
+		break;
+
+	case 'p':
+		if (std::optional<uint64_t> value = parseWholeNumber(arg); !value) {
+			fatal("Invalid argument for option '-p'");
+		} else if (*value > 0xFF) {
+			fatal("Argument for option '-p' must be between 0 and 0xFF");
+		} else {
+			options.padValue = *value;
+			options.hasPadValue = true;
+		}
+		break;
+
+	case 'S':
+		parseScrambleSpec(arg);
+		break;
+
+	case 't':
+		options.is32kMode = true;
+		break;
+
+		// LCOV_EXCL_START
+	case 'V':
+		printf("rgblink %s\n", get_package_version_string());
+		exit(0);
+
+	case 'v':
+		incrementVerbosity();
+		break;
+		// LCOV_EXCL_STOP
+
+	case 'W':
+		warnings.processWarningFlag(arg);
+		break;
+
+	case 'w':
+		options.isWRAM0Mode = true;
+		break;
+
+	case 'x':
+		options.disablePadding = true;
+		// implies tiny mode
+		options.is32kMode = true;
+		break;
+
+	case 0: // Long-only options
+		if (longOpt == 'c' && !style_Parse(arg)) {
+			fatal("Invalid argument for option '--color'");
+		}
+		break;
+
+	case 1: // Positional argument
+		localOptions.inputFileNames.push_back(arg);
+		break;
+
+		// LCOV_EXCL_START
+	default:
+		usage.printAndExit(1);
+		// LCOV_EXCL_STOP
+	}
+}
+
+// LCOV_EXCL_START
+static void verboseOutputConfig() {
+	if (!checkVerbosity(VERB_CONFIG)) {
+		return;
 	}
 
-	verboseOutputConfig(argc, argv);
+	style_Set(stderr, STYLE_MAGENTA, false);
 
-	if (musl_optind == argc) {
+	fprintf(stderr, "rgblink %s\n", get_package_version_string());
+
+	printVVVVVVerbosity();
+
+	fputs("Options:\n", stderr);
+	// -d/--dmg
+	if (options.isDmgMode) {
+		fputs("\tDMG mode prohibits non-DMG section types\n", stderr);
+	}
+	// -t/--tiny
+	if (options.is32kMode) {
+		fputs("\tROM0 covers the full 32 KiB of ROM\n", stderr);
+	}
+	// -w/--wramx
+	if (options.isWRAM0Mode) {
+		fputs("\tWRAM0 covers the full 8 KiB of WRAM\n", stderr);
+	}
+	// -x/--nopad
+	if (options.disablePadding) {
+		fputs("\tNo padding at the end of the ROM file\n", stderr);
+	}
+	// -p/--pad
+	fprintf(stderr, "\tPad value: 0x%02" PRIx8 "\n", options.padValue);
+	// -S/--scramble
+	if (options.scrambleROMX || options.scrambleWRAMX || options.scrambleSRAM) {
+		fputs("\tScramble: ", stderr);
+		if (options.scrambleROMX) {
+			fprintf(stderr, "ROMX = %" PRIu16, options.scrambleROMX);
+			if (options.scrambleWRAMX || options.scrambleSRAM) {
+				fputs(", ", stderr);
+			}
+		}
+		if (options.scrambleWRAMX) {
+			fprintf(stderr, "WRAMX = %" PRIu16, options.scrambleWRAMX);
+			if (options.scrambleSRAM) {
+				fputs(", ", stderr);
+			}
+		}
+		if (options.scrambleSRAM) {
+			fprintf(stderr, "SRAM = %" PRIu16, options.scrambleSRAM);
+		}
+		putc('\n', stderr);
+	}
+	// file ...
+	if (!localOptions.inputFileNames.empty()) {
+		fprintf(stderr, "\tInput object files: ");
+		size_t nbFiles = localOptions.inputFileNames.size();
+		for (size_t i = 0; i < nbFiles; ++i) {
+			if (i > 0) {
+				fputs(", ", stderr);
+			}
+			if (i == 10) {
+				fprintf(stderr, "and %zu more", nbFiles - i);
+				break;
+			}
+			fputs(localOptions.inputFileNames[i].c_str(), stderr);
+		}
+		putc('\n', stderr);
+	}
+	auto printPath = [](char const *name, std::optional<std::string> const &path) {
+		if (path) {
+			fprintf(stderr, "\t%s: %s\n", name, path->c_str());
+		}
+	};
+	// -O/--overlay
+	printPath("Overlay file", options.overlayFileName);
+	// -l/--linkerscript
+	printPath("Linker script", localOptions.linkerScriptName);
+	// -o/--output
+	printPath("Output ROM file", options.outputFileName);
+	// -m/--map
+	printPath("Output map file", options.mapFileName);
+	// -M/--no-sym-in-map
+	if (options.mapFileName && options.noSymInMap) {
+		fputs("\tNo symbols in map file\n", stderr);
+	}
+	// -n/--sym
+	printPath("Output sym file", options.symFileName);
+	fputs("Ready.\n", stderr);
+
+	style_Reset(stderr);
+}
+// LCOV_EXCL_STOP
+
+int main(int argc, char *argv[]) {
+	cli_ParseArgs(argc, argv, optstring, longopts, parseArg, fatal);
+
+	verboseOutputConfig();
+
+	if (localOptions.inputFileNames.empty()) {
 		usage.printAndExit("No input file specified (pass \"-\" to read from standard input)");
 	}
 
@@ -427,16 +437,17 @@ int main(int argc, char *argv[]) {
 	}
 
 	// Read all object files first,
-	obj_Setup(argc - musl_optind);
-	for (int i = musl_optind; i < argc; ++i) {
-		obj_ReadFile(argv[i], argc - i - 1);
+	size_t nbFiles = localOptions.inputFileNames.size();
+	obj_Setup(nbFiles);
+	for (size_t i = 0; i < nbFiles; ++i) {
+		obj_ReadFile(localOptions.inputFileNames[i], nbFiles - i - 1);
 	}
 
 	// apply the linker script's modifications,
-	if (linkerScriptName) {
+	if (localOptions.linkerScriptName) {
 		verbosePrint(VERB_NOTICE, "Reading linker script...\n");
 
-		if (lexer_Init(linkerScriptName)) {
+		if (lexer_Init(*localOptions.linkerScriptName)) {
 			if (yy::parser parser; parser.parse() != 0) {
 				// Exited due to YYABORT or YYNOMEM
 				fatal("Unrecoverable error while reading linker script"); // LCOV_EXCL_LINE

@@ -50,10 +50,14 @@ tryCmp () {
 }
 
 runTest () {
-	flags=$(
-		head -n 1 "$2/$1.flags" | # Allow other lines to serve as comments
-		sed "s# ./# ${src//#/\\#}/#g" # Prepend src directory to path arguments
-	)
+	if grep -qF ' ./' "$2/$1.flags"; then
+		flags=$(
+			head -n 1 "$2/$1.flags" | # Allow other lines to serve as comments
+			sed "s# ./# ${src//#/\\#}/#g" # Prepend src directory to path arguments
+		)
+	else
+		flags="@$2/$1.flags"
+	fi
 
 	for variant in '' ' piped' ' output'; do
 		(( tests++ ))
