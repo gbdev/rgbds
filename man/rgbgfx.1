@@ -43,7 +43,13 @@ is to divide the input PNG into 8\[tmu]8 pixel
 convert each of those squares into 1bpp or 2bpp tile data, and save all of the tile data in a file.
 It also has options to generate a tile map, attribute map, and/or palette set as well; more on that and how the conversion process can be tweaked below.
 .Sh ARGUMENTS
-Note that options can be abbreviated as long as the abbreviation is unambiguous:
+.Nm
+accepts the usual short and long options, such as
+.Fl V
+and 
+.Fl -version .
+Options later in the command line override those set earlier, except for when duplicate options are considered an error.
+Options can be abbreviated as long as the abbreviation is unambiguous:
 .Fl \-verb
 is
 .Fl \-verbose ,
@@ -51,26 +57,6 @@ but
 .Fl \-ver
 is invalid because it could also be
 .Fl \-version .
-.Pp
-.Nm
-accepts decimal, binary, and hexadecimal numbers in option arguments.
-Decimal numbers are written as usual; binary numbers must be prefixed with either
-.Ql %
-or
-.Ql 0b ,
-and hexadecimal numbers must be prefixed with either
-.Ql $
-(which will likely need escaping or quoting to avoid being interpreted by the shell), or
-.Ql 0x .
-Leading zeros (after the base prefix, if any) are accepted, and letters are not case-sensitive.
-All of these are equivalent:
-.Ql 42 ,
-.Ql 042 ,
-.Ql 0b00101010 ,
-.Ql 0B101010 ,
-.Ql 0x2A ,
-.Ql 0X2A ,
-.Ql 0x2a .
 .Pp
 Unless otherwise noted, passing
 .Ql -
@@ -82,7 +68,39 @@ To suppress this behavior, and open a file in the current directory actually cal
 pass
 .Ql ./-
 instead.
-Using standard input or output more than once in a single command will likely produce unexpected results.
+Using standard input or output for more than one file in a single command may produce unexpected results.
+.Pp
+.Nm
+accepts decimal, hexadecimal, octal, and binary for numeric option arguments.
+Decimal numbers are written as usual; hexadecimal numbers must be prefixed with either
+.Ql $
+or
+.Ql 0x ;
+octal numbers must be prefixed with either
+.Ql &
+or
+.Ql 0o ;
+and binary numbers must be prefixed with either
+.Ql %
+or
+.Ql 0b .
+(The prefixes
+.Ql $
+and
+.Ql &
+will likely need escaping or quoting to avoid being interpreted by the shell.)
+Leading zeros (after the base prefix, if any) are accepted, and letters are not case-sensitive.
+For example, all of these are equivalent:
+.Ql 42 ,
+.Ql 042 ,
+.Ql 0x2A ,
+.Ql 0X2A ,
+.Ql 0x2a ,
+.Ql &52 ,
+.Ql 0o52 ,
+.Ql 0O052 ,
+.Ql 0b00101010 ,
+.Ql 0B101010 .
 .Pp
 The following options are accepted:
 .Bl -tag -width Ds

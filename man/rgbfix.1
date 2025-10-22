@@ -39,23 +39,67 @@ Developers are advised to fill those fields with 0x00 bytes in their source code
 .Nm ,
 and to have already populated whichever fields they don't specify using
 .Nm .
-.Pp
-The input
-.Ar file
-can be a path to a file, or
-.Cm \-
-to read from standard input.
-.Pp
-Note that options can be abbreviated as long as the abbreviation is unambiguous:
-.Fl \-verb
-is
-.Fl \-verbose ,
-but
+.Sh ARGUMENTS
+.Nm
+accepts the usual short and long options, such as
+.Fl V
+and 
+.Fl -version .
+Options later in the command line override those set earlier, except for when duplicate options are considered an error.
+Options can be abbreviated as long as the abbreviation is unambiguous:
 .Fl \-ver
+is
+.Fl \-version ,
+but
+.Fl \-v
 is invalid because it could also be
-.Fl \-version .
-Options later in the command line override those set earlier.
-Accepted options are as follows:
+.Fl \-validate .
+.Pp
+Unless otherwise noted, passing
+.Ql -
+(a single dash) as a file name makes
+.Nm
+use standard input (for input files) or standard output (for output files).
+To suppress this behavior, and open a file in the current directory actually called
+.Ql - ,
+pass
+.Ql ./-
+instead.
+Using standard input or output for more than one file in a single command may produce unexpected results.
+.Pp
+.Nm
+accepts decimal, hexadecimal, octal, and binary for numeric option arguments.
+Decimal numbers are written as usual; hexadecimal numbers must be prefixed with either
+.Ql $
+or
+.Ql 0x ;
+octal numbers must be prefixed with either
+.Ql &
+or
+.Ql 0o ;
+and binary numbers must be prefixed with either
+.Ql %
+or
+.Ql 0b .
+(The prefixes
+.Ql $
+and
+.Ql &
+will likely need escaping or quoting to avoid being interpreted by the shell.)
+Leading zeros (after the base prefix, if any) are accepted, and letters are not case-sensitive.
+For example, all of these are equivalent:
+.Ql 42 ,
+.Ql 042 ,
+.Ql 0x2A ,
+.Ql 0X2A ,
+.Ql 0x2a ,
+.Ql &52 ,
+.Ql 0o52 ,
+.Ql 0O052 ,
+.Ql 0b00101010 ,
+.Ql 0B101010 .
+.Pp
+The following options are accepted:
 .Bl -tag -width Ds
 .It Fl C , Fl \-color-only
 Set the Game Boy Color\(enonly flag
