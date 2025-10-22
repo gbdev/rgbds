@@ -212,7 +212,7 @@ to prevent turning all warnings into errors.
 .It Fl Werror=
 Make the specified warning or meta warning into an error.
 A warning's name is appended
-.Pq example: Fl Werror=overwrite ,
+.Pq example: Fl Werror=obsolete ,
 and this warning is implicitly enabled and turned into an error.
 This can be negated as
 .Fl Wno-error=
@@ -234,10 +234,10 @@ Enables literally every warning.
 .El
 .Pp
 The following warnings are actual warning flags; with each description, the corresponding warning flag is included.
-Note that each of these flag also has a negation (for example,
-.Fl Wtruncation
+Note that each of these flags also has a negation (for example,
+.Fl Wobsolete
 enables the warning that
-.Fl Wno-truncation
+.Fl Wno-obsolete
 disables; and
 .Fl Wall
 enables every warning that
