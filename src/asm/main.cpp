@@ -513,7 +513,7 @@ int main(int argc, char *argv[]) {
 		options.maxErrors = 100; // LCOV_EXCL_LINE
 	}
 
-	cli_ParseArgs(argc, argv, optstring, longopts, parseArg, fatal);
+	cli_ParseArgs(argc, argv, optstring, longopts, parseArg, usage);
 
 	if (!options.targetFileName && options.objectFileName) {
 		options.targetFileName = options.objectFileName;

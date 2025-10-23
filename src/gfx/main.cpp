@@ -639,7 +639,7 @@ static void replaceExtension(std::string &path, char const *extension) {
 }
 
 int main(int argc, char *argv[]) {
-	cli_ParseArgs(argc, argv, optstring, longopts, parseArg, fatal);
+	cli_ParseArgs(argc, argv, optstring, longopts, parseArg, usage);
 
 	if (options.nbColorsPerPal == 0) {
 		options.nbColorsPerPal = 1u << options.bitDepth;

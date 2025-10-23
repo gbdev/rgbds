@@ -11,15 +11,21 @@
 #include <string.h>
 #include <wchar.h>
 
+#include "style.hpp"
+
 char *musl_optarg;
 int musl_optind = 1, musl_opterr = 1, musl_optopt;
 int musl_optreset = 0;
 static int musl_optpos;
 
-static void musl_getopt_msg(char const *a, char const *b, char const *c, size_t l) {
+static void musl_getopt_msg(char const *msg, char const *param, size_t len) {
 	FILE *f = stderr;
 
-	if (fputs(a, f) >= 0 && fwrite(b, strlen(b), 1, f) && fwrite(c, 1, l, f) == l) {
+	style_Set(f, STYLE_RED, true);
+	fputs("error: ", f);
+	style_Reset(f);
+
+	if (fwrite(msg, strlen(msg), 1, f) && fwrite(param, 1, len, f) == len) {
 		putc('\n', f);
 	}
 }
@@ -90,7 +96,7 @@ static int getopt(int argc, char *argv[], char const *optstring) {
 	if (d != c || c == ':') {
 		musl_optopt = c;
 		if (optstring[0] != ':' && musl_opterr) {
-			musl_getopt_msg(argv[0], ": unrecognized option: ", optchar, k);
+			musl_getopt_msg("unrecognized option: ", optchar, k);
 		}
 		return '?';
 	}
@@ -106,7 +112,7 @@ static int getopt(int argc, char *argv[], char const *optstring) {
 				return ':';
 			}
 			if (musl_opterr) {
-				musl_getopt_msg(argv[0], ": option requires an argument: ", optchar, k);
+				musl_getopt_msg("option requires an argument: ", optchar, k);
 			}
 			return '?';
 		}
@@ -228,8 +234,7 @@ static int musl_getopt_long_core(
 						return '?';
 					}
 					musl_getopt_msg(
-					    argv[0],
-					    ": option does not take an argument: ",
+					    "option does not take an argument: ",
 					    longopts[i].name,
 					    strlen(longopts[i].name)
 					);
@@ -247,10 +252,7 @@ static int musl_getopt_long_core(
 						return '?';
 					}
 					musl_getopt_msg(
-					    argv[0],
-					    ": option requires an argument: ",
-					    longopts[i].name,
-					    strlen(longopts[i].name)
+					    "option requires an argument: ", longopts[i].name, strlen(longopts[i].name)
 					);
 					return '?';
 				}
@@ -269,8 +271,7 @@ static int musl_getopt_long_core(
 			musl_optopt = 0;
 			if (!colon && musl_opterr) {
 				musl_getopt_msg(
-				    argv[0],
-				    cnt ? ": option is ambiguous: " : ": unrecognized option: ",
+				    cnt ? "option is ambiguous: " : "unrecognized option: ",
 				    argv[musl_optind] + 2,
 				    strlen(argv[musl_optind] + 2)
 				);

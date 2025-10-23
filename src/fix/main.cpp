@@ -346,7 +346,7 @@ static void initLogo() {
 }
 
 int main(int argc, char *argv[]) {
-	cli_ParseArgs(argc, argv, optstring, longopts, parseArg, fatal);
+	cli_ParseArgs(argc, argv, optstring, longopts, parseArg, usage);
 
 	if ((options.cartridgeType & 0xFF00) == TPP1 && !options.japanese) {
 		warning(

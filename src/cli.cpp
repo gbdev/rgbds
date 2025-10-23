@@ -2,26 +2,30 @@
 
 #include <errno.h>
 #include <fstream>
+#include <stdio.h>
 #include <string.h>
 #include <string>
 #include <vector>
 
 #include "extern/getopt.hpp"
+#include "style.hpp"
+#include "usage.hpp"
 #include "util.hpp" // isBlankSpace
 
 using namespace std::literals;
 
 // Turn an at-file's contents into an argv that `getopt` can handle, appending them to `argPool`.
-static std::vector<size_t> readAtFile(
-    std::string const &path, std::vector<char> &argPool, void (*fatal)(char const *, ...)
-) {
+static std::vector<size_t>
+    readAtFile(std::string const &path, std::vector<char> &argPool, Usage usage) {
 	std::vector<size_t> argvOfs;
 
 	std::filebuf file;
 	if (!file.open(path, std::ios_base::in)) {
-		std::string msg = "Error reading at-file \""s + path + "\": " + strerror(errno);
-		fatal(msg.c_str());
-		return argvOfs; // Since we can't mark the `fatal` function pointer as [[noreturn]]
+		style_Set(stderr, STYLE_RED, true);
+		fputs("FATAL: ", stderr);
+		style_Reset(stderr);
+		fprintf(stderr, "Failed to open at-file \"%s\": %s\n", path.c_str(), strerror(errno));
+		usage.printAndExit(1);
 	}
 
 	for (;;) {
@@ -71,7 +75,7 @@ void cli_ParseArgs(
     char const *shortOpts,
     option const *longOpts,
     void (*parseArg)(int, char *),
-    void (*fatal)(char const *, ...)
+    Usage usage
 ) {
 	struct AtFileStackEntry {
 		int parentInd;            // Saved offset into parent argv
@@ -112,7 +116,7 @@ void cli_ParseArgs(
 
 			// It would be nice to compute the char pointers on the fly, but reallocs don't allow
 			// that; so we must compute the offsets after the pool is fixed
-			std::vector<size_t> offsets = readAtFile(&musl_optarg[1], argPool, fatal);
+			std::vector<size_t> offsets = readAtFile(&musl_optarg[1], argPool, usage);
 			stackEntry.argv.reserve(offsets.size() + 2); // Avoid a bunch of reallocs
 			for (size_t ofs : offsets) {
 				stackEntry.argv.push_back(&argPool.data()[ofs]);

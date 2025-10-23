@@ -415,7 +415,7 @@ static void verboseOutputConfig() {
 // LCOV_EXCL_STOP
 
 int main(int argc, char *argv[]) {
-	cli_ParseArgs(argc, argv, optstring, longopts, parseArg, fatal);
+	cli_ParseArgs(argc, argv, optstring, longopts, parseArg, usage);
 
 	verboseOutputConfig();
 

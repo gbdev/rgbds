@@ -7,6 +7,7 @@
 #include <string>
 
 #include "extern/getopt.hpp" // option
+#include "usage.hpp"
 
 void cli_ParseArgs(
     int argc,
@@ -14,7 +15,7 @@ void cli_ParseArgs(
     char const *shortOpts,
     option const *longOpts,
     void (*parseArg)(int, char *),
-    void (*fatal)(char const *, ...)
+    Usage usage
 );
 
 #endif // RGBDS_CLI_HPP
