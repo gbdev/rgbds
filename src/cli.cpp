@@ -94,8 +94,7 @@ void cli_ParseArgs(
 	for (;;) {
 		char *atFileName = nullptr;
 		for (int ch;
-		     (ch = musl_getopt_long_only(curArgc, curArgv, optString.c_str(), longOpts, nullptr))
-		     != -1;) {
+		     (ch = musl_getopt_long_only(curArgc, curArgv, optString.c_str(), longOpts)) != -1;) {
 			if (ch == 1 && musl_optarg[0] == '@') {
 				atFileName = &musl_optarg[1];
 				break;

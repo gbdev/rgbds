@@ -12,7 +12,7 @@ static constexpr int optional_argument = 2;
 // clang-format on
 
 extern char *musl_optarg;
-extern int musl_optind, musl_opterr, musl_optopt, musl_optreset;
+extern int musl_optind, musl_optopt;
 
 struct option {
 	char const *name;
@@ -21,8 +21,6 @@ struct option {
 	int val;
 };
 
-int musl_getopt_long_only(
-    int argc, char **argv, char const *optstring, option const *longopts, int *idx
-);
+int musl_getopt_long_only(int argc, char **argv, char const *optstring, option const *longopts);
 
 #endif // RGBDS_EXTERN_GETOPT_HPP
