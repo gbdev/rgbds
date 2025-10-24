@@ -50,10 +50,9 @@ uint16_t Rgba::cgbColor() const {
 		g = reverse_curve[g];
 		b = reverse_curve[b];
 	} else {
-		constexpr auto _8to5 = [](uint8_t c) -> uint8_t { return (c * 31 + 127) / 255; };
-		r = _8to5(r);
-		g = _8to5(g);
-		b = _8to5(b);
+		r >>= 3;
+		g >>= 3;
+		b >>= 3;
 	}
 	return r | g << 5 | b << 10;
 }

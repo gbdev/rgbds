@@ -1,4 +1,4 @@
-error: Failed to fit tile colors [$688b, $7f55, $7fff] in specified palettes
+error: Failed to fit tile colors [$6c8a, $7f55, $7fff] in specified palettes
 note: The following palettes were specified:
         [$5f77, $213d, $41a6, $40ee]
         [$3f65, $36b3, $262a, $50b0]

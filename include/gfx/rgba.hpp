@@ -18,7 +18,10 @@ struct Rgba {
 	    : red(rgba >> 24), green(rgba >> 16), blue(rgba >> 8), alpha(rgba) {}
 
 	static constexpr Rgba fromCGBColor(uint16_t color) {
-		constexpr auto _5to8 = [](uint8_t c) -> uint8_t { return ((c & 0b11111) * 255 + 15) / 31; };
+		constexpr auto _5to8 = [](uint8_t channel) -> uint8_t {
+			channel &= 0b11111; // For caller's convenience
+			return channel << 3 | channel >> 2;
+		};
 		return {
 		    _5to8(color),
 		    _5to8(color >> 5),
