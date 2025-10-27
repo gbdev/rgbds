@@ -27,10 +27,13 @@ but any program that processes RGBDS object files (described in
 can be used in its place.
 .Sh SYNTAX
 The syntax is line-based, just as in any other assembler.
-Each line may have components in this order:
-.Pp
-.Dl Oo Ar directive Oc Oo ;\  Ns Ar comment Oc
-.Dl Oo Ar label : Oc Oo Ar instruction Oo :: Ar instruction ... Oc Oc Oo ;\  Ns Ar comment Oc
+Each line may have components in either of these orders:
+.Bl -bullet -offset indent
+.It
+.Li Oo Ar directive Oc Oo ;\  Ns Ar comment Oc
+.It
+.Li Oo Ar label : Oc Oo Ar instruction Oo :: Ar instruction ... Oc Oc Oo ;\  Ns Ar comment Oc
+.El
 .Pp
 Directives are commands to the assembler itself, such as
 .Ic PRINTLN ,
@@ -84,8 +87,8 @@ as the opposite condition code; for example,
 for
 .Ic z .
 .Pp
-All reserved keywords (directives, register names, etc.) are case-insensitive;
-all identifiers (labels and other symbol names) are case-sensitive.
+All reserved keywords (directives, instructions, registers, built-in functions, etc.) are case-insensitive;
+all identifiers (labels, variables, etc) are case-sensitive.
 .Pp
 Comments are used to give humans information about the code, such as explanations.
 The assembler
@@ -124,17 +127,17 @@ To do so, put a backslash at the end of the line:
 world!"\ \ \ \ \ \ \ \ \ \ \ ;\ Any leading space is included
 .Ed
 .Ss Symbol interpolation
-A funky feature is writing a symbol between
-.Ql {braces} ,
-called
-.Dq symbol interpolation .
+Symbols with string or numeric values can be
+.Dq interpolated
+by writing them inside
+.Ql {braces} .
 This will paste the symbol's contents as if they were part of the source file.
 If it is a string symbol, its characters are simply inserted as-is.
 If it is a numeric symbol, its value is converted to hexadecimal notation with a dollar sign
 .Sq $
 prepended.
 .Pp
-Symbol interpolations can be nested, too!
+Symbol interpolations can be nested, too.
 .Bd -literal -offset indent
 DEF topic EQUS "life, the universe, and \e"everything\e""
 DEF meaning EQUS "answer"
@@ -145,11 +148,7 @@ PRINTLN "The {meaning} to {topic} is {{meaning}}"
 PURGE topic, meaning, {meaning}
 .Ed
 .Pp
-Symbols can be
-.Em interpolated
-even in the contexts that disable automatic
-.Em expansion
-of string constants:
+Symbols can be interpolated even in contexts that disable automatic expansion of string constants: that is,
 .Ql name
 will be expanded in all of
 .Ql DEF({name}) ,
@@ -159,8 +158,10 @@ will be expanded in all of
 .Ql PURGE {name} ,
 and
 .Ql MACRO {name} ,
-but, for example, won't be in
-.Ql DEF(name) .
+even though it won't be in
+.Ql DEF(name) ,
+.Ql PURGE {name} ,
+etc.
 .Pp
 It's possible to change the way symbols are printed by specifying a print format like so:
 .Ql {fmt:symbol} .
@@ -177,14 +178,18 @@ or
 .Ql \  .
 If specified, prints this character in front of non-negative numbers.
 .It Ql <exact> Ta May be
-.Ql # .
-If specified, prints the value in an "exact" format: with a base prefix for non-decimal integer types
-.Pq So $ Sc , So & Sc , or So % Sc ;
+.Ql #
+for non-decimal types
+.Pq not So d Sc or So u Sc .
+If specified, prints the value in an "exact" format: with a base prefix
+.Pq So $ Sc , So & Sc , or So % Sc
+for non-decimal integer types
+.Pq So x Sc / So X Sc , So o Sc , or So b Sc ;
 with a
 .Ql q
 precision suffix for fixed-point numbers; or with
 .Ql \e
-escape characters for strings.
+escape characters (but no enclosing quotes) for strings.
 .It Ql <align> Ta May be
 .Ql - .
 If specified, aligns left instead of right.
@@ -210,7 +215,7 @@ followed by zero
 .Ql 0
 \[en]
 .Ql 9
-prints zero fractional digits.)
+prints zero fractional digits and no decimal point.)
 .It Ql <prec> Ta May be
 .Ql q
 followed by one or more
@@ -226,11 +231,11 @@ option.
 .Pp
 All the format specifier parts are optional except the
 .Ql <type> .
-Valid print types are:
+Valid types are:
 .Bl -column -offset indent "Type" "Lowercase hexadecimal" "Example"
 .It Sy Type Ta Sy Format Ta Sy Example
 .It Ql d Ta Signed decimal Ta -42
-.It Ql u Ta Unsigned decimal Ta 42
+.It Ql u Ta Unsigned decimal Ta 4294967254
 .It Ql x Ta Lowercase hexadecimal Ta 2a
 .It Ql X Ta Uppercase hexadecimal Ta 2A
 .It Ql b Ta Binary Ta 101010
@@ -266,9 +271,10 @@ would be more appropriate; see
 .Sx String expressions
 below.
 .Sh EXPRESSIONS
-An expression can be composed of many things.
+Expressions can be one of two types: either numeric or string.
+.Pp
 Numeric expressions are always evaluated using signed 32-bit math.
-Zero is considered to be the only "false" number, all non-zero numbers (including negative) are "true".
+In Boolean logic contexts, zero is considered to be the only "false" number, and all non-zero numbers (including negative) are "true".
 .Pp
 An expression is said to be "constant" if
 .Nm
@@ -280,18 +286,21 @@ However, some operators can be constant even with non-constant operands, as expl
 .Sx Operators
 below.
 .Pp
-The instructions in the macro-language generally require constant expressions.
-.Ss Numeric formats
-There are a number of numeric formats.
-.Bl -column -offset indent "Precise fixed-point" "Possible prefixes"
-.It Sy Format type Ta Sy Possible prefixes Ta Sy Accepted characters
+Directives generally require constant expressions: for example,
+.Ic REPT
+requires the number of repetitions to be known at assembly time.
+.Ss Numeric literals
+.Nm
+supports a variety of numeric literals.
+.Bl -column -offset indent "Precise fixed-point" "Prefixes" "Accepted characters"
+.It Sy Format type Ta Sy Prefixes Ta Sy Accepted characters
 .It Decimal Ta none Ta 0123456789
 .It Hexadecimal Ta Li $ , 0x , 0X Ta 0123456789ABCDEF
 .It Octal Ta Li & , 0o , 0O Ta 01234567
 .It Binary Ta Li % , 0b , 0B Ta 01
 .It Fixed-point Ta none Ta 01234.56789
 .It Precise fixed-point Ta none Ta 12.34q8
-.It Character constant Ta none Ta 'ABYZ'
+.It Character constant Ta none Ta 'A'
 .It Game Boy graphics Ta Li \` Ta 0123
 .El
 .Pp
@@ -313,15 +322,14 @@ for information on charmaps, and
 .Sx String expressions
 for information on escape characters allowed in character constants.
 .Pp
-The last one, Game Boy graphics, is quite interesting and useful.
-After the backtick, 8 digits between 0 and 3 are expected, corresponding to pixel values.
-The resulting value is the two bytes of tile data that would produce that row of pixels.
+The last one, Game Boy graphics, expects up to eight digits between 0 and 3, corresponding to pixels' two-bit shade values.
+The resulting numeric value is the two bytes of tile data which would produce that row of pixels.
 For example,
 .Sq \`01012323
 is equivalent to
 .Sq $0F55 .
 .Pp
-You can also use symbols, which are implicitly replaced with their value.
+In place of a numeric literal, you can also use a numeric symbol's name, which is implicitly replaced with its value.
 .Ss Operators
 You can use these operators in numeric expressions (listed from highest to lowest precedence):
 .Bl -column -offset indent "!= == <= >= < >"
@@ -329,8 +337,8 @@ You can use these operators in numeric expressions (listed from highest to lowes
 .It Li \&( \&) Ta Grouping
 .It Li FUNC() Ta Built-in function call
 .It Li ** Ta Exponentiation
-.It Li + - ~ \&! Ta Unary plus, minus (negation), complement (bitwise negation), and Boolean negation
-.It Li * / % Ta Multiplication, division, and modulo (remainder)
+.It Li + - ~ \&! Ta Unary plus, unary minus (negation), complement (bitwise negation), and Boolean negation
+.It Li * / % Ta Multiplication, division (rounding down), and modulo (remainder)
 .It Li << >> >>> Ta Bit shifts (left, sign-extended right, zero-extended right)
 .It Li & \&| ^ Ta Bitwise AND/OR/XOR
 .It Li + - Ta Addition and subtraction
@@ -398,7 +406,7 @@ with a non-zero constant as either operand will be constant 1, even if the other
 returns 1 if the operand was 0, and 0 otherwise.
 Even a non-constant operand with any non-zero bits will return 0.
 .Ss Integer functions
-Besides operators, there are also some functions which have more specialized uses.
+Besides operators, there are also some functions which have more specialized uses:
 .Bl -column "BITWIDTH(n)"
 .It Sy Name Ta Sy Operation
 .It Fn HIGH n Ta Equivalent to Ql Po Ns Ar n No & $FF00 Pc >> 8 .
@@ -410,12 +418,13 @@ delim $$
 .Ar n .
 Some useful formulas:
 .Ic BITWIDTH Ns ( Ar n Ns )\ \-\ 1
-equals $\[lf] log sub 2 ( n ) \[rf]$,
+equals $\[lf] log sub 2 ( n ) \[rf]$;
 .Ic BITWIDTH Ns Pq Ar n Ns \ \-\ 1
-equals $\[lc] log sub 2 ( n ) \[rc]$, and
+equals $\[lc] log sub 2 ( n ) \[rc]$; and
 .No 32\ \-\  Ns Ic BITWIDTH Ns Pq Ar n
-equals $roman clz ( n )$.
-.It Fn TZCOUNT n Ta Returns $roman ctz ( n )$, the count of trailing zero bits at the end of the binary representation of
+equals $roman clz ( n )$, the count of leading zero bits in the binary representation of
+.Ar n .
+.It Fn TZCOUNT n Ta Returns $roman ctz ( n )$, the count of trailing zero bits in the binary representation of
 .Ar n .
 .El
 .EQ
@@ -436,21 +445,25 @@ command-line option, and/or by
 An individual fixed-point literal can specify its own precision, overriding the current default, by appending a
 .Dq q
 followed by the number of fractional bits: for example,
-.Ql 1234.5q8
-is equal to $0004d2_80
+.Ql 789.25q8
+is equal to $000315_40
 .EQ
 delim $$
 .EN
-($= 1234.5 * 2 sup 8$).
+($= 789.25 * 2 sup 8$).
 .Pp
 Since fixed-point values are still just integers, you can use them in normal integer expressions.
-You can easily truncate a fixed-point number into an integer by shifting it right by the number of fractional bits.
-It follows that you can convert an integer to a fixed-point number by shifting it left that same amount.
+You can easily truncate a fixed-point number into an integer by shifting it right by the number of fractional bits, or by dividing it by 1.0.
+It follows that you can convert an integer to a fixed-point number by shifting it left that same amount, or by multiplying it by 1.0.
+For example,
+.Ql 123.0 / 1.0 == 123 ,
+and
+.Ql 123 * 1.0 == 123.0 .
 .Pp
 Note that the current number of fractional bits can be computed as
 .Ic TZCOUNT Ns Pq 1.0 .
 .Pp
-The following functions are designed to operate with fixed-point numbers:
+The following functions are designed to operate with fixed-point numbers (which must be known constant):
 .Bl -column -offset indent "ATAN2(y, x)"
 .It Sy Name Ta Sy Operation
 .It Fn DIV x y Ta Fixed-point division
@@ -458,7 +471,7 @@ The following functions are designed to operate with fixed-point numbers:
 .It Fn FMOD x y Ta Fixed-point modulo
 .It Fn POW x y Ta $x sup y$
 .It Fn LOG x y Ta Logarithm of $x$ to the base $y$
-.It Fn ROUND x Ta Round $x$ to the nearest integer
+.It Fn ROUND x Ta Round $x$ half away from zero to the nearest integer
 .It Fn CEIL x Ta Round $x$ up to the nearest integer
 .It Fn FLOOR x Ta Round $x$ down to the nearest integer
 .It Fn SIN x Ta Sine of $x$
@@ -509,9 +522,7 @@ will produce a nonsensical (but technically correct) result:
 The
 .Ic FMOD
 function
-is used to get the remainder of the corresponding fixed-point division, so that
-.Ql MUL(DIV(x, y), y) + FMOD(x, y) == x
-is always true.
+is used to get the remainder of the corresponding fixed-point division.
 The result has the same sign as the
 .Em dividend ;
 this is the opposite of how the integer modulo operator
@@ -534,14 +545,15 @@ These functions are useful for automatic generation of various tables.
 For example:
 .Bd -literal -offset indent
 ; Generate a table of 128 sine values
-; from sin(0.0) to sin(0.5) excluded,
-; with amplitude scaled from [-1.0, 1.0] to [0.0, 128.0].
+; from sin(0.0) included to sin(0.5) excluded,
+; with amplitude scaled from [-1.0, 1.0] to [0.0, 128.0],
+; then divided by 1.0 to round down to integer values.
 FOR angle, 0.0, 0.5, 0.5 / 128
-    db MUL(SIN(angle) + 1.0, 128.0 / 2) >> 16
+    db MUL(SIN(angle) + 1.0, 128.0 / 2) / 1.0
 ENDR
 .Ed
 .Ss String expressions
-The most basic string expression is any number of characters contained in double quotes
+The most basic string expression is a string literal: any number of characters contained in double quotes
 .Pq Ql \&"for instance" .
 The backslash character
 .Ql \e
@@ -562,14 +574,14 @@ There are a number of escape sequences you can use within a string:
 .It Ql \e0 Ta Null Pq ASCII $00
 .El
 .Pp
-Multi-line strings are contained in triple quotes
+Multi-line string literals are contained in triple quotes
 .Pq Ql \&"\&"\&"for instance""" .
 Escape sequences work the same way in multi-line strings; however, literal newline characters will be included as-is, without needing to escape them with
 .Ql \er
 or
 .Ql \en .
 .Pp
-Raw strings are prefixed by a hash
+Raw string literals are prefixed by a hash
 .Sq # .
 Inside them, backslashes and braces are treated like regular characters, so they will not be expanded as macro arguments, interpolated symbols, or escape sequences.
 For example, the raw string
@@ -601,7 +613,7 @@ and
 is equivalent to
 .Ql STRCMP("str", \&"ing") != 0 .
 .Pp
-The following functions operate on string expressions, and return strings themselves.
+The following functions operate on string expressions, and return strings themselves:
 .Bl -column "STRSLICE(str, start, stop)"
 .It Sy Name Ta Sy Operation
 .It Fn STRCAT strs... Ta Concatenates Ar strs .
@@ -612,7 +624,7 @@ in uppercase.
 .Pq Ql A-Z
 in lowercase.
 .It Fn STRSLICE str start stop Ta Returns a substring of Ar str No starting at Ar start No and ending at Ar stop No (exclusive). If Ar stop No is not specified, the substring continues to the end of Ar str .
-.It Fn STRRPL str old new Ta Returns Ar str No with each non-overlapping occurrence of the substring Ar old No replaced with Ar new .
+.It Fn STRRPL str old new Ta Returns Ar str No with each occurrence of the substring Ar old No replaced with Ar new .
 .It Fn STRFMT fmt args... Ta Returns the string Ar fmt No with each
 .Ql %spec
 pattern replaced by interpolating the format
@@ -622,11 +634,15 @@ with its corresponding argument in
 .Ar args
 .Pq So %% Sc is replaced by the So % Sc character .
 .It Fn STRCHAR str idx Ta Returns the substring of Ar str No for the charmap entry at Ar idx No with the current charmap . Pq Ar idx No counts charmap entries, not characters.
+.El
+.Pp
+The following functions take varying operands, and return strings:
+.Bl -column "READFILE(name, max)"
 .It Fn REVCHAR vals... Ta Returns the string that is mapped to Ar vals No with the current charmap. If there is no unique charmap entry for Ar vals Ns , an error occurs.
 .It Fn READFILE name max Ta Returns the contents of the file Ar name No as a string. Reads up to Ar max No bytes, or the entire contents if Ar max No is not specified. If the file isn't found in the current directory, the include-path list passed to Xr rgbasm 1 Ap s Fl I No option on the command line will be searched.
 .El
 .Pp
-The following functions operate on string expressions, but return integers.
+The following functions operate on string expressions, but return integers:
 .Bl -column "STRRFIND(str, sub)"
 .It Sy Name Ta Sy Operation
 .It Fn STRLEN str Ta Returns the number of characters in Ar str .
@@ -670,7 +686,8 @@ and
 being equivalent to
 .Ql dw 50, 53, $20ac .
 .Pp
-Any characters in a string without defined mappings will be copied directly, using the source file's encoding of characters to bytes.
+Character mappings are matched greedily, so the longest applicable one will be mapped in a string.
+Any characters in the string without defined mappings will be copied directly, using the source file's encoding of characters to bytes.
 .Pp
 It is possible to create multiple character maps and then switch between them as desired.
 This can be used to encode debug information in ASCII and use a different encoding for other purposes, for example.
@@ -743,7 +760,7 @@ The result is not constant, since only RGBLINK can compute its value.
 .El
 .Sh SECTIONS
 Before you can start writing code, you must define a section.
-This tells the assembler what kind of information follows and, if it is code, where to put it.
+This tells the assembler what kind of information follows and where to put it.
 .Pp
 .Dl SECTION Ar name , type
 .Dl SECTION Ar name , type , options
@@ -751,9 +768,9 @@ This tells the assembler what kind of information follows and, if it is code, wh
 .Dl SECTION Ar name , type Ns Bo Ar addr Bc , Ar options
 .Pp
 .Ar name
-is a string enclosed in double quotes, and can be a new name or the name of an existing section.
+is a string enclosed in double quotes, which is the name of the section.
 If the type doesn't match, an error occurs.
-All other sections must have a unique name, even in different source files, or the linker will treat it as an error.
+Each section must have a unique name, even across different source files, or the linker will treat it as an error.
 .Pp
 Possible section
 .Ar type Ns s
@@ -779,7 +796,7 @@ can range from
 to
 .Ad $7FFF .
 .Ar bank
-can range from 1 to 511.
+can range from 1 to 511, or up to 65535 for the homebrew TPP1 mapper.
 Becomes an alias for
 .Ic ROM0
 if tiny ROM mode is enabled in the linker.
@@ -800,7 +817,7 @@ can range from
 to
 .Ad $BFFF .
 .Ar bank
-can range from 0 to 15.
+can range from 0 to 15, or up to 255 for the homebrew TPP1 mapper.
 .It Ic WRAM0
 A general-purpose RAM section.
 .Ar addr
@@ -812,7 +829,7 @@ or
 .Ad $C000
 to
 .Ad $DFFF
-if WRAM0 mode is enabled in the linker.
+if WRAM0 mode or DMG mode is enabled in the linker.
 .It Ic WRAMX
 A banked general-purpose RAM section.
 .Ar addr
@@ -824,7 +841,7 @@ to
 can range from 1 to 7.
 Becomes an alias for
 .Ic WRAM0
-if WRAM0 mode is enabled in the linker.
+if WRAM0 mode or DMG mode is enabled in the linker.
 .It Ic OAM
 An object attribute RAM section.
 .Ar addr
@@ -841,12 +858,18 @@ to
 .Ad $FFFE .
 .El
 .Pp
-Since RGBDS produces ROMs, code and data can only be placed in
+RGBDS produces ROMs, which means that code and data can only be placed in
 .Ic ROM0
 and
 .Ic ROMX
 sections.
-To put some in RAM, have it stored in ROM, and copy it to RAM.
+The other RAM section types are for statically allocated labels.
+If you need code or data in RAM, you will need to copy it from ROM to RAM.
+See
+.Sx RAM code
+for an example of how to conveniently do that with a
+.Ic LOAD
+block.
 .Pp
 .Ar option Ns s are comma-separated and may include:
 .Bl -tag -width Ds
@@ -903,7 +926,7 @@ creating it if it doesn't already exist.
 It can end up in any ROM bank.
 Code and data may follow.
 .It
-If it is needed, the the base address of the section can be specified:
+If it is needed, the base address of the section can be specified:
 .Bd -literal -offset indent
 SECTION "Cool Stuff", ROMX[$4567]
 .Ed
@@ -958,13 +981,12 @@ Function:
     ld [wAnswer], a
 .Ed
 .Ss RAM code
-Sometimes you want to have some code in RAM.
-But then you can't simply put it in a RAM section, you have to store it in ROM and copy it to RAM at some point.
-.Pp
-This means the code (or data) will not be stored in the place it gets executed.
-Luckily,
+Sometimes you want to have some code (or data) in RAM, e.g. for self-modifying code.
+But you can't just put it directly in a RAM section; you have to store it in ROM and copy it to RAM at some point.
+This means that the code will be executed at a different address range than where it's defined, which can be inconvenient for references to labels within that code.
+This situation is what
 .Ic LOAD
-blocks are the perfect solution to that.
+blocks are designed for.
 Here's an example of how to use them:
 .Bd -literal -offset indent
 SECTION "LOAD example", ROMX
@@ -1049,7 +1071,7 @@ However, a
 .Ic UNION
 only works within a single file, so it can't be used e.g. to define temporary variables across several files, all of which use the same statically allocated memory.
 Unionized sections solve this problem.
-To declare an unionized section, add a
+To declare a unionized section, add a
 .Ic UNION
 keyword after the
 .Ic SECTION
@@ -1087,9 +1109,9 @@ Different declarations of the same unionized section are not appended, but inste
 .Sx Allocating overlapping spaces in RAM .
 Similarly, the size of an unionized section is the largest of all its declarations.
 .Ss Section fragments
-Section fragments are sections with a small twist: when several of the same name are encountered, they are concatenated instead of producing an error.
+Section fragments are sections with a small twist: when several fragments with the same name are encountered, they are concatenated into one section instead of producing an error.
 This works within the same file (paralleling the behavior "plain" sections has in previous versions), but also across object files.
-To declare an section fragment, add a
+To declare a section fragment, add a
 .Ic FRAGMENT
 keyword after the
 .Ic SECTION
@@ -1940,7 +1962,7 @@ and
 .Sq wBonus .
 Thus, keep in mind that
 .Ql ld [wHealth], a
-assembles to the exact same thing as
+assembles to the exact same instruction as
 .Ql ld [wName], a .
 .Pp
 This whole union's total size is 20 bytes, the size of the largest block (the first one, containing
