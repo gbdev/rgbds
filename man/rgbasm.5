@@ -154,6 +154,8 @@ of string constants:
 will be expanded in all of
 .Ql DEF({name}) ,
 .Ql DEF {name} EQU/=/EQUS/etc ... ,
+.Ql REDEF {name} EQU/=/EQUS/etc ... ,
+.Ql FOR {name}, ... ,
 .Ql PURGE {name} ,
 and
 .Ql MACRO {name} ,
@@ -1556,6 +1558,8 @@ in the C programming language.
 This expansion is disabled in a few contexts:
 .Ql DEF(name) ,
 .Ql DEF name EQU/=/EQUS/etc ... ,
+.Ql REDEF name EQU/=/EQUS/etc ... ,
+.Ql FOR name, ... ,
 .Ql PURGE name ,
 and
 .Ql MACRO name
