@@ -716,45 +716,44 @@ int LexerState::peekCharAhead() {
 static std::pair<Symbol const *, std::shared_ptr<std::string>> readInterpolation(size_t depth);
 
 static int peek() {
-	int c = lexerState->peekChar();
+	for (;;) {
+		int c = lexerState->peekChar();
 
-	if (lexerState->expansionScanDistance > 0) {
-		return c;
-	}
-
-	++lexerState->expansionScanDistance; // Do not consider again
-
-	if (lexerState->disableExpansions) {
-		return c;
-	} else if (c == '\\') {
-		// If character is a backslash, check for a macro arg
-		++lexerState->expansionScanDistance;
-		if (!isMacroChar(lexerState->peekCharAhead())) {
+		if (lexerState->expansionScanDistance > 0) {
 			return c;
 		}
 
-		// If character is a macro arg char, do macro arg expansion
-		shiftChar();
-		if (std::shared_ptr<std::string> str = readMacroArg(); str) {
-			beginExpansion(str, std::nullopt);
+		++lexerState->expansionScanDistance; // Do not consider again
 
-			// Mark the entire macro arg expansion as "painted blue"
-			// so that macro args can't be recursive
-			// https://en.wikipedia.org/wiki/Painted_blue
-			lexerState->expansionScanDistance += str->length();
+		if (lexerState->disableExpansions) {
+			return c;
+		} else if (c == '\\') {
+			// If character is a backslash, check for a macro arg
+			++lexerState->expansionScanDistance;
+			if (!isMacroChar(lexerState->peekCharAhead())) {
+				return c;
+			}
+			// If character is a macro arg char, do macro arg expansion
+			shiftChar();
+			if (std::shared_ptr<std::string> str = readMacroArg(); str) {
+				beginExpansion(str, std::nullopt);
+
+				// Mark the entire macro arg expansion as "painted blue"
+				// so that macro args can't be recursive
+				// https://en.wikipedia.org/wiki/Painted_blue
+				lexerState->expansionScanDistance += str->length();
+			}
+			// Continue in the next iteration
+		} else if (c == '{') {
+			// If character is an open brace, do symbol interpolation
+			shiftChar();
+			if (auto interp = readInterpolation(0); interp.first && interp.second) {
+				beginExpansion(interp.second, interp.first->name);
+			}
+			// Continue in the next iteration
+		} else {
+			return c;
 		}
-
-		MUSTTAIL return peek();
-	} else if (c == '{') {
-		// If character is an open brace, do symbol interpolation
-		shiftChar();
-		if (auto interp = readInterpolation(0); interp.first && interp.second) {
-			beginExpansion(interp.second, interp.first->name);
-		}
-
-		MUSTTAIL return peek();
-	} else {
-		return c;
 	}
 }
 
@@ -1943,8 +1942,6 @@ static Token yylex_NORMAL() {
 				if (Symbol const *sym = sym_FindExactSymbol(std::get<std::string>(token.value));
 				    sym && sym->type == SYM_EQUS) {
 					beginExpansion(sym->getEqus(), sym->name);
-					// We cannot do `MUSTTAIL return yylex_NORMAL();` because tail call optimization
-					// requires the return value to be "trivially destructible", and `Token` is not.
 					continue; // Restart, reading from the new buffer
 				}
 			}

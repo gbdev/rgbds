@@ -60,13 +60,4 @@
 	#define _POSIX_C_SOURCE 200809L
 #endif
 
-// gcc and clang have their own `musttail` attributes for tail recursion
-#if defined(__clang__) && __has_cpp_attribute(clang::musttail)
-	#define MUSTTAIL [[clang::musttail]]
-#elif defined(__GNUC__) && __has_cpp_attribute(gnu::musttail)
-	#define MUSTTAIL [[gnu::musttail]]
-#else
-	#define MUSTTAIL
-#endif
-
 #endif // RGBDS_PLATFORM_HPP

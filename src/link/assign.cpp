@@ -15,7 +15,6 @@
 #include "helpers.hpp"
 #include "itertools.hpp"
 #include "linkdefs.hpp"
-#include "platform.hpp" // MUSTTAIL
 #include "verbosity.hpp"
 
 #include "link/main.hpp"
@@ -119,92 +118,93 @@ static MemoryLocation getStartLocation(Section const &section) {
 static std::optional<size_t> getPlacement(Section const &section, MemoryLocation &location) {
 	SectionTypeInfo const &typeInfo = sectionTypeInfo[section.type];
 
-	// Switch to the beginning of the next bank
-	std::deque<FreeSpace> &bankMem = memory[section.type][location.bank - typeInfo.firstBank];
-	size_t spaceIdx = 0;
+	for (;;) {
+		// Switch to the beginning of the next bank
+		std::deque<FreeSpace> &bankMem = memory[section.type][location.bank - typeInfo.firstBank];
+		size_t spaceIdx = 0;
 
-	if (spaceIdx < bankMem.size()) {
-		location.address = bankMem[spaceIdx].address;
-	}
-
-	// Process locations in that bank
-	while (spaceIdx < bankMem.size()) {
-		// If that location is OK, return it
-		if (isLocationSuitable(section, bankMem[spaceIdx], location)) {
-			return spaceIdx;
-		}
-
-		// Go to the next *possible* location
-		if (section.isAddressFixed) {
-			// If the address is fixed, there can be only one candidate block per bank;
-			// if we already reached it, give up.
-			if (location.address < section.org) {
-				location.address = section.org;
-			} else {
-				break; // Try again in next bank
-			}
-		} else if (section.isAlignFixed) {
-			// Move to next aligned location
-			// Move back to alignment boundary
-			location.address -= section.alignOfs;
-			// Ensure we're there (e.g. on first check)
-			location.address &= ~section.alignMask;
-			// Go to next align boundary and add offset
-			location.address += section.alignMask + 1 + section.alignOfs;
-		} else if (++spaceIdx < bankMem.size()) {
-			// Any location is fine, so, next free block
+		if (spaceIdx < bankMem.size()) {
 			location.address = bankMem[spaceIdx].address;
 		}
 
-		// If that location is past the current block's end,
-		// go forwards until that is no longer the case.
-		while (spaceIdx < bankMem.size()
-		       && location.address >= bankMem[spaceIdx].address + bankMem[spaceIdx].size) {
-			++spaceIdx;
+		// Process locations in that bank
+		while (spaceIdx < bankMem.size()) {
+			// If that location is OK, return it
+			if (isLocationSuitable(section, bankMem[spaceIdx], location)) {
+				return spaceIdx;
+			}
+
+			// Go to the next *possible* location
+			if (section.isAddressFixed) {
+				// If the address is fixed, there can be only one candidate block per bank;
+				// if we already reached it, give up and try again in the next bank.
+				if (location.address >= section.org) {
+					break;
+				}
+				location.address = section.org;
+			} else if (section.isAlignFixed) {
+				// Move to next aligned location
+				// Move back to alignment boundary
+				location.address -= section.alignOfs;
+				// Ensure we're there (e.g. on first check)
+				location.address &= ~section.alignMask;
+				// Go to next align boundary and add offset
+				location.address += section.alignMask + 1 + section.alignOfs;
+			} else if (++spaceIdx < bankMem.size()) {
+				// Any location is fine, so, next free block
+				location.address = bankMem[spaceIdx].address;
+			}
+
+			// If that location is past the current block's end,
+			// go forwards until that is no longer the case.
+			while (spaceIdx < bankMem.size()
+			       && location.address >= bankMem[spaceIdx].address + bankMem[spaceIdx].size) {
+				++spaceIdx;
+			}
+
+			// Try again with the new location/free space combo
 		}
 
-		// Try again with the new location/free space combo
+		// Try again in the next bank, if one is available.
+		// Try scrambled banks in descending order until no bank in the scrambled range is
+		// available. Otherwise, try in ascending order.
+		if (section.isBankFixed) {
+			return std::nullopt;
+		} else if (options.scrambleROMX && section.type == SECTTYPE_ROMX
+		           && location.bank <= options.scrambleROMX) {
+			if (location.bank > typeInfo.firstBank) {
+				--location.bank;
+			} else if (options.scrambleROMX < typeInfo.lastBank) {
+				location.bank = options.scrambleROMX + 1;
+			} else {
+				return std::nullopt;
+			}
+		} else if (options.scrambleWRAMX && section.type == SECTTYPE_WRAMX
+		           && location.bank <= options.scrambleWRAMX) {
+			if (location.bank > typeInfo.firstBank) {
+				--location.bank;
+			} else if (options.scrambleWRAMX < typeInfo.lastBank) {
+				location.bank = options.scrambleWRAMX + 1;
+			} else {
+				return std::nullopt;
+			}
+		} else if (options.scrambleSRAM && section.type == SECTTYPE_SRAM
+		           && location.bank <= options.scrambleSRAM) {
+			if (location.bank > typeInfo.firstBank) {
+				--location.bank;
+			} else if (options.scrambleSRAM < typeInfo.lastBank) {
+				location.bank = options.scrambleSRAM + 1;
+			} else {
+				return std::nullopt;
+			}
+		} else if (location.bank < typeInfo.lastBank) {
+			++location.bank;
+		} else {
+			return std::nullopt;
+		}
+
+		// Try again in the next iteration.
 	}
-
-	// Try again in the next bank, if one is available.
-	// Try scrambled banks in descending order until no bank in the scrambled range is
-	// available. Otherwise, try in ascending order.
-	if (section.isBankFixed) {
-		return std::nullopt;
-	} else if (options.scrambleROMX && section.type == SECTTYPE_ROMX
-	           && location.bank <= options.scrambleROMX) {
-		if (location.bank > typeInfo.firstBank) {
-			--location.bank;
-		} else if (options.scrambleROMX < typeInfo.lastBank) {
-			location.bank = options.scrambleROMX + 1;
-		} else {
-			return std::nullopt;
-		}
-	} else if (options.scrambleWRAMX && section.type == SECTTYPE_WRAMX
-	           && location.bank <= options.scrambleWRAMX) {
-		if (location.bank > typeInfo.firstBank) {
-			--location.bank;
-		} else if (options.scrambleWRAMX < typeInfo.lastBank) {
-			location.bank = options.scrambleWRAMX + 1;
-		} else {
-			return std::nullopt;
-		}
-	} else if (options.scrambleSRAM && section.type == SECTTYPE_SRAM
-	           && location.bank <= options.scrambleSRAM) {
-		if (location.bank > typeInfo.firstBank) {
-			--location.bank;
-		} else if (options.scrambleSRAM < typeInfo.lastBank) {
-			location.bank = options.scrambleSRAM + 1;
-		} else {
-			return std::nullopt;
-		}
-	} else if (location.bank < typeInfo.lastBank) {
-		++location.bank;
-	} else {
-		return std::nullopt;
-	}
-
-	MUSTTAIL return getPlacement(section, location);
 }
 
 static std::string getSectionDescription(Section const &section) {
