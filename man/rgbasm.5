@@ -30,7 +30,7 @@ The syntax is line-based, just as in any other assembler.
 Each line may have components in either of these orders:
 .Bl -bullet -offset indent
 .It
-.Li Oo Ar directive Oc Oo ;\  Ns Ar comment Oc
+.Li Oo Ar label : Oc Oo Ar directive Oc Oo ;\  Ns Ar comment Oc
 .It
 .Li Oo Ar label : Oc Oo Ar instruction Oo :: Ar instruction ... Oc Oc Oo ;\  Ns Ar comment Oc
 .El
@@ -44,6 +44,17 @@ or
 Labels tie a name to a specific location within a section (see
 .Sx Labels
 below).
+Labels are allowed before most directives, but not before
+.Ic IF ,
+.Ic ELIF ,
+.Ic ELSE ,
+.Ic ENDC ,
+.Ic REPT ,
+.Ic FOR ,
+.Ic ENDR ,
+.Ic MACRO ,
+or
+.Ic ENDM .
 .Pp
 Instructions are assembled into Game Boy opcodes.
 Multiple instructions on one line, as well as data directives (see
@@ -167,8 +178,10 @@ It's possible to change the way symbols are printed by specifying a print format
 .Ql {fmt:symbol} .
 The
 .Ql fmt
-specifier consists of these parts:
+specifier consists of parts, which must be in the following order:
 .Ql <sign><exact><align><pad><width><frac><prec><type> .
+All the parts are optional except the required
+.Ql <type> .
 These parts are:
 .Bl -column "<exact>"
 .It Sy Part Ta Sy Meaning
@@ -179,8 +192,7 @@ or
 If specified, prints this character in front of non-negative numbers.
 .It Ql <exact> Ta May be
 .Ql #
-for non-decimal types
-.Pq not So d Sc or So u Sc .
+.Pq only allowed for non-decimal types .
 If specified, prints the value in an "exact" format: with a base prefix
 .Pq So $ Sc , So & Sc , or So % Sc
 for non-decimal integer types
@@ -229,8 +241,6 @@ option.
 .It Ql <type> Ta Specifies the type of value.
 .El
 .Pp
-All the format specifier parts are optional except the
-.Ql <type> .
 Valid types are:
 .Bl -column -offset indent "Type" "Lowercase hexadecimal" "Example"
 .It Sy Type Ta Sy Format Ta Sy Example
@@ -271,7 +281,7 @@ would be more appropriate; see
 .Sx String expressions
 below.
 .Sh EXPRESSIONS
-Expressions can be one of two types: either numeric or string.
+There are two types of expressions: numeric and string.
 .Pp
 Numeric expressions are always evaluated using signed 32-bit math.
 In Boolean logic contexts, zero is considered to be the only "false" number, and all non-zero numbers (including negative) are "true".
@@ -795,8 +805,6 @@ can range from
 .Ad $4000
 to
 .Ad $7FFF .
-.Ar bank
-can range from 1 to 511, or up to 65535 for the homebrew TPP1 mapper.
 Becomes an alias for
 .Ic ROM0
 if tiny ROM mode is enabled in the linker.
@@ -816,8 +824,6 @@ can range from
 .Ad $A000
 to
 .Ad $BFFF .
-.Ar bank
-can range from 0 to 15, or up to 255 for the homebrew TPP1 mapper.
 .It Ic WRAM0
 A general-purpose RAM section.
 .Ar addr
@@ -829,7 +835,7 @@ or
 .Ad $C000
 to
 .Ad $DFFF
-if WRAM0 mode or DMG mode is enabled in the linker.
+if WRAM0 mode is enabled in the linker.
 .It Ic WRAMX
 A banked general-purpose RAM section.
 .Ar addr
@@ -841,7 +847,7 @@ to
 can range from 1 to 7.
 Becomes an alias for
 .Ic WRAM0
-if WRAM0 mode or DMG mode is enabled in the linker.
+if WRAM0 mode is enabled in the linker.
 .It Ic OAM
 An object attribute RAM section.
 .Ar addr
@@ -864,7 +870,7 @@ and
 .Ic ROMX
 sections.
 The other RAM section types are for statically allocated labels.
-If you need code or data in RAM, you will need to copy it from ROM to RAM.
+If you need code or data in RAM, you will need to copy it from ROM to RAM yourself.
 See
 .Sx RAM code
 for an example of how to conveniently do that with a
@@ -1109,7 +1115,7 @@ Different declarations of the same unionized section are not appended, but inste
 .Sx Allocating overlapping spaces in RAM .
 Similarly, the size of an unionized section is the largest of all its declarations.
 .Ss Section fragments
-Section fragments are sections with a small twist: when several fragments with the same name are encountered, they are concatenated into one section instead of producing an error.
+Section fragments are sections with a small twist: when several fragments with the same name are encountered, they are concatenated into one section instead of producing an error, even across multiple object files.
 This works within the same file (paralleling the behavior "plain" sections has in previous versions), but also across object files.
 To declare a section fragment, add a
 .Ic FRAGMENT
