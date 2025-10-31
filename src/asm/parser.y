@@ -455,12 +455,13 @@ endofline: NEWLINE | EOB | EOL;
 // and to avoid causing some grammar conflicts (token reducing is finicky).
 // This is DEFINITELY one of the more FRAGILE parts of the codebase, handle with care.
 line_directive:
-	  def_macro
+	  macro_def
 	| rept
 	| for
 	| break
 	| include
 	| if
+	| endc
 	// It's important that all of these require being at line start for `skipIfBlock`
 	| elif
 	| else
@@ -489,12 +490,12 @@ else:
 plain_directive:
 	  label
 	| label data
-	| label macro
+	| label macro_invocation
 	| label directive
 ;
 
 endc:
-	POP_ENDC {
+	POP_ENDC endofline {
 		act_Endc();
 	}
 ;
@@ -545,7 +546,7 @@ label:
 	}
 ;
 
-macro:
+macro_invocation:
 	SYMBOL {
 		// Parsing 'macro_args' will restore the lexer's normal mode
 		lexer_SetMode(LEXER_RAW);
@@ -571,8 +572,7 @@ macro_args:
 ;
 
 directive:
-	  endc
-	| print
+	  print
 	| println
 	| export
 	| export_def
@@ -853,7 +853,7 @@ break:
 	}
 ;
 
-def_macro:
+macro_def:
 	POP_MACRO {
 		lexer_ToggleStringExpansion(false);
 	} maybe_quiet SYMBOL {

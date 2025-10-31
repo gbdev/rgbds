@@ -12,4 +12,5 @@ error: syntax error, unexpected PRINTLN, expecting end of line
     at code-after-endm-endr-endc.asm(23)
 error: syntax error, unexpected PRINTLN, expecting end of line or end of buffer or end of fragment literal
     at code-after-endm-endr-endc.asm(25)
-Assembly aborted with 7 errors!
+FATAL: Ended block with 2 unterminated conditionals (`IF`/`ELIF`/`ELSE` blocks)
+    at code-after-endm-endr-endc.asm(28)

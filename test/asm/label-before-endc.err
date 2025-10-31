@@ -1,0 +1,6 @@
+error: syntax error, unexpected ENDC
+    at label-before-endc.asm(4)
+error: syntax error, unexpected ENDC
+    at label-before-endc.asm(7)
+FATAL: Ended block with 2 unterminated conditionals (`IF`/`ELIF`/`ELSE` blocks)
+    at label-before-endc.asm(8)
