@@ -1,2 +1,2 @@
-section fragment "test", rom0
-db 1
+section fragment "test", wram0
+w1:: db

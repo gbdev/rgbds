@@ -1,0 +1,2 @@
+SECTION UNION "wat", ROM0
+db 42

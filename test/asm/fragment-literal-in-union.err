@@ -1,2 +1,6 @@
-FATAL: `SECTION UNION` cannot contain fragment literals
+error: Cannot declare ROM sections as `UNION`
+    at fragment-literal-in-union.asm(1)
+error: Cannot output data outside of a `SECTION`
+    at fragment-literal-in-union.asm(2)
+FATAL: Cannot output fragment literals outside of a `SECTION`
     at fragment-literal-in-union.asm(3)

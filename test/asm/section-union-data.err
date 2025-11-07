@@ -1,0 +1,5 @@
+error: Cannot declare ROM sections as `UNION`
+    at section-union-data.asm(1)
+error: Cannot output data outside of a `SECTION`
+    at section-union-data.asm(2)
+Assembly aborted with 2 errors!

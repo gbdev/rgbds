@@ -1,2 +1,2 @@
-section union "test", rom0
-db 2
+section union "test", wram0
+w2:: db

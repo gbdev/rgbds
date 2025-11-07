@@ -120,9 +120,8 @@ Section *sect_FindSectionByName(std::string const &name) {
 		++nbSectErrors; \
 	} while (0)
 
-static unsigned int mergeSectUnion(
-    Section &sect, SectionType type, uint32_t org, uint8_t alignment, uint16_t alignOffset
-) {
+static unsigned int
+    mergeSectUnion(Section &sect, uint32_t org, uint8_t alignment, uint16_t alignOffset) {
 	unsigned int nbSectErrors = 0;
 
 	assume(alignment < 16); // Should be ensured by the caller
@@ -132,12 +131,6 @@ static unsigned int mergeSectUnion(
 	assume(sect.align <= 16); // Left-shifting by 32 or more would be UB
 	uint32_t sectAlignSize = 1u << sect.align;
 	uint32_t sectAlignMask = sectAlignSize - 1;
-
-	// Unionized sections only need "compatible" constraints, and they end up with the strictest
-	// combination of both.
-	if (sectTypeHasData(type)) {
-		sectError("Cannot declare ROM sections as `UNION`");
-	}
 
 	if (org != UINT32_MAX) {
 		// If both are fixed, they must be the same
@@ -266,12 +259,10 @@ static void mergeSections(
 	} else {
 		switch (mod) {
 		case SECTION_UNION:
-		case SECTION_FRAGMENT:
-			nbSectErrors += mod == SECTION_UNION
-			                    ? mergeSectUnion(sect, type, org, alignment, alignOffset)
-			                    : mergeFragments(sect, org, alignment, alignOffset);
-
-			// Common checks
+		case SECTION_FRAGMENT: {
+			unsigned int (*merge)(Section &, uint32_t, uint8_t, uint16_t) =
+			    mod == SECTION_UNION ? mergeSectUnion : mergeFragments;
+			nbSectErrors += merge(sect, org, alignment, alignOffset);
 
 			// If the section's bank is unspecified, override it
 			if (sect.bank == UINT32_MAX) {
@@ -282,6 +273,7 @@ static void mergeSections(
 				sectError("Section already declared with different bank %" PRIu32, sect.bank);
 			}
 			break;
+		}
 
 		case SECTION_NORMAL:
 			errorNoTrace([&]() {
@@ -511,6 +503,11 @@ void sect_NewSection(
 		if (entry.section && entry.section->name == name) {
 			fatal("Section \"%s\" is already on the stack", name.c_str());
 		}
+	}
+
+	if (mod == SECTION_UNION && sectTypeHasData(type)) {
+		error("Cannot declare ROM sections as `UNION`");
+		return;
 	}
 
 	if (currentLoadSection) {
@@ -1121,11 +1118,11 @@ std::string sect_PushSectionFragmentLiteral() {
 		);
 	}
 
+	// This section has data (ROM0 or ROMX), so it cannot be a UNION
+	assume(currentSection->modifier != SECTION_UNION);
+
 	if (currentLoadSection) {
 		fatal("`LOAD` blocks cannot contain fragment literals");
-	}
-	if (currentSection->modifier == SECTION_UNION) {
-		fatal("`SECTION UNION` cannot contain fragment literals");
 	}
 
 	// A section containing a fragment literal has to become a fragment too
