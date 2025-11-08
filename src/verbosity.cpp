@@ -24,6 +24,15 @@ void incrementVerbosity() {
 	}
 }
 
+void printVerbosely(char const *fmt, ...) {
+	va_list args;
+	style_Set(stderr, STYLE_MAGENTA, false);
+	va_start(args, fmt);
+	vfprintf(stderr, fmt, args);
+	va_end(args);
+	style_Reset(stderr);
+}
+
 void printVVVVVVerbosity() {
 	if (!checkVerbosity(VERB_VVVVVV)) {
 		return;

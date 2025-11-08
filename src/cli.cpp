@@ -21,10 +21,11 @@ static std::vector<size_t>
 
 	std::filebuf file;
 	if (!file.open(path, std::ios_base::in)) {
+		int errnum = errno;
 		style_Set(stderr, STYLE_RED, true);
 		fputs("FATAL: ", stderr);
 		style_Reset(stderr);
-		fprintf(stderr, "Failed to open at-file \"%s\": %s\n", path.c_str(), strerror(errno));
+		fprintf(stderr, "Failed to open at-file \"%s\": %s\n", path.c_str(), strerror(errnum));
 		usage.printAndExit(1);
 	}
 

@@ -3,17 +3,14 @@
 #ifndef RGBDS_VERBOSITY_HPP
 #define RGBDS_VERBOSITY_HPP
 
+#include <stdarg.h>
 #include <stdio.h>
-
-#include "style.hpp"
 
 // This macro does not evaluate its arguments unless the condition is true.
 #define verbosePrint(level, ...) \
 	do { \
 		if (checkVerbosity(level)) { \
-			style_Set(stderr, STYLE_MAGENTA, false); \
-			fprintf(stderr, __VA_ARGS__); \
-			style_Reset(stderr); \
+			printVerbosely(__VA_ARGS__); \
 		} \
 	} while (0)
 
@@ -29,6 +26,9 @@ enum Verbosity {
 
 void incrementVerbosity();
 bool checkVerbosity(Verbosity level);
+
+[[gnu::format(printf, 1, 2)]]
+void printVerbosely(char const *fmt, ...);
 
 void printVVVVVVerbosity();
 
