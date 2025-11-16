@@ -49,7 +49,7 @@ else()
                   -fsanitize=float-divide-by-zero)
     add_compile_options(${SAN_FLAGS})
     add_link_options(${SAN_FLAGS})
-    add_definitions(-D_GLIBCXX_ASSERTIONS)
+    add_definitions(-D_GLIBCXX_ASSERTIONS -D_LIBCPP_HARDENING_MODE=_LIBCPP_HARDENING_MODE_DEBUG)
     # A non-zero optimization level is desired in debug mode, but allow overriding it nonetheless
     set(CMAKE_CXX_FLAGS_DEBUG "-g -Og -fno-omit-frame-pointer -fno-optimize-sibling-calls ${CMAKE_CXX_FLAGS_DEBUG}"
                               CACHE STRING "" FORCE)
