@@ -222,8 +222,8 @@ develop:
 		-Wformat=2 -Wformat-overflow=2 -Wformat-truncation=1 \
 		-Wno-format-nonliteral -Wno-strict-overflow -Wno-unused-but-set-variable \
 		-Wno-type-limits -Wno-tautological-constant-out-of-range-compare -Wvla \
-		-D_GLIBCXX_ASSERTIONS -fsanitize=address -fsanitize=undefined \
-		-fsanitize=float-divide-by-zero" \
+		-D_GLIBCXX_ASSERTIONS -D_LIBCPP_HARDENING_MODE=_LIBCPP_HARDENING_MODE_DEBUG \
+		-fsanitize=address -fsanitize=undefined -fsanitize=float-divide-by-zero" \
 		CXXFLAGS="-ggdb3 -Og -fno-omit-frame-pointer -fno-optimize-sibling-calls"
 
 # Target used in development to debug with gdb.
