@@ -208,50 +208,37 @@ static std::optional<size_t> getPlacement(Section const &section, MemoryLocation
 }
 
 static std::string getSectionDescription(Section const &section) {
-	std::string where;
-
-	char bank[8], addr[8], mask[8], offset[8];
+	std::string description =
+	    "\"" + section.name + "\" (" + sectionTypeInfo[section.type].name + " section) ";
 	if (section.isBankFixed && sectTypeBanks(section.type) != 1) {
+		char bank[8];
 		snprintf(bank, sizeof(bank), "%02" PRIx32, section.bank);
-	}
-	if (section.isAddressFixed) {
-		snprintf(addr, sizeof(addr), "%04" PRIx16, section.org);
-	}
-	if (section.isAlignFixed) {
-		snprintf(mask, sizeof(mask), "%" PRIx16, static_cast<uint16_t>(~section.alignMask));
-		snprintf(offset, sizeof(offset), "%" PRIx16, section.alignOfs);
-	}
-
-	if (section.isBankFixed && sectTypeBanks(section.type) != 1) {
 		if (section.isAddressFixed) {
-			where = "at $";
-			where += bank;
-			where += ":";
-			where += addr;
+			char addr[8];
+			snprintf(addr, sizeof(addr), "%04" PRIx16, section.org);
+			description = description + "at $" + bank + ":" + addr;
 		} else if (section.isAlignFixed) {
-			where = "in bank $";
-			where += bank;
-			where += " with align mask $";
-			where += mask;
+			char mask[8];
+			snprintf(mask, sizeof(mask), "%" PRIx16, static_cast<uint16_t>(~section.alignMask));
+			description = description + "in bank $" + bank + " with align mask $" + mask;
 		} else {
-			where = "in bank $";
-			where += bank;
+			description = description + "in bank $" + bank;
 		}
 	} else {
 		if (section.isAddressFixed) {
-			where = "at address $";
-			where += addr;
+			char addr[8];
+			snprintf(addr, sizeof(addr), "%04" PRIx16, section.org);
+			description = description + "at address $" + addr;
 		} else if (section.isAlignFixed) {
-			where = "with align mask $";
-			where += mask;
-			where += " and offset $";
-			where += offset;
+			char mask[8], offset[8];
+			snprintf(mask, sizeof(mask), "%" PRIx16, static_cast<uint16_t>(~section.alignMask));
+			snprintf(offset, sizeof(offset), "%" PRIx16, section.alignOfs);
+			description = description + "with align mask $" + mask + " and offset $" + offset;
 		} else {
-			where = "anywhere";
+			description = description + "anywhere";
 		}
 	}
-
-	return where;
+	return description;
 }
 
 // Places a section in a suitable location, or error out if it fails to.
@@ -310,19 +297,11 @@ static void placeSection(Section &section) {
 
 	if (!section.isBankFixed || !section.isAddressFixed) {
 		// If a section failed to go to several places, nothing we can report
-		fatal(
-		    "Unable to place \"%s\" (%s section) %s",
-		    section.name.c_str(),
-		    sectionTypeInfo[section.type].name.c_str(),
-		    getSectionDescription(section).c_str()
-		);
+		fatal("Unable to place %s", getSectionDescription(section).c_str());
 	} else if (section.org + section.size > sectTypeEndAddr(section.type) + 1) {
 		// If the section just can't fit the bank, report that
 		fatal(
-		    "Unable to place \"%s\" (%s section) %s: section runs past end of region ($%04x > "
-		    "$%04x)",
-		    section.name.c_str(),
-		    sectionTypeInfo[section.type].name.c_str(),
+		    "Unable to place %s: section runs past end of region ($%04x > $%04x)",
 		    getSectionDescription(section).c_str(),
 		    section.org + section.size,
 		    sectTypeEndAddr(section.type) + 1
@@ -330,9 +309,7 @@ static void placeSection(Section &section) {
 	} else {
 		// Otherwise there is overlap with another section
 		fatal(
-		    "Unable to place \"%s\" (%s section) %s: section overlaps with \"%s\"",
-		    section.name.c_str(),
-		    sectionTypeInfo[section.type].name.c_str(),
+		    "Unable to place %s: section overlaps with \"%s\"",
 		    getSectionDescription(section).c_str(),
 		    out_OverlappingSection(section)->name.c_str()
 		);
