@@ -1,0 +1,5 @@
+error: Undefined symbol `BAR`
+    at rpn-bad-sym-id.asm(3)
+error: Undefined symbol `FOO`
+    at rpn-bad-sym-id.asm(2)
+Linking failed with 2 errors
