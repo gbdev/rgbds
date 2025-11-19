@@ -420,19 +420,15 @@ void obj_ReadFile(std::string const &filePath, size_t fileID) {
 	}
 	Defer closeFile{[&] { fclose(file); }};
 
-	// First, check if the object is a RGBDS object or a SDCC one. If the first byte is 'R',
-	// we'll assume it's a RGBDS object file, and otherwise, that it's a SDCC object file.
-	int c = getc(file);
-
-	ungetc(c, file); // Guaranteed to work
-	switch (c) {
+	// First, check if the object is a RGBDS object, a SDCC one, or neither.
+	// A single `ungetc` is guaranteed to work.
+	switch (ungetc(getc(file), file)) {
 	case EOF:
 		fatal("File \"%s\" is empty!", fileName);
 
-	case 'R':
-		break;
-
-	default:
+	case 'X':
+	case 'D':
+	case 'Q': {
 		// This is (probably) a SDCC object file, defer the rest of detection to it.
 		// Since SDCC does not provide line info, everything will be reported as coming from the
 		// object file. It's better than nothing.
@@ -450,11 +446,16 @@ void obj_ReadFile(std::string const &filePath, size_t fileID) {
 		return;
 	}
 
-	// Begin by reading the magic bytes
-	int matchedElems;
+	case 'R':
+		// Check the magic byte signature for a RGB object file.
+		if (char magic[literal_strlen(RGBDS_OBJECT_VERSION_STRING)];
+		    fread(magic, 1, sizeof(magic), file) == sizeof(magic)
+		    && !memcmp(magic, RGBDS_OBJECT_VERSION_STRING, sizeof(magic))) {
+			break;
+		}
+		[[fallthrough]];
 
-	if (fscanf(file, RGBDS_OBJECT_VERSION_STRING "%n", &matchedElems) == 1
-	    && matchedElems != literal_strlen(RGBDS_OBJECT_VERSION_STRING)) {
+	default:
 		fatal("%s: Not a RGBDS object file", fileName);
 	}
 
