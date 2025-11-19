@@ -252,7 +252,7 @@ static void parseArg(int ch, char *arg) {
 
 		// LCOV_EXCL_START
 	case 'V':
-		printf("rgbfix %s\n", get_package_version_string());
+		printf("%s %s\n", usage.name.c_str(), get_package_version_string());
 		exit(0);
 
 	case 'v':

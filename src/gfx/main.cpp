@@ -409,7 +409,7 @@ static void parseArg(int ch, char *arg) {
 
 		// LCOV_EXCL_START
 	case 'V':
-		printf("rgbgfx %s\n", get_package_version_string());
+		printf("%s %s\n", usage.name.c_str(), get_package_version_string());
 		exit(0);
 
 	case 'v':
@@ -481,7 +481,7 @@ static void verboseOutputConfig() {
 
 	style_Set(stderr, STYLE_MAGENTA, false);
 
-	fprintf(stderr, "rgbgfx %s\n", get_package_version_string());
+	fprintf(stderr, "%s %s\n", usage.name.c_str(), get_package_version_string());
 
 	printVVVVVVerbosity();
 
