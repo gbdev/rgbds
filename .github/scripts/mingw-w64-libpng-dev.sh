@@ -1,13 +1,13 @@
 #!/bin/bash
 set -euo pipefail
 
-pngver=1.6.50
+pngver=1.6.51
 arch="$1"
 
 ## Grab sources and check them
 
 wget http://downloads.sourceforge.net/project/libpng/libpng16/$pngver/libpng-$pngver.tar.xz
-echo 4df396518620a7aa3651443e87d1b2862e4e88cad135a8b93423e01706232307 libpng-$pngver.tar.xz | sha256sum -c -
+echo a050a892d3b4a7bb010c3a95c7301e49656d72a64f1fc709a90b8aded192bed2 libpng-$pngver.tar.xz | sha256sum -c -
 
 ## Extract sources and patch them
 
