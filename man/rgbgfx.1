@@ -143,9 +143,17 @@ Set the base IDs for tile map output.
 should be one or two numbers between 0 and 255, separated by a comma; they are for bank 0 and bank 1 respectively.
 Both default to 0.
 .It Fl C , Fl \-color-curve
-When generating palettes, use a color curve mimicking the Game Boy Color's screen.
-The resulting colors may look closer to the input image's
-.Sy on hardware and accurate emulators .
+Modifies the color palettes
+.Pq whether they are generated from the input image or taken from an input palette specification
+with a color curve mimicking the Game Boy Color's screen.
+This adjusts the
+.Em absolute
+RGB color values so that the
+.Em perceived
+colors, when displayed on Game Boy Color hardware
+.Pq or an emulator with an accurate display filter ,
+will look like the original colors as displayed on a backlit computer screen.
+Note that GBC displays can look very different depending on the ambient light and their exact hardware model, so this color curve is only a "best effort".
 .It Fl c Ar pal_spec , Fl \-colors Ar pal_spec
 Use the specified color palettes instead of having
 .Nm
