@@ -1,0 +1,3 @@
+error: syntax error, unexpected local label, expecting symbol
+    at dots-constant.asm(2)
+Assembly aborted with 1 error!

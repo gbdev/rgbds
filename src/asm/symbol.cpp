@@ -53,6 +53,12 @@ bool sym_IsPC(Symbol const *sym) {
 	return sym == PCSymbol;
 }
 
+bool sym_IsDotScope(std::string const &symName) {
+	// Label scopes `.` and `..` are the only nonlocal identifiers that start with a dot.
+	// Three or more dots are considered a nonsensical local label.
+	return symName == "." || symName == "..";
+}
+
 void sym_ForEach(void (*callback)(Symbol &)) {
 	for (auto &it : symbols) {
 		callback(it.second);
@@ -215,8 +221,8 @@ static void redefinedError(Symbol const &sym) {
 
 static void assumeAlreadyExpanded(std::string const &symName) {
 	// Either the symbol name is `Global.local` or entirely '.'s (for scopes `.` and `..`),
-	// but cannot be unqualified `.local`
-	assume(!symName.starts_with('.') || symName.find_first_not_of('.') == symName.npos);
+	// but cannot be unqualified `.local` or more than two '.'s
+	assume(!symName.starts_with('.') || sym_IsDotScope(symName));
 }
 
 static Symbol &createSymbol(std::string const &symName) {
@@ -253,7 +259,7 @@ static bool isAutoScoped(std::string const &symName) {
 	}
 
 	// Label scopes `.` and `..` are the only nonlocal identifiers that start with a dot
-	if (dotPos == 0 && symName.find_first_not_of('.') == symName.npos) {
+	if (sym_IsDotScope(symName)) {
 		return false;
 	}
 

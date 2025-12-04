@@ -10,4 +10,32 @@ error: Built-in symbol `.` cannot be purged
     at label-scope.asm(12)
 error: Built-in symbol `..` cannot be purged
     at label-scope.asm(12)
-Assembly aborted with 6 errors!
+error: `.` is not a macro
+    at label-scope.asm(22)
+error: `.` is not a macro
+    at label-scope.asm(23)
+error: `.` is not a macro
+    at label-scope.asm(24)
+error: `.` is reserved for a built-in symbol
+    at label-scope.asm(25)
+error: `.` has no value outside of a label scope
+    at label-scope.asm(26)
+warning: Treating strings as numbers is deprecated; use character literals or `CHARVAL` instead [-Wobsolete]
+    at label-scope.asm(26)
+error: Strings as numbers must be a single charmap unit
+    at label-scope.asm(26)
+error: `..` is not a macro
+    at label-scope.asm(28)
+error: `..` is not a macro
+    at label-scope.asm(29)
+error: `..` is not a macro
+    at label-scope.asm(30)
+error: `..` is reserved for a built-in symbol
+    at label-scope.asm(31)
+error: `..` has no value outside of a local label scope
+    at label-scope.asm(32)
+warning: Treating strings as numbers is deprecated; use character literals or `CHARVAL` instead [-Wobsolete]
+    at label-scope.asm(32)
+error: Strings as numbers must be a single charmap unit
+    at label-scope.asm(32)
+Assembly aborted with 18 errors!

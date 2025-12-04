@@ -16,3 +16,17 @@ ASSERT DEF(@) && DEF(.) && DEF(..) && DEF(Foo) && DEF(.bar)
 PRINTLN "PC: {#05X:@}"
 PRINTLN "global scope: \"{.}\" ({#05X:{.}})"
 PRINTLN "local scope: \"{..}\" ({#05X:{..}})"
+
+SECTION "can't redefine", ROM0
+
+#.
+#.:
+#.?
+DEF #. EQUS "global"
+jp #.
+
+#..
+#..:
+#..?
+DEF #.. EQUS "local"
+jp #..

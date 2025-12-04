@@ -1,0 +1,2 @@
+FATAL: `...` is a nonsensical reference to a nested local label
+    at dots-label.asm(2)
