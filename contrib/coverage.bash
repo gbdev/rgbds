@@ -22,7 +22,7 @@ mkdir -p coverage
 COVERAGE_INFO=coverage/coverage.info
 lcov -c --no-external -d . -o "$COVERAGE_INFO"
 lcov -r "$COVERAGE_INFO" src/asm/parser.{hpp,cpp} src/link/script.{hpp,cpp} -o "$COVERAGE_INFO"
-genhtml --dark-mode -f -s -o coverage/ "$COVERAGE_INFO"
+genhtml --dark-mode --num-spaces 4 -f -s -o coverage/ "$COVERAGE_INFO"
 
 # Check whether running from coverage.yml workflow
 if [ "$1" != "ubuntu-ci" ]; then
