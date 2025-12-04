@@ -1,0 +1,2 @@
+section "test", rom0
+#...:

@@ -1295,7 +1295,7 @@ static Token readIdentifier(char firstChar, bool raw) {
 	}
 
 	// Label scopes `.` and `..` are the only nonlocal identifiers that start with a dot
-	if (identifier.find_first_not_of('.') == identifier.npos) {
+	if (sym_IsDotScope(identifier)) {
 		tokenType = T_(SYMBOL);
 	}
 
@@ -1939,11 +1939,12 @@ static Token yylex_NORMAL() {
 
 			// `token` is either a `SYMBOL` or a `LOCAL`, and both have a `std::string` value.
 			assume(std::holds_alternative<std::string>(token.value));
+			std::string const &identifier = std::get<std::string>(token.value);
 
 			// Raw symbols and local symbols cannot be string expansions
 			if (!raw && token.type == T_(SYMBOL) && lexerState->expandStrings) {
 				// Attempt string expansion
-				if (Symbol const *sym = sym_FindExactSymbol(std::get<std::string>(token.value));
+				if (Symbol const *sym = sym_FindExactSymbol(identifier);
 				    sym && sym->type == SYM_EQUS) {
 					beginExpansion(sym->getEqus(), sym->name);
 					continue; // Restart, reading from the new buffer
@@ -1954,6 +1955,7 @@ static Token yylex_NORMAL() {
 			// - label definitions (which are followed by a ':' and use the token `LABEL`)
 			// - quiet macro invocations (which are followed by a '?' and use the token `QMACRO`)
 			// - regular macro invocations (which use the token `SYMBOL`)
+			// - label scopes "." and ".." (which use the token `SYMBOL` no matter what)
 			//
 			// If we had one `IDENTIFIER` token, the parser would need to perform "lookahead" to
 			// determine which rule applies. But since macros need to enter "raw" mode to parse
@@ -1964,7 +1966,7 @@ static Token yylex_NORMAL() {
 			// one to lex depending on the character *immediately* following the identifier.
 			// Thus "name:" is a label definition, and "name?" is a quiet macro invocation, but
 			// "name :" and "name ?" and just "name" are all regular macro invocations.
-			if (token.type == T_(SYMBOL)) {
+			if (token.type == T_(SYMBOL) && !sym_IsDotScope(identifier)) {
 				c = peek();
 				token.type = c == ':' ? T_(LABEL) : c == '?' ? T_(QMACRO) : T_(SYMBOL);
 			}

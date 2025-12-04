@@ -68,6 +68,8 @@ struct Symbol {
 	uint32_t getConstantValue() const;
 };
 
+bool sym_IsDotScope(std::string const &symName);
+
 void sym_ForEach(void (*callback)(Symbol &));
 
 Symbol *sym_AddLocalLabel(std::string const &symName);
