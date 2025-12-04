@@ -1,0 +1,5 @@
+error: Invalid character 0xEB (is the file UTF-8?)
+    at garbage-before-eof.asm(1)
+error: syntax error, unexpected end of buffer, expecting ? or symbol
+    at garbage-before-eof.asm(1)
+Assembly aborted with 2 errors!

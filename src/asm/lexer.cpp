@@ -1636,6 +1636,10 @@ static Token yylex_SKIP_TO_ENDC(); // Forward declaration for `yylex_NORMAL`
 
 // Must stay in sync with the `switch` in `yylex_NORMAL`!
 static bool isGarbageCharacter(int c) {
+	// EOF is not garbage (it can't be reported anyway)
+	if (c == EOF) {
+		return false;
+	}
 	// Whitespace characters are not garbage, even the non-"printable" ones
 	if (isWhitespace(c)) {
 		return false;
@@ -1645,7 +1649,7 @@ static bool isGarbageCharacter(int c) {
 		return true;
 	}
 	// All other printable characters are not garbage (i.e. `yylex_NORMAL` handles them), and
-	// all other nonprintable characters are garbage (including '\0' and EOF)
+	// all other nonprintable characters are garbage (including '\0')
 	return !isPrintable(c);
 }
 
