@@ -107,11 +107,11 @@ if ! "$external"; then
 fi
 
 if "$nonfree"; then
-	action github.com pret  pokecrystal      2025-09-05 d138ed1bd4db80cf8caa549878600448fedf674e
-	action github.com pret  pokered          2025-10-04 e3af20b907fad59bcbee7d36ab4912d0cc5f2935
-	action github.com zladx LADX-Disassembly 2025-10-11 f6de3516aaea480d2d3beda357fc76460bb8299d
+	action github.com pret  pokecrystal      2025-11-30 713b829198840eb0d6ba1bf0f947d609fdec6464
+	action github.com pret  pokered          2025-11-30 8bb03542bd0dd01b1e4fce990751edc0822a878f
+	action github.com zladx LADX-Disassembly 2025-11-25 c9f522f18ad69079322ff564595881d10a9897b4
 fi
 action github.com   AntonioND ucity          2025-08-07 d1880a2a112d7c26f16c0fc06a15b6c32fdc9137
 action github.com   pinobatch libbet         2025-08-31 e42c0036b18e6e715987b88b4973389b283974c9
-action github.com   LIJI32    SameBoy        2025-10-16 4c57a761517d3d11bb8d2ce31037b17d3a85b745
-action codeberg.org ISSOtm    gb-starter-kit 2025-09-23 6aeb2508ab75c15724b177a1437b939357bc5d6f
+action github.com   LIJI32    SameBoy        2025-11-13 c50fdfd222ac5a2e07cf9c6f43c645e2dbe0a62d
+action codeberg.org ISSOtm    gb-starter-kit 2025-11-19 74b647d62ff74b40d2b52e585cbebe148463212e
