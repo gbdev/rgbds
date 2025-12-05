@@ -468,4 +468,6 @@ int main(int argc, char *argv[]) {
 	patch_ApplyPatches();
 	requireZeroErrors();
 	out_WriteFiles();
+
+	return 0;
 }
