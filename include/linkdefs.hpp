@@ -120,7 +120,7 @@ enum SectionModifier { SECTION_NORMAL, SECTION_UNION, SECTION_FRAGMENT };
 
 extern char const * const sectionModNames[];
 
-enum ExportLevel { SYMTYPE_LOCAL, SYMTYPE_IMPORT, SYMTYPE_EXPORT };
+enum ExportLevel { SYMTYPE_LOCAL, SYMTYPE_IMPORT, SYMTYPE_EXPORT, SYMTYPE_INVALID };
 
 enum PatchType {
 	PATCHTYPE_BYTE,

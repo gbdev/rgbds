@@ -78,7 +78,8 @@ static uint32_t getRPNByte(uint8_t const *&expression, int32_t &size, Patch cons
 }
 
 static Symbol const *getSymbol(std::vector<Symbol> const &symbolList, uint32_t index) {
-	assume(index != UINT32_MAX); // PC needs to be handled specially, not here
+	assume(index != UINT32_MAX);       // PC needs to be handled specially, not here
+	assume(index < symbolList.size()); // This needs to be checked before calling
 	Symbol const &symbol = symbolList[index];
 
 	// If the symbol is defined elsewhere...
@@ -270,17 +271,19 @@ static int32_t computeRPNExpr(Patch const &patch, std::vector<Symbol> const &fil
 			value = op_shift_right_unsigned(popRPN(patch), value);
 			break;
 
-		case RPN_BANK_SYM:
-			value = 0;
+		case RPN_BANK_SYM: {
+			uint32_t symID = 0;
 			for (uint8_t shift = 0; shift < 32; shift += 8) {
-				value |= getRPNByte(expression, size, patch) << shift;
+				symID |= getRPNByte(expression, size, patch) << shift;
 			}
 
-			if (Symbol const *symbol = getSymbol(fileSymbols, value); !symbol) {
+			if (symID >= fileSymbols.size()) {
+				fatalAt(patch, "Requested `BANK()` of invalid symbol ID #%" PRIu32, symID);
+			} else if (Symbol const *symbol = getSymbol(fileSymbols, symID); !symbol) {
 				errorAt(
 				    patch,
 				    "Requested `BANK()` of undefined symbol `%s`",
-				    fileSymbols[value].name.c_str()
+				    fileSymbols[symID].name.c_str()
 				);
 				isError = true;
 				value = 1;
@@ -290,12 +293,13 @@ static int32_t computeRPNExpr(Patch const &patch, std::vector<Symbol> const &fil
 				errorAt(
 				    patch,
 				    "Requested `BANK()` of non-label symbol `%s`",
-				    fileSymbols[value].name.c_str()
+				    fileSymbols[symID].name.c_str()
 				);
 				isError = true;
 				value = 1;
 			}
 			break;
+		}
 
 		case RPN_BANK_SECT: {
 			// `expression` is not guaranteed to be '\0'-terminated. If it is not,
@@ -420,13 +424,13 @@ static int32_t computeRPNExpr(Patch const &patch, std::vector<Symbol> const &fil
 			}
 			break;
 
-		case RPN_SYM:
-			value = 0;
+		case RPN_SYM: {
+			uint32_t symID = 0;
 			for (uint8_t shift = 0; shift < 32; shift += 8) {
-				value |= getRPNByte(expression, size, patch) << shift;
+				symID |= getRPNByte(expression, size, patch) << shift;
 			}
 
-			if (value == -1) { // PC
+			if (symID == UINT32_MAX) { // PC
 				if (patch.pcSection) {
 					value = patch.pcOffset + patch.pcSection->org;
 				} else {
@@ -434,9 +438,11 @@ static int32_t computeRPNExpr(Patch const &patch, std::vector<Symbol> const &fil
 					value = 0;
 					isError = true;
 				}
-			} else if (Symbol const *symbol = getSymbol(fileSymbols, value); !symbol) {
-				errorAt(patch, "Undefined symbol `%s`", fileSymbols[value].name.c_str());
-				sym_TraceLocalAliasedSymbols(fileSymbols[value].name);
+			} else if (symID >= fileSymbols.size()) {
+				fatalAt(patch, "Invalid symbol ID #%" PRIu32, symID);
+			} else if (Symbol const *symbol = getSymbol(fileSymbols, symID); !symbol) {
+				errorAt(patch, "Undefined symbol `%s`", fileSymbols[symID].name.c_str());
+				sym_TraceLocalAliasedSymbols(fileSymbols[symID].name);
 				value = 0;
 				isError = true;
 			} else if (std::holds_alternative<Label>(symbol->data)) {
@@ -446,6 +452,7 @@ static int32_t computeRPNExpr(Patch const &patch, std::vector<Symbol> const &fil
 				value = std::get<int32_t>(symbol->data);
 			}
 			break;
+		}
 		}
 
 		pushRPN(value, isError);
