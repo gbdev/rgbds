@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+
 #include "cli.hpp"
 
 #include <errno.h>
