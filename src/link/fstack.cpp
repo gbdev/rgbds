@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+
 #include "link/fstack.hpp"
 
 #include <stdint.h>
