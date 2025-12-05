@@ -119,6 +119,15 @@ static std::optional<size_t> getPlacement(Section const &section, MemoryLocation
 	SectionTypeInfo const &typeInfo = sectionTypeInfo[section.type];
 
 	for (;;) {
+		if (location.bank < typeInfo.firstBank
+		    || location.bank >= memory[section.type].size() + typeInfo.firstBank) {
+			fatal(
+			    "Invalid bank for %s section: 0x%02x",
+			    sectionTypeInfo[section.type].name.c_str(),
+			    location.bank
+			);
+		}
+
 		// Switch to the beginning of the next bank
 		std::deque<FreeSpace> &bankMem = memory[section.type][location.bank - typeInfo.firstBank];
 		size_t spaceIdx = 0;
