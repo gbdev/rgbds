@@ -71,9 +71,7 @@ void out_AddSection(Section const &section) {
 	};
 
 	uint32_t targetBank = section.bank - sectionTypeInfo[section.type].firstBank;
-	uint32_t minNbBanks = targetBank + 1;
-
-	if (minNbBanks > maxNbBanks[section.type]) {
+	if (targetBank >= maxNbBanks[section.type]) {
 		fatal(
 		    "Section \"%s\" has an invalid bank range (%" PRIu32 " > %" PRIu32 ")",
 		    section.name.c_str(),
@@ -81,16 +79,14 @@ void out_AddSection(Section const &section) {
 		    maxNbBanks[section.type] - 1
 		);
 	}
-
-	for (uint32_t i = sections[section.type].size(); i < minNbBanks; ++i) {
-		sections[section.type].emplace_back();
+	if (sections[section.type].size() <= targetBank) {
+		sections[section.type].resize(targetBank + 1);
 	}
 
+	// Insert section while keeping the list sorted by increasing org
 	std::deque<Section const *> &bankSections =
 	    section.size ? sections[section.type][targetBank].sections
 	                 : sections[section.type][targetBank].zeroLenSections;
-
-	// Insert section while keeping the list sorted by increasing org
 	auto pos = bankSections.begin();
 	while (pos != bankSections.end() && (*pos)->org < section.org) {
 		++pos;
