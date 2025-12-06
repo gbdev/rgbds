@@ -21,7 +21,6 @@
 #include "usage.hpp"
 #include "util.hpp" // UpperMap, printChar
 #include "verbosity.hpp"
-#include "version.hpp"
 
 #include "link/assign.hpp"
 #include "link/lexer.hpp"
@@ -283,7 +282,7 @@ static void parseArg(int ch, char *arg) {
 
 		// LCOV_EXCL_START
 	case 'V':
-		printf("%s %s\n", usage.name.c_str(), get_package_version_string());
+		usage.printVersion(false);
 		exit(0);
 
 	case 'v':
@@ -330,7 +329,7 @@ static void verboseOutputConfig() {
 
 	style_Set(stderr, STYLE_MAGENTA, false);
 
-	fprintf(stderr, "%s %s\n", usage.name.c_str(), get_package_version_string());
+	usage.printVersion(true);
 
 	printVVVVVVerbosity();
 

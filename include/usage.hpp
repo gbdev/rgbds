@@ -13,6 +13,8 @@ struct Usage {
 	std::vector<std::string> flags;
 	std::vector<std::pair<std::vector<std::string>, std::vector<std::string>>> options;
 
+	void printVersion(bool error) const;
+
 	[[noreturn]]
 	void printAndExit(int code) const;
 

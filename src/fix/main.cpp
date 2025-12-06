@@ -19,7 +19,6 @@
 #include "style.hpp"
 #include "usage.hpp"
 #include "util.hpp"
-#include "version.hpp"
 
 #include "fix/fix.hpp"
 #include "fix/mbc.hpp"
@@ -252,7 +251,7 @@ static void parseArg(int ch, char *arg) {
 
 		// LCOV_EXCL_START
 	case 'V':
-		printf("%s %s\n", usage.name.c_str(), get_package_version_string());
+		usage.printVersion(false);
 		exit(0);
 
 	case 'v':
