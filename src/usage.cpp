@@ -9,6 +9,7 @@
 #include "helpers.hpp"
 #include "platform.hpp"
 #include "style.hpp"
+#include "version.hpp"
 
 #if defined(_MSC_VER) || defined(__MINGW32__)
 	#define WIN32_LEAN_AND_MEAN // Include less from `windows.h`
@@ -16,6 +17,10 @@
 #else
 	#include <sys/ioctl.h>
 #endif
+
+void Usage::printVersion(bool error) const {
+	fprintf(error ? stderr : stdout, "%s %s\n", name.c_str(), get_package_version_string());
+}
 
 void Usage::printAndExit(int code) const {
 	FILE *file;
