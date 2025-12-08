@@ -191,10 +191,14 @@ std::optional<std::string> fstk_FindFile(std::string const &path) {
 		}
 	}
 
-	errno = ENOENT;
 	if (options.missingIncludeState != INC_ERROR) {
 		printDep(path);
 	}
+
+	// Set `errno` as if `fopen` had failed on a nonexistent file.
+	// This allows a subsequent `fstk_FileError` to report correctly with `strerror`.
+	errno = ENOENT;
+
 	return std::nullopt;
 }
 
@@ -351,17 +355,17 @@ static Context &
 	return context;
 }
 
-bool fstk_FileError(std::string const &path, char const *functionName) {
+bool fstk_FileError(std::string const &path, char const *description) {
 	if (options.missingIncludeState == INC_ERROR) {
-		error("Error opening `%s` file \"%s\": %s", functionName, path.c_str(), strerror(errno));
+		error("Error opening %s file \"%s\": %s", description, path.c_str(), strerror(errno));
 	} else {
 		failedOnMissingInclude = true;
 		// LCOV_EXCL_START
 		if (options.missingIncludeState == GEN_EXIT) {
 			verbosePrint(
 			    VERB_NOTICE,
-			    "Aborting due to '-MG' on `%s` file \"%s\": %s\n",
-			    functionName,
+			    "Aborting due to '-MG' on %s file \"%s\": %s\n",
+			    description,
 			    path.c_str(),
 			    strerror(errno)
 			);
@@ -382,7 +386,7 @@ bool fstk_RunInclude(std::string const &path, bool isQuiet) {
 		newFileContext(*fullPath, isQuiet, false);
 		return false;
 	}
-	return fstk_FileError(path, "INCLUDE");
+	return fstk_FileError(path, "`INCLUDE`");
 }
 
 void fstk_RunMacro(
@@ -490,14 +494,16 @@ void fstk_NewRecursionDepth(size_t newDepth) {
 	options.maxRecursionDepth = newDepth;
 }
 
-void fstk_Init(std::string const &mainPath) {
+bool fstk_Init(std::string const &mainPath) {
 	newFileContext(mainPath, false, true);
 
 	for (std::string const &name : preIncludeNames) {
 		if (std::optional<std::string> fullPath = fstk_FindFile(name); fullPath) {
 			newFileContext(*fullPath, false, false);
-		} else {
-			error("Error reading pre-included file \"%s\": %s", name.c_str(), strerror(errno));
+		} else if (fstk_FileError(name, "pre-included")) {
+			return false;
 		}
 	}
+
+	return true;
 }

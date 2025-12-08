@@ -1,0 +1,2 @@
+a.o: exits-after-missing-preinclude/a.asm
+a.o: nonexistent-pre.inc

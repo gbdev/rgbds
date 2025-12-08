@@ -1,0 +1,4 @@
+a.o: continues-after-missing-preinclude/a.asm
+a.o: nonexistent-pre.inc
+a.o: nonexistent1.inc
+a.o: nonexistent2.inc

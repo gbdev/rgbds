@@ -558,11 +558,8 @@ int main(int argc, char *argv[]) {
 
 	charmap_New(DEFAULT_CHARMAP_NAME, nullptr);
 
-	// Init lexer and file stack, providing file info
-	fstk_Init(*localOptions.inputFileName);
-
-	// Perform parse (`yy::parser` is auto-generated from `parser.y`)
-	if (yy::parser parser; parser.parse() != 0) {
+	// Init lexer and file stack, and parse (`yy::parser` is auto-generated from `parser.y`)
+	if (yy::parser parser; fstk_Init(*localOptions.inputFileName) && parser.parse() != 0) {
 		// Exited due to YYABORT or YYNOMEM
 		fatal("Unrecoverable error while parsing"); // LCOV_EXCL_LINE
 	}

@@ -1,0 +1,2 @@
+a.o: exits-after-missing-include/a.asm
+a.o: does not exist

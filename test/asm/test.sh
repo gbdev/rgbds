@@ -163,11 +163,14 @@ done
 
 evaluateDepTest () {
 	i="$1"
-	RGBASMFLAGS="-Weverything -Bcollapse -M - $2"
+	RGBASMFLAGS="-Weverything -Bcollapse -M -"
+	if [ -f "$i/a.flags" ]; then
+		RGBASMFLAGS="$RGBASMFLAGS @$i/a.flags"
+	fi
 	# Piping the .asm file to rgbasm would not make sense for dependency generation,
 	# so just test the normal variant
 	(( tests++ ))
-	echo "${bold}${green}${i%.asm}...${rescolors}${resbold}"
+	echo "${bold}${green}${i}...${rescolors}${resbold}"
 	"$RGBASM" $RGBASMFLAGS -o "$o" "$i"/a.asm >"$output" 2>"$errput"
 
 	fixed_output="$input"
@@ -192,8 +195,10 @@ evaluateDepTest () {
 		(( failed++ ))
 	fi
 }
-evaluateDepTest "continues-after-missing-include" "-MG -MC"
-evaluateDepTest "errors-after-missing-include" "-MG"
+evaluateDepTest "continues-after-missing-include"
+evaluateDepTest "exits-after-missing-include"
+evaluateDepTest "continues-after-missing-preinclude"
+evaluateDepTest "exits-after-missing-preinclude"
 
 i="state-file"
 if which cygpath &>/dev/null; then
