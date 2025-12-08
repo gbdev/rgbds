@@ -1,0 +1,4 @@
+warning: still going! [-Wuser]
+    at continues-after-missing-preinclude/a.asm(7)
+warning: and going! [-Wuser]
+    at continues-after-missing-preinclude/a.asm(9)

@@ -929,7 +929,7 @@ bool sect_BinaryFile(std::string const &name, uint32_t startPos) {
 		file = fopen(fullPath->c_str(), "rb");
 	}
 	if (!file) {
-		return fstk_FileError(name, "INCBIN");
+		return fstk_FileError(name, "`INCBIN`");
 	}
 	Defer closeFile{[&] { fclose(file); }};
 
@@ -984,7 +984,7 @@ bool sect_BinaryFileSlice(std::string const &name, uint32_t startPos, uint32_t l
 		file = fopen(fullPath->c_str(), "rb");
 	}
 	if (!file) {
-		return fstk_FileError(name, "INCBIN");
+		return fstk_FileError(name, "`INCBIN`");
 	}
 	Defer closeFile{[&] { fclose(file); }};
 

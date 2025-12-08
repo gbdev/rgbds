@@ -63,7 +63,7 @@ MacroArgs *fstk_GetCurrentMacroArgs();
 void fstk_AddIncludePath(std::string const &path);
 void fstk_AddPreIncludeFile(std::string const &path);
 std::optional<std::string> fstk_FindFile(std::string const &path);
-bool fstk_FileError(std::string const &path, char const *functionName);
+bool fstk_FileError(std::string const &path, char const *description);
 bool fstk_FailedOnMissingInclude();
 
 bool yywrap();
@@ -84,6 +84,6 @@ void fstk_RunFor(
 bool fstk_Break();
 
 void fstk_NewRecursionDepth(size_t newDepth);
-void fstk_Init(std::string const &mainPath);
+bool fstk_Init(std::string const &mainPath);
 
 #endif // RGBDS_ASM_FSTACK_HPP

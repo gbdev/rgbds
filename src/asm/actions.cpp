@@ -139,7 +139,7 @@ std::optional<std::string> act_ReadFile(std::string const &name, uint32_t maxLen
 		file = fopen(fullPath->c_str(), "rb");
 	}
 	if (!file) {
-		if (fstk_FileError(name, "READFILE")) {
+		if (fstk_FileError(name, "`READFILE`")) {
 			// If `fstk_FileError` returned true due to `-MG`, we should abort due to a
 			// missing file, so return `std::nullopt`, which tells the caller to `YYACCEPT`
 			return std::nullopt;
