@@ -4,4 +4,4 @@ error: Expected constant expression: undefined symbol `xyz`
     at ff00+c-bad.asm(9)
 error: Base value must be equal to $FF00 for [$FF00+C]
     at ff00+c-bad.asm(9)
-Assembly aborted with 3 errors!
+Assembly aborted with 3 errors

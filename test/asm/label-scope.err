@@ -38,4 +38,4 @@ warning: Treating strings as numbers is deprecated; use character literals or `C
     at label-scope.asm(32)
 error: Strings as numbers must be a single charmap unit
     at label-scope.asm(32)
-Assembly aborted with 18 errors!
+Assembly aborted with 18 errors

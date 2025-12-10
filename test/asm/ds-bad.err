@@ -2,4 +2,4 @@ error: Expected constant expression: undefined symbol `unknown`
     at ds-bad.asm(3)
 warning: Expression must be 8-bit; use `LOW()` to force 8-bit [-Wtruncation]
     at ds-bad.asm(4)
-Assembly aborted with 1 error!
+Assembly aborted with 1 error

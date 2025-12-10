@@ -12,4 +12,4 @@ error: Section "e"'s fixed address does not match its alignment
     at invalid-alignment.asm(21)
 error: Section "f"'s fixed address does not match its alignment
     at invalid-alignment.asm(23)
-Assembly aborted with 7 errors!
+Assembly aborted with 7 errors

@@ -16,4 +16,4 @@ error: Undefined macro `label` (did you mean a label "label:"?)
     at suggest-def.asm(9)
 error: Undefined macro `exported` (did you mean a label "exported::"?)
     at suggest-def.asm(10)
-Assembly aborted with 9 errors!
+Assembly aborted with 9 errors

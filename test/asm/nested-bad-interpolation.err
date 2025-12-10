@@ -14,4 +14,4 @@ error: Interpolated symbol `` does not exist
     at nested-bad-interpolation.asm(3)
 error: Character literals must be a single charmap unit
     at nested-bad-interpolation.asm(3)
-Assembly aborted with 8 errors!
+Assembly aborted with 8 errors

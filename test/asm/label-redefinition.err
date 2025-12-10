@@ -2,4 +2,4 @@ error: `Sym` already defined
     at label-redefinition.asm(7)
     and also:
     at label-redefinition.asm::m(4) <- label-redefinition.asm(6)
-Assembly aborted with 1 error!
+Assembly aborted with 1 error

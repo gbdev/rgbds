@@ -10,4 +10,4 @@ error: `Y` already defined as label
     at symbol-override.asm(14)
     and also:
     at symbol-override.asm(13)
-Assembly aborted with 3 errors!
+Assembly aborted with 3 errors

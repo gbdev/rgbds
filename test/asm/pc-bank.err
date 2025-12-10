@@ -2,4 +2,4 @@ error: Source address $2a00 not between $FF00 to $FFFF
     at pc-bank.asm(2)
 error: Expected constant expression: Current section's bank is not known
     at pc-bank.asm(11)
-Assembly aborted with 2 errors!
+Assembly aborted with 2 errors

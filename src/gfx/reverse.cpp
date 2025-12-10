@@ -112,15 +112,15 @@ void reverse() {
 	// Check for weird flag combinations
 
 	if (options.output.empty()) {
-		fatal("Tile data must be provided when reversing an image!");
+		fatal("Tile data must be provided when reversing an image");
 	}
 
 	if (options.allowDedup && options.tilemap.empty()) {
-		warnx("Tile deduplication is enabled, but no tilemap is provided?");
+		warnx("Tile deduplication is enabled, but no tilemap is provided");
 	}
 
 	if (options.useColorCurve) {
-		warnx("The color curve is not yet supported in reverse mode...");
+		warnx("The color curve is not yet supported in reverse mode");
 	}
 
 	if (options.inputSlice.left != 0 || options.inputSlice.top != 0
@@ -149,13 +149,13 @@ void reverse() {
 
 	// By default, assume tiles are not deduplicated, and add the (allegedly) trimmed tiles
 	size_t const nbTiles = tiles.size() / tileSize;
-	verbosePrint(VERB_INFO, "Read %zu tiles.\n", nbTiles);
+	verbosePrint(VERB_INFO, "Read %zu tiles\n", nbTiles);
 	size_t mapSize = nbTiles + options.trim; // Image size in tiles
 	std::optional<std::vector<uint8_t>> tilemap;
 	if (!options.tilemap.empty()) {
 		tilemap = readInto(options.tilemap);
 		mapSize = tilemap->size();
-		verbosePrint(VERB_INFO, "Read %zu tilemap entries.\n", mapSize);
+		verbosePrint(VERB_INFO, "Read %zu tilemap entries\n", mapSize);
 	}
 
 	if (mapSize == 0) {
@@ -224,7 +224,7 @@ void reverse() {
 				break;
 			} else if (nbRead != buf.size()) {
 				fatal(
-				    "Palette data size (%zu) is not a multiple of %zu bytes!\n",
+				    "Palette data size (%zu) is not a multiple of %zu bytes\n",
 				    palettes.size() * buf.size() + nbRead,
 				    buf.size()
 				);
@@ -250,7 +250,7 @@ void reverse() {
 		}
 
 		if (options.palSpecType == Options::EXPLICIT && palettes != options.palSpec) {
-			warnx("Colors in the palette file do not match those specified with '-c'!");
+			warnx("Colors in the palette file do not match those specified with '-c'");
 			// This spacing aligns "...versus with `-c`" above the column of `-c` palettes
 			fputs("Colors specified in the palette file:         ...versus with '-c':\n", stderr);
 			for (size_t i = 0; i < palettes.size() && i < options.palSpec.size(); ++i) {
@@ -272,7 +272,7 @@ void reverse() {
 		}
 	} else if (options.palSpecType == Options::EMBEDDED) {
 		warnx("An embedded palette was requested, but no palette file was specified; ignoring "
-		      "request.");
+		      "request");
 	} else if (options.palSpecType == Options::EXPLICIT) {
 		palettes = std::move(options.palSpec); // We won't be using it again.
 	}
@@ -299,7 +299,8 @@ void reverse() {
 
 			if (uint8_t palID = (attr & 0b111) - options.basePalID; palID > palettes.size()) {
 				error(
-				    "Attribute map references palette #%u at (%zu, %zu), but there are only %zu!",
+				    "Attribute map references palette #%u at (%zu, %zu), but there are only %zu "
+				    "palettes",
 				    palID,
 				    tx,
 				    ty,

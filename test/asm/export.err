@@ -9,4 +9,4 @@ warning: Purging an exported symbol `equ_sym` [-Wpurge]
     at export.asm(20)
 warning: Exporting an undefined symbol `equ_sym` [-Wexport-undefined]
     at export.asm(21)
-Assembly aborted with 1 error!
+Assembly aborted with 1 error

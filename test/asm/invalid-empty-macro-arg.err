@@ -1,3 +1,3 @@
 error: Empty bracketed macro argument
     at invalid-empty-macro-arg.asm(1)
-Assembly aborted with 1 error!
+Assembly aborted with 1 error

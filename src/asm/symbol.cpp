@@ -587,7 +587,7 @@ static uint32_t anonLabelID = 0;
 Symbol *sym_AddAnonLabel() {
 	if (anonLabelID == UINT32_MAX) {
 		// LCOV_EXCL_START
-		error("Only %" PRIu32 " anonymous labels can be created!", anonLabelID);
+		error("Only %" PRIu32 " anonymous labels can be created", anonLabelID);
 		return nullptr;
 		// LCOV_EXCL_STOP
 	}

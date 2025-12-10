@@ -10,4 +10,4 @@ error: Expected constant expression: `FloatingLabel` is not constant at assembly
     at isconst.asm::test_expr(9) <- isconst.asm(28)
 warning: Test #6: Compile-time constant [-Wuser]
     at isconst.asm::test_expr(10) <- isconst.asm(29)
-Assembly aborted with 2 errors!
+Assembly aborted with 2 errors

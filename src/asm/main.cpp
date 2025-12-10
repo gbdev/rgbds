@@ -490,7 +490,7 @@ static void verboseOutputConfig() {
 			fputs("\tGenerate phony dependencies\n", stderr);
 		}
 	}
-	fputs("Ready.\n", stderr);
+	fputs("Ready for assembly\n", stderr);
 
 	style_Reset(stderr);
 }

@@ -12,4 +12,4 @@ error: Section "OAM"'s fixed address $0cab is outside of range [$fe00; $fe9f]
     at fixed-oob.asm(13)
 error: Section "HRAM"'s fixed address $0bad is outside of range [$ff80; $fffe]
     at fixed-oob.asm(15)
-Assembly aborted with 7 errors!
+Assembly aborted with 7 errors

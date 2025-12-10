@@ -14,4 +14,4 @@ error: Invalid format spec "sizeof_"
     at label-macro-arg.asm::test_char(29) <- label-macro-arg.asm(39)
 error: Interpolated symbol `something` does not exist
     at label-macro-arg.asm::test_char(29) <- label-macro-arg.asm(39)
-Assembly aborted with 7 errors!
+Assembly aborted with 7 errors

@@ -18,4 +18,4 @@ error: Undefined charmap `map5`
     at multiple-charmaps.asm::set_(15) <- multiple-charmaps.asm(108)
 error: No entries in the charmap stack
     at multiple-charmaps.asm::pop_(30) <- multiple-charmaps.asm(110)
-Assembly aborted with 9 errors!
+Assembly aborted with 9 errors

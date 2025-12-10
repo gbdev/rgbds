@@ -24,4 +24,4 @@ error: Invalid fixed-point constant, no significant digits after 'q'
     at invalid-numbers.asm::try(2) <- invalid-numbers.asm(26)
 error: Fixed-point constant precision must be between 1 and 31
     at invalid-numbers.asm::try(2) <- invalid-numbers.asm(29)
-Assembly aborted with 7 errors!
+Assembly aborted with 7 errors

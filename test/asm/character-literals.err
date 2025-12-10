@@ -16,4 +16,4 @@ error: Unterminated character
     at character-literals.asm(35)
 error: Character literals must be a single charmap unit
     at character-literals.asm(35)
-Assembly aborted with 5 errors!
+Assembly aborted with 5 errors

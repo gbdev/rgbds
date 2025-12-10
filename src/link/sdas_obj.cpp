@@ -296,7 +296,7 @@ void sdobj_ReadFile(FileStackNode const &src, FILE *file, std::vector<Symbol> &f
 			if (tmp > UINT16_MAX) {
 				fatalAt(
 				    where,
-				    "Area \"%s\" is larger than the GB address space!?",
+				    "Area \"%s\" is larger than the GB address space",
 				    curSection->name.c_str()
 				);
 			}

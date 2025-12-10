@@ -12,4 +12,4 @@ warning: CHARVAL: Index starts at 0 [-Wbuiltin-args]
     at charval.asm(28)
 warning: CHARVAL: Index 10 is past the end of the character mapping [-Wbuiltin-args]
     at charval.asm(29)
-Assembly aborted with 5 errors!
+Assembly aborted with 5 errors

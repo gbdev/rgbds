@@ -12,4 +12,4 @@ error: Section "hmm" grew too big (max size = 0x2000 bytes, reached 0x4000)
     at load-overflow.asm(26)
 error: Section "lol" grew too big (max size = 0x2000 bytes, reached 0x3000)
     at load-overflow.asm(26)
-Assembly aborted with 5 errors!
+Assembly aborted with 5 errors

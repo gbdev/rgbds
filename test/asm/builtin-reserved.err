@@ -30,4 +30,4 @@ error: `.` is reserved for a built-in symbol
     at builtin-reserved.asm(29)
 error: `.` has no value outside of a label scope
     at builtin-reserved.asm(32)
-Assembly aborted with 16 errors!
+Assembly aborted with 16 errors

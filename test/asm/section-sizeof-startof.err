@@ -8,4 +8,4 @@ error: Expected constant expression: Section "sect2"'s start is not known
     at section-sizeof-startof.asm(23)
 error: Expected constant expression: Section "sect3"'s size is not known
     at section-sizeof-startof.asm(30)
-Assembly aborted with 5 errors!
+Assembly aborted with 5 errors

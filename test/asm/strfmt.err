@@ -8,4 +8,4 @@ error: STRFMT: Invalid format spec for argument 1
     at strfmt.asm(26)
 error: STRFMT: Not enough arguments for format spec (expected 3, got 1)
     at strfmt.asm(28)
-Assembly aborted with 5 errors!
+Assembly aborted with 5 errors

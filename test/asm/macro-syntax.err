@@ -8,4 +8,4 @@ error: syntax error, unexpected ENDM
     at macro-syntax.asm(9)
 error: `old` is not a macro
     at macro-syntax.asm(11)
-Assembly aborted with 5 errors!
+Assembly aborted with 5 errors

@@ -23,4 +23,4 @@ error: Number in bracketed macro argument is too large
 error: Number in bracketed macro argument is too large
     at negative-macro-args.asm::mac(18) <- negative-macro-args.asm(21)
     while expanding symbol `i`
-Assembly aborted with 11 errors!
+Assembly aborted with 11 errors

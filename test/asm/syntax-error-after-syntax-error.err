@@ -8,4 +8,4 @@ error: syntax error, unexpected :
     at syntax-error-after-syntax-error.asm(9)
 error: syntax error, unexpected stop, expecting end of line or end of buffer or end of fragment literal or ::
     at syntax-error-after-syntax-error.asm(10)
-Assembly aborted with 5 errors!
+Assembly aborted with 5 errors

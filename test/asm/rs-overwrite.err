@@ -8,4 +8,4 @@ error: `_RS` already defined as built-in non-`EQU`
     at rs-overwrite.asm(16)
 error: `_RS` already defined as built-in non-`EQUS`
     at rs-overwrite.asm(19)
-Assembly aborted with 5 errors!
+Assembly aborted with 5 errors

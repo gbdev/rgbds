@@ -2,4 +2,4 @@ error: Invalid character '!' in bracketed macro argument
     at invalid-macro-arg-character.asm(1)
 error: syntax error, unexpected >
     at invalid-macro-arg-character.asm(1)
-Assembly aborted with 2 errors!
+Assembly aborted with 2 errors

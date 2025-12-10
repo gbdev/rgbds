@@ -132,15 +132,15 @@ struct Image {
 
 		// Validate input slice
 		if (options.inputSlice.width == 0 && png.width % 8 != 0) {
-			fatal("Image width (%" PRIu32 " pixels) is not a multiple of 8!", png.width);
+			fatal("Image width (%" PRIu32 " pixels) is not a multiple of 8", png.width);
 		}
 		if (options.inputSlice.height == 0 && png.height % 8 != 0) {
-			fatal("Image height (%" PRIu32 " pixels) is not a multiple of 8!", png.height);
+			fatal("Image height (%" PRIu32 " pixels) is not a multiple of 8", png.height);
 		}
 		if (options.inputSlice.right() > png.width || options.inputSlice.bottom() > png.height) {
 			error(
 			    "Image slice ((%" PRIu16 ", %" PRIu16 ") to (%" PRIu32 ", %" PRIu32
-			    ")) is outside the image bounds (%" PRIu32 "x%" PRIu32 ")!",
+			    ")) is outside the image bounds (%" PRIu32 "x%" PRIu32 ")",
 			    options.inputSlice.left,
 			    options.inputSlice.top,
 			    options.inputSlice.right(),
@@ -319,7 +319,7 @@ static void generatePalSpec(Image const &image) {
 	// Generate a palette spec from the first few colors in the embedded palette
 	std::vector<Rgba> const &embPal = image.png.palette;
 	if (embPal.empty()) {
-		fatal("\"-c embedded\" was given, but the PNG does not have an embedded palette!");
+		fatal("\"-c embedded\" was given, but the PNG does not have an embedded palette");
 	}
 
 	// Ignore extraneous colors if they are unused
@@ -821,7 +821,7 @@ static UniqueTiles dedupTiles(
 			if (inputWithoutOutput && matchType == TileData::NOPE) {
 				error(
 				    "Tile at (%" PRIu32 ", %" PRIu32
-				    ") is not within the input tileset, and '-o' was not given!",
+				    ") is not within the input tileset, and '-o' was not given",
 				    tile.x,
 				    tile.y
 				);
@@ -973,7 +973,7 @@ void process() {
 
 		if (tileColors.size() > options.maxOpaqueColors()) {
 			fatal(
-			    "Tile at (%" PRIu32 ", %" PRIu32 ") has %zu colors, more than %" PRIu8 "!",
+			    "Tile at (%" PRIu32 ", %" PRIu32 ") has %zu colors, more than %" PRIu8,
 			    tile.x,
 			    tile.y,
 			    tileColors.size(),
@@ -1001,7 +1001,7 @@ void process() {
 				continue;
 			}
 			fatal(
-			    "Tile (%" PRIu32 ", %" PRIu32 ") contains the background color (#%08x)!",
+			    "Tile (%" PRIu32 ", %" PRIu32 ") contains the background color (#%08x)",
 			    tile.x,
 			    tile.y,
 			    options.bgColor->toCSS()

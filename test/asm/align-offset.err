@@ -2,4 +2,4 @@ error: The absolute alignment offset (18) must be less than alignment size (16)
     at align-offset.asm(4)
 error: The absolute alignment offset (20) must be less than alignment size (16)
     at align-offset.asm(6)
-Assembly aborted with 2 errors!
+Assembly aborted with 2 errors

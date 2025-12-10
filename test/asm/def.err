@@ -14,4 +14,4 @@ error: `name` already defined (should it be {interpolated} to define its content
     at def.asm(42)
     and also:
     at def.asm(40)
-Assembly aborted with 4 errors!
+Assembly aborted with 4 errors
