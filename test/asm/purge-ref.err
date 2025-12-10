@@ -8,4 +8,4 @@ error: Symbol `EvenLessOK` is referenced and thus cannot be purged
     at purge-ref.asm(15)
 warning: Purging a label `Maybe` [-Wpurge]
     at purge-ref.asm(23)
-Assembly aborted with 3 errors!
+Assembly aborted with 3 errors

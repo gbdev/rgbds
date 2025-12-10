@@ -4,4 +4,4 @@ error: Invalid character '\' in bracketed macro argument
     at character-escapes.asm::m(7) <- character-escapes.asm(10)
 error: Invalid character '\t' in bracketed macro argument
     at character-escapes.asm::m(8) <- character-escapes.asm(10)
-Assembly aborted with 3 errors!
+Assembly aborted with 3 errors

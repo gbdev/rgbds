@@ -6,4 +6,4 @@ error: Expected constant expression: PC is not constant at assembly time
     at const-and.asm(17)
 error: Expected constant expression: `Floating` is not constant at assembly time
     at const-and.asm(20)
-Assembly aborted with 4 errors!
+Assembly aborted with 4 errors

@@ -56,4 +56,4 @@ error: STRLEN: Incomplete UTF-8 character
     at invalid-utf-8-strings.asm(50)
 error: STRSLICE: Incomplete UTF-8 character
     at invalid-utf-8-strings.asm(54)
-Assembly aborted with 29 errors!
+Assembly aborted with 29 errors

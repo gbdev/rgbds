@@ -4,4 +4,4 @@ error: `Label` does not have a constant value
     at bracketed-symbols.asm(20)
 error: PC does not have a constant value; the current section is not fixed
     at bracketed-symbols.asm(21)
-Assembly aborted with 3 errors!
+Assembly aborted with 3 errors

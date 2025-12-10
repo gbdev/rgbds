@@ -1,3 +1,3 @@
 error: Undefined macro `qux`
     at nested-expansions.asm::test(4) <- nested-expansions.asm(6)
-Assembly aborted with 1 error!
+Assembly aborted with 1 error

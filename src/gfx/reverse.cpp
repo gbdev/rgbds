@@ -112,15 +112,15 @@ void reverse() {
 	// Check for weird flag combinations
 
 	if (options.output.empty()) {
-		fatal("Tile data must be provided when reversing an image!");
+		fatal("Tile data must be provided when reversing an image");
 	}
 
 	if (options.allowDedup && options.tilemap.empty()) {
-		warnx("Tile deduplication is enabled, but no tilemap is provided?");
+		warnx("Tile deduplication is enabled, but no tilemap is provided");
 	}
 
 	if (options.useColorCurve) {
-		warnx("The color curve is not yet supported in reverse mode...");
+		warnx("The color curve is not yet supported in reverse mode");
 	}
 
 	if (options.inputSlice.left != 0 || options.inputSlice.top != 0
@@ -224,7 +224,7 @@ void reverse() {
 				break;
 			} else if (nbRead != buf.size()) {
 				fatal(
-				    "Palette data size (%zu) is not a multiple of %zu bytes!\n",
+				    "Palette data size (%zu) is not a multiple of %zu bytes\n",
 				    palettes.size() * buf.size() + nbRead,
 				    buf.size()
 				);
@@ -250,7 +250,7 @@ void reverse() {
 		}
 
 		if (options.palSpecType == Options::EXPLICIT && palettes != options.palSpec) {
-			warnx("Colors in the palette file do not match those specified with '-c'!");
+			warnx("Colors in the palette file do not match those specified with '-c'");
 			// This spacing aligns "...versus with `-c`" above the column of `-c` palettes
 			fputs("Colors specified in the palette file:         ...versus with '-c':\n", stderr);
 			for (size_t i = 0; i < palettes.size() && i < options.palSpec.size(); ++i) {
@@ -299,7 +299,8 @@ void reverse() {
 
 			if (uint8_t palID = (attr & 0b111) - options.basePalID; palID > palettes.size()) {
 				error(
-				    "Attribute map references palette #%u at (%zu, %zu), but there are only %zu!",
+				    "Attribute map references palette #%u at (%zu, %zu), but there are only %zu "
+				    "palettes",
 				    palID,
 				    tx,
 				    ty,

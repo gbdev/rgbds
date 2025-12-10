@@ -2,4 +2,4 @@ error: Cannot shift macro arguments outside of a macro
     at shift-outside-macro.asm(1)
 error: Cannot shift macro arguments outside of a macro
     at shift-outside-macro.asm(2)
-Assembly aborted with 2 errors!
+Assembly aborted with 2 errors

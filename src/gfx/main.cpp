@@ -126,7 +126,7 @@ static uint16_t readNumber(char const *&str, char const *errPrefix, uint16_t err
 		error("%s: expected number, but found nothing", errPrefix);
 		return errVal;
 	} else if (*number > UINT16_MAX) {
-		error("%s: the number is too large!", errPrefix);
+		error("%s: the number is too large", errPrefix);
 		return errVal;
 	} else {
 		return *number;
@@ -239,7 +239,7 @@ static void parseArg(int ch, char *arg) {
 	case 'L':
 		options.inputSlice.left = readNumber(argPtr, "Input slice left coordinate");
 		if (options.inputSlice.left > INT16_MAX) {
-			error("Input slice left coordinate is out of range!");
+			error("Input slice left coordinate is out of range");
 			break;
 		}
 		skipBlankSpace(argPtr);
@@ -260,7 +260,7 @@ static void parseArg(int ch, char *arg) {
 		options.inputSlice.width = readNumber(argPtr, "Input slice width");
 		skipBlankSpace(argPtr);
 		if (options.inputSlice.width == 0) {
-			error("Input slice width may not be 0!");
+			error("Input slice width may not be 0");
 		}
 		if (*argPtr != ',') {
 			error("Missing comma after width in \"%s\"", arg);
@@ -270,7 +270,7 @@ static void parseArg(int ch, char *arg) {
 		skipBlankSpace(argPtr);
 		options.inputSlice.height = readNumber(argPtr, "Input slice height");
 		if (options.inputSlice.height == 0) {
-			error("Input slice height may not be 0!");
+			error("Input slice height may not be 0");
 		}
 		if (*argPtr != '\0') {
 			error("Unexpected extra characters after slice spec in \"%s\"", arg);
@@ -330,9 +330,9 @@ static void parseArg(int ch, char *arg) {
 			error("Number of palettes ('-n') must be a valid number, not \"%s\"", arg);
 		}
 		if (number > 256) {
-			error("Number of palettes ('-n') must not exceed 256!");
+			error("Number of palettes ('-n') must not exceed 256");
 		} else if (number == 0) {
-			error("Number of palettes ('-n') may not be 0!");
+			error("Number of palettes ('-n') may not be 0");
 		} else {
 			options.nbPalettes = number;
 		}
@@ -388,9 +388,9 @@ static void parseArg(int ch, char *arg) {
 			error("Palette size ('-s') must be a valid number, not \"%s\"", arg);
 		}
 		if (options.nbColorsPerPal > 4) {
-			error("Palette size ('-s') must not exceed 4!");
+			error("Palette size ('-s') must not exceed 4");
 		} else if (options.nbColorsPerPal == 0) {
-			error("Palette size ('-s') may not be 0!");
+			error("Palette size ('-s') may not be 0");
 		}
 		break;
 

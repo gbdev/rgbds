@@ -2,4 +2,4 @@ error: `FOO` already defined (should it be {interpolated} to define its contents
     at command-line-symbols.asm(3)
     and also:
     at <command-line>
-Assembly aborted with 1 error!
+Assembly aborted with 1 error

@@ -2,4 +2,4 @@ error: `N` already defined as non-`EQUS`
     at redef-equs.asm(25)
     and also:
     at redef-equs.asm(24)
-Assembly aborted with 1 error!
+Assembly aborted with 1 error

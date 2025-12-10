@@ -32,4 +32,4 @@ error: syntax error, unexpected af
     at invalid-instructions.asm(20)
 error: syntax error, unexpected af
     at invalid-instructions.asm(21)
-Assembly aborted with 16 errors!
+Assembly aborted with 16 errors

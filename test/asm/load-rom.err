@@ -2,4 +2,4 @@ error: `LOAD` blocks cannot create a ROM section
     at load-rom.asm(3)
 error: Found `ENDL` outside of a `LOAD` block
     at load-rom.asm(5)
-Assembly aborted with 2 errors!
+Assembly aborted with 2 errors

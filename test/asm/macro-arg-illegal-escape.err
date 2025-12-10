@@ -2,4 +2,4 @@ error: Illegal character escape 'w'
     at macro-arg-illegal-escape.asm(5)
 error: Illegal character escape '\' at end of input
     at macro-arg-illegal-escape.asm(5)
-Assembly aborted with 2 errors!
+Assembly aborted with 2 errors

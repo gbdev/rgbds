@@ -4,4 +4,4 @@ error: syntax error, unexpected symbol
 error: syntax error, unexpected string
     at interpolation-after-string.asm(8)
     while expanding symbol `string`
-Assembly aborted with 2 errors!
+Assembly aborted with 2 errors

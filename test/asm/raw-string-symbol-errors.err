@@ -28,4 +28,4 @@ error: Undefined symbol `s` was already purged
     at raw-string-symbol-errors.asm(27)
 error: `s` is not a string symbol
     at raw-string-symbol-errors.asm(29)
-Assembly aborted with 13 errors!
+Assembly aborted with 13 errors

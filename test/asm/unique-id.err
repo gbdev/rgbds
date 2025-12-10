@@ -29,4 +29,4 @@ error: `\@` cannot be used outside of a macro or loop (`REPT`/`FOR` block)
     while expanding symbol `warn_unique`
 warning: ! [-Wuser]
     at unique-id.asm(15)
-Assembly aborted with 3 errors!
+Assembly aborted with 3 errors

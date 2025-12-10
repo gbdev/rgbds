@@ -6,4 +6,4 @@ error: Unterminated string
     at raw-macro-args.asm(37)
 error: Unterminated string
     at raw-macro-args.asm(38)
-Assembly aborted with 4 errors!
+Assembly aborted with 4 errors

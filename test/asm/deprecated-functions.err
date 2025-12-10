@@ -52,4 +52,4 @@ warning: STRSUB: Position 12 is past the end of the string [-Wbuiltin-args]
     at deprecated-functions.asm(28)
 error: STRSUB: Incomplete UTF-8 character
     at deprecated-functions.asm(28)
-Assembly aborted with 6 errors!
+Assembly aborted with 6 errors

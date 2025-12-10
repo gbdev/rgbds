@@ -1,2 +1,2 @@
-error: Image slice ((2, 2) to (34, 18)) is outside the image bounds (20x20)!
+error: Image slice ((2, 2) to (34, 18)) is outside the image bounds (20x20)
 Conversion aborted after 1 error

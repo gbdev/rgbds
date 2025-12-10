@@ -8,4 +8,4 @@ error: Undefined macro `undef` (did you mean a label "undef:"?)
     at lexer-hack.asm(27)
 error: Undefined macro `undef` (did you mean a label "undef::"?)
     at lexer-hack.asm(28)
-Assembly aborted with 4 errors!
+Assembly aborted with 4 errors

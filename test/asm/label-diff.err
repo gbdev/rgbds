@@ -34,4 +34,4 @@ error: Expected constant expression: undefined symbol `Unknown`
     at label-diff.asm::print_diff(19) <- label-diff.asm(58)
 error: Expected constant expression: PC is not constant at assembly time
     at label-diff.asm::print_diff(20) <- label-diff.asm(58)
-Assembly aborted with 18 errors!
+Assembly aborted with 18 errors

@@ -2,4 +2,4 @@ error: Label `foo` created outside of a `SECTION`
     at macro-@.asm(1)
 error: `@` is not a macro
     at macro-@.asm(1)
-Assembly aborted with 2 errors!
+Assembly aborted with 2 errors

@@ -10,4 +10,4 @@ error: Invalid character '/' after line continuation
     at line-continuation-block-comment.asm(14)
 error: Invalid character '/' after line continuation
     at line-continuation-block-comment.asm(17)
-Assembly aborted with 6 errors!
+Assembly aborted with 6 errors

@@ -14,4 +14,4 @@ error: Assertion failed
     <- rept-trace.asm::REPT~4::REPT~3(6)
     <- rept-trace.asm::REPT~4(4)
     <- rept-trace.asm(2)
-Assembly aborted with 2 errors!
+Assembly aborted with 2 errors

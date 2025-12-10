@@ -10,4 +10,4 @@ error: syntax error, unexpected ENDR
     at lex-label.asm(7)
 error: syntax error, unexpected label, expecting symbol
     at lex-label.asm(9)
-Assembly aborted with 6 errors!
+Assembly aborted with 6 errors

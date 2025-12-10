@@ -2,4 +2,4 @@ error: syntax error, unexpected '-' at the beginning of the line (is it a leftov
     at diff-marks.asm(2)
 error: syntax error, unexpected '+' at the beginning of the line (is it a leftover diff mark?)
     at diff-marks.asm(3)
-Assembly aborted with 2 errors!
+Assembly aborted with 2 errors

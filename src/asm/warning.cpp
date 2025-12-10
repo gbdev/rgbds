@@ -90,7 +90,7 @@ static void incrementErrors() {
 		style_Set(stderr, STYLE_RED, true);
 		fprintf(
 		    stderr,
-		    "Assembly aborted after the maximum of %" PRIu64 " error%s!",
+		    "Assembly aborted after the maximum of %" PRIu64 " error%s",
 		    warnings.nbErrors,
 		    warnings.nbErrors == 1 ? "" : "s"
 		);
@@ -136,7 +136,7 @@ void requireZeroErrors() {
 		style_Set(stderr, STYLE_RED, true);
 		fprintf(
 		    stderr,
-		    "Assembly aborted with %" PRIu64 " error%s!\n",
+		    "Assembly aborted with %" PRIu64 " error%s\n",
 		    warnings.nbErrors,
 		    warnings.nbErrors == 1 ? "" : "s"
 		);

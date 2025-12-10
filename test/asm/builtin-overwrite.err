@@ -54,4 +54,4 @@ error: Built-in symbol `__ISO_8601_UTC__` cannot be redefined
     at builtin-overwrite.asm::tickle(29) <- builtin-overwrite.asm(37)
 error: Built-in symbol `__ISO_8601_UTC__` cannot be redefined
     at builtin-overwrite.asm::tickle(30) <- builtin-overwrite.asm(37)
-Assembly aborted with 28 errors!
+Assembly aborted with 28 errors

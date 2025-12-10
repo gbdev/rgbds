@@ -6,4 +6,4 @@ error: `s2` already referenced
     at reference-undefined-equs.asm(5)
     and also:
     at reference-undefined-equs.asm(2)
-Assembly aborted with 2 errors!
+Assembly aborted with 2 errors

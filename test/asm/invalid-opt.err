@@ -36,4 +36,4 @@ error: syntax error, unexpected end of line, expecting string
     at invalid-opt.asm(18)
 error: No entries in the option stack
     at invalid-opt.asm(19)
-Assembly aborted with 19 errors!
+Assembly aborted with 19 errors

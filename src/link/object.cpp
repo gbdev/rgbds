@@ -452,7 +452,7 @@ void obj_ReadFile(std::string const &filePath, size_t fileID) {
 	// A single `ungetc` is guaranteed to work.
 	switch (ungetc(getc(file), file)) {
 	case EOF:
-		fatal("File \"%s\" is empty!", fileName);
+		fatal("File \"%s\" is empty", fileName);
 
 	case 'X':
 	case 'D':
