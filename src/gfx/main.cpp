@@ -608,7 +608,7 @@ static void verboseOutputConfig() {
 	if (localOptions.reverse) {
 		fprintf(stderr, "\tReverse image width: %" PRIu16 " tiles\n", options.reversedWidth);
 	}
-	fputs("Ready.\n", stderr);
+	fputs("Ready for conversion\n", stderr);
 
 	style_Reset(stderr);
 }

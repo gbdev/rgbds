@@ -149,13 +149,13 @@ void reverse() {
 
 	// By default, assume tiles are not deduplicated, and add the (allegedly) trimmed tiles
 	size_t const nbTiles = tiles.size() / tileSize;
-	verbosePrint(VERB_INFO, "Read %zu tiles.\n", nbTiles);
+	verbosePrint(VERB_INFO, "Read %zu tiles\n", nbTiles);
 	size_t mapSize = nbTiles + options.trim; // Image size in tiles
 	std::optional<std::vector<uint8_t>> tilemap;
 	if (!options.tilemap.empty()) {
 		tilemap = readInto(options.tilemap);
 		mapSize = tilemap->size();
-		verbosePrint(VERB_INFO, "Read %zu tilemap entries.\n", mapSize);
+		verbosePrint(VERB_INFO, "Read %zu tilemap entries\n", mapSize);
 	}
 
 	if (mapSize == 0) {
@@ -272,7 +272,7 @@ void reverse() {
 		}
 	} else if (options.palSpecType == Options::EMBEDDED) {
 		warnx("An embedded palette was requested, but no palette file was specified; ignoring "
-		      "request.");
+		      "request");
 	} else if (options.palSpecType == Options::EXPLICIT) {
 		palettes = std::move(options.palSpec); // We won't be using it again.
 	}

@@ -407,7 +407,7 @@ static void verboseOutputConfig() {
 	}
 	// -n/--sym
 	printPath("Output sym file", options.symFileName);
-	fputs("Ready.\n", stderr);
+	fputs("Ready for linking\n", stderr);
 
 	style_Reset(stderr);
 }
