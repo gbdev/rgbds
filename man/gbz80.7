@@ -861,11 +861,13 @@ Flags: None affected.
 Relative Jump to address
 .Ar n16 .
 .Pp
-The address is encoded as a signed 8-bit offset from the address immediately following the
-.Ic JR
-instruction, so the target address
+The target address
 .Ar n16
-must be between
+is
+.Em encoded
+as a signed 8-bit offset from the address immediately following the
+.Ic JR
+instruction, so it must be between
 .Sy -128
 and
 .Sy 127
@@ -888,6 +890,18 @@ Relative Jump to address
 if condition
 .Ar cc
 is met.
+.Pp
+The target address
+.Ar n16
+is
+.Em encoded
+as a signed 8-bit offset from the address immediately following the
+.Ic JR
+instruction, so it must be between
+.Sy -128
+and
+.Sy 127
+bytes away.
 .Pp
 Cycles: 3 taken / 2 untaken
 .Pp
@@ -992,8 +1006,15 @@ Flags: None affected.
 Copy the value in register
 .Sy A
 into the byte at address
-.Ar n16 ,
-provided the address is between
+.Ar n16 .
+.Pp
+The destination address
+.Ar n16
+is
+.Em encoded
+as its 8-bit low byte and assumes a high byte of
+.Ad $FF ,
+so it must be between
 .Ad $FF00
 and
 .Ad $FFFF .
@@ -1043,8 +1064,15 @@ Flags: None affected.
 Copy the byte at address
 .Ar n16
 into register
-.Sy A ,
-provided the address is between
+.Sy A .
+.Pp
+The source address
+.Ar n16
+is
+.Em encoded
+as its 8-bit low byte and assumes a high byte of
+.Ad $FF ,
+so it must be between
 .Ad $FF00
 and
 .Ad $FFFF .
