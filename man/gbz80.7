@@ -11,6 +11,11 @@ This is the list of instructions supported by
 .Xr rgbasm 1 ,
 including a short description, the number of bytes needed to encode them and the number of CPU cycles at 1MHz (or 2MHz in GBC double speed mode) needed to complete them.
 .Pp
+Instructons are documented according to the syntax accepted by
+.Xr rgbasm 1 ,
+which does not always match one-to-one with the way instructions are
+.Lk encoded https://gbdev.io/gb-opcodes/optables/ .
+.Pp
 Note: All arithmetic and logic instructions that use register
 .Sy A
 as a destination can omit the destination, since it is assumed to be register
@@ -861,11 +866,13 @@ Flags: None affected.
 Relative Jump to address
 .Ar n16 .
 .Pp
-The address is encoded as a signed 8-bit offset from the address immediately following the
-.Ic JR
-instruction, so the target address
+The target address
 .Ar n16
-must be between
+is
+.Em encoded
+as a signed 8-bit offset from the address immediately following the
+.Ic JR
+instruction, so it must be between
 .Sy -128
 and
 .Sy 127
@@ -888,6 +895,18 @@ Relative Jump to address
 if condition
 .Ar cc
 is met.
+.Pp
+The target address
+.Ar n16
+is
+.Em encoded
+as a signed 8-bit offset from the address immediately following the
+.Ic JR
+instruction, so it must be between
+.Sy -128
+and
+.Sy 127
+bytes away.
 .Pp
 Cycles: 3 taken / 2 untaken
 .Pp
@@ -992,8 +1011,15 @@ Flags: None affected.
 Copy the value in register
 .Sy A
 into the byte at address
-.Ar n16 ,
-provided the address is between
+.Ar n16 .
+.Pp
+The destination address
+.Ar n16
+is
+.Em encoded
+as its 8-bit low byte and assumes a high byte of
+.Ad $FF ,
+so it must be between
 .Ad $FF00
 and
 .Ad $FFFF .
@@ -1043,8 +1069,15 @@ Flags: None affected.
 Copy the byte at address
 .Ar n16
 into register
-.Sy A ,
-provided the address is between
+.Sy A .
+.Pp
+The source address
+.Ar n16
+is
+.Em encoded
+as its 8-bit low byte and assumes a high byte of
+.Ad $FF ,
+so it must be between
 .Ad $FF00
 and
 .Ad $FFFF .
