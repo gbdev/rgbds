@@ -11,6 +11,11 @@ This is the list of instructions supported by
 .Xr rgbasm 1 ,
 including a short description, the number of bytes needed to encode them and the number of CPU cycles at 1MHz (or 2MHz in GBC double speed mode) needed to complete them.
 .Pp
+Instructons are documented according to the syntax accepted by
+.Xr rgbasm 1 ,
+which does not always match one-to-one with the way instructions are
+.Lk encoded https://gbdev.io/gb-opcodes/optables/ .
+.Pp
 Note: All arithmetic and logic instructions that use register
 .Sy A
 as a destination can omit the destination, since it is assumed to be register
