@@ -68,7 +68,7 @@ public:
 
 	size_t size() const {
 		return std::count_if(RANGE(_colors), [](std::optional<Rgba> const &slot) {
-			return slot.has_value() && !slot->isTransparent();
+			return slot.has_value() && slot->isOpaque();
 		});
 	}
 	decltype(_colors) const &raw() const { return _colors; }
@@ -402,7 +402,7 @@ static std::pair<std::vector<size_t>, std::vector<Palette>>
 	for (auto [spec, pal] : zip(options.palSpec, palettes)) {
 		for (size_t i = 0; i < options.nbColorsPerPal; ++i) {
 			// If the spec has a gap, there's no need to copy anything.
-			if (spec[i].has_value() && !spec[i]->isTransparent()) {
+			if (spec[i].has_value() && spec[i]->isOpaque()) {
 				pal[i] = spec[i]->cgbColor();
 			}
 		}
@@ -981,7 +981,7 @@ void process() {
 		for (uint32_t y = 0; y < 8; ++y) {
 			for (uint32_t x = 0; x < 8; ++x) {
 				if (Rgba color = tile.pixel(x, y);
-				    !color.isTransparent() || !options.hasTransparentPixels) {
+				    color.isOpaque() || !options.hasTransparentPixels) {
 					tileColors.insert(color.cgbColor());
 				}
 			}
