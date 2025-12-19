@@ -313,8 +313,10 @@ This is useful for example if the input image is a sheet of some sort, and you w
 The default is to process the whole image as-is.
 .Pp
 .Ar slice
-must be two number pairs, separated by a colon.
-The numbers must be separated by commas; space is allowed around all punctuation.
+must be formatted as
+.Ql Ar X , Ns Ar Y : Ns Ar W , Ns Ar H :
+two comma-separated number pairs, separated by a colon.
+Whitespace is allowed around all punctuation.
 The first number pair specifies the X and Y coordinates of the top-left pixel that will be processed (anything above it or to its left will be ignored).
 The second number pair specifies how many tiles to process horizontally and vertically, respectively.
 .Pp

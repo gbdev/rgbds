@@ -84,7 +84,13 @@ struct Image {
 	Rgba &pixel(uint32_t x, uint32_t y) { return png.pixels[y * png.width + x]; }
 	Rgba const &pixel(uint32_t x, uint32_t y) const { return png.pixels[y * png.width + x]; }
 
-	bool isSuitableForGrayscale() const {
+	enum GrayscaleResult {
+		GRAY_OK,
+		GRAY_TOO_MANY,
+		GRAY_NONGRAY,
+		GRAY_CONFLICT,
+	};
+	std::pair<GrayscaleResult, std::optional<Rgba>> isSuitableForGrayscale() const {
 		// Check that all of the grays don't fall into the same "bin"
 		if (colors.size() > options.maxOpaqueColors()) { // Apply the Pigeonhole Principle
 			verbosePrint(
@@ -93,7 +99,7 @@ struct Image {
 			    colors.size(),
 			    options.maxOpaqueColors()
 			);
-			return false;
+			return {GrayscaleResult::GRAY_TOO_MANY, std::nullopt};
 		}
 		uint8_t bins = 0;
 		for (std::optional<Rgba> const &color : colors) {
@@ -106,7 +112,7 @@ struct Image {
 				    "Found non-gray color #%08x, not using grayscale sorting\n",
 				    color->toCSS()
 				);
-				return false;
+				return {GrayscaleResult::GRAY_NONGRAY, color};
 			}
 			uint8_t mask = 1 << color->grayIndex();
 			if (bins & mask) { // Two in the same bin!
@@ -115,11 +121,11 @@ struct Image {
 				    "Color #%08x conflicts with another one, not using grayscale sorting\n",
 				    color->toCSS()
 				);
-				return false;
+				return {GrayscaleResult::GRAY_CONFLICT, color};
 			}
 			bins |= mask;
 		}
-		return true;
+		return {GrayscaleResult::GRAY_OK, std::nullopt};
 	}
 
 	explicit Image(std::string const &path) {
@@ -151,8 +157,8 @@ struct Image {
 			if (options.inputSlice.width % 8 == 0 && options.inputSlice.height % 8 == 0) {
 				fprintf(
 				    stderr,
-				    "note: Did you mean the slice \"%" PRIu32 ",%" PRIu32 ":%" PRId32 ",%" PRId32
-				    "\"? (width and height are in tiles, not pixels!)\n",
+				    "       (Did you mean the slice \"%" PRIu32 ",%" PRIu32 ":%" PRId32 ",%" PRId32
+				    "\"? The width and height are in tiles, not pixels!)\n",
 				    options.inputSlice.left,
 				    options.inputSlice.top,
 				    options.inputSlice.width / 8,
@@ -181,7 +187,7 @@ struct Image {
 					if (uint32_t css = color.toCSS(); ambiguous.find(css) == ambiguous.end()) {
 						error(
 						    "Color #%08x is neither transparent (alpha < %u) nor opaque (alpha >= "
-						    "%u) [first seen at x: %" PRIu32 ", y: %" PRIu32 "]",
+						    "%u) (first seen at (%" PRIu32 ", %" PRIu32 "))",
 						    css,
 						    Rgba::transparency_threshold,
 						    Rgba::opacity_threshold,
@@ -195,8 +201,8 @@ struct Image {
 					if (std::pair fused{color.toCSS(), other->toCSS()};
 					    fusions.find(fused) == fusions.end()) {
 						warnx(
-						    "Fusing colors #%08x and #%08x into Game Boy color $%04x [first seen "
-						    "at x: %" PRIu32 ", y: %" PRIu32 "]",
+						    "Colors #%08x and #%08x both reduce to the same Game Boy color $%04x "
+						    "(first seen at (%" PRIu32 ", %" PRIu32 "))",
 						    fused.first,
 						    fused.second,
 						    color.cgbColor(),
@@ -381,7 +387,7 @@ static std::pair<std::vector<size_t>, std::vector<Palette>>
 		    "Sorting palette colors by PNG's embedded PLTE chunk without '-c/--colors embedded'"
 		);
 		sortIndexed(palettes, image.png.palette);
-	} else if (image.isSuitableForGrayscale()) {
+	} else if (image.isSuitableForGrayscale().first == Image::GRAY_OK) {
 		sortGrayscale(palettes, image.colors.raw());
 	} else {
 		sortRgb(palettes);
@@ -939,14 +945,24 @@ void process() {
 	// LCOV_EXCL_STOP
 
 	if (options.palSpecType == Options::DMG) {
+		char const *prefix =
+		    "Image is not compatible with a DMG palette specification: it contains";
 		if (options.hasTransparentPixels) {
-			fatal(
-			    "Image contains transparent pixels, not compatible with a DMG palette specification"
-			);
+			fatal("%s transparent pixels", prefix);
 		}
-		if (!image.isSuitableForGrayscale()) {
-			fatal("Image contains too many or non-gray colors, not compatible with a DMG palette "
-			      "specification");
+		switch (auto const [result, color] = image.isSuitableForGrayscale(); result) {
+		case Image::GRAY_OK:
+			break;
+		case Image::GRAY_TOO_MANY:
+			fatal("%s too many colors (%zu)", prefix, image.colors.size());
+		case Image::GRAY_NONGRAY:
+			fatal("%s a non-gray color #%08x", prefix, color->toCSS());
+		case Image::GRAY_CONFLICT:
+			fatal(
+			    "%s a color #%08x that reduces to the same gray shade as another one",
+			    prefix,
+			    color->toCSS()
+			);
 		}
 	}
 
