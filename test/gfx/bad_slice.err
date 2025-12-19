@@ -1,3 +1,3 @@
 error: Image slice ((2, 2) to (130, 130)) is outside the image bounds (20x20)
-note: Did you mean the slice "2,2:2,2"? (width and height are in tiles, not pixels!)
+       (Did you mean the slice "2,2:2,2"? The width and height are in tiles, not pixels!)
 Conversion aborted after 1 error

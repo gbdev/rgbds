@@ -1,0 +1,2 @@
+FATAL: Image is not compatible with a DMG palette specification: it contains a color #111111ff that reduces to the same gray shade as another one
+Conversion aborted after 1 error

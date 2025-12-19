@@ -1,0 +1,2 @@
+error: Color #ff800080 is neither transparent (alpha < 16) nor opaque (alpha >= 240) (first seen at (0, 8))
+Conversion aborted after 1 error
