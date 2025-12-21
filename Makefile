@@ -31,7 +31,7 @@ WARNFLAGS := -Wall -pedantic -Wno-unknown-warning-option -Wno-gnu-zero-variadic-
 # Overridable CXXFLAGS
 CXXFLAGS     ?= -O3 -flto -DNDEBUG
 # Non-overridable CXXFLAGS
-REALCXXFLAGS := ${CXXFLAGS} ${WARNFLAGS} -std=c++2a -I include -fno-exceptions -fno-rtti
+REALCXXFLAGS := ${CXXFLAGS} ${WARNFLAGS} -std=c++20 -I include -fno-exceptions -fno-rtti
 # Overridable LDFLAGS
 LDFLAGS      ?=
 # Non-overridable LDFLAGS
@@ -254,7 +254,7 @@ tidy: src/asm/parser.hpp src/link/script.hpp
 iwyu:
 	$Qenv ${MAKE} \
 		CXX="include-what-you-use" \
-		REALCXXFLAGS="-std=c++2a -I include"
+		REALCXXFLAGS="-std=c++20 -I include"
 
 # Targets for the project maintainer to easily create Windows exes.
 # This is not for Windows users!
