@@ -80,14 +80,15 @@ void sym_TraceLocalAliasedSymbols(std::string const &name) {
 	    plural ? "are" : "is"
 	);
 
-	int count = 0;
+	size_t nbListed = 0;
 	for (Symbol *local : locals) {
-		assume(local->src);
-		local->src->printBacktrace(local->lineNo);
-		if (++count == 3 && locals.size() > 3) {
-			fprintf(stderr, "    ...and %zu more\n", locals.size() - 3);
+		if (nbListed == 3) {
+			fprintf(stderr, "    ...and %zu more\n", locals.size() - nbListed);
 			break;
 		}
+		assume(local->src);
+		local->src->printBacktrace(local->lineNo);
+		++nbListed;
 	}
 }
 

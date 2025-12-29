@@ -36,19 +36,6 @@ struct FreeSpace {
 // Table of free space for each bank
 static std::vector<std::deque<FreeSpace>> memory[SECTTYPE_INVALID];
 
-// Init the free space-modelling structs
-static void initFreeSpace() {
-	for (SectionType type : EnumSeq(SECTTYPE_INVALID)) {
-		memory[type].resize(sectTypeBanks(type));
-		for (std::deque<FreeSpace> &bankMem : memory[type]) {
-			bankMem.push_back({
-			    .address = sectionTypeInfo[type].startAddr,
-			    .size = sectionTypeInfo[type].size,
-			});
-		}
-	}
-}
-
 // Assigns a section to a given memory location
 static void assignSection(Section &section, MemoryLocation const &location) {
 	// Propagate the assigned location to all UNIONs/FRAGMENTs
@@ -368,36 +355,74 @@ static void categorizeSection(Section &section) {
 	sections.insert(pos, &section);
 }
 
-static std::vector<Section const *> checkOverlayCompat() {
-	std::vector<Section const *> unfixedSections;
+static void checkOverlayCompat() {
+	auto isFixed = [](uint8_t constraints) {
+		return (constraints & BANK_CONSTRAINED) && (constraints & ORG_CONSTRAINED);
+	};
 
-	if (!options.overlayFileName) {
-		return unfixedSections;
+	std::string unfixedList;
+
+	size_t nbUnfixedSections = 0;
+	for (uint8_t constraints = std::size(unassignedSections); constraints--;) {
+		if (!isFixed(constraints)) {
+			nbUnfixedSections += unassignedSections[constraints].size();
+		}
 	}
 
+	if (nbUnfixedSections == 0) {
+		return;
+	}
+
+	size_t nbListed = 0;
 	for (uint8_t constraints = std::size(unassignedSections); constraints--;) {
-		if (((constraints & BANK_CONSTRAINED) && (constraints & ORG_CONSTRAINED))
-		    || unassignedSections[constraints].empty()) {
+		if (isFixed(constraints)) {
 			continue;
 		}
 
-		for (Section *section : unassignedSections[constraints]) {
-			unfixedSections.push_back(section);
-
-			if (unfixedSections.size() == 10) {
-				return unfixedSections;
+		for (Section const *section : unassignedSections[constraints]) {
+			if (nbListed == 10) {
+				unfixedList += "\n- and ";
+				unfixedList += std::to_string(nbUnfixedSections - nbListed);
+				unfixedList += " more";
+				break;
 			}
+			unfixedList += "\n- \"";
+			unfixedList += section->name;
+			unfixedList += "\" (";
+			if (!(constraints & (BANK_CONSTRAINED | ORG_CONSTRAINED))) {
+				unfixedList += "bank and address";
+			} else if (!(constraints & BANK_CONSTRAINED)) {
+				unfixedList += "bank";
+			} else {
+				assume(!(constraints & ORG_CONSTRAINED));
+				unfixedList += "address";
+			}
+			unfixedList += " not specified)";
+			++nbListed;
 		}
 	}
 
-	return unfixedSections;
+	fatal(
+	    "All sections must be fixed when using an overlay file; %zu %s not:%s",
+	    nbUnfixedSections,
+	    nbUnfixedSections == 1 ? "is" : "are",
+	    unfixedList.c_str()
+	);
 }
 
 void assign_AssignSections() {
 	verbosePrint(VERB_NOTICE, "Beginning assignment...\n");
 
-	// Initialize assignment
-	initFreeSpace();
+	// Initialize the free space-modelling structs
+	for (SectionType type : EnumSeq(SECTTYPE_INVALID)) {
+		memory[type].resize(sectTypeBanks(type));
+		for (std::deque<FreeSpace> &bankMem : memory[type]) {
+			bankMem.push_back({
+			    .address = sectionTypeInfo[type].startAddr,
+			    .size = sectionTypeInfo[type].size,
+			});
+		}
+	}
 
 	// Generate linked lists of sections to assign
 	static uint64_t nbSectionsToAssign = 0; // `static` so `sect_ForEach` callback can see it
@@ -407,26 +432,8 @@ void assign_AssignSections() {
 	});
 
 	// Overlaying requires only fully-constrained sections
-	if (std::vector<Section const *> unfixedSections = checkOverlayCompat();
-	    !unfixedSections.empty()) {
-		size_t nbUnfixedSections = unfixedSections.size();
-		std::string unfixedList;
-		for (Section const *section : unfixedSections) {
-			unfixedList += "\n- \"";
-			unfixedList += section->name;
-			unfixedList += '"';
-		}
-		if (nbSectionsToAssign > nbUnfixedSections) {
-			unfixedList += "\n- and ";
-			unfixedList += std::to_string(nbSectionsToAssign - nbUnfixedSections);
-			unfixedList += " more";
-		}
-		fatal(
-		    "All sections must be fixed when using an overlay file; %" PRIu64 " %s not:%s",
-		    nbSectionsToAssign,
-		    nbSectionsToAssign == 1 ? "is" : "are",
-		    unfixedList.c_str()
-		);
+	if (options.overlayFileName) {
+		checkOverlayCompat();
 	}
 
 	// Assign sections in decreasing constraint order
