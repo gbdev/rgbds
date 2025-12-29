@@ -1,13 +1,13 @@
-FATAL: All sections must be fixed when using an overlay file; 15 are not:
-- "test 14"
-- "test 13"
-- "test 12"
-- "test 11"
-- "test 10"
-- "test 9"
-- "test 8"
-- "test 7"
-- "test 6"
-- "test 5"
-- and 5 more
+FATAL: All sections must be fixed when using an overlay file; 12 are not:
+- "ROMX BANK[4]" (address not specified)
+- "ROMX BANK[3]" (address not specified)
+- "ROMX BANK[2]" (address not specified)
+- "ROMX BANK[1]" (address not specified)
+- "ROMX[$4004]" (bank not specified)
+- "ROMX[$4003]" (bank not specified)
+- "ROMX[$4002]" (bank not specified)
+- "ROMX[$4001]" (bank not specified)
+- "ROMX #4" (bank and address not specified)
+- "ROMX #3" (bank and address not specified)
+- and 2 more
 Linking aborted with 1 error
