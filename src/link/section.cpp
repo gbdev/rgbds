@@ -25,91 +25,71 @@ void sect_ForEach(void (*callback)(Section &)) {
 	}
 }
 
-static void checkAgainstFixedAddress(Section const &target, Section const &other, uint16_t org) {
-	if (target.isAddressFixed) {
-		if (target.org != org) {
-			fatalTwoAt(
-			    target,
-			    other,
-			    "Section \"%s\" is defined with address $%04" PRIx16
-			    ", but also with address $%04" PRIx16,
-			    target.name.c_str(),
-			    target.org,
-			    other.org
-			);
+static void checkPieceCompat(Section &target, Section const &other, size_t delta) {
+	assume(other.modifier != SECTION_UNION || delta == 0);
+
+	if (other.isAddressFixed) {
+		uint16_t org = other.org - delta;
+
+		if (target.isAddressFixed) {
+			if (target.org != org) {
+				fatalTwoAt(
+				    target,
+				    other,
+				    "Section \"%s\" is defined with address $%04" PRIx16
+				    ", but also with address $%04" PRIx16,
+				    target.name.c_str(),
+				    target.org,
+				    other.org
+				);
+			}
+		} else if (target.isAlignFixed) {
+			if ((org - target.alignOfs) & target.alignMask) {
+				fatalTwoAt(
+				    target,
+				    other,
+				    "Section \"%s\" is defined with %d-byte alignment (offset %" PRIu16
+				    "), but also with address $%04" PRIx16,
+				    target.name.c_str(),
+				    target.alignMask + 1,
+				    target.alignOfs,
+				    other.org
+				);
+			}
 		}
-	} else if (target.isAlignFixed) {
-		if ((org - target.alignOfs) & target.alignMask) {
+
+		target.isAddressFixed = true;
+		target.org = org;
+	} else if (other.isAlignFixed) {
+		uint32_t ofs = (other.alignOfs - delta) & other.alignMask;
+
+		if (target.isAddressFixed) {
+			if ((target.org - ofs) & other.alignMask) {
+				fatalTwoAt(
+				    target,
+				    other,
+				    "Section \"%s\" is defined with address $%04" PRIx16
+				    ", but also with %d-byte alignment (offset %" PRIu16 ")",
+				    target.name.c_str(),
+				    target.org,
+				    other.alignMask + 1,
+				    other.alignOfs
+				);
+			}
+		} else if (target.isAlignFixed
+		           && (other.alignMask & target.alignOfs) != (target.alignMask & ofs)) {
 			fatalTwoAt(
 			    target,
 			    other,
 			    "Section \"%s\" is defined with %d-byte alignment (offset %" PRIu16
-			    "), but also with address $%04" PRIx16,
+			    "), but also with %d-byte alignment (offset %" PRIu16 ")",
 			    target.name.c_str(),
 			    target.alignMask + 1,
 			    target.alignOfs,
-			    other.org
-			);
-		}
-	}
-}
-
-static bool checkAgainstFixedAlign(Section const &target, Section const &other, uint32_t ofs) {
-	if (target.isAddressFixed) {
-		if ((target.org - ofs) & other.alignMask) {
-			fatalTwoAt(
-			    target,
-			    other,
-			    "Section \"%s\" is defined with address $%04" PRIx16
-			    ", but also with %d-byte alignment (offset %" PRIu16 ")",
-			    target.name.c_str(),
-			    target.org,
 			    other.alignMask + 1,
 			    other.alignOfs
 			);
-		}
-		return false;
-	} else if (target.isAlignFixed
-	           && (other.alignMask & target.alignOfs) != (target.alignMask & ofs)) {
-		fatalTwoAt(
-		    target,
-		    other,
-		    "Section \"%s\" is defined with %d-byte alignment (offset %" PRIu16
-		    "), but also with %d-byte alignment (offset %" PRIu16 ")",
-		    target.name.c_str(),
-		    target.alignMask + 1,
-		    target.alignOfs,
-		    other.alignMask + 1,
-		    other.alignOfs
-		);
-	} else {
-		return !target.isAlignFixed || (other.alignMask > target.alignMask);
-	}
-}
-
-static void checkSectUnionCompat(Section &target, Section &other) {
-	if (other.isAddressFixed) {
-		checkAgainstFixedAddress(target, other, other.org);
-		target.isAddressFixed = true;
-		target.org = other.org;
-	} else if (other.isAlignFixed) {
-		if (checkAgainstFixedAlign(target, other, other.alignOfs)) {
-			target.isAlignFixed = true;
-			target.alignMask = other.alignMask;
-			target.alignOfs = other.alignOfs;
-		}
-	}
-}
-
-static void checkFragmentCompat(Section &target, Section &other) {
-	if (other.isAddressFixed) {
-		uint16_t org = other.org - target.size;
-		checkAgainstFixedAddress(target, other, org);
-		target.isAddressFixed = true;
-		target.org = org;
-	} else if (other.isAlignFixed) {
-		uint32_t ofs = (other.alignOfs - target.size) & other.alignMask;
-		if (checkAgainstFixedAlign(target, other, ofs)) {
+		} else if (!target.isAlignFixed || other.alignMask > target.alignMask) {
 			target.isAlignFixed = true;
 			target.alignMask = other.alignMask;
 			target.alignOfs = ofs;
@@ -158,14 +138,14 @@ static void mergeSections(Section &target, std::unique_ptr<Section> &&other) {
 
 	switch (other->modifier) {
 	case SECTION_UNION:
-		checkSectUnionCompat(target, *other);
+		checkPieceCompat(target, *other, 0);
 		if (other->size > target.size) {
 			target.size = other->size;
 		}
 		break;
 
 	case SECTION_FRAGMENT:
-		checkFragmentCompat(target, *other);
+		checkPieceCompat(target, *other, target.size);
 		// Append `other` to `target`
 		other->offset = target.size;
 		target.size += other->size;
