@@ -1,0 +1,4 @@
+SECTION "ROM", ROM0
+LOAD UNION "U", WRAM0
+        ds 1
+ENDL

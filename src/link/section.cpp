@@ -96,6 +96,7 @@ static void checkSectUnionCompat(Section &target, Section &other) {
 		if (checkAgainstFixedAlign(target, other, other.alignOfs)) {
 			target.isAlignFixed = true;
 			target.alignMask = other.alignMask;
+			target.alignOfs = other.alignOfs;
 		}
 	}
 }
