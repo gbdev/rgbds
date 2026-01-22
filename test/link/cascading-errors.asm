@@ -3,8 +3,8 @@ Zero:
 
 ; Pin the section such that a jr to 0 is out of range
 SECTION "test", ROM0[$1000]
-	;; XXX: the fallback value used is the index of the symbol (in the object file?)
-	;; Is this intended?
+	;; the fallback value for an undefined symbol used to be its index in the object file,
+	;; but is now zero as of RGBLINK v1.0.1
 	dw Bar
 	dw Foo / Bar
 	dw Foo / Zero

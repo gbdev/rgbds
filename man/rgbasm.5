@@ -2571,9 +2571,9 @@ The stack's number of entries is limited only by the amount of memory in your ma
 .Ic PUSHO
 can also take a comma-separated list of options, to push the current set and apply the argument set at the same time:
 .Bd -literal -offset indent
-PUSHO b.X, g.oOX
-    DB %..XXXX..
-    DW `..ooOOXX
+PUSHO b.#, g.oO#
+    DB %..####..
+    DW `..ooOO##
 POPO
 .Ed
 .Ss Excluding locations from backtraces

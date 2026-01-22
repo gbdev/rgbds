@@ -409,10 +409,10 @@ static std::pair<std::vector<size_t>, std::vector<Palette>>
 	}
 
 	auto listColors = [](auto const &list) {
-		static char buf[sizeof(", $XXXX, $XXXX, $XXXX, $XXXX")];
+		static char buf[sizeof(", $xxxx, $xxxx, $xxxx, $xxxx")];
 		char *ptr = buf;
 		for (uint16_t color : list) {
-			ptr += snprintf(ptr, sizeof(", $XXXX"), ", $%04x", color);
+			ptr += snprintf(ptr, sizeof(", $xxxx"), ", $%04x", color);
 		}
 		return &buf[literal_strlen(", ")];
 	};
