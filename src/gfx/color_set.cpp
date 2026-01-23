@@ -42,29 +42,45 @@ void ColorSet::add(uint16_t color) {
 }
 
 ColorSet::ComparisonResult ColorSet::compare(ColorSet const &other) const {
-	// This works because the sets are sorted numerically
+	// This algorithm works because the sets are sorted numerically
 	assume(std::is_sorted(RANGE(_colorIndices)));
 	assume(std::is_sorted(RANGE(other._colorIndices)));
 
-	auto ours = _colorIndices.begin(), theirs = other._colorIndices.begin();
-	bool weBigger = true, theyBigger = true;
+	auto self_item = begin(), other_item = other.begin();
+	auto const self_end = end(), other_end = other.end();
+	bool self_has_unique = false, other_has_unique = false;
 
-	while (ours != end() && theirs != other.end()) {
-		if (*ours == *theirs) {
-			++ours;
-			++theirs;
-		} else if (*ours < *theirs) {
-			++ours;
-			theyBigger = false;
-		} else { // *ours > *theirs
-			++theirs;
-			weBigger = false;
+	while (self_item != self_end && other_item != other_end) {
+		if (*self_item < *other_item) {
+			// *self_item is not in other, so self cannot be a strict subset of other
+			self_has_unique = true;
+			++self_item;
+		} else if (*self_item > *other_item) {
+			// *other_item is not in self, so self cannot be a strict superset of other
+			other_has_unique = true;
+			++other_item;
+		} else {
+			// *self_item == *other_item, so continue comparing
+			++self_item;
+			++other_item;
+		}
+
+		// Early return optimization: we already know self and other are incomparable
+		if (self_has_unique && other_has_unique) {
+			return INCOMPARABLE;
 		}
 	}
-	weBigger &= theirs == other.end();
-	theyBigger &= ours == end();
 
-	return theyBigger ? THEY_BIGGER : (weBigger ? WE_BIGGER : NEITHER);
+	if (self_item != self_end) {
+		// self has more unique items after other has been fully iterated, so either self
+		// is a strict superset, or they're incomparable if other had unique items earlier
+		assume(other_item == other_end); // necessary to have exited the `while` loop
+		return other_has_unique ? INCOMPARABLE : STRICT_SUPERSET;
+	} else {
+		// self has been fully iterated (whether or not other has been), so either other
+		// is a strict superset, or they're incomparable if self had unique items earlier
+		return self_has_unique ? INCOMPARABLE : SUBSET_OR_EQUAL;
+	}
 }
 
 size_t ColorSet::size() const {
