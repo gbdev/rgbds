@@ -71,16 +71,15 @@ ColorSet::ComparisonResult ColorSet::compare(ColorSet const &other) const {
 		}
 	}
 
+	// Check if either color set has unique items remaining after one set has been fully iterated
 	if (self_item != self_end) {
-		// self has more unique items after other has been fully iterated, so either self
-		// is a strict superset, or they're incomparable if other had unique items earlier
-		assume(other_item == other_end); // necessary to have exited the `while` loop
-		return other_has_unique ? INCOMPARABLE : STRICT_SUPERSET;
-	} else {
-		// self has been fully iterated (whether or not other has been), so either other
-		// is a strict superset, or they're incomparable if self had unique items earlier
-		return self_has_unique ? INCOMPARABLE : SUBSET_OR_EQUAL;
+		self_has_unique = true;
 	}
+	if (other_item != other_end) {
+		other_has_unique = true;
+	}
+
+	return self_has_unique ? other_has_unique ? INCOMPARABLE : STRICT_SUPERSET : SUBSET_OR_EQUAL;
 }
 
 size_t ColorSet::size() const {
