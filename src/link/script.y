@@ -16,7 +16,7 @@
 	#include "link/layout.hpp"
 	#include "link/warning.hpp"
 
-	yy::parser::symbol_type yylex(); // Provided by layout.cpp
+	yy::parser::symbol_type yylex(); // Provided by lexer.cpp
 }
 
 /******************** Tokens and data types ********************/
