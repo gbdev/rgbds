@@ -14,14 +14,17 @@ set(common_src
 
 find_package(BISON 3.0.0 REQUIRED)
 set(BISON_FLAGS "-Wall -Dlr.type=ielr")
-# Set some optimization flags on versions that support them
+# Set some flags on versions that support them
 if(BISON_VERSION VERSION_GREATER_EQUAL "3.5")
-  set(BISON_FLAGS "${BISON_FLAGS} -Dparse.lac=full -Dapi.token.raw=true")
+  set(BISON_FLAGS "${BISON_FLAGS} -Dparse.lac=full -Dapi.token.raw=true -Wdangling-alias")
 endif()
 if(BISON_VERSION VERSION_GREATER_EQUAL "3.6")
   set(BISON_FLAGS "${BISON_FLAGS} -Dparse.error=detailed")
 else()
   set(BISON_FLAGS "${BISON_FLAGS} -Dparse.error=verbose")
+endif()
+if(BISON_VERSION VERSION_GREATER_EQUAL "3.7")
+  set(BISON_FLAGS "${BISON_FLAGS} -Wcounterexamples")
 endif()
 
 BISON_TARGET(ASM_PARSER "asm/parser.y"

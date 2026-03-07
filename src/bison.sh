@@ -14,9 +14,9 @@ fi
 
 BISON_FLAGS="-Wall -Dlr.type=ielr"
 
-# Set some optimization flags on versions that support them
+# Set some flags on versions that support them
 if [ "$BISON_MAJOR" -ge 4 ] || [ "$BISON_MAJOR" -eq 3 ] && [ "$BISON_MINOR" -ge 5 ]; then
-	BISON_FLAGS="$BISON_FLAGS -Dparse.lac=full -Dapi.token.raw=true"
+	BISON_FLAGS="$BISON_FLAGS -Dparse.lac=full -Dapi.token.raw=true -Wdangling-alias"
 fi
 if [ "$BISON_MAJOR" -ge 4 ] || [ "$BISON_MAJOR" -eq 3 ] && [ "$BISON_MINOR" -ge 6 ]; then
 	BISON_FLAGS="$BISON_FLAGS -Dparse.error=detailed"
