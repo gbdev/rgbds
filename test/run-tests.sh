@@ -138,6 +138,6 @@ test_downstream LIJI32    SameBoy bootroms build/bin/BootROMs/cgb_boot.bin 11390
 # gb-starter kit fails with any `make` on Windows: https://codeberg.org/ISSOtm/gb-starter-kit/issues/1
 # gb-starter-kit fails with macOS/BSD `make`: https://codeberg.org/ISSOtm/gb-starter-kit/issues/29
 case "${osname%%-*}" in
-	windows | macos | bsd) ;;
+	windows | macos | *bsd) ;;
 	*) test_downstream ISSOtm gb-starter-kit all bin/boilerplate.gb b4f130169ba73284e0d0e71b53e7baa4eca2f7fe;;
 esac

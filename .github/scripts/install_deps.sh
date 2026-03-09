@@ -1,5 +1,6 @@
-#!/usr/bin/env bash
-set -euo pipefail
+#!/bin/sh
+# This script requires `sh` instead of `bash` because the latter is not always installed on FreeBSD.
+set -eu
 
 case "${1%-*}" in
 	ubuntu)
@@ -12,6 +13,9 @@ case "${1%-*}" in
 		# instead of the outdated one preinstalled on macOS (which doesn't even support `-Wall`...)
 		export PATH="/opt/homebrew/opt/bison/bin:$PATH"
 		printf 'PATH=%s\n' "$PATH" >>"$GITHUB_ENV" # Make it available to later CI steps too
+		;;
+	freebsd)
+		pkg install -y bash bison cmake git png
 		;;
 	*)
 		echo "WARNING: Cannot install deps for OS '$1'"
