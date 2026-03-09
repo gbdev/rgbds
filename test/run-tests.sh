@@ -9,14 +9,17 @@ export SOURCE_DATE_EPOCH=609165296
 cd "$(dirname "$0")"
 
 usage() {
-	echo "Runs regression tests on RGBDS."
-	echo "Options:"
-	echo "    -h, --help            show this help message"
-	echo "    --only-internal       only run tests that build local examples"
-	echo "    --only-external       only run tests that build external codebases"
-	echo "    --only-free           skip tests that build nonfree codebases"
-	echo "    --installed-rgbds     use the system installed RGBDS"
-	echo "                          (only compatible with external codebases)"
+	cat <<"EOF"
+Runs regression tests on RGBDS.
+Options:
+    -h, --help            show this help message
+    --only-internal       only run tests that build local examples
+    --only-external       only run tests that build external codebases
+    --only-free           skip tests that build nonfree codebases
+    --os <os>             skip tests known to fail on <os> (e.g. `macos-14`)
+    --installed-rgbds     use the system installed RGBDS
+                          (only compatible with external codebases)
+EOF
 }
 
 # Parse options in pure Bash because macOS `getopt` is stuck

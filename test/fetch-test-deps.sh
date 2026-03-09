@@ -4,14 +4,16 @@ set -euo pipefail
 cd "$(dirname "$0")"
 
 usage() {
-	echo "Downloads source code of Game Boy programs used as RGBDS test cases."
-	echo "Options:"
-	echo "    -h, --help          show this help message"
-	echo "    --only-free         download only freely licensed codebases"
-	echo "    --only-internal     do not download any codebases"
-	echo "    --get-deps          install programs' own dependencies instead of themselves"
-	echo "    --get-hash          print programs' commit hashes instead of downloading them"
-	echo "    --get-paths         print programs' GitHub paths instead of downloading them"
+	cat <<"EOF"
+Downloads source code of Game Boy programs used as RGBDS test cases.
+Options:
+    -h, --help          show this help message
+    --only-free         download only freely licensed codebases
+    --only-internal     do not download any codebases
+    --get-deps          install programs' own dependencies instead of themselves
+    --get-hash          print programs' commit hashes instead of downloading them
+    --get-paths         print programs' GitHub paths instead of downloading them
+EOF
 }
 
 # Parse options in pure Bash because macOS `getopt` is stuck
