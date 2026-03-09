@@ -20,8 +20,9 @@ if(srcdir STREQUAL bindir)
   message(FATAL_ERROR "Terminating configuration")
 endif()
 
-option(SANITIZERS "Build with sanitizers enabled" OFF) # Ignored on MSVC
-option(MORE_WARNINGS "Turn on more warnings" OFF) # Ignored on MSVC
+include(CMakeDependentOption)
+option(SANITIZERS "Build with sanitizers enabled" OFF)
+cmake_dependent_option(MORE_WARNINGS "Turn on more warnings" OFF !MSVC OFF)
 
 if(MSVC)
   # MSVC's own standard library triggers warning C5105,
