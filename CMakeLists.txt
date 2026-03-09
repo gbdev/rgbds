@@ -174,5 +174,28 @@ set(man7 "man/gbz80.7"
          "man/rgbds.7")
 
 foreach(SECTION "man1" "man5" "man7")
-  install(FILES ${${SECTION}} DESTINATION "${CMAKE_INSTALL_MANDIR}/${SECTION}")
+  install(FILES ${${SECTION}} DESTINATION "${CMAKE_INSTALL_MANDIR}/${SECTION}" COMPONENT man)
 endforeach()
+
+## Packaging.
+
+# We only specify here the package-agnostic options;
+# the rest is rather convention from our side,
+# and thus more appropriate for presets or CLI flags.
+## CPACK_PACKAGE_NAME: copied from `project()`
+set(CPACK_PACKAGE_VENDOR "GBDev")
+set(CPACK_PACKAGE_VERSION "${CMAKE_PROJECT_VERSION}") # The individual components are defined implicitly.
+set(CPACK_PACKAGE_DESCRIPTION "An assembly toolchain for the Nintendo Game Boy and Game Boy Color") # Same as our repo's description.
+## CPACK_PACKAGE_DESCRIPTION_SUMMARY: copied from `project()`
+set(CPACK_PACKAGE_HOMEPAGE_URL "https://rgbds.gbdev.io")
+## CPACK_PACKAGE_FILE_NAME: should be provided at runtime (`cpack -P`)
+set(CPACK_PACKAGE_CHECKSUM SHA256)
+set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_SOURCE_DIR}/LICENSE")
+set(CPACK_RESOURCE_FILE_README "${CMAKE_SOURCE_DIR}/README.md")
+set(CPACK_STRIP_FILES ON) # Only applies to binary packages, not sources.
+set(CPACK_VERBATIM_VARIABLES ON)
+set(CPACK_THREADS 0) # Use all available CPU cores.
+# Convert our gitignore into regex ignores, for source tarballs.
+# TODO
+set(CPACK_INCLUDE_TOPLEVEL_DIRECTORY OFF) # TODO: source packages don't want this, what about binary ones?
+include(CPack)
