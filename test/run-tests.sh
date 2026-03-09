@@ -60,7 +60,7 @@ while [[ $# -gt 0 ]]; do
 			break
 			;;
 		*)
-			echo "$(basename "$0"): internal error"
+			echo "$(basename "$0"): unknown option '$1'"
 			exit 1
 			;;
 	esac
