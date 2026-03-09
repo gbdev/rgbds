@@ -4,7 +4,9 @@
 cmake_minimum_required(VERSION 3.17...4.2 FATAL_ERROR)
 
 project(rgbds
-        LANGUAGES CXX)
+        LANGUAGES CXX
+        DESCRIPTION "Game Boy assembly toolchain"
+        HOMEPAGE_URL "https://rgbds.gbdev.io")
 
 include(CTest)
 
