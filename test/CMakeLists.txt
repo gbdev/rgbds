@@ -2,15 +2,21 @@
 
 option(USE_NONFREE_TESTS "run tests that build nonfree codebases" ON)
 option(USE_EXTERNAL_TESTS "run tests that build external codebases" ON)
+set(TESTS_OS_NAME "" CACHE STRING "skip running tests known to fail on this OS")
 
+set(ONLY_FREE)
 if(NOT USE_NONFREE_TESTS)
   set(ONLY_FREE "--only-free")
 endif()
+
+set(ONLY_INTERNAL)
 if(NOT USE_EXTERNAL_TESTS)
   set(ONLY_INTERNAL "--only-internal")
 endif()
-if(DEFINED OS)
-  set(OS_NAME "--os" "${OS}")
+
+set(OS_NAME)
+if(NOT TESTS_OS_NAME STREQUAL "")
+  set(OS_NAME "--os" "${TESTS_OS_NAME}")
 endif()
 
 add_executable(randtilegen gfx/randtilegen.cpp)
