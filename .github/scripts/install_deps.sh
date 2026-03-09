@@ -21,7 +21,8 @@ case "${1%-*}" in
 		pkg install -y bash bison cmake git png
 		;;
 	windows)
-		choco install -y winflexbison3
+		# GitHub Actions' hosted runners ship CMake 3.x, but versions prior to 4.0.0 ignore `CPACK_PACKAGE_FILE_NAME`.
+		choco install -y winflexbison3 cmake
 		# The below expects the base name, not the Windows-specific name.
 		bison() { win_bison "$@"; } # An alias doesn't work, so we use a function instead.
 		;;
