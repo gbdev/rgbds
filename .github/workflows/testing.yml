@@ -155,11 +155,6 @@ jobs:
       matrix:
         bits: [32, 64]
         os: [windows-2022, windows-2025]
-        include:
-          - bits: 32
-            arch: x86
-          - bits: 64
-            arch: x86_x64
       fail-fast: false
     runs-on: ${{ matrix.os }}
     steps:
@@ -180,16 +175,15 @@ jobs:
           cmake -S . -B build --preset develop-msvc${{ matrix.bits }} -DFETCHCONTENT_BASE_DIR="${{ env.DEPS_ROOT_DIR }}" -DSANITIZERS=OFF
           cmake --build build
       - name: Package binaries
-        shell: bash
+        working-directory: build
         run: |
-          cmake --install build --config Debug --prefix install_dir --verbose
-          mkdir bins
-          cp -v install_dir/bin/{rgb*.exe,*.dll} bins
+          cat CPackConfig.cmake
+          cpack -G ZIP -DCPACK_PACKAGE_FILE_NAME=rgbds-win${{ matrix.bits }} -C Debug --verbose
       - name: Upload Windows binaries
         uses: actions/upload-artifact@v4
         with:
           name: rgbds-canary-w${{ matrix.bits }}-${{ matrix.os }}
-          path: bins
+          path: build/rgbds-win${{ matrix.bits }}.zip
           if-no-files-found: error
       - name: Compute test dependency cache params
         id: test-deps-cache-params
@@ -218,8 +212,6 @@ jobs:
       - name: Run tests
         shell: bash
         run: |
-          cp bins/* .
-          cp bins/*.dll test/gfx
           test/run-tests.sh --os ${{ matrix.os }}
 
   windows-mingw-build:
