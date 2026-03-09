@@ -2,7 +2,7 @@
 
 # 3.9 required for LTO checks
 # 3.17 optional for CMAKE_CTEST_ARGUMENTS
-cmake_minimum_required(VERSION 3.9..3.17 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.9...4.2 FATAL_ERROR)
 
 project(rgbds
         LANGUAGES CXX)
