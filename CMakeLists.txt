@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: MIT
 
-# 3.9 required for LTO checks
-cmake_minimum_required(VERSION 3.9...4.2 FATAL_ERROR)
+# 3.17 required for LTO checks messages
+cmake_minimum_required(VERSION 3.17...4.2 FATAL_ERROR)
 
 project(rgbds
         LANGUAGES CXX)
