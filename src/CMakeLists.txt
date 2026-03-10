@@ -2,7 +2,7 @@
 
 configure_file(version.cpp _version.cpp ESCAPE_QUOTES)
 
-set(common_src
+add_library(common OBJECT
     "extern/getopt.cpp"
     "cli.cpp"
     "diagnostics.cpp"
@@ -10,7 +10,7 @@ set(common_src
     "usage.cpp"
     "util.cpp"
     "_version.cpp"
-    )
+)
 
 find_package(BISON 3.0.0 REQUIRED)
 set(BISON_FLAGS "-Wall -Dlr.type=ielr")
@@ -31,15 +31,8 @@ BISON_TARGET(ASM_PARSER "asm/parser.y"
              "${PROJECT_SOURCE_DIR}/src/asm/parser.cpp"
              COMPILE_FLAGS "${BISON_FLAGS}"
              DEFINES_FILE "${PROJECT_SOURCE_DIR}/src/asm/parser.hpp"
-             )
-
-BISON_TARGET(LINKER_SCRIPT_PARSER "link/script.y"
-             "${PROJECT_SOURCE_DIR}/src/link/script.cpp"
-             COMPILE_FLAGS "${BISON_FLAGS}"
-             DEFINES_FILE "${PROJECT_SOURCE_DIR}/src/link/script.hpp"
-             )
-
-set(rgbasm_src
+)
+add_executable(rgbasm $<TARGET_OBJECTS:common>
     "${BISON_ASM_PARSER_OUTPUT_SOURCE}"
     "asm/actions.cpp"
     "asm/charmap.cpp"
@@ -60,9 +53,14 @@ set(rgbasm_src
     "linkdefs.cpp"
     "opmath.cpp"
     "verbosity.cpp"
-    )
+)
 
-set(rgblink_src
+BISON_TARGET(LINKER_SCRIPT_PARSER "link/script.y"
+             "${PROJECT_SOURCE_DIR}/src/link/script.cpp"
+             COMPILE_FLAGS "${BISON_FLAGS}"
+             DEFINES_FILE "${PROJECT_SOURCE_DIR}/src/link/script.hpp"
+)
+add_executable(rgblink $<TARGET_OBJECTS:common>
     "${BISON_LINKER_SCRIPT_PARSER_OUTPUT_SOURCE}"
     "link/assign.cpp"
     "link/fstack.cpp"
@@ -81,16 +79,16 @@ set(rgblink_src
     "linkdefs.cpp"
     "opmath.cpp"
     "verbosity.cpp"
-    )
+)
 
-set(rgbfix_src
+add_executable(rgbfix $<TARGET_OBJECTS:common>
     "fix/fix.cpp"
     "fix/main.cpp"
     "fix/mbc.cpp"
     "fix/warning.cpp"
-    )
+)
 
-set(rgbgfx_src
+add_executable(rgbgfx $<TARGET_OBJECTS:common>
     "gfx/color_set.cpp"
     "gfx/main.cpp"
     "gfx/pal_packing.cpp"
@@ -103,19 +101,13 @@ set(rgbgfx_src
     "gfx/rgba.cpp"
     "gfx/warning.cpp"
     "verbosity.cpp"
-    )
+)
 
-foreach(PROG "asm" "fix" "gfx" "link")
-  add_executable(rgb${PROG}
-                 ${rgb${PROG}_src}
-                 ${common_src}
-                 )
-  install(TARGETS rgb${PROG} RUNTIME DESTINATION bin)
-  # Required to run tests
-  set_target_properties(rgb${PROG} PROPERTIES
-  # hack for MSVC: no-op generator expression to stop generation of "per-configuration subdirectory"
-                        RUNTIME_OUTPUT_DIRECTORY $<1:${CMAKE_SOURCE_DIR}>)
-endforeach()
+install(TARGETS rgbasm rgblink rgbfix rgbgfx RUNTIME DESTINATION bin)
+# Required to run tests
+set_target_properties(rgbasm rgblink rgbfix rgbgfx PROPERTIES
+# hack for MSVC: no-op generator expression to stop generation of "per-configuration subdirectory"
+                      RUNTIME_OUTPUT_DIRECTORY $<1:${CMAKE_SOURCE_DIR}>)
 
 if(LIBPNG_FOUND) # pkg-config
   target_include_directories(rgbgfx PRIVATE ${LIBPNG_INCLUDE_DIRS})
