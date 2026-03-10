@@ -28,7 +28,6 @@ cmake_dependent_option(MORE_WARNINGS "Turn on more warnings" OFF !MSVC OFF)
 if(MSVC)
   add_compile_options(
     /MP # Build multiple files in parallel.
-    /wd5105 # MSVC's own standard library triggers warning C5105, "macro expansion producing 'defined' has undefined behavior".
     /wd5030 # Warning C5030 is about unknown attributes (`[[gnu::ATTR]]`), none of ours being load-bearing.
     /wd4996 # Warning C4996 is about using POSIX names, which we want to do for portability.
     /Zc:preprocessor # Opt into the C++20-conformant preprocessor.
