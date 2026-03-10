@@ -51,7 +51,7 @@ char const *printChar(int c);
 struct Uppercase {
 	// FNV-1a hash of an uppercased string
 	constexpr size_t operator()(std::string const &str) const {
-		return std::accumulate(RANGE(str), 0x811C9DC5, [](size_t hash, char c) {
+		return std::accumulate(RANGE(str), size_t(0x811C9DC5), [](size_t hash, char c) {
 			return (hash ^ toUpper(c)) * 16777619;
 		});
 	}

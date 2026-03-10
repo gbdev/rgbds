@@ -204,7 +204,7 @@ static void warnExtraColors(
 // Parses the initial part of a string_view, advancing the "read index" as it does
 template<typename UintT> // Should be uint*_t
 static std::optional<UintT> parseDec(std::string const &str, size_t &n) {
-	uintmax_t value = 0;
+	UintT value = 0;
 	auto result = std::from_chars(str.data() + n, str.data() + str.length(), value);
 	if (static_cast<bool>(result.ec)) {
 		return std::nullopt;
