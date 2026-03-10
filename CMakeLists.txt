@@ -105,8 +105,6 @@ add_subdirectory(src)
 set(CMAKE_CTEST_ARGUMENTS "--verbose")
 add_subdirectory(test)
 
-# By default, build in Release mode; Debug mode must be explicitly requested
-# (You may want to augment it with the options above)
 if(CMAKE_BUILD_TYPE STREQUAL "Release")
   message(CHECK_START "Checking if LTO is supported")
   include(CheckIPOSupported)
