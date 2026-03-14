@@ -1,0 +1,17 @@
+{
+	"version": 3,
+	"configurePresets": [
+		{
+			"name": "develop",
+			"description": "Debugging config for maintainers",
+			"cacheVariables": {
+				"CMAKE_BUILD_TYPE": "Debug",
+				"CMAKE_EXPORT_COMPILE_COMMANDS": true,
+				"MORE_WARNINGS": true,
+				"SANITIZERS": true
+			},
+			"warnings": { "uninitialized": true },
+			"errors": { "dev": true }
+		}
+	]
+}

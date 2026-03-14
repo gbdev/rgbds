@@ -58,6 +58,7 @@ rgbds/
 ├── .clang-format
 ├── .clang-tidy
 ├── CMakeLists.txt
+├── CMakePresets.json
 ├── compile_flags.txt
 ├── Dockerfile
 └── Makefile
@@ -107,6 +108,8 @@ rgbds/
   Configuration for C++ static analysis with [`clang-tidy`](https://clang.llvm.org/extra/clang-tidy/) (for which we define the shortcut `make tidy`).
 - **`CMakeLists.txt`:**  
   Defines how to build RGBDS with CMake.
+- **`CMakePresets.json`:**
+  Defines some [presets](https://cmake.org/cmake/help/latest/manual/cmake-presets.7.html) useful for working with our CMake.
 - **`compile_flags.txt`:**  
   Compiler flags for `clang-tidy`.
 - **`Dockerfile`:**  
