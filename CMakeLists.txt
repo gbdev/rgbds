@@ -8,7 +8,7 @@ project(rgbds
         DESCRIPTION "Game Boy assembly toolchain"
         HOMEPAGE_URL "https://rgbds.gbdev.io")
 
-include(CTest)
+include(CTest) # Note: must be in the top-level dir.
 
 # Reject in-source builds, as they may conflict with the Makefile.
 get_filename_component(srcdir "${CMAKE_SOURCE_DIR}" REALPATH)
@@ -97,7 +97,6 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 add_subdirectory(src)
-set(CMAKE_CTEST_ARGUMENTS "--verbose")
 add_subdirectory(test)
 
 if(CMAKE_BUILD_TYPE STREQUAL "Release")
