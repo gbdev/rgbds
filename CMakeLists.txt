@@ -10,15 +10,12 @@ project(rgbds
 
 include(CTest)
 
-# get real path of source and binary directories
+# Reject in-source builds, as they may conflict with the Makefile.
 get_filename_component(srcdir "${CMAKE_SOURCE_DIR}" REALPATH)
 get_filename_component(bindir "${CMAKE_BINARY_DIR}" REALPATH)
-
-# reject in-source builds, may conflict with Makefile
 if(srcdir STREQUAL bindir)
-  message("RGBDS should not be built in the source directory.")
-  message("Instead, create a separate build directory and specify to CMake the path to the source directory.")
-  message(FATAL_ERROR "Terminating configuration")
+  message(FATAL_ERROR "RGBDS should not be built in the source directory.
+Instead, create a separate build directory and specify to CMake the path to the source directory.")
 endif()
 
 include(CMakeDependentOption)
