@@ -9,6 +9,7 @@ project(rgbds
         HOMEPAGE_URL "https://rgbds.gbdev.io")
 
 include(CTest) # Note: must be in the top-level dir.
+include(GNUInstallDirs)
 
 # Reject in-source builds, as they may conflict with the Makefile.
 get_filename_component(srcdir "${CMAKE_SOURCE_DIR}" REALPATH)
@@ -111,7 +112,6 @@ if(CMAKE_BUILD_TYPE STREQUAL "Release")
   endif()
 endif()
 
-set(MANDIR "share/man")
 set(man1 "man/rgbasm.1"
          "man/rgbfix.1"
          "man/rgbgfx.1"
@@ -124,6 +124,5 @@ set(man7 "man/gbz80.7"
          "man/rgbds.7")
 
 foreach(SECTION "man1" "man5" "man7")
-  set(DEST "${MANDIR}/${SECTION}")
-  install(FILES ${${SECTION}} DESTINATION ${DEST})
+  install(FILES ${${SECTION}} DESTINATION "${CMAKE_INSTALL_MANDIR}/${SECTION}")
 endforeach()
