@@ -61,7 +61,7 @@ years). If you are adding new files, you need to use the
 4. Compile your changes with `make develop` instead of just `make`. This
    target checks for additional warnings. Your patches shouldn't introduce any
    new warning (but it may be possible to remove some warning checks if it makes
-   the code much easier).
+   the code much easier). You can also use `cmake --preset develop` if you prefer.
 5. Test your changes by running `./run-tests.sh` in the `test` directory.
    (You must run `./fetch-test-deps.sh` first; if you forget to, the test suite
    will fail and remind you mid-way.)

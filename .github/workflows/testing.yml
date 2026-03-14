@@ -31,7 +31,7 @@ jobs:
       - name: Build & install using CMake
         if: matrix.buildsys == 'cmake'
         run: |
-          cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER=${{ matrix.cxx }} -DSANITIZERS=ON -DMORE_WARNINGS=ON -DTESTS_OS_NAME=${{ matrix.os }}
+          cmake -S . -B build --preset develop -DCMAKE_CXX_COMPILER=${{ matrix.cxx }} -DTESTS_OS_NAME=${{ matrix.os }}
           cmake --build build -j --verbose
           sudo cmake --install build --verbose
       - name: Package binaries
@@ -159,8 +159,8 @@ jobs:
         if: steps.cache.outputs.cache-hit != 'true'
         shell: bash
         run: | # BUILD_SHARED_LIBS causes the output DLL to be called `z.dll` as of zlib 1.3.2 (formerly `zlib1.dll`)
-          cmake -S zlib -B zbuild -A ${{ matrix.platform }} -Wno-dev -DCMAKE_INSTALL_PREFIX=install_dir -DBUILD_SHARED_LIBS=ON
-          cmake --build zbuild --config Release -j
+          cmake -S zlib -B zbuild -A ${{ matrix.platform }} -Wno-dev -DCMAKE_INSTALL_PREFIX=install_dir -DCMAKE_BUILD_TYPE=Debug -DBUILD_SHARED_LIBS=ON
+          cmake --build zbuild --config Debug -j
       - name: Install zlib
         run: |
           cmake --install zbuild
@@ -168,16 +168,16 @@ jobs:
         if: steps.cache.outputs.cache-hit != 'true'
         shell: bash
         run: |
-          cmake -S libpng -B pngbuild -A ${{ matrix.platform }} -Wno-dev -DCMAKE_INSTALL_PREFIX=install_dir -DPNG_SHARED=ON -DPNG_STATIC=OFF -DPNG_TESTS=OFF
-          cmake --build pngbuild --config Release -j
+          cmake -S libpng -B pngbuild -A ${{ matrix.platform }} -Wno-dev -DCMAKE_INSTALL_PREFIX=install_dir -DCMAKE_BUILD_TYPE=Debug -DPNG_SHARED=ON -DPNG_STATIC=OFF -DPNG_TESTS=OFF
+          cmake --build pngbuild --config Debug -j
       - name: Install libpng
         run: |
           cmake --install pngbuild
       - name: Build Windows binaries
         shell: bash
         run: |
-          cmake -S . -B build -A ${{ matrix.platform }} -DCMAKE_INSTALL_PREFIX=install_dir -DCMAKE_BUILD_TYPE=Release
-          cmake --build build --config Release -j --verbose
+          cmake -S . -B build -A ${{ matrix.platform }} --preset develop -DCMAKE_INSTALL_PREFIX=install_dir
+          cmake --build build --config Debug -j --verbose
           cmake --install build --verbose --prefix install_dir
       - name: Package binaries
         shell: bash
