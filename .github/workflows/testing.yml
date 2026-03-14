@@ -31,7 +31,7 @@ jobs:
       - name: Build & install using CMake
         if: matrix.buildsys == 'cmake'
         run: |
-          cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER=${{ matrix.cxx }} -DSANITIZERS=ON -DMORE_WARNINGS=ON
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER=${{ matrix.cxx }} -DSANITIZERS=ON -DMORE_WARNINGS=ON -DTESTS_OS_NAME=${{ matrix.os }}
           cmake --build build -j --verbose
           sudo cmake --install build --verbose
       - name: Package binaries
@@ -66,10 +66,15 @@ jobs:
         shell: bash
         run: |
           test/fetch-test-deps.sh --get-deps ${{ matrix.os }}
-      - name: Run tests
+      - name: Run tests using our script
+        if: matrix.buildsys == 'make'
         shell: bash
         run: |
           CXX=${{ matrix.cxx }} test/run-tests.sh --os ${{ matrix.os }}
+      - name: Run tests using CTest
+        if: matrix.buildsys == 'cmake'
+        run: |
+          cmake --build build --target test
 
   macos-static:
     runs-on: macos-14
