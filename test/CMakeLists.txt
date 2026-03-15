@@ -9,18 +9,8 @@ add_executable(rgbgfx_test gfx/rgbgfx_test.cpp)
 set_target_properties(randtilegen rgbgfx_test PROPERTIES
 # hack for MSVC: no-op generator expression to stop generation of "per-configuration subdirectory"
                       RUNTIME_OUTPUT_DIRECTORY $<1:${CMAKE_CURRENT_SOURCE_DIR}/gfx>)
-
-foreach(TARGET randtilegen rgbgfx_test)
-  if(LIBPNG_FOUND) # pkg-config
-    target_include_directories(${TARGET} PRIVATE ${LIBPNG_INCLUDE_DIRS})
-    target_link_directories(${TARGET} PRIVATE ${LIBPNG_LIBRARY_DIRS})
-    target_link_libraries(${TARGET} PRIVATE ${LIBPNG_LIBRARIES})
-  else()
-    target_compile_definitions(${TARGET} PRIVATE ${PNG_DEFINITIONS})
-    target_include_directories(${TARGET} PRIVATE ${PNG_INCLUDE_DIRS})
-    target_link_libraries(${TARGET} PRIVATE ${PNG_LIBRARIES})
-  endif()
-endforeach()
+target_link_libraries(randtilegen PRIVATE PNG::PNG)
+target_link_libraries(rgbgfx_test PRIVATE PNG::PNG)
 
 set(ONLY_FREE)
 if(NOT TESTS_RUN_NONFREE)
