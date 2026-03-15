@@ -103,7 +103,7 @@ add_executable(rgbgfx $<TARGET_OBJECTS:common>
     "verbosity.cpp"
 )
 
-install(TARGETS rgbasm rgblink rgbfix rgbgfx RUNTIME DESTINATION bin)
+install(TARGETS rgbasm rgblink rgbfix rgbgfx RUNTIME)
 # Required to run tests
 set_target_properties(rgbasm rgblink rgbfix rgbgfx PROPERTIES
 # hack for MSVC: no-op generator expression to stop generation of "per-configuration subdirectory"
