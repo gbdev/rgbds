@@ -78,6 +78,53 @@ years). If you are adding new files, you need to use the
 8. Be prepared to get some comments about your code and to modify it. Tip: Use
    `git rebase -i origin/master` to modify chains of commits.
 
+## Running tests
+
+### Using CTest (recommended — CMake build)
+
+Each test case is registered as an individual CTest test, enabling parallel
+execution, filtering, and ordered dependencies.
+
+```sh
+# Build RGBDS first
+cmake -S . -B build
+cmake --build build
+
+# Run all internal tests in parallel (defaults to nproc)
+cd build && ctest -j$(nproc)
+
+# Run only a specific suite
+ctest -L asm
+ctest -L link
+ctest -L fix
+ctest -L gfx
+
+# Run only internal tests (skip downstream projects)
+ctest -L internal
+
+# Run only external/downstream tests
+ctest -L external
+
+# Filter by test name
+ctest -R "asm/charmap"
+ctest -R "link/overlay"
+
+# Show output from failing tests
+ctest -j$(nproc) --output-on-failure
+```
+
+Smoke tests run first for each suite. If a smoke test fails, the rest of that
+suite is skipped. External/downstream tests only run after all smoke tests pass.
+
+### Using run-tests.sh (Makefile build)
+
+The legacy `test/run-tests.sh` script still works for Makefile-based builds:
+
+```sh
+make
+cd test && ./run-tests.sh
+```
+
 ## Adding a test
 
 The test suite is a little ad-hoc, so the way tests work is different for each
@@ -85,6 +132,9 @@ program being tested.
 
 Feel free to modify how the test scripts work, if the thing you want to test
 doesn't fit the existing scheme(s).
+
+When adding new test files, re-run `cmake` to pick them up (CTest discovers
+tests at configure time via `file(GLOB ...)`).
 
 ### RGBASM
 
