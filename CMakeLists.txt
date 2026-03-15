@@ -3,13 +3,22 @@
 # 3.17 required for LTO checks messages
 cmake_minimum_required(VERSION 3.17...4.2 FATAL_ERROR)
 
+# Read the project version from the header (the canonical source of truth).
+file(STRINGS "include/version.hpp" version_defines REGEX "^[ \t]*#define[ \t]+PACKAGE_VERSION_")
+foreach(line IN LISTS version_defines)
+  # We want the `CMAKE_MATCH_n` variables, so we just need to run *some* regex op.
+  string(REGEX MATCH "PACKAGE_(VERSION_[^ \t]+)[ \t]+([0-9]+)" dummy "${line}")
+  set("${CMAKE_MATCH_1}" "${CMAKE_MATCH_2}")
+endforeach()
+
 project(rgbds
+        VERSION "${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}"
         LANGUAGES CXX
         DESCRIPTION "Game Boy assembly toolchain"
         HOMEPAGE_URL "https://rgbds.gbdev.io")
-
-include(CTest) # Note: CTest only functions properly if included from the top-level CMakeLists.
-include(GNUInstallDirs)
+if(DEFINED VERSION_RC)
+  string(APPEND CMAKE_PROJECT_VERSION "-rc${VERSION_RC}")
+endif()
 
 # Reject in-source builds, as they may conflict with the Makefile.
 get_filename_component(srcdir "${CMAKE_SOURCE_DIR}" REALPATH)
@@ -18,6 +27,9 @@ if(srcdir STREQUAL bindir)
   message(FATAL_ERROR "RGBDS should not be built in the source directory.
 Instead, create a separate build directory and specify to CMake the path to the source directory.")
 endif()
+
+include(CTest) # Note: CTest only functions properly if included from the top-level CMakeLists.
+include(GNUInstallDirs)
 
 include(CMakeDependentOption)
 option(SANITIZERS "Build with sanitizers enabled" OFF)
@@ -71,16 +83,37 @@ endif()
 # Use versioning consistent with Makefile
 # the git revision is used but uses the fallback in an archive
 
-find_program(GIT git)
-if(GIT)
-  execute_process(COMMAND ${GIT} --git-dir=.git -c safe.directory='*' describe --tags --dirty --always
-                  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+message(CHECK_START "Determining RGBDS version from Git history")
+list(APPEND CMAKE_MESSAGE_INDENT "  ")
+set(GIT_REV "") # This fallback is important!
+find_package(Git)
+list(POP_BACK CMAKE_MESSAGE_INDENT)
+if(NOT Git_FOUND)
+  message(CHECK_FAIL "Git not found")
+else()
+  execute_process(COMMAND "${GIT_EXECUTABLE}" --git-dir=.git -c safe.directory='*'
+                            describe --tags --dirty --always --match "v[0-9]*"
+                  WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
                   OUTPUT_VARIABLE GIT_REV OUTPUT_STRIP_TRAILING_WHITESPACE
-                  ERROR_QUIET)
-  message(STATUS "RGBDS version: ${GIT_REV}")
-else(GIT)
-  message(STATUS "Cannot determine RGBDS version (Git not installed), falling back")
-endif(GIT)
+                  ERROR_VARIABLE git_err ERROR_STRIP_TRAILING_WHITESPACE
+                  RESULT_VARIABLE result)
+  if(NOT result EQUAL 0)
+    message(CHECK_FAIL "error ${result} from Git:")
+    list(APPEND CMAKE_MESSAGE_INDENT "     ")
+    message("${git_err}")
+    list(POP_BACK CMAKE_MESSAGE_INDENT)
+  else()
+    message(CHECK_PASS "${GIT_REV}")
+    if(NOT "${GIT_REV}" MATCHES "^v[0-9]+\\.[0-9]+\\.[0-9]+(-rc[0-9]+)?")
+      # Can't find an ancestor tag! (That passes `--match`, anyway.)
+      message(WARNING "No `v*` Git tag reachable; falling back")
+    elseif(NOT CMAKE_MATCH_0 STREQUAL "v${CMAKE_PROJECT_VERSION}")
+      message(SEND_ERROR "\
+Version mismatch! Git says ${CMAKE_MATCH_0},
+          version.hpp says v${CMAKE_PROJECT_VERSION}!")
+    endif()
+  endif()
+endif()
 
 find_package(PkgConfig)
 if(MSVC OR NOT PKG_CONFIG_FOUND)
