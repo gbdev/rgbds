@@ -92,7 +92,7 @@ else()
   pkg_check_modules(LIBPNG REQUIRED libpng)
 endif()
 
-include_directories("${PROJECT_SOURCE_DIR}/include")
+include_directories("include")
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
