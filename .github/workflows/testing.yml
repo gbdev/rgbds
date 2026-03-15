@@ -383,7 +383,7 @@ jobs:
           prepare: |
             .github/scripts/install_deps.sh freebsd
           run: | # FreeBSD `c++` compiler does not support `make develop` sanitizers ASan or UBSan
-            cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER=c++ -DUSE_EXTERNAL_TESTS=OFF -DTESTS_OS_NAME=freebsd
+            cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER=c++ -DTESTS_RUN_EXTERNAL=OFF -DTESTS_OS_NAME=freebsd
             cmake --build build -j4 --verbose
             cmake --install build --verbose
             cmake --build build --target test

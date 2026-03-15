@@ -8,7 +8,7 @@ project(rgbds
         DESCRIPTION "Game Boy assembly toolchain"
         HOMEPAGE_URL "https://rgbds.gbdev.io")
 
-include(CTest) # Note: must be in the top-level dir.
+include(CTest) # Note: CTest only functions properly if included from the top-level CMakeLists.
 include(GNUInstallDirs)
 
 # Reject in-source builds, as they may conflict with the Makefile.
