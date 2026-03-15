@@ -97,20 +97,20 @@ include_directories("${PROJECT_SOURCE_DIR}/include")
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
+message(CHECK_START "Checking if LTO is supported")
+include(CheckIPOSupported)
+check_ipo_supported(RESULT enable_lto)
+if(enable_lto)
+  message(CHECK_PASS "yes")
+  set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_RELEASE ON)
+  set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_RELWITHDEBINFO ON)
+  set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_MINSIZEREL ON)
+else()
+  message(CHECK_FAIL "no")
+endif()
+
 add_subdirectory(src)
 add_subdirectory(test)
-
-if(CMAKE_BUILD_TYPE STREQUAL "Release")
-  message(CHECK_START "Checking if LTO is supported")
-  include(CheckIPOSupported)
-  check_ipo_supported(RESULT enable_lto)
-  if(enable_lto)
-    message(CHECK_PASS "yes")
-    set_property(TARGET rgbasm rgblink rgbfix rgbgfx PROPERTY INTERPROCEDURAL_OPTIMIZATION ON)
-  else()
-    message(CHECK_FAIL "no")
-  endif()
-endif()
 
 set(man1 "man/rgbasm.1"
          "man/rgbfix.1"
