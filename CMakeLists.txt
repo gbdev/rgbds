@@ -50,7 +50,7 @@ if(MSVC)
     add_link_options(${SAN_FLAGS})
   endif()
 else()
-  add_compile_options(-Wall -pedantic
+  add_compile_options(-Wall -pedantic -fno-exceptions -fno-rtti
     # C++20 allows macros to take zero variadic arguments.
     # Some versions of Clang don't recognize this, and treat them as a GNU extension.
     -Wno-gnu-zero-variadic-macro-arguments)
@@ -98,6 +98,7 @@ else()
                   ERROR_VARIABLE git_err ERROR_STRIP_TRAILING_WHITESPACE
                   RESULT_VARIABLE result)
   if(NOT result EQUAL 0)
+    # Note that this happens e.g. when building from a tarball, so it shouldn't fail the build!
     message(CHECK_FAIL "error ${result} from Git:")
     list(APPEND CMAKE_MESSAGE_INDENT "     ")
     message("${git_err}")
