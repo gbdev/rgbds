@@ -123,7 +123,8 @@ if(MSVC OR NOT PKG_CONFIG_FOUND)
   # this is most evident on macOS but can occur on Linux too
   find_package(PNG REQUIRED)
 else()
-  pkg_check_modules(LIBPNG REQUIRED libpng)
+  pkg_check_modules(LIBPNG REQUIRED IMPORTED_TARGET libpng)
+  add_library(PNG::PNG ALIAS PkgConfig::LIBPNG)
 endif()
 
 include_directories("include")

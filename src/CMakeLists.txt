@@ -108,13 +108,4 @@ install(TARGETS rgbasm rgblink rgbfix rgbgfx RUNTIME)
 set_target_properties(rgbasm rgblink rgbfix rgbgfx PROPERTIES
 # hack for MSVC: no-op generator expression to stop generation of "per-configuration subdirectory"
                       RUNTIME_OUTPUT_DIRECTORY $<1:${CMAKE_SOURCE_DIR}>)
-
-if(LIBPNG_FOUND) # pkg-config
-  target_include_directories(rgbgfx PRIVATE ${LIBPNG_INCLUDE_DIRS})
-  target_link_directories(rgbgfx PRIVATE ${LIBPNG_LIBRARY_DIRS})
-  target_link_libraries(rgbgfx PRIVATE ${LIBPNG_LIBRARIES})
-else()
-  target_compile_definitions(rgbgfx PRIVATE ${PNG_DEFINITIONS})
-  target_include_directories(rgbgfx PRIVATE ${PNG_INCLUDE_DIRS})
-  target_link_libraries(rgbgfx PRIVATE ${PNG_LIBRARIES})
-endif()
+target_link_libraries(rgbgfx PRIVATE PNG::PNG)
