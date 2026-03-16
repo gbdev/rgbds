@@ -45,9 +45,7 @@ if(MSVC)
 
   if(SANITIZERS)
     message(STATUS "ASan enabled")
-    set(SAN_FLAGS /fsanitize=address)
-    add_compile_options(${SAN_FLAGS})
-    add_link_options(${SAN_FLAGS})
+    add_compile_options(/fsanitize=address) # Note that this shouldn't be passed to the linker.
   endif()
 else()
   add_compile_options(-Wall -pedantic -fno-exceptions -fno-rtti
