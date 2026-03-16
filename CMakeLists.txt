@@ -59,9 +59,10 @@ else()
     add_compile_options(${SAN_FLAGS})
     add_link_options(${SAN_FLAGS})
     add_definitions(-D_GLIBCXX_ASSERTIONS -D_LIBCPP_HARDENING_MODE=_LIBCPP_HARDENING_MODE_DEBUG)
-    # A non-zero optimization level is desired in debug mode, but allow overriding it nonetheless
-    set(CMAKE_CXX_FLAGS_DEBUG "-g -Og -fno-omit-frame-pointer -fno-optimize-sibling-calls ${CMAKE_CXX_FLAGS_DEBUG}"
-                              CACHE STRING "" FORCE)
+    # A non-zero optimization level is desired even in debug mode (especially for Clang),
+    # and the two codegen flags improve the sanitizers' backtraces, but we want the user to
+    # be able to override these easily so we put them first.
+    string(PREPEND CMAKE_CXX_FLAGS_DEBUG "-Og -fno-omit-frame-pointer -fno-optimize-sibling-calls ")
   endif()
 
   if(MORE_WARNINGS)
