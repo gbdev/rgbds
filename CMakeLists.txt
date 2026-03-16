@@ -48,7 +48,7 @@ if(MSVC)
     add_compile_options(/fsanitize=address) # Note that this shouldn't be passed to the linker.
   endif()
 else()
-  add_compile_options(-Wall -pedantic -fno-exceptions -fno-rtti
+  add_compile_options(-Wall -pedantic -fno-exceptions -fno-rtti -Wno-unknown-warning-option
     # C++20 allows macros to take zero variadic arguments.
     # Some versions of Clang don't recognize this, and treat them as a GNU extension.
     -Wno-gnu-zero-variadic-macro-arguments)
