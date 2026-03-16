@@ -9,8 +9,9 @@ add_library(common OBJECT
     "style.cpp"
     "usage.cpp"
     "util.cpp"
-    "_version.cpp"
+    "version.cpp"
 )
+target_compile_definitions(common PRIVATE "BUILD_VERSION_STRING=\"${GIT_REV}\"")
 
 find_package(BISON 3.0.0 REQUIRED)
 set(BISON_FLAGS "-Wall -Dlr.type=ielr")
