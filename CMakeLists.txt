@@ -31,6 +31,8 @@ endif()
 include(CTest) # Note: CTest only functions properly if included from the top-level CMakeLists.
 include(GNUInstallDirs)
 
+## Compiler switches.
+
 include(CMakeDependentOption)
 option(SANITIZERS "Build with sanitizers enabled" OFF)
 cmake_dependent_option(MORE_WARNINGS "Turn on more warnings" OFF !MSVC OFF)
@@ -79,8 +81,25 @@ else()
   endif()
 endif()
 
-# Use versioning consistent with Makefile
-# the git revision is used but uses the fallback in an archive
+include_directories("include")
+
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED True)
+
+message(CHECK_START "Checking if LTO is supported")
+include(CheckIPOSupported)
+check_ipo_supported(RESULT enable_lto)
+if(enable_lto)
+  message(CHECK_PASS "yes")
+  set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_RELEASE ON)
+  set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_RELWITHDEBINFO ON)
+  set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_MINSIZEREL ON)
+else()
+  message(CHECK_FAIL "no")
+endif()
+
+# Use versioning consistent with Makefile:
+# the git revision is used but uses the fallback in an archive.
 
 message(CHECK_START "Determining RGBDS version from Git history")
 list(APPEND CMAKE_MESSAGE_INDENT "  ")
@@ -115,6 +134,8 @@ Version mismatch! Git says ${CMAKE_MATCH_0},
   endif()
 endif()
 
+## Dependencies.
+
 find_package(PkgConfig)
 if(MSVC OR NOT PKG_CONFIG_FOUND)
   # fallback to find_package
@@ -126,22 +147,7 @@ else()
   add_library(PNG::PNG ALIAS PkgConfig::LIBPNG)
 endif()
 
-include_directories("include")
-
-set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_CXX_STANDARD_REQUIRED True)
-
-message(CHECK_START "Checking if LTO is supported")
-include(CheckIPOSupported)
-check_ipo_supported(RESULT enable_lto)
-if(enable_lto)
-  message(CHECK_PASS "yes")
-  set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_RELEASE ON)
-  set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_RELWITHDEBINFO ON)
-  set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_MINSIZEREL ON)
-else()
-  message(CHECK_FAIL "no")
-endif()
+## The actual stuff.
 
 add_subdirectory(src)
 add_subdirectory(test)
