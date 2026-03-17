@@ -7,8 +7,11 @@ case "${1%-*}" in
 		sudo apt-get -qq update
 		sudo apt-get install -yq bison libpng-dev pkg-config
 		;;
-	macos)
-		brew install bison sha2 md5sha1sum
+		macos)
+		# macOS bundles GNU Make 3.81, which doesn't support synced output.
+		# We leave it as the default in `PATH`, to test that our Makefile works with it.
+		# However, CMake automatically uses Homebrew's `gmake`, so our CI has synced output.
+		brew install bison sha2 md5sha1sum make
 		# Export `bison` to allow using the version we install from Homebrew,
 		# instead of the outdated one preinstalled on macOS (which doesn't even support `-Wall`...)
 		export PATH="/opt/homebrew/opt/bison/bin:$PATH"
