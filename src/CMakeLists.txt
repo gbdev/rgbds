@@ -1,7 +1,5 @@
 # SPDX-License-Identifier: MIT
 
-configure_file(version.cpp _version.cpp ESCAPE_QUOTES)
-
 add_library(common OBJECT
     "extern/getopt.cpp"
     "cli.cpp"
