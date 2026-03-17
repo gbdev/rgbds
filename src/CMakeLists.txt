@@ -105,8 +105,8 @@ add_executable(rgbgfx $<TARGET_OBJECTS:common>
 )
 
 install(TARGETS rgbasm rgblink rgbfix rgbgfx RUNTIME)
-# Required to run tests
+# Tests expect the binaries to end up in-source; this is more acceptable than the entire artifact dir.
 set_target_properties(rgbasm rgblink rgbfix rgbgfx PROPERTIES
-# hack for MSVC: no-op generator expression to stop generation of "per-configuration subdirectory"
+# The generator expression (even if a no-op) stops muti-config generators using a of "per-configuration subdirectory".
                       RUNTIME_OUTPUT_DIRECTORY $<1:${CMAKE_SOURCE_DIR}>)
 target_link_libraries(rgbgfx PRIVATE PNG::PNG)
