@@ -6,6 +6,10 @@ on:
 env:
   CLICOLOR_FORCE: 1 # Tells CMake to have colored output.
   CMAKE_COLOR_DIAGNOSTICS: ON # Tells CMake-generated build systems to have colored output.
+  # Approximate number of CPU cores in GitHub's runners as of 2026-03-18:
+  # https://docs.github.com/en/actions/reference/runners/github-hosted-runners#standard-github-hosted-runners-for-public-repositories
+  CMAKE_BUILD_PARALLEL_LEVEL: 4 # `cmake --build` now implies `--parallel 4`.
+  CMAKE_INSTALL_PARALLEL_LEVEL: 4 # `cmake --install` now implies `--parallel 4`.
 
 jobs:
   unix:
@@ -41,7 +45,7 @@ jobs:
         # better applied here than in our CMakeLists, where it could affect and break someone else.
         run: |
           cmake -S . -B build --preset develop -DCMAKE_FIND_FRAMEWORK=LAST -DCMAKE_CXX_COMPILER=${{ matrix.cxx }} -DTESTS_OS_NAME=${{ matrix.os }}
-          cmake --build build -j --verbose
+          cmake --build build --verbose
           sudo cmake --install build --verbose
       - name: Package binaries
         run: |
@@ -162,7 +166,7 @@ jobs:
         # otherwise they can trigger `-Werror=dev` (from the `develop` preset).
         run: | # ASan seems to be broken on Windows, so we disable it.
           cmake -S . -B build -A ${{ matrix.platform }} --preset develop -DFETCHCONTENT_BASE_DIR="$TEMP/cmake-deps" -DBISON_EXECUTABLE=bison/win_bison.exe -DSANITIZERS=OFF
-          cmake --build build --config Debug -j
+          cmake --build build --config Debug
           cmake --install build --config Debug --prefix install_dir --verbose
       - name: Package binaries
         shell: bash
@@ -363,13 +367,13 @@ jobs:
       - name: Build & test using CMake on FreeBSD
         uses: vmactions/freebsd-vm@v1
         with:
-          envs: CLICOLOR_FORCE CMAKE_COLOR_DIAGNOSTICS
+          envs: CLICOLOR_FORCE CMAKE_COLOR_DIAGNOSTICS CMAKE_BUILD_PARALLEL_LEVEL CMAKE_INSTALL_PARALLEL_LEVEL
           release: "14.3"
           usesh: true
           prepare: |
             .github/scripts/install_deps.sh freebsd
           run: | # FreeBSD `c++` compiler does not support `make develop` sanitizers ASan or UBSan
             cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER=c++ -DTESTS_RUN_EXTERNAL=OFF -DTESTS_OS_NAME=freebsd
-            cmake --build build -j4 --verbose
+            cmake --build build --verbose
             cmake --install build --verbose
             ctest --test-dir build --verbose
