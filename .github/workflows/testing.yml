@@ -83,7 +83,7 @@ jobs:
       - name: Run tests using CTest
         if: matrix.buildsys == 'cmake'
         run: |
-          cmake --build build --target test
+          ctest --test-dir build --verbose
 
   macos-static:
     runs-on: macos-14
@@ -372,4 +372,4 @@ jobs:
             cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER=c++ -DTESTS_RUN_EXTERNAL=OFF -DTESTS_OS_NAME=freebsd
             cmake --build build -j4 --verbose
             cmake --install build --verbose
-            cmake --build build --target test
+            ctest --test-dir build --verbose
