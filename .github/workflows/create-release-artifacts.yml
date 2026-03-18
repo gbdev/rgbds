@@ -11,6 +11,8 @@ env:
   # https://docs.github.com/en/actions/reference/runners/github-hosted-runners#standard-github-hosted-runners-for-public-repositories
   CMAKE_BUILD_PARALLEL_LEVEL: 4 # `cmake --build` now implies `--parallel 4`.
   CMAKE_INSTALL_PARALLEL_LEVEL: 4 # `cmake --install` now implies `--parallel 4`.
+  CMAKE_BUILD_TYPE: Release # `cmake -S` now implies `-DCMAKE_BUILD_TYPE=Release`.
+  CMAKE_CONFIG_TYPE: Release # `cmake --build` now implies `--config Release`.
 
 jobs:
   windows:
@@ -41,8 +43,8 @@ jobs:
         # We instruct CMake to download and build third-party projects outside of our source tree,
         # otherwise they can trigger `-Werror=dev` (from the `develop` preset).
         run: |
-          cmake -S . -B build -A ${{ matrix.platform }} -DCMAKE_BUILD_TYPE=Release -DFETCHCONTENT_BASE_DIR="$TEMP/cmake-deps" -DBISON_EXECUTABLE=bison/win_bison.exe
-          cmake --build build --config Release
+          cmake -S . -B build -A ${{ matrix.platform }} -DFETCHCONTENT_BASE_DIR="$TEMP/cmake-deps" -DBISON_EXECUTABLE=bison/win_bison.exe
+          cmake --build build
           cmake --install build --config Release --prefix install_dir --verbose
       - name: Package binaries
         run: |
