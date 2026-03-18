@@ -372,8 +372,8 @@ jobs:
           usesh: true
           prepare: |
             .github/scripts/install_deps.sh freebsd
-          run: | # FreeBSD `c++` compiler does not support `make develop` sanitizers ASan or UBSan
-            cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER=c++ -DTESTS_RUN_EXTERNAL=OFF -DTESTS_OS_NAME=freebsd
+          run: | # Leak detection is not supported on FreeBSD, so disable it.
+            cmake -S . -B build --preset develop -DTESTS_RUN_EXTERNAL=OFF -DTESTS_OS_NAME=freebsd
             cmake --build build --verbose
             cmake --install build --verbose
-            ctest --test-dir build --verbose
+            ASAN_OPTIONS=detect_leaks=0 ctest --test-dir build --verbose
