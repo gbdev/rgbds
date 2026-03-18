@@ -12,6 +12,25 @@
 			},
 			"warnings": { "uninitialized": true },
 			"errors": { "dev": true }
+		},
+		{
+			"name": "develop-msvc32",
+			"inherits": ["develop", "msvc32"]
+		},
+		{
+			"name": "develop-msvc64",
+			"inherits": ["develop", "msvc64"]
+		},
+
+		{
+			"name": "msvc32",
+			"description": "Flags for building 32-bit executables with MSVC",
+			"architecture": "Win32"
+		},
+		{
+			"name": "msvc64",
+			"description": "Flags for building 64-bit executables with MSVC",
+			"architecture": "x64"
 		}
 	]
 }

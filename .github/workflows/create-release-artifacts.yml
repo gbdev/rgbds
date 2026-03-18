@@ -23,10 +23,8 @@ jobs:
         include:
           - bits: 32
             arch: x86
-            platform: Win32
           - bits: 64
             arch: x86_x64
-            platform: x64
       fail-fast: false
     steps:
       - name: Get version from tag
@@ -43,7 +41,7 @@ jobs:
         # We instruct CMake to download and build third-party projects outside of our source tree,
         # otherwise they can trigger `-Werror=dev` (from the `develop` preset).
         run: |
-          cmake -S . -B build -A ${{ matrix.platform }} -DFETCHCONTENT_BASE_DIR="$TEMP/cmake-deps" -DBISON_EXECUTABLE=bison/win_bison.exe
+          cmake -S . -B build --preset msvc${{ matrix.bits }} -DFETCHCONTENT_BASE_DIR="$TEMP/cmake-deps" -DBISON_EXECUTABLE=bison/win_bison.exe
           cmake --build build
           cmake --install build --config Release --prefix install_dir --verbose
       - name: Package binaries
