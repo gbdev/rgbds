@@ -10,6 +10,7 @@ env:
   # https://docs.github.com/en/actions/reference/runners/github-hosted-runners#standard-github-hosted-runners-for-public-repositories
   CMAKE_BUILD_PARALLEL_LEVEL: 4 # `cmake --build` now implies `--parallel 4`.
   CMAKE_INSTALL_PARALLEL_LEVEL: 4 # `cmake --install` now implies `--parallel 4`.
+  CMAKE_CONFIG_TYPE: Debug # `cmake --build` now implies `--config Debug`.
 
 jobs:
   unix:
@@ -166,7 +167,7 @@ jobs:
         # otherwise they can trigger `-Werror=dev` (from the `develop` preset).
         run: | # ASan seems to be broken on Windows, so we disable it.
           cmake -S . -B build -A ${{ matrix.platform }} --preset develop -DFETCHCONTENT_BASE_DIR="$TEMP/cmake-deps" -DBISON_EXECUTABLE=bison/win_bison.exe -DSANITIZERS=OFF
-          cmake --build build --config Debug
+          cmake --build build
           cmake --install build --config Debug --prefix install_dir --verbose
       - name: Package binaries
         shell: bash
