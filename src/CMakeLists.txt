@@ -13,7 +13,7 @@ target_compile_definitions(common PRIVATE "BUILD_VERSION_STRING=\"${GIT_REV}\"")
 
 find_package(BISON 3.0.0 REQUIRED)
 set(BISON_FLAGS "-Wall -Dlr.type=ielr")
-# Set some flags on versions that support them
+# Set some flags on versions that support them.
 if(BISON_VERSION VERSION_GREATER_EQUAL "3.5")
   set(BISON_FLAGS "${BISON_FLAGS} -Dparse.lac=full -Dapi.token.raw=true -Wdangling-alias")
 endif()
