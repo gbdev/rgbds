@@ -1,7 +1,10 @@
 # SPDX-License-Identifier: MIT
 
-# 3.17 required for LTO checks messages
-cmake_minimum_required(VERSION 3.17...4.2 FATAL_ERROR)
+# - 3.24 is required for `FetchContent`'s `find_package` integration.
+#   Older versions *may* work, but we can't test them; compat patches are welcome.
+# - 3.17 is required for `CHECK_*` messages to display properly, but is not essential.
+# - 3.9 is required for LTO checks.
+cmake_minimum_required(VERSION 3.24...4.2 FATAL_ERROR)
 
 # Read the project version from the header (the canonical source of truth).
 file(STRINGS "include/version.hpp" version_defines REGEX "^[ \t]*#define[ \t]+PACKAGE_VERSION_")
@@ -136,15 +139,34 @@ endif()
 
 ## Dependencies.
 
-find_package(PkgConfig)
-if(MSVC OR NOT PKG_CONFIG_FOUND)
-  # fallback to find_package
-  # cmake's FindPNG is very fragile; it breaks when multiple versions are installed
-  # this is most evident on macOS but can occur on Linux too
-  find_package(PNG REQUIRED)
-else()
-  pkg_check_modules(LIBPNG REQUIRED IMPORTED_TARGET libpng)
-  add_library(PNG::PNG ALIAS PkgConfig::LIBPNG)
+include(FetchContent)
+FetchContent_Declare(PNG
+                     URL https://download.sourceforge.net/libpng/libpng-1.6.55.tar.xz
+                     URL_HASH SHA256=d925722864837ad5ae2a82070d4b2e0603dc72af44bd457c3962298258b8e82d
+                     FIND_PACKAGE_ARGS 1.5.4)
+FetchContent_Declare(ZLIB
+                     URL https://www.zlib.net/zlib-1.3.2.tar.xz
+                     URL_HASH SHA256=d7a0654783a4da529d1bb793b7ad9c3318020af77667bcae35f95d0e42a792f3
+# libpng documents requiring "zlib 1.0.4 or later (1.2.13 or later recommended for performance and security reasons)".
+# We thus enforce 1.0.4, but note that the libpng source code mentions that "it may work with versions as old as zlib 0.95".
+                     FIND_PACKAGE_ARGS 1.0.4)
+set(ZLIB_BUILD_SHARED ON CACHE INTERNAL "")
+set(ZLIB_BUILD_STATIC OFF CACHE INTERNAL "")
+FetchContent_MakeAvailable(ZLIB)
+if(NOT DEFINED ZLIB_INCLUDE_DIRS)
+  set(ZLIB_INCLUDE_DIRS "${zlib_BINARY_DIR};${zlib_SOURCE_DIR}") # libpng's `genout` script relies on this variable to be set.
+endif()
+set(PNG_TESTS OFF CACHE INTERNAL "") # We do not care for these two (and they can even cause compile errors!)
+set(PNG_TOOLS OFF CACHE INTERNAL "")
+set(PNG_SHARED ON CACHE INTERNAL "") # Upstream seems to favour the dynamic lib over the static one?
+set(PNG_STATIC OFF CACHE INTERNAL "")
+FetchContent_MakeAvailable(PNG)
+if(NOT TARGET PNG::PNG)
+  if(PNG_SHARED)
+    add_library(PNG::PNG ALIAS png_shared)
+  else()
+    add_library(PNG::PNG ALIAS png_static)
+  endif()
 endif()
 
 ## The actual stuff.
