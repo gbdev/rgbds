@@ -4,6 +4,10 @@ on:
     tags:
       - v[0-9]*
 
+env:
+  CLICOLOR_FORCE: 1 # Tells CMake to have colored output.
+  CMAKE_COLOR_DIAGNOSTICS: ON # Tells CMake-generated build systems to have colored output.
+
 jobs:
   windows:
     runs-on: windows-2022
