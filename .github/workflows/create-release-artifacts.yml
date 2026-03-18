@@ -7,6 +7,10 @@ on:
 env:
   CLICOLOR_FORCE: 1 # Tells CMake to have colored output.
   CMAKE_COLOR_DIAGNOSTICS: ON # Tells CMake-generated build systems to have colored output.
+  # Approximate number of CPU cores in GitHub's runners as of 2026-03-18:
+  # https://docs.github.com/en/actions/reference/runners/github-hosted-runners#standard-github-hosted-runners-for-public-repositories
+  CMAKE_BUILD_PARALLEL_LEVEL: 4 # `cmake --build` now implies `--parallel 4`.
+  CMAKE_INSTALL_PARALLEL_LEVEL: 4 # `cmake --install` now implies `--parallel 4`.
 
 jobs:
   windows:
@@ -38,7 +42,7 @@ jobs:
         # otherwise they can trigger `-Werror=dev` (from the `develop` preset).
         run: |
           cmake -S . -B build -A ${{ matrix.platform }} -DCMAKE_BUILD_TYPE=Release -DFETCHCONTENT_BASE_DIR="$TEMP/cmake-deps" -DBISON_EXECUTABLE=bison/win_bison.exe
-          cmake --build build --config Release -j
+          cmake --build build --config Release
           cmake --install build --config Release --prefix install_dir --verbose
       - name: Package binaries
         run: |
