@@ -84,11 +84,6 @@ else()
   endif()
 endif()
 
-include_directories("include")
-
-set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_CXX_STANDARD_REQUIRED True)
-
 message(CHECK_START "Checking if LTO is supported")
 include(CheckIPOSupported)
 check_ipo_supported(RESULT enable_lto)
@@ -157,6 +152,12 @@ if(NOT TARGET PNG::PNG)
 endif()
 
 ## The actual stuff.
+# Any compiler options that shouldn't apply to our dependencies go here.
+
+include_directories("include")
+
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 add_subdirectory(src)
 add_subdirectory(test)
