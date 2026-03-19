@@ -102,9 +102,16 @@ add_executable(rgbgfx $<TARGET_OBJECTS:common>
     "verbosity.cpp"
 )
 
-install(TARGETS rgbasm rgblink rgbfix rgbgfx RUNTIME)
+install(TARGETS rgbasm rgblink rgbfix rgbgfx RUNTIME COMPONENT runtime)
 # Tests expect the binaries to end up in-source; this is more acceptable than the entire artifact dir.
 set_target_properties(rgbasm rgblink rgbfix rgbgfx PROPERTIES
 # The generator expression (even if a no-op) stops muti-config generators using a of "per-configuration subdirectory".
                       RUNTIME_OUTPUT_DIRECTORY $<1:${CMAKE_SOURCE_DIR}>)
 target_link_libraries(rgbgfx PRIVATE PNG::PNG)
+
+# TARGET_RUNTIME_DLLS was introduced in CMake 3.21.
+if(WIN32 AND CMAKE_VERSION VERSION_GREATER_EQUAL "3.21")
+  # TODO: WHY IT NOT WORK!?!?
+  install(IMPORTED_RUNTIME_ARTIFACTS rgbasm rgblink rgbfix rgbgfx RUNTIME COMPONENT runtime)
+  install(FILES "$<TARGET_RUNTIME_DLLS:rgbgfx>" TYPE BIN COMPONENT runtime)
+endif()
