@@ -2,10 +2,32 @@
 # This script requires `sh` instead of `bash` because the latter is not always installed on FreeBSD.
 set -eu
 
-case "${1%%-*}" in
+case $# in
+	1) OS="$1"; TOOLSET=    ;;
+	2) OS="$1"; TOOLSET="$2";;
+	*) echo >&2 "Usage: $0 <os> [toolset]" && exit 1;;
+esac
+
+case "${OS%%-*}" in
 	ubuntu|debian)
-		sudo apt-get -qq update
-		sudo apt-get install -yq bison libpng-dev pkgconf
+		pkgs=bison
+		case "$TOOLSET" in
+			mingw32)
+				pkgs="$pkgs libz-mingw-w64-dev g++-mingw-w64-i686-win32"
+				TOOLSET=
+			;;
+			mingw64)
+				pkgs="$pkgs libz-mingw-w64-dev g++-mingw-w64-x86-64-win32"
+				TOOLSET=
+			;;
+			'' | lcov)
+				pkgs="$pkgs libpng-dev pkgconf $TOOLSET"
+				TOOLSET=
+			;;
+		esac
+		sudo apt-get update -qq
+		# shellcheck disable=SC2086 # (This word splitting is intentional.)
+		sudo apt-get install -yq $pkgs
 		;;
 	macos)
 		# macOS bundles GNU Make 3.81, which doesn't support synced output.
@@ -31,6 +53,11 @@ case "${1%%-*}" in
 		exit 1
 		;;
 esac
+
+if [ -n "$TOOLSET" ]; then
+	printf >&2 'Unknown toolset `%s` for OS `%s`\n' "$TOOLSET" "$OS"
+	exit 1
+fi
 
 # Print some system info, for easier debugging.
 # https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-commands#grouping-log-lines

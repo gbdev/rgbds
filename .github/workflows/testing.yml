@@ -49,7 +49,7 @@ jobs:
         uses: actions/checkout@v6
       - name: Install deps
         run: |
-          ./.github/scripts/install_deps.sh ${{ matrix.os }}
+          .github/scripts/install_deps.sh ${{ matrix.os }}
       - name: Build & install using Make
         if: matrix.buildsys == 'make'
         run: |
@@ -113,7 +113,7 @@ jobs:
         uses: actions/checkout@v6
       - name: Install deps
         run: |
-          ./.github/scripts/install_deps.sh macos
+          .github/scripts/install_deps.sh macos
       - name: Cache library deps
         uses: actions/cache@v5
         with:
@@ -222,45 +222,29 @@ jobs:
     strategy:
       matrix:
         bits: [32, 64]
-        include:
-          - bits: 32
-            arch: i686
-            triplet: i686-w64-mingw32
-          - bits: 64
-            arch: x86-64
-            triplet: x86_64-w64-mingw32
       fail-fast: false
-    runs-on: ubuntu-22.04
-    env:
-      DIST_DIR: win${{ matrix.bits }}
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout repo
         uses: actions/checkout@v6
       - name: Install deps
         run: |
-          ./.github/scripts/install_deps.sh ubuntu
-      - name: Install MinGW
-        run: | # dpkg-dev is apparently required for pkg-config for cross-building
-          sudo apt-get install g++-mingw-w64-${{ matrix.arch }}-win32 mingw-w64-tools libz-mingw-w64-dev dpkg-dev
-      - name: Install libpng dev headers for MinGW
-        run: |
-          ./.github/scripts/mingw-w64-libpng-dev.sh ${{ matrix.triplet }}
+          .github/scripts/install_deps.sh ubuntu mingw${{ matrix.bits }}
       - name: Cross-build Windows binaries
-        run: |
-          make mingw${{ matrix.bits }} -kj Q=
+        run: | # MinGW does not support `--preset develop` sanitizers ASan or UBSan.
+          dll_search_dir=$(printf '%s\n' /usr/lib/gcc/*-w64-mingw32/*-win32 | tee -a /dev/stderr)
+          cmake -B build --preset develop -DSANITIZERS=OFF --toolchain cmake/toolchain-mingw${{ matrix.bits }}.cmake \
+            -DFETCHCONTENT_BASE_DIR="${{ env.DEPS_ROOT_DIR }}" -DDLL_SEARCH_DIRS="$dll_search_dir"
+          cmake --build build
       - name: Package binaries
-        run: | # DLL dependencies can be figured out using e.g. Dependency Walker or objdump -p
-          mkdir bins
-          mv -v rgb{asm,link,fix,gfx}.exe bins/
-          cp -v /usr/${{ matrix.triplet }}/lib/zlib1.dll bins
-          cp -v /usr/${{ matrix.triplet }}/bin/libpng16-16.dll bins
-          cp -v /usr/lib/gcc/${{ matrix.triplet }}/10-win32/lib{ssp-0,stdc++-6}.dll bins
-          [ "${{ matrix.bits }}" -ne 32 ] || cp -v /usr/lib/gcc/${{ matrix.triplet }}/10-win32/libgcc_s_dw2-1.dll bins
+        run: |
+          cmake --install build --prefix . --verbose --component binaries
+          cmake --install build --prefix . --verbose --component shared-libs
       - name: Upload Windows binaries
         uses: actions/upload-artifact@v7
         with:
           name: rgbds-canary-mingw-win${{ matrix.bits }}
-          path: bins
+          path: bin
           if-no-files-found: error
       - name: Upload Windows test binaries
         uses: actions/upload-artifact@v7
