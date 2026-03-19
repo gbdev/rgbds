@@ -12,6 +12,10 @@ env:
   CMAKE_INSTALL_PARALLEL_LEVEL: 4 # `cmake --install` now implies `--parallel 4`.
   CMAKE_CONFIG_TYPE: Debug # `cmake --build` now implies `--config Debug`.
 
+  # We instruct CMake to download and build third-party projects outside of our source tree,
+  # otherwise they can trigger `-Werror=dev` (from the `develop` preset).
+  DEPS_ROOT_DIR: ~/_deps # Note that this needs to be used in a position where Bash will trigger tilde expansion!
+
 jobs:
   unix:
     strategy:
@@ -20,9 +24,7 @@ jobs:
         cxx: [g++, clang++]
         buildsys: [make, cmake]
         exclude:
-          # Don't use `g++` on macOS; it's just an alias to `clang++`.
-          - os: macos-14
-            cxx: g++
+          - { os: macos-14, cxx: g++ } # Don't use `g++` on macOS; it's just an alias to `clang++`.
       fail-fast: false
     runs-on: ${{ matrix.os }}
     steps:
@@ -67,7 +69,7 @@ jobs:
           tee -a <<<"hash=${hash%-}" $GITHUB_OUTPUT
       - name: Check test dependency repositories cache
         id: test-deps-cache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ${{ fromJSON(steps.test-deps-cache-params.outputs.paths) }}
           key: ${{ matrix.os }}-${{ steps.test-deps-cache-params.outputs.hash }}
@@ -124,7 +126,7 @@ jobs:
           tee -a <<<"hash=${hash%-}" $GITHUB_OUTPUT
       - name: Check test dependency repositories cache
         id: test-deps-cache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ${{ fromJSON(steps.test-deps-cache-params.outputs.paths) }}
           key: ${{ matrix.os }}-${{ steps.test-deps-cache-params.outputs.hash }}
@@ -158,18 +160,23 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
       - name: Install deps
-        run: .github/scripts/get_win_deps.ps1
+        run: |
+          bash .github/scripts/install_deps.sh ${{ matrix.os }}
+      - name: Cache library deps
+        uses: actions/cache@v5
+        with:
+          path: ${{ env.DEPS_ROOT_DIR }}/*-tmp/
+          key: dep-srcs-${{ hashFiles('cmake/deps.cmake') }}
+          enableCrossOsArchive: true
       - name: Build Windows binaries
         shell: bash
-        # We instruct CMake to download and build third-party projects outside of our source tree,
-        # otherwise they can trigger `-Werror=dev` (from the `develop` preset).
         run: | # ASan seems to be broken on Windows, so we disable it.
-          cmake -S . -B build --preset develop-msvc${{ matrix.bits }} -DFETCHCONTENT_BASE_DIR="$TEMP/cmake-deps" -DBISON_EXECUTABLE=bison/win_bison.exe -DSANITIZERS=OFF
+          cmake -S . -B build --preset develop-msvc${{ matrix.bits }} -DFETCHCONTENT_BASE_DIR="${{ env.DEPS_ROOT_DIR }}" -DSANITIZERS=OFF
           cmake --build build
-          cmake --install build --config Debug --prefix install_dir --verbose
       - name: Package binaries
         shell: bash
         run: |
+          cmake --install build --config Debug --prefix install_dir --verbose
           mkdir bins
           cp -v install_dir/bin/{rgb*.exe,*.dll} bins
       - name: Upload Windows binaries
@@ -187,7 +194,7 @@ jobs:
           tee -a <<<"hash=${hash%-}" $GITHUB_OUTPUT
       - name: Check test dependency repositories cache
         id: test-deps-cache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ${{ fromJSON(steps.test-deps-cache-params.outputs.paths) }}
           key: ${{ matrix.os }}-${{ matrix.bits }}-${{ steps.test-deps-cache-params.outputs.hash }}
@@ -296,7 +303,7 @@ jobs:
           tee -a <<<"hash=${hash%-}" $GITHUB_OUTPUT
       - name: Check test dependency repositories cache
         id: test-deps-cache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ${{ fromJSON(steps.test-deps-cache-params.outputs.paths) }}
           key: mingw-${{ matrix.bits }}-${{ steps.test-deps-cache-params.outputs.hash }}

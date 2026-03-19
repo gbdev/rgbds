@@ -14,6 +14,10 @@ env:
   CMAKE_BUILD_TYPE: Release # `cmake -S` now implies `-DCMAKE_BUILD_TYPE=Release`.
   CMAKE_CONFIG_TYPE: Release # `cmake --build` now implies `--config Release`.
 
+  # We instruct CMake to download and build third-party projects in the same place as in `testing.yml`
+  # for the sources cache to remain valid.
+  DEPS_ROOT_DIR: ~/_deps # Note that this needs to be used in a position where Bash will trigger tilde expansion!
+
 jobs:
   windows:
     runs-on: windows-2022
@@ -35,17 +39,21 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
       - name: Install deps
-        run: .github/scripts/get_win_deps.ps1
+        run: .github/scripts/install_deps.sh windows
+      - name: Cache library deps
+        uses: actions/cache@v5
+        with:
+          path: ${{ env.DEPS_ROOT_DIR }}/*-tmp/
+          key: dep-srcs-${{ hashFiles('cmake/deps.cmake') }}
+          enableCrossOsArchive: true
       - name: Build Windows binaries
         shell: bash
-        # We instruct CMake to download and build third-party projects outside of our source tree,
-        # otherwise they can trigger `-Werror=dev` (from the `develop` preset).
         run: |
-          cmake -S . -B build --preset msvc${{ matrix.bits }} -DFETCHCONTENT_BASE_DIR="$TEMP/cmake-deps" -DBISON_EXECUTABLE=bison/win_bison.exe
+          cmake -S . -B build --preset msvc${{ matrix.bits }} -DFETCHCONTENT_BASE_DIR="${{ env.DEPS_ROOT_DIR }}"
           cmake --build build
-          cmake --install build --config Release --prefix install_dir --verbose
       - name: Package binaries
         run: |
+          cmake --install build --config Release --prefix install_dir --verbose
           Compress-Archive -LiteralPath @("install_dir/bin/rgbasm.exe", "install_dir/bin/rgblink.exe", "install_dir/bin/rgbfix.exe", "install_dir/bin/rgbgfx.exe", "install_dir/bin/z.dll", "install_dir/bin/libpng16.dll") "rgbds-win${{ matrix.bits }}.zip"
       - name: Upload Windows binaries
         uses: actions/upload-artifact@v4

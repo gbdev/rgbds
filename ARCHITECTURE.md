@@ -28,6 +28,8 @@ rgbds/
 │   │   └── ...
 │   └── workflows/
 │       └── ...
+├── cmake/
+│   └── ...
 ├── contrib/
 │   ├── bash_compl/
 │   ├── zsh_compl/
@@ -70,6 +72,8 @@ rgbds/
     Scripts used by GitHub Actions workflow files.
   * **`workflows/`:**  
     GitHub Actions CI workflow description files. Used for automated testing, deployment, etc.
+- **`cmake/`**:  
+  Files relevant to our CMake build system that are not required to be somewhere else (e.g. `CMakePresets.json` *has* to be at the root).
 - **`contrib/`:**  
   Scripts and other resources which may be useful to RGBDS users and developers.
   * **`bash_compl/`:**  
@@ -108,7 +112,7 @@ rgbds/
   Configuration for C++ static analysis with [`clang-tidy`](https://clang.llvm.org/extra/clang-tidy/) (for which we define the shortcut `make tidy`).
 - **`CMakeLists.txt`:**  
   Defines how to build RGBDS with CMake.
-- **`CMakePresets.json`:**
+- **`CMakePresets.json`:**  
   Defines some [presets](https://cmake.org/cmake/help/latest/manual/cmake-presets.7.html) useful for working with our CMake.
 - **`compile_flags.txt`:**  
   Compiler flags for `clang-tidy`.

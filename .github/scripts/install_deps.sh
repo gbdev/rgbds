@@ -7,7 +7,7 @@ case "${1%-*}" in
 		sudo apt-get -qq update
 		sudo apt-get install -yq bison libpng-dev pkg-config
 		;;
-		macos)
+	macos)
 		# macOS bundles GNU Make 3.81, which doesn't support synced output.
 		# We leave it as the default in `PATH`, to test that our Makefile works with it.
 		# However, CMake automatically uses Homebrew's `gmake`, so our CI has synced output.
@@ -20,11 +20,17 @@ case "${1%-*}" in
 	freebsd)
 		pkg install -y bash bison cmake git png
 		;;
+	windows)
+		choco install -y winflexbison3
+		# The below expects the base name, not the Windows-specific name.
+		bison() { win_bison "$@"; } # An alias doesn't work, so we use a function instead.
+		;;
 	*)
 		echo "WARNING: Cannot install deps for OS '$1'"
 		;;
 esac
 
+echo "PATH=($PATH)" | sed 's/:/\n      /g'
 bison --version
 make --version
 cmake --version
