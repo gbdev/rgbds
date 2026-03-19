@@ -182,6 +182,7 @@ endforeach()
 # We only specify here the package-agnostic options;
 # the rest is rather convention from our side,
 # and thus more appropriate for presets or CLI flags.
+include(CPackComponent)
 ## CPACK_PACKAGE_NAME: copied from `project()`
 set(CPACK_PACKAGE_VENDOR "GBDev")
 set(CPACK_PACKAGE_VERSION "${CMAKE_PROJECT_VERSION}") # The individual components are defined implicitly.
@@ -198,4 +199,11 @@ set(CPACK_THREADS 0) # Use all available CPU cores.
 # Convert our gitignore into regex ignores, for source tarballs.
 # TODO
 set(CPACK_INCLUDE_TOPLEVEL_DIRECTORY OFF) # TODO: source packages don't want this, what about binary ones?
+
+set(CPACK_INSTALL_CMAKE_PROJECTS "${CMAKE_BINARY_DIR};${CMAKE_PROJECT_NAME};runtime;/")
+#set(CPACK_ZIP_COMPONENT_INSTALL ON)
+#cpack_add_component(runtime)
+#cpack_add_component(man)
+#set(CPACK_COMPONENTS_ALL "runtime;man")
+
 include(CPack)
