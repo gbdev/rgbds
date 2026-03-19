@@ -935,6 +935,21 @@ static std::string readAnonLabelRef(char c) {
 	return sym_MakeAnonLabelName(n, c == '-');
 }
 
+static void checkDigitSeparator(bool nonDigit) {
+	if (nonDigit) {
+		error("Invalid integer constant, '_' after another '_'");
+	}
+}
+
+static void checkIntegerConstantSuffix(bool empty, bool nonDigit, char const *prefix) {
+	if (empty) {
+		error("Invalid integer constant, no digits after %s", prefix);
+	}
+	if (nonDigit) {
+		error("Invalid integer constant, trailing '_'");
+	}
+}
+
 static uint32_t readFractionalPart(uint32_t integer) {
 	uint32_t value = 0, divisor = 1;
 	uint8_t precision = 0;
@@ -948,9 +963,7 @@ static uint32_t readFractionalPart(uint32_t integer) {
 	for (int c = peek();; c = nextChar()) {
 		if (state == READFRACTIONALPART_DIGITS) {
 			if (c == '_') {
-				if (nonDigit) {
-					error("Invalid integer constant, '_' after another '_'");
-				}
+				checkDigitSeparator(nonDigit);
 				nonDigit = true;
 				continue;
 			}
@@ -962,15 +975,16 @@ static uint32_t readFractionalPart(uint32_t integer) {
 			} else if (!isDigit(c)) {
 				break;
 			}
+			c -= '0';
 			nonDigit = false;
 
-			if (divisor > (UINT32_MAX - (c - '0')) / 10) {
+			if (divisor > (UINT32_MAX - c) / 10) {
 				warning(WARNING_LARGE_CONSTANT, "Precision of fixed-point constant is too large");
 				// Discard any additional digits
 				skipChars([](int d) { return isDigit(d) || d == '_'; });
 				break;
 			}
-			value = value * 10 + (c - '0');
+			value = value * 10 + c;
 			divisor *= 10;
 		} else {
 			if (c == '.' && state == READFRACTIONALPART_PRECISION) {
@@ -1061,9 +1075,7 @@ static uint32_t readBinaryNumber(char const *prefix) {
 
 	for (int c = peek();; c = nextChar()) {
 		if (c == '_') {
-			if (nonDigit) {
-				error("Invalid integer constant, '_' after another '_'");
-			}
+			checkDigitSeparator(nonDigit);
 			nonDigit = true;
 			continue;
 		}
@@ -1088,13 +1100,7 @@ static uint32_t readBinaryNumber(char const *prefix) {
 		value = value * 2 + bit;
 	}
 
-	if (empty) {
-		error("Invalid integer constant, no digits after %s", prefix);
-	}
-	if (nonDigit) {
-		error("Invalid integer constant, trailing '_'");
-	}
-
+	checkIntegerConstantSuffix(empty, nonDigit, prefix);
 	return value;
 }
 
@@ -1105,9 +1111,7 @@ static uint32_t readOctalNumber(char const *prefix) {
 
 	for (int c = peek();; c = nextChar()) {
 		if (c == '_') {
-			if (nonDigit) {
-				error("Invalid integer constant, '_' after another '_'");
-			}
+			checkDigitSeparator(nonDigit);
 			nonDigit = true;
 			continue;
 		}
@@ -1115,7 +1119,7 @@ static uint32_t readOctalNumber(char const *prefix) {
 		if (!isOctDigit(c)) {
 			break;
 		}
-		c = c - '0';
+		c -= '0';
 		empty = false;
 		nonDigit = false;
 
@@ -1128,13 +1132,7 @@ static uint32_t readOctalNumber(char const *prefix) {
 		value = value * 8 + c;
 	}
 
-	if (empty) {
-		error("Invalid integer constant, no digits after %s", prefix);
-	}
-	if (nonDigit) {
-		error("Invalid integer constant, trailing '_'");
-	}
-
+	checkIntegerConstantSuffix(empty, nonDigit, prefix);
 	return value;
 }
 
@@ -1145,9 +1143,7 @@ static uint32_t readDecimalNumber(int initial) {
 
 	for (int c = peek();; c = nextChar()) {
 		if (c == '_') {
-			if (nonDigit) {
-				error("Invalid integer constant, '_' after another '_'");
-			}
+			checkDigitSeparator(nonDigit);
 			nonDigit = true;
 			continue;
 		}
@@ -1155,7 +1151,7 @@ static uint32_t readDecimalNumber(int initial) {
 		if (!isDigit(c)) {
 			break;
 		}
-		c = c - '0';
+		c -= '0';
 		nonDigit = false;
 
 		if (value > (UINT32_MAX - c) / 10) {
@@ -1167,10 +1163,7 @@ static uint32_t readDecimalNumber(int initial) {
 		value = value * 10 + c;
 	}
 
-	if (nonDigit) {
-		error("Invalid integer constant, trailing '_'");
-	}
-
+	checkIntegerConstantSuffix(false, nonDigit, nullptr);
 	return value;
 }
 
@@ -1181,9 +1174,7 @@ static uint32_t readHexNumber(char const *prefix) {
 
 	for (int c = peek();; c = nextChar()) {
 		if (c == '_') {
-			if (nonDigit) {
-				error("Invalid integer constant, '_' after another '_'");
-			}
+			checkDigitSeparator(nonDigit);
 			nonDigit = true;
 			continue;
 		}
@@ -1204,13 +1195,7 @@ static uint32_t readHexNumber(char const *prefix) {
 		value = value * 16 + c;
 	}
 
-	if (empty) {
-		error("Invalid integer constant, no digits after %s", prefix);
-	}
-	if (nonDigit) {
-		error("Invalid integer constant, trailing '_'");
-	}
-
+	checkIntegerConstantSuffix(empty, nonDigit, prefix);
 	return value;
 }
 
@@ -1221,9 +1206,7 @@ static uint32_t readGfxConstant() {
 
 	for (int c = peek();; c = nextChar()) {
 		if (c == '_') {
-			if (nonDigit) {
-				error("Invalid integer constant, '_' after another '_'");
-			}
+			checkDigitSeparator(nonDigit);
 			nonDigit = true;
 			continue;
 		}
