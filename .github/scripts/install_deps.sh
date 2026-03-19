@@ -2,10 +2,34 @@
 # This script requires `sh` instead of `bash` because the latter is not always installed on FreeBSD.
 set -eu
 
-case "${1%-*}" in
+USAGE="Usage: $0 <os> [additional toolset]"
+
+OS="${1:?$USAGE}"
+shift
+TOOLSET="${1-}"
+shift 2>/dev/null || : # That argument is optional.
+if [ $# -ne 0 ]; then
+	echo >&2 "$USAGE"
+	exit 1
+fi
+
+case "${OS%-*}" in
 	ubuntu)
+		pkgs=bison
+		case "$TOOLSET" in
+			mingw32)
+				pkgs="$pkgs dpkg-dev mingw-w64-tools libz-mingw-w64-dev g++-mingw-w64-i686-win32"
+				TOOLSET= ;;
+			mingw64)
+				pkgs="$pkgs dpkg-dev mingw-w64-tools libz-mingw-w64-dev g++-mingw-w64-x86-64-win32"
+				TOOLSET= ;;
+			'' | lcov)
+				pkgs="$pkgs libpng-dev $TOOLSET"
+				TOOLSET= ;;
+		esac
 		sudo apt-get -qq update
-		sudo apt-get install -yq bison libpng-dev pkg-config
+		#shellcheck disable=SC2086 # (This word splitting is intentional.)
+		sudo apt-get install -yq $pkgs
 		;;
 	macos)
 		# macOS bundles GNU Make 3.81, which doesn't support synced output.
@@ -29,6 +53,11 @@ case "${1%-*}" in
 		echo "WARNING: Cannot install deps for OS '$1'"
 		;;
 esac
+
+if [ -n "$TOOLSET" ]; then
+	printf >&2 'Unknown toolset `%s` for OS `%s`\n' "$TOOLSET" "$OS"
+	exit 1
+fi
 
 echo "PATH=($PATH)" | sed 's/:/\n      /g'
 bison --version
