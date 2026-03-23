@@ -219,17 +219,12 @@ Each one is a binary RNG file which is passed to the `rgbgfx_test` program.
    While the test suite supports any Make target name, only
    [Make](//gnu.org/software/make) is currently supported, and the Makefile must
    support a `RGBDS` variable to use a non-system RGBDS directory.
-   
-   Also, only projects hosted on GitHub are currently supported.
 2. Add the project to `test/fetch-test-deps.sh`: add a new `action` line at the
    bottom, following the existing pattern:
    
    ```sh
-   action  <owner>  <repo>  <date of last commit>  <hash of last commit>
+   action  <domain>  <owner>  <repo>  <hash of last commit>
    ```
-   
-   (The date is used to avoid fetching too much history when cloning the
-   repositories.)
 3. Add the project to `test/run-tests.sh`: add a new `test_downstream` line at
    the bottom, following the existing pattern:
    
