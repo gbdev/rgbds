@@ -96,7 +96,7 @@ case "$actionname" in
 				git clone "https://$1/$2/$3.git" --recursive --depth=1 --single-branch
 			fi
 			pushd "$3"
-			git checkout -f "$5"
+			git checkout -f "$4"
 			if [ -f "../patches/$3.patch" ]; then
 				git apply --ignore-whitespace "../patches/$3.patch"
 			fi
