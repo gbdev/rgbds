@@ -93,7 +93,7 @@ case "$actionname" in
 
 		action() { # domain owner repo commit
 			if [ ! -d "$3" ]; then
-				git clone "https://$1/$2/$3.git" --recursive --revision="$4" --depth=1
+				git clone "https://$1/$2/$3.git" --revision="$4" --depth=1 --recursive --shallow-submodules
 			fi
 			pushd "$3"
 			git checkout -f "$4"
