@@ -12,6 +12,10 @@ env:
   CMAKE_INSTALL_PARALLEL_LEVEL: 4 # `cmake --install` now implies `--parallel 4`.
   CMAKE_CONFIG_TYPE: Debug # `cmake --build` now implies `--config Debug`.
 
+  GIT_CONFIG_COUNT: 1
+  GIT_CONFIG_KEY_0: color.ui
+  GIT_CONFIG_VALUE_0: always # CI output is not considered to be a terminal, but colour is helpful.
+
   # We instruct CMake to download and build third-party projects outside of our source tree,
   # otherwise they can trigger `-Werror=dev` (from the `develop` preset).
   DEPS_ROOT_DIR: ~/_deps # Note that this needs to be used in a position where Bash will trigger tilde expansion!
