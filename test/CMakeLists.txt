@@ -11,6 +11,15 @@ set_target_properties(randtilegen rgbgfx_test PROPERTIES
                       RUNTIME_OUTPUT_DIRECTORY $<1:${CMAKE_CURRENT_SOURCE_DIR}/gfx>)
 target_link_libraries(randtilegen PRIVATE PNG::PNG)
 target_link_libraries(rgbgfx_test PRIVATE PNG::PNG)
+# Copy DLLs next to the test executables so they can be run without installing.
+if(WIN32)
+  foreach(target IN ITEMS randtilegen rgbgfx_test)
+    add_custom_command(TARGET ${target} POST_BUILD
+      COMMAND ${CMAKE_COMMAND} -E copy -t $<TARGET_FILE_DIR:${target}>
+              $<TARGET_RUNTIME_DLLS:${target}>
+      COMMAND_EXPAND_LISTS)
+  endforeach()
+endif()
 
 set(ONLY_FREE)
 if(NOT TESTS_RUN_NONFREE)

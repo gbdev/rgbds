@@ -210,7 +210,6 @@ jobs:
       - name: Run tests
         shell: bash
         run: |
-          #cp bins/*.dll test/gfx
           test/run-tests.sh --os ${{ matrix.os }}
 
   windows-mingw-build:

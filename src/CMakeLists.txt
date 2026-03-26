@@ -108,6 +108,13 @@ set_target_properties(rgbasm rgblink rgbfix rgbgfx PROPERTIES
 # The generator expression (even if a no-op) stops muti-config generators using a of "per-configuration subdirectory".
                       RUNTIME_OUTPUT_DIRECTORY $<1:${CMAKE_SOURCE_DIR}>)
 target_link_libraries(rgbgfx PRIVATE PNG::PNG)
+# Copy DLLs next to the executables so they can be run without installing.
+if(WIN32)
+  add_custom_command(TARGET rgbgfx POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy -t $<TARGET_FILE_DIR:rgbgfx>
+            $<TARGET_RUNTIME_DLLS:rgbgfx>
+    COMMAND_EXPAND_LISTS)
+endif()
 
 # TODO: we've only tested this with MinGW, but it may not work with other uses of the variable.
 #       Anyonw who knows how to handle this better, feel free to submit a patch!
