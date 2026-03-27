@@ -93,10 +93,10 @@ case "$actionname" in
 
 		action() { # domain owner repo commit
 			if [ ! -d "$3" ]; then
-				git clone "https://$1/$2/$3.git" --revision="$4" --depth=1 --recursive --shallow-submodules
+				git clone "https://$1/$2/$3.git" --revision="$4" --depth=1 --recursive --shallow-submodules --config advice.detachedHead=false
 			fi
 			pushd "$3"
-			git checkout -f "$4"
+			git checkout --force --detach "$4" --
 			if [ -f "../patches/$3.patch" ]; then
 				git apply --ignore-whitespace "../patches/$3.patch"
 			fi
