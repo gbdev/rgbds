@@ -256,22 +256,6 @@ iwyu:
 		CXX="include-what-you-use" \
 		REALCXXFLAGS="-std=c++20 -I include"
 
-# Targets for the project maintainer to easily create Windows exes.
-# This is not for Windows users!
-# If you're building on Windows with Cygwin or MinGW, just follow the Unix
-# install instructions instead.
-
-mingw32:
-	$Q${MAKE} all test/gfx/randtilegen test/gfx/rgbgfx_test \
-		CXX=i686-w64-mingw32-g++ \
-		CXXFLAGS="-O3 -flto -DNDEBUG -static-libgcc -static-libstdc++" \
-		PKG_CONFIG="PKG_CONFIG_SYSROOT_DIR=/usr/i686-w64-mingw32 pkg-config"
-
-mingw64:
-	$Q${MAKE} all test/gfx/randtilegen test/gfx/rgbgfx_test \
-		CXX=x86_64-w64-mingw32-g++ \
-		PKG_CONFIG="PKG_CONFIG_SYSROOT_DIR=/usr/x86_64-w64-mingw32 pkg-config"
-
 wine-shim:
 	$Qecho '#!/usr/bin/env bash' > rgbshim.sh
 	$Qecho 'WINEDEBUG=-all wine $$0.exe "$${@:1}"' >> rgbshim.sh
