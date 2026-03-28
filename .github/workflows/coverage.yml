@@ -32,3 +32,4 @@ jobs:
           path: |
             coverage
             dummy-file-to-keep-directory-structure.txt
+          if-no-files-found: error

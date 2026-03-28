@@ -60,6 +60,7 @@ jobs:
         with:
           name: win${{ matrix.bits }}
           path: rgbds-win${{ matrix.bits }}.zip
+          if-no-files-found: error
 
   macos:
     runs-on: macos-14
@@ -91,6 +92,7 @@ jobs:
         with:
           name: macos
           path: rgbds-macos.zip
+          if-no-files-found: error
 
   linux:
     runs-on: ubuntu-22.04 # Oldest supported, for best glibc compatibility.
@@ -118,6 +120,7 @@ jobs:
         with:
           name: linux
           path: rgbds-linux-x86_64.tar.xz
+          if-no-files-found: error
 
   release:
     runs-on: ubuntu-latest

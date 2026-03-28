@@ -63,6 +63,7 @@ jobs:
         with:
           name: rgbds-canary-${{ matrix.os }}-${{ matrix.cxx }}-${{ matrix.buildsys }}
           path: bins
+          if-no-files-found: error
       - name: Compute test dependency cache params
         id: test-deps-cache-params
         shell: bash
@@ -120,6 +121,7 @@ jobs:
         with:
           name: rgbds-canary-macos-static
           path: bins
+          if-no-files-found: error
       - name: Compute test dependency cache params
         id: test-deps-cache-params
         shell: bash
@@ -188,6 +190,7 @@ jobs:
         with:
           name: rgbds-canary-w${{ matrix.bits }}-${{ matrix.os }}
           path: bins
+          if-no-files-found: error
       - name: Compute test dependency cache params
         id: test-deps-cache-params
         shell: bash
@@ -263,6 +266,7 @@ jobs:
         with:
           name: rgbds-canary-mingw-win${{ matrix.bits }}
           path: bins
+          if-no-files-found: error
       - name: Upload Windows test binaries
         uses: actions/upload-artifact@v4
         with:
@@ -270,6 +274,7 @@ jobs:
           path: |
             test/gfx/randtilegen.exe
             test/gfx/rgbgfx_test.exe
+          if-no-files-found: error
 
   windows-mingw-testing:
     needs: windows-mingw-build
