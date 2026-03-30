@@ -381,6 +381,12 @@ void sdobj_ReadFile(FileStackNode const &src, FILE *file, std::vector<Symbol> &f
 
 			expectNext(nullptr, 'S');
 
+			// Expected format: /[DR]ef[0-9A-F]+/i
+			if ((token[0] != 'D' && token[0] != 'd' && token[0] != 'R' && token[0] != 'r')
+			    || token[1] != 'e' || token[2] != 'f') {
+				fatalAt(where, "'S' line is neither \"Def\" nor \"Ref\"");
+			}
+
 			if (int32_t value = readInt(where, &token[3], numberBase); !fileSections.empty()) {
 				// Symbols in sections are labels; their value is an offset
 				Section *section = fileSections.back().section.get();
@@ -395,15 +401,13 @@ void sdobj_ReadFile(FileStackNode const &src, FILE *file, std::vector<Symbol> &f
 				symbol.data = value;
 			}
 
-			// Expected format: /[DR]ef[0-9A-F]+/i
 			if (token[0] == 'R' || token[0] == 'r') {
+				// "Ref" symbols are imported
 				symbol.type = SYMTYPE_IMPORT;
 				sym_AddSymbol(symbol);
 				// TODO: hard error if the rest is not zero
-			} else if (token[0] != 'D' && token[0] != 'd') {
-				fatalAt(where, "'S' line is neither \"Def\" nor \"Ref\"");
 			} else {
-				// All symbols are exported
+				// "Def" symbols are exported
 				symbol.type = SYMTYPE_EXPORT;
 				Symbol const *other = sym_GetSymbol(symbol.name);
 
@@ -439,9 +443,6 @@ void sdobj_ReadFile(FileStackNode const &src, FILE *file, std::vector<Symbol> &f
 				}
 				// It's fine to keep modifying the symbol after `AddSymbol`, only
 				// the name must not be modified
-			}
-			if (strncasecmp(&token[1], "ef", literal_strlen("ef")) != 0) {
-				fatalAt(where, "'S' line is neither \"Def\" nor \"Ref\"");
 			}
 
 			if (!fileSections.empty()) {
