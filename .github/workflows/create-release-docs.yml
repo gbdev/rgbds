@@ -10,11 +10,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout rgbds@release
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           path: rgbds
       - name: Checkout rgbds-www@master
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           repository: ${{ github.repository_owner }}/rgbds-www
           path: rgbds-www

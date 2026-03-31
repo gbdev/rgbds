@@ -37,7 +37,7 @@ jobs:
           VERSION="${{ github.ref_name }}"
           echo "version=${VERSION#v}" >> $GITHUB_ENV
       - name: Checkout repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Install deps
         run: .github/scripts/install_deps.sh windows
       - name: Cache library deps
@@ -56,7 +56,7 @@ jobs:
           cmake --install build --config Release --prefix install_dir --verbose
           Compress-Archive -LiteralPath @("install_dir/bin/rgbasm.exe", "install_dir/bin/rgblink.exe", "install_dir/bin/rgbfix.exe", "install_dir/bin/rgbgfx.exe", "install_dir/bin/z.dll", "install_dir/bin/libpng16.dll") "rgbds-win${{ matrix.bits }}.zip"
       - name: Upload Windows binaries
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: win${{ matrix.bits }}
           path: rgbds-win${{ matrix.bits }}.zip
@@ -71,7 +71,7 @@ jobs:
           VERSION="${{ github.ref_name }}"
           echo "version=${VERSION#v}" >> $GITHUB_ENV
       - name: Checkout repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Install deps
         shell: bash
         run: |
@@ -88,7 +88,7 @@ jobs:
         run: |
           zip --junk-paths rgbds-macos.zip rgb{asm,link,fix,gfx} man/* .github/scripts/install.sh
       - name: Upload macOS binaries
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: macos
           path: rgbds-macos.zip
@@ -103,7 +103,7 @@ jobs:
           VERSION="${{ github.ref_name }}"
           echo "version=${VERSION#v}" >> $GITHUB_ENV
       - name: Checkout repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Install deps
         shell: bash
         run: |
@@ -116,7 +116,7 @@ jobs:
         run: |
           tar caf rgbds-linux-x86_64.tar.xz --transform='s#.*/##' rgb{asm,link,fix,gfx} man/* .github/scripts/install.sh
       - name: Upload Linux binaries
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: linux
           path: rgbds-linux-x86_64.tar.xz
@@ -134,13 +134,13 @@ jobs:
           VERSION="${{ github.ref_name }}"
           echo "version=${VERSION#v}" >> $GITHUB_ENV
       - name: Checkout repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Package sources
         run: |
           make dist Q=
           ls
       - name: Download Linux binaries
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
       - name: Release
         uses: softprops/action-gh-release@v2
         with:

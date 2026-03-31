@@ -14,10 +14,10 @@ jobs:
       packages: write
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Login to GitHub Container Registry
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -43,7 +43,7 @@ jobs:
 
       - name: Delete untagged container images
         if: github.repository_owner == 'gbdev'
-        uses: Chizkiyahu/delete-untagged-ghcr-action@v5
+        uses: Chizkiyahu/delete-untagged-ghcr-action@v6
         with:
           # Requires a personal access token with delete:packages permissions
           token: ${{ secrets.PAT_TOKEN }}
