@@ -501,9 +501,11 @@ int main(int argc, char *argv[]) {
 	// https://reproducible-builds.org/docs/source-date-epoch/
 	time_t now = time(nullptr);
 	if (char const *sourceDateEpoch = getenv("SOURCE_DATE_EPOCH"); sourceDateEpoch) {
-		// Use `strtoul`, not `parseWholeNumber`, because SOURCE_DATE_EPOCH does
-		// not conventionally support our custom base prefixes
-		now = static_cast<time_t>(strtoul(sourceDateEpoch, nullptr, 0));
+		if (std::optional<uint64_t> epoch = parseWholeNumber(sourceDateEpoch, BASE_10); epoch) {
+			now = static_cast<time_t>(*epoch);
+		} else {
+			warnx("Ignoring invalid `SOURCE_DATE_EPOCH` value \"%s\"", sourceDateEpoch);
+		}
 	}
 	sym_Init(now);
 

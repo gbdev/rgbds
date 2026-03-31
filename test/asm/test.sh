@@ -161,6 +161,20 @@ done
 
 # These tests do their own thing
 
+i="invalid-source-date-epoch"
+RGBASMFLAGS="-Weverything -Bcollapse"
+(( tests++ ))
+echo "${bold}${green}${i}...${rescolors}${resbold}"
+SOURCE_DATE_EPOCH=0x1234 "$RGBASM" $RGBASMFLAGS /dev/null >"$output" 2>"$errput"
+tryDiff /dev/null "$output" out
+our_rc=$?
+tryDiff invalid-source-date-epoch.err "$errput" err
+(( our_rc = our_rc || $? ))
+(( rc = rc || our_rc ))
+if [[ $our_rc -ne 0 ]]; then
+	(( failed++ ))
+fi
+
 evaluateDepTest () {
 	i="$1"
 	RGBASMFLAGS="-Weverything -Bcollapse -M -"
