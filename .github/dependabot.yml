@@ -7,7 +7,7 @@ updates:
       interval: "quarterly" # We do not need *immediate* bumps, only frequent enough to avoid falling out of support range.
     cooldown: # Avoid bumping deps immediately, to give time for security audits to be conducted
       default-days: 15
-      include: [ * ]
+      include: [ "*" ]
     groups:
       actions:
     labels: [ builds ] # Since those are CI-related updates...
