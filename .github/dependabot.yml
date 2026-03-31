@@ -12,4 +12,3 @@ updates:
       actions:
         patterns: [ "*" ]
     labels: [ builds ] # Since those are CI-related updates...
-        

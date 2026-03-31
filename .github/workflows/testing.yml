@@ -14,7 +14,7 @@ env:
 
   GIT_CONFIG_COUNT: 1
   GIT_CONFIG_KEY_0: color.ui
-  GIT_CONFIG_VALUE_0: always # CI output is not considered to be a terminal, but colour is helpful.
+  GIT_CONFIG_VALUE_0: always # Colorful output is helpful even though CI is not considered to be a terminal.
 
   # We instruct CMake to download and build third-party projects outside of our source tree,
   # otherwise they can trigger `-Werror=dev` (from the `develop` preset).
