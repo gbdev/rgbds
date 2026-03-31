@@ -289,7 +289,7 @@ static void parseArg(int ch, char *arg) {
 		if (localOptions.stateFileSpecs.find(name) != localOptions.stateFileSpecs.end()) {
 			warnx("Overriding state file \"%s\"", name);
 		}
-		localOptions.stateFileSpecs.emplace(name, std::move(features));
+		localOptions.stateFileSpecs[name] = std::move(features);
 		break;
 	}
 
