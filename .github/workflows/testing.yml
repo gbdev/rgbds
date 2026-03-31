@@ -33,7 +33,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Install deps
         shell: bash
         run: |
@@ -59,7 +59,7 @@ jobs:
           mkdir bins
           cp rgb{asm,link,fix,gfx} bins
       - name: Upload binaries
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: rgbds-canary-${{ matrix.os }}-${{ matrix.cxx }}-${{ matrix.buildsys }}
           path: bins
@@ -101,7 +101,7 @@ jobs:
     runs-on: macos-14
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Install deps
         shell: bash
         run: |
@@ -117,7 +117,7 @@ jobs:
           mkdir bins
           cp rgb{asm,link,fix,gfx} bins
       - name: Upload binaries
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: rgbds-canary-macos-static
           path: bins
@@ -164,7 +164,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Install deps
         run: |
           bash .github/scripts/install_deps.sh ${{ matrix.os }}
@@ -186,7 +186,7 @@ jobs:
           mkdir bins
           cp -v install_dir/bin/{rgb*.exe,*.dll} bins
       - name: Upload Windows binaries
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: rgbds-canary-w${{ matrix.bits }}-${{ matrix.os }}
           path: bins
@@ -239,7 +239,7 @@ jobs:
       DIST_DIR: win${{ matrix.bits }}
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Install deps
         shell: bash
         run: |
@@ -262,13 +262,13 @@ jobs:
           cp -v /usr/lib/gcc/${{ matrix.triplet }}/10-win32/lib{ssp-0,stdc++-6}.dll bins
           [ "${{ matrix.bits }}" -ne 32 ] || cp -v /usr/lib/gcc/${{ matrix.triplet }}/10-win32/libgcc_s_dw2-1.dll bins
       - name: Upload Windows binaries
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: rgbds-canary-mingw-win${{ matrix.bits }}
           path: bins
           if-no-files-found: error
       - name: Upload Windows test binaries
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: testing-programs-mingw-win${{ matrix.bits }}
           path: |
@@ -286,14 +286,14 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Retrieve binaries
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: rgbds-canary-mingw-win${{ matrix.bits }}
           path: bins
       - name: Retrieve test binaries
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: testing-programs-mingw-win${{ matrix.bits }}
           path: test/gfx
@@ -345,12 +345,12 @@ jobs:
     timeout-minutes: 30
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
           fetch-tags: true
       - name: Setup Cygwin
-        uses: cygwin/cygwin-install-action@v4
+        uses: cygwin/cygwin-install-action@v6
         with:
           platform: ${{ matrix.arch }}
           packages: >-
@@ -375,7 +375,7 @@ jobs:
     timeout-minutes: 30
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
           fetch-tags: true
