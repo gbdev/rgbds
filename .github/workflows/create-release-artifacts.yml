@@ -53,13 +53,12 @@ jobs:
           cmake --build build
       - name: Package binaries
         run: |
-          cmake --install build --config Release --prefix install_dir --verbose
-          Compress-Archive -LiteralPath @("install_dir/bin/rgbasm.exe", "install_dir/bin/rgblink.exe", "install_dir/bin/rgbfix.exe", "install_dir/bin/rgbgfx.exe", "install_dir/bin/z.dll", "install_dir/bin/libpng16.dll") "rgbds-win${{ matrix.bits }}.zip"
+          env -C build cpack -DCPACK_PACKAGE_FILE_NAME=rgbds-win${{ matrix.bits }} -G ZIP -C Release --verbose
       - name: Upload Windows binaries
         uses: actions/upload-artifact@v7
         with:
           name: win${{ matrix.bits }}
-          path: rgbds-win${{ matrix.bits }}.zip
+          path: build/rgbds-win${{ matrix.bits }}.zip
           if-no-files-found: error
 
   macos:
