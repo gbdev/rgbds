@@ -108,6 +108,14 @@ set_target_properties(rgbasm rgblink rgbfix rgbgfx PROPERTIES
 # The generator expression (even if a no-op) stops muti-config generators using a of "per-configuration subdirectory".
                       RUNTIME_OUTPUT_DIRECTORY $<1:${CMAKE_SOURCE_DIR}>)
 target_link_libraries(rgbgfx PRIVATE PNG::PNG)
+# Copy the DLLs in the output directory so the program can be run for testing without having to `install`.
+# From https://cmake.org/cmake/help/v4.3/manual/cmake-generator-expressions.7.html#genex:TARGET_RUNTIME_DLLS.
+add_custom_command(TARGET rgbgfx POST_BUILD COMMENT "Copying rgbgfx's DLLs"
+                   # It would be nice to symlink instead, but that only supports one file at a time.
+                   COMMAND ${CMAKE_COMMAND} -E copy -t $<TARGET_FILE_DIR:rgbgfx> $<TARGET_RUNTIME_DLLS:rgbgfx>
+                   # FIXME: this would be nice (so DLLs get removed by `make clean`), but CMake complains about the target not existing...
+                   #BYPRODUCTS $<LIST:TRANSFORM,$<PATH:GET_FILENAME,$<TARGET_RUNTIME_DLLS:rgbgfx>>,PREPEND,$<TARGET_FILE_DIR:rgbgfx>/>
+                   COMMAND_EXPAND_LISTS VERBATIM)
 
 # TODO: we've only tested this with MinGW, but it may not work with other uses of the variable.
 #       Anyonw who knows how to handle this better, feel free to submit a patch!
