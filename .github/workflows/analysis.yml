@@ -10,9 +10,9 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v6
       - name: Install deps
-        shell: bash
         run: |
-          ./.github/scripts/install_deps.sh ubuntu-latest
+          bash .github/scripts/install_deps.sh ubuntu-latest
       - name: Static analysis
-        run: | # Silence warnings with too many false positives (https://stackoverflow.com/a/73913076)
+        run:
+          | # Silence warnings with too many false positives (https://stackoverflow.com/a/73913076)
           make -kj CXX=g++-14 CXXFLAGS="-fanalyzer -fanalyzer-verbosity=0 -Wno-analyzer-use-of-uninitialized-value -DNDEBUG" Q=

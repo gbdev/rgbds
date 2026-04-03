@@ -24,11 +24,6 @@ jobs:
     strategy:
       matrix:
         bits: [32, 64]
-        include:
-          - bits: 32
-            arch: x86
-          - bits: 64
-            arch: x86_x64
       fail-fast: false
     steps:
       - name: Get version from tag
@@ -52,14 +47,14 @@ jobs:
           cmake -S . -B build --preset msvc${{ matrix.bits }} -DFETCHCONTENT_BASE_DIR="${{ env.DEPS_ROOT_DIR }}"
           cmake --build build
       - name: Package binaries
+        working-directory: build
         run: |
-          cmake --install build --config Release --prefix install_dir --verbose
-          Compress-Archive -LiteralPath @("install_dir/bin/rgbasm.exe", "install_dir/bin/rgblink.exe", "install_dir/bin/rgbfix.exe", "install_dir/bin/rgbgfx.exe", "install_dir/bin/z.dll", "install_dir/bin/libpng16.dll") "rgbds-win${{ matrix.bits }}.zip"
+          cpack -DCPACK_PACKAGE_FILE_NAME=rgbds-win${{ matrix.bits }} -G ZIP -C Release --verbose
       - name: Upload Windows binaries
         uses: actions/upload-artifact@v7
         with:
           name: win${{ matrix.bits }}
-          path: rgbds-win${{ matrix.bits }}.zip
+          path: build/rgbds-win${{ matrix.bits }}.zip
           if-no-files-found: error
 
   macos:
