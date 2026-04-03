@@ -1030,19 +1030,42 @@ void process() {
 			case ColorSet::STRICT_SUPERSET:
 				// Override the previous color set that this one is a strict superset of
 
-				printf("- tile (%u, %u) overrides color set #%zu: [", tile.x, tile.y, n);
-				for (uint16_t color : colorSets[n]) {
-					printf("$%04x, ", color);
+				if (checkVerbosity(VERB_DEBUG)) {
+					fprintf(stderr, "- tile (%" PRIu32 ", %" PRIu32 ") overrides color set #%zu: [", tile.x, tile.y, n);
+					for (uint16_t color : colorSets[n]) {
+						fprintf(stderr, "$%04x, ", color);
+					}
+					fputs("] becomes [", stderr);
+					for (uint16_t color : colorSet) {
+						fprintf(stderr, "$%04x, ", color);
+					}
+					fputs("]\n", stderr);
 				}
-				printf("] becomes [");
-				for (uint16_t color : colorSet) {
-					printf("$%04x, ", color);
-				}
-				puts("]");
 
 				colorSets[n] = colorSet;
 				// Remove any other color sets that we are also a strict superset of
 				// (example: we have [(0, 1), (0, 2)] and are inserting (0, 1, 2))
+				for (size_t m = n + 1; m < colorSets.size();) {
+					if (colorSet.compare(colorSets[m]) != ColorSet::STRICT_SUPERSET) {
+						++m;
+						continue;
+					}
+
+					for (size_t i = 0; i + 1 < attrmap.size(); ++i) {
+						AttrmapEntry &entry = attrmap[i];
+						if (entry.colorSetID == AttrmapEntry::transparent
+						    || entry.colorSetID == AttrmapEntry::background) {
+							continue;
+						}
+						if (entry.colorSetID == m) {
+							entry.colorSetID = n;
+						} else if (entry.colorSetID > m) {
+							--entry.colorSetID;
+						}
+					}
+
+					colorSets.erase(colorSets.begin() + m);
+				}
 				[[fallthrough]];
 
 			case ColorSet::SUBSET_OR_EQUAL:
@@ -1065,11 +1088,13 @@ void process() {
 			);
 		}
 
-		printf("- tile (%u, %u) adds color set #%zu: [", tile.x, tile.y, colorSets.size());
-		for (uint16_t color : colorSet) {
-			printf("$%04x, ", color);
+		if (checkVerbosity(VERB_DEBUG)) {
+			fprintf(stderr, "- tile (%" PRIu32 ", %" PRIu32 ") adds color set #%zu: [", tile.x, tile.y, colorSets.size());
+			for (uint16_t color : colorSet) {
+				fprintf(stderr, "$%04x, ", color);
+			}
+			fputs("]\n", stderr);
 		}
-		puts("]");
 
 		colorSets.push_back(colorSet);
 continue_visiting_tiles:;
