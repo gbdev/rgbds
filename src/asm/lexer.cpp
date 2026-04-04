@@ -958,12 +958,17 @@ static uint32_t readFractionalPart(uint32_t integer) {
 		READFRACTIONALPART_PRECISION,
 		READFRACTIONALPART_PRECISION_DIGITS,
 	} state = READFRACTIONALPART_DIGITS;
-	bool nonDigit = true;
+	bool anyDigit = false;
+	bool nonDigit = false;
 
 	for (int c = peek();; c = nextChar()) {
 		if (state == READFRACTIONALPART_DIGITS) {
 			if (c == '_') {
-				checkDigitSeparator(nonDigit);
+				if (nonDigit) {
+					error("Invalid fixed-point constant, '_' after another '_'");
+				} else if (!anyDigit) {
+					error("Invalid fixed-point constant, '_' after '.'");
+				}
 				nonDigit = true;
 				continue;
 			}
@@ -976,6 +981,7 @@ static uint32_t readFractionalPart(uint32_t integer) {
 				break;
 			}
 			c -= '0';
+			anyDigit = true;
 			nonDigit = false;
 
 			if (divisor > (UINT32_MAX - c) / 10) {
