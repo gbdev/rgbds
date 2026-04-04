@@ -1,6 +1,6 @@
-error: Invalid fixed-point constant, no significant digits after 'q'
+error: Fixed-point constant precision must be between 1 and 31
     at fixed-point-syntax.asm(10)
-error: Invalid fixed-point constant, no significant digits after 'q'
+error: Invalid fixed-point constant, no digits after 'q'
     at fixed-point-syntax.asm(11)
 error: syntax error, unexpected symbol
     at fixed-point-syntax.asm(11)
@@ -10,6 +10,6 @@ error: Invalid integer constant, trailing '_'
     at fixed-point-syntax.asm(13)
 error: Invalid fixed-point constant, '_' after '.'
     at fixed-point-syntax.asm(14)
-error: Invalid fixed-point constant, no significant digits after 'q'
+error: Invalid fixed-point constant, no digits after 'q'
     at fixed-point-syntax.asm(15)
 Assembly aborted with 7 errors
