@@ -1027,22 +1027,59 @@ void process() {
 		// Insert the color set, making sure to avoid overlaps
 		for (size_t n = 0; n < colorSets.size(); ++n) {
 			switch (colorSet.compare(colorSets[n])) {
-			case ColorSet::WE_BIGGER:
-				colorSets[n] = colorSet; // Override them
-				// Remove any other color sets that we encompass
-				// (Example [(0, 1), (0, 2)], inserting (0, 1, 2))
+			case ColorSet::STRICT_SUPERSET:
+				// Override the previous color set that this one is a strict superset of
+
+				if (checkVerbosity(VERB_DEBUG)) {
+					fprintf(stderr, "- tile (%" PRIu32 ", %" PRIu32 ") overrides color set #%zu: [", tile.x, tile.y, n);
+					for (uint16_t color : colorSets[n]) {
+						fprintf(stderr, "$%04x, ", color);
+					}
+					fputs("] becomes [", stderr);
+					for (uint16_t color : colorSet) {
+						fprintf(stderr, "$%04x, ", color);
+					}
+					fputs("]\n", stderr);
+				}
+
+				colorSets[n] = colorSet;
+				// Remove any other color sets that we are also a strict superset of
+				// (example: we have [(0, 1), (0, 2)] and are inserting (0, 1, 2))
+				for (size_t m = n + 1; m < colorSets.size();) {
+					if (colorSet.compare(colorSets[m]) != ColorSet::STRICT_SUPERSET) {
+						++m;
+						continue;
+					}
+
+					for (size_t i = 0; i + 1 < attrmap.size(); ++i) {
+						AttrmapEntry &entry = attrmap[i];
+						if (entry.colorSetID == AttrmapEntry::transparent
+						    || entry.colorSetID == AttrmapEntry::background) {
+							continue;
+						}
+						if (entry.colorSetID == m) {
+							entry.colorSetID = n;
+						} else if (entry.colorSetID > m) {
+							--entry.colorSetID;
+						}
+					}
+
+					colorSets.erase(colorSets.begin() + m);
+				}
 				[[fallthrough]];
 
-			case ColorSet::THEY_BIGGER:
-				// Do nothing, they already contain us
+			case ColorSet::SUBSET_OR_EQUAL:
+				// Use the previous color set that this one is a subset or duplicate of
 				attrs.colorSetID = n;
 				goto continue_visiting_tiles; // Can't `continue` from within a nested loop
 
-			case ColorSet::NEITHER:
-				break; // Keep going
+			case ColorSet::INCOMPARABLE:
+				// This color set is incomparable so far, so keep going
+				break;
 			}
 		}
 
+		// This color set is incomparable with all previous ones, so add it as a new one
 		attrs.colorSetID = colorSets.size();
 		if (colorSets.size() == AttrmapEntry::background) { // Check for overflow
 			fatal(
@@ -1050,6 +1087,15 @@ void process() {
 			    AttrmapEntry::transparent
 			);
 		}
+
+		if (checkVerbosity(VERB_DEBUG)) {
+			fprintf(stderr, "- tile (%" PRIu32 ", %" PRIu32 ") adds color set #%zu: [", tile.x, tile.y, colorSets.size());
+			for (uint16_t color : colorSet) {
+				fprintf(stderr, "$%04x, ", color);
+			}
+			fputs("]\n", stderr);
+		}
+
 		colorSets.push_back(colorSet);
 continue_visiting_tiles:;
 	}
