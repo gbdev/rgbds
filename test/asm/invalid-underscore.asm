@@ -30,3 +30,7 @@ println 123.456_
 ; bad ('_' next to '.')
 println 1_.618
 println 2._718
+
+; bad ('_' after 'q')
+println 1q_2
+println 1q2_3
