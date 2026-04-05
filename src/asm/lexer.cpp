@@ -935,40 +935,40 @@ static std::string readAnonLabelRef(char c) {
 	return sym_MakeAnonLabelName(n, c == '-');
 }
 
-static void checkDigitSeparator(bool prevSeparator) {
-	if (prevSeparator) {
-		error("Invalid integer constant, '_' after another '_'");
+static void checkDigitSeparator(bool prevWasSeparator, char const *name = "integer") {
+	if (prevWasSeparator) {
+		error("Invalid %s constant, '_' after another '_'", name);
 	}
 }
 
-static void checkIntegerConstantSuffix(bool empty, bool prevSeparator, char const *prefix) {
+static void checkDigitsEnding(
+    bool empty, char const *prefix, bool prevWasSeparator, char const *name = "integer"
+) {
 	if (empty) {
-		error("Invalid integer constant, no digits after %s", prefix);
+		error("Invalid %s constant, no digits after %s", name, prefix);
 	}
-	if (prevSeparator) {
-		error("Invalid integer constant, trailing '_'");
+	if (prevWasSeparator) {
+		error("Invalid %s constant, trailing '_'", name);
 	}
 }
 
 static bool readFractionDigits(uint32_t &dividend, uint32_t &divisor) {
 	bool seenDigit = false;
-	bool prevSeparator = false;
+	bool prevWasSeparator = false;
 
 	for (int c = peek();; c = nextChar()) {
 		if (c == '_') {
 			if (!seenDigit) {
 				error("Invalid fixed-point constant, '_' after '.'");
 			}
-			if (prevSeparator) {
-				error("Invalid fixed-point constant, '_' after another '_'");
-			}
-			prevSeparator = true;
+			checkDigitSeparator(prevWasSeparator, "fixed-point");
+			prevWasSeparator = true;
 			continue;
 		}
 
 		if (isDigit(c)) {
 			seenDigit = true;
-			prevSeparator = false;
+			prevWasSeparator = false;
 			c -= '0';
 			if (divisor > (UINT32_MAX - c) / 10) {
 				warning(WARNING_LARGE_CONSTANT, "Precision of fixed-point constant is too large");
@@ -983,12 +983,10 @@ static bool readFractionDigits(uint32_t &dividend, uint32_t &divisor) {
 
 		// '_' is allowed before 'q'/'Q'
 		if (c == 'q' || c == 'Q') {
-			shiftChar();
 			return true;
 		}
-		if (prevSeparator) {
-			error("Invalid fixed-point constant, trailing '_'");
-		}
+
+		checkDigitsEnding(false, nullptr, prevWasSeparator, "fixed-point");
 		return false;
 	}
 }
@@ -1015,10 +1013,15 @@ static uint8_t readPrecisionSuffix() {
 	return precision;
 }
 
-static uint32_t readFixedPointMantissa(uint32_t integer) {
+static uint32_t finishReadingFixedPoint(uint32_t integer) {
 	uint32_t dividend = 0, divisor = 1;
+	uint8_t precision = options.fixPrecision;
+
 	bool hasPrecisionSuffix = readFractionDigits(dividend, divisor);
-	uint8_t precision = hasPrecisionSuffix ? readPrecisionSuffix() : options.fixPrecision;
+	if (hasPrecisionSuffix) {
+		shiftChar(); // Skip the 'q'/'Q'
+		precision = readPrecisionSuffix();
+	}
 
 	if (precision < 1 || precision > 31) {
 		error("Fixed-point constant precision must be between 1 and 31");
@@ -1032,7 +1035,7 @@ static uint32_t readFixedPointMantissa(uint32_t integer) {
 
 	// Cast to unsigned avoids undefined overflow behavior
 	uint32_t fractional =
-	    static_cast<uint32_t>(round(static_cast<double>(dividend) / divisor * pow(2.0, precision)));
+	    static_cast<uint32_t>(round(static_cast<double>(dividend) / divisor * (1ULL << precision)));
 
 	return (integer << precision) | fractional;
 }
@@ -1085,12 +1088,12 @@ void lexer_SetGfxDigits(char const digits[4]) {
 static uint32_t readBinaryNumber(char const *prefix) {
 	uint32_t value = 0;
 	bool empty = true;
-	bool prevSeparator = false;
+	bool prevWasSeparator = false;
 
 	for (int c = peek();; c = nextChar()) {
 		if (c == '_') {
-			checkDigitSeparator(prevSeparator);
-			prevSeparator = true;
+			checkDigitSeparator(prevWasSeparator);
+			prevWasSeparator = true;
 			continue;
 		}
 
@@ -1103,7 +1106,7 @@ static uint32_t readBinaryNumber(char const *prefix) {
 			break;
 		}
 		empty = false;
-		prevSeparator = false;
+		prevWasSeparator = false;
 
 		if (value > (UINT32_MAX - bit) / 2) {
 			warning(WARNING_LARGE_CONSTANT, "Integer constant is too large");
@@ -1114,19 +1117,19 @@ static uint32_t readBinaryNumber(char const *prefix) {
 		value = value * 2 + bit;
 	}
 
-	checkIntegerConstantSuffix(empty, prevSeparator, prefix);
+	checkDigitsEnding(empty, prefix, prevWasSeparator);
 	return value;
 }
 
 static uint32_t readOctalNumber(char const *prefix) {
 	uint32_t value = 0;
 	bool empty = true;
-	bool prevSeparator = false;
+	bool prevWasSeparator = false;
 
 	for (int c = peek();; c = nextChar()) {
 		if (c == '_') {
-			checkDigitSeparator(prevSeparator);
-			prevSeparator = true;
+			checkDigitSeparator(prevWasSeparator);
+			prevWasSeparator = true;
 			continue;
 		}
 
@@ -1135,7 +1138,7 @@ static uint32_t readOctalNumber(char const *prefix) {
 		}
 		c -= '0';
 		empty = false;
-		prevSeparator = false;
+		prevWasSeparator = false;
 
 		if (value > (UINT32_MAX - c) / 8) {
 			warning(WARNING_LARGE_CONSTANT, "Integer constant is too large");
@@ -1146,19 +1149,19 @@ static uint32_t readOctalNumber(char const *prefix) {
 		value = value * 8 + c;
 	}
 
-	checkIntegerConstantSuffix(empty, prevSeparator, prefix);
+	checkDigitsEnding(empty, prefix, prevWasSeparator);
 	return value;
 }
 
 static uint32_t readDecimalNumber(int initial) {
 	assume(isDigit(initial));
 	uint32_t value = initial - '0';
-	bool prevSeparator = false;
+	bool prevWasSeparator = false;
 
 	for (int c = peek();; c = nextChar()) {
 		if (c == '_') {
-			checkDigitSeparator(prevSeparator);
-			prevSeparator = true;
+			checkDigitSeparator(prevWasSeparator);
+			prevWasSeparator = true;
 			continue;
 		}
 
@@ -1166,7 +1169,7 @@ static uint32_t readDecimalNumber(int initial) {
 			break;
 		}
 		c -= '0';
-		prevSeparator = false;
+		prevWasSeparator = false;
 
 		if (value > (UINT32_MAX - c) / 10) {
 			warning(WARNING_LARGE_CONSTANT, "Integer constant is too large");
@@ -1177,19 +1180,19 @@ static uint32_t readDecimalNumber(int initial) {
 		value = value * 10 + c;
 	}
 
-	checkIntegerConstantSuffix(false, prevSeparator, nullptr);
+	checkDigitsEnding(false, nullptr, prevWasSeparator);
 	return value;
 }
 
 static uint32_t readHexNumber(char const *prefix) {
 	uint32_t value = 0;
 	bool empty = true;
-	bool prevSeparator = false;
+	bool prevWasSeparator = false;
 
 	for (int c = peek();; c = nextChar()) {
 		if (c == '_') {
-			checkDigitSeparator(prevSeparator);
-			prevSeparator = true;
+			checkDigitSeparator(prevWasSeparator);
+			prevWasSeparator = true;
 			continue;
 		}
 
@@ -1198,7 +1201,7 @@ static uint32_t readHexNumber(char const *prefix) {
 		}
 		c = parseHexDigit(c);
 		empty = false;
-		prevSeparator = false;
+		prevWasSeparator = false;
 
 		if (value > (UINT32_MAX - c) / 16) {
 			warning(WARNING_LARGE_CONSTANT, "Integer constant is too large");
@@ -1209,19 +1212,19 @@ static uint32_t readHexNumber(char const *prefix) {
 		value = value * 16 + c;
 	}
 
-	checkIntegerConstantSuffix(empty, prevSeparator, prefix);
+	checkDigitsEnding(empty, prefix, prevWasSeparator);
 	return value;
 }
 
 static uint32_t readGfxConstant() {
 	uint32_t bitPlaneLower = 0, bitPlaneUpper = 0;
 	uint8_t width = 0;
-	bool prevSeparator = false;
+	bool prevWasSeparator = false;
 
 	for (int c = peek();; c = nextChar()) {
 		if (c == '_') {
-			checkDigitSeparator(prevSeparator);
-			prevSeparator = true;
+			checkDigitSeparator(prevWasSeparator);
+			prevWasSeparator = true;
 			continue;
 		}
 
@@ -1237,7 +1240,7 @@ static uint32_t readGfxConstant() {
 		} else {
 			break;
 		}
-		prevSeparator = false;
+		prevWasSeparator = false;
 
 		if (width < 8) {
 			bitPlaneLower = bitPlaneLower << 1 | (pixel & 1);
@@ -1248,15 +1251,11 @@ static uint32_t readGfxConstant() {
 		}
 	}
 
-	if (width == 0) {
-		error("Invalid graphics constant, no digits after '`'");
-	} else if (width == 9) {
+	checkDigitsEnding(width == 0, "'`'", prevWasSeparator, "graphics");
+	if (width == 9) {
 		warning(
 		    WARNING_LARGE_CONSTANT, "Graphics constant is too large; only first 8 pixels considered"
 		);
-	}
-	if (prevSeparator) {
-		error("Invalid graphics constant, trailing '_'");
 	}
 
 	return bitPlaneUpper << 8 | bitPlaneLower;
@@ -1841,7 +1840,7 @@ static Token yylex_NORMAL() {
 
 			if (peek() == '.') {
 				shiftChar();
-				n = readFixedPointMantissa(n);
+				n = finishReadingFixedPoint(n);
 			}
 			return Token(T_(NUMBER), n);
 		}
