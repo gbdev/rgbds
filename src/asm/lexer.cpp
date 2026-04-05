@@ -964,9 +964,7 @@ static bool readFractionDigits(uint32_t &dividend, uint32_t &divisor) {
 			checkDigitSeparator(prevWasSeparator, "fixed-point");
 			prevWasSeparator = true;
 			continue;
-		}
-
-		if (isDigit(c)) {
+		} else if (isDigit(c)) {
 			seenDigit = true;
 			prevWasSeparator = false;
 			c -= '0';
@@ -979,15 +977,13 @@ static bool readFractionDigits(uint32_t &dividend, uint32_t &divisor) {
 			dividend = dividend * 10 + c;
 			divisor *= 10;
 			continue;
-		}
-
-		// '_' is allowed before 'q'/'Q'
-		if (c == 'q' || c == 'Q') {
+		} else if (c == 'q' || c == 'Q') {
+			// '_' is allowed before 'q'/'Q'
 			return true;
+		} else {
+			checkDigitsEnding(false, nullptr, prevWasSeparator, "fixed-point");
+			return false;
 		}
-
-		checkDigitsEnding(false, nullptr, prevWasSeparator, "fixed-point");
-		return false;
 	}
 }
 
