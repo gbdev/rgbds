@@ -13,3 +13,5 @@ println 12.34q1_5
 println 1_.2
 println 1._2
 println 1.2q
+println 1.999_999_999_999_999
+println 1.999_999_999_999_999q.16

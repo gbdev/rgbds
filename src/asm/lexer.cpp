@@ -970,18 +970,16 @@ static bool readFractionDigits(uint32_t &dividend, uint32_t &divisor) {
 			if (divisor > (UINT32_MAX - c) / 10) {
 				warning(WARNING_LARGE_CONSTANT, "Precision of fixed-point constant is too large");
 				// Discard any additional digits
-				skipChars([](int d) { return isDigit(d) || d == '_'; });
-				return false;
+				for (int d = peek(); isDigit(d) || d == '_'; d = nextChar()) {
+					c = d;
+				}
+				return c == '_';
 			}
 			dividend = dividend * 10 + c;
 			divisor *= 10;
 			continue;
-		} else if (c == 'q' || c == 'Q') {
-			// '_' is allowed before 'q'/'Q'
-			return true;
 		} else {
-			checkDigitsEnding(false, nullptr, prevWasSeparator, "fixed-point");
-			return false;
+			return prevWasSeparator;
 		}
 	}
 }
@@ -1012,10 +1010,13 @@ static uint32_t finishReadingFixedPoint(uint32_t integer) {
 	uint32_t dividend = 0, divisor = 1;
 	uint8_t precision = options.fixPrecision;
 
-	bool hasPrecisionSuffix = readFractionDigits(dividend, divisor);
-	if (hasPrecisionSuffix) {
-		shiftChar(); // Skip the 'q'/'Q'
+	bool prevWasSeparator = readFractionDigits(dividend, divisor);
+	if (int c = peek(); c == 'q' || c == 'Q') {
+		// '_' is allowed before 'q'/'Q', so do not call `checkDigitsEnding`
+		shiftChar();
 		precision = readPrecisionSuffix();
+	} else {
+		checkDigitsEnding(false, nullptr, prevWasSeparator, "fixed-point");
 	}
 
 	if (precision < 1 || precision > 31) {

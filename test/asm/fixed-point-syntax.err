@@ -12,4 +12,8 @@ error: Invalid fixed-point constant, '_' after '.'
     at fixed-point-syntax.asm(14)
 error: Invalid fixed-point constant, no digits after 'q'
     at fixed-point-syntax.asm(15)
+warning: Precision of fixed-point constant is too large [-Wlarge-constant]
+    at fixed-point-syntax.asm(16)
+warning: Precision of fixed-point constant is too large [-Wlarge-constant]
+    at fixed-point-syntax.asm(17)
 Assembly aborted with 7 errors
