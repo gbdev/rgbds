@@ -935,15 +935,14 @@ static std::string readAnonLabelRef(char c) {
 	return sym_MakeAnonLabelName(n, c == '-');
 }
 
-static void checkDigitSeparator(bool prevWasSeparator, char const *name = "integer") {
+static void checkDigitSeparator(bool prevWasSeparator, char const *name) {
 	if (prevWasSeparator) {
 		error("Invalid %s constant, '_' after another '_'", name);
 	}
 }
 
-static void checkDigitsEnding(
-    bool empty, char const *prefix, bool prevWasSeparator, char const *name = "integer"
-) {
+static void
+    checkDigitsEnding(bool empty, char const *prefix, bool prevWasSeparator, char const *name) {
 	if (empty) {
 		error("Invalid %s constant, no digits after %s", name, prefix);
 	}
@@ -1088,7 +1087,7 @@ static uint32_t readBinaryNumber(char const *prefix) {
 
 	for (int c = peek();; c = nextChar()) {
 		if (c == '_') {
-			checkDigitSeparator(prevWasSeparator);
+			checkDigitSeparator(prevWasSeparator, "integer");
 			prevWasSeparator = true;
 			continue;
 		}
@@ -1113,7 +1112,7 @@ static uint32_t readBinaryNumber(char const *prefix) {
 		value = value * 2 + bit;
 	}
 
-	checkDigitsEnding(empty, prefix, prevWasSeparator);
+	checkDigitsEnding(empty, prefix, prevWasSeparator, "integer");
 	return value;
 }
 
@@ -1124,7 +1123,7 @@ static uint32_t readOctalNumber(char const *prefix) {
 
 	for (int c = peek();; c = nextChar()) {
 		if (c == '_') {
-			checkDigitSeparator(prevWasSeparator);
+			checkDigitSeparator(prevWasSeparator, "integer");
 			prevWasSeparator = true;
 			continue;
 		}
@@ -1145,7 +1144,7 @@ static uint32_t readOctalNumber(char const *prefix) {
 		value = value * 8 + c;
 	}
 
-	checkDigitsEnding(empty, prefix, prevWasSeparator);
+	checkDigitsEnding(empty, prefix, prevWasSeparator, "integer");
 	return value;
 }
 
@@ -1156,7 +1155,7 @@ static uint32_t readDecimalNumber(int initial) {
 
 	for (int c = peek();; c = nextChar()) {
 		if (c == '_') {
-			checkDigitSeparator(prevWasSeparator);
+			checkDigitSeparator(prevWasSeparator, "integer");
 			prevWasSeparator = true;
 			continue;
 		}
@@ -1176,7 +1175,7 @@ static uint32_t readDecimalNumber(int initial) {
 		value = value * 10 + c;
 	}
 
-	checkDigitsEnding(false, nullptr, prevWasSeparator);
+	checkDigitsEnding(false, nullptr, prevWasSeparator, "integer");
 	return value;
 }
 
@@ -1187,7 +1186,7 @@ static uint32_t readHexNumber(char const *prefix) {
 
 	for (int c = peek();; c = nextChar()) {
 		if (c == '_') {
-			checkDigitSeparator(prevWasSeparator);
+			checkDigitSeparator(prevWasSeparator, "integer");
 			prevWasSeparator = true;
 			continue;
 		}
@@ -1208,7 +1207,7 @@ static uint32_t readHexNumber(char const *prefix) {
 		value = value * 16 + c;
 	}
 
-	checkDigitsEnding(empty, prefix, prevWasSeparator);
+	checkDigitsEnding(empty, prefix, prevWasSeparator, "integer");
 	return value;
 }
 
@@ -1219,7 +1218,7 @@ static uint32_t readGfxConstant() {
 
 	for (int c = peek();; c = nextChar()) {
 		if (c == '_') {
-			checkDigitSeparator(prevWasSeparator);
+			checkDigitSeparator(prevWasSeparator, "integer");
 			prevWasSeparator = true;
 			continue;
 		}
