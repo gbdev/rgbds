@@ -15,8 +15,8 @@ env:
   CMAKE_CONFIG_TYPE: Release # `cmake --build` now implies `--config Release`.
 
   # We instruct CMake to download and build third-party projects in the same place as in `testing.yml`
-  # for the sources cache to remain valid.
-  DEPS_ROOT_DIR: ~/_deps # Note that this needs to be used in a position where Bash will trigger tilde expansion!
+  # to prevent divergence between testing and release workflows.
+  DEPS_ROOT_DIR: ~/_deps
 
 jobs:
   windows:
@@ -41,12 +41,6 @@ jobs:
       - name: Install deps
         run: |
           bash .github/scripts/install_deps.sh windows
-      - name: Cache library deps
-        uses: actions/cache@v5
-        with:
-          path: ${{ env.DEPS_ROOT_DIR }}/*-tmp/
-          key: dep-srcs-${{ hashFiles('cmake/deps.cmake') }}
-          enableCrossOsArchive: true
       - name: Build Windows binaries
         shell: bash
         run: |
