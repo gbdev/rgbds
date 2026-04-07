@@ -8,8 +8,12 @@ println 1.q2
 
 ; bad
 println 12.34q0
-println 12.34q_15
-println 12.34q1_5
+println 12.34q_15 ; lexes as `12.34q` (invalid) then symbol `_15`
+println 12.34q1_5 ; lexes as `12.34q1` (valid) then symbol `_5`
 println 1_.2
 println 1._2
+println 1.__2
 println 1.2q
+println 1.999_999_999_999_999
+println 1.999_999_999_999_999q16
+println 1.999_999_999_999_999q.16
