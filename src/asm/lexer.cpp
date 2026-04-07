@@ -20,6 +20,7 @@
 #include <string.h>
 #include <string>
 #include <string_view>
+#include <tuple>
 #include <unordered_map>
 #include <utility>
 #include <variant>
@@ -951,7 +952,8 @@ static void
 	}
 }
 
-static bool readFractionDigits(uint32_t &dividend, uint32_t &divisor) {
+static std::tuple<uint32_t, uint32_t, bool> readFractionDigits() {
+	uint32_t dividend = 0, divisor = 1;
 	bool prevWasSeparator = false;
 
 	int c = peek();
@@ -972,7 +974,7 @@ static bool readFractionDigits(uint32_t &dividend, uint32_t &divisor) {
 				);
 				// Discard any additional digits
 				for (int d = peek(); isDigit(d) || d == '_'; c = d, d = nextChar()) {}
-				return c == '_';
+				return {dividend, divisor, c == '_'};
 			}
 			dividend = dividend * 10 + c;
 			divisor *= 10;
@@ -981,7 +983,7 @@ static bool readFractionDigits(uint32_t &dividend, uint32_t &divisor) {
 		}
 	}
 
-	return prevWasSeparator;
+	return {dividend, divisor, prevWasSeparator};
 }
 
 static uint8_t readPrecisionSuffix() {
@@ -1015,10 +1017,8 @@ static uint8_t readPrecisionSuffix() {
 }
 
 static uint32_t finishReadingFixedPoint(uint32_t integer) {
-	uint32_t dividend = 0, divisor = 1;
+	auto [dividend, divisor, prevWasSeparator] = readFractionDigits();
 	uint8_t precision = options.fixPrecision;
-
-	bool prevWasSeparator = readFractionDigits(dividend, divisor);
 	if (int c = peek(); c == 'q' || c == 'Q') {
 		// '_' is allowed before 'q'/'Q', so do not call `checkDigitsEnding`
 		shiftChar();
