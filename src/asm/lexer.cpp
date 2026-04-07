@@ -966,7 +966,7 @@ static bool readFractionDigits(uint32_t &dividend, uint32_t &divisor) {
 		} else if (isDigit(c)) {
 			prevWasSeparator = false;
 			c -= '0';
-			if (divisor > (UINT32_MAX - c) / 10) {
+			if (dividend > (UINT32_MAX - c) / 10 || divisor > UINT32_MAX / 10) {
 				warning(WARNING_LARGE_CONSTANT, "Precision of fixed-point constant is too large");
 				// Discard any additional digits
 				for (int d = peek(); isDigit(d) || d == '_'; c = d, d = nextChar()) {}
@@ -993,7 +993,15 @@ static uint8_t readPrecisionSuffix() {
 	// '_' is not allowed after 'q'/'Q'
 	for (int c = peek(); isDigit(c); c = nextChar()) {
 		empty = false;
-		precision = precision * 10 + (c - '0');
+		c -= '0';
+		if (precision > (UINT8_MAX - c) / 10) {
+			// Discard any additional digits
+			skipChars(isDigit);
+			// Return an invalid precision to cause a subsequent error, which is checked afterwards
+			// to cover the default `options.fixPrecision` as well, just in case
+			return UINT8_MAX;
+		}
+		precision = precision * 10 + c;
 	}
 
 	if (empty) {
