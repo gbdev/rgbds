@@ -952,19 +952,18 @@ static void
 }
 
 static bool readFractionDigits(uint32_t &dividend, uint32_t &divisor) {
-	bool seenDigit = false;
 	bool prevWasSeparator = false;
 
-	for (int c = peek();; c = nextChar()) {
+	int c = peek();
+	if (c == '_') {
+		error("Invalid fixed-point constant, '_' after '.'");
+	}
+
+	for (;; c = nextChar()) {
 		if (c == '_') {
-			if (!seenDigit) {
-				error("Invalid fixed-point constant, '_' after '.'");
-			}
 			checkDigitSeparator(prevWasSeparator, "fixed-point");
 			prevWasSeparator = true;
-			continue;
 		} else if (isDigit(c)) {
-			seenDigit = true;
 			prevWasSeparator = false;
 			c -= '0';
 			if (divisor > (UINT32_MAX - c) / 10) {
@@ -977,11 +976,12 @@ static bool readFractionDigits(uint32_t &dividend, uint32_t &divisor) {
 			}
 			dividend = dividend * 10 + c;
 			divisor *= 10;
-			continue;
 		} else {
-			return prevWasSeparator;
+			break;
 		}
 	}
+
+	return prevWasSeparator;
 }
 
 static uint8_t readPrecisionSuffix() {
