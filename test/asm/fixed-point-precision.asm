@@ -21,3 +21,5 @@ def q24 = 1.25q.24
 
 def qerr = 1.25q32
 	println "{q0f:qerr}"
+def qerr = 1.25q264
+	println "{q999f:qerr}"

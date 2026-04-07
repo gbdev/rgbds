@@ -20,6 +20,7 @@
 #include <string.h>
 #include <string>
 #include <string_view>
+#include <tuple>
 #include <unordered_map>
 #include <utility>
 #include <variant>
@@ -951,7 +952,8 @@ static void
 	}
 }
 
-static bool readFractionDigits(uint32_t &dividend, uint32_t &divisor) {
+static std::tuple<uint32_t, uint32_t, bool> readFractionDigits() {
+	uint32_t dividend = 0, divisor = 1;
 	bool prevWasSeparator = false;
 
 	int c = peek();
@@ -966,11 +968,13 @@ static bool readFractionDigits(uint32_t &dividend, uint32_t &divisor) {
 		} else if (isDigit(c)) {
 			prevWasSeparator = false;
 			c -= '0';
-			if (divisor > (UINT32_MAX - c) / 10) {
-				warning(WARNING_LARGE_CONSTANT, "Precision of fixed-point constant is too large");
+			if (dividend > (UINT32_MAX - c) / 10 || divisor > UINT32_MAX / 10) {
+				warning(
+				    WARNING_LARGE_CONSTANT, "Fixed-point constant has too many fractional digits"
+				);
 				// Discard any additional digits
 				for (int d = peek(); isDigit(d) || d == '_'; c = d, d = nextChar()) {}
-				return c == '_';
+				return {dividend, divisor, c == '_'};
 			}
 			dividend = dividend * 10 + c;
 			divisor *= 10;
@@ -979,7 +983,7 @@ static bool readFractionDigits(uint32_t &dividend, uint32_t &divisor) {
 		}
 	}
 
-	return prevWasSeparator;
+	return {dividend, divisor, prevWasSeparator};
 }
 
 static uint8_t readPrecisionSuffix() {
@@ -993,7 +997,15 @@ static uint8_t readPrecisionSuffix() {
 	// '_' is not allowed after 'q'/'Q'
 	for (int c = peek(); isDigit(c); c = nextChar()) {
 		empty = false;
-		precision = precision * 10 + (c - '0');
+		c -= '0';
+		if (precision > (UINT8_MAX - c) / 10) {
+			// Discard any additional digits
+			skipChars(isDigit);
+			// Return an invalid precision to cause a subsequent error, which is checked afterwards
+			// to cover the default `options.fixPrecision` as well, just in case
+			return UINT8_MAX;
+		}
+		precision = precision * 10 + c;
 	}
 
 	if (empty) {
@@ -1005,10 +1017,8 @@ static uint8_t readPrecisionSuffix() {
 }
 
 static uint32_t finishReadingFixedPoint(uint32_t integer) {
-	uint32_t dividend = 0, divisor = 1;
+	auto [dividend, divisor, prevWasSeparator] = readFractionDigits();
 	uint8_t precision = options.fixPrecision;
-
-	bool prevWasSeparator = readFractionDigits(dividend, divisor);
 	if (int c = peek(); c == 'q' || c == 'Q') {
 		// '_' is allowed before 'q'/'Q', so do not call `checkDigitsEnding`
 		shiftChar();
@@ -1248,7 +1258,8 @@ static uint32_t readGfxConstant() {
 	checkDigitsEnding(width == 0, "'`'", prevWasSeparator, "graphics");
 	if (width == 9) {
 		warning(
-		    WARNING_LARGE_CONSTANT, "Graphics constant is too large; only first 8 pixels considered"
+		    WARNING_LARGE_CONSTANT,
+		    "Graphics constant has too many digits; only first 8 pixels considered"
 		);
 	}
 
