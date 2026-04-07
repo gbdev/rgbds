@@ -7,21 +7,23 @@ on:
 jobs:
   build:
     if: github.repository_owner == 'gbdev'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     steps:
       - name: Checkout rgbds@release
         uses: actions/checkout@v6
         with:
           path: rgbds
-      - name: Checkout rgbds-www@master
+          sparse-checkout: man # Avoid checking out other files, we don't use them here.
+      - name: Checkout rgbds-www
         uses: actions/checkout@v6
         with:
-          repository: ${{ github.repository_owner }}/rgbds-www
           path: rgbds-www
+          repository: ${{ github.repository_owner }}/rgbds-www
+          ref: master # Need to check out the branch to be able to commit on and push it.
+          ssh-key: !!str ${{ secrets.SSH_KEY_SECRET }}
       - name: Install groff and mandoc
         run: |
-          sudo apt-get -qq update
-          sudo apt-get install -yq groff mandoc
+          sudo apt install -Uyq groff mandoc -o APT::Color=yes -o Acquire::Queue-Mode
       - name: Update pages
         working-directory: rgbds/man
         run: | # The ref appears to be in the format "refs/tags/<version>", so strip that
@@ -29,19 +31,12 @@ jobs:
           ../../rgbds-www/maintainer/new_release.sh ${GITHUB_REF##*/}
       - name: Push new pages
         working-directory: rgbds-www
+        env:
+          GIT_AUTHOR_NAME: !!str ${{ github.actor }}
+          GIT_AUTHOR_EMAIL: !!str ${{ github.actor_id }}+${{ github.actor }}@users.noreply.github.com
+          GIT_COMMITTER_NAME: github-actions[bot]
+          GIT_COMMITTER_EMAIL: 41898282+github-actions[bot]@users.noreply.github.com
         run: |
-          mkdir -p -m 700 ~/.ssh
-          cat > ~/.ssh/id_ed25519 <<<"${{ secrets.SSH_KEY_SECRET }}"
-          chmod 0600 ~/.ssh/id_ed25519
-          eval $(ssh-agent -s)
-          ssh-add ~/.ssh/id_ed25519
-          git config --global user.name "GitHub Action"
-          git config --global user.email "community@gbdev.io"
           git add -A
           git commit -m "Create RGBDS ${GITHUB_REF##*/} documentation"
-          if git remote | grep -q origin; then
-            git remote set-url origin git@github.com:${{ github.repository_owner }}/rgbds-www.git
-          else
-            git remote add origin git@github.com:${{ github.repository_owner }}/rgbds-www.git
-          fi
-          git push origin master
+          git push
