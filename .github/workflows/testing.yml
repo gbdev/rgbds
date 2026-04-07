@@ -173,7 +173,7 @@ jobs:
         with:
           path: ${{ env.DEPS_ROOT_DIR }}/*-tmp/
           key: dep-srcs-${{ hashFiles('cmake/deps.cmake') }}
-          enableCrossOsArchive: true
+          enableCrossOsArchive: true # Currently only used on Windows, but the contents are OS-agnostic.
       - name: Build Windows binaries
         shell: bash
         run: | # ASan seems to be broken on Windows, so we disable it.
