@@ -969,9 +969,7 @@ static bool readFractionDigits(uint32_t &dividend, uint32_t &divisor) {
 			if (divisor > (UINT32_MAX - c) / 10) {
 				warning(WARNING_LARGE_CONSTANT, "Precision of fixed-point constant is too large");
 				// Discard any additional digits
-				for (int d = peek(); isDigit(d) || d == '_'; d = nextChar()) {
-					c = d;
-				}
+				for (int d = peek(); isDigit(d) || d == '_'; c = d, d = nextChar()) {}
 				return c == '_';
 			}
 			dividend = dividend * 10 + c;
