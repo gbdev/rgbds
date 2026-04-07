@@ -31,11 +31,6 @@ jobs:
             arch: x86_x64
       fail-fast: false
     steps:
-      - name: Get version from tag
-        shell: bash
-        run: | # Turn "vX.Y.Z" into "X.Y.Z"
-          VERSION="${{ github.ref_name }}"
-          echo "version=${VERSION#v}" >> $GITHUB_ENV
       - name: Checkout repo
         uses: actions/checkout@v6
       - name: Install deps
@@ -60,11 +55,6 @@ jobs:
   macos:
     runs-on: macos-14
     steps:
-      - name: Get version from tag
-        shell: bash
-        run: | # Turn "refs/tags/vX.Y.Z" into "X.Y.Z"
-          VERSION="${{ github.ref_name }}"
-          echo "version=${VERSION#v}" >> $GITHUB_ENV
       - name: Checkout repo
         uses: actions/checkout@v6
       - name: Install deps
@@ -92,11 +82,6 @@ jobs:
   linux:
     runs-on: ubuntu-22.04 # Oldest supported, for best glibc compatibility.
     steps:
-      - name: Get version from tag
-        shell: bash
-        run: | # Turn "refs/tags/vX.Y.Z" into "X.Y.Z"
-          VERSION="${{ github.ref_name }}"
-          echo "version=${VERSION#v}" >> $GITHUB_ENV
       - name: Checkout repo
         uses: actions/checkout@v6
       - name: Install deps
@@ -123,11 +108,6 @@ jobs:
     permissions:
       contents: write
     steps:
-      - name: Get version from tag
-        shell: bash
-        run: | # Turn "refs/tags/vX.Y.Z" into "X.Y.Z"
-          VERSION="${{ github.ref_name }}"
-          echo "version=${VERSION#v}" >> $GITHUB_ENV
       - name: Checkout repo
         uses: actions/checkout@v6
       - name: Package sources
