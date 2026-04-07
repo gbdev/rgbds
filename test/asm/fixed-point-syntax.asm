@@ -6,6 +6,12 @@ println 12.34_q.5
 println 1_2.3_4_q15
 println 1.q2
 
+; warning
+println 1.000_000_000_000_001
+println 1.999_999_999_999_999
+println 1.000_000_000_000_001q16
+println 1.999_999_999_999_999q.16
+
 ; bad
 println 12.34q0
 println 12.34q_15 ; lexes as `12.34q` (invalid) then symbol `_15`
@@ -14,6 +20,3 @@ println 1_.2
 println 1._2
 println 1.__2
 println 1.2q
-println 1.999_999_999_999_999
-println 1.999_999_999_999_999q16
-println 1.999_999_999_999_999q.16

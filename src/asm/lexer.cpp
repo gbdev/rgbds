@@ -967,7 +967,9 @@ static bool readFractionDigits(uint32_t &dividend, uint32_t &divisor) {
 			prevWasSeparator = false;
 			c -= '0';
 			if (dividend > (UINT32_MAX - c) / 10 || divisor > UINT32_MAX / 10) {
-				warning(WARNING_LARGE_CONSTANT, "Precision of fixed-point constant is too large");
+				warning(
+				    WARNING_LARGE_CONSTANT, "Fixed-point constant has too many fractional digits"
+				);
 				// Discard any additional digits
 				for (int d = peek(); isDigit(d) || d == '_'; c = d, d = nextChar()) {}
 				return c == '_';
@@ -1256,7 +1258,8 @@ static uint32_t readGfxConstant() {
 	checkDigitsEnding(width == 0, "'`'", prevWasSeparator, "graphics");
 	if (width == 9) {
 		warning(
-		    WARNING_LARGE_CONSTANT, "Graphics constant is too large; only first 8 pixels considered"
+		    WARNING_LARGE_CONSTANT,
+		    "Graphics constant has too many digits; only first 8 pixels considered"
 		);
 	}
 

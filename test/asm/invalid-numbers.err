@@ -16,7 +16,7 @@ warning: Integer constant is too large [-Wlarge-constant]
     at invalid-numbers.asm::try(2) <- invalid-numbers.asm(20)
 warning: Integer constant is too large [-Wlarge-constant]
     at invalid-numbers.asm::try(2) <- invalid-numbers.asm(21)
-warning: Graphics constant is too large; only first 8 pixels considered [-Wlarge-constant]
+warning: Graphics constant has too many digits; only first 8 pixels considered [-Wlarge-constant]
     at invalid-numbers.asm::try(2) <- invalid-numbers.asm(22)
 warning: Magnitude of fixed-point constant is too large [-Wlarge-constant]
     at invalid-numbers.asm::try(2) <- invalid-numbers.asm(23)

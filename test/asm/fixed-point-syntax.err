@@ -1,25 +1,27 @@
-error: Fixed-point constant precision must be between 1 and 31
+warning: Fixed-point constant has too many fractional digits [-Wlarge-constant]
     at fixed-point-syntax.asm(10)
-error: Invalid fixed-point constant, no digits after 'q'
+warning: Fixed-point constant has too many fractional digits [-Wlarge-constant]
     at fixed-point-syntax.asm(11)
-error: syntax error, unexpected symbol
-    at fixed-point-syntax.asm(11)
-error: syntax error, unexpected symbol
+warning: Fixed-point constant has too many fractional digits [-Wlarge-constant]
     at fixed-point-syntax.asm(12)
-error: Invalid integer constant, trailing '_'
+warning: Fixed-point constant has too many fractional digits [-Wlarge-constant]
     at fixed-point-syntax.asm(13)
-error: Invalid fixed-point constant, '_' after '.'
-    at fixed-point-syntax.asm(14)
-error: Invalid fixed-point constant, '_' after '.'
-    at fixed-point-syntax.asm(15)
-error: Invalid fixed-point constant, '_' after another '_'
-    at fixed-point-syntax.asm(15)
-error: Invalid fixed-point constant, no digits after 'q'
+error: Fixed-point constant precision must be between 1 and 31
     at fixed-point-syntax.asm(16)
-warning: Precision of fixed-point constant is too large [-Wlarge-constant]
+error: Invalid fixed-point constant, no digits after 'q'
     at fixed-point-syntax.asm(17)
-warning: Precision of fixed-point constant is too large [-Wlarge-constant]
+error: syntax error, unexpected symbol
+    at fixed-point-syntax.asm(17)
+error: syntax error, unexpected symbol
     at fixed-point-syntax.asm(18)
-warning: Precision of fixed-point constant is too large [-Wlarge-constant]
+error: Invalid integer constant, trailing '_'
     at fixed-point-syntax.asm(19)
+error: Invalid fixed-point constant, '_' after '.'
+    at fixed-point-syntax.asm(20)
+error: Invalid fixed-point constant, '_' after '.'
+    at fixed-point-syntax.asm(21)
+error: Invalid fixed-point constant, '_' after another '_'
+    at fixed-point-syntax.asm(21)
+error: Invalid fixed-point constant, no digits after 'q'
+    at fixed-point-syntax.asm(22)
 Assembly aborted with 9 errors
