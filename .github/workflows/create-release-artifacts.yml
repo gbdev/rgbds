@@ -51,7 +51,7 @@ jobs:
         shell: bash
         run: |
           cmake -S . -B build --preset msvc${{ matrix.bits }} -DFETCHCONTENT_BASE_DIR="${{ env.DEPS_ROOT_DIR }}"
-          cmake --build build
+          cmake --build build --config Release
       - name: Package binaries
         run: |
           cmake --install build --config Release --prefix install_dir --verbose
