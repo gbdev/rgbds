@@ -1,17 +1,13 @@
 #!/bin/bash
 set -euo pipefail
 
-pngver=1.6.53
+pngver=1.6.56
 
 ## Grab sources and check them
 
 curl -LOJ "http://prdownloads.sourceforge.net/libpng/libpng-$pngver.tar.xz?download"
-# Brew doesn't provide any sha256sum, so we're making do with `sha2` instead.
-if [ "$(sha2 -q -256 libpng-$pngver.tar.xz)" != 1d3fb8ccc2932d04aa3663e22ef5ef490244370f4e568d7850165068778d98d4 ]; then
-	sha2 -256 libpng-$pngver.tar.xz
-	echo Checksum mismatch! Aborting. >&2
-	exit 1
-fi
+echo f7d8bf1601b7804f583a254ab343a6549ca6cf27d255c302c47af2d9d36a6f18 libpng-$pngver.tar.xz | \
+	shasum -a 256 -c -
 
 ## Extract sources and patch them
 
