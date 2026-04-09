@@ -76,5 +76,5 @@ std::pair<WarningState, std::optional<uint32_t>> getInitialWarningState(std::str
 		}
 	}
 
-	return {state, param > UINT32_MAX ? UINT32_MAX : uint32_t(param)};
+	return {state, param > UINT32_MAX ? UINT32_MAX : static_cast<uint32_t>(param)};
 }
