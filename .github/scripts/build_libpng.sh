@@ -6,7 +6,7 @@ pngver=1.6.56
 ## Grab sources and check them
 
 curl -LOJ "http://prdownloads.sourceforge.net/libpng/libpng-$pngver.tar.xz?download"
-echo f7d8bf1601b7804f583a254ab343a6549ca6cf27d255c302c47af2d9d36a6f18 libpng-$pngver.tar.xz | \
+echo f7d8bf1601b7804f583a254ab343a6549ca6cf27d255c302c47af2d9d36a6f18 \*libpng-$pngver.tar.xz | \
 	shasum -a 256 -c -
 
 ## Extract sources and patch them

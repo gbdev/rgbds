@@ -7,7 +7,7 @@ arch="$1"
 ## Grab sources and check them
 
 wget http://downloads.sourceforge.net/project/libpng/libpng16/$pngver/libpng-$pngver.tar.xz
-echo f7d8bf1601b7804f583a254ab343a6549ca6cf27d255c302c47af2d9d36a6f18 libpng-$pngver.tar.xz | \
+echo f7d8bf1601b7804f583a254ab343a6549ca6cf27d255c302c47af2d9d36a6f18 \*libpng-$pngver.tar.xz | \
 	sha256sum -c -
 
 ## Extract sources and patch them
