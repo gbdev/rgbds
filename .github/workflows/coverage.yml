@@ -27,9 +27,6 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: coverage-report
-          # Workaround for keeping the top-level coverage/ directory
-          # https://github.com/actions/upload-artifact/issues/174
-          path: |
-            coverage
-            dummy-file-to-keep-directory-structure.txt
+          # The top-level coverage/ directory is preserved after the wildcard pattern.
+          path: */coverage/
           if-no-files-found: error
