@@ -3,8 +3,8 @@
 # These are kept in a separate file so that it can be hashed as a key for our CI's `actions/cache`.
 
 FetchContent_Declare(PNG
-                     URL https://download.sourceforge.net/libpng/libpng-1.6.55.tar.xz
-                     URL_HASH SHA256=d925722864837ad5ae2a82070d4b2e0603dc72af44bd457c3962298258b8e82d
+                     URL https://download.sourceforge.net/libpng/libpng-1.6.56.tar.xz
+                     URL_HASH SHA256=f7d8bf1601b7804f583a254ab343a6549ca6cf27d255c302c47af2d9d36a6f18
                      FIND_PACKAGE_ARGS 1.5.4)
 
 set(PNG_TESTS OFF CACHE INTERNAL "") # We do not care for these two (and they can even cause compile errors!)
