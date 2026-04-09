@@ -140,12 +140,55 @@ Deprecated in 0.9.0, removed in 1.0.0.
 Instead, use a multi-value
 .Ic CHARMAP ,
 or explicitly combine the values of individual characters.
+.Pp
+For example, instead of a multi-character string like:
+.Bd -literal -offset indent
+    CHARMAP "X", $12
+    CHARMAP "Y", $34
+    LD BC, "XY"
+.Ed
+.Pp
+Either use a multi-value
+.Ic CHARMAP :
+.Bd -literal -offset indent
+    CHARMAP "X", $12
+    CHARMAP "Y", $34
+    CHARMAP "<XY>", 'X', 'Y'
+    LD BC, CHARVAL("<XY>", 0) << 8 | CHARVAL("<XY>", 1)
+.Ed
+.Pp
+Or combine the individual characters:
+.Bd -literal -offset indent
+    CHARMAP "X", $12
+    CHARMAP "Y", $34
+    LD BC, 'X' << 8 | 'Y'
+.Ed
+.Pp
+Or use a single-value character:
+.Bd -literal -offset indent
+    CHARMAP "X", $12
+    CHARMAP "Y", $34
+    CHARMAP "<XY>", 'X' << 8 | 'Y'
+    LD BC, '<XY>'
+.Ed
 .Ss Treating strings as numbers
 Deprecated in 1.0.0.
 .Pp
 Instead, use character constants or the
 .Ic CHARVAL
 function.
+.Pp
+For example, instead of a string literal like
+.Ql LD A, \&"R" ,
+use a numeric character literal
+.Ql LD A, 'R' .
+.Pp
+And instead of a string expression like
+.Ql CP STRUPR("\e1") ,
+use a numeric
+.Ic CHARVAL
+expression
+.Ql CP CHARVAL(STRUPR("\e1")) .
 .Ss rgbgfx -f/--fix and -F/--fix-and-save
 Removed in 0.6.0.
 .Pp
