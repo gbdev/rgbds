@@ -12,6 +12,7 @@ add_library(common OBJECT
 target_compile_definitions(common PRIVATE "BUILD_VERSION_STRING=\"${GIT_REV}\"")
 
 find_package(BISON 3.0.0 REQUIRED)
+# FIXME: Using a list would be cleaner, but is not supported by `bison_target` before CMake 4.0.
 set(BISON_FLAGS "-Wall -Dlr.type=ielr")
 # Set some flags on versions that support them.
 if(BISON_VERSION VERSION_GREATER_EQUAL "3.5")
@@ -26,7 +27,7 @@ if(BISON_VERSION VERSION_GREATER_EQUAL "3.7")
   set(BISON_FLAGS "${BISON_FLAGS} -Wcounterexamples")
 endif()
 
-BISON_TARGET(ASM_PARSER "asm/parser.y"
+bison_target(ASM_PARSER "asm/parser.y"
              "${PROJECT_SOURCE_DIR}/src/asm/parser.cpp"
              COMPILE_FLAGS "${BISON_FLAGS}"
              DEFINES_FILE "${PROJECT_SOURCE_DIR}/src/asm/parser.hpp"
@@ -54,7 +55,7 @@ add_executable(rgbasm $<TARGET_OBJECTS:common>
     "verbosity.cpp"
 )
 
-BISON_TARGET(LINKER_SCRIPT_PARSER "link/script.y"
+bison_target(LINKER_SCRIPT_PARSER "link/script.y"
              "${PROJECT_SOURCE_DIR}/src/link/script.cpp"
              COMPILE_FLAGS "${BISON_FLAGS}"
              DEFINES_FILE "${PROJECT_SOURCE_DIR}/src/link/script.hpp"
