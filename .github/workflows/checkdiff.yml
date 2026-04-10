@@ -14,4 +14,4 @@ jobs:
       - name: Check diff
         working-directory: rgbds
         run: |
-          make checkdiff "BASE_REF=${{ github.event.pull_request.base.sha }}" Q= | tee log
+          make checkdiff "BASE_REF=${{ github.event.pull_request.base.sha }}" Q=
