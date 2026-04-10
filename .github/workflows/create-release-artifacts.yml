@@ -32,7 +32,6 @@ jobs:
         run: |
           bash .github/scripts/install_deps.sh windows
       - name: Build Windows binaries
-        shell: bash
         run: |
           cmake -S . -B build --preset msvc${{ matrix.bits }} -DFETCHCONTENT_BASE_DIR="${{ env.DEPS_ROOT_DIR }}"
           cmake --build build --config Release
@@ -53,7 +52,6 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v6
       - name: Install deps
-        shell: bash
         run: |
           ./.github/scripts/install_deps.sh macos
       - name: Build libpng
@@ -80,7 +78,6 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v6
       - name: Install deps
-        shell: bash
         run: |
           ./.github/scripts/install_deps.sh ubuntu-22.04
       - name: Build binaries

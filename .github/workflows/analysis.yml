@@ -10,7 +10,6 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v6
       - name: Install deps
-        shell: bash
         run: |
           ./.github/scripts/install_deps.sh ubuntu-latest
       - name: Static analysis
