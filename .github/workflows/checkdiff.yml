@@ -3,7 +3,7 @@ on: pull_request
 
 jobs:
   checkdiff:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     steps:
       - name: Set up repo
         run: |
