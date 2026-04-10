@@ -13,5 +13,6 @@ jobs:
           git fetch upstream
       - name: Check diff
         working-directory: rgbds
+        shell: bash # Bash is the default, but specifying it explicitly enables `-o pipefail`.
         run: |
-          make checkdiff "BASE_REF=${{ github.event.pull_request.base.sha }}" Q=
+          make -s checkdiff BASE_REF=${{ github.event.pull_request.base.sha }} | sed -E 's/^/::warning::/'
