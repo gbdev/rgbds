@@ -27,13 +27,11 @@ if(BISON_VERSION VERSION_GREATER_EQUAL "3.7")
   set(BISON_FLAGS "${BISON_FLAGS} -Wcounterexamples")
 endif()
 
-bison_target(ASM_PARSER "asm/parser.y"
-             "${PROJECT_SOURCE_DIR}/src/asm/parser.cpp"
-             COMPILE_FLAGS "${BISON_FLAGS}"
-             DEFINES_FILE "${PROJECT_SOURCE_DIR}/src/asm/parser.hpp"
-)
+bison_target(asm_parser "asm/parser.y"
+             "${CMAKE_CURRENT_BINARY_DIR}/parser.cpp"
+             COMPILE_FLAGS "${BISON_FLAGS}")
 add_executable(rgbasm $<TARGET_OBJECTS:common>
-    "${BISON_ASM_PARSER_OUTPUT_SOURCE}"
+    "${BISON_asm_parser_OUTPUT_SOURCE}"
     "asm/actions.cpp"
     "asm/charmap.cpp"
     "asm/fixpoint.cpp"
@@ -54,14 +52,14 @@ add_executable(rgbasm $<TARGET_OBJECTS:common>
     "opmath.cpp"
     "verbosity.cpp"
 )
+cmake_path(GET BISON_asm_parser_OUTPUT_HEADER PARENT_PATH parser_header_dir)
+target_include_directories(rgbasm PRIVATE "${parser_header_dir}")
 
-bison_target(LINKER_SCRIPT_PARSER "link/script.y"
-             "${PROJECT_SOURCE_DIR}/src/link/script.cpp"
-             COMPILE_FLAGS "${BISON_FLAGS}"
-             DEFINES_FILE "${PROJECT_SOURCE_DIR}/src/link/script.hpp"
-)
+bison_target(linker_script_parser "link/script.y"
+             "${CMAKE_CURRENT_BINARY_DIR}/script.cpp"
+             COMPILE_FLAGS "${BISON_FLAGS}")
 add_executable(rgblink $<TARGET_OBJECTS:common>
-    "${BISON_LINKER_SCRIPT_PARSER_OUTPUT_SOURCE}"
+    "${BISON_linker_script_parser_OUTPUT_SOURCE}"
     "link/assign.cpp"
     "link/fstack.cpp"
     "link/lexer.cpp"
@@ -80,6 +78,8 @@ add_executable(rgblink $<TARGET_OBJECTS:common>
     "opmath.cpp"
     "verbosity.cpp"
 )
+cmake_path(GET BISON_linker_script_parser_OUTPUT_HEADER PARENT_PATH parser_header_dir)
+target_include_directories(rgblink PRIVATE "${parser_header_dir}")
 
 add_executable(rgbfix $<TARGET_OBJECTS:common>
     "fix/fix.cpp"
