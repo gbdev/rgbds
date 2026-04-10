@@ -1,0 +1,7 @@
+error: Unterminated interpolation
+    at unterminated-interpolation.asm(2)
+error: Invalid interpolation format spec "v"
+    at unterminated-interpolation.asm(3)
+error: Unterminated interpolation
+    at unterminated-interpolation.asm(4)
+Assembly aborted with 3 errors
