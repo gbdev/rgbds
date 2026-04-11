@@ -20,7 +20,7 @@ env:
   # otherwise they can trigger `-Werror=dev` (from the `develop` preset).
   DEPS_ROOT_DIR: ~/_deps # Note that this needs to be used in a position where Bash will trigger tilde expansion!
 
-# We'd rather stick to a single syntax across all OSes (and, we shamelessly are Unix devs).
+# We use bash syntax across OSes for consistency unless otherwise specified
 defaults:
   run:
     shell: bash
