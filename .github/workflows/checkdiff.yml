@@ -3,15 +3,19 @@ on: pull_request
 
 jobs:
   checkdiff:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     steps:
-      - name: Set up repo
-        run: |
-          git clone -b "${{ github.event.pull_request.head.ref }}" "${{ github.event.pull_request.head.repo.clone_url }}" rgbds
-          cd rgbds
-          git remote add upstream "${{ github.event.pull_request.base.repo.clone_url }}"
-          git fetch upstream
+      - name: Clone repo
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 999 # If you have a PR with more commits than this, you deserve having this fail on you.
       - name: Check diff
-        working-directory: rgbds
-        run: |
-          make checkdiff "BASE_REF=${{ github.event.pull_request.base.sha }}" Q= | tee log
+        shell: bash # Bash is the default, but specifying it explicitly enables `-o pipefail`.
+        run: | # `git merge-base` isn't fatal within the Makefile, so we run it ourselves.
+          git fetch origin "$BASE_REF" "$HEAD_REF"
+          git switch --detach --force "$HEAD_REF"
+          git merge-base HEAD "origin/$BASE_REF"
+          make -s checkdiff BASE_REF="origin/$BASE_REF" | sed -E 's/^/::warning::/'
+        env:
+          BASE_REF: ${{ github.base_ref }}
+          HEAD_REF: ${{ github.event.pull_request.head.sha }}

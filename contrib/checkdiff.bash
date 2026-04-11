@@ -3,17 +3,17 @@
 # SPDX-License-Identifier: MIT
 
 declare -A FILES
-while read -r -d '' file; do
-	FILES["$file"]="true"
+while IFS= read -r -d '' file; do
+	FILES["$file"]=true
 done < <(git diff --name-only -z "$1" HEAD)
 
 edited () {
-	${FILES["$1"]:-"false"}
+	${FILES["$1"]:-false}
 }
 
 dependency () {
 	if edited "$1" && ! edited "$2"; then
-		echo "'$1' was modified, but not '$2'! $3" | xargs
+		echo "'$1' was modified, but not '$2'! $3"
 	fi
 }
 
