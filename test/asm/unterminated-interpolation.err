@@ -1,0 +1,36 @@
+error: Unterminated interpolation
+    at unterminated-interpolation.asm(2)
+error: Invalid interpolation format spec "v"
+    at unterminated-interpolation.asm(3)
+error: Unterminated interpolation
+    at unterminated-interpolation.asm(3)
+error: Unterminated interpolation
+    at unterminated-interpolation.asm(4)
+error: Unterminated interpolation
+    at unterminated-interpolation.asm(7)
+error: Unterminated interpolation
+    at unterminated-interpolation.asm(7)
+error: Invalid interpolation format spec "v"
+    at unterminated-interpolation.asm(8)
+error: Invalid interpolation format spec "v"
+    at unterminated-interpolation.asm(9)
+error: Unterminated interpolation
+    at unterminated-interpolation.asm(9)
+error: Invalid interpolation format spec "v"
+    at unterminated-interpolation.asm(10)
+error: Unterminated interpolation
+    at unterminated-interpolation.asm(10)
+    while expanding symbol `name`
+error: Invalid interpolation format spec "v"
+    at unterminated-interpolation.asm(11)
+error: Interpolated symbol `` does not exist
+    at unterminated-interpolation.asm(11)
+error: Invalid interpolation format spec "v"
+    at unterminated-interpolation.asm(12)
+error: Unterminated interpolation
+    at unterminated-interpolation.asm(12)
+error: Invalid interpolation format spec "v"
+    at unterminated-interpolation.asm(13)
+error: Unterminated interpolation
+    at unterminated-interpolation.asm(13)
+Assembly aborted with 17 errors

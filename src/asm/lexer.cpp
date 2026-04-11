@@ -1320,6 +1320,7 @@ static std::pair<Symbol const *, std::shared_ptr<std::string>> readInterpolation
 
 	std::string identifier;
 	FormatSpec fmt{};
+	bool invalid = false;
 
 	for (;;) {
 		// Use `consumeChar()` since `peek()` might expand nested interpolations and recursively
@@ -1330,7 +1331,8 @@ static std::pair<Symbol const *, std::shared_ptr<std::string>> readInterpolation
 			}
 			continue; // Restart, reading from the new buffer
 		} else if (int c = peek(); c == EOF || isNewline(c) || c == '"') {
-			error("Missing '}'");
+			error("Unterminated interpolation");
+			invalid = true;
 			break;
 		} else if (c == '}') {
 			shiftChar();
@@ -1339,13 +1341,18 @@ static std::pair<Symbol const *, std::shared_ptr<std::string>> readInterpolation
 			shiftChar();
 			size_t n = fmt.parseSpec(identifier.c_str());
 			if (!fmt.isValid() || n != identifier.length()) {
-				error("Invalid format spec \"%s\"", identifier.c_str());
+				error("Invalid interpolation format spec \"%s\"", identifier.c_str());
+				invalid = true;
 			}
-			identifier.clear(); // Now that format has been set, restart at beginning of string
+			identifier.clear(); // Now that format has been set, restart at beginning of string.
 		} else {
 			shiftChar();
 			identifier += c;
 		}
+	}
+
+	if (invalid) {
+		return {nullptr, nullptr}; // Don't allow invalid interpolation to occur.
 	}
 
 	if (identifier.starts_with('#')) {
