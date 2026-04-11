@@ -137,11 +137,17 @@ endif()
 include(FetchContent)
 include(cmake/deps.cmake)
 
+if(NOT DEFINED ZLIB_BUILD_TESTING) # Unless overridden (e.g. in the cache), we don't care about zlib's tests.
+  set(ZLIB_BUILD_TESTING OFF)
+endif()
 FetchContent_MakeAvailable(ZLIB)
 if(NOT DEFINED ZLIB_INCLUDE_DIRS)
   set(ZLIB_INCLUDE_DIRS "${zlib_BINARY_DIR};${zlib_SOURCE_DIR}") # libpng's `genout` script relies on this variable to be set.
 endif()
 
+if(NOT DEFINED PNG_TESTS) # Unless overridden (e.g. in the cache), we don't care about libpng's tests.
+  set(PNG_TESTS OFF)
+endif()
 FetchContent_MakeAvailable(PNG)
 if(NOT TARGET PNG::PNG)
   if(PNG_SHARED)

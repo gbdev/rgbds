@@ -62,7 +62,7 @@ years). If you are adding new files, you need to use the
    target checks for additional warnings. Your patches shouldn't introduce any
    new warning (but it may be possible to remove some warning checks if it makes
    the code much easier). You can also use `cmake --preset develop` if you prefer.
-5. Test your changes by running `./run-tests.sh` in the `test` directory.
+5. Test your changes by running `./run-tests.sh` in the `test` directory, or using `ctest`.
    (You must run `./fetch-test-deps.sh` first; if you forget to, the test suite
    will fail and remind you mid-way.)
 6. Format your changes according to `clang-format`, which will reformat the
@@ -122,7 +122,7 @@ its contents.
 
 ### RGBLINK
 
-Each `.asm` file corresponds to one test, or one *set* of tests.
+Each `.asm` file corresponds to one test, or one _set_ of tests.
 
 All tests begin by assembling the `.asm` file into an object file, which will be
 linked in various ways depending on the test.
@@ -168,11 +168,11 @@ RGBFIX will be invoked on the `.bin` file if it exists, or else on
 default-input.bin.
 
 If no `.out` file exist, RGBFIX is not expected to output anything.
-If one *does* exist, RGBFIX's output **must** match the `.out` file's contents.
+If one _does_ exist, RGBFIX's output **must** match the `.out` file's contents.
 
 If no `.err` file exists, RGBFIX is simply expected to be able to process the
 file normally.
-If one *does* exist, RGBFIX's return status is ignored, but its error output
+If one _does_ exist, RGBFIX's return status is ignored, but its error output
 **must** match the `.err` file's contents.
 
 Additionally, if a `.gb` file exists, the output of RGBFIX must match the `.gb`.
@@ -195,7 +195,7 @@ Multiple kinds of output may be tested for the same input.
 
 If no `.err` file exists, RGBGFX is simply expected to be able to process the
 file normally.
-If one *does* exist, RGBGFX's return status is ignored, but its output **must**
+If one _does_ exist, RGBGFX's return status is ignored, but its output **must**
 match the `.err` file's contents.
 
 #### Reverse tests
@@ -221,16 +221,17 @@ Each one is a binary RNG file which is passed to the `rgbgfx_test` program.
    support a `RGBDS` variable to use a non-system RGBDS directory.
 2. Add the project to `test/fetch-test-deps.sh`: add a new `action` line at the
    bottom, following the existing pattern:
-   
-   ```sh
-   action  <domain>  <owner>  <repo>  <hash of last commit>
-   ```
+
+    ```sh
+    action  <domain>  <owner>  <repo>  <hash of last commit>
+    ```
+
 3. Add the project to `test/run-tests.sh`: add a new `test_downstream` line at
    the bottom, following the existing pattern:
-   
-   ```sh
-   test_downstream  <owner>  <repo>  <makefile target>  <build file>  <sha1 hash of build file>
-   ```
+
+    ```sh
+    test_downstream  <owner>  <repo>  <makefile target>  <build file>  <sha1 hash of build file>
+    ```
 
 ## Container images
 
