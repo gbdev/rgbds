@@ -6,11 +6,14 @@ on:
 env:
   CLICOLOR_FORCE: 1 # Tells CMake to have colored output.
   CMAKE_COLOR_DIAGNOSTICS: ON # Tells CMake-generated build systems to have colored output.
+  CMAKE_CONFIG_TYPE: Debug # `cmake --build` now implies `--config Debug`.
   # Approximate number of CPU cores in GitHub's runners as of 2026-03-18:
   # https://docs.github.com/en/actions/reference/runners/github-hosted-runners#standard-github-hosted-runners-for-public-repositories
   CMAKE_BUILD_PARALLEL_LEVEL: 4 # `cmake --build` now implies `--parallel 4`.
   CMAKE_INSTALL_PARALLEL_LEVEL: 4 # `cmake --install` now implies `--parallel 4`.
-  CMAKE_CONFIG_TYPE: Debug # `cmake --build` now implies `--config Debug`.
+  CTEST_PARALLEL_LEVEL: 0 # `ctest` now implies `--parallel 0` (number of logical CPUs).
+  CTEST_NO_TESTS_ACTION: error # Make CTest fail if it cannot find any tests. (That should never happen.)
+  CTEST_OUTPUT_ON_FAILURE: ON # CTest reports test program output on failure.
 
   GIT_CONFIG_COUNT: 1
   GIT_CONFIG_KEY_0: color.ui
@@ -96,7 +99,7 @@ jobs:
       - name: Run tests using CTest
         if: matrix.buildsys == 'cmake'
         run: |
-          ctest --test-dir build --verbose
+          ctest --test-dir build --schedule-random
 
   macos-static:
     runs-on: macos-14
@@ -168,7 +171,8 @@ jobs:
           enableCrossOsArchive: true # Currently only used on Windows, but the contents are OS-agnostic.
       - name: Build Windows binaries
         run: | # ASan seems to be broken on Windows, so we disable it.
-          cmake -S . -B build --preset develop-msvc${{ matrix.bits }} -DFETCHCONTENT_BASE_DIR="${{ env.DEPS_ROOT_DIR }}" -DSANITIZERS=OFF
+          cmake -S . -B build --preset develop-msvc${{ matrix.bits }} -DSANITIZERS=OFF \
+                -DTESTS_OS_NAME=${{ matrix.os }} -DFETCHCONTENT_BASE_DIR="${{ env.DEPS_ROOT_DIR }}"
           cmake --build build
       - name: Package binaries
         working-directory: build
@@ -201,9 +205,9 @@ jobs:
       - name: Install test dependency dependencies
         run: |
           test/fetch-test-deps.sh --get-deps ${{ matrix.os }}
-      - name: Run tests
+      - name: Run tests using CTest
         run: |
-          test/run-tests.sh --os ${{ matrix.os }}
+          ctest --test-dir build --schedule-random -C Debug
 
   windows-mingw-build:
     strategy:
@@ -359,13 +363,17 @@ jobs:
       - name: Build & test using CMake on FreeBSD
         uses: vmactions/freebsd-vm@v1
         with:
-          envs: CLICOLOR_FORCE CMAKE_COLOR_DIAGNOSTICS CMAKE_BUILD_PARALLEL_LEVEL CMAKE_INSTALL_PARALLEL_LEVEL
+          envs: >-
+            CLICOLOR_FORCE CMAKE_COLOR_DIAGNOSTICS CMAKE_CONFIG_TYPE
+            CMAKE_BUILD_PARALLEL_LEVEL CMAKE_INSTALL_PARALLEL_LEVEL CTEST_PARALLEL_LEVEL
+            CTEST_NO_TESTS_ACTION CTEST_OUTPUT_ON_FAILURE
+            GIT_CONFIG_COUNT GIT_CONFIG_KEY_0 GIT_CONFIG_VALUE_0
           release: "14.3"
           usesh: true
           prepare: |
             .github/scripts/install_deps.sh freebsd
           run: | # Leak detection is not supported on FreeBSD, so disable it.
-            cmake -S . -B build --preset develop -DTESTS_RUN_EXTERNAL=OFF -DTESTS_OS_NAME=freebsd
+            cmake -S . -B build --preset develop -DTESTS_OS_NAME=freebsd
             cmake --build build --verbose
+            ASAN_OPTIONS=detect_leaks=0 ctest --test-dir build --schedule-random --label-exclude external
             cmake --install build --verbose
-            ASAN_OPTIONS=detect_leaks=0 ctest --test-dir build --verbose
