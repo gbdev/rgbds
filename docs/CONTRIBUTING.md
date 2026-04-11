@@ -65,7 +65,7 @@ years). If you are adding new files, you need to use the
    target checks for additional warnings. Your patches shouldn't introduce any
    new warning (but it may be possible to remove some warning checks if it makes
    the code much easier). You can also use `cmake --preset develop` if you prefer.
-5. Test your changes by running `./run-tests.sh` in the `test` directory.
+5. Test your changes by running `./run-tests.sh` in the `test` directory, or using `ctest`.
    (You must run `./fetch-test-deps.sh` first; if you forget to, the test suite
    will fail and remind you mid-way.)
 6. Format your changes according to `clang-format`, which will reformat the
