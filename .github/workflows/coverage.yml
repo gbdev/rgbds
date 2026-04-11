@@ -5,16 +5,13 @@ on:
 
 jobs:
   coverage:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout repo
         uses: actions/checkout@v6
       - name: Install deps
         run: |
-          ./.github/scripts/install_deps.sh ubuntu
-      - name: Install LCOV
-        run: |
-          sudo apt-get install lcov
+          bash .github/scripts/install_deps.sh ubuntu-latest lcov
       - name: Install test dependency dependencies
         run: |
           test/fetch-test-deps.sh --get-deps ubuntu

@@ -3,14 +3,12 @@
 export LC_ALL=C
 
 tmpdir="$(mktemp -d)"
-
-cp ../../{rgbfix,contrib/gbdiff.bash} "$tmpdir"
-src="$PWD"
-cd "$tmpdir" || exit
-
 # Immediate expansion is the desired behavior.
 # shellcheck disable=SC2064
 trap "cd; rm -rf ${tmpdir@Q}" EXIT
+
+src="$PWD"
+cd "$tmpdir" || exit
 
 if which cygpath &>/dev/null; then
 	# MinGW needs the Windows path substituted but with forward slash separators;
@@ -32,7 +30,7 @@ red="$(tput setaf 1)"
 green="$(tput setaf 2)"
 rescolors="$(tput op)"
 
-RGBFIX=./rgbfix
+RGBFIX="$src/../../rgbfix"
 
 tryDiff () {
 	if ! diff -au --strip-trailing-cr "$1" "$2"; then
@@ -43,7 +41,7 @@ tryDiff () {
 
 tryCmp () {
 	if ! cmp "$1" "$2"; then
-		./gbdiff.bash "$1" "$2"
+		"$src/../../gbdiff.bash" "$1" "$2"
 		echo "${bold}${red}${3:-$1} mismatch!${rescolors}${resbold}"
 		false
 	fi
