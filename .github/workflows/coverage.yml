@@ -10,14 +10,12 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v6
       - name: Install deps
-        shell: bash
         run: |
           ./.github/scripts/install_deps.sh ubuntu
       - name: Install LCOV
         run: |
           sudo apt-get install lcov
       - name: Install test dependency dependencies
-        shell: bash
         run: |
           test/fetch-test-deps.sh --get-deps ubuntu
       - name: Generate coverage report

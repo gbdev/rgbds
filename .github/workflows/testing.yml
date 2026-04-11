@@ -20,6 +20,11 @@ env:
   # otherwise they can trigger `-Werror=dev` (from the `develop` preset).
   DEPS_ROOT_DIR: ~/_deps # Note that this needs to be used in a position where Bash will trigger tilde expansion!
 
+# We use bash syntax across OSes for consistency unless otherwise specified
+defaults:
+  run:
+    shell: bash
+
 jobs:
   unix:
     strategy:
@@ -35,7 +40,6 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v6
       - name: Install deps
-        shell: bash
         run: |
           ./.github/scripts/install_deps.sh ${{ matrix.os }}
       - name: Build & install using Make
@@ -66,7 +70,6 @@ jobs:
           if-no-files-found: error
       - name: Compute test dependency cache params
         id: test-deps-cache-params
-        shell: bash
         run: |
           paths=$(test/fetch-test-deps.sh --get-paths)
           hash=$(test/fetch-test-deps.sh --get-hash)
@@ -84,12 +87,10 @@ jobs:
         run: |
           test/fetch-test-deps.sh
       - name: Install test dependency dependencies
-        shell: bash
         run: |
           test/fetch-test-deps.sh --get-deps ${{ matrix.os }}
       - name: Run tests using our script
         if: matrix.buildsys == 'make'
-        shell: bash
         run: |
           CXX=${{ matrix.cxx }} test/run-tests.sh --os ${{ matrix.os }}
       - name: Run tests using CTest
@@ -103,7 +104,6 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v6
       - name: Install deps
-        shell: bash
         run: |
           ./.github/scripts/install_deps.sh macos
       - name: Build libpng
@@ -124,7 +124,6 @@ jobs:
           if-no-files-found: error
       - name: Compute test dependency cache params
         id: test-deps-cache-params
-        shell: bash
         run: |
           paths=$(test/fetch-test-deps.sh --get-paths)
           hash=$(test/fetch-test-deps.sh --get-hash)
@@ -142,11 +141,9 @@ jobs:
         run: |
           test/fetch-test-deps.sh
       - name: Install test dependency dependencies
-        shell: bash
         run: |
           test/fetch-test-deps.sh --get-deps macos
       - name: Run tests
-        shell: bash
         run: |
           test/run-tests.sh --os macos
 
@@ -175,7 +172,6 @@ jobs:
           cmake --build build
       - name: Package binaries
         working-directory: build
-        shell: bash
         run: |
           cpack -DCPACK_PACKAGE_FILE_NAME=rgbds-win${{ matrix.bits }} -G ZIP -C Debug --verbose
       - name: Upload Windows binaries
@@ -186,7 +182,6 @@ jobs:
           if-no-files-found: error
       - name: Compute test dependency cache params
         id: test-deps-cache-params
-        shell: bash
         run: |
           paths=$(test/fetch-test-deps.sh --get-paths)
           hash=$(test/fetch-test-deps.sh --get-hash)
@@ -200,16 +195,13 @@ jobs:
           key: ${{ matrix.os }}-${{ matrix.bits }}-${{ steps.test-deps-cache-params.outputs.hash }}
       - name: Fetch test dependency repositories
         if: steps.test-deps-cache.outputs.cache-hit != 'true'
-        shell: bash
         continue-on-error: true
         run: |
           test/fetch-test-deps.sh
       - name: Install test dependency dependencies
-        shell: bash
         run: |
           test/fetch-test-deps.sh --get-deps ${{ matrix.os }}
       - name: Run tests
-        shell: bash
         run: |
           test/run-tests.sh --os ${{ matrix.os }}
 
@@ -232,7 +224,6 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v6
       - name: Install deps
-        shell: bash
         run: |
           ./.github/scripts/install_deps.sh ubuntu
       - name: Install MinGW
@@ -289,13 +280,11 @@ jobs:
           name: testing-programs-mingw-win${{ matrix.bits }}
           path: test/gfx
       - name: Extract binaries
-        shell: bash
         run: |
           cp bins/* .
           cp bins/*.dll test/gfx
       - name: Compute test dependency cache params
         id: test-deps-cache-params
-        shell: bash
         run: |
           paths=$(test/fetch-test-deps.sh --get-paths)
           hash=$(test/fetch-test-deps.sh --get-hash)
@@ -309,16 +298,13 @@ jobs:
           key: mingw-${{ matrix.bits }}-${{ steps.test-deps-cache-params.outputs.hash }}
       - name: Fetch test dependency repositories
         if: steps.test-deps-cache.outputs.cache-hit != 'true'
-        shell: bash
         continue-on-error: true
         run: |
           test/fetch-test-deps.sh
       - name: Install test dependency dependencies
-        shell: bash
         run: |
           test/fetch-test-deps.sh --get-deps ${{ matrix.os }}
       - name: Run tests
-        shell: bash
         run: |
           test/run-tests.sh --os ${{ matrix.os }}
 
