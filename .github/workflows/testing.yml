@@ -39,6 +39,8 @@ jobs:
     steps:
       - name: Checkout repo
         uses: actions/checkout@v6
+        with:
+          fetch-tags: true
       - name: Install deps
         run: |
           ./.github/scripts/install_deps.sh ${{ matrix.os }}
@@ -103,6 +105,8 @@ jobs:
     steps:
       - name: Checkout repo
         uses: actions/checkout@v6
+        with:
+          fetch-tags: true
       - name: Install deps
         run: |
           ./.github/scripts/install_deps.sh macos
@@ -157,6 +161,8 @@ jobs:
     steps:
       - name: Checkout repo
         uses: actions/checkout@v6
+        with:
+          fetch-tags: true
       - name: Install deps
         run: |
           bash .github/scripts/install_deps.sh ${{ matrix.os }}
@@ -223,6 +229,8 @@ jobs:
     steps:
       - name: Checkout repo
         uses: actions/checkout@v6
+        with:
+          fetch-tags: true
       - name: Install deps
         run: |
           ./.github/scripts/install_deps.sh ubuntu
@@ -269,6 +277,8 @@ jobs:
     steps:
       - name: Checkout repo
         uses: actions/checkout@v6
+        with:
+          fetch-tags: true
       - name: Retrieve binaries
         uses: actions/download-artifact@v8
         with:
@@ -324,7 +334,6 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v6
         with:
-          fetch-depth: 0
           fetch-tags: true
       - name: Setup Cygwin
         uses: cygwin/cygwin-install-action@v6
@@ -354,7 +363,6 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v6
         with:
-          fetch-depth: 0
           fetch-tags: true
       - name: Build & test using CMake on FreeBSD
         uses: vmactions/freebsd-vm@v1
