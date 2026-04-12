@@ -3,15 +3,19 @@ on: pull_request
 
 jobs:
   checkdiff:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     steps:
-      - name: Set up repo
-        run: |
-          git clone -b "${{ github.event.pull_request.head.ref }}" "${{ github.event.pull_request.head.repo.clone_url }}" rgbds
-          cd rgbds
-          git remote add upstream "${{ github.event.pull_request.base.repo.clone_url }}"
-          git fetch upstream
+      - name: Clone repo
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
       - name: Check diff
-        working-directory: rgbds
+        shell: bash # Bash is the default, but specifying it explicitly enables `-o pipefail`.
         run: |
-          make checkdiff "BASE_REF=${{ github.event.pull_request.base.sha }}" Q= | tee log
+          MERGE_BASE=$(gh api "/repos/{owner}/{repo}/compare/$BASE_SHA...$HEAD_SHA" --jq '.merge_base_commit.sha')
+          git fetch origin "$MERGE_BASE"
+          contrib/checkdiff.bash "$MERGE_BASE" | sed -E 's/^/::warning::/'
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          GH_TOKEN: ${{ github.token }}
