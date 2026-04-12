@@ -35,6 +35,8 @@ rgbds/
 │   ├── zsh_compl/
 │   │   └── ...
 │   └── ...
+├── docs/
+│   └── ...
 ├── include/
 │   └── ...
 ├── man/
@@ -80,6 +82,12 @@ rgbds/
     Tab completion scripts for use with `bash`. Run them with `source` somewhere in your `.bashrc`, and they should auto-load when you open a shell.
   * **`zsh_compl/`:**  
     Tab completion scripts for use with `zsh`. Put them somewhere in your `fpath`, and they should auto-load when you open a shell.
+- **`docs/`:**  
+  Documentation related to the development and maintenance of RGBDS itself.
+  (The directory's name, as well as some of its file's names, are
+  [recognized by GitHub](https://docs.github.com/en/communities/setting-up-your-project-for-healthy-contributions/setting-guidelines-for-repository-contributors)
+  and linked to in parts of its UI.)
+  Documentation for RGBDS itself exists as manual pages in `man/`.
 - **`include/`:**  
   Header files for the respective source files in `src`.
 - **`man/`:**  

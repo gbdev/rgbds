@@ -4,7 +4,7 @@ RGBDS was created in the late '90s and has received contributions from several
 developers since then. It wouldn't have been possible to get to this point
 without their work, and it is always open to the contributions of other people.
 
-## Reporting Bugs
+## Reporting bugs
 
 Bug reports are essential to improve RGBDS and they are always welcome. If you
 want to report a bug:
@@ -34,6 +34,9 @@ complicated ones. If you really need something to be done, and you think you can
 implement it yourself, you can always contribute to RGBDS with your own code.
 
 ## Contributing code
+
+Thank you! Code contributions are the most appreciated.
+You can find a description of the project's layout in [`ARCHITECTURE.md`](ARCHITECTURE.md).
 
 If you want to contribute with your own code, whether it is to fix a current
 issue or to add something that nobody had requested, you should first consider
@@ -250,3 +253,11 @@ manually running:
 docker build . --tag ghcr.io/gbdev/rgbds:master
 docker push ghcr.io/gbdev/rgbds:master
 ```
+
+## Publishing a new release
+
+Please refer to [`RELEASE.md`](RELEASE.md).
+
+## Closing remarks
+
+Feel free to add yourself to `CREDITS.md`!
