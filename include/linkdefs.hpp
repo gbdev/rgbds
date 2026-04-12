@@ -132,3 +132,4 @@ enum PatchType {
 };
 
 #endif // RGBDS_LINKDEFS_HPP
+
