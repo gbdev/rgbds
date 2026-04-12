@@ -4,7 +4,7 @@
 #   Older versions *may* work, but we can't test them; compat patches are welcome.
 # - 3.17 is required for `CHECK_*` messages to display properly, but is not essential.
 # - 3.9 is required for LTO checks.
-cmake_minimum_required(VERSION 3.24...4.2 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.24...4.3 FATAL_ERROR)
 
 # Read the project version from the header (the canonical source of truth).
 file(STRINGS "include/version.hpp" version_defines REGEX "^[ \t]*#define[ \t]+PACKAGE_VERSION_")
