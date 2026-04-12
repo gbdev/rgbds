@@ -79,15 +79,15 @@ dependency src/gfx/main.cpp        contrib/zsh_compl/_rgbgfx \
 dependency src/gfx/main.cpp        contrib/bash_compl/_rgbgfx.bash \
            "Did the rgbgfx CLI change?"
 
-dependency test/fetch-test-deps.sh CONTRIBUTING.md \
+dependency test/fetch-test-deps.sh docs/CONTRIBUTING.md \
            "Did the test protocol change?"
-dependency test/run-tests.sh       CONTRIBUTING.md \
+dependency test/run-tests.sh       docs/CONTRIBUTING.md \
            "Did the test protocol change?"
-dependency test/asm/test.sh        CONTRIBUTING.md \
+dependency test/asm/test.sh        docs/CONTRIBUTING.md \
            "Did the RGBASM test protocol change?"
-dependency test/link/test.sh       CONTRIBUTING.md \
+dependency test/link/test.sh       docs/CONTRIBUTING.md \
            "Did the RGBLINK test protocol change?"
-dependency test/fix/test.sh        CONTRIBUTING.md \
+dependency test/fix/test.sh        docs/CONTRIBUTING.md \
            "Did the RGBFIX test protocol change?"
-dependency test/gfx/test.sh        CONTRIBUTING.md \
+dependency test/gfx/test.sh        docs/CONTRIBUTING.md \
            "Did the RGBGFX test protocol change?"
