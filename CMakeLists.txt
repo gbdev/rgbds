@@ -79,8 +79,7 @@ else()
                         -Wno-format-nonliteral -Wno-strict-overflow
                         -Wno-unused-but-set-variable # bison's `yynerrs_` is incremented but unused
                         -Wno-type-limits -Wno-tautological-constant-out-of-range-compare
-                        -Wvla # MSVC does not support VLAs
-                        -Wno-unknown-warning-option) # Clang shouldn't diagnose unknown warnings
+                        -Wvla) # MSVC does not support VLAs
   endif()
 endif()
 
