@@ -38,7 +38,7 @@ include(GNUInstallDirs)
 
 include(CMakeDependentOption)
 option(SANITIZERS "Build with sanitizers enabled" OFF)
-cmake_dependent_option(MORE_WARNINGS "Turn on more warnings" OFF !MSVC OFF)
+cmake_dependent_option(MORE_WARNINGS "Turn on more warnings" OFF "NOT MSVC" OFF)
 
 if(MSVC)
   add_compile_options(
