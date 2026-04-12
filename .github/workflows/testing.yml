@@ -323,9 +323,6 @@ jobs:
     steps:
       - name: Checkout repo
         uses: actions/checkout@v6
-        with:
-          fetch-depth: 0
-          fetch-tags: true
       - name: Setup Cygwin
         uses: cygwin/cygwin-install-action@v6
         with:
@@ -353,9 +350,6 @@ jobs:
     steps:
       - name: Checkout repo
         uses: actions/checkout@v6
-        with:
-          fetch-depth: 0
-          fetch-tags: true
       - name: Build & test using CMake on FreeBSD
         uses: vmactions/freebsd-vm@v1
         with:
