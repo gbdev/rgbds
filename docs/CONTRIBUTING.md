@@ -4,7 +4,7 @@ RGBDS was created in the late '90s and has received contributions from several
 developers since then. It wouldn't have been possible to get to this point
 without their work, and it is always open to the contributions of other people.
 
-## Reporting Bugs
+## Reporting bugs
 
 Bug reports are essential to improve RGBDS and they are always welcome. If you
 want to report a bug:
