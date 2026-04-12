@@ -250,3 +250,11 @@ manually running:
 docker build . --tag ghcr.io/gbdev/rgbds:master
 docker push ghcr.io/gbdev/rgbds:master
 ```
+
+## Publishing a new release
+
+Please refer to [`RELEASE.md`](RELEASE.md).
+
+## Closing remarks
+
+Feel free to add yourself to `CREDITS.md`!
