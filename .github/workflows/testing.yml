@@ -366,19 +366,11 @@ jobs:
         uses: vmactions/freebsd-vm@v1
         with:
           envs: >-
-            TERM
-            CLICOLOR
-            CLICOLOR_FORCE
-            CMAKE_COLOR_DIAGNOSTICS
-            CMAKE_CONFIG_TYPE
-            CMAKE_BUILD_PARALLEL_LEVEL
-            CMAKE_INSTALL_PARALLEL_LEVEL
-            CTEST_PARALLEL_LEVEL
-            CTEST_NO_TESTS_ACTION
-            CTEST_OUTPUT_ON_FAILURE
-            GIT_CONFIG_COUNT
-            GIT_CONFIG_KEY_0
-            GIT_CONFIG_VALUE_0
+            TERM CLICOLOR CLICOLOR_FORCE
+            CMAKE_COLOR_DIAGNOSTICS CMAKE_CONFIG_TYPE
+            CMAKE_BUILD_PARALLEL_LEVEL CTEST_PARALLEL_LEVEL
+            CTEST_NO_TESTS_ACTION CTEST_OUTPUT_ON_FAILURE
+            GIT_CONFIG_COUNT GIT_CONFIG_KEY_0 GIT_CONFIG_VALUE_0
           release: "14.3"
           usesh: true
           prepare: |
