@@ -109,12 +109,16 @@ jobs:
       - name: Install deps
         run: |
           ./.github/scripts/install_deps.sh macos
-      - name: Build libpng
-        run: |
-          ./.github/scripts/build_libpng.sh
+      - name: Cache library deps
+        uses: actions/cache@v5
+        with:
+          path: ${{ env.DEPS_ROOT_DIR }}/*-tmp/
+          key: dep-srcs-${{ hashFiles('cmake/deps.cmake') }}
+          enableCrossOsArchive: true
       - name: Build & install
         run: |
-          make -kj CXXFLAGS="-O3 -flto -DNDEBUG -mmacosx-version-min=10.9 -arch x86_64 -arch arm64" PNGCFLAGS="-I libpng-staging/include" PNGLDLIBS="libpng-staging/lib/libpng.a -lz" Q=
+          cmake -S . -B build --preset macos-static -DFETCHCONTENT_BASE_DIR="${{ env.DEPS_ROOT_DIR }}"
+          cmake --build build
       - name: Package binaries
         run: |
           mkdir bins
@@ -168,7 +172,7 @@ jobs:
         with:
           path: ${{ env.DEPS_ROOT_DIR }}/*-tmp/
           key: dep-srcs-${{ hashFiles('cmake/deps.cmake') }}
-          enableCrossOsArchive: true # Currently only used on Windows, but the contents are OS-agnostic.
+          enableCrossOsArchive: true
       - name: Build Windows binaries
         run: | # ASan seems to be broken on Windows, so we disable it.
           cmake -S . -B build --preset develop-msvc${{ matrix.bits }} -DSANITIZERS=OFF \
