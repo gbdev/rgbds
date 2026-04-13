@@ -57,12 +57,14 @@ jobs:
         uses: actions/checkout@v6
       - name: Install deps
         run: |
-          ./.github/scripts/install_deps.sh macos
+          ./.github/scripts/install_deps.sh macos lld
       - name: Build binaries
         run: |
           cmake -S . -B build --preset macos-static -DFETCHCONTENT_BASE_DIR="${{ env.DEPS_ROOT_DIR }}"
           cmake --build build
           strip rgb{asm,link,fix,gfx}
+        env:
+          LDFLAGS: -fuse-ld=lld # See the preset's comments for rationale.
       - name: Package binaries
         run: |
           zip --junk-paths rgbds-macos.zip rgb{asm,link,fix,gfx} man/* .github/scripts/install.sh

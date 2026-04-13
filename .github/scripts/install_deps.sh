@@ -30,10 +30,18 @@ case "${OS%%-*}" in
 		sudo apt-get install -yq $pkgs
 		;;
 	macos)
+		pkgs=bison
+		case $TOOLSET in
+			'' | lld)
+				pkgs="$pkgs $TOOLSET"
+				TOOLSET=
+			;;
+		esac
 		# macOS bundles GNU Make 3.81, which doesn't support synced output.
 		# We leave it as the default in `PATH`, to test that our Makefile works with it.
 		# However, CMake automatically uses Homebrew's `gmake`, so our CI has synced output.
-		brew install bison make
+		# shellcheck disable=SC2086 # (This word splitting is intentional.)
+		brew install $pkgs make
 		# Export `bison` to allow using the version we install from Homebrew,
 		# instead of the outdated one preinstalled on macOS (which doesn't even support `-Wall`...).
 		export PATH="$(brew --prefix)/opt/bison/bin:$PATH"
