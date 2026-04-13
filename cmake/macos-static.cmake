@@ -2,23 +2,20 @@
 # in order to generate executables compatible with old macOS versions.
 # See our `macos-static` CMake preset for how it's meant to be used.
 
-# The first of these flags ensures that the binary only uses APIs available on this old a macOS,
-# and the `-arch` flags build a "fat binary" that works on both architectures.
-# (Both older Intel Macs and the newer "Apple Silicon" ones.)
+# The `-mmacosx-version-min=10.9` flag ensures that the binary only uses APIs available on Mac OS X 10.9 Mavericks.
+# The `-arch` flags build a "fat binary" that works on both Apple architectures:
+# older Intel x64 Macs and newer ARM "Apple Silicon" ones.
 set("-mmacosx-version-min=10.9 -arch x86_64 -arch arm64")
 set(CMAKE_C_FLAGS "${secret_sauce}" CACHE STRING "Flags used by the C compiler during all build types.")
 set(CMAKE_CXX_FLAGS "${secret_sauce}" CACHE STRING "Flags used by the CXX compiler during all build types.")
 
-# Here is a bit of context and rationale for the following actions.
-# OSX has always provided zlib, so we can safely link dynamically against it.
-# However, libpng is *not* provided by default, yet it might be available on the build host
-# (e.g. via Homebrew); we instead link it statically.
+# Mac OS X has always provided zlib, so we can safely link dynamically against it.
+# However, libpng is *not* provided by default, so we link it statically, which requires downloading and building it from source.
 set(PNG_SHARED OFF)
 set(PNG_STATIC ON)
-# This requires building it from source, which itself requires downloading it, and ignoring it on the host.
+# If libpng is already available (e.g. via Homebrew), we ignore that and still build our own.
 set(FETCHCONTENT_TRY_FIND_PACKAGE_MODE NEVER)
 # But we still want to attempt linking against the system's zlib.
-# (We let other deps, such as libpng, be handled normally.)
 function(rgbds_provide_dependency method dep_name)
   if(dep_name STREQUAL "ZLIB")
     find_package(ZLIB)
