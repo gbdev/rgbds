@@ -19,7 +19,7 @@ It is generated from the man pages found in this repository.
 The source code of the website itself is on GitHub as well under the repository
 [rgbds-www](https://github.com/gbdev/rgbds-www).
 
-If you want to contribute or maintain RGBDS, please read [our contribution guide](CONTRIBUTING.md).
+If you want to contribute or maintain RGBDS, please read [our contribution guide](docs/CONTRIBUTING.md).
 If you have questions regarding the code, its organization, etc. you can find the maintainers
 [on the GBDev community channels](https://gbdev.io/chat) or via mail at `rgbds at gbdev dot io`.
 
