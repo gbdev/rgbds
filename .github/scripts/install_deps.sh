@@ -5,7 +5,7 @@ set -eu
 case "${1%-*}" in
 	ubuntu|debian)
 		sudo apt-get -qq update
-		sudo apt-get install -yq bison libpng-dev pkg-config
+		sudo apt-get install -yq bison libpng-dev pkgconf
 		;;
 	macos)
 		# macOS bundles GNU Make 3.81, which doesn't support synced output.
