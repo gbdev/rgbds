@@ -33,31 +33,18 @@ endif()
 
 include(CTest) # Note: CTest only functions properly if included from the top-level CMakeLists.
 include(GNUInstallDirs)
-
-## Compiler switches.
-
 include(CMakeDependentOption)
+
+## Compiler switches that should apply to our deps too.
+
 option(SANITIZERS "Build with sanitizers enabled" OFF)
 cmake_dependent_option(MORE_WARNINGS "Turn on more warnings" OFF "NOT MSVC" OFF)
 
-if(MSVC)
-  add_compile_options(
-    /wd5030 # Warning C5030 is about unknown attributes (`[[gnu::ATTR]]`), none of ours being load-bearing.
-    /wd4996 # Warning C4996 is about using POSIX names, which we want to do for portability.
-    /Zc:preprocessor # Opt into the C++20-conformant preprocessor.
-  )
-  add_definitions(/D_CRT_SECURE_NO_WARNINGS)
-
-  if(SANITIZERS)
+if(SANITIZERS)
+  if(MSVC)
     message(STATUS "ASan enabled")
     add_compile_options(/fsanitize=address) # Note that this shouldn't be passed to the linker.
-  endif()
-else()
-  add_compile_options(-Wall -pedantic -fno-exceptions $<$<COMPILE_LANGUAGE:CXX>:-fno-rtti> -Wno-unknown-warning-option
-    # C++20 allows macros to take zero variadic arguments.
-    # Some versions of Clang don't recognize this, and treat them as a GNU extension.
-    -Wno-gnu-zero-variadic-macro-arguments)
-  if(SANITIZERS)
+  else() # We assume a GNU-like compiler.
     message(STATUS "ASan and UBSan enabled")
     set(SAN_FLAGS -fsanitize=address -fsanitize=undefined
                   -fsanitize=float-divide-by-zero)
@@ -68,18 +55,6 @@ else()
     # and the two codegen flags improve the sanitizers' backtraces, but we want the user to
     # be able to override these easily so we put them first.
     string(PREPEND CMAKE_CXX_FLAGS_DEBUG "-Og -fno-omit-frame-pointer -fno-optimize-sibling-calls ")
-  endif()
-
-  if(MORE_WARNINGS)
-    add_compile_options(-Werror -Wextra
-                        -Walloc-zero -Wcast-align -Wcast-qual -Wduplicated-branches -Wduplicated-cond
-                        -Wfloat-equal -Wlogical-op -Wnull-dereference -Wold-style-cast -Wshift-overflow=2
-                        -Wstringop-overflow=4 -Wtrampolines -Wundef -Wuninitialized -Wunused -Wshadow
-                        -Wformat=2 -Wformat-overflow=2 -Wformat-truncation=1
-                        -Wno-format-nonliteral -Wno-strict-overflow
-                        -Wno-unused-but-set-variable # bison's `yynerrs_` is incremented but unused
-                        -Wno-type-limits -Wno-tautological-constant-out-of-range-compare
-                        -Wvla) # MSVC does not support VLAs
   endif()
 endif()
 
@@ -163,6 +138,32 @@ include_directories("include")
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
+
+if(MSVC)
+  add_compile_options(
+    /wd5030 # Warning C5030 is about unknown attributes (`[[gnu::ATTR]]`), none of ours being load-bearing.
+    /wd4996 # Warning C4996 is about using POSIX names, which we want to do for portability.
+    /Zc:preprocessor # Opt into the C++20-conformant preprocessor.
+  )
+  add_definitions(/D_CRT_SECURE_NO_WARNINGS)
+else()
+  add_compile_options(-Wall -pedantic -fno-exceptions -fno-rtti -Wno-unknown-warning-option
+                      # C++20 allows macros to take zero variadic arguments.
+                      # Some versions of Clang don't recognize this, and treat them as a GNU extension.
+                      -Wno-gnu-zero-variadic-macro-arguments)
+
+  if(MORE_WARNINGS)
+    add_compile_options(-Werror -Wextra
+                        -Walloc-zero -Wcast-align -Wcast-qual -Wduplicated-branches -Wduplicated-cond
+                        -Wfloat-equal -Wlogical-op -Wnull-dereference -Wold-style-cast -Wshift-overflow=2
+                        -Wstringop-overflow=4 -Wtrampolines -Wundef -Wuninitialized -Wunused -Wshadow
+                        -Wformat=2 -Wformat-overflow=2 -Wformat-truncation=1
+                        -Wno-format-nonliteral -Wno-strict-overflow
+                        -Wno-unused-but-set-variable # bison's `yynerrs_` is incremented but unused
+                        -Wno-type-limits -Wno-tautological-constant-out-of-range-compare
+                        -Wvla) # MSVC does not support VLAs
+  endif()
+endif()
 
 add_subdirectory(src)
 if(BUILD_TESTING) # This option is defined implicitly by `include(CTest)`.
