@@ -3,6 +3,12 @@ on:
   - push
   - pull_request
 
+env:
+  # Force colored output (see https://bixense.com/clicolors/ and https://force-color.org/)
+  TERM: xterm-256color
+  CLICOLOR: 1
+  CLICOLOR_FORCE: 1
+
 jobs:
   coverage:
     runs-on: ubuntu-24.04

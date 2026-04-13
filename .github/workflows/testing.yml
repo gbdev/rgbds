@@ -4,7 +4,11 @@ on:
   - pull_request
 
 env:
-  CLICOLOR_FORCE: 1 # Tells CMake to have colored output.
+  # Force colored output (see https://bixense.com/clicolors/ and https://force-color.org/)
+  TERM: xterm-256color
+  CLICOLOR: 1
+  CLICOLOR_FORCE: 1
+
   CMAKE_COLOR_DIAGNOSTICS: ON # Tells CMake-generated build systems to have colored output.
   CMAKE_CONFIG_TYPE: Debug # `cmake --build` now implies `--config Debug`.
   # Approximate number of CPU cores in GitHub's runners as of 2026-03-18:
@@ -362,8 +366,9 @@ jobs:
         uses: vmactions/freebsd-vm@v1
         with:
           envs: >-
-            CLICOLOR_FORCE CMAKE_COLOR_DIAGNOSTICS CMAKE_CONFIG_TYPE
-            CMAKE_BUILD_PARALLEL_LEVEL CMAKE_INSTALL_PARALLEL_LEVEL CTEST_PARALLEL_LEVEL
+            TERM CLICOLOR CLICOLOR_FORCE
+            CMAKE_COLOR_DIAGNOSTICS CMAKE_CONFIG_TYPE
+            CMAKE_BUILD_PARALLEL_LEVEL CTEST_PARALLEL_LEVEL
             CTEST_NO_TESTS_ACTION CTEST_OUTPUT_ON_FAILURE
             GIT_CONFIG_COUNT GIT_CONFIG_KEY_0 GIT_CONFIG_VALUE_0
           release: "14.3"
