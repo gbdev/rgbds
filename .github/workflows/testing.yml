@@ -36,11 +36,12 @@ jobs:
   unix:
     strategy:
       matrix:
-        os: [ubuntu-22.04, macos-14]
+        os: [ubuntu-22.04, macos-15-intel, macos-26]
         cxx: [g++, clang++]
         buildsys: [make, cmake]
-        exclude:
-          - { os: macos-14, cxx: g++ } # Don't use `g++` on macOS; it's just an alias to `clang++`.
+        exclude: # Don't use `g++` on macOS; it's just an alias to `clang++`.
+          - { os: macos-15-intel, cxx: g++ }
+          - { os: macos-26, cxx: g++ }
       fail-fast: false
     runs-on: ${{ matrix.os }}
     steps:
@@ -106,7 +107,7 @@ jobs:
           ctest --test-dir build --schedule-random
 
   macos-static:
-    runs-on: macos-14
+    runs-on: macos-26
     steps:
       - name: Checkout repo
         uses: actions/checkout@v6
@@ -145,7 +146,7 @@ jobs:
         uses: actions/cache@v5
         with:
           path: ${{ fromJSON(steps.test-deps-cache-params.outputs.paths) }}
-          key: macos-14-${{ steps.test-deps-cache-params.outputs.hash }}
+          key: macos-26-${{ steps.test-deps-cache-params.outputs.hash }}
       - name: Fetch test dependency repositories
         if: steps.test-deps-cache.outputs.cache-hit != 'true'
         continue-on-error: true
