@@ -51,7 +51,7 @@ jobs:
           if-no-files-found: error
 
   macos:
-    runs-on: macos-14
+    runs-on: macos-26
     steps:
       - name: Checkout repo
         uses: actions/checkout@v6
