@@ -358,7 +358,7 @@ void LexerState::setFileAsNextState(std::string const &filePath, bool updateStat
 				fatal("Failed to read file \"%s\": %s", path.c_str(), strerror(errno));
 				// LCOV_EXCL_STOP
 			}
-			content.emplace<ViewedContent>(ptr, size);
+			content.emplace<ViewedContent>(ptr, static_cast<size_t>(size));
 
 			// LCOV_EXCL_START
 			verbosePrint(VERB_INFO, "File \"%s\" is fully read\n", path.c_str());
