@@ -3,6 +3,10 @@ on:
   - push
   - pull_request
 
+env:
+  TERM: xterm-256color
+  CLICOLOR_FORCE: 1
+
 jobs:
   coverage:
     runs-on: ubuntu-24.04

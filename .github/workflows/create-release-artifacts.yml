@@ -5,7 +5,9 @@ on:
       - v[0-9]*
 
 env:
-  CLICOLOR_FORCE: 1 # Tells CMake to have colored output.
+  TERM: xterm-256color
+  CLICOLOR_FORCE: 1
+
   CMAKE_COLOR_DIAGNOSTICS: ON # Tells CMake-generated build systems to have colored output.
   # Approximate number of CPU cores in GitHub's runners as of 2026-03-18:
   # https://docs.github.com/en/actions/reference/runners/github-hosted-runners#standard-github-hosted-runners-for-public-repositories
@@ -48,7 +50,6 @@ jobs:
 
   macos:
     runs-on: macos-14
-    env: { TERM: xterm-256color }
     steps:
       - name: Checkout repo
         uses: actions/checkout@v6

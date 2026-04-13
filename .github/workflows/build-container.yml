@@ -6,6 +6,10 @@ on:
     tags:
       - '*'
 
+env:
+  TERM: xterm-256color
+  CLICOLOR_FORCE: 1
+
 jobs:
   publish-docker-image:
     if: github.repository_owner == 'gbdev'

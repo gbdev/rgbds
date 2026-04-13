@@ -4,7 +4,9 @@ on:
   - pull_request
 
 env:
-  CLICOLOR_FORCE: 1 # Tells CMake to have colored output.
+  TERM: xterm-256color
+  CLICOLOR_FORCE: 1
+
   CMAKE_COLOR_DIAGNOSTICS: ON # Tells CMake-generated build systems to have colored output.
   # Approximate number of CPU cores in GitHub's runners as of 2026-03-18:
   # https://docs.github.com/en/actions/reference/runners/github-hosted-runners#standard-github-hosted-runners-for-public-repositories
@@ -36,7 +38,6 @@ jobs:
           - { os: macos-14, cxx: g++ } # Don't use `g++` on macOS; it's just an alias to `clang++`.
       fail-fast: false
     runs-on: ${{ matrix.os }}
-    env: { TERM: xterm-256color }
     steps:
       - name: Checkout repo
         uses: actions/checkout@v6
@@ -101,7 +102,6 @@ jobs:
 
   macos-static:
     runs-on: macos-14
-    env: { TERM: xterm-256color }
     steps:
       - name: Checkout repo
         uses: actions/checkout@v6
@@ -355,7 +355,12 @@ jobs:
       - name: Build & test using CMake on FreeBSD
         uses: vmactions/freebsd-vm@v1
         with:
-          envs: CLICOLOR_FORCE CMAKE_COLOR_DIAGNOSTICS CMAKE_BUILD_PARALLEL_LEVEL CMAKE_INSTALL_PARALLEL_LEVEL
+          envs: >-
+            TERM
+            CLICOLOR_FORCE
+            CMAKE_COLOR_DIAGNOSTICS
+            CMAKE_BUILD_PARALLEL_LEVEL
+            CMAKE_INSTALL_PARALLEL_LEVEL
           release: "14.3"
           usesh: true
           prepare: |
