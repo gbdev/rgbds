@@ -1,0 +1,19 @@
+# This file contains a list of commits that are probably not what you
+# are looking for in a `git blame`, such as mass reformatting or renaming.
+#
+# You can set this file as a default ignore file for `git blame` by running
+# the following command:
+#
+# $ git config blame.ignoreRevsFile .git-blame-ignore-revs
+
+# 2024-03-04: Run `clang-format` on everything
+e74073e4805fa3cce90a99946fc9994ae2970f9b
+
+# 2009-06-11: Run `indent' on the whole tree
+b6c749ffbd30138de7beef13fb9265372a461a96
+
+# 2009-06-11: Switch line terminators from CRLF to LF
+94fad97aedcd8bd85c53a505db28390e3f82577b
+
+# 2009-06-11: Use spaces instead of tabs after CPP directives
+0d9739535e313b0a2ad19c89b9c85fc7b75237a3
