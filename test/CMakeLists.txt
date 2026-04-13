@@ -1,14 +1,13 @@
 # SPDX-License-Identifier: MIT
 
 option(TESTS_RUN_NONFREE "Run tests that build nonfree codebases." ON)
-option(TESTS_RUN_EXTERNAL "Run tests that build external codebases." ON)
 set(TESTS_OS_NAME "" CACHE STRING "Skip running tests known to fail on this OS.")
 
 add_executable(randtilegen gfx/randtilegen.cpp)
 add_executable(rgbgfx_test gfx/rgbgfx_test.cpp)
 set_target_properties(randtilegen rgbgfx_test PROPERTIES
 # hack for MSVC: no-op generator expression to stop generation of "per-configuration subdirectory"
-                      RUNTIME_OUTPUT_DIRECTORY $<1:${CMAKE_CURRENT_SOURCE_DIR}/gfx>)
+                      RUNTIME_OUTPUT_DIRECTORY "$<1:${CMAKE_CURRENT_SOURCE_DIR}/gfx>")
 foreach(prog "randtilegen" "rgbgfx_test")
   target_link_libraries(${prog} PRIVATE PNG::PNG)
   # Copy the DLLs in the output directory so the program can be run for testing without having to `install`.
@@ -24,18 +23,30 @@ if(NOT TESTS_RUN_NONFREE)
   set(ONLY_FREE "--only-free")
 endif()
 
-set(ONLY_INTERNAL)
-if(NOT TESTS_RUN_EXTERNAL)
-  set(ONLY_INTERNAL "--only-internal")
-endif()
-
 set(OS_NAME)
 if(NOT TESTS_OS_NAME STREQUAL "")
   set(OS_NAME "--os" "${TESTS_OS_NAME}")
 endif()
 
-configure_file(CTestCustom.cmake.in ${CMAKE_BINARY_DIR}/CTestCustom.cmake @ONLY)
+foreach(component "asm" "link" "fix" "gfx")
+  add_test(NAME "rgb${component}"
+           COMMAND bash -- test.sh
+           WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/${component}")
+  set_tests_properties("rgb${component}" PROPERTIES REQUIRED_FILES "$<TARGET_FILE:rgb${component}>"
+                                                    PROCESSORS 1
+                                                    LABELS "rgb${component}")
+endforeach()
+set_tests_properties(rgbgfx PROPERTIES REQUIRED_FILES "$<TARGET_FILE:rgbgfx>;$<TARGET_FILE:randtilegen>;$<TARGET_FILE:rgbgfx_test>")
 
-add_test(NAME all
-         COMMAND ./run-tests.sh ${ONLY_FREE} ${ONLY_INTERNAL} ${OS_NAME}
-         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+add_test(NAME fetch-test-deps
+         COMMAND bash -- fetch-test-deps.sh ${ONLY_FREE}
+         WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}")
+set_tests_properties(fetch-test-deps PROPERTIES FIXTURES_SETUP "external-repos"
+                                                LABELS "external")
+add_test(NAME external
+         COMMAND bash -- run-tests.sh --only-external ${ONLY_FREE} ${OS_NAME}
+         WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}")
+set_tests_properties(external PROPERTIES DEPENDS "rgbasm;rgblink;rgbfix;rgbgfx" # Only attempt building whole projects if each tool passes muster on its own.
+                                         PROCESSORS 4
+                                         FIXTURES_REQUIRED "external-repos"
+                                         LABELS "external") # Allow filtering out external tests.
