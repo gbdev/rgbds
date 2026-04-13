@@ -5,9 +5,10 @@
 # The `-mmacosx-version-min=10.9` flag ensures that the binary only uses APIs available on Mac OS X 10.9 Mavericks.
 # The `-arch` flags build a "fat binary" that works on both Apple architectures:
 # older Intel x64 Macs and newer ARM "Apple Silicon" ones.
-set("-mmacosx-version-min=10.9 -arch x86_64 -arch arm64")
-set(CMAKE_C_FLAGS "${secret_sauce}" CACHE STRING "Flags used by the C compiler during all build types.")
-set(CMAKE_CXX_FLAGS "${secret_sauce}" CACHE STRING "Flags used by the CXX compiler during all build types.")
+set(secret_sauce -mmacosx-version-min=10.9 "SHELL:-arch x86_64" "SHELL:-arch arm64") # Avoid `-arch` being dedup'd.
+add_compile_options(${secret_sauce})
+add_link_options(${secret_sauce})
+set(PNG_HARDWARE_OPTIMIZATIONS OFF) # These do not play well with a dual-arch build.
 
 # Mac OS X has always provided zlib, so we can safely link dynamically against it.
 # However, libpng is *not* provided by default, so we link it statically, which requires downloading and building it from source.
