@@ -36,6 +36,7 @@ jobs:
           - { os: macos-14, cxx: g++ } # Don't use `g++` on macOS; it's just an alias to `clang++`.
       fail-fast: false
     runs-on: ${{ matrix.os }}
+    env: { TERM: xterm-256color }
     steps:
       - name: Checkout repo
         uses: actions/checkout@v6
@@ -100,6 +101,7 @@ jobs:
 
   macos-static:
     runs-on: macos-14
+    env: { TERM: xterm-256color }
     steps:
       - name: Checkout repo
         uses: actions/checkout@v6

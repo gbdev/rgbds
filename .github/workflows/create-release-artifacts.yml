@@ -48,6 +48,7 @@ jobs:
 
   macos:
     runs-on: macos-14
+    env: { TERM: xterm-256color }
     steps:
       - name: Checkout repo
         uses: actions/checkout@v6
