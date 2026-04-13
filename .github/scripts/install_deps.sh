@@ -3,7 +3,7 @@
 set -eu
 
 case "${1%-*}" in
-	ubuntu)
+	ubuntu|debian)
 		sudo apt-get -qq update
 		sudo apt-get install -yq bison libpng-dev pkg-config
 		;;
@@ -27,7 +27,7 @@ case "${1%-*}" in
 		bison() { win_bison "$@"; } # An alias doesn't work, so we use a function instead.
 		;;
 	*)
-		echo "WARNING: Cannot install deps for OS '$1'"
+		echo "::error:: Cannot install deps for OS '$1'"
 		;;
 esac
 
