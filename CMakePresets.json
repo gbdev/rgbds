@@ -31,6 +31,14 @@
 			"name": "msvc64",
 			"description": "Flags for building 64-bit executables with MSVC",
 			"architecture": "x64"
+		},
+
+		{
+			"name": "macos-static",
+			"description": "Flags for building an executable compatible with old macOS",
+			"cacheVariables": {
+				"CMAKE_PROJECT_TOP_LEVEL_INCLUDES": "cmake/macos-static.cmake"
+			}
 		}
 	]
 }

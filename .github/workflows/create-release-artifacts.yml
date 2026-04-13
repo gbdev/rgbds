@@ -54,13 +54,10 @@ jobs:
       - name: Install deps
         run: |
           ./.github/scripts/install_deps.sh macos
-      - name: Build libpng
-        run: |
-          ./.github/scripts/build_libpng.sh
-      # We force linking libpng statically; the other libs are provided by macOS itself
       - name: Build binaries
         run: |
-          make -kj CXXFLAGS="-O3 -flto -DNDEBUG -mmacosx-version-min=10.9 -arch x86_64 -arch arm64" PNGCFLAGS="-I libpng-staging/include" PNGLDLIBS="libpng-staging/lib/libpng.a -lz" Q=
+          cmake -S . -B build --preset macos-static -DFETCHCONTENT_BASE_DIR="${{ env.DEPS_ROOT_DIR }}"
+          cmake --build build
           strip rgb{asm,link,fix,gfx}
       - name: Package binaries
         run: |
