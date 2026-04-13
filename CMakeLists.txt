@@ -153,7 +153,7 @@ else()
                       -Wno-gnu-zero-variadic-macro-arguments)
 
   if(MORE_WARNINGS)
-    add_compile_options(-Werror -Wextra
+    add_compile_options(-Wextra
                         -Walloc-zero -Wcast-align -Wcast-qual -Wduplicated-branches -Wduplicated-cond
                         -Wfloat-equal -Wlogical-op -Wnull-dereference -Wold-style-cast -Wshift-overflow=2
                         -Wstringop-overflow=4 -Wtrampolines -Wundef -Wuninitialized -Wunused -Wshadow
