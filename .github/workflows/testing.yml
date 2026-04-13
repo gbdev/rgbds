@@ -121,7 +121,7 @@ jobs:
           enableCrossOsArchive: true
       - name: Build & install
         run: |
-          cmake -S . -B build --preset macos-static -DFETCHCONTENT_BASE_DIR="${{ env.DEPS_ROOT_DIR }}"
+          cmake -S . -B build --preset macos-static -DFETCHCONTENT_BASE_DIR="${{ env.DEPS_ROOT_DIR }}" -DTESTS_OS_NAME=macos
           cmake --build build
       - name: Package binaries
         run: |
@@ -156,7 +156,7 @@ jobs:
           test/fetch-test-deps.sh --get-deps macos
       - name: Run tests
         run: |
-          test/run-tests.sh --os macos
+          ctest --test-dir build --schedule-random
 
   windows:
     strategy:
