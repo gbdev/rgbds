@@ -1,5 +1,5 @@
-error: Specified start position is greater than length of file "data.bin"
+error: Specified start position (999) is greater than length of "data.bin" (123)
     at incbin-start-bad.asm(3)
-error: Specified start position is greater than length of file "data.bin"
+error: Specified start position (999) is greater than length of "data.bin" (123)
     at incbin-start-bad.asm(4)
 Assembly aborted with 2 errors
