@@ -63,8 +63,8 @@ jobs:
         # Note that since this is specific to our CI environment, the workaround is
         # better applied here than in our CMakeLists, where it could affect and break someone else.
         run: |
-          cmake -S . -B build --preset develop -DCMAKE_FIND_FRAMEWORK=LAST -DCMAKE_CXX_COMPILER=${{ matrix.cxx }} -DTESTS_OS_NAME=${{ matrix.os }}
-          cmake --build build --verbose -- --output-sync --keep-going
+          cmake -S . -B build -G Ninja --preset develop -DCMAKE_FIND_FRAMEWORK=LAST -DCMAKE_CXX_COMPILER=${{ matrix.cxx }} -DTESTS_OS_NAME=${{ matrix.os }}
+          cmake --build build -- -k 0
           sudo cmake --install build --verbose
       - name: Package binaries
         run: |
@@ -122,8 +122,8 @@ jobs:
           enableCrossOsArchive: true
       - name: Build & install
         run: |
-          cmake -S . -B build --preset macos-static -DFETCHCONTENT_BASE_DIR="${{ env.DEPS_ROOT_DIR }}" -DTESTS_OS_NAME=macos
-          cmake --build build -- --output-sync --keep-going
+          cmake -S . -B build -G Ninja --preset macos-static -DFETCHCONTENT_BASE_DIR="${{ env.DEPS_ROOT_DIR }}" -DTESTS_OS_NAME=macos
+          cmake --build build -- -k 0
       - name: Package binaries
         run: |
           mkdir bins
@@ -184,7 +184,7 @@ jobs:
           call .github\scripts\msvc-env.bat ${{ matrix.bits }}
           cmake -S . -B build -G Ninja --preset develop -DSANITIZERS=OFF ^
                 -DTESTS_OS_NAME=${{ matrix.os }} -DFETCHCONTENT_BASE_DIR="${{ env.DEPS_ROOT_DIR }}"
-          cmake --build build
+          cmake --build build -- -k 0
       - name: Package binaries
         working-directory: build
         run: |
@@ -241,9 +241,9 @@ jobs:
       - name: Cross-build Windows binaries
         run: | # MinGW does not support `--preset develop` sanitizers ASan or UBSan.
           dll_search_dir=$(printf '%s\n' /usr/lib/gcc/*-w64-mingw32/*-win32 | tee -a /dev/stderr)
-          cmake -B build --preset develop -DSANITIZERS=OFF --toolchain cmake/toolchain-mingw${{ matrix.bits }}.cmake \
+          cmake -B build -G Ninja --preset develop -DSANITIZERS=OFF --toolchain cmake/toolchain-mingw${{ matrix.bits }}.cmake \
             -DFETCHCONTENT_BASE_DIR="${{ env.DEPS_ROOT_DIR }}" -DDLL_SEARCH_DIRS="$dll_search_dir"
-          cmake --build build
+          cmake --build build -- -k 0
       - name: Package binaries
         run: |
           cmake --install build --prefix . --verbose --component binaries

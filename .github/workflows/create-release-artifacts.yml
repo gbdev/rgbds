@@ -40,7 +40,7 @@ jobs:
         run: |
           call .github\scripts\msvc-env.bat ${{ matrix.bits }}
           cmake -S . -B build -G Ninja -DFETCHCONTENT_BASE_DIR="${{ env.DEPS_ROOT_DIR }}"
-          cmake --build build
+          cmake --build build -- -k 0
       - name: Package binaries
         working-directory: build
         run: |
@@ -62,8 +62,8 @@ jobs:
           ./.github/scripts/install_deps.sh macos
       - name: Build binaries
         run: |
-          cmake -S . -B build --preset macos-static -DFETCHCONTENT_BASE_DIR="${{ env.DEPS_ROOT_DIR }}"
-          cmake --build build -- --output-sync --keep-going
+          cmake -S . -B build -G Ninja --preset macos-static -DFETCHCONTENT_BASE_DIR="${{ env.DEPS_ROOT_DIR }}"
+          cmake --build build -- -k 0
           strip rgb{asm,link,fix,gfx}
       - name: Package binaries
         run: |
