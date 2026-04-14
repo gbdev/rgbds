@@ -32,7 +32,16 @@ case "${1%%-*}" in
 		;;
 esac
 
+# Print some system info, for easier debugging.
+# https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-commands#grouping-log-lines
+
+echo ::group::PATH
 echo "PATH=($PATH)" | sed 's/:/\n      /g'
-bison --version
-make --version
-cmake --version
+echo ::endgroup::
+
+for prog in bison make cmake; do
+	printf '::group::' # No line terminator, the next command's first line becomes the group's title.
+	$prog --version
+	type $prog
+	echo ::endgroup::
+done
