@@ -36,13 +36,15 @@ jobs:
         run: |
           bash .github/scripts/install_deps.sh windows
       - name: Build Windows binaries
+        shell: cmd
         run: |
-          cmake -S . -B build --preset msvc${{ matrix.bits }} -DFETCHCONTENT_BASE_DIR="${{ env.DEPS_ROOT_DIR }}"
-          cmake --build build --config Release
+          call .github\scripts\msvc-env.bat ${{ matrix.bits }}
+          cmake -S . -B build -G Ninja -DFETCHCONTENT_BASE_DIR="${{ env.DEPS_ROOT_DIR }}"
+          cmake --build build
       - name: Package binaries
         working-directory: build
         run: |
-          cpack -DCPACK_PACKAGE_FILE_NAME=rgbds-win${{ matrix.bits }} -G ZIP -C Release --verbose
+          cpack -DCPACK_PACKAGE_FILE_NAME=rgbds-win${{ matrix.bits }} -G ZIP --verbose
       - name: Upload Windows binaries
         uses: actions/upload-artifact@v7
         with:
