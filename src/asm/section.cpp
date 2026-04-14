@@ -934,8 +934,14 @@ bool sect_BinaryFile(std::string const &name, uint32_t startPos) {
 	Defer closeFile{[&] { fclose(file); }};
 
 	if (fseek(file, 0, SEEK_END) == 0) {
-		if (startPos > ftell(file)) {
-			error("Specified start position is greater than length of file \"%s\"", name.c_str());
+		if (unsigned long fsize = ftell(file);
+		    startPos > fsize) { // `ftell` cannot fail here, since `fseek` succeeded.
+			error(
+			    "Specified start position (%" PRIu32 ") is greater than length of \"%s\" (%lu)",
+			    startPos,
+			    name.c_str(),
+			    fsize
+			);
 			return false;
 		}
 		// The file is seekable; skip to the specified start position
@@ -989,8 +995,14 @@ bool sect_BinaryFileSlice(std::string const &name, uint32_t startPos, uint32_t l
 	Defer closeFile{[&] { fclose(file); }};
 
 	if (fseek(file, 0, SEEK_END) == 0) {
-		if (long fsize = ftell(file); startPos > fsize) {
-			error("Specified start position is greater than length of file \"%s\"", name.c_str());
+		if (unsigned long fsize = ftell(file);
+		    startPos > fsize) { // `ftell` cannot fail here, since `fseek` succeeded.
+			error(
+			    "Specified start position (%" PRIu32 ") is greater than length of \"%s\" (%lu)",
+			    startPos,
+			    name.c_str(),
+			    fsize
+			);
 			return false;
 		} else if (startPos + length > fsize) {
 			error(
