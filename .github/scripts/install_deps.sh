@@ -3,9 +3,9 @@
 set -eu
 
 case $# in
-	1) OS="$1"; TOOLSET=    ;;
-	2) OS="$1"; TOOLSET="$2";;
-	*) echo >&2 "Usage: $0 <os> [toolset]" && exit 1;;
+	1) OS="$1"; TOOLSET=     ;;
+	2) OS="$1"; TOOLSET="$2" ;;
+	*) echo >&2 "Usage: $0 <os> [<toolset>]" && exit 1 ;;
 esac
 
 case "${OS%%-*}" in
@@ -21,19 +21,22 @@ case "${OS%%-*}" in
 				TOOLSET=
 			;;
 			'' | lcov)
-				pkgs="$pkgs libpng-dev pkgconf $TOOLSET"
+				pkgs="$pkgs libpng-dev pkgconf python3-pil $TOOLSET"
 				TOOLSET=
 			;;
 		esac
 		sudo apt-get update -qq
 		# shellcheck disable=SC2086 # (This word splitting is intentional.)
 		sudo apt-get install -yq $pkgs
+		case "$TOOLSET" in
+			mingw32|mingw64) py -3 -m pip install pillow ;;
+		esac
 		;;
 	macos)
 		# macOS bundles GNU Make 3.81, which doesn't support synced output.
 		# We leave it as the default in `PATH`, to test that our Makefile works with it.
 		# However, CMake automatically uses Homebrew's `gmake`, so our CI has synced output.
-		brew install bison make
+		brew install bison make pillow
 		# Export `bison` to allow using the version we install from Homebrew,
 		# instead of the outdated one preinstalled on macOS (which doesn't even support `-Wall`...).
 		export PATH="$(brew --prefix)/opt/bison/bin:$PATH"
@@ -47,6 +50,8 @@ case "${OS%%-*}" in
 		choco install -y winflexbison3 cmake
 		# The below expects the base name, not the Windows-specific name.
 		bison() { win_bison "$@"; } # An alias doesn't work, so we use a function instead.
+		# Python and the Pillow library are dependencies for libbet, a repo built by our external tests.
+		py -3 -m pip install pillow
 		;;
 	*)
 		echo "Cannot install deps for OS '$1'"

@@ -10,7 +10,6 @@ Options:
     -h, --help          show this help message
     --only-free         download only freely licensed codebases
     --only-internal     do not download any codebases
-    --get-deps          install programs' own dependencies instead of themselves
     --get-hash          print programs' commit hashes instead of downloading them
     --get-paths         print programs' GitHub paths instead of downloading them
 EOF
@@ -34,11 +33,6 @@ while [[ $# -gt 0 ]]; do
 		--only-internal)
 			external=false
 			;;
-		--get-deps)
-			actionname="$1"
-			shift
-			osname="$1"
-			;;
 		--get-hash|--get-paths)
 			actionname="$1"
 			;;
@@ -54,28 +48,6 @@ while [[ $# -gt 0 ]]; do
 done
 
 case "$actionname" in
-	--get-deps)
-		action() { # _ _ repo _
-			# libbet depends on PIL to build
-			if [ "$3" = "libbet" ]; then
-				case "${osname%%-*}" in
-					ubuntu | debian)
-						sudo apt-get install python3-pil
-						;;
-					macos)
-						python3 -m pip install --break-system-packages pillow
-						;;
-					windows)
-						py -3 -m pip install pillow
-						;;
-					*)
-						echo "WARNING: Cannot install Pillow for OS '$osname'"
-						;;
-				esac
-			fi
-		}
-		;;
-
 	--get-hash)
 		action() { # _ _ repo commit
 			printf "%s@%s-" "$3" "$4"
