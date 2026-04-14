@@ -9,7 +9,7 @@ env:
 
 jobs:
   checkformat:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     steps:
       - name: Checkout repo
         uses: actions/checkout@v6
