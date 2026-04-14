@@ -13,10 +13,9 @@ case "${1%%-*}" in
 		# However, CMake automatically uses Homebrew's `gmake`, so our CI has synced output.
 		brew install bison md5sha1sum make
 		# Export `bison` to allow using the version we install from Homebrew,
-		# instead of the outdated one preinstalled on macOS (which doesn't even support `-Wall`...)
-		# This path  ↓ is used on Intel macOS, and this one ↓ on ARM ones.
-		export PATH="/usr/local/opt/bison/bin:/opt/homebrew/opt/bison/bin:$PATH"
-		printf 'PATH=%s\n' "$PATH" >>"$GITHUB_ENV" # Make it available to later CI steps too
+		# instead of the outdated one preinstalled on macOS (which doesn't even support `-Wall`...).
+		export PATH="$(brew --prefix)/opt/bison/bin:$PATH"
+		printf 'PATH=%s\n' "$PATH" >>"$GITHUB_ENV" # Make it available to later CI steps too.
 		;;
 	freebsd)
 		pkg install -y bash bison cmake git png
