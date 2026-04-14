@@ -11,7 +11,7 @@ case "${1%%-*}" in
 		# macOS bundles GNU Make 3.81, which doesn't support synced output.
 		# We leave it as the default in `PATH`, to test that our Makefile works with it.
 		# However, CMake automatically uses Homebrew's `gmake`, so our CI has synced output.
-		brew install bison md5sha1sum make
+		brew install bison make
 		# Export `bison` to allow using the version we install from Homebrew,
 		# instead of the outdated one preinstalled on macOS (which doesn't even support `-Wall`...).
 		export PATH="$(brew --prefix)/opt/bison/bin:$PATH"
