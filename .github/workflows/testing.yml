@@ -64,7 +64,7 @@ jobs:
         # better applied here than in our CMakeLists, where it could affect and break someone else.
         run: |
           cmake -S . -B build --preset develop -DCMAKE_FIND_FRAMEWORK=LAST -DCMAKE_CXX_COMPILER=${{ matrix.cxx }} -DTESTS_OS_NAME=${{ matrix.os }}
-          cmake --build build --verbose
+          cmake --build build --verbose -- --output-sync --keep-going
           sudo cmake --install build --verbose
       - name: Package binaries
         run: |
@@ -123,7 +123,7 @@ jobs:
       - name: Build & install
         run: |
           cmake -S . -B build --preset macos-static -DFETCHCONTENT_BASE_DIR="${{ env.DEPS_ROOT_DIR }}" -DTESTS_OS_NAME=macos
-          cmake --build build
+          cmake --build build -- --output-sync --keep-going
       - name: Package binaries
         run: |
           mkdir bins
@@ -369,6 +369,6 @@ jobs:
             .github/scripts/install_deps.sh freebsd
           run: | # Leak detection is not supported on FreeBSD, so disable it.
             cmake -S . -B build --preset develop -DTESTS_OS_NAME=freebsd
-            cmake --build build --verbose
+            cmake --build build --verbose -- -k
             ASAN_OPTIONS=detect_leaks=0 ctest --test-dir build --schedule-random --label-exclude external
             cmake --install build --verbose

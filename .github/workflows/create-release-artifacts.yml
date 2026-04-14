@@ -61,7 +61,7 @@ jobs:
       - name: Build binaries
         run: |
           cmake -S . -B build --preset macos-static -DFETCHCONTENT_BASE_DIR="${{ env.DEPS_ROOT_DIR }}"
-          cmake --build build
+          cmake --build build -- --output-sync --keep-going
           strip rgb{asm,link,fix,gfx}
       - name: Package binaries
         run: |
