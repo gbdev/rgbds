@@ -163,6 +163,14 @@ else()
                         -Wno-type-limits -Wno-tautological-constant-out-of-range-compare
                         -Wvla) # MSVC does not support VLAs
   endif()
+
+  if(MINGW)
+    # MinGW warns about format specifiers like `%z` and `%j`, which are missing on Windows XP and earlier.
+    # We rely on runtimes more modern than that, so we can ignore those warnings.
+    # If this is a problem for you: use Microsoft's equivalents, or define `__USE_MINGW_ANSI_STDIO=1`.
+    # https://sourceforge.net/p/mingw-w64/wiki2/gnu%20printf/
+    add_compile_options(-Wno-error=format -Wno-error=format-extra-args)
+  endif()
 endif()
 
 add_subdirectory(src)
