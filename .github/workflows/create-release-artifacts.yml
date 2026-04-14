@@ -39,7 +39,7 @@ jobs:
         shell: cmd
         run: |
           call .github\scripts\msvc-env.bat ${{ matrix.bits }}
-          cmake -S . -B build -G Ninja -DFETCHCONTENT_BASE_DIR="${{ env.DEPS_ROOT_DIR }}"
+          cmake -S . -B build -G Ninja -DFETCHCONTENT_BASE_DIR="${{ env.DEPS_ROOT_DIR }}" -DCMAKE_C_FLAGS="/nologo"
           cmake --build build -- -k 0
       - name: Package binaries
         working-directory: build
