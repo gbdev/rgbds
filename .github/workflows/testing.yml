@@ -179,14 +179,16 @@ jobs:
           key: dep-srcs-${{ hashFiles('cmake/deps.cmake') }}
           enableCrossOsArchive: true
       - name: Build Windows binaries
+        shell: cmd
         run: | # ASan seems to be broken on Windows, so we disable it.
-          cmake -S . -B build --preset develop-msvc${{ matrix.bits }} -DSANITIZERS=OFF \
+          call .github\scripts\msvc-env.bat ${{ matrix.bits }}
+          cmake -S . -B build -G Ninja --preset develop -DSANITIZERS=OFF ^
                 -DTESTS_OS_NAME=${{ matrix.os }} -DFETCHCONTENT_BASE_DIR="${{ env.DEPS_ROOT_DIR }}"
           cmake --build build
       - name: Package binaries
         working-directory: build
         run: |
-          cpack -DCPACK_PACKAGE_FILE_NAME=rgbds-win${{ matrix.bits }} -G ZIP -C Debug --verbose
+          cpack -DCPACK_PACKAGE_FILE_NAME=rgbds-win${{ matrix.bits }} -G ZIP --verbose
       - name: Upload Windows binaries
         uses: actions/upload-artifact@v7
         with:
@@ -216,7 +218,7 @@ jobs:
           test/fetch-test-deps.sh --get-deps ${{ matrix.os }}
       - name: Run tests using CTest
         run: |
-          ctest --test-dir build --schedule-random -C Debug
+          ctest --test-dir build --schedule-random
 
   windows-mingw-build:
     strategy:
