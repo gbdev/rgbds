@@ -15,5 +15,5 @@ jobs:
         uses: actions/checkout@v6
       - name: Check format
         run: |
-          sudo apt install clang-format
+          sudo apt --update --yes --quiet install clang-format
           contrib/checkformat.sh
