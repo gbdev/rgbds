@@ -16,4 +16,4 @@ jobs:
       - name: Check format
         run: |
           sudo apt install clang-format
-          contrib/checkformat.bash
+          contrib/checkformat.sh
