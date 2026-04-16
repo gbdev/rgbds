@@ -230,6 +230,12 @@ jobs:
       - name: Install deps
         run: |
           .github/scripts/install_deps.sh ubuntu mingw${{ matrix.bits }}
+      - name: Cache library deps
+        uses: actions/cache@v5
+        with:
+          path: ${{ env.DEPS_ROOT_DIR }}/*-tmp/
+          key: dep-srcs-${{ hashFiles('cmake/deps.cmake') }}
+          enableCrossOsArchive: true
       - name: Cross-build Windows binaries
         run: | # MinGW does not support `--preset develop` sanitizers ASan or UBSan.
           dll_search_dir=$(printf '%s\n' /usr/lib/gcc/*-w64-mingw32/*-win32 | tee -a /dev/stderr)
