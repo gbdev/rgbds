@@ -243,12 +243,12 @@ coverage:
 
 # Target used in development to format source code with clang-format.
 format:
-	$Qclang-format -i $$(git ls-files '*.hpp' '*.cpp')
+	$Qclang-format -i $$(git ls-files '*.[hc]pp')
 
 # Target used in development to check code with clang-tidy.
 # Requires Bison-generated header files to exist.
 tidy: src/asm/parser.hpp src/link/script.hpp
-	$Qclang-tidy -p . $$(git ls-files '*.hpp' '*.cpp')
+	$Qclang-tidy -p . $$(git ls-files '*.[hc]pp')
 
 # Target used in development to remove unused `#include` headers.
 iwyu:

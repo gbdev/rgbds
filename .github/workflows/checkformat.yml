@@ -13,7 +13,9 @@ jobs:
     steps:
       - name: Checkout repo
         uses: actions/checkout@v6
+      - name: Install clang-format
+        run: |
+          sudo apt-get install -Uyq install clang-format
       - name: Check format
         run: |
-          sudo apt --update --yes --quiet install clang-format
           contrib/checkformat.sh
