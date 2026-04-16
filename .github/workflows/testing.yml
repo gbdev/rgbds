@@ -13,8 +13,6 @@ env:
   CMAKE_CONFIG_TYPE: Debug # `cmake --build` now implies `--config Debug`.
   # Approximate number of CPU cores in GitHub's runners as of 2026-03-18:
   # https://docs.github.com/en/actions/reference/runners/github-hosted-runners#standard-github-hosted-runners-for-public-repositories
-  CMAKE_BUILD_PARALLEL_LEVEL: 4 # `cmake --build` now implies `--parallel 4`.
-  CMAKE_INSTALL_PARALLEL_LEVEL: 4 # `cmake --install` now implies `--parallel 4`.
   CTEST_PARALLEL_LEVEL: 0 # `ctest` now implies `--parallel 0` (number of logical CPUs).
   CTEST_NO_TESTS_ACTION: error # Make CTest fail if it cannot find any tests. (That should never happen.)
   CTEST_OUTPUT_ON_FAILURE: ON # CTest reports test program output on failure.
@@ -362,7 +360,7 @@ jobs:
           envs: >-
             TERM CLICOLOR CLICOLOR_FORCE
             CMAKE_COLOR_DIAGNOSTICS CMAKE_CONFIG_TYPE
-            CMAKE_BUILD_PARALLEL_LEVEL CTEST_PARALLEL_LEVEL
+            CTEST_PARALLEL_LEVEL
             CTEST_NO_TESTS_ACTION CTEST_OUTPUT_ON_FAILURE
             GIT_CONFIG_COUNT GIT_CONFIG_KEY_0 GIT_CONFIG_VALUE_0
           release: "14.3"
@@ -371,6 +369,6 @@ jobs:
             .github/scripts/install_deps.sh freebsd
           run: | # Leak detection is not supported on FreeBSD, so disable it.
             cmake -B build --preset develop -DTESTS_OS_NAME=freebsd
-            cmake --build build --verbose -- -k
+            cmake --build build --verbose -- -k -j 4
             ASAN_OPTIONS=detect_leaks=0 ctest --test-dir build --schedule-random --label-exclude external
             cmake --install build --verbose
