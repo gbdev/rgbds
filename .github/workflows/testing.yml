@@ -323,6 +323,9 @@ jobs:
       fail-fast: false
     runs-on: windows-2022
     timeout-minutes: 30
+    defaults:
+      run:
+        shell: C:\cygwin\bin\env.exe CYGWIN_NOWINPATH=1 CHERE_INVOKING=1 C:\cygwin\bin\bash.exe -o igncr '{0}'
     steps:
       - name: Checkout repo
         uses: actions/checkout@v6
@@ -338,12 +341,10 @@ jobs:
             make
             pkg-config
       - name: Build & install using Make
-        shell: C:\cygwin\bin\env.exe CYGWIN_NOWINPATH=1 CHERE_INVOKING=1 C:\cygwin\bin\bash.exe -o igncr '{0}'
         run: | # Cygwin does not support `make develop` sanitizers ASan or UBSan
           make -kj Q=
           make install -j Q=
       - name: Run tests
-        shell: C:\cygwin\bin\env.exe CYGWIN_NOWINPATH=1 CHERE_INVOKING=1 C:\cygwin\bin\bash.exe -o igncr '{0}'
         run: |
           test/run-tests.sh --only-internal
 
