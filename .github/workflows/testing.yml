@@ -63,7 +63,7 @@ jobs:
         # Note that since this is specific to our CI environment, the workaround is
         # better applied here than in our CMakeLists, where it could affect and break someone else.
         run: |
-          cmake -B build -G Ninja --preset develop -DCMAKE_FIND_FRAMEWORK=LAST -DCMAKE_CXX_COMPILER=${{ matrix.cxx }} -DTESTS_OS_NAME=${{ matrix.os }}
+          CXX=${{ matrix.cxx }} cmake -B build -G Ninja --preset develop -DCMAKE_FIND_FRAMEWORK=LAST -DTESTS_OS_NAME=${{ matrix.os }}
           cmake --build build -- -k 0
           sudo cmake --install build --verbose
       - name: Package binaries
