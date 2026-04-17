@@ -22,28 +22,46 @@
 
 #include "asm/warning.hpp"
 
-// Charmaps are stored using a structure known as "trie".
-// Essentially a tree, where each nodes stores a single character's worth of info:
-// whether there exists a mapping that ends at the current character,
+static bool compareNode(std::pair<char, size_t> edge, char c) {
+	return edge.first < c;
+}
+
 struct CharmapNode {
-	std::vector<int32_t> value; // The mapped value, if there exists a mapping that ends here
+	// The mapped value, if there exists a mapping that ends here; empty for non-terminal nodes.
+	std::vector<int32_t> value;
+	// Trie edges, pairing each next character with an index into the parent `Charmap`'s `nodes`.
+	// Sorted by character. Indexes must be nonzero.
 	// These MUST be indexes and not pointers, because pointers get invalidated by reallocation!
-	std::vector<std::pair<char, size_t>> next; // Indexes of where to go next, must be nonzero
+	std::vector<std::pair<char, size_t>> children;
 
 	bool isTerminal() const { return !value.empty(); }
 
 	size_t nextIndex(char c) const {
-		auto nextPair = std::find_if(RANGE(next), [c](std::pair<char, size_t> pair) {
-			return pair.first == c;
-		});
-		assume(nextPair == next.end() || nextPair->second != 0);
-		return nextPair != next.end() ? nextPair->second : 0;
+		if (auto pos = std::lower_bound(RANGE(children), c, compareNode);
+		    pos != children.end() && pos->first == c) {
+			assume(pos->second != 0);
+			return pos->second;
+		}
+		return 0;
 	}
 };
 
 struct Charmap {
 	std::string name;
-	std::vector<CharmapNode> nodes; // first node is reserved for the root node
+	std::vector<CharmapNode> nodes; // Trie of mappings (first node is reserved for the root node)
+
+	size_t nextIndexOrAdd(size_t nodeIdx, char c) {
+		std::vector<std::pair<char, size_t>> &children = nodes[nodeIdx].children;
+		if (auto pos = std::lower_bound(RANGE(children), c, compareNode);
+		    pos != children.end() && pos->first == c) {
+			assume(pos->second != 0);
+			return pos->second;
+		} else {
+			auto nextIdx = children.emplace(pos, c, nodes.size());
+			nodes.emplace_back();
+			return nextIdx->second;
+		}
+	}
 };
 
 // Traverse the trie depth-first to derive the character mappings in definition order
@@ -58,7 +76,7 @@ bool forEachChar(Charmap const &charmap, CallbackFnT callback) {
 		if (node.isTerminal() && !callback(nodeIdx, mapping)) {
 			return false;
 		}
-		for (auto const &[c, nextIdx] : node.next) {
+		for (auto const &[c, nextIdx] : node.children) {
 			assume(nextIdx);
 			prefixes.push({nextIdx, mapping + c});
 		}
@@ -155,16 +173,7 @@ void charmap_Add(std::string const &mapping, std::vector<int32_t> &&value) {
 	size_t nodeIdx = 0;
 
 	for (char c : mapping) {
-		size_t nextIdx = charmap.nodes[nodeIdx].nextIndex(c);
-
-		if (!nextIdx) {
-			// Switch to and zero-init the new node
-			nextIdx = charmap.nodes.size();
-			charmap.nodes[nodeIdx].next.emplace_back(c, nextIdx);
-			charmap.nodes.emplace_back();
-		}
-
-		nodeIdx = nextIdx;
+		nodeIdx = charmap.nextIndexOrAdd(nodeIdx, c);
 	}
 
 	CharmapNode &node = charmap.nodes[nodeIdx];
