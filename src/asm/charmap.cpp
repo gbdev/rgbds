@@ -170,49 +170,36 @@ void charmap_Add(std::string const &mapping, std::vector<int32_t> &&value) {
 	}
 
 	Charmap &charmap = *currentCharmap;
-	size_t nodeIdx = 0;
 
+	size_t nodeIdx = 0;
 	for (char c : mapping) {
 		nodeIdx = charmap.nextIndexOrAdd(nodeIdx, c);
 	}
 
 	CharmapNode &node = charmap.nodes[nodeIdx];
-
 	if (node.isTerminal()) {
 		warning(WARNING_CHARMAP_REDEF, "Overriding charmap mapping");
 	}
-
 	std::swap(node.value, value);
-}
-
-bool charmap_HasChar(std::string const &mapping) {
-	Charmap const &charmap = *currentCharmap;
-	size_t nodeIdx = 0;
-
-	for (char c : mapping) {
-		nodeIdx = charmap.nodes[nodeIdx].nextIndex(c);
-
-		if (!nodeIdx) {
-			return false;
-		}
-	}
-
-	return charmap.nodes[nodeIdx].isTerminal();
 }
 
 static CharmapNode const *charmapEntry(std::string const &mapping) {
 	Charmap const &charmap = *currentCharmap;
-	size_t nodeIdx = 0;
 
+	size_t nodeIdx = 0;
 	for (char c : mapping) {
 		nodeIdx = charmap.nodes[nodeIdx].nextIndex(c);
-
 		if (!nodeIdx) {
 			return nullptr;
 		}
 	}
 
 	return &charmap.nodes[nodeIdx];
+}
+
+bool charmap_HasChar(std::string const &mapping) {
+	CharmapNode const *node = charmapEntry(mapping);
+	return node && node->isTerminal();
 }
 
 size_t charmap_CharSize(std::string const &mapping) {
