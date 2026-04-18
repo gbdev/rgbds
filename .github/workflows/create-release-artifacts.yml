@@ -36,13 +36,15 @@ jobs:
         run: |
           bash .github/scripts/install_deps.sh windows
       - name: Build Windows binaries
+        shell: cmd
         run: |
-          cmake -S . -B build --preset msvc${{ matrix.bits }} -DFETCHCONTENT_BASE_DIR="${{ env.DEPS_ROOT_DIR }}"
-          cmake --build build --config Release
+          call .github\scripts\msvc-env.bat ${{ matrix.bits }}
+          cmake -B build -G Ninja -DFETCHCONTENT_BASE_DIR="${{ env.DEPS_ROOT_DIR }}" -DCMAKE_C_FLAGS="/nologo"
+          cmake --build build -- -k 0
       - name: Package binaries
         working-directory: build
         run: |
-          cpack -DCPACK_PACKAGE_FILE_NAME=rgbds-win${{ matrix.bits }} -G ZIP -C Release --verbose
+          cpack -DCPACK_PACKAGE_FILE_NAME=rgbds-win${{ matrix.bits }} -G ZIP --verbose
       - name: Upload Windows binaries
         uses: actions/upload-artifact@v7
         with:
@@ -60,8 +62,8 @@ jobs:
           ./.github/scripts/install_deps.sh macos
       - name: Build binaries
         run: |
-          cmake -S . -B build --preset macos-static -DFETCHCONTENT_BASE_DIR="${{ env.DEPS_ROOT_DIR }}"
-          cmake --build build
+          cmake -B build -G Ninja --preset macos-static -DFETCHCONTENT_BASE_DIR="${{ env.DEPS_ROOT_DIR }}"
+          cmake --build build -- -k 0
           strip rgb{asm,link,fix,gfx}
       - name: Package binaries
         run: |
