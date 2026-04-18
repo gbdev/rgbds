@@ -22,9 +22,9 @@ public:
 	void add(uint16_t color);
 
 	enum ComparisonResult {
-		NEITHER,
-		WE_BIGGER,
-		THEY_BIGGER = -1,
+		INCOMPARABLE,    // the two sets are incomparable
+		SUBSET_OR_EQUAL, // this set is a subset of or identical to the other
+		STRICT_SUPERSET, // this set is a strict superset of the other
 	};
 	ComparisonResult compare(ColorSet const &other) const;
 
