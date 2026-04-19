@@ -2146,13 +2146,13 @@ finish: // Can't `break` out of a nested `for`-`switch`
 // and when skipping unexecuted `IF`/`ELIF`/`ELSE` blocks and `REPT`/`FOR` loops.
 // It expects that these constructs' `ENDC`/`ENDR`/`ENDM` closing tokens are only
 // valid at the start of their lines, which enables ignoring everything except
-// the leading identifier in lines that have one (as well as line continuations).
+// the leading keyword in lines that have one (as well as line continuations).
 //
 // Note that when these constructs are *evaluated*, they can perform expansions
 // (for macro args, interpolations, and macro invocations) which may produce
 // tokens that would change how these constructs were captured or skipped, if
 // they had been produced during the capture/skip non-evaluating phase.
-static Token skipToLeadingIdentifier() {
+static Token skipToLeadingKeyword() {
 	for (;;) {
 		if (lexerState->atLineStart) {
 			lexerState->atLineStart = false;
@@ -2160,15 +2160,14 @@ static Token skipToLeadingIdentifier() {
 				return Token(T_(YYEOF));
 			} else if (startsIdentifier(c) && c != '.') {
 				shiftChar();
-				std::string identifier(1, c);
+				std::string keyword(1, c);
 				c = peek();
 				for (; continuesIdentifier(c) && c != '.'; c = nextChar()) {
-					identifier += c;
+					keyword += c;
 				}
-				if (auto search = keywords.find(identifier); search != keywords.end()) {
+				if (auto search = keywords.find(keyword); search != keywords.end()) {
 					return Token(search->second);
 				}
-				return Token(T_(SYMBOL), identifier);
 			}
 		}
 		if (int c = bumpChar(); c == EOF) {
@@ -2186,7 +2185,7 @@ static Token skipIfBlock(bool toEndc) {
 
 	Defer reenableExpansions = scopedDisableExpansions();
 	for (uint32_t startingDepth = lexer_GetIFDepth();;) {
-		switch (Token token = skipToLeadingIdentifier(); token.type) {
+		switch (Token token = skipToLeadingKeyword(); token.type) {
 		case T_(YYEOF):
 			return token;
 
@@ -2240,7 +2239,7 @@ static Token yylex_SKIP_TO_ENDR() {
 	// context, which yields an EOF.
 	Defer reenableExpansions = scopedDisableExpansions();
 	for (;;) {
-		switch (Token token = skipToLeadingIdentifier(); token.type) {
+		switch (Token token = skipToLeadingKeyword(); token.type) {
 		case T_(YYEOF):
 			return token;
 
@@ -2326,7 +2325,7 @@ static Capture makeCapture(char const *name, CallbackFnT callback) {
 
 	Defer reenableExpansions = scopedDisableExpansions();
 	for (;;) {
-		if (Token token = skipToLeadingIdentifier(); token.type == T_(YYEOF)) {
+		if (Token token = skipToLeadingKeyword(); token.type == T_(YYEOF)) {
 			error("Unterminated %s", name);
 			capture.span = {.ptr = nullptr, .size = lexerState->captureSize};
 			break;
@@ -2342,7 +2341,7 @@ static Capture makeCapture(char const *name, CallbackFnT callback) {
 		}
 	}
 
-	assume(!lexerState->atLineStart); // `skipToLeadingIdentifier` moves past the start of the line
+	assume(!lexerState->atLineStart); // `skipToLeadingKeyword` moves past the start of the line
 
 	lexerState->capturing = false;
 	lexerState->captureBuf = nullptr;
