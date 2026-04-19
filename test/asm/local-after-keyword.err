@@ -1,0 +1,5 @@
+error: Identifier "db.local" begins with a keyword; did you mean to put a space between them?
+    at local-after-keyword.asm(20)
+error: syntax error, unexpected number
+    at local-after-keyword.asm(20)
+Assembly aborted with 2 errors
