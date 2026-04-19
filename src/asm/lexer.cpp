@@ -2142,30 +2142,6 @@ finish: // Can't `break` out of a nested `for`-`switch`
 	return Token(T_(YYEOF));
 }
 
-static int skipPastEOL() {
-	if (lexerState->atLineStart) {
-		lexerState->atLineStart = false;
-		return skipChars(isBlankSpace);
-	}
-
-	for (;;) {
-		if (int c = bumpChar(); c == EOF) {
-			return EOF;
-		} else if (isNewline(c)) {
-			handleCRLF(c);
-			nextLine();
-			return skipChars(isBlankSpace);
-		} else if (c == '\\') {
-			// Unconditionally skip the next char, including line continuations
-			c = bumpChar();
-			if (isNewline(c)) {
-				handleCRLF(c);
-				nextLine();
-			}
-		}
-	}
-}
-
 // This function is called when capturing `REPT`/`FOR` loops and `MACRO` bodies,
 // and when skipping unexecuted `IF`/`ELIF`/`ELSE` blocks and `REPT`/`FOR` loops.
 // It expects that these constructs' `ENDC`/`ENDR`/`ENDM` closing tokens are only
@@ -2178,11 +2154,29 @@ static int skipPastEOL() {
 // they had been produced during the capture/skip non-evaluating phase.
 static Token skipToLeadingIdentifier() {
 	for (;;) {
-		if (int c = skipPastEOL(); c == EOF) {
+		if (lexerState->atLineStart) {
+			lexerState->atLineStart = false;
+			if (int c = skipChars(isBlankSpace); c == EOF) {
+				return Token(T_(YYEOF));
+			} else if (startsIdentifier(c) && c != '.') {
+				shiftChar();
+				std::string identifier(1, c);
+				c = peek();
+				for (; continuesIdentifier(c) && c != '.'; c = nextChar()) {
+					identifier += c;
+				}
+				if (auto search = keywords.find(identifier); search != keywords.end()) {
+					return Token(search->second);
+				}
+				return Token(T_(SYMBOL), identifier);
+			}
+		}
+		if (int c = bumpChar(); c == EOF) {
 			return Token(T_(YYEOF));
-		} else if (startsIdentifier(c)) {
-			shiftChar();
-			return readIdentifier(c, false);
+		} else if (isNewline(c)) {
+			handleCRLF(c);
+			nextLine();
+			lexerState->atLineStart = true;
 		}
 	}
 }
