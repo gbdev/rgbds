@@ -2166,11 +2166,16 @@ static int skipPastEOL() {
 	}
 }
 
-// This function uses the fact that `IF` and `REPT` constructs are only valid
-// when there's nothing before them on their lines. This enables filtering
-// "meaningful" tokens (at line start) vs. "meaningless" (everything else) ones.
-// It's especially important due to macro args not being handled in this
-// state, and lexing them in "normal" mode potentially producing such tokens.
+// This function is called when capturing `REPT`/`FOR` loops and `MACRO` bodies,
+// and when skipping unexecuted `IF`/`ELIF`/`ELSE` blocks and `REPT`/`FOR` loops.
+// It expects that these constructs' `ENDC`/`ENDR`/`ENDM` closing tokens are only
+// valid at the start of their lines, which enables ignoring everything except
+// the leading identifier in lines that have one (as well as line continuations).
+//
+// Note that when these constructs are *evaluated*, they can perform expansions
+// (for macro args, interpolations, and macro invocations) which may produce
+// tokens that would change how these constructs were captured or skipped, if
+// they had been produced during the capture/skip non-evaluating phase.
 static Token skipToLeadingIdentifier() {
 	for (;;) {
 		if (int c = skipPastEOL(); c == EOF) {
@@ -2323,38 +2328,28 @@ static Capture makeCapture(char const *name, CallbackFnT callback) {
 		assume(capture.span.ptr == nullptr);
 	}
 
+	nextLine();
+
 	Defer reenableExpansions = scopedDisableExpansions();
 	for (;;) {
-		nextLine();
-
-		if (int c = skipChars(isBlankSpace); startsIdentifier(c)) {
-			shiftChar();
-			int tokenType = readIdentifier(c, false).type;
-			if (size_t endTokenLength = callback(tokenType); endTokenLength > 0) {
-				if (!capture.span.ptr) {
-					// Retrieve the capture buffer now that we're done capturing
-					capture.span.ptr = lexerState->makeSharedCaptureBufPtr();
-				}
-				// Subtract the length of the ending token; we know we have read it exactly, not
-				// e.g. an interpolation or EQUS expansion, since those are disabled.
-				capture.span.size = lexerState->captureSize - endTokenLength;
-				break;
-			}
-		}
-
-		// Just consume characters until EOL or EOF
-		if (int c = skipChars([](int d) { return d != EOF && !isNewline(d); }); c == EOF) {
+		if (Token token = skipToLeadingIdentifier(); token.type == T_(YYEOF)) {
 			error("Unterminated %s", name);
 			capture.span = {.ptr = nullptr, .size = lexerState->captureSize};
 			break;
-		} else {
-			assume(isNewline(c));
-			shiftChar();
-			handleCRLF(c);
+		} else if (size_t endTokenLength = callback(token.type); endTokenLength > 0) {
+			if (!capture.span.ptr) {
+				// Retrieve the capture buffer now that we're done capturing
+				capture.span.ptr = lexerState->makeSharedCaptureBufPtr();
+			}
+			// Subtract the length of the ending token; we know we have read it exactly,
+			// not e.g. an interpolation or EQUS expansion, since those are disabled.
+			capture.span.size = lexerState->captureSize - endTokenLength;
+			break;
 		}
 	}
 
-	lexerState->atLineStart = false; // The ending token or EOF puts us past the start of the line
+	assume(!lexerState->atLineStart); // `skipToLeadingIdentifier` moves past the start of the line
+
 	lexerState->capturing = false;
 	lexerState->captureBuf = nullptr;
 	return capture;
