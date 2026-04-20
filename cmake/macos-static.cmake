@@ -2,10 +2,9 @@
 # in order to generate executables compatible with old macOS versions.
 # See our `macos-static` CMake preset for how it's meant to be used.
 
-# Note that targeting old enough versions of macOS on recent enough versions of macOS
+# Note that targeting old enough versions of Mac OS X on recent enough versions of macOS
 # triggers some poorly-tested code paths within Apple's linker, which then crashes.
-# This can be worked around by using LLD (install it e.g. via Brew, and pass `-fuse-ld=lld`
-# when linking).
+# This can be worked around by using LLVM's LLD linker and passing `-fuse-ld=lld` when linking.
 
 # The `-mmacosx-version-min=10.4` flag ensures that the binary only uses APIs available on Mac OS X 10.4 Tiger.
 # The `-arch` flags build a "fat binary" that works on both Apple architectures:

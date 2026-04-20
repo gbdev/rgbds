@@ -64,7 +64,7 @@ jobs:
           cmake --build build
           strip rgb{asm,link,fix,gfx}
         env:
-          LDFLAGS: -fuse-ld=lld # See the preset's comments for rationale.
+          LDFLAGS: -fuse-ld=lld # cmake/macos-static.cmake comments explain why we use lld.
       - name: Package binaries
         run: |
           zip --junk-paths rgbds-macos.zip rgb{asm,link,fix,gfx} man/* .github/scripts/install.sh

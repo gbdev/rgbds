@@ -125,7 +125,7 @@ jobs:
           cmake -S . -B build --preset macos-static -DFETCHCONTENT_BASE_DIR="${{ env.DEPS_ROOT_DIR }}" -DTESTS_OS_NAME=macos
           cmake --build build
         env:
-          LDFLAGS: -fuse-ld=lld # See the preset's comments for rationale.
+          LDFLAGS: -fuse-ld=lld # cmake/macos-static.cmake comments explain why we use lld.
       - name: Package binaries
         run: |
           mkdir bins
