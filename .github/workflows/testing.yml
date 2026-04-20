@@ -94,9 +94,6 @@ jobs:
         continue-on-error: true
         run: |
           test/fetch-test-deps.sh
-      - name: Install test dependency dependencies
-        run: |
-          test/fetch-test-deps.sh --get-deps ${{ matrix.os }}
       - name: Run tests using our script
         if: matrix.buildsys == 'make'
         run: |
@@ -152,9 +149,6 @@ jobs:
         continue-on-error: true
         run: |
           test/fetch-test-deps.sh
-      - name: Install test dependency dependencies
-        run: |
-          test/fetch-test-deps.sh --get-deps macos
       - name: Run tests
         run: |
           ctest --test-dir build --schedule-random
@@ -211,9 +205,6 @@ jobs:
         continue-on-error: true
         run: |
           test/fetch-test-deps.sh
-      - name: Install test dependency dependencies
-        run: |
-          test/fetch-test-deps.sh --get-deps ${{ matrix.os }}
       - name: Run tests using CTest
         run: |
           ctest --test-dir build --schedule-random -C Debug
@@ -304,9 +295,6 @@ jobs:
         continue-on-error: true
         run: |
           test/fetch-test-deps.sh
-      - name: Install test dependency dependencies
-        run: |
-          test/fetch-test-deps.sh --get-deps ${{ matrix.os }}
       - name: Run tests
         run: |
           test/run-tests.sh --os ${{ matrix.os }}
