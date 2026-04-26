@@ -5,10 +5,10 @@
 #include "asm/fixpoint.hpp"
 
 #include <math.h>
-#include <numbers>
 #include <stdint.h>
 
-static constexpr double tau = std::numbers::pi * 2;
+// Ideally we'd use `std::numbers::pi`, but GCC 9 doesn't support it.
+static constexpr double tau = 3.141592653589793238462643383279502884L * 2;
 
 static double fix2double(int32_t i, int32_t q) {
 	return i / pow(2.0, q);
