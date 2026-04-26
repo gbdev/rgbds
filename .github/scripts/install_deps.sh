@@ -20,8 +20,12 @@ case "${OS%%-*}" in
 				pkgs="$pkgs libz-mingw-w64-dev g++-mingw-w64-x86-64-win32"
 				TOOLSET=
 			;;
-			'' | lcov)
+			g++-9 | lcov)
 				pkgs="$pkgs libpng-dev pkgconf $TOOLSET"
+				TOOLSET=
+			;;
+			'' | g++ | clang++)
+				pkgs="$pkgs libpng-dev pkgconf"
 				TOOLSET=
 			;;
 		esac
@@ -32,8 +36,11 @@ case "${OS%%-*}" in
 	macos)
 		pkgs=bison
 		case $TOOLSET in
-			'' | lld)
+			lld)
 				pkgs="$pkgs $TOOLSET"
+				TOOLSET=
+			;;
+			clang++)
 				TOOLSET=
 			;;
 		esac
