@@ -100,6 +100,7 @@ private:
 		AssignedSetsIter() = default;
 
 		bool operator==(AssignedSetsIter const &rhs) const { return _iter == rhs._iter; }
+		bool operator!=(AssignedSetsIter const &rhs) const { return !operator==(rhs); }
 
 		AssignedSetsIter &operator++() {
 			++_iter;
