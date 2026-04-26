@@ -70,6 +70,7 @@ private:
 			SectionT &operator*() const { return *_piece; }
 
 			bool operator==(Iterator const &rhs) const { return _piece == rhs._piece; }
+			bool operator!=(Iterator const &rhs) const { return !operator==(rhs); }
 		};
 
 	public:
