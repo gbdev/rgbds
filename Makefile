@@ -31,7 +31,8 @@ WARNFLAGS := -Wall -pedantic -Wno-unknown-warning-option -Wno-gnu-zero-variadic-
 # Overridable CXXFLAGS
 CXXFLAGS     ?= -O3 -flto -DNDEBUG
 # Non-overridable CXXFLAGS
-REALCXXFLAGS := ${CXXFLAGS} ${WARNFLAGS} -std=c++20 -I include -fno-exceptions -fno-rtti
+# GCC 9 doesn't support `-std=c++20`, and all later GCCs treat it as equivalent to `-std=c++2a`.
+REALCXXFLAGS := ${CXXFLAGS} ${WARNFLAGS} -std=c++2a -I include -fno-exceptions -fno-rtti
 # Overridable LDFLAGS
 LDFLAGS      ?=
 # Non-overridable LDFLAGS
