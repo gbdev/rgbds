@@ -2148,17 +2148,22 @@ finish: // Can't `break` out of a nested `for`-`switch`
 // valid at the start of their lines, which enables ignoring everything except
 // the leading keyword in lines that have one (as well as line continuations).
 //
+// The only keywords it needs to recognize are case-insensitive `IF`, `ELIF`,
+// `ELSE`, `ENDC`, `REPT`, `FOR`, `ENDR`, and `ENDM` (not `MACRO`).
+//
 // Note that when these constructs are *evaluated*, they can perform expansions
 // (for macro args, interpolations, and macro invocations) which may produce
 // tokens that would change how these constructs were captured or skipped, if
 // they had been produced during the capture/skip non-evaluating phase.
 static Token skipToLeadingKeyword() {
+	assume(lexerState->disableExpansions);
+
 	for (;;) {
 		if (lexerState->atLineStart) {
 			lexerState->atLineStart = false;
 			if (int c = skipChars(isBlankSpace); c == EOF) {
 				return Token(T_(YYEOF));
-			} else if (startsIdentifier(c) && c != '.') {
+			} else if (isLetter(c)) {
 				shiftChar();
 				std::string keyword(1, c);
 				for (c = peek(); continuesIdentifier(c) && c != '.'; c = nextChar()) {
