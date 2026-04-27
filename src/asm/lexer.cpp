@@ -582,11 +582,13 @@ static uint32_t readBracketedMacroArgNum() {
 		empty = true;
 	}
 
-	c = bumpChar();
+	c = peek();
 	if (c != '>') {
 		error("Invalid character %s in bracketed macro argument", printChar(c));
 		return 0;
-	} else if (empty) {
+	}
+	shiftChar();
+	if (empty) {
 		error("Empty bracketed macro argument");
 		return 0;
 	} else if (num == 0 && !symbolError) {
