@@ -928,6 +928,8 @@ static void discardLineContinuation() {
 // Functions to read tokenizable values
 
 static std::string readAnonLabelRef(char c) {
+	assume(c == '+' || c == '-');
+
 	// We come here having already peeked at one char, so no need to do it again
 	uint32_t n = 1;
 	while (nextChar() == c) {
@@ -1269,6 +1271,8 @@ static uint32_t readGfxConstant() {
 // Functions to read identifiers and keywords
 
 static Token readIdentifier(char firstChar, bool raw) {
+	assume(startsIdentifier(firstChar));
+
 	std::string identifier(1, firstChar);
 	bool keywordBeforeLocal = false;
 	int tokenType = firstChar == '.' ? T_(LOCAL) : T_(SYMBOL);
