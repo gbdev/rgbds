@@ -2166,7 +2166,7 @@ static Token skipToLeadingKeyword() {
 			} else if (isLetter(c)) {
 				shiftChar();
 				std::string keyword(1, c);
-				for (c = peek(); continuesIdentifier(c) && c != '.'; c = nextChar()) {
+				for (c = peek(); continuesIdentifier(c); c = nextChar()) {
 					keyword += c;
 				}
 				if (auto search = keywords.find(keyword); search != keywords.end()) {

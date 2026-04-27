@@ -1,14 +1,2 @@
-error: syntax error, unexpected local label, expecting end of line or end of buffer or end of fragment literal
-    at local-after-end.asm(6)
-error: Identifier "endc.local_yes" begins with a keyword; did you mean to put a space between them?
-    at local-after-end.asm(9)
-error: syntax error, unexpected local label, expecting end of line or end of buffer or end of fragment literal
-    at local-after-end.asm(13)
-error: syntax error, unexpected local label, expecting end of line or end of buffer or end of fragment literal
-    at local-after-end.asm(16)
-error: syntax error, unexpected local label, expecting end of line or end of buffer or end of fragment literal
-    at local-after-end.asm(20)
-error: Undefined macro `mac`
-    at local-after-end.asm(21)
 FATAL: Ended block with 2 unterminated conditionals (`IF`/`ELIF`/`ELSE` blocks)
     at local-after-end.asm(22)

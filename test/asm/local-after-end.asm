@@ -1,5 +1,5 @@
 section "test", ROM0
-Global:
+Global: ; none of the `end*.local_*` identifiers below should get treated as keywords
 
 if 0
 	println "no"
