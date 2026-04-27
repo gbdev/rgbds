@@ -36,7 +36,7 @@ ReversedIterable<IterableT> reversed(IterableT &&_iterable) {
 // A map from `std::string` keys to `ItemT` items, iterable in the order the items were inserted.
 template<typename ItemT>
 class InsertionOrderedMap {
-	std::deque<ItemT> list;
+	std::deque<ItemT> list;                      // `deque` does not invalidate item references
 	std::unordered_map<std::string, size_t> map; // Indexes into `list`
 
 public:

@@ -183,7 +183,7 @@ These files have been copied ("vendored") from external authors and adapted for 
 - **`lexer.cpp`:**  
   Functions and data related to [lexing](https://en.wikipedia.org/wiki/Lexical_analysis) assembly source code into tokens, which can then be parsed.  
   This file maintains static `lexerState` and `lexerStateEOL` pointers to `LexerState`s from the `Context`s in `fstack.cpp`.  
-  Each `LexerState` *owns* its `content` and its `expansions`' content. Each `Expansion` (the contents of an `{interpolation}` or macro argument) in turn *owns* its `contents`.  
+  Each `LexerState` *owns* its `content` and its `expansionStack`'s content. Each `Expansion` (the contents of an `{interpolation}` or macro argument) in turn *owns* its `contents`.  
   The lexer and parser are interdependent: when the parser reaches certain tokens, it changes the lexer's mode, which affects how characters get lexed into tokens. For example, when the parser reaches a macro name, it changes the lexer to "raw" mode, which lexes the rest of the line as a sequence of string arguments to the macro.
 - **`macro.cpp`:**  
   `MacroArgs` methods related to macro arguments. Each `MacroArgs` *references* its arguments' contents.

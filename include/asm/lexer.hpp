@@ -87,16 +87,16 @@ struct LexerState {
 	int lastToken;
 	int nextToken;
 
-	std::deque<IfStackEntry> ifStack;
+	std::deque<IfStackEntry> ifStack; // Front is the innermost `IF` block
 
 	bool capturing;     // Whether the text being lexed should be captured
 	size_t captureSize; // Amount of text captured
 	std::shared_ptr<std::vector<char>> captureBuf; // Buffer to send the captured text to if set
 
-	bool disableExpansions;
-	size_t expansionScanDistance; // Max distance already scanned for expansions
-	bool expandStrings;
-	std::deque<Expansion> expansions; // Front is the innermost current expansion
+	bool enableExpansions;
+	bool enableStringExpansions;
+	size_t expansionScanDistance;         // Max distance already scanned for expansions
+	std::deque<Expansion> expansionStack; // Front is the innermost current expansion
 
 	std::variant<std::monostate, ViewedContent, BufferedContent> content;
 

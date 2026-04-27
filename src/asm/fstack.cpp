@@ -54,7 +54,7 @@ static std::stack<Context> contextStack;
 
 // The first include path for `fstk_FindFile` to try is none at all
 static std::vector<std::string> includePaths = {""}; // -I
-static std::deque<std::string> preIncludeNames;      // -P
+static std::deque<std::string> preIncludeStack;      // -P
 static bool failedOnMissingInclude = false;
 
 void FileStackNode::printBacktrace(uint32_t curLineNo) const {
@@ -124,9 +124,9 @@ void fstk_VerboseOutputConfig() {
 		}
 	}
 	// -P/--preinclude
-	if (!preIncludeNames.empty()) {
+	if (!preIncludeStack.empty()) {
 		fputs("\tPreincluded files:\n", stderr);
-		for (std::string const &name : preIncludeNames) {
+		for (std::string const &name : preIncludeStack) {
 			fprintf(stderr, "\t - %s\n", name.c_str());
 		}
 	}
@@ -168,7 +168,7 @@ void fstk_AddIncludePath(std::string const &path) {
 }
 
 void fstk_AddPreIncludeFile(std::string const &path) {
-	preIncludeNames.emplace_front(path);
+	preIncludeStack.emplace_front(path);
 }
 
 static bool isValidFilePath(std::string const &path) {
@@ -497,7 +497,7 @@ void fstk_NewRecursionDepth(size_t newDepth) {
 bool fstk_Init(std::string const &mainPath) {
 	newFileContext(mainPath, false, true);
 
-	for (std::string const &name : preIncludeNames) {
+	for (std::string const &name : preIncludeStack) {
 		if (std::optional<std::string> fullPath = fstk_FindFile(name); fullPath) {
 			newFileContext(*fullPath, false, false);
 		} else if (fstk_FileError(name, "pre-included")) {

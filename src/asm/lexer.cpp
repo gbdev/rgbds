@@ -277,18 +277,18 @@ void LexerState::clear(uint32_t lineNo_) {
 	capturing = false;
 	captureBuf = nullptr;
 
-	disableExpansions = false;
+	enableExpansions = true;
+	enableStringExpansions = true;
 	expansionScanDistance = 0;
-	expandStrings = true;
 
-	expansions.clear();
+	expansionStack.clear();
 
 	lineNo = lineNo_; // Will be incremented at next line start
 }
 
 static void nextLine() {
 	// Newlines read within an expansion should not increase the line count
-	if (lexerState->expansions.empty()) {
+	if (lexerState->expansionStack.empty()) {
 		++lexerState->lineNo;
 	}
 }
@@ -444,6 +444,7 @@ void BufferedContent::advance() {
 }
 
 void BufferedContent::refill() {
+	assume(size <= std::size(buf));
 	size_t target = std::size(buf) - size; // Aim: making the buf full
 
 	// Compute the index we'll start writing to
@@ -482,6 +483,7 @@ size_t BufferedContent::readMore(size_t startIndex, size_t nbChars) {
 	}
 
 	size += nbReadChars;
+	assume(size <= std::size(buf));
 
 	// `nbReadChars` cannot be negative, so it's fine to cast to `size_t`
 	return static_cast<size_t>(nbReadChars);
@@ -492,7 +494,7 @@ void lexer_SetMode(LexerMode mode) {
 }
 
 void lexer_ToggleStringExpansion(bool enable) {
-	lexerState->expandStrings = enable;
+	lexerState->enableStringExpansions = enable;
 }
 
 // Functions for the actual lexer to obtain characters
@@ -507,11 +509,11 @@ static void beginExpansion(std::shared_ptr<std::string> str, std::optional<std::
 		return;
 	}
 
-	lexerState->expansions.push_front({.name = name, .contents = str, .offset = 0});
+	lexerState->expansionStack.push_front({.name = name, .contents = str, .offset = 0});
 }
 
 void lexer_CheckRecursionDepth() {
-	if (lexerState->expansions.size() > options.maxRecursionDepth + 1) {
+	if (lexerState->expansionStack.size() > options.maxRecursionDepth + 1) {
 		fatal("Recursion limit (%zu) exceeded", options.maxRecursionDepth);
 	}
 }
@@ -528,9 +530,9 @@ static int nextChar();
 static uint32_t readDecimalNumber(int initial);
 
 static uint32_t readBracketedMacroArgNum() {
-	bool disableExpansions = lexerState->disableExpansions;
-	lexerState->disableExpansions = false;
-	Defer restoreExpansions{[&] { lexerState->disableExpansions = disableExpansions; }};
+	bool enableExpansions = lexerState->enableExpansions;
+	lexerState->enableExpansions = true;
+	Defer restoreExpansions{[&] { lexerState->enableExpansions = enableExpansions; }};
 
 	int32_t num = 0;
 	int c = peek();
@@ -606,8 +608,7 @@ static std::shared_ptr<std::string> readMacroArg() {
 			error("`\\@` cannot be used outside of a macro or loop (`REPT`/`FOR` block)");
 		}
 		return str;
-	} else if (c == '#') {
-		MacroArgs *macroArgs = fstk_GetCurrentMacroArgs();
+	} else if (MacroArgs const *macroArgs = fstk_GetCurrentMacroArgs(); c == '#') {
 		if (!macroArgs) {
 			error("`\\#` cannot be used outside of a macro");
 			return nullptr;
@@ -623,7 +624,6 @@ static std::shared_ptr<std::string> readMacroArg() {
 			return nullptr;
 		}
 
-		MacroArgs *macroArgs = fstk_GetCurrentMacroArgs();
 		if (!macroArgs) {
 			error("`\\<%" PRIu32 ">` cannot be used outside of a macro", num);
 			return nullptr;
@@ -637,7 +637,6 @@ static std::shared_ptr<std::string> readMacroArg() {
 	} else {
 		assume(c >= '1' && c <= '9');
 
-		MacroArgs *macroArgs = fstk_GetCurrentMacroArgs();
 		if (!macroArgs) {
 			error("`\\%c` cannot be used outside of a macro", c);
 			return nullptr;
@@ -653,7 +652,7 @@ static std::shared_ptr<std::string> readMacroArg() {
 
 int LexerState::peekChar() {
 	// This is `.peekCharAhead()` modified for zero lookahead distance
-	for (Expansion &exp : expansions) {
+	for (Expansion &exp : expansionStack) {
 		if (exp.offset < exp.size()) {
 			return static_cast<uint8_t>((*exp.contents)[exp.offset]);
 		}
@@ -683,7 +682,7 @@ int LexerState::peekCharAhead() {
 	// We only need one character of lookahead, for macro arguments
 	uint8_t distance = 1;
 
-	for (Expansion &exp : expansions) {
+	for (Expansion &exp : expansionStack) {
 		// An expansion that has reached its end will have `exp.offset` == `exp.size()`,
 		// and `.peekCharAhead()` will continue with its parent
 		assume(exp.offset <= exp.size());
@@ -728,7 +727,7 @@ static int peek() {
 
 		++lexerState->expansionScanDistance; // Do not consider again
 
-		if (lexerState->disableExpansions) {
+		if (!lexerState->enableExpansions) {
 			return c;
 		} else if (c == '\\') {
 			// If character is a backslash, check for a macro arg
@@ -770,15 +769,16 @@ static void shiftChar() {
 		++lexerState->captureSize;
 	}
 
+	assume(lexerState->expansionScanDistance > 0);
 	--lexerState->expansionScanDistance;
 
 	for (;;) {
-		if (!lexerState->expansions.empty()) {
+		if (!lexerState->expansionStack.empty()) {
 			// Advance within the current expansion
-			if (Expansion &exp = lexerState->expansions.front(); exp.advance()) {
+			if (Expansion &exp = lexerState->expansionStack.front(); exp.advance()) {
 				// When advancing would go past an expansion's end,
 				// move up to its parent and try again to advance
-				lexerState->expansions.pop_front();
+				lexerState->expansionStack.pop_front();
 				continue;
 			}
 		} else {
@@ -834,8 +834,8 @@ static void handleCRLF(int c) {
 }
 
 static auto scopedDisableExpansions() {
-	lexerState->disableExpansions = true;
-	return Defer{[&] { lexerState->disableExpansions = false; }};
+	lexerState->enableExpansions = false;
+	return Defer{[&] { lexerState->enableExpansions = true; }};
 }
 
 // "Services" provided by the lexer to the rest of the program
@@ -849,7 +849,7 @@ void lexer_TraceStringExpansions() {
 		return;
 	}
 
-	for (Expansion &exp : lexerState->expansions) {
+	for (Expansion &exp : lexerState->expansionStack) {
 		// Only print EQUS expansions, not string args
 		if (exp.name) {
 			style_Set(stderr, STYLE_CYAN, false);
@@ -1439,11 +1439,11 @@ static void appendCharInLiteral(std::string &str, int c) {
 	// Symbol interpolation
 	if (c == '{') {
 		// We'll be exiting the string/character scope, so re-enable expansions
-		lexerState->disableExpansions = false;
+		lexerState->enableExpansions = true;
 		if (auto interp = readInterpolation(0); interp.second) {
 			appendExpandedString(str, *interp.second);
 		}
-		lexerState->disableExpansions = true;
+		lexerState->enableExpansions = false;
 		return;
 	}
 
@@ -1956,7 +1956,7 @@ static Token yylex_NORMAL() {
 			std::string const &identifier = std::get<std::string>(token.value);
 
 			// Raw symbols and local symbols cannot be string expansions
-			if (!raw && token.type == T_(SYMBOL) && lexerState->expandStrings) {
+			if (!raw && token.type == T_(SYMBOL) && lexerState->enableStringExpansions) {
 				// Attempt string expansion
 				if (Symbol const *sym = sym_FindExactSymbol(identifier);
 				    sym && sym->type == SYM_EQUS) {
@@ -2162,7 +2162,7 @@ finish: // Can't `break` out of a nested `for`-`switch`
 // tokens that would change how these constructs were captured or skipped, if
 // they had been produced during the capture/skip non-evaluating phase.
 static Token skipToLeadingKeyword() {
-	assume(lexerState->disableExpansions);
+	assume(!lexerState->enableExpansions);
 
 	for (;;) {
 		if (lexerState->atLineStart) {
@@ -2321,7 +2321,7 @@ static Capture makeCapture(char const *name, CallbackFnT callback) {
 	    .lineNo = lexer_GetLineNo(), .span = {.ptr = nullptr, .size = 0}
 	};
 	if (std::holds_alternative<ViewedContent>(lexerState->content)
-	    && lexerState->expansions.empty()) {
+	    && lexerState->expansionStack.empty()) {
 		auto &view = std::get<ViewedContent>(lexerState->content);
 		capture.span.ptr = view.makeSharedContentPtr();
 	} else {
