@@ -142,6 +142,7 @@ _rgblink_completions() {
 			mapfile -t COMPREPLY < <(compgen -W "
 				assert
 				div
+				large-constant
 				obsolete
 				shift
 				shift-amount

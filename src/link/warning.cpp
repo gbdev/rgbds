@@ -17,18 +17,19 @@
 // clang-format off: nested initializers
 Diagnostics<WarningLevel, WarningID> warnings = {
     .metaWarnings = {
-        {"all",          LEVEL_ALL       },
-        {"everything",   LEVEL_EVERYTHING},
+        {"all",            LEVEL_ALL       },
+        {"everything",     LEVEL_EVERYTHING},
     },
     .warningFlags = {
-        {"assert",       LEVEL_DEFAULT   },
-        {"div",          LEVEL_ALL       },
-        {"obsolete",     LEVEL_DEFAULT   },
-        {"shift",        LEVEL_ALL       },
-        {"shift-amount", LEVEL_ALL       },
+        {"assert",         LEVEL_DEFAULT   },
+        {"div",            LEVEL_ALL       },
+        {"large-constant", LEVEL_DEFAULT   },
+        {"obsolete",       LEVEL_DEFAULT   },
+        {"shift",          LEVEL_ALL       },
+        {"shift-amount",   LEVEL_ALL       },
         // Parametric warnings
-        {"truncation",   LEVEL_DEFAULT   },
-        {"truncation",   LEVEL_EVERYTHING},
+        {"truncation",     LEVEL_DEFAULT   },
+        {"truncation",     LEVEL_EVERYTHING},
     },
     .paramWarnings = {
         {WARNING_TRUNCATION_1, WARNING_TRUNCATION_2, 1},
@@ -197,4 +198,30 @@ void warning(FileStackNode const *src, uint32_t lineNo, WarningID id, char const
 	}
 
 	va_end(args);
+}
+
+void scriptWarning(WarningID id, char const *fmt, ...) {
+	char const *flag = warnings.warningFlags[id].name;
+	va_list args;
+
+	va_start(args, fmt);
+
+	switch (warnings.getWarningBehavior(id)) {
+	case WarningBehavior::DISABLED:
+		break;
+
+	case WarningBehavior::ENABLED:
+		printDiag(nullptr, 0, fmt, args, "warning", STYLE_YELLOW, "[-W%s]", flag);
+		break;
+
+	case WarningBehavior::ERROR:
+		printDiag(nullptr, 0, fmt, args, "error", STYLE_RED, "[-Werror=%s]", flag);
+
+		warnings.incrementErrors();
+		break;
+	}
+
+	va_end(args);
+
+	lexer_TraceCurrent();
 }

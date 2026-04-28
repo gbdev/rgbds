@@ -113,9 +113,18 @@ static yy::parser::symbol_type readNumber(int initial, char const *prefix, char 
 		context.file.sbumpc();
 	}
 	for (int c = context.file.sgetc(); isDigit<Base>(c) || c == '_'; c = context.file.snextc()) {
-		if (c != '_') {
-			number = number * Base + parseDigit<Base>(c);
+		if (c == '_') {
+			continue;
 		}
+		uint32_t digit = parseDigit<Base>(c);
+		if (number > (UINT32_MAX - digit) / Base) {
+			scriptWarning(WARNING_LARGE_CONSTANT, "Integer constant is too large");
+			// Discard any additional digits
+			for (c = context.file.snextc(); isDigit<Base>(c) || c == '_';
+			     c = context.file.snextc()) {}
+			return yy::parser::make_number(0);
+		}
+		number = number * Base + digit;
 	}
 	return yy::parser::make_number(number);
 }

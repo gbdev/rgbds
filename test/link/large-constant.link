@@ -1,0 +1,3 @@
+ROM0
+	INCLUDE "large-constant.inc"
+	"test"
