@@ -12,7 +12,6 @@
 #include <limits.h>
 #include <math.h>
 #include <memory>
-#include <new> // nothrow
 #include <optional>
 #include <stdint.h>
 #include <stdio.h>
@@ -347,7 +346,7 @@ void LexerState::setFileAsNextState(std::string const &filePath, bool updateStat
 			// Read the entire file for better performance
 			// Ideally we'd use C++20 `auto ptr = std::make_shared<char[]>(size)`,
 			// but it has insufficient compiler support
-			auto ptr = std::shared_ptr<char[]>(new (std::nothrow) char[size]);
+			auto ptr = std::shared_ptr<char[]>(new char[size]);
 
 			if (std::ifstream fs(path, std::ios::binary); !fs) {
 				// LCOV_EXCL_START
