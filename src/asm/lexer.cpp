@@ -51,8 +51,8 @@ struct Token {
 	Token() : type(T_(NUMBER)), value(std::monostate{}) {}
 	Token(int type_) : type(type_), value(std::monostate{}) {}
 	Token(int type_, uint32_t value_) : type(type_), value(value_) {}
-	Token(int type_, std::string const &value_) : type(type_), value(value_) {}
-	Token(int type_, std::string &&value_) : type(type_), value(value_) {}
+	Token(int type_, std::string const &value_) : type(type_), value(std::move(value_)) {}
+	Token(int type_, std::string &&value_) : type(type_), value(std::move(value_)) {}
 };
 
 // This map lists all RGBASM keywords which `yylex_NORMAL` lexes as identifiers.
