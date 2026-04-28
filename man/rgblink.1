@@ -369,6 +369,8 @@ for
 Warn when dividing the smallest negative integer (-2**31) by -1, which yields itself due to integer overflow.
 This warning is enabled by
 .Fl Wall .
+.It Fl Wno-large-constant
+Warn when a constant too large to fit in a signed 32-bit integer is encountered.
 .It Fl Wno-obsolete
 Warn when obsolete features are encountered, which have been deprecated and may later be removed.
 .It Fl Wshift
