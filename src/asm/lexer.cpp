@@ -1206,17 +1206,17 @@ static uint32_t readHexNumber(char const *prefix) {
 		if (!isHexDigit(c)) {
 			break;
 		}
-		c = parseHexDigit(c);
+		int digit = parseHexDigit(c);
 		empty = false;
 		prevWasSeparator = false;
 
-		if (number > (UINT32_MAX - c) / 16) {
+		if (number > (UINT32_MAX - digit) / 16) {
 			warning(WARNING_LARGE_CONSTANT, "Integer constant is too large");
 			// Discard any additional digits
 			skipChars([](int d) { return isHexDigit(d) || d == '_'; });
 			return 0;
 		}
-		number = number * 16 + c;
+		number = number * 16 + digit;
 	}
 
 	checkDigitsEnding(empty, prefix, prevWasSeparator, "integer");
