@@ -970,8 +970,8 @@ static std::tuple<uint32_t, uint32_t, bool> readFractionDigits() {
 			prevWasSeparator = true;
 		} else if (isDigit(c)) {
 			prevWasSeparator = false;
-			c -= '0';
-			if (dividend > (UINT32_MAX - c) / 10 || divisor > UINT32_MAX / 10) {
+			int digit = c - '0';
+			if (dividend > (UINT32_MAX - digit) / 10 || divisor > UINT32_MAX / 10) {
 				warning(
 				    WARNING_LARGE_CONSTANT, "Fixed-point constant has too many fractional digits"
 				);
@@ -979,7 +979,7 @@ static std::tuple<uint32_t, uint32_t, bool> readFractionDigits() {
 				for (int d = peek(); isDigit(d) || d == '_'; c = d, d = nextChar()) {}
 				return {dividend, divisor, c == '_'};
 			}
-			dividend = dividend * 10 + c;
+			dividend = dividend * 10 + digit;
 			divisor *= 10;
 		} else {
 			break;
@@ -1000,15 +1000,15 @@ static uint8_t readPrecisionSuffix() {
 	// '_' is not allowed after 'q'/'Q'
 	for (int c = peek(); isDigit(c); c = nextChar()) {
 		empty = false;
-		c -= '0';
-		if (precision > (UINT8_MAX - c) / 10) {
+		int digit = c - '0';
+		if (precision > (UINT8_MAX - digit) / 10) {
 			// Discard any additional digits
 			skipChars(isDigit);
 			// Return an invalid precision to cause a subsequent error, which is checked afterwards
 			// to cover the default `options.fixPrecision` as well, just in case
 			return UINT8_MAX;
 		}
-		precision = precision * 10 + c;
+		precision = precision * 10 + digit;
 	}
 
 	if (empty) {
@@ -1093,7 +1093,7 @@ void lexer_SetGfxDigits(char const digits[4]) {
 }
 
 static uint32_t readBinaryNumber(char const *prefix) {
-	uint32_t value = 0;
+	uint32_t number = 0;
 	bool empty = true;
 	bool prevWasSeparator = false;
 
@@ -1115,21 +1115,21 @@ static uint32_t readBinaryNumber(char const *prefix) {
 		empty = false;
 		prevWasSeparator = false;
 
-		if (value > (UINT32_MAX - bit) / 2) {
+		if (number > (UINT32_MAX - bit) / 2) {
 			warning(WARNING_LARGE_CONSTANT, "Integer constant is too large");
 			// Discard any additional digits
 			skipChars([](int d) { return isCustomBinDigit(d) || d == '_'; });
 			return 0;
 		}
-		value = value * 2 + bit;
+		number = number * 2 + bit;
 	}
 
 	checkDigitsEnding(empty, prefix, prevWasSeparator, "integer");
-	return value;
+	return number;
 }
 
 static uint32_t readOctalNumber(char const *prefix) {
-	uint32_t value = 0;
+	uint32_t number = 0;
 	bool empty = true;
 	bool prevWasSeparator = false;
 
@@ -1143,26 +1143,26 @@ static uint32_t readOctalNumber(char const *prefix) {
 		if (!isOctDigit(c)) {
 			break;
 		}
-		c -= '0';
+		int digit = c - '0';
 		empty = false;
 		prevWasSeparator = false;
 
-		if (value > (UINT32_MAX - c) / 8) {
+		if (number > (UINT32_MAX - digit) / 8) {
 			warning(WARNING_LARGE_CONSTANT, "Integer constant is too large");
 			// Discard any additional digits
 			skipChars([](int d) { return isOctDigit(d) || d == '_'; });
 			return 0;
 		}
-		value = value * 8 + c;
+		number = number * 8 + digit;
 	}
 
 	checkDigitsEnding(empty, prefix, prevWasSeparator, "integer");
-	return value;
+	return number;
 }
 
 static uint32_t readDecimalNumber(int initial) {
 	assume(isDigit(initial));
-	uint32_t value = initial - '0';
+	uint32_t number = initial - '0';
 	bool prevWasSeparator = false;
 
 	for (int c = peek();; c = nextChar()) {
@@ -1175,24 +1175,24 @@ static uint32_t readDecimalNumber(int initial) {
 		if (!isDigit(c)) {
 			break;
 		}
-		c -= '0';
+		int digit = c - '0';
 		prevWasSeparator = false;
 
-		if (value > (UINT32_MAX - c) / 10) {
+		if (number > (UINT32_MAX - digit) / 10) {
 			warning(WARNING_LARGE_CONSTANT, "Integer constant is too large");
 			// Discard any additional digits
 			skipChars([](int d) { return isDigit(d) || d == '_'; });
 			return 0;
 		}
-		value = value * 10 + c;
+		number = number * 10 + digit;
 	}
 
 	checkDigitsEnding(false, nullptr, prevWasSeparator, "integer");
-	return value;
+	return number;
 }
 
 static uint32_t readHexNumber(char const *prefix) {
-	uint32_t value = 0;
+	uint32_t number = 0;
 	bool empty = true;
 	bool prevWasSeparator = false;
 
@@ -1210,17 +1210,17 @@ static uint32_t readHexNumber(char const *prefix) {
 		empty = false;
 		prevWasSeparator = false;
 
-		if (value > (UINT32_MAX - c) / 16) {
+		if (number > (UINT32_MAX - c) / 16) {
 			warning(WARNING_LARGE_CONSTANT, "Integer constant is too large");
 			// Discard any additional digits
 			skipChars([](int d) { return isHexDigit(d) || d == '_'; });
 			return 0;
 		}
-		value = value * 16 + c;
+		number = number * 16 + c;
 	}
 
 	checkDigitsEnding(empty, prefix, prevWasSeparator, "integer");
-	return value;
+	return number;
 }
 
 static uint32_t readGfxConstant() {
@@ -2169,9 +2169,8 @@ static Token skipToLeadingKeyword() {
 			if (int c = skipChars(isBlankSpace); c == EOF) {
 				return Token(T_(YYEOF));
 			} else if (isLetter(c)) {
-				shiftChar();
 				std::string keyword(1, c);
-				for (c = peek(); continuesIdentifier(c); c = nextChar()) {
+				for (c = nextChar(); continuesIdentifier(c); c = nextChar()) {
 					keyword += c;
 				}
 				if (auto search = keywords.find(keyword); search != keywords.end()) {

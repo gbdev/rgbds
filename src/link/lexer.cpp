@@ -84,24 +84,23 @@ static yy::parser::symbol_type yywrap() {
 	return yy::parser::make_YYEOF();
 }
 
-static std::string readKeyword(int c) {
+static std::string readKeyword(int initial) {
 	LexerStackEntry &context = lexerStack.back();
 	std::string keyword;
-	keyword.push_back(c);
-	for (c = context.file.sgetc(); isAlphanumeric(c); c = context.file.snextc()) {
+	keyword.push_back(initial);
+	for (int c = context.file.sgetc(); isAlphanumeric(c); c = context.file.snextc()) {
 		keyword.push_back(c);
 	}
 	return keyword;
 }
 
-static yy::parser::symbol_type parseDecNumber(int c) {
+static yy::parser::symbol_type parseDecNumber(int initial) {
 	LexerStackEntry &context = lexerStack.back();
-	uint32_t number = c - '0';
-	for (c = context.file.sgetc(); isDigit(c) || c == '_'; c = context.file.sgetc()) {
+	uint32_t number = initial - '0';
+	for (int c = context.file.sgetc(); isDigit(c) || c == '_'; c = context.file.snextc()) {
 		if (c != '_') {
 			number = number * 10 + (c - '0');
 		}
-		context.file.sbumpc();
 	}
 	return yy::parser::make_number(number);
 }
@@ -115,12 +114,10 @@ static yy::parser::symbol_type parseBinNumber(char const *prefix) {
 	}
 
 	uint32_t number = c - '0';
-	context.file.sbumpc();
-	for (c = context.file.sgetc(); isBinDigit(c) || c == '_'; c = context.file.sgetc()) {
+	for (c = context.file.snextc(); isBinDigit(c) || c == '_'; c = context.file.snextc()) {
 		if (c != '_') {
 			number = number * 2 + (c - '0');
 		}
-		context.file.sbumpc();
 	}
 	return yy::parser::make_number(number);
 }
@@ -134,12 +131,10 @@ static yy::parser::symbol_type parseOctNumber(char const *prefix) {
 	}
 
 	uint32_t number = c - '0';
-	context.file.sbumpc();
-	for (c = context.file.sgetc(); isOctDigit(c) || c == '_'; c = context.file.sgetc()) {
+	for (c = context.file.snextc(); isOctDigit(c) || c == '_'; c = context.file.snextc()) {
 		if (c != '_') {
 			number = number * 8 + (c - '0');
 		}
-		context.file.sbumpc();
 	}
 	return yy::parser::make_number(number);
 }
@@ -153,41 +148,33 @@ static yy::parser::symbol_type parseHexNumber(char const *prefix) {
 	}
 
 	uint32_t number = parseHexDigit(c);
-	context.file.sbumpc();
-	for (c = context.file.sgetc(); isHexDigit(c) || c == '_'; c = context.file.sgetc()) {
+	for (c = context.file.snextc(); isHexDigit(c) || c == '_'; c = context.file.snextc()) {
 		if (c != '_') {
 			number = number * 16 + parseHexDigit(c);
 		}
-		context.file.sbumpc();
 	}
 	return yy::parser::make_number(number);
 }
 
-static yy::parser::symbol_type parseAnyNumber(int c) {
+static yy::parser::symbol_type parseAnyNumber(int initial) {
 	LexerStackEntry &context = lexerStack.back();
-	if (c == '0') {
+	if (initial == '0') {
 		switch (context.file.sgetc()) {
 		case 'x':
-			context.file.sbumpc();
-			return parseHexNumber("\"0x\"");
 		case 'X':
 			context.file.sbumpc();
-			return parseHexNumber("\"0X\"");
+			return parseHexNumber("\"0x\"");
 		case 'o':
-			context.file.sbumpc();
-			return parseOctNumber("\"0o\"");
 		case 'O':
 			context.file.sbumpc();
-			return parseOctNumber("\"0O\"");
+			return parseOctNumber("\"0o\"");
 		case 'b':
-			context.file.sbumpc();
-			return parseBinNumber("\"0b\"");
 		case 'B':
 			context.file.sbumpc();
-			return parseBinNumber("\"0B");
+			return parseBinNumber("\"0b\"");
 		}
 	}
-	return parseDecNumber(c);
+	return parseDecNumber(initial);
 }
 
 static yy::parser::symbol_type parseString() {
@@ -294,12 +281,7 @@ yy::parser::symbol_type yylex() {
 	} else {
 		scriptError("Unexpected character %s", printChar(c));
 		// Keep reading characters until the EOL, to avoid reporting too many errors.
-		for (c = context.file.sgetc(); !isNewline(c); c = context.file.sgetc()) {
-			if (c == EOF) {
-				break;
-			}
-			context.file.sbumpc();
-		}
+		for (c = context.file.sgetc(); c != EOF && !isNewline(c); c = context.file.snextc()) {}
 		return yylex();
 	}
 	// Not marking as unreachable; this will generate a warning if any codepath forgets to return.
