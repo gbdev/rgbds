@@ -76,14 +76,19 @@ bool continuesIdentifier(int c) {
 	return startsIdentifier(c) || isDigit(c) || c == '#' || c == '$' || c == '@';
 }
 
+uint8_t parseDigit(int c) {
+	assume(isDigit(c));
+	return c - '0';
+}
+
 uint8_t parseHexDigit(int c) {
+	assume(isHexDigit(c));
 	if (c >= 'A' && c <= 'F') {
 		return c - 'A' + 10;
 	} else if (c >= 'a' && c <= 'f') {
 		return c - 'a' + 10;
 	} else {
-		assume(isDigit(c));
-		return c - '0';
+		return parseDigit(c);
 	}
 }
 

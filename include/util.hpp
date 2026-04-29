@@ -42,6 +42,7 @@ char toUpper(char c);
 bool startsIdentifier(int c);
 bool continuesIdentifier(int c);
 
+uint8_t parseDigit(int c);
 uint8_t parseHexDigit(int c);
 std::optional<uint64_t> parseNumber(char const *&str, NumberBase base = BASE_AUTO);
 std::optional<uint64_t> parseWholeNumber(char const *str, NumberBase base = BASE_AUTO);

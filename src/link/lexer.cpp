@@ -94,66 +94,51 @@ static std::string readKeyword(int initial) {
 	return keyword;
 }
 
-static yy::parser::symbol_type parseDecNumber(int initial) {
+template<int Base, typename IsDigitFnT, typename ParseSomeDigitT>
+static yy::parser::symbol_type parseSomeNumber(
+    char const *prefix,
+    int initial,
+    char const *name,
+    IsDigitFnT isSomeDigit,
+    ParseSomeDigitT parseSomeDigit
+) {
 	LexerStackEntry &context = lexerStack.back();
-	uint32_t number = initial - '0';
-	for (int c = context.file.sgetc(); isDigit(c) || c == '_'; c = context.file.snextc()) {
+	uint32_t number;
+	if (prefix) {
+		assume(initial == 0 && name != nullptr);
+		int c = context.file.sgetc();
+		if (!isSomeDigit(c)) {
+			scriptError("No %s digits found after %s", name, prefix);
+			return yy::parser::make_number(0);
+		}
+		number = parseSomeDigit(c);
+		context.file.sbumpc();
+	} else {
+		assume(name == nullptr);
+		number = parseSomeDigit(initial);
+	}
+	for (int c = context.file.sgetc(); isSomeDigit(c) || c == '_'; c = context.file.snextc()) {
 		if (c != '_') {
-			number = number * 10 + (c - '0');
+			number = number * Base + parseSomeDigit(c);
 		}
 	}
 	return yy::parser::make_number(number);
+}
+
+static yy::parser::symbol_type parseDecNumber(int initial) {
+	return parseSomeNumber<10>(nullptr, initial, nullptr, isDigit, parseDigit);
 }
 
 static yy::parser::symbol_type parseBinNumber(char const *prefix) {
-	LexerStackEntry &context = lexerStack.back();
-	int c = context.file.sgetc();
-	if (!isBinDigit(c)) {
-		scriptError("No binary digits found after %s", prefix);
-		return yy::parser::make_number(0);
-	}
-
-	uint32_t number = c - '0';
-	for (c = context.file.snextc(); isBinDigit(c) || c == '_'; c = context.file.snextc()) {
-		if (c != '_') {
-			number = number * 2 + (c - '0');
-		}
-	}
-	return yy::parser::make_number(number);
+	return parseSomeNumber<2>(prefix, 0, "binary", isBinDigit, parseDigit);
 }
 
 static yy::parser::symbol_type parseOctNumber(char const *prefix) {
-	LexerStackEntry &context = lexerStack.back();
-	int c = context.file.sgetc();
-	if (!isOctDigit(c)) {
-		scriptError("No octal digits found after %s", prefix);
-		return yy::parser::make_number(0);
-	}
-
-	uint32_t number = c - '0';
-	for (c = context.file.snextc(); isOctDigit(c) || c == '_'; c = context.file.snextc()) {
-		if (c != '_') {
-			number = number * 8 + (c - '0');
-		}
-	}
-	return yy::parser::make_number(number);
+	return parseSomeNumber<8>(prefix, 0, "octal", isOctDigit, parseDigit);
 }
 
 static yy::parser::symbol_type parseHexNumber(char const *prefix) {
-	LexerStackEntry &context = lexerStack.back();
-	int c = context.file.sgetc();
-	if (!isHexDigit(c)) {
-		scriptError("No hexadecimal digits found after %s", prefix);
-		return yy::parser::make_number(0);
-	}
-
-	uint32_t number = parseHexDigit(c);
-	for (c = context.file.snextc(); isHexDigit(c) || c == '_'; c = context.file.snextc()) {
-		if (c != '_') {
-			number = number * 16 + parseHexDigit(c);
-		}
-	}
-	return yy::parser::make_number(number);
+	return parseSomeNumber<16>(prefix, 0, "hexadecimal", isHexDigit, parseHexDigit);
 }
 
 static yy::parser::symbol_type parseAnyNumber(int initial) {

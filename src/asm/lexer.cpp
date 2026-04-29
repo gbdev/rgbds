@@ -1055,6 +1055,17 @@ static bool isCustomBinDigit(int c) {
 	return isBinDigit(c) || c == options.binDigits[0] || c == options.binDigits[1];
 }
 
+static uint8_t parseCustomBinDigit(int c) {
+	assume(isCustomBinDigit(c));
+	if (c == '0' || c == options.binDigits[0]) {
+		return 0;
+	} else if (c == '1' || c == options.binDigits[1]) {
+		return 1;
+	} else {
+		unreachable_();
+	}
+}
+
 static bool checkDigitErrors(char const *digits, size_t n, char const *type) {
 	for (size_t i = 0; i < n; ++i) {
 		char c = digits[i];
@@ -1092,9 +1103,21 @@ void lexer_SetGfxDigits(char const digits[4]) {
 	}
 }
 
-static uint32_t readBinaryNumber(char const *prefix) {
-	uint32_t number = 0;
-	bool empty = true;
+template<int Base, typename IsDigitFnT, typename ParseSomeDigitT>
+static uint32_t readSomeNumber(
+    char const *prefix, int initial, IsDigitFnT isSomeDigit, ParseSomeDigitT parseSomeDigit
+) {
+	uint32_t number;
+	bool empty;
+	if (prefix) {
+		assume(initial == 0);
+		number = 0;
+		empty = true;
+	} else {
+		number = parseSomeDigit(initial);
+		empty = false;
+	}
+
 	bool prevWasSeparator = false;
 
 	for (int c = peek();; c = nextChar()) {
@@ -1104,123 +1127,40 @@ static uint32_t readBinaryNumber(char const *prefix) {
 			continue;
 		}
 
-		int bit;
-		if (c == '0' || c == options.binDigits[0]) {
-			bit = 0;
-		} else if (c == '1' || c == options.binDigits[1]) {
-			bit = 1;
-		} else {
+		if (!isSomeDigit(c)) {
 			break;
 		}
+		int digit = parseSomeDigit(c);
 		empty = false;
 		prevWasSeparator = false;
 
-		if (number > (UINT32_MAX - bit) / 2) {
+		if (number > (UINT32_MAX - digit) / Base) {
 			warning(WARNING_LARGE_CONSTANT, "Integer constant is too large");
 			// Discard any additional digits
-			skipChars([](int d) { return isCustomBinDigit(d) || d == '_'; });
+			skipChars([&isSomeDigit](int d) { return isSomeDigit(d) || d == '_'; });
 			return 0;
 		}
-		number = number * 2 + bit;
+		number = number * Base + digit;
 	}
 
 	checkDigitsEnding(empty, prefix, prevWasSeparator, "integer");
 	return number;
+}
+
+static uint32_t readBinaryNumber(char const *prefix) {
+	return readSomeNumber<2>(prefix, 0, isCustomBinDigit, parseCustomBinDigit);
 }
 
 static uint32_t readOctalNumber(char const *prefix) {
-	uint32_t number = 0;
-	bool empty = true;
-	bool prevWasSeparator = false;
-
-	for (int c = peek();; c = nextChar()) {
-		if (c == '_') {
-			checkDigitSeparator(prevWasSeparator, "integer");
-			prevWasSeparator = true;
-			continue;
-		}
-
-		if (!isOctDigit(c)) {
-			break;
-		}
-		int digit = c - '0';
-		empty = false;
-		prevWasSeparator = false;
-
-		if (number > (UINT32_MAX - digit) / 8) {
-			warning(WARNING_LARGE_CONSTANT, "Integer constant is too large");
-			// Discard any additional digits
-			skipChars([](int d) { return isOctDigit(d) || d == '_'; });
-			return 0;
-		}
-		number = number * 8 + digit;
-	}
-
-	checkDigitsEnding(empty, prefix, prevWasSeparator, "integer");
-	return number;
+	return readSomeNumber<8>(prefix, 0, isOctDigit, parseDigit);
 }
 
 static uint32_t readDecimalNumber(int initial) {
-	assume(isDigit(initial));
-	uint32_t number = initial - '0';
-	bool prevWasSeparator = false;
-
-	for (int c = peek();; c = nextChar()) {
-		if (c == '_') {
-			checkDigitSeparator(prevWasSeparator, "integer");
-			prevWasSeparator = true;
-			continue;
-		}
-
-		if (!isDigit(c)) {
-			break;
-		}
-		int digit = c - '0';
-		prevWasSeparator = false;
-
-		if (number > (UINT32_MAX - digit) / 10) {
-			warning(WARNING_LARGE_CONSTANT, "Integer constant is too large");
-			// Discard any additional digits
-			skipChars([](int d) { return isDigit(d) || d == '_'; });
-			return 0;
-		}
-		number = number * 10 + digit;
-	}
-
-	checkDigitsEnding(false, nullptr, prevWasSeparator, "integer");
-	return number;
+	return readSomeNumber<10>(nullptr, initial, isDigit, parseDigit);
 }
 
 static uint32_t readHexNumber(char const *prefix) {
-	uint32_t number = 0;
-	bool empty = true;
-	bool prevWasSeparator = false;
-
-	for (int c = peek();; c = nextChar()) {
-		if (c == '_') {
-			checkDigitSeparator(prevWasSeparator, "integer");
-			prevWasSeparator = true;
-			continue;
-		}
-
-		if (!isHexDigit(c)) {
-			break;
-		}
-		int digit = parseHexDigit(c);
-		empty = false;
-		prevWasSeparator = false;
-
-		if (number > (UINT32_MAX - digit) / 16) {
-			warning(WARNING_LARGE_CONSTANT, "Integer constant is too large");
-			// Discard any additional digits
-			skipChars([](int d) { return isHexDigit(d) || d == '_'; });
-			return 0;
-		}
-		number = number * 16 + digit;
-	}
-
-	checkDigitsEnding(empty, prefix, prevWasSeparator, "integer");
-	return number;
+	return readSomeNumber<16>(prefix, 0, isHexDigit, parseHexDigit);
 }
 
 static uint32_t readGfxConstant() {
