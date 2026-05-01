@@ -4,7 +4,5 @@ FATAL: Section "conflicting types" is defined with type `HRAM`, but also with ty
     at section-union/bad-types.asm(7)
 Linking aborted with 1 error
 ---
-error: Section already exists but with type `HRAM`
-    at <stdin>(18)
-FATAL: Cannot create section "conflicting types" (1 error)
+FATAL: Section "conflicting types" already exists but with type `HRAM`
     at <stdin>(18)
