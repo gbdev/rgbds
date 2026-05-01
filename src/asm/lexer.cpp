@@ -1057,13 +1057,7 @@ static bool isCustomBinDigit(int c) {
 
 static uint8_t parseCustomBinDigit(int c) {
 	assume(isCustomBinDigit(c));
-	if (c == '0' || c == options.binDigits[0]) {
-		return 0;
-	} else if (c == '1' || c == options.binDigits[1]) {
-		return 1;
-	} else {
-		unreachable_();
-	}
+	return c == '1' || c == options.binDigits[1]; // Returns 0 or 1
 }
 
 static bool checkDigitErrors(char const *digits, size_t n, char const *type) {
@@ -1103,9 +1097,9 @@ void lexer_SetGfxDigits(char const digits[4]) {
 	}
 }
 
-template<int Base, typename IsDigitFnT, typename ParseSomeDigitT>
+template<uint32_t Base, typename IsDigitFnT, typename ParseSomeDigitFnT>
 static uint32_t readSomeNumber(
-    char const *prefix, int initial, IsDigitFnT isSomeDigit, ParseSomeDigitT parseSomeDigit
+    char const *prefix, int initial, IsDigitFnT isSomeDigit, ParseSomeDigitFnT parseSomeDigit
 ) {
 	uint32_t number;
 	bool empty;

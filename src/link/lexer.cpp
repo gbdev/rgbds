@@ -94,13 +94,13 @@ static std::string readKeyword(int initial) {
 	return keyword;
 }
 
-template<int Base, typename IsDigitFnT, typename ParseSomeDigitT>
+template<uint32_t Base, typename IsDigitFnT, typename ParseSomeDigitFnT>
 static yy::parser::symbol_type parseSomeNumber(
     char const *prefix,
     int initial,
     char const *name,
     IsDigitFnT isSomeDigit,
-    ParseSomeDigitT parseSomeDigit
+    ParseSomeDigitFnT parseSomeDigit
 ) {
 	LexerStackEntry &context = lexerStack.back();
 	uint32_t number;
