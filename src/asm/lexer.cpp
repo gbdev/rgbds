@@ -1051,12 +1051,12 @@ static bool isValidDigit(char c) {
 	return isAlphanumeric(c) || c == '.' || c == '#' || c == '@';
 }
 
-static bool isCustomBinDigit(int c) {
+static bool isAsmBinDigit(int c) {
 	return isBinDigit(c) || c == options.binDigits[0] || c == options.binDigits[1];
 }
 
-static uint8_t parseCustomBinDigit(int c) {
-	assume(isCustomBinDigit(c));
+static uint8_t parseAsmBinDigit(int c) {
+	assume(isAsmBinDigit(c));
 	return c == '1' || c == options.binDigits[1]; // Returns 0 or 1
 }
 
@@ -1142,7 +1142,7 @@ static uint32_t readSomeNumber(
 }
 
 static uint32_t readBinaryNumber(char const *prefix) {
-	return readSomeNumber<2>(prefix, 0, isCustomBinDigit, parseCustomBinDigit);
+	return readSomeNumber<2>(prefix, 0, isAsmBinDigit, parseAsmBinDigit);
 }
 
 static uint32_t readOctalNumber(char const *prefix) {
@@ -1805,7 +1805,7 @@ static Token yylex_NORMAL() {
 
 		case '%': // Either %=, MOD, or a binary constant
 			c = peek();
-			if (isCustomBinDigit(c) || c == '_') {
+			if (isAsmBinDigit(c) || c == '_') {
 				return Token(T_(NUMBER), readBinaryNumber("'%'"));
 			}
 			return oneOrTwo('=', T_(POP_MODEQ), T_(OP_MOD));
