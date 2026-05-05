@@ -10,7 +10,7 @@ trap "cd; rm -rf ${tmpdir@Q}" EXIT
 src="$PWD"
 cd "$tmpdir" || exit
 
-if which cygpath &>/dev/null; then
+if type -t cygpath >/dev/null; then
 	# MinGW needs the Windows path substituted but with forward slash separators;
 	# Cygwin has `cygpath` but just needs the original path substituted.
 	subst1="$(printf '%s\n' "$src" | sed 's:[][\/.^$*]:\\&:g')"

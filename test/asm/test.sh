@@ -188,7 +188,7 @@ evaluateDepTest () {
 	"$RGBASM" $RGBASMFLAGS -o "$o" "$i"/a.asm >"$output" 2>"$errput"
 
 	fixed_output="$input"
-	if which cygpath &>/dev/null; then
+	if type -t cygpath >/dev/null; then
 		# MinGW needs the Windows path substituted but with forward slash separators;
 		# Cygwin has `cygpath` but just needs the original path substituted.
 		subst1="$(printf '%s\n' "$o" | sed 's:[][\/.^$*]:\\&:g')"
@@ -215,7 +215,7 @@ evaluateDepTest "continues-after-missing-preinclude"
 evaluateDepTest "exits-after-missing-preinclude"
 
 i="state-file"
-if which cygpath &>/dev/null; then
+if type -t cygpath >/dev/null; then
 	# MinGW translates path names before passing them as command-line arguments,
 	# but does not do so when they are prefixed, so we have to do it ourselves.
 	state_outname="$(cygpath -w "$o")"
