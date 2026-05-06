@@ -108,7 +108,7 @@ install(TARGETS rgbasm rgblink rgbfix rgbgfx RUNTIME COMPONENT binaries)
 # Tests expect the binaries to end up in-source; this is more acceptable than the entire artifact dir.
 set_target_properties(rgbasm rgblink rgbfix rgbgfx PROPERTIES
 # The generator expression (even if a no-op) stops muti-config generators using a of "per-configuration subdirectory".
-                      RUNTIME_OUTPUT_DIRECTORY $<1:${CMAKE_SOURCE_DIR}>)
+                      RUNTIME_OUTPUT_DIRECTORY $<1:${CMAKE_CURRENT_SOURCE_DIR}/..>)
 target_link_libraries(rgbgfx PRIVATE PNG::PNG)
 # Copy the DLLs in the output directory so the program can be run for testing without having to `install`.
 # From https://cmake.org/cmake/help/v4.3/manual/cmake-generator-expressions.7.html#genex:TARGET_RUNTIME_DLLS.
