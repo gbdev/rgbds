@@ -1,0 +1,24 @@
+error: Invalid character '{'
+    at expansion-after-end.asm(6)
+error: syntax error, unexpected symbol, expecting end of line or end of buffer or end of fragment literal
+    at expansion-after-end.asm(6)
+error: Invalid character '}'
+    at expansion-after-end.asm(6)
+error: Invalid character '{'
+    at expansion-after-end.asm(12)
+error: syntax error, unexpected symbol, expecting end of line or end of buffer or end of fragment literal
+    at expansion-after-end.asm(12)
+error: Invalid character '}'
+    at expansion-after-end.asm(12)
+error: Invalid character '{'
+    at expansion-after-end.asm(16)
+error: syntax error, unexpected symbol, expecting end of line or end of buffer or end of fragment literal
+    at expansion-after-end.asm(16)
+error: Invalid character '}'
+    at expansion-after-end.asm(16)
+error: Invalid character '1' after line continuation
+    at expansion-after-end.asm::m(23) <- expansion-after-end.asm(25)
+error: syntax error, unexpected number, expecting end of line or end of buffer or end of fragment literal
+    at expansion-after-end.asm::m(23) <- expansion-after-end.asm(25)
+FATAL: Ended block with 1 unterminated conditional (`IF`/`ELIF`/`ELSE` block)
+    at expansion-after-end.asm::m(24) <- expansion-after-end.asm(25)
