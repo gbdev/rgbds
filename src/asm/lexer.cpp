@@ -2262,6 +2262,36 @@ static Token yylex_SKIP_TO_ENDR() {
 	}
 }
 
+// LCOV_EXCL_START
+static void verboseOutputString(std::string_view str) {
+	static constexpr size_t max_len = 40;
+	putc('"', stderr);
+	for (size_t i = 0, n = str.length(); i < n; ++i) {
+		if (n > max_len && i == max_len / 2) {
+			fputs("[...]", stderr);
+			i = n - max_len / 2 - 1;
+			continue;
+		}
+		if (char c = str[i]; c == '\\') {
+			fputs("\\\\", stderr);
+		} else if (c == '"') {
+			fputs("\\\"", stderr);
+		} else if (c == '\n') {
+			fputs("\\n", stderr);
+		} else if (c == '\r') {
+			fputs("\\r", stderr);
+		} else if (c == '\t') {
+			fputs("\\t", stderr);
+		} else if (isPrintable(c)) {
+			putc(c, stderr);
+		} else {
+			fprintf(stderr, "\\x%02X", c);
+		}
+	}
+	putc('"', stderr);
+}
+// LCOV_EXCL_STOP
+
 yy::parser::symbol_type yylex() {
 	if (lexerState->atLineStart && lexerStateEOL) {
 		lexerState = lexerStateEOL;
@@ -2290,15 +2320,31 @@ yy::parser::symbol_type yylex() {
 	lexerState->lastToken = token.type;
 	lexerState->atLineStart = token.type == T_(NEWLINE) || token.type == T_(EOB);
 
-	// LCOV_EXCL_START
-	verbosePrint(VERB_TRACE, "Lexed `%s` token\n", yy::parser::symbol_type(token.type).name());
-	// LCOV_EXCL_STOP
-
 	if (std::holds_alternative<uint32_t>(token.value)) {
+		// LCOV_EXCL_START
+		verbosePrint(
+		    VERB_TRACE,
+		    "Lexed `%s` token (0x%" PRIX32 ")\n",
+		    yy::parser::symbol_type(token.type).name(),
+		    std::get<uint32_t>(token.value)
+		);
+		// LCOV_EXCL_STOP
 		return yy::parser::symbol_type(token.type, std::get<uint32_t>(token.value));
 	} else if (std::holds_alternative<std::string>(token.value)) {
+		// LCOV_EXCL_START
+		if (checkVerbosity(VERB_TRACE)) {
+			style_Set(stderr, STYLE_MAGENTA, false);
+			fprintf(stderr, "Lexed `%s` token (", yy::parser::symbol_type(token.type).name());
+			verboseOutputString(std::get<std::string>(token.value));
+			fputs(")\n", stderr);
+			style_Reset(stderr);
+		}
+		// LCOV_EXCL_STOP
 		return yy::parser::symbol_type(token.type, std::get<std::string>(token.value));
 	} else {
+		// LCOV_EXCL_START
+		verbosePrint(VERB_TRACE, "Lexed `%s` token\n", yy::parser::symbol_type(token.type).name());
+		// LCOV_EXCL_STOP
 		assume(std::holds_alternative<std::monostate>(token.value));
 		return yy::parser::symbol_type(token.type);
 	}
@@ -2348,6 +2394,16 @@ static Capture makeCapture(char const *name, CallbackFnT callback) {
 			break;
 		}
 	}
+
+	// LCOV_EXCL_START
+	if (checkVerbosity(VERB_TRACE) && capture.span.ptr) {
+		style_Set(stderr, STYLE_MAGENTA, false);
+		fprintf(stderr, "Captured %s (", name);
+		verboseOutputString(std::string_view{capture.span.ptr.get(), capture.span.size});
+		fputs(")\n", stderr);
+		style_Reset(stderr);
+	}
+	// LCOV_EXCL_STOP
 
 	assume(!lexerState->atLineStart); // `skipToLeadingKeyword` moves past the start of the line
 
