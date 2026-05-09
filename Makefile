@@ -257,6 +257,7 @@ iwyu:
 		CXX="include-what-you-use" \
 		REALCXXFLAGS="-std=c++20 -I include"
 
+# Target used in development to conveniently invoke RGBDS binaries with Wine.
 wine-shim:
 	$Qecho '#!/usr/bin/env bash' > rgbshim.sh
 	$Qecho 'WINEDEBUG=-all wine $$0.exe "$${@:1}"' >> rgbshim.sh
@@ -268,7 +269,6 @@ wine-shim:
 
 # Target for the project maintainer to produce distributable release tarballs
 # of the source code.
-
 dist:
 	$Qgit ls-files | sed s~^~$${PWD##*/}/~ \
 	  | tar -czf rgbds-source.tar.gz -C .. -T -
