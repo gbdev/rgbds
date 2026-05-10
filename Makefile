@@ -233,11 +233,13 @@ debug:
 		CXXFLAGS="-ggdb3 -O0 -fno-omit-frame-pointer -fno-optimize-sibling-calls"
 
 # Target used in development to profile with callgrind.
+# Use `valgrind --tool=callgrind --dump-instr=yes --simulate-cache=yes --collect-jumps=yes ./rgbasm ...`.
 profile:
 	$Qenv ${MAKE} \
 		CXXFLAGS="-ggdb3 -O3 -fno-omit-frame-pointer -fno-optimize-sibling-calls"
 
 # Target used in development to inspect code coverage with gcov.
+# Use `./contrib/coverage.bash`.
 coverage:
 	$Qenv ${MAKE} \
 		CXXFLAGS="-ggdb3 -Og --coverage -fno-omit-frame-pointer -fno-optimize-sibling-calls"
