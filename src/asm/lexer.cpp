@@ -1099,17 +1099,18 @@ void lexer_SetGfxDigits(char const digits[4]) {
 
 template<uint32_t Base, typename IsDigitFnT, typename ParseSomeDigitFnT>
 static uint32_t readSomeNumber(
-    char const *prefix, int initial, IsDigitFnT isSomeDigit, ParseSomeDigitFnT parseSomeDigit
+    int initial, char const *prefix, IsDigitFnT isSomeDigit, ParseSomeDigitFnT parseSomeDigit
 ) {
 	uint32_t number;
 	bool empty;
-	if (prefix) {
-		assume(initial == 0);
-		number = 0;
-		empty = true;
-	} else {
+	if (Base == 10) {
+		assume(prefix == nullptr);
 		number = parseSomeDigit(initial);
 		empty = false;
+	} else {
+		assume(initial == 0 && prefix != nullptr);
+		number = 0;
+		empty = true;
 	}
 
 	bool prevWasSeparator = false;
@@ -1142,19 +1143,19 @@ static uint32_t readSomeNumber(
 }
 
 static uint32_t readBinaryNumber(char const *prefix) {
-	return readSomeNumber<2>(prefix, 0, isAsmBinDigit, parseAsmBinDigit);
+	return readSomeNumber<2>(0, prefix, isAsmBinDigit, parseAsmBinDigit);
 }
 
 static uint32_t readOctalNumber(char const *prefix) {
-	return readSomeNumber<8>(prefix, 0, isOctDigit, parseDigit);
+	return readSomeNumber<8>(0, prefix, isOctDigit, parseDigit);
 }
 
 static uint32_t readDecimalNumber(int initial) {
-	return readSomeNumber<10>(nullptr, initial, isDigit, parseDigit);
+	return readSomeNumber<10>(initial, nullptr, isDigit, parseDigit);
 }
 
 static uint32_t readHexNumber(char const *prefix) {
-	return readSomeNumber<16>(prefix, 0, isHexDigit, parseHexDigit);
+	return readSomeNumber<16>(0, prefix, isHexDigit, parseHexDigit);
 }
 
 static uint32_t readGfxConstant() {

@@ -96,16 +96,19 @@ static std::string readKeyword(int initial) {
 
 template<uint32_t Base, typename IsDigitFnT, typename ParseSomeDigitFnT>
 static yy::parser::symbol_type parseSomeNumber(
-    char const *prefix,
     int initial,
+    char const *prefix,
     char const *name,
     IsDigitFnT isSomeDigit,
     ParseSomeDigitFnT parseSomeDigit
 ) {
 	LexerStackEntry &context = lexerStack.back();
 	uint32_t number;
-	if (prefix) {
-		assume(initial == 0 && name != nullptr);
+	if (Base == 10) {
+		assume(prefix == nullptr && name == nullptr);
+		number = parseSomeDigit(initial);
+	} else {
+		assume(initial == 0 && prefix != nullptr && name != nullptr);
 		int c = context.file.sgetc();
 		if (!isSomeDigit(c)) {
 			scriptError("No %s digits found after %s", name, prefix);
@@ -113,9 +116,6 @@ static yy::parser::symbol_type parseSomeNumber(
 		}
 		number = parseSomeDigit(c);
 		context.file.sbumpc();
-	} else {
-		assume(name == nullptr);
-		number = parseSomeDigit(initial);
 	}
 	for (int c = context.file.sgetc(); isSomeDigit(c) || c == '_'; c = context.file.snextc()) {
 		if (c != '_') {
@@ -126,19 +126,19 @@ static yy::parser::symbol_type parseSomeNumber(
 }
 
 static yy::parser::symbol_type parseDecNumber(int initial) {
-	return parseSomeNumber<10>(nullptr, initial, nullptr, isDigit, parseDigit);
+	return parseSomeNumber<10>(initial, nullptr, nullptr, isDigit, parseDigit);
 }
 
 static yy::parser::symbol_type parseBinNumber(char const *prefix) {
-	return parseSomeNumber<2>(prefix, 0, "binary", isBinDigit, parseDigit);
+	return parseSomeNumber<2>(0, prefix, "binary", isBinDigit, parseDigit);
 }
 
 static yy::parser::symbol_type parseOctNumber(char const *prefix) {
-	return parseSomeNumber<8>(prefix, 0, "octal", isOctDigit, parseDigit);
+	return parseSomeNumber<8>(0, prefix, "octal", isOctDigit, parseDigit);
 }
 
 static yy::parser::symbol_type parseHexNumber(char const *prefix) {
-	return parseSomeNumber<16>(prefix, 0, "hexadecimal", isHexDigit, parseHexDigit);
+	return parseSomeNumber<16>(0, prefix, "hexadecimal", isHexDigit, parseHexDigit);
 }
 
 static yy::parser::symbol_type parseAnyNumber(int initial) {
