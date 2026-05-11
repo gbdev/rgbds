@@ -2,16 +2,12 @@
 set -e
 
 # Build RGBDS with gcov support
-make coverage -j
+make coverage -j $(getconf _NPROCESSORS_ONLN)
 
-# Run the tests
+# Run the tests, forwarding all script arguments
 pushd test
 ./fetch-test-deps.sh
-if [[ $# -eq 0 ]]; then
-  ./run-tests.sh --jobs 4
-else
-  ./run-tests.sh --os "$1" --jobs 4
-fi
+./run-tests.sh "$@"
 popd
 
 # Generate coverage logs
@@ -24,12 +20,5 @@ lcov -c --no-external -d . -o "$COVERAGE_INFO"
 lcov -r "$COVERAGE_INFO" src/asm/parser.{hpp,cpp} src/link/script.{hpp,cpp} -o "$COVERAGE_INFO"
 genhtml --dark-mode --num-spaces 4 -f -s -o coverage/ "$COVERAGE_INFO"
 
-# Check whether running from coverage.yml workflow
-if [ "$1" != "ubuntu-ci" ]; then
-  # Open report in web browser
-  if [ "$(uname)" == "Darwin" ]; then
-    open coverage/index.html
-  else
-    xdg-open coverage/index.html
-  fi
-fi
+# Output the path to the report
+echo "Open $PWD/coverage/index.html"

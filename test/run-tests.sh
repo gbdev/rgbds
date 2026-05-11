@@ -30,7 +30,7 @@ internal=true
 external=true
 installedrgbds=false
 osname=
-make_jobs=4
+make_jobs=
 FETCH_TEST_DEPS="fetch-test-deps.sh"
 RGBDS_PATH="RGBDS=../../"
 while [[ $# -gt 0 ]]; do
@@ -56,7 +56,7 @@ while [[ $# -gt 0 ]]; do
 			;;
 		--jobs)
 			shift
-			make_jobs="$1"
+			make_jobs="-j$1"
 			;;
 		--os)
 			shift
@@ -124,7 +124,7 @@ test_downstream() { # owner repo make-target build-file build-hash
 		return 1
 	fi
 	make clean "$RGBDS_PATH"
-	make "-j$make_jobs" "$3" "$RGBDS_PATH"
+	make "$make_jobs" "$3" "$RGBDS_PATH"
 	hash="$(sha1sum -b "$4" | head -c 40)"
 	if [ "$hash" != "$5" ]; then
 		echo >&2 'SHA-1 hash of '"$4"' did not match: '"$hash"

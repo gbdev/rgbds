@@ -52,7 +52,7 @@ jobs:
         if: matrix.buildsys == 'make'
         run: |
           make develop -kj Q= CXX=${{ matrix.cxx }}
-          sudo make install -j4 Q=
+          sudo make install Q=
       - name: Build & install using CMake
         if: matrix.buildsys == 'cmake'
         # Since GitHub's runners are basically kitchen sinks,
@@ -98,7 +98,7 @@ jobs:
       - name: Run tests using our script
         if: matrix.buildsys == 'make'
         run: |
-          CXX=${{ matrix.cxx }} test/run-tests.sh --os ${{ matrix.os }} --jobs 4
+          CXX=${{ matrix.cxx }} test/run-tests.sh --os ${{ matrix.os }} --jobs $(getconf _NPROCESSORS_ONLN)
       - name: Run tests using CTest
         if: matrix.buildsys == 'cmake'
         run: |
@@ -311,7 +311,7 @@ jobs:
           test/fetch-test-deps.sh --get-deps ${{ matrix.os }}
       - name: Run tests
         run: |
-          test/run-tests.sh --os ${{ matrix.os }} --jobs 4
+          test/run-tests.sh --os ${{ matrix.os }} --jobs $(getconf _NPROCESSORS_ONLN)
 
   cygwin:
     strategy:
@@ -344,11 +344,11 @@ jobs:
             pkg-config
       - name: Build & install using Make
         run: | # Cygwin does not support `make develop` sanitizers ASan or UBSan
-          make -kj Q=
-          make install -j4 Q=
+          make -k -j $(getconf _NPROCESSORS_ONLN) Q=
+          make install Q=
       - name: Run tests
         run: |
-          test/run-tests.sh --jobs 4 --only-internal
+          test/run-tests.sh --jobs $(getconf _NPROCESSORS_ONLN) --only-internal
 
   freebsd:
     runs-on: ubuntu-latest
@@ -371,6 +371,6 @@ jobs:
             .github/scripts/install_deps.sh freebsd
           run: | # Leak detection is not supported on FreeBSD, so disable it.
             cmake -B build --preset develop -DTESTS_OS_NAME=freebsd
-            cmake --build build --verbose -- -k -j 4
+            cmake --build build --verbose -- -k -j $(getconf _NPROCESSORS_ONLN)
             ASAN_OPTIONS=detect_leaks=0 ctest --test-dir build --schedule-random --label-exclude external
             cmake --install build --verbose
