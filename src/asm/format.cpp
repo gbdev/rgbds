@@ -47,7 +47,7 @@ size_t FormatSpec::parseSpec(char const *spec) {
 		padZero = true;
 	}
 	// <width>
-	if (isDigit(spec[i])) {
+	if (isDigit<10>(spec[i])) {
 		width = parseSpecNumber();
 	}
 	// <frac>

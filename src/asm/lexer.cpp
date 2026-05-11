@@ -526,7 +526,8 @@ static int peek();
 static void shiftChar();
 static int bumpChar();
 static int nextChar();
-static uint32_t readDecimalNumber(int initial);
+template<uint32_t Base>
+static uint32_t readNumber(int initial, char const *prefix);
 
 static uint32_t readBracketedMacroArgNum() {
 	bool enableExpansions = lexerState->enableExpansions;
@@ -543,8 +544,8 @@ static uint32_t readBracketedMacroArgNum() {
 		c = nextChar();
 	}
 
-	if (isDigit(c)) {
-		uint32_t n = readDecimalNumber(bumpChar());
+	if (isDigit<10>(c)) {
+		uint32_t n = readNumber<10>(bumpChar(), nullptr);
 		if (n > INT32_MAX) {
 			error("Number in bracketed macro argument is too large");
 			return 0;
@@ -968,7 +969,7 @@ static std::tuple<uint32_t, uint32_t, bool> readFractionDigits() {
 		if (c == '_') {
 			checkDigitSeparator(prevWasSeparator, "fixed-point");
 			prevWasSeparator = true;
-		} else if (isDigit(c)) {
+		} else if (isDigit<10>(c)) {
 			prevWasSeparator = false;
 			int digit = c - '0';
 			if (dividend > (UINT32_MAX - digit) / 10 || divisor > UINT32_MAX / 10) {
@@ -976,7 +977,7 @@ static std::tuple<uint32_t, uint32_t, bool> readFractionDigits() {
 				    WARNING_LARGE_CONSTANT, "Fixed-point constant has too many fractional digits"
 				);
 				// Discard any additional digits
-				for (int d = peek(); isDigit(d) || d == '_'; c = d, d = nextChar()) {}
+				for (int d = peek(); isDigit<10>(d) || d == '_'; c = d, d = nextChar()) {}
 				return {dividend, divisor, c == '_'};
 			}
 			dividend = dividend * 10 + digit;
@@ -998,12 +999,12 @@ static uint8_t readPrecisionSuffix() {
 	bool empty = true;
 
 	// '_' is not allowed after 'q'/'Q'
-	for (int c = peek(); isDigit(c); c = nextChar()) {
+	for (int c = peek(); isDigit<10>(c); c = nextChar()) {
 		empty = false;
 		int digit = c - '0';
 		if (precision > (UINT8_MAX - digit) / 10) {
 			// Discard any additional digits
-			skipChars(isDigit);
+			skipChars(isDigit<10>);
 			// Return an invalid precision to cause a subsequent error, which is checked afterwards
 			// to cover the default `options.fixPrecision` as well, just in case
 			return UINT8_MAX;
@@ -1052,7 +1053,7 @@ static bool isValidDigit(char c) {
 }
 
 static bool isAsmBinDigit(int c) {
-	return isBinDigit(c) || c == options.binDigits[0] || c == options.binDigits[1];
+	return isDigit<2>(c) || c == options.binDigits[0] || c == options.binDigits[1];
 }
 
 static uint8_t parseAsmBinDigit(int c) {
@@ -1097,13 +1098,26 @@ void lexer_SetGfxDigits(char const digits[4]) {
 	}
 }
 
-template<uint32_t Base, typename IsDigitFnT, typename ParseSomeDigitFnT>
-static uint32_t readSomeNumber(
-    int initial, char const *prefix, IsDigitFnT isSomeDigit, ParseSomeDigitFnT parseSomeDigit
-) {
+template<uint32_t Base>
+static uint32_t readNumber(int initial, char const *prefix) {
+	auto isSomeDigit = [](int c) {
+		if constexpr (Base == 2) {
+			return isAsmBinDigit(c);
+		} else {
+			return isDigit<Base>(c);
+		}
+	};
+	auto parseSomeDigit = [](int c) {
+		if constexpr (Base == 2) {
+			return parseAsmBinDigit(c);
+		} else {
+			return parseDigit<Base>(c);
+		}
+	};
+
 	uint32_t number;
 	bool empty;
-	if (Base == 10) {
+	if constexpr (Base == 10) {
 		assume(prefix == nullptr);
 		number = parseSomeDigit(initial);
 		empty = false;
@@ -1140,22 +1154,6 @@ static uint32_t readSomeNumber(
 
 	checkDigitsEnding(empty, prefix, prevWasSeparator, "integer");
 	return number;
-}
-
-static uint32_t readBinaryNumber(char const *prefix) {
-	return readSomeNumber<2>(0, prefix, isAsmBinDigit, parseAsmBinDigit);
-}
-
-static uint32_t readOctalNumber(char const *prefix) {
-	return readSomeNumber<8>(0, prefix, isOctDigit, parseDigit);
-}
-
-static uint32_t readDecimalNumber(int initial) {
-	return readSomeNumber<10>(initial, nullptr, isDigit, parseDigit);
-}
-
-static uint32_t readHexNumber(char const *prefix) {
-	return readSomeNumber<16>(0, prefix, isHexDigit, parseHexDigit);
 }
 
 static uint32_t readGfxConstant() {
@@ -1765,15 +1763,15 @@ static Token yylex_NORMAL() {
 			case 'x':
 			case 'X':
 				shiftChar();
-				return Token(T_(NUMBER), readHexNumber("\"0x\""));
+				return Token(T_(NUMBER), readNumber<16>(0, "\"0x\""));
 			case 'o':
 			case 'O':
 				shiftChar();
-				return Token(T_(NUMBER), readOctalNumber("\"0o\""));
+				return Token(T_(NUMBER), readNumber<8>(0, "\"0o\""));
 			case 'b':
 			case 'B':
 				shiftChar();
-				return Token(T_(NUMBER), readBinaryNumber("\"0b\""));
+				return Token(T_(NUMBER), readNumber<2>(0, "\"0b\""));
 			}
 			[[fallthrough]];
 
@@ -1788,7 +1786,7 @@ static Token yylex_NORMAL() {
 		case '7':
 		case '8':
 		case '9': {
-			uint32_t n = readDecimalNumber(c);
+			uint32_t n = readNumber<10>(c, nullptr);
 
 			if (peek() == '.') {
 				shiftChar();
@@ -1799,20 +1797,20 @@ static Token yylex_NORMAL() {
 
 		case '&': // Either &=, binary AND, logical AND, or an octal constant
 			c = peek();
-			if (isOctDigit(c) || c == '_') {
-				return Token(T_(NUMBER), readOctalNumber("'&'"));
+			if (isDigit<8>(c) || c == '_') {
+				return Token(T_(NUMBER), readNumber<8>(0, "'&'"));
 			}
 			return oneOrTwo('=', T_(POP_ANDEQ), '&', T_(OP_LOGICAND), T_(OP_AND));
 
 		case '%': // Either %=, MOD, or a binary constant
 			c = peek();
 			if (isAsmBinDigit(c) || c == '_') {
-				return Token(T_(NUMBER), readBinaryNumber("'%'"));
+				return Token(T_(NUMBER), readNumber<2>(0, "'%'"));
 			}
 			return oneOrTwo('=', T_(POP_MODEQ), T_(OP_MOD));
 
 		case '$': // Hex constant
-			return Token(T_(NUMBER), readHexNumber("'$'"));
+			return Token(T_(NUMBER), readNumber<16>(0, "'$'"));
 
 		case '`': // Gfx constant
 			return Token(T_(NUMBER), readGfxConstant());

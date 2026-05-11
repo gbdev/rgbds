@@ -29,10 +29,6 @@ bool isPrintable(int c);
 bool isUpper(int c);
 bool isLower(int c);
 bool isLetter(int c);
-bool isDigit(int c);
-bool isBinDigit(int c);
-bool isOctDigit(int c);
-bool isHexDigit(int c);
 bool isAlphanumeric(int c);
 
 // Locale-independent character transform functions
@@ -42,8 +38,35 @@ char toUpper(char c);
 bool startsIdentifier(int c);
 bool continuesIdentifier(int c);
 
-uint8_t parseDigit(int c);
-uint8_t parseHexDigit(int c);
+template<uint32_t Base>
+bool isDigit(int c) {
+	static_assert(Base <= 36, "Base must be 36 or less to allow digits 0-9A-Z");
+	if constexpr (Base <= 10) {
+		return c >= '0' && c < static_cast<int>('0' + Base);
+	} else {
+		return isDigit<10>(c) || (c >= 'A' && c < static_cast<int>('A' + Base - 10))
+		       || (c >= 'a' && c < static_cast<int>('a' + Base - 10));
+	}
+}
+
+template<uint32_t Base>
+uint8_t parseDigit(int c) {
+	static_assert(Base <= 36, "Base must be 36 or less to allow digits 0-9A-Z");
+	assume(isDigit<Base>(c));
+	if constexpr (Base <= 10) {
+		return c - '0';
+	} else {
+		// Check digit ranges from greatest to least ('a'-'z', then 'A'-'Z', then '0'-'9')
+		if (c >= 'a') {
+			return c - 'a' + 10;
+		} else if (c >= 'A') {
+			return c - 'A' + 10;
+		} else {
+			return parseDigit<10>(c);
+		}
+	}
+}
+
 std::optional<uint64_t> parseNumber(char const *&str, NumberBase base = BASE_AUTO);
 std::optional<uint64_t> parseWholeNumber(char const *str, NumberBase base = BASE_AUTO);
 

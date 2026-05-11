@@ -11,7 +11,7 @@
 
 #include "helpers.hpp"
 #include "style.hpp"
-#include "util.hpp" // isDigit
+#include "util.hpp" // parseNumber
 
 void warnx(char const *fmt, ...) {
 	va_list ap;

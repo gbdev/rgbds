@@ -94,51 +94,41 @@ static std::string readKeyword(int initial) {
 	return keyword;
 }
 
-template<uint32_t Base, typename IsDigitFnT, typename ParseSomeDigitFnT>
-static yy::parser::symbol_type parseSomeNumber(
-    int initial,
-    char const *prefix,
-    char const *name,
-    IsDigitFnT isSomeDigit,
-    ParseSomeDigitFnT parseSomeDigit
-) {
+template<uint32_t Base>
+static yy::parser::symbol_type readNumber(int initial, char const *prefix, char const *name) {
 	LexerStackEntry &context = lexerStack.back();
 	uint32_t number;
-	if (Base == 10) {
+	if constexpr (Base == 10) {
 		assume(prefix == nullptr && name == nullptr);
-		number = parseSomeDigit(initial);
+		number = parseDigit<Base>(initial);
 	} else {
 		assume(initial == 0 && prefix != nullptr && name != nullptr);
 		int c = context.file.sgetc();
-		if (!isSomeDigit(c)) {
+		if (!isDigit<Base>(c)) {
 			scriptError("No %s digits found after %s", name, prefix);
 			return yy::parser::make_number(0);
 		}
-		number = parseSomeDigit(c);
+		number = parseDigit<Base>(c);
 		context.file.sbumpc();
 	}
-	for (int c = context.file.sgetc(); isSomeDigit(c) || c == '_'; c = context.file.snextc()) {
+	for (int c = context.file.sgetc(); isDigit<Base>(c) || c == '_'; c = context.file.snextc()) {
 		if (c != '_') {
-			number = number * Base + parseSomeDigit(c);
+			number = number * Base + parseDigit<Base>(c);
 		}
 	}
 	return yy::parser::make_number(number);
 }
 
-static yy::parser::symbol_type parseDecNumber(int initial) {
-	return parseSomeNumber<10>(initial, nullptr, nullptr, isDigit, parseDigit);
-}
-
 static yy::parser::symbol_type parseBinNumber(char const *prefix) {
-	return parseSomeNumber<2>(0, prefix, "binary", isBinDigit, parseDigit);
+	return readNumber<2>(0, prefix, "binary");
 }
 
 static yy::parser::symbol_type parseOctNumber(char const *prefix) {
-	return parseSomeNumber<8>(0, prefix, "octal", isOctDigit, parseDigit);
+	return readNumber<8>(0, prefix, "octal");
 }
 
 static yy::parser::symbol_type parseHexNumber(char const *prefix) {
-	return parseSomeNumber<16>(0, prefix, "hexadecimal", isHexDigit, parseHexDigit);
+	return readNumber<16>(0, prefix, "hexadecimal");
 }
 
 static yy::parser::symbol_type parseAnyNumber(int initial) {
@@ -159,7 +149,7 @@ static yy::parser::symbol_type parseAnyNumber(int initial) {
 			return parseBinNumber("\"0b\"");
 		}
 	}
-	return parseDecNumber(initial);
+	return readNumber<10>(initial, nullptr, nullptr);
 }
 
 static yy::parser::symbol_type parseString() {
@@ -230,7 +220,7 @@ yy::parser::symbol_type yylex() {
 		return parseBinNumber("'%'");
 	} else if (c == '&') {
 		return parseOctNumber("'&'");
-	} else if (isDigit(c)) {
+	} else if (isDigit<10>(c)) {
 		return parseAnyNumber(c);
 	} else if (isLetter(c)) {
 		std::string keyword = readKeyword(c);
