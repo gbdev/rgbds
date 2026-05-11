@@ -273,6 +273,11 @@ static void mergeSections(
 		fputs("    and also:\n", stderr);
 		sect.src->printBacktrace(sect.fileLine);
 	};
+	auto sectAlreadyDefinedError = []() {
+		// The empty string is a sentinel for the `sectAlreadyDefinedCallback` error,
+		// since it cannot be preformatted as a string
+		sectErrors.push_back("");
+	};
 
 	if (type != sect.type) {
 		sectError(
@@ -312,9 +317,7 @@ static void mergeSections(
 		}
 
 		case SECTION_NORMAL:
-			// The empty string is a sentinel for the `sectAlreadyDefinedCallback` error,
-			// since it cannot be preformatted as a string
-			sectError("");
+			sectAlreadyDefinedError();
 			break;
 		}
 	}
