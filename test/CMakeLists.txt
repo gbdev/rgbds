@@ -33,7 +33,7 @@ foreach(component "asm" "link" "fix" "gfx")
            COMMAND bash -- test.sh
            WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/${component}")
   set_tests_properties("rgb${component}" PROPERTIES REQUIRED_FILES "$<TARGET_FILE:rgb${component}>"
-                                                    PROCESSORS $ENV{CTEST_PARALLEL_LEVEL}
+                                                    PROCESSORS 1 # This test is entirely serial.
                                                     LABELS "rgb${component}")
 endforeach()
 set_tests_properties(rgbgfx PROPERTIES REQUIRED_FILES "$<TARGET_FILE:rgbgfx>;$<TARGET_FILE:randtilegen>;$<TARGET_FILE:rgbgfx_test>")

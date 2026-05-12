@@ -124,7 +124,8 @@ test_downstream() { # owner repo make-target build-file build-hash
 		return 1
 	fi
 	make clean "$RGBDS_PATH"
-	make "$make_jobs" "$3" "$RGBDS_PATH"
+	# shellcheck disable=SC2086 # (This word splitting is intentional.)
+	make $make_jobs "$3" "$RGBDS_PATH"
 	hash="$(sha1sum -b "$4" | head -c 40)"
 	if [ "$hash" != "$5" ]; then
 		echo >&2 'SHA-1 hash of '"$4"' did not match: '"$hash"
