@@ -118,6 +118,10 @@ FetchContent_MakeAvailable(ZLIB)
 if(NOT DEFINED ZLIB_INCLUDE_DIRS)
   set(ZLIB_INCLUDE_DIRS "${zlib_BINARY_DIR};${zlib_SOURCE_DIR}") # libpng's `genout` script relies on this variable to be set.
 endif()
+# Statically building zlib (from source) generates a target named differently.
+if(NOT TARGET ZLIB::ZLIB AND TARGET zlibstatic)
+  add_library(ZLIB::ZLIB ALIAS zlibstatic)
+endif()
 
 if(NOT DEFINED PNG_TESTS) # Unless overridden (e.g. in the cache), we don't care about libpng's tests.
   set(PNG_TESTS OFF)
