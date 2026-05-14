@@ -40,6 +40,15 @@ include(CMakeDependentOption)
 option(SANITIZERS "Build with sanitizers enabled" OFF)
 cmake_dependent_option(MORE_WARNINGS "Turn on more warnings" OFF "NOT MSVC" OFF)
 
+if(NOT DEFINED CMAKE_MSVC_RUNTIME_LIBRARY) # Allow this to be overridden from the CLI easily.
+  # We link against the Microsoft C++ runtime libs statically, except the debug-mode one.
+  # This is because Microsoft's license terms (through some indirection) allow us to redistribute
+  # the runtime lib code *except* the debug-mode libs'.
+  # Since we want to remain able to not think too hard about debug executables, we link against
+  # the debug libs dynamically, shifting the burden of obtaining them onto the recipient.
+  set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:DebugDLL>")
+endif()
+
 if(SANITIZERS)
   if(MSVC)
     message(STATUS "ASan enabled")
