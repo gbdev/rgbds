@@ -257,7 +257,7 @@ tidy: src/asm/parser.hpp src/link/script.hpp
 iwyu:
 	$Qenv ${MAKE} \
 		CXX="include-what-you-use" \
-		REALCXXFLAGS="-std=c++20 -I include"
+		REALCXXFLAGS="-std=c++2a -I include"
 
 # Target used in development to conveniently invoke RGBDS binaries with Wine.
 wine-shim:
