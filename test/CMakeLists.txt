@@ -33,7 +33,7 @@ foreach(component "asm" "link" "fix" "gfx")
            COMMAND bash -- test.sh
            WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/${component}")
   set_tests_properties("rgb${component}" PROPERTIES REQUIRED_FILES "$<TARGET_FILE:rgb${component}>"
-                                                    PROCESSORS 1
+                                                    PROCESSORS 1 # This test is entirely serial.
                                                     LABELS "rgb${component}")
 endforeach()
 set_tests_properties(rgbgfx PROPERTIES REQUIRED_FILES "$<TARGET_FILE:rgbgfx>;$<TARGET_FILE:randtilegen>;$<TARGET_FILE:rgbgfx_test>")
@@ -44,9 +44,9 @@ add_test(NAME fetch-test-deps
 set_tests_properties(fetch-test-deps PROPERTIES FIXTURES_SETUP "external-repos"
                                                 LABELS "external")
 add_test(NAME external
-         COMMAND bash -- run-tests.sh --only-external ${ONLY_FREE} ${OS_NAME}
+         COMMAND bash -- run-tests.sh --jobs $ENV{CTEST_PARALLEL_LEVEL} --only-external ${ONLY_FREE} ${OS_NAME}
          WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}")
 set_tests_properties(external PROPERTIES DEPENDS "rgbasm;rgblink;rgbfix;rgbgfx" # Only attempt building whole projects if each tool passes muster on its own.
-                                         PROCESSORS 4
+                                         PROCESSORS $ENV{CTEST_PARALLEL_LEVEL}
                                          FIXTURES_REQUIRED "external-repos"
                                          LABELS "external") # Allow filtering out external tests.
