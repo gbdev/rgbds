@@ -332,6 +332,10 @@ jobs:
       run:
         shell: C:\cygwin\bin\env.exe CYGWIN_NOWINPATH=1 CHERE_INVOKING=1 C:\cygwin\bin\bash.exe -o igncr '{0}'
     steps:
+      - name: Save Windows git location for the PATH
+        shell: pwsh
+        run: | # The `cygwin/cygwin-install-action` step will override the PATH with Cygwin's binaries
+          "ORIGINAL_GIT_DIR=$(Split-Path (Get-Command git).Source)" >> $env:GITHUB_ENV
       - name: Checkout repo
         uses: actions/checkout@v6
       - name: Setup Cygwin
@@ -352,6 +356,10 @@ jobs:
       - name: Run tests
         run: |
           test/run-tests.sh --only-internal
+      - name: Use Windows git location in the PATH
+        shell: pwsh
+        run: | # Prevents the `actions/checkout` post-job cleanup from using Cygwin's git binary
+          "$env:ORIGINAL_GIT_DIR" >> $env:GITHUB_PATH
 
   freebsd:
     runs-on: ubuntu-latest
