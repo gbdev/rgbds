@@ -1,4 +1,2 @@
-error: Section already declared as fixed at incompatible address $0000
-    at fragment-mismatch.asm(2)
-FATAL: Cannot create section "test" (1 error)
+FATAL: Section "test" already declared as fixed at incompatible address $0000
     at fragment-mismatch.asm(2)

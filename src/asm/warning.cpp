@@ -131,6 +131,16 @@ void fatal(char const *fmt, ...) {
 	exit(1);
 }
 
+[[noreturn]]
+void fatalNoTrace(std::function<void()> callback) {
+	style_Set(stderr, STYLE_RED, true);
+	fputs("FATAL: ", stderr);
+	style_Reset(stderr);
+	callback();
+
+	exit(1);
+}
+
 void requireZeroErrors() {
 	if (warnings.nbErrors != 0) {
 		style_Set(stderr, STYLE_RED, true);

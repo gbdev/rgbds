@@ -9,6 +9,7 @@
 #include <iterator>
 #include <optional>
 #include <stack>
+#include <stdarg.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -114,16 +115,33 @@ Section *sect_FindSectionByName(std::string const &name) {
 	return index ? &sections[*index] : nullptr;
 }
 
-#define sectError(...) \
-	do { \
-		error(__VA_ARGS__); \
-		++nbSectErrors; \
-	} while (0)
+static std::vector<std::string> sectErrors;
 
-static unsigned int
-    mergeSectUnion(Section &sect, uint32_t org, uint8_t alignment, uint16_t alignOffset) {
-	unsigned int nbSectErrors = 0;
+// Ideally we'd use a variadic template function and `std::forward` the variadic arguments to
+// `snprintf`; but passing `fmt` to `snprintf` triggers a `-Wformat-security` warning which we
+// can't prevent because GCC only supports the `[[gnu::format(printf, 1, 2)]]` attribute on
+// C-style variadic functions, not on variadic templates; so we have to use `vsnprintf`.
+void sectError(char const *fmt, ...) {
+	std::string result;
+	va_list args1, args2;
+	va_start(args1, fmt);
+	va_copy(args2, args1);
+	int len = vsnprintf(nullptr, 0, fmt, args1);
+	va_end(args1);
+	if (len < 0) {
+		// LCOV_EXCL_START
+		va_end(args2);
+		fatal("Error describing the error that occurred when merging a section");
+		// LCOV_EXCL_STOP
+	} else if (len > 0) {
+		result.resize(len);
+		vsnprintf(result.data(), len + 1, fmt, args2);
+	}
+	va_end(args2);
+	sectErrors.push_back(result);
+}
 
+static void mergeSectUnion(Section &sect, uint32_t org, uint8_t alignment, uint16_t alignOffset) {
 	assume(alignment < 16); // Should be ensured by the caller
 	uint32_t alignSize = 1u << alignment;
 	uint32_t alignMask = alignSize - 1;
@@ -136,11 +154,15 @@ static unsigned int
 		// If both are fixed, they must be the same
 		if (sect.org != UINT32_MAX && sect.org != org) {
 			sectError(
-			    "Section already declared as fixed at different address $%04" PRIx32, sect.org
+			    "Section \"%s\" already declared as fixed at different address $%04" PRIx32,
+			    sect.name.c_str(),
+			    sect.org
 			);
 		} else if (sect.align != 0 && ((org - sect.alignOfs) & sectAlignMask)) {
 			sectError(
-			    "Section already declared as aligned to %" PRIu32 " bytes (offset %" PRIu16 ")",
+			    "Section \"%s\" already declared as aligned to %" PRIu32 " bytes (offset %" PRIu16
+			    ")",
+			    sect.name.c_str(),
 			    sectAlignSize,
 			    sect.alignOfs
 			);
@@ -154,15 +176,17 @@ static unsigned int
 		if (sect.org != UINT32_MAX) {
 			if ((sect.org - alignOffset) & alignMask) {
 				sectError(
-				    "Section already declared as fixed at incompatible address $%04" PRIx32,
+				    "Section \"%s\" already declared as fixed at incompatible address $%04" PRIx32,
+				    sect.name.c_str(),
 				    sect.org
 				);
 			}
 			// Check if alignment offsets are compatible
 		} else if ((alignOffset & sectAlignMask) != (sect.alignOfs & alignMask)) {
 			sectError(
-			    "Section already declared with incompatible %" PRIu32
+			    "Section \"%s\" already declared with incompatible %" PRIu32
 			    "-byte alignment (offset %" PRIu16 ")",
+			    sect.name.c_str(),
 			    sectAlignSize,
 			    sect.alignOfs
 			);
@@ -172,14 +196,9 @@ static unsigned int
 			sect.alignOfs = alignOffset;
 		}
 	}
-
-	return nbSectErrors;
 }
 
-static unsigned int
-    mergeFragments(Section &sect, uint32_t org, uint8_t alignment, uint16_t alignOffset) {
-	unsigned int nbSectErrors = 0;
-
+static void mergeFragments(Section &sect, uint32_t org, uint8_t alignment, uint16_t alignOffset) {
 	assume(alignment < 16); // Should be ensured by the caller
 	uint32_t alignSize = 1u << alignment;
 	uint32_t alignMask = alignSize - 1;
@@ -197,11 +216,15 @@ static unsigned int
 		// If both are fixed, they must be the same
 		if (sect.org != UINT32_MAX && sect.org != curOrg) {
 			sectError(
-			    "Section already declared as fixed at incompatible address $%04" PRIx32, sect.org
+			    "Section \"%s\" already declared as fixed at incompatible address $%04" PRIx32,
+			    sect.name.c_str(),
+			    sect.org
 			);
 		} else if (sect.align != 0 && ((curOrg - sect.alignOfs) & sectAlignMask)) {
 			sectError(
-			    "Section already declared as aligned to %" PRIu32 " bytes (offset %" PRIu16 ")",
+			    "Section \"%s\" already declared as aligned to %" PRIu32 " bytes (offset %" PRIu16
+			    ")",
+			    sect.name.c_str(),
 			    sectAlignSize,
 			    sect.alignOfs
 			);
@@ -215,15 +238,17 @@ static unsigned int
 		if (uint32_t curOfs = (alignOffset - sect.size) & alignMask; sect.org != UINT32_MAX) {
 			if ((sect.org - curOfs) & alignMask) {
 				sectError(
-				    "Section already declared as fixed at incompatible address $%04" PRIx32,
+				    "Section \"%s\" already declared as fixed at incompatible address $%04" PRIx32,
+				    sect.name.c_str(),
 				    sect.org
 				);
 			}
 			// Check if alignment offsets are compatible
 		} else if ((curOfs & sectAlignMask) != (sect.alignOfs & alignMask)) {
 			sectError(
-			    "Section already declared with incompatible %" PRIu32
+			    "Section \"%s\" already declared with incompatible %" PRIu32
 			    "-byte alignment (offset %" PRIu16 ")",
+			    sect.name.c_str(),
 			    sectAlignSize,
 			    sect.alignOfs
 			);
@@ -233,8 +258,6 @@ static unsigned int
 			sect.alignOfs = curOfs;
 		}
 	}
-
-	return nbSectErrors;
 }
 
 static void mergeSections(
@@ -246,23 +269,41 @@ static void mergeSections(
     uint16_t alignOffset,
     SectionModifier mod
 ) {
-	unsigned int nbSectErrors = 0;
+	sectErrors.clear();
+
+	auto sectAlreadyDefinedCallback = [&sect]() {
+		fprintf(stderr, "Section \"%s\" already defined\n", sect.name.c_str());
+		fstk_TraceCurrent();
+		fputs("    and also:\n", stderr);
+		sect.src->printBacktrace(sect.fileLine);
+	};
+	auto sectAlreadyDefinedError = []() {
+		// The empty string is a sentinel for the `sectAlreadyDefinedCallback` error,
+		// since it cannot be preformatted as a string
+		sectErrors.push_back("");
+	};
 
 	if (type != sect.type) {
 		sectError(
-		    "Section already exists but with type `%s`", sectionTypeInfo[sect.type].name.c_str()
+		    "Section \"%s\" already exists but with type `%s`",
+		    sect.name.c_str(),
+		    sectionTypeInfo[sect.type].name.c_str()
 		);
 	}
 
 	if (sect.modifier != mod) {
-		sectError("Section already declared as `SECTION %s`", sectionModNames[sect.modifier]);
+		sectError(
+		    "Section \"%s\" already declared as `SECTION %s`",
+		    sect.name.c_str(),
+		    sectionModNames[sect.modifier]
+		);
 	} else {
 		switch (mod) {
 		case SECTION_UNION:
 		case SECTION_FRAGMENT: {
-			unsigned int (*merge)(Section &, uint32_t, uint8_t, uint16_t) =
+			void (*merge)(Section &, uint32_t, uint8_t, uint16_t) =
 			    mod == SECTION_UNION ? mergeSectUnion : mergeFragments;
-			nbSectErrors += merge(sect, org, alignment, alignOffset);
+			merge(sect, org, alignment, alignOffset);
 
 			// If the section's bank is unspecified, override it
 			if (sect.bank == UINT32_MAX) {
@@ -270,34 +311,45 @@ static void mergeSections(
 			}
 			// If both specify a bank, it must be the same one
 			else if (bank != UINT32_MAX && sect.bank != bank) {
-				sectError("Section already declared with different bank %" PRIu32, sect.bank);
+				sectError(
+				    "Section \"%s\" already declared with different bank %" PRIu32,
+				    sect.name.c_str(),
+				    sect.bank
+				);
 			}
 			break;
 		}
 
 		case SECTION_NORMAL:
-			errorNoTrace([&]() {
-				fputs("Section already defined\n", stderr);
-				fstk_TraceCurrent();
-				fputs("    and also:\n", stderr);
-				sect.src->printBacktrace(sect.fileLine);
-				++nbSectErrors;
-			});
+			sectAlreadyDefinedError();
 			break;
 		}
 	}
 
-	if (nbSectErrors) {
+	if (size_t nbSectErrors = sectErrors.size(); nbSectErrors == 1) {
+		// If there was only one error, print it as a fatal error
+		if (std::string const &message = sectErrors[0]; message.empty()) {
+			fatalNoTrace(sectAlreadyDefinedCallback);
+		} else {
+			fatal("%s", message.c_str());
+		}
+	} else if (nbSectErrors > 1) {
+		// If there were multiple errors, print each of them, followed by a fatal summary error
+		for (std::string const &message : sectErrors) {
+			if (message.empty()) {
+				errorNoTrace(sectAlreadyDefinedCallback);
+			} else {
+				error("%s", message.c_str());
+			}
+		}
 		fatal(
-		    "Cannot create section \"%s\" (%u error%s)",
+		    "Cannot create section \"%s\" (%zu error%s)",
 		    sect.name.c_str(),
 		    nbSectErrors,
 		    nbSectErrors == 1 ? "" : "s"
 		);
 	}
 }
-
-#undef sectError
 
 static Section *createSection(
     std::string const &name,
