@@ -128,7 +128,7 @@ MbcType mbc_ParseName(char const *name, uint8_t &tpp1Major, uint8_t &tpp1Minor) 
 	}
 
 	// Parse numeric MBC and return it as-is (unless it's too large)
-	if (char c = *ptr; isDigit(c) || c == '$' || c == '&' || c == '%') {
+	if (char c = *ptr; isDigit<10>(c) || c == '$' || c == '&' || c == '%') {
 		if (std::optional<uint64_t> mbc = parseWholeNumber(ptr); !mbc) {
 			fatalUnknownMBC(name);
 		} else if (*mbc > 0xFF) {
