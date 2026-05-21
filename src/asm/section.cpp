@@ -117,6 +117,10 @@ Section *sect_FindSectionByName(std::string const &name) {
 
 static std::vector<std::string> sectErrors;
 
+// Ideally we'd use a variadic template function and `std::forward` the variadic arguments to
+// `snprintf`; but passing `fmt` to `snprintf` triggers a `-Wformat-security` warning which we
+// can't prevent because GCC only supports the `[[gnu::format(printf, 1, 2)]]` attribute on
+// C-style variadic functions, not on variadic templates; so we have to use `vsnprintf`.
 void sectError(char const *fmt, ...) {
 	std::string result;
 	va_list args1, args2;
