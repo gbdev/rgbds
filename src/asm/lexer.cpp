@@ -2082,8 +2082,10 @@ finish: // Can't `break` out of a nested `for`-`switch`
 	return Token(T_(YYEOF));
 }
 
-template<bool Quick, typename PeekFnT, typename ShiftFnT, typename NextLineFnT>
-static Token skipToLeadingKeyword(PeekFnT peekFn, ShiftFnT shiftFn, NextLineFnT nextLineFn) {
+template<bool IsOptimized>
+static Token skipToLeadingKeyword(
+    InvocableR<int> auto peekFn, Procedure<> auto shiftFn, Procedure<> auto nextLineFn
+) {
 	for (;;) {
 		int c = peekFn();
 		if (lexerState->atLineStart) {
@@ -2103,11 +2105,11 @@ static Token skipToLeadingKeyword(PeekFnT peekFn, ShiftFnT shiftFn, NextLineFnT 
 				}
 				if (auto search = keywords.find(keyword); search != keywords.end()) {
 					// There has been one more call to `peekFn` than to `shiftFn`.
-					// If they are optimized "quick" functions for `ViewedContent`,
+					// If they are optimized functions for unexpanded `ViewedContent`,
 					// instead of `peek` and `shiftChar`, they have not updated
 					// `lexerState->expansionScanDistance`, so it must be incremented
 					// if it was previously zero.
-					if (Quick && lexerState->expansionScanDistance == 0) {
+					if (IsOptimized && lexerState->expansionScanDistance == 0) {
 						++lexerState->expansionScanDistance;
 					}
 					return Token(search->second);
