@@ -32,6 +32,7 @@
 
 %code {
 	#include <algorithm>
+	#include <concepts> // invocable
 	#include <inttypes.h>
 	#include <optional>
 	#include <stdio.h>
@@ -57,9 +58,10 @@
 
 	yy::parser::symbol_type yylex(); // Provided by lexer.cpp
 
-	template<typename NumCallbackFnT, typename StrCallbackFnT>
 	static auto handleSymbolByType(
-	    std::string const &symName, NumCallbackFnT numCallback, StrCallbackFnT strCallback
+	    std::string const &symName,
+	    std::invocable<Expression const &> auto numCallback,
+	    std::invocable<std::string const &> auto strCallback
 	) {
 		if (Symbol *sym = sym_FindScopedSymbol(symName); sym && sym->type == SYM_EQUS) {
 			return strCallback(*sym->getEqus());

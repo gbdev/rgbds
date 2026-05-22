@@ -3,6 +3,7 @@
 #include "asm/charmap.hpp"
 
 #include <algorithm>
+#include <concepts> // predicate
 #include <map>
 #include <optional>
 #include <stack>
@@ -65,8 +66,9 @@ struct Charmap {
 };
 
 // Traverse the trie depth-first to derive the character mappings in definition order
-template<typename CallbackFnT>
-bool forEachChar(Charmap const &charmap, CallbackFnT callback) {
+bool forEachChar(
+    Charmap const &charmap, std::predicate<size_t, std::string const &> auto callback
+) {
 	// clang-format off: nested initializers
 	for (std::stack<std::pair<size_t, std::string>> prefixes({{0, ""}}); !prefixes.empty();) {
 		// clang-format on

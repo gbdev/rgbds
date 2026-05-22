@@ -4,6 +4,7 @@
 #include <sys/stat.h>
 
 #include <algorithm>
+#include <concepts> // predicate
 #include <errno.h>
 #include <fcntl.h>
 #include <fstream>
@@ -527,6 +528,7 @@ static void shiftChar();
 static int bumpChar();
 static int nextChar();
 template<uint32_t Base>
+    requires BaseV<Base>
 static uint32_t readNumber(int initial, char const *prefix);
 
 static uint32_t readBracketedMacroArgNum() {
@@ -818,8 +820,7 @@ static int nextChar() {
 	return peek();
 }
 
-template<typename PredicateFnT>
-static int skipChars(PredicateFnT predicate) {
+static int skipChars(std::predicate<int> auto predicate) {
 	int c = peek();
 	while (predicate(c)) {
 		c = nextChar();
@@ -1099,6 +1100,7 @@ void lexer_SetGfxDigits(char const digits[4]) {
 }
 
 template<uint32_t Base>
+    requires BaseV<Base>
 static uint32_t readNumber(int initial, char const *prefix) {
 	auto isSomeDigit = [](int c) {
 		if constexpr (Base == 2) {
@@ -2283,8 +2285,7 @@ yy::parser::symbol_type yylex() {
 	}
 }
 
-template<typename CallbackFnT>
-static Capture makeCapture(char const *name, CallbackFnT callback) {
+static Capture makeCapture(char const *name, InvocableR<int, int> auto callback) {
 	// Due to parser internals, it reads the EOL after the expression before calling this.
 	// Thus, we don't need to keep one in the buffer afterwards.
 	// The following assumption checks that.
