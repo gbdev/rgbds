@@ -39,7 +39,10 @@ bool startsIdentifier(int c);
 bool continuesIdentifier(int c);
 
 template<uint32_t Base>
-    requires(Base > 0 && Base <= 36)
+inline constexpr bool BaseV = Base > 0 && Base <= 36;
+
+template<uint32_t Base>
+    requires BaseV<Base>
 bool isDigit(int c) {
 	if constexpr (Base <= 10) {
 		return c >= '0' && c < static_cast<int>('0' + Base);
@@ -50,7 +53,7 @@ bool isDigit(int c) {
 }
 
 template<uint32_t Base>
-    requires(Base > 0 && Base <= 36)
+    requires BaseV<Base>
 uint8_t parseDigit(int c) {
 	assume(isDigit<Base>(c));
 	if constexpr (Base <= 10) {

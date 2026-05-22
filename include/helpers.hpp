@@ -3,7 +3,7 @@
 #ifndef RGBDS_HELPERS_HPP
 #define RGBDS_HELPERS_HPP
 
-#include <type_traits> // is_void_v, invoke_result_t
+#include <type_traits>
 
 // Ideally we'd use `std::unreachable`, but it has insufficient compiler support
 #ifdef __GNUC__ // GCC or compatible
@@ -108,9 +108,20 @@ static constexpr int literal_strlen(char const (&)[SizeOfString]) {
 	return SizeOfString - 1; // Don't count the ending '\0'
 }
 
+// Concept for template parameters that must be an `enum` type
+template<typename EnumT>
+concept Enum = std::is_enum_v<EnumT>;
+
+// Concept for template parameters that must be a function returning `void`
+template<typename ProcedureFnT, typename... Args>
+concept Procedure = std::is_void_v<std::invoke_result_t<ProcedureFnT, Args...>>;
+
+// Concept for template parameters that must be a function returning a particular type
+template<typename FnT, typename ReturnT, typename... Args>
+concept InvocableR = std::is_invocable_r_v<ReturnT, FnT, Args...>;
+
 // For ad-hoc RAII in place of a `defer` statement or cross-platform `__attribute__((cleanup))`
-template<typename DeferredFnT>
-    requires(std::is_void_v<std::invoke_result_t<DeferredFnT>>)
+template<Procedure DeferredFnT>
 struct Defer {
 	DeferredFnT deferred;
 	Defer(DeferredFnT func) : deferred(func) {}

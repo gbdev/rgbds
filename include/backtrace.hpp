@@ -7,9 +7,9 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
-#include <type_traits> // is_invocable_r_v
 #include <vector>
 
+#include "helpers.hpp" // InvocableR
 #include "style.hpp"
 
 #define TRACE_SEPARATOR  "<-"
@@ -26,10 +26,12 @@ extern Tracing tracing;
 
 bool trace_ParseTraceDepth(char const *arg);
 
-template<typename NodeT, typename NameFnT, typename LineNoFnT>
-    requires std::is_invocable_r_v<char const *, NameFnT, NodeT const &>
-             && std::is_invocable_r_v<uint32_t, LineNoFnT, NodeT const &>
-void trace_PrintBacktrace(std::vector<NodeT> const &stack, NameFnT getName, LineNoFnT getLineNo) {
+template<typename NodeT>
+void trace_PrintBacktrace(
+    std::vector<NodeT> const &stack,
+    InvocableR<char const *, NodeT const &> auto getName,
+    InvocableR<uint32_t, NodeT const &> auto getLineNo
+) {
 	size_t n = stack.size();
 	if (n == 0) {
 		return; // LCOV_EXCL_LINE

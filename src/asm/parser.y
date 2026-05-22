@@ -58,11 +58,10 @@
 
 	yy::parser::symbol_type yylex(); // Provided by lexer.cpp
 
-	template<typename NumCallbackFnT, typename StrCallbackFnT>
-	    requires std::invocable<NumCallbackFnT, Expression const &>
-	             && std::invocable<StrCallbackFnT, std::string const &>
 	static auto handleSymbolByType(
-	    std::string const &symName, NumCallbackFnT numCallback, StrCallbackFnT strCallback
+	    std::string const &symName,
+	    std::invocable<Expression const &> auto numCallback,
+	    std::invocable<std::string const &> auto strCallback
 	) {
 		if (Symbol *sym = sym_FindScopedSymbol(symName); sym && sym->type == SYM_EQUS) {
 			return strCallback(*sym->getEqus());

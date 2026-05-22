@@ -10,7 +10,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string>
-#include <type_traits> // is_enum_v
 #include <utility>
 #include <vector>
 
@@ -31,8 +30,7 @@ struct WarningState {
 
 std::pair<WarningState, std::optional<uint32_t>> getInitialWarningState(std::string &flag);
 
-template<typename LevelEnumT>
-    requires std::is_enum_v<LevelEnumT>
+template<Enum LevelEnumT>
 struct WarningFlag {
 	char const *name;
 	LevelEnumT level;
@@ -40,16 +38,14 @@ struct WarningFlag {
 
 enum WarningBehavior { DISABLED, ENABLED, ERROR };
 
-template<typename WarningEnumT>
-    requires std::is_enum_v<WarningEnumT>
+template<Enum WarningEnumT>
 struct ParamWarning {
 	WarningEnumT firstID;
 	WarningEnumT lastID;
 	uint8_t defaultLevel;
 };
 
-template<typename WarningEnumT>
-    requires std::is_enum_v<WarningEnumT>
+template<Enum WarningEnumT>
 struct DiagnosticsState {
 	WarningState flagStates[WarningEnumT::NB_WARNINGS];
 	WarningState metaStates[WarningEnumT::NB_WARNINGS];
@@ -57,8 +53,7 @@ struct DiagnosticsState {
 	bool warningsAreErrors = false;
 };
 
-template<typename LevelEnumT, typename WarningEnumT>
-    requires std::is_enum_v<LevelEnumT> && std::is_enum_v<WarningEnumT>
+template<Enum LevelEnumT, Enum WarningEnumT>
 struct Diagnostics {
 	std::vector<WarningFlag<LevelEnumT>> metaWarnings;
 	std::vector<WarningFlag<LevelEnumT>> warningFlags;
@@ -76,8 +71,7 @@ struct Diagnostics {
 	void processWarningFlag(char const *flag);
 };
 
-template<typename LevelEnumT, typename WarningEnumT>
-    requires std::is_enum_v<LevelEnumT> && std::is_enum_v<WarningEnumT>
+template<Enum LevelEnumT, Enum WarningEnumT>
 WarningBehavior Diagnostics<LevelEnumT, WarningEnumT>::getWarningBehavior(WarningEnumT id) const {
 	// Check if warnings are globally disabled
 	if (!state.warningsEnabled) {
@@ -126,8 +120,7 @@ WarningBehavior Diagnostics<LevelEnumT, WarningEnumT>::getWarningBehavior(Warnin
 	return WarningBehavior::DISABLED;
 }
 
-template<typename LevelEnumT, typename WarningEnumT>
-    requires std::is_enum_v<LevelEnumT> && std::is_enum_v<WarningEnumT>
+template<Enum LevelEnumT, Enum WarningEnumT>
 void Diagnostics<LevelEnumT, WarningEnumT>::processWarningFlag(char const *flag) {
 	std::string rootFlag = flag;
 
