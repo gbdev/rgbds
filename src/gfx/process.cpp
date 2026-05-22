@@ -263,7 +263,6 @@ struct Image {
 			}
 
 			bool operator==(Iterator const &rhs) const { return coords() == rhs.coords(); }
-			bool operator!=(Iterator const &rhs) const { return !operator==(rhs); }
 		};
 
 	public:

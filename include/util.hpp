@@ -74,14 +74,14 @@ char const *printChar(int c);
 
 struct Uppercase {
 	// FNV-1a hash of an uppercased string
-	size_t operator()(std::string const &str) const {
+	constexpr size_t operator()(std::string const &str) const {
 		return std::accumulate(RANGE(str), size_t(0x811C9DC5), [](size_t hash, char c) {
 			return (hash ^ toUpper(c)) * 16777619;
 		});
 	}
 
 	// Compare two strings without case-sensitivity (by converting to uppercase)
-	bool operator()(std::string const &str1, std::string const &str2) const {
+	constexpr bool operator()(std::string const &str1, std::string const &str2) const {
 		return std::equal(RANGE(str1), RANGE(str2), [](char c1, char c2) {
 			return toUpper(c1) == toUpper(c2);
 		});
