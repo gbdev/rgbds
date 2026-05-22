@@ -66,18 +66,16 @@ struct Charmap {
 };
 
 // Traverse the trie depth-first to derive the character mappings in definition order
-template<typename CallbackFnT>
-    requires requires(CallbackFnT callback, size_t nodeIdx, std::string const &mapping) {
-	    { callback(nodeIdx, mapping) } -> std::same_as<bool>;
-    }
-bool forEachChar(Charmap const &charmap, CallbackFnT callback) {
+template<typename PredicateFnT>
+    requires std::predicate<PredicateFnT, size_t, std::string const &>
+bool forEachChar(Charmap const &charmap, PredicateFnT predicate) {
 	// clang-format off: nested initializers
 	for (std::stack<std::pair<size_t, std::string>> prefixes({{0, ""}}); !prefixes.empty();) {
 		// clang-format on
 		auto [nodeIdx, mapping] = std::move(prefixes.top());
 		prefixes.pop();
 		CharmapNode const &node = charmap.nodes[nodeIdx];
-		if (node.isTerminal() && !callback(nodeIdx, mapping)) {
+		if (node.isTerminal() && !predicate(nodeIdx, mapping)) {
 			return false;
 		}
 		for (auto const &[c, nextIdx] : node.children) {

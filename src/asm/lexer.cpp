@@ -4,7 +4,7 @@
 #include <sys/stat.h>
 
 #include <algorithm>
-#include <concepts> // same_as
+#include <concepts> // predicate
 #include <errno.h>
 #include <fcntl.h>
 #include <fstream>
@@ -821,9 +821,7 @@ static int nextChar() {
 }
 
 template<typename PredicateFnT>
-    requires requires(PredicateFnT predicate, int c) {
-	    { predicate(c) } -> std::same_as<bool>;
-    }
+    requires std::predicate<PredicateFnT, int>
 static int skipChars(PredicateFnT predicate) {
 	int c = peek();
 	while (predicate(c)) {
