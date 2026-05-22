@@ -6,9 +6,9 @@
 #include <memory>
 #include <stdint.h>
 #include <string>
-#include <type_traits> // is_same_t, remove_cvref_t
 #include <vector>
 
+#include "helpers.hpp" // QualifiedEquivalent
 #include "linkdefs.hpp"
 
 struct FileStackNode;
@@ -53,8 +53,7 @@ struct Section {
 
 private:
 	// Template class for both const and non-const iterators over the "pieces" of this section
-	template<typename SectionT>
-	    requires(std::is_same_v<std::remove_cvref_t<SectionT>, Section>)
+	template<QualifiedEquivalent<Section> SectionT>
 	class PiecesIterable {
 		SectionT *_firstPiece;
 

@@ -120,6 +120,10 @@ concept Procedure = std::is_void_v<std::invoke_result_t<ProcedureFnT, Args...>>;
 template<typename FnT, typename ReturnT, typename... Args>
 concept InvocableR = std::is_invocable_r_v<ReturnT, FnT, Args...>;
 
+// Concept for template parameters that must match a particular type modulo cv-qualifiers
+template<typename T, typename UnqualifiedT>
+concept QualifiedEquivalent = std::is_same_v<std::remove_cvref_t<T>, UnqualifiedT>;
+
 // For ad-hoc RAII in place of a `defer` statement or cross-platform `__attribute__((cleanup))`
 template<Procedure DeferredFnT>
 struct Defer {
