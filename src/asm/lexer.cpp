@@ -21,6 +21,7 @@
 #include <string>
 #include <string_view>
 #include <tuple>
+#include <type_traits> // is_invocable_r_v
 #include <unordered_map>
 #include <utility>
 #include <variant>
@@ -2288,9 +2289,7 @@ yy::parser::symbol_type yylex() {
 }
 
 template<typename CallbackFnT>
-    requires requires(CallbackFnT callback, int tokenType) {
-	    { callback(tokenType) } -> std::same_as<int>;
-    }
+    requires std::is_invocable_r_v<int, CallbackFnT, int>
 static Capture makeCapture(char const *name, CallbackFnT callback) {
 	// Due to parser internals, it reads the EOL after the expression before calling this.
 	// Thus, we don't need to keep one in the buffer afterwards.
