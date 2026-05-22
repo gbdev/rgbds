@@ -12,6 +12,8 @@
 #include <unordered_map>
 #include <utility>
 
+#include "helpers.hpp" // Enum
+
 // A wrapper around iterables to reverse their iteration order; used in `for`-each loops.
 template<typename IterableT>
 struct ReversedIterable {
@@ -78,7 +80,7 @@ public:
 };
 
 // An iterable of `enum` values in the half-open range [start, stop).
-template<typename EnumT>
+template<Enum EnumT>
 class EnumSeq {
 	EnumT _start;
 	EnumT _stop;
@@ -169,7 +171,7 @@ template<typename IterableT>
 using ZipHolder = std::conditional_t<
     std::is_lvalue_reference_v<IterableT>,
     IterableT,
-    std::remove_cv_t<std::remove_reference_t<IterableT>>>;
+    std::remove_cvref_t<IterableT>>;
 
 // Iterates over N containers at once, yielding tuples of N items at a time.
 // Does the same number of iterations as the first container's iterator!
