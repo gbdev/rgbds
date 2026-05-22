@@ -40,9 +40,9 @@ jobs:
         exclude: # Don't use `g++` on macOS; it's just an alias to `clang++`.
           - { os: macos-15-intel, cxx: g++ }
           - { os: macos-26, cxx: g++ }
-        include: # Use `g++-9`, the earliest GCC version we support, on the earliest Ubuntu runner.
-          - { os: ubuntu-22.04, cxx: g++-9, buildsys: make }
-          - { os: ubuntu-22.04, cxx: g++-9, buildsys: cmake }
+        include: # Use `g++-10`, the earliest GCC version we support, on the earliest Ubuntu runner.
+          - { os: ubuntu-22.04, cxx: g++-10, buildsys: make }
+          - { os: ubuntu-22.04, cxx: g++-10, buildsys: cmake }
       fail-fast: false
     runs-on: ${{ matrix.os }}
     steps:

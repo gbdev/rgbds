@@ -31,8 +31,7 @@ WARNFLAGS := -Wall -pedantic -Wno-unknown-warning-option -Wno-gnu-zero-variadic-
 # Overridable CXXFLAGS
 CXXFLAGS     ?= -O3 -flto -DNDEBUG
 # Non-overridable CXXFLAGS
-# GCC 9 doesn't support `-std=c++20`, and all later GCCs treat it as equivalent to `-std=c++2a`.
-REALCXXFLAGS := ${CXXFLAGS} ${WARNFLAGS} -std=c++2a -I include -fno-exceptions -fno-rtti
+REALCXXFLAGS := ${CXXFLAGS} ${WARNFLAGS} -std=c++20 -I include -fno-exceptions -fno-rtti
 # Overridable LDFLAGS
 LDFLAGS      ?=
 # Non-overridable LDFLAGS
@@ -257,7 +256,7 @@ tidy: src/asm/parser.hpp src/link/script.hpp
 iwyu:
 	$Qenv ${MAKE} \
 		CXX="include-what-you-use" \
-		REALCXXFLAGS="-std=c++2a -I include"
+		REALCXXFLAGS="-std=c++20 -I include"
 
 # Target used in development to conveniently invoke RGBDS binaries with Wine.
 wine-shim:

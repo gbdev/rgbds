@@ -20,7 +20,7 @@ case "${OS%%-*}" in
 				pkgs="$pkgs libz-mingw-w64-dev g++-mingw-w64-x86-64-win32"
 				TOOLSET=
 			;;
-			g++-9 | lcov)
+			g++-10 | lcov)
 				pkgs="$pkgs libpng-dev pkgconf $TOOLSET"
 				TOOLSET=
 			;;
