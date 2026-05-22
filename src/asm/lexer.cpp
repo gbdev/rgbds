@@ -2082,6 +2082,49 @@ finish: // Can't `break` out of a nested `for`-`switch`
 	return Token(T_(YYEOF));
 }
 
+static Token skipToLeadingKeyword(
+    InvocableR<int> auto peekFn,
+    Procedure<> auto shiftFn,
+    Procedure<> auto nextLineFn,
+    Procedure<> auto finalizeFn
+) {
+	for (;;) {
+		int c = peekFn();
+		if (lexerState->atLineStart) {
+			lexerState->atLineStart = false;
+			while (isBlankSpace(c)) {
+				shiftFn();
+				c = peekFn();
+			}
+			if (c == EOF) {
+				return Token(T_(YYEOF));
+			} else if (isLetter(c)) {
+				std::string keyword(1, c);
+				shiftFn();
+				for (c = peekFn(); continuesIdentifier(c); c = peekFn()) {
+					keyword += c;
+					shiftFn();
+				}
+				if (auto search = keywords.find(keyword); search != keywords.end()) {
+					finalizeFn();
+					return Token(search->second);
+				}
+			}
+		}
+		shiftFn();
+		if (c == EOF) {
+			return Token(T_(YYEOF));
+		} else if (isNewline(c)) {
+			// Like `handleCRLF` but calling generic `shiftFn`
+			if (c == '\r' && peekFn() == '\n') {
+				shiftFn();
+			}
+			nextLineFn();
+			lexerState->atLineStart = true;
+		}
+	}
+}
+
 // This function is called when capturing `REPT`/`FOR` loops and `MACRO` bodies,
 // and when skipping unexecuted `IF`/`ELIF`/`ELSE` blocks and `REPT`/`FOR` loops.
 // It expects that these constructs' `ENDC`/`ENDR`/`ENDM` closing tokens are only
@@ -2098,28 +2141,39 @@ finish: // Can't `break` out of a nested `for`-`switch`
 static Token skipToLeadingKeyword() {
 	assume(!lexerState->enableExpansions);
 
-	for (;;) {
-		if (lexerState->atLineStart) {
-			lexerState->atLineStart = false;
-			if (int c = skipChars(isBlankSpace); c == EOF) {
-				return Token(T_(YYEOF));
-			} else if (isLetter(c)) {
-				std::string keyword(1, c);
-				for (c = nextChar(); continuesIdentifier(c); c = nextChar()) {
-					keyword += c;
-				}
-				if (auto search = keywords.find(keyword); search != keywords.end()) {
-					return Token(search->second);
-				}
+	if (std::holds_alternative<ViewedContent>(lexerState->content)
+	    && lexerState->expansionStack.empty()) {
+		// Optimize the common case (a fully-read assembly file without ongoing
+		// expansions) to avoid the bookkeeping of `peek` and `shiftChar`.
+		auto &view = std::get<ViewedContent>(lexerState->content);
+		char const *ptr = view.span.ptr.get();
+		auto quickPeek = [&]() { return view.offset < view.span.size ? ptr[view.offset] : EOF; };
+		auto quickNextLine = []() { ++lexerState->lineNo; };
+		auto quickFinalize = []() {
+			// When `skipToLeadingKeyword` returns a token, there has been one more
+			// call to `quickPeek` than to `quickNextLine`. Unlike `peek` and `shiftChar`,
+			// the optimized functions do not update `lexerState->expansionScanDistance`,
+			// so it must be incrementedif it was previously zero.
+			if (lexerState->expansionScanDistance == 0) {
+				++lexerState->expansionScanDistance;
 			}
+		};
+		if (lexerState->capturing) {
+			assume(lexerState->captureBuf == nullptr);
+			auto quickCaptureShiftChar = [&]() {
+				++view.offset;
+				++lexerState->captureSize;
+			};
+			return skipToLeadingKeyword(
+			    quickPeek, quickCaptureShiftChar, quickNextLine, quickFinalize
+			);
+		} else {
+			auto quickShiftChar = [&]() { ++view.offset; };
+			return skipToLeadingKeyword(quickPeek, quickShiftChar, quickNextLine, quickFinalize);
 		}
-		if (int c = bumpChar(); c == EOF) {
-			return Token(T_(YYEOF));
-		} else if (isNewline(c)) {
-			handleCRLF(c);
-			nextLine();
-			lexerState->atLineStart = true;
-		}
+	} else {
+		auto finalize = []() {};
+		return skipToLeadingKeyword(peek, shiftChar, nextLine, finalize);
 	}
 }
 
