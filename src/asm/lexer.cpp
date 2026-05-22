@@ -2082,9 +2082,11 @@ finish: // Can't `break` out of a nested `for`-`switch`
 	return Token(T_(YYEOF));
 }
 
-template<bool IsOptimized>
 static Token skipToLeadingKeyword(
-    InvocableR<int> auto peekFn, Procedure<> auto shiftFn, Procedure<> auto nextLineFn
+    InvocableR<int> auto peekFn,
+    Procedure<> auto shiftFn,
+    Procedure<> auto nextLineFn,
+    Procedure<> auto finalizeFn
 ) {
 	for (;;) {
 		int c = peekFn();
@@ -2104,14 +2106,7 @@ static Token skipToLeadingKeyword(
 					shiftFn();
 				}
 				if (auto search = keywords.find(keyword); search != keywords.end()) {
-					// There has been one more call to `peekFn` than to `shiftFn`.
-					// If they are optimized functions for unexpanded `ViewedContent`,
-					// instead of `peek` and `shiftChar`, they have not updated
-					// `lexerState->expansionScanDistance`, so it must be incremented
-					// if it was previously zero.
-					if (IsOptimized && lexerState->expansionScanDistance == 0) {
-						++lexerState->expansionScanDistance;
-					}
+					finalizeFn();
 					return Token(search->second);
 				}
 			}
@@ -2154,19 +2149,31 @@ static Token skipToLeadingKeyword() {
 		char const *ptr = view.span.ptr.get();
 		auto quickPeek = [&]() { return view.offset < view.span.size ? ptr[view.offset] : EOF; };
 		auto quickNextLine = []() { ++lexerState->lineNo; };
+		auto quickFinalize = []() {
+			// When `skipToLeadingKeyword` returns a token, there has been one more
+			// call to `quickPeek` than to `quickNextLine`. Unlike `peek` and `shiftChar`,
+			// the optimized functions do not update `lexerState->expansionScanDistance`,
+			// so it must be incrementedif it was previously zero.
+			if (lexerState->expansionScanDistance == 0) {
+				++lexerState->expansionScanDistance;
+			}
+		};
 		if (lexerState->capturing) {
 			assume(lexerState->captureBuf == nullptr);
 			auto quickCaptureShiftChar = [&]() {
 				++view.offset;
 				++lexerState->captureSize;
 			};
-			return skipToLeadingKeyword<true>(quickPeek, quickCaptureShiftChar, quickNextLine);
+			return skipToLeadingKeyword(
+			    quickPeek, quickCaptureShiftChar, quickNextLine, quickFinalize
+			);
 		} else {
 			auto quickShiftChar = [&]() { ++view.offset; };
-			return skipToLeadingKeyword<true>(quickPeek, quickShiftChar, quickNextLine);
+			return skipToLeadingKeyword(quickPeek, quickShiftChar, quickNextLine, quickFinalize);
 		}
 	} else {
-		return skipToLeadingKeyword<false>(peek, shiftChar, nextLine);
+		auto finalize = []() {};
+		return skipToLeadingKeyword(peek, shiftChar, nextLine, finalize);
 	}
 }
 
