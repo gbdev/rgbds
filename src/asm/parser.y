@@ -58,6 +58,15 @@
 	yy::parser::symbol_type yylex(); // Provided by lexer.cpp
 
 	template<typename NumCallbackFnT, typename StrCallbackFnT>
+	    requires requires(
+	        NumCallbackFnT numCallback,
+	        StrCallbackFnT strCallback,
+	        Expression const &expr,
+	        std::string const &str
+	    ) {
+		    numCallback(expr);
+		    strCallback(str);
+	    }
 	static auto handleSymbolByType(
 	    std::string const &symName, NumCallbackFnT numCallback, StrCallbackFnT strCallback
 	) {

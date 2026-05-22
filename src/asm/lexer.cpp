@@ -4,6 +4,7 @@
 #include <sys/stat.h>
 
 #include <algorithm>
+#include <concepts> // same_as
 #include <errno.h>
 #include <fcntl.h>
 #include <fstream>
@@ -527,6 +528,7 @@ static void shiftChar();
 static int bumpChar();
 static int nextChar();
 template<uint32_t Base>
+    requires(Base > 0 && Base <= 36)
 static uint32_t readNumber(int initial, char const *prefix);
 
 static uint32_t readBracketedMacroArgNum() {
@@ -819,6 +821,9 @@ static int nextChar() {
 }
 
 template<typename PredicateFnT>
+    requires requires(PredicateFnT predicate, int c) {
+	    { predicate(c) } -> std::same_as<bool>;
+    }
 static int skipChars(PredicateFnT predicate) {
 	int c = peek();
 	while (predicate(c)) {
@@ -1099,6 +1104,7 @@ void lexer_SetGfxDigits(char const digits[4]) {
 }
 
 template<uint32_t Base>
+    requires(Base > 0 && Base <= 36)
 static uint32_t readNumber(int initial, char const *prefix) {
 	auto isSomeDigit = [](int c) {
 		if constexpr (Base == 2) {
@@ -2284,6 +2290,9 @@ yy::parser::symbol_type yylex() {
 }
 
 template<typename CallbackFnT>
+    requires requires(CallbackFnT callback, int tokenType) {
+	    { callback(tokenType) } -> std::same_as<int>;
+    }
 static Capture makeCapture(char const *name, CallbackFnT callback) {
 	// Due to parser internals, it reads the EOL after the expression before calling this.
 	// Thus, we don't need to keep one in the buffer afterwards.

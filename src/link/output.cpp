@@ -11,6 +11,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <tuple>
+#include <type_traits> // is_void_v, invoke_result_t
 #include <variant>
 #include <vector>
 
@@ -311,6 +312,7 @@ static bool compareSymbols(SortedSymbol const &sym1, SortedSymbol const &sym2) {
 }
 
 template<typename CallbackFnT>
+    requires std::is_void_v<std::invoke_result_t<CallbackFnT, Section const &>>
 static void forEachSortedSection(SortedSections const &bankSections, CallbackFnT callback) {
 	for (Section const *sect : bankSections.zeroLenSections) {
 		for (Section const &piece : sect->pieces()) {
@@ -412,6 +414,7 @@ static void writeSectionName(std::string const &name, FILE *file) {
 }
 
 template<typename CallbackFnT>
+    requires std::is_void_v<std::invoke_result_t<CallbackFnT, Section const &>>
 uint16_t forEachSection(SortedSections const &sectList, CallbackFnT callback) {
 	uint16_t used = 0;
 	auto section = sectList.sections.begin();

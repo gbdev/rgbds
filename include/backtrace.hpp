@@ -3,6 +3,7 @@
 #ifndef RGBDS_BACKTRACE_HPP
 #define RGBDS_BACKTRACE_HPP
 
+#include <concepts> // same_as
 #include <inttypes.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -26,6 +27,10 @@ extern Tracing tracing;
 bool trace_ParseTraceDepth(char const *arg);
 
 template<typename NodeT, typename NameFnT, typename LineNoFnT>
+    requires requires(NodeT const &item, NameFnT getName, LineNoFnT getLineNo) {
+	    { getName(item) } -> std::same_as<char const *>;
+	    { getLineNo(item) } -> std::same_as<uint32_t>;
+    }
 void trace_PrintBacktrace(std::vector<NodeT> const &stack, NameFnT getName, LineNoFnT getLineNo) {
 	size_t n = stack.size();
 	if (n == 0) {

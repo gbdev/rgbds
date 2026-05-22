@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string>
+#include <type_traits> // is_enum_v
 #include <utility>
 #include <vector>
 
@@ -31,6 +32,7 @@ struct WarningState {
 std::pair<WarningState, std::optional<uint32_t>> getInitialWarningState(std::string &flag);
 
 template<typename LevelEnumT>
+    requires std::is_enum_v<LevelEnumT>
 struct WarningFlag {
 	char const *name;
 	LevelEnumT level;
@@ -39,6 +41,7 @@ struct WarningFlag {
 enum WarningBehavior { DISABLED, ENABLED, ERROR };
 
 template<typename WarningEnumT>
+    requires std::is_enum_v<WarningEnumT>
 struct ParamWarning {
 	WarningEnumT firstID;
 	WarningEnumT lastID;
@@ -46,6 +49,7 @@ struct ParamWarning {
 };
 
 template<typename WarningEnumT>
+    requires std::is_enum_v<WarningEnumT>
 struct DiagnosticsState {
 	WarningState flagStates[WarningEnumT::NB_WARNINGS];
 	WarningState metaStates[WarningEnumT::NB_WARNINGS];
@@ -54,6 +58,7 @@ struct DiagnosticsState {
 };
 
 template<typename LevelEnumT, typename WarningEnumT>
+    requires std::is_enum_v<LevelEnumT> && std::is_enum_v<WarningEnumT>
 struct Diagnostics {
 	std::vector<WarningFlag<LevelEnumT>> metaWarnings;
 	std::vector<WarningFlag<LevelEnumT>> warningFlags;
@@ -72,6 +77,7 @@ struct Diagnostics {
 };
 
 template<typename LevelEnumT, typename WarningEnumT>
+    requires std::is_enum_v<LevelEnumT> && std::is_enum_v<WarningEnumT>
 WarningBehavior Diagnostics<LevelEnumT, WarningEnumT>::getWarningBehavior(WarningEnumT id) const {
 	// Check if warnings are globally disabled
 	if (!state.warningsEnabled) {
@@ -121,6 +127,7 @@ WarningBehavior Diagnostics<LevelEnumT, WarningEnumT>::getWarningBehavior(Warnin
 }
 
 template<typename LevelEnumT, typename WarningEnumT>
+    requires std::is_enum_v<LevelEnumT> && std::is_enum_v<WarningEnumT>
 void Diagnostics<LevelEnumT, WarningEnumT>::processWarningFlag(char const *flag) {
 	std::string rootFlag = flag;
 

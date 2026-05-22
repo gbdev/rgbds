@@ -15,6 +15,7 @@
 #include <string.h>
 #include <string>
 #include <string_view>
+#include <type_traits> // is_unsigned_v
 #include <utility>
 #include <vector>
 
@@ -202,7 +203,8 @@ static void warnExtraColors(
 }
 
 // Parses the initial part of a string_view, advancing the "read index" as it does
-template<typename UintT> // Should be uint*_t
+template<typename UintT>
+    requires std::is_unsigned_v<UintT>
 static std::optional<UintT> parseDec(std::string const &str, size_t &n) {
 	UintT value = 0;
 	auto result = std::from_chars(str.data() + n, str.data() + str.length(), value);

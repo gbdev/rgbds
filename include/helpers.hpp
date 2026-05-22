@@ -3,6 +3,8 @@
 #ifndef RGBDS_HELPERS_HPP
 #define RGBDS_HELPERS_HPP
 
+#include <type_traits> // is_void_v, invoke_result_t
+
 // Ideally we'd use `std::unreachable`, but it has insufficient compiler support
 #ifdef __GNUC__ // GCC or compatible
 	#ifdef NDEBUG
@@ -101,12 +103,14 @@ static inline int clz(unsigned int x) {
 
 // MSVC does not inline `strlen()` or `.length()` of a constant string
 template<int SizeOfString>
+    requires(SizeOfString > 0)
 static constexpr int literal_strlen(char const (&)[SizeOfString]) {
 	return SizeOfString - 1; // Don't count the ending '\0'
 }
 
 // For ad-hoc RAII in place of a `defer` statement or cross-platform `__attribute__((cleanup))`
 template<typename DeferredFnT>
+    requires(std::is_void_v<std::invoke_result_t<DeferredFnT>>)
 struct Defer {
 	DeferredFnT deferred;
 	Defer(DeferredFnT func) : deferred(func) {}

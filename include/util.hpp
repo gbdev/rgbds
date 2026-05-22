@@ -39,8 +39,8 @@ bool startsIdentifier(int c);
 bool continuesIdentifier(int c);
 
 template<uint32_t Base>
+    requires(Base > 0 && Base <= 36)
 bool isDigit(int c) {
-	static_assert(Base <= 36, "Base must be 36 or less to allow digits 0-9A-Z");
 	if constexpr (Base <= 10) {
 		return c >= '0' && c < static_cast<int>('0' + Base);
 	} else {
@@ -50,8 +50,8 @@ bool isDigit(int c) {
 }
 
 template<uint32_t Base>
+    requires(Base > 0 && Base <= 36)
 uint8_t parseDigit(int c) {
-	static_assert(Base <= 36, "Base must be 36 or less to allow digits 0-9A-Z");
 	assume(isDigit<Base>(c));
 	if constexpr (Base <= 10) {
 		return c - '0';
