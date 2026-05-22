@@ -271,18 +271,6 @@ static void mergeSections(
 ) {
 	sectErrors.clear();
 
-	auto sectAlreadyDefinedCallback = [&sect]() {
-		fprintf(stderr, "Section \"%s\" already defined\n", sect.name.c_str());
-		fstk_TraceCurrent();
-		fputs("    and also:\n", stderr);
-		sect.src->printBacktrace(sect.fileLine);
-	};
-	auto sectAlreadyDefinedError = []() {
-		// The empty string is a sentinel for the `sectAlreadyDefinedCallback` error,
-		// since it cannot be preformatted as a string
-		sectErrors.push_back("");
-	};
-
 	if (type != sect.type) {
 		sectError(
 		    "Section \"%s\" already exists but with type `%s`",
@@ -321,26 +309,28 @@ static void mergeSections(
 		}
 
 		case SECTION_NORMAL:
-			sectAlreadyDefinedError();
+			// Only union/fragment sections can end up with multiple errors queued in `sectErrors`,
+			// and they cannot encounter this error, so it's okay for this one to skip the queue.
+			// Queueing it in `sectErrors` would require a sentinel value anyway (e.g. an empty
+			// string) to handle the "no trace" callback.
+			assume(sectErrors.empty());
+			fatalNoTrace([&sect]() {
+				fprintf(stderr, "Section \"%s\" already defined\n", sect.name.c_str());
+				fstk_TraceCurrent();
+				fputs("    and also:\n", stderr);
+				sect.src->printBacktrace(sect.fileLine);
+			});
 			break;
 		}
 	}
 
 	if (size_t nbSectErrors = sectErrors.size(); nbSectErrors == 1) {
 		// If there was only one error, print it as a fatal error
-		if (std::string const &message = sectErrors[0]; message.empty()) {
-			fatalNoTrace(sectAlreadyDefinedCallback);
-		} else {
-			fatal("%s", message.c_str());
-		}
+		fatal("%s", sectErrors.front().c_str());
 	} else if (nbSectErrors > 1) {
 		// If there were multiple errors, print each of them, followed by a fatal summary error
 		for (std::string const &message : sectErrors) {
-			if (message.empty()) {
-				errorNoTrace(sectAlreadyDefinedCallback);
-			} else {
-				error("%s", message.c_str());
-			}
+			error("%s", message.c_str());
 		}
 		fatal(
 		    "Cannot create section \"%s\" (%zu error%s)",
