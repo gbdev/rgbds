@@ -654,7 +654,7 @@ static std::shared_ptr<std::string> readMacroArg() {
 
 int LexerState::peekChar() {
 	// This is `.peekCharAhead()` modified for zero lookahead distance
-	for (Expansion &exp : expansionStack) {
+	for (Expansion const &exp : expansionStack) {
 		if (exp.offset < exp.size()) {
 			return static_cast<uint8_t>((*exp.contents)[exp.offset]);
 		}
@@ -684,7 +684,7 @@ int LexerState::peekCharAhead() {
 	// We only need one character of lookahead, for macro arguments
 	uint8_t distance = 1;
 
-	for (Expansion &exp : expansionStack) {
+	for (Expansion const &exp : expansionStack) {
 		// An expansion that has reached its end will have `exp.offset` == `exp.size()`,
 		// and `.peekCharAhead()` will continue with its parent
 		assume(exp.offset <= exp.size());
@@ -777,7 +777,7 @@ static void shiftChar() {
 	for (;;) {
 		if (!lexerState->expansionStack.empty()) {
 			// Advance within the current expansion
-			if (Expansion &exp = lexerState->expansionStack.front(); exp.advance()) {
+			if (lexerState->expansionStack.front().advance()) {
 				// When advancing would go past an expansion's end,
 				// move up to its parent and try again to advance
 				lexerState->expansionStack.pop_front();
@@ -850,7 +850,7 @@ void lexer_TraceStringExpansions() {
 		return;
 	}
 
-	for (Expansion &exp : lexerState->expansionStack) {
+	for (Expansion const &exp : lexerState->expansionStack) {
 		// Only print EQUS expansions, not string args
 		if (exp.name) {
 			style_Set(stderr, STYLE_CYAN, false);
