@@ -26,7 +26,8 @@ PNGLDLIBS  := `${PKG_CONFIG} --libs-only-l libpng`
 # Note: if this comes up empty, `version.cpp` will automatically fall back to last release number
 VERSION_STRING := `git --git-dir=.git -c safe.directory='*' describe --tags --dirty --always 2>/dev/null`
 
-WARNFLAGS := -Wall -pedantic -Wno-unknown-warning-option -Wno-gnu-zero-variadic-macro-arguments
+WARNFLAGS := -Wall -pedantic -Wno-unknown-warning-option \
+             -Wno-gnu-zero-variadic-macro-arguments -Wno-unused-but-set-variable
 
 # Overridable CXXFLAGS
 CXXFLAGS     ?= -O3 -flto -DNDEBUG

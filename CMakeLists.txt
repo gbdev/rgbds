@@ -162,10 +162,7 @@ if(MSVC)
   )
   add_definitions(/D_CRT_SECURE_NO_WARNINGS)
 else()
-  add_compile_options(-Wall -pedantic -fno-exceptions -fno-rtti -Wno-unknown-warning-option
-                      # C++20 allows macros to take zero variadic arguments.
-                      # Some versions of Clang don't recognize this, and treat them as a GNU extension.
-                      -Wno-gnu-zero-variadic-macro-arguments)
+  add_compile_options(-Wall -pedantic -Wno-unknown-warning-option -fno-exceptions -fno-rtti)
 
   if(MORE_WARNINGS)
     add_compile_options(-Wextra
@@ -174,10 +171,14 @@ else()
                         -Wstringop-overflow=4 -Wtrampolines -Wundef -Wuninitialized -Wunused -Wshadow
                         -Wformat=2 -Wformat-overflow=2 -Wformat-truncation=1
                         -Wno-format-nonliteral -Wno-strict-overflow
-                        -Wno-unused-but-set-variable # bison's `yynerrs_` is incremented but unused
                         -Wno-type-limits -Wno-tautological-constant-out-of-range-compare
                         -Wvla) # MSVC does not support VLAs
   endif()
+
+  add_compile_options(-Wno-unused-but-set-variable # bison's `yynerrs_` is incremented but unused
+                      # C++20 allows macros to take zero variadic arguments.
+                      # Some versions of Clang don't recognize this, and treat them as a GNU extension.
+                      -Wno-gnu-zero-variadic-macro-arguments)
 
   if(MINGW)
     # MinGW warns about format specifiers like `%z` and `%j`, which are missing on Windows XP and earlier.
