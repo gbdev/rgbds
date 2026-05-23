@@ -2,7 +2,6 @@
 
 #include "asm/warning.hpp"
 
-#include <functional>
 #include <inttypes.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -83,7 +82,7 @@ static void printDiag(
 	fstk_TraceCurrent();
 }
 
-static void incrementErrors() {
+void incrementErrors() {
 	// This intentionally makes 0 act as "unlimited"
 	warnings.incrementErrors();
 	if (warnings.nbErrors == options.maxErrors) {
@@ -111,15 +110,6 @@ void error(char const *fmt, ...) {
 	incrementErrors();
 }
 
-void errorNoTrace(std::function<void()> callback) {
-	style_Set(stderr, STYLE_RED, true);
-	fputs("error: ", stderr);
-	style_Reset(stderr);
-	callback();
-
-	incrementErrors();
-}
-
 [[noreturn]]
 void fatal(char const *fmt, ...) {
 	va_list args;
@@ -127,16 +117,6 @@ void fatal(char const *fmt, ...) {
 	va_start(args, fmt);
 	printDiag(fmt, args, "FATAL", STYLE_RED, nullptr, nullptr);
 	va_end(args);
-
-	exit(1);
-}
-
-[[noreturn]]
-void fatalNoTrace(std::function<void()> callback) {
-	style_Set(stderr, STYLE_RED, true);
-	fputs("FATAL: ", stderr);
-	style_Reset(stderr);
-	callback();
 
 	exit(1);
 }

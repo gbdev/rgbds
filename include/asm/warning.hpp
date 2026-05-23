@@ -3,9 +3,11 @@
 #ifndef RGBDS_ASM_WARNING_HPP
 #define RGBDS_ASM_WARNING_HPP
 
-#include <functional>
+#include <stdio.h>
 
 #include "diagnostics.hpp"
+#include "helpers.hpp" // Procedure
+#include "style.hpp"
 
 enum WarningLevel {
 	LEVEL_DEFAULT,    // Warnings that are enabled by default
@@ -68,10 +70,6 @@ void warning(WarningID id, char const *fmt, ...);
 [[gnu::format(printf, 1, 2), noreturn]]
 void fatal(char const *fmt, ...);
 
-// Used for fatal errors that handle their own backtrace output.
-[[noreturn]]
-void fatalNoTrace(std::function<void()> callback);
-
 // Used for errors that make it impossible to assemble correctly, but don't
 // affect the following code. The code will fail to assemble but the user will
 // get a list of all errors at the end, making it easier to fix all of them at
@@ -79,10 +77,31 @@ void fatalNoTrace(std::function<void()> callback);
 [[gnu::format(printf, 1, 2)]]
 void error(char const *fmt, ...);
 
+// Only visible so `errorNoTrace` can call it; should not be otherwise used.
+void incrementErrors();
+
+// Used for fatal errors that handle their own backtrace output.
+[[noreturn]]
+void fatalNoTrace(Procedure<> auto callback) {
+	style_Set(stderr, STYLE_RED, true);
+	fputs("FATAL: ", stderr);
+	style_Reset(stderr);
+	callback();
+
+	exit(1);
+}
+
 // Used for errors that handle their own backtrace output. The code will fail
 // to assemble but the user will get a list of all errors at the end, making it
 // easier to fix all of them at once.
-void errorNoTrace(std::function<void()> callback);
+void errorNoTrace(Procedure<> auto callback) {
+	style_Set(stderr, STYLE_RED, true);
+	fputs("error: ", stderr);
+	style_Reset(stderr);
+	callback();
+
+	incrementErrors();
+}
 
 void requireZeroErrors();
 
