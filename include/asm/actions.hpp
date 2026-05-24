@@ -13,7 +13,8 @@
 
 #include "linkdefs.hpp" // AssertionType, RPNCommand
 
-#include "asm/rpn.hpp" // Expression
+#include "asm/intern.hpp" // InternedStr
+#include "asm/rpn.hpp"    // Expression
 
 struct AlignmentSpec {
 	uint8_t alignment;
@@ -54,8 +55,8 @@ std::string act_StringFormat(
     std::string const &spec, std::vector<std::variant<uint32_t, std::string>> const &args
 );
 
-std::string act_SectionName(std::string const &symName);
+std::string act_SectionName(InternedStr symName);
 
-void act_CompoundAssignment(std::string const &symName, RPNCommand op, int32_t constValue);
+void act_CompoundAssignment(InternedStr symName, RPNCommand op, int32_t constValue);
 
 #endif // RGBDS_ASM_ACTIONS_HPP

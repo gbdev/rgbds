@@ -190,9 +190,9 @@ static void parseArg(int ch, char *arg) {
 		char *equals = strchr(arg, '=');
 		if (equals) {
 			*equals = '\0';
-			sym_AddString(arg, std::make_shared<std::string>(equals + 1));
+			sym_AddString(intern(arg), std::make_shared<std::string>(equals + 1));
 		} else {
-			sym_AddString(arg, std::make_shared<std::string>("1"));
+			sym_AddString(intern(arg), std::make_shared<std::string>("1"));
 		}
 		break;
 	}

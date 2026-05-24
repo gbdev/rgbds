@@ -1158,7 +1158,7 @@ void sect_EndSection() {
 	sym_ResetCurrentLabelScopes();
 }
 
-std::string sect_PushSectionFragmentLiteral() {
+InternedStr sect_PushSectionFragmentLiteral() {
 	static uint64_t nextFragmentLiteralID = 0;
 
 	// Like `requireCodeSection` but fatal
@@ -1192,5 +1192,5 @@ std::string sect_PushSectionFragmentLiteral() {
 	currentSection = sect;
 
 	// Return a symbol ID to use for the address of this section fragment
-	return "$"s + std::to_string(nextFragmentLiteralID++);
+	return intern("$"s + std::to_string(nextFragmentLiteralID++));
 }

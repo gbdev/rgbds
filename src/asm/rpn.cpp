@@ -37,7 +37,7 @@ Symbol const *Expression::symbolOf() const {
 	if (rpn.size() != 1 || rpn[0].command != RPN_SYM) {
 		return nullptr;
 	}
-	return sym_FindScopedSymbol(std::get<std::string>(rpn[0].data));
+	return sym_FindScopedSymbol(std::get<InternedStr>(rpn[0].data));
 }
 
 bool Expression::isDiffConstant(Symbol const *sym) const {
@@ -58,7 +58,7 @@ void Expression::makeNumber(uint32_t value) {
 	data = static_cast<int32_t>(value);
 }
 
-void Expression::makeSymbol(std::string const &symName) {
+void Expression::makeSymbol(InternedStr symName) {
 	assume(rpn.empty());
 	if (Symbol *sym = sym_FindScopedSymbol(symName); sym_IsPC(sym) && !sect_GetSymbolSection()) {
 		error("PC has no value outside of a section");
@@ -69,8 +69,8 @@ void Expression::makeSymbol(std::string const &symName) {
 	} else if (!sym || !sym->isConstant()) {
 		data = sym_IsPC(sym) ? "PC is not constant at assembly time"
 		                     : (sym && sym->isDefined()
-		                            ? "`"s + symName + "` is not constant at assembly time"
-		                            : "undefined symbol `"s + symName + "`")
+		                            ? "`"s + symName.str() + "` is not constant at assembly time"
+		                            : "undefined symbol `"s + symName.str() + "`")
 		                           + (sym_IsPurgedScoped(symName) ? "; it was purged" : "");
 		sym = sym_Ref(symName);
 		rpn.emplace_back(RPN_SYM, sym->name);
@@ -79,7 +79,7 @@ void Expression::makeSymbol(std::string const &symName) {
 	}
 }
 
-void Expression::makeBankSymbol(std::string const &symName) {
+void Expression::makeBankSymbol(InternedStr symName) {
 	assume(rpn.empty());
 	if (Symbol const *sym = sym_FindScopedSymbol(symName); sym_IsPC(sym)) {
 		// The @ symbol is treated differently.
@@ -103,8 +103,8 @@ void Expression::makeBankSymbol(std::string const &symName) {
 			data = static_cast<int32_t>(sym->getSection()->bank);
 		} else {
 			data = sym_IsPurgedScoped(symName)
-			           ? "`"s + symName + "`'s bank is not known; it was purged"
-			           : "`"s + symName + "`'s bank is not known";
+			           ? "`"s + symName.str() + "`'s bank is not known; it was purged"
+			           : "`"s + symName.str() + "`'s bank is not known";
 			rpn.emplace_back(RPN_BANK_SYM, sym->name);
 		}
 	}
@@ -116,7 +116,7 @@ void Expression::makeBankSection(std::string const &sectName) {
 		data = static_cast<int32_t>(sect->bank);
 	} else {
 		data = "Section \""s + sectName + "\"'s bank is not known";
-		rpn.emplace_back(RPN_BANK_SECT, sectName);
+		rpn.emplace_back(RPN_BANK_SECT, intern(sectName));
 	}
 }
 
@@ -126,7 +126,7 @@ void Expression::makeSizeOfSection(std::string const &sectName) {
 		data = static_cast<int32_t>(sect->size);
 	} else {
 		data = "Section \""s + sectName + "\"'s size is not known";
-		rpn.emplace_back(RPN_SIZEOF_SECT, sectName);
+		rpn.emplace_back(RPN_SIZEOF_SECT, intern(sectName));
 	}
 }
 
@@ -136,7 +136,7 @@ void Expression::makeStartOfSection(std::string const &sectName) {
 		data = static_cast<int32_t>(sect->org);
 	} else {
 		data = "Section \""s + sectName + "\"'s start is not known";
-		rpn.emplace_back(RPN_STARTOF_SECT, sectName);
+		rpn.emplace_back(RPN_STARTOF_SECT, intern(sectName));
 	}
 }
 
@@ -550,7 +550,7 @@ RPNValue::RPNValue(RPNCommand cmd, uint32_t val) : command(cmd), data(val) {
 	assume(cmd == RPN_CONST);
 }
 
-RPNValue::RPNValue(RPNCommand cmd, std::string const &name) : command(cmd), data(name) {
+RPNValue::RPNValue(RPNCommand cmd, InternedStr name) : command(cmd), data(name) {
 	assume(
 	    cmd == RPN_SYM || cmd == RPN_BANK_SYM || cmd == RPN_BANK_SECT || cmd == RPN_SIZEOF_SECT
 	    || cmd == RPN_STARTOF_SECT
@@ -576,9 +576,9 @@ void RPNValue::appendEncoded(std::vector<uint8_t> &buffer) const {
 	case RPN_SYM:
 	case RPN_BANK_SYM: {
 		// The command ID is followed by a four-byte symbol ID
-		assume(std::holds_alternative<std::string>(data));
+		assume(std::holds_alternative<InternedStr>(data));
 		// The symbol name is always written expanded
-		Symbol *sym = sym_FindExactSymbol(std::get<std::string>(data));
+		Symbol *sym = sym_FindExactSymbol(std::get<InternedStr>(data));
 		out_RegisterSymbol(*sym); // Ensure that `sym->ID` is set
 		buffer.push_back(sym->ID & 0xFF);
 		buffer.push_back(sym->ID >> 8);
@@ -591,8 +591,8 @@ void RPNValue::appendEncoded(std::vector<uint8_t> &buffer) const {
 	case RPN_SIZEOF_SECT:
 	case RPN_STARTOF_SECT: {
 		// The command ID is followed by a NUL-terminated section name string
-		assume(std::holds_alternative<std::string>(data));
-		std::string const &name = std::get<std::string>(data);
+		assume(std::holds_alternative<InternedStr>(data));
+		std::string const &name = std::get<InternedStr>(data).str();
 		buffer.reserve(buffer.size() + name.length() + 1);
 		buffer.insert(buffer.end(), RANGE(name));
 		buffer.push_back('\0');

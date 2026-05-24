@@ -59,7 +59,7 @@
 	yy::parser::symbol_type yylex(); // Provided by lexer.cpp
 
 	static auto handleSymbolByType(
-	    std::string const &symName,
+	    InternedStr symName,
 	    std::invocable<Expression const &> auto numCallback,
 	    std::invocable<std::string const &> auto strCallback
 	) {
@@ -324,11 +324,11 @@
 %token <int32_t> NUMBER "number"
 %token <std::string> STRING "string"
 %token <std::string> CHARACTER "character"
-%token <std::string> SYMBOL "symbol"
-%token <std::string> LABEL "label"
-%token <std::string> LOCAL "local label"
-%token <std::string> ANON "anonymous label"
-%token <std::string> QMACRO "quiet macro"
+%token <InternedStr> SYMBOL "symbol"
+%token <InternedStr> LABEL "label"
+%token <InternedStr> LOCAL "local label"
+%token <InternedStr> ANON "anonymous label"
+%token <InternedStr> QMACRO "quiet macro"
 
 /******************** Data types ********************/
 
@@ -355,23 +355,23 @@
 %type <std::string> string_literal
 %type <std::string> strcat_args
 // Strings used for identifiers
-%type <std::string> def_id
-%type <std::string> redef_id
-%type <std::string> def_numeric
-%type <std::string> def_equ
-%type <std::string> redef_equ
-%type <std::string> def_set
-%type <std::string> def_rb
-%type <std::string> def_rw
-%type <std::string> def_rl
-%type <std::string> def_equs
-%type <std::string> redef_equs
-%type <std::string> scoped_sym
+%type <InternedStr> def_id
+%type <InternedStr> redef_id
+%type <InternedStr> def_numeric
+%type <InternedStr> def_equ
+%type <InternedStr> redef_equ
+%type <InternedStr> def_set
+%type <InternedStr> def_rb
+%type <InternedStr> def_rw
+%type <InternedStr> def_rl
+%type <InternedStr> def_equs
+%type <InternedStr> redef_equs
+%type <InternedStr> scoped_sym
 // `scoped_sym_no_anon` exists because anonymous labels usually count as "scoped symbols", but some
 // contexts treat anonymous labels and other labels/symbols differently, e.g. `purge` or `export`.
-%type <std::string> scoped_sym_no_anon
-%type <std::string> fragment_literal
-%type <std::string> fragment_literal_name
+%type <InternedStr> scoped_sym_no_anon
+%type <InternedStr> fragment_literal
+%type <InternedStr> fragment_literal_name
 
 // SM83 instruction parameters
 %type <int32_t> reg_r
@@ -399,7 +399,7 @@
 %type <std::vector<Expression>> ds_args
 %type <ForArgs> for_args
 %type <std::shared_ptr<MacroArgs>> macro_args
-%type <std::vector<std::string>> purge_args
+%type <std::vector<InternedStr>> purge_args
 %type <SectionSpec> sect_attrs
 %type <SectionModifier> sect_mod
 %type <SectionType> sect_type
@@ -507,7 +507,7 @@ def_id:
 		lexer_ToggleStringExpansion(false);
 	} SYMBOL {
 		lexer_ToggleStringExpansion(true);
-		$$ = std::move($3);
+		$$ = $3;
 	}
 ;
 
@@ -516,7 +516,7 @@ redef_id:
 		lexer_ToggleStringExpansion(false);
 	} SYMBOL {
 		lexer_ToggleStringExpansion(true);
-		$$ = std::move($3);
+		$$ = $3;
 	}
 ;
 
@@ -912,40 +912,40 @@ endu:
 
 def_equ:
 	def_id POP_EQU iconst {
-		$$ = std::move($1);
+		$$ = $1;
 		sym_AddEqu($$, $3);
 	}
 ;
 
 redef_equ:
 	redef_id POP_EQU iconst {
-		$$ = std::move($1);
+		$$ = $1;
 		sym_RedefEqu($$, $3);
 	}
 ;
 
 def_set:
 	def_id POP_EQUAL iconst {
-		$$ = std::move($1);
+		$$ = $1;
 		sym_AddVar($$, $3);
 	}
 	| redef_id POP_EQUAL iconst {
-		$$ = std::move($1);
+		$$ = $1;
 		sym_AddVar($$, $3);
 	}
 	| def_id compound_eq iconst {
-		$$ = std::move($1);
+		$$ = $1;
 		act_CompoundAssignment($$, $2, $3);
 	}
 	| redef_id compound_eq iconst {
-		$$ = std::move($1);
+		$$ = $1;
 		act_CompoundAssignment($$, $2, $3);
 	}
 ;
 
 def_rb:
 	def_id POP_RB rs_uconst {
-		$$ = std::move($1);
+		$$ = $1;
 		uint32_t rs = sym_GetRSValue();
 		sym_AddEqu($$, rs);
 		sym_SetRSValue(rs + $3);
@@ -954,7 +954,7 @@ def_rb:
 
 def_rw:
 	def_id POP_RW rs_uconst {
-		$$ = std::move($1);
+		$$ = $1;
 		uint32_t rs = sym_GetRSValue();
 		sym_AddEqu($$, rs);
 		sym_SetRSValue(rs + 2 * $3);
@@ -963,7 +963,7 @@ def_rw:
 
 def_rl:
 	def_id SM83_RL rs_uconst {
-		$$ = std::move($1);
+		$$ = $1;
 		uint32_t rs = sym_GetRSValue();
 		sym_AddEqu($$, rs);
 		sym_SetRSValue(rs + 4 * $3);
@@ -972,14 +972,14 @@ def_rl:
 
 def_equs:
 	def_id POP_EQUS string {
-		$$ = std::move($1);
+		$$ = $1;
 		sym_AddString($$, std::make_shared<std::string>($3));
 	}
 ;
 
 redef_equs:
 	redef_id POP_EQUS string {
-		$$ = std::move($1);
+		$$ = $1;
 		sym_RedefString($$, std::make_shared<std::string>($3));
 	}
 ;
@@ -988,7 +988,7 @@ purge:
 	POP_PURGE {
 		lexer_ToggleStringExpansion(false);
 	} purge_args trailing_comma {
-		for (std::string &arg : $3) {
+		for (InternedStr arg : $3) {
 			sym_Purge(arg);
 		}
 		lexer_ToggleStringExpansion(true);
@@ -1254,7 +1254,7 @@ reloc_16bit:
 fragment_literal:
 	LBRACKS fragment_literal_name asm_file RBRACKS {
 		sect_PopSection();
-		$$ = std::move($2);
+		$$ = $2;
 	}
 ;
 
