@@ -14,6 +14,8 @@
 
 #include "platform.hpp" // SSIZE_MAX
 
+#include "asm/intern.hpp"
+
 // This value is a compromise between `LexerState` allocation performance when reading the entire
 // file works, and buffering performance when it doesn't (e.g. when piping a file into RGBASM).
 static constexpr size_t LEXER_BUF_SIZE = 64;
@@ -32,7 +34,7 @@ enum LexerMode {
 };
 
 struct Expansion {
-	std::optional<std::string> name;
+	std::optional<InternedStr> name;
 	std::shared_ptr<std::string> contents;
 	size_t offset; // Cursor into `contents`
 

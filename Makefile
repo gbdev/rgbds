@@ -65,6 +65,7 @@ rgbasm_obj := \
 	src/asm/fixpoint.o \
 	src/asm/format.o \
 	src/asm/fstack.o \
+	src/asm/intern.o \
 	src/asm/lexer.o \
 	src/asm/macro.o \
 	src/asm/main.o \

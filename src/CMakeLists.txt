@@ -38,6 +38,7 @@ add_executable(rgbasm $<TARGET_OBJECTS:common>
     "asm/fixpoint.cpp"
     "asm/format.cpp"
     "asm/fstack.cpp"
+    "asm/intern.cpp"
     "asm/lexer.cpp"
     "asm/macro.cpp"
     "asm/main.cpp"

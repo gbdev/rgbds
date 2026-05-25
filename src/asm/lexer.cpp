@@ -34,6 +34,7 @@
 
 #include "asm/format.hpp"
 #include "asm/fstack.hpp"
+#include "asm/intern.hpp"
 #include "asm/macro.hpp"
 #include "asm/main.hpp"
 #include "asm/rpn.hpp"
@@ -47,7 +48,7 @@
 
 struct Token {
 	int type;
-	std::variant<std::monostate, uint32_t, std::string> value;
+	std::variant<std::monostate, InternedStr, uint32_t, std::string> value;
 
 	Token() : type(T_(NUMBER)), value(std::monostate{}) {
 		assume(
@@ -63,15 +64,15 @@ struct Token {
 	}
 	Token(int type_, uint32_t value_) : type(type_), value(value_) { assume(type == T_(NUMBER)); }
 	Token(int type_, std::string const &value_) : type(type_), value(std::move(value_)) {
-		assume(
-		    type == T_(STRING) || type == T_(CHARACTER) || type == T_(SYMBOL) || type == T_(LABEL)
-		    || type == T_(LOCAL) || type == T_(ANON) || type == T_(QMACRO)
-		);
+		assume(type == T_(STRING) || type == T_(CHARACTER));
 	}
 	Token(int type_, std::string &&value_) : type(type_), value(std::move(value_)) {
+		assume(type == T_(STRING) || type == T_(CHARACTER));
+	}
+	Token(int type_, InternedStr value_) : type(type_), value(value_) {
 		assume(
-		    type == T_(STRING) || type == T_(CHARACTER) || type == T_(SYMBOL) || type == T_(LABEL)
-		    || type == T_(LOCAL) || type == T_(ANON) || type == T_(QMACRO)
+		    type == T_(SYMBOL) || type == T_(LABEL) || type == T_(LOCAL) || type == T_(ANON)
+		    || type == T_(QMACRO)
 		);
 	}
 };
@@ -519,7 +520,7 @@ void lexer_ToggleStringExpansion(bool enable) {
 
 // Functions for the actual lexer to obtain characters
 
-static void beginExpansion(std::shared_ptr<std::string> str, std::optional<std::string> name) {
+static void beginExpansion(std::shared_ptr<std::string> str, std::optional<InternedStr> name) {
 	if (name) {
 		lexer_CheckRecursionDepth();
 	}
@@ -582,10 +583,12 @@ static uint32_t readBracketedMacroArgNum() {
 			}
 		}
 
-		std::string symName;
+		std::string builder;
 		for (; continuesIdentifier(c); c = nextChar()) {
-			symName += c;
+			builder += c;
 		}
+
+		InternedStr symName = intern(builder);
 
 		if (Symbol const *sym = sym_FindScopedValidSymbol(symName); !sym) {
 			if (sym_IsPurgedScoped(symName)) {
@@ -950,7 +953,7 @@ static void discardLineContinuation() {
 
 // Functions to read tokenizable values
 
-static std::string readAnonLabelRef(char c) {
+static InternedStr readAnonLabelRef(char c) {
 	assume(c == '+' || c == '-');
 
 	// We come here having already peeked at one char, so no need to do it again
@@ -1229,7 +1232,7 @@ static uint32_t readGfxConstant() {
 static Token readIdentifier(char firstChar, bool raw) {
 	assume(startsIdentifier(firstChar));
 
-	std::string identifier(1, firstChar);
+	std::string builder(1, firstChar);
 	bool keywordBeforeLocal = false;
 	int tokenType = firstChar == '.' ? T_(LOCAL) : T_(SYMBOL);
 
@@ -1238,19 +1241,21 @@ static Token readIdentifier(char firstChar, bool raw) {
 		// If the char was a dot, the identifier is a local label
 		if (c == '.') {
 			// Check for a keyword before a non-raw local label
-			if (!raw && tokenType != T_(LOCAL) && keywords.find(identifier) != keywords.end()) {
+			if (!raw && tokenType != T_(LOCAL) && keywords.find(builder) != keywords.end()) {
 				keywordBeforeLocal = true;
 			}
 
 			tokenType = T_(LOCAL);
 		}
 
-		identifier += c;
+		builder += c;
 	}
+
+	InternedStr identifier = intern(builder);
 
 	// Check for a keyword if the identifier is not raw and not a local label
 	if (!raw && tokenType != T_(LOCAL)) {
-		if (auto search = keywords.find(identifier); search != keywords.end()) {
+		if (auto search = keywords.find(builder); search != keywords.end()) {
 			return Token(search->second);
 		}
 	}
@@ -1278,7 +1283,7 @@ static std::pair<Symbol const *, std::shared_ptr<std::string>> readInterpolation
 		fatal("Recursion limit (%zu) exceeded", options.maxRecursionDepth);
 	}
 
-	std::string identifier;
+	std::string builder;
 	FormatSpec fmt{};
 	bool invalid = false;
 
@@ -1299,15 +1304,15 @@ static std::pair<Symbol const *, std::shared_ptr<std::string>> readInterpolation
 			break;
 		} else if (c == ':' && !fmt.isParsed()) { // Format spec, only once
 			shiftChar();
-			size_t n = fmt.parseSpec(identifier.c_str());
-			if (!fmt.isValid() || n != identifier.length()) {
-				error("Invalid interpolation format spec \"%s\"", identifier.c_str());
+			size_t n = fmt.parseSpec(builder.c_str());
+			if (!fmt.isValid() || n != builder.length()) {
+				error("Invalid interpolation format spec \"%s\"", builder.c_str());
 				invalid = true;
 			}
-			identifier.clear(); // Now that format has been set, restart at beginning of string.
+			builder.clear(); // Now that format has been set, restart at beginning of string.
 		} else {
 			shiftChar();
-			identifier += c;
+			builder += c;
 		}
 	}
 
@@ -1315,18 +1320,20 @@ static std::pair<Symbol const *, std::shared_ptr<std::string>> readInterpolation
 		return {nullptr, nullptr}; // Don't allow invalid interpolation to occur.
 	}
 
-	if (identifier.starts_with('#')) {
+	if (builder.starts_with('#')) {
 		// Skip a '#' raw symbol prefix, but after expanding any nested interpolations.
-		identifier.erase(0, 1);
-	} else if (keywords.find(identifier) != keywords.end()) {
+		builder.erase(0, 1);
+	} else if (keywords.find(builder) != keywords.end()) {
 		// Don't allow symbols that alias keywords without a '#' prefix.
 		error(
 		    "Interpolated symbol `%s` is a reserved keyword; add a '#' prefix to use it as a raw "
 		    "symbol",
-		    identifier.c_str()
+		    builder.c_str()
 		);
 		return {nullptr, nullptr};
 	}
+
+	InternedStr identifier = intern(builder);
 
 	if (Symbol const *sym = sym_FindScopedValidSymbol(identifier); !sym || !sym->isDefined()) {
 		if (sym_IsPurgedScoped(identifier)) {
@@ -1902,9 +1909,9 @@ static Token yylex_NORMAL() {
 				return token;
 			}
 
-			// `token` is either a `SYMBOL` or a `LOCAL`, and both have a `std::string` value.
-			assume(std::holds_alternative<std::string>(token.value));
-			std::string const &identifier = std::get<std::string>(token.value);
+			// `token` is either a `SYMBOL` or a `LOCAL`, and both have an `InternedStr` value.
+			assume(std::holds_alternative<InternedStr>(token.value));
+			InternedStr identifier = std::get<InternedStr>(token.value);
 
 			// Raw symbols and local symbols cannot be string expansions
 			if (!raw && token.type == T_(SYMBOL) && lexerState->enableStringExpansions) {
@@ -2116,13 +2123,13 @@ static Token skipToLeadingKeyword(
 			if (c == EOF) {
 				return Token(T_(YYEOF));
 			} else if (isLetter(c)) {
-				std::string keyword(1, c);
+				std::string builder(1, c);
 				shiftFn();
 				for (c = peekFn(); continuesIdentifier(c); c = peekFn()) {
-					keyword += c;
+					builder += c;
 					shiftFn();
 				}
-				if (auto search = keywords.find(keyword); search != keywords.end()) {
+				if (auto search = keywords.find(builder); search != keywords.end()) {
 					finalizeFn();
 					return Token(search->second);
 				}
@@ -2347,6 +2354,19 @@ yy::parser::symbol_type yylex() {
 		}
 		// LCOV_EXCL_STOP
 		return yy::parser::symbol_type(token.type, std::get<std::string>(token.value));
+	} else if (std::holds_alternative<InternedStr>(token.value)) {
+		// LCOV_EXCL_START
+		if (checkVerbosity(VERB_TRACE)) {
+			style_Set(stderr, STYLE_MAGENTA, false);
+			fprintf(
+			    stderr, "Lexed `%s` token (interned ", yy::parser::symbol_type(token.type).name()
+			);
+			verboseOutputString(std::get<InternedStr>(token.value).str());
+			fputs(")\n", stderr);
+			style_Reset(stderr);
+		}
+		// LCOV_EXCL_STOP
+		return yy::parser::symbol_type(token.type, std::get<InternedStr>(token.value));
 	} else {
 		// LCOV_EXCL_START
 		verbosePrint(VERB_TRACE, "Lexed `%s` token\n", yy::parser::symbol_type(token.type).name());

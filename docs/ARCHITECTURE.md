@@ -180,6 +180,9 @@ These files have been copied ("vendored") from external authors and adapted for 
 - **`fstack.cpp`:**  
   Functions and data related to "fstack" nodes (the contents of top-level or `INCLUDE`d files, macro expansions, or `REPT`/`FOR` loop iterations) and their "contexts" (metadata that is only relevant while a node's content is being lexed and parsed).  
   This file *owns* the `Context`s in its `contextStack` collection. Each of those `Context`s *owns* its `LexerState`, and *refers* to its `FileStackNode`, `uniqueIDStr`, and `macroArgs`. Each `FileStackNode` also *references* its `parent`.
+- **`intern.cpp`:**  
+  [Interned strings](https://en.wikipedia.org/wiki/String_interning), which are used for the names of keywords, symbols (labels, constants, variables, string constants, macros, etc), and charmaps.  
+  This file *owns* the strings in its `internedStrings` collection, which its `internedIndexes` collection *references* by view and index.
 - **`lexer.cpp`:**  
   Functions and data related to [lexing](https://en.wikipedia.org/wiki/Lexical_analysis) assembly source code into tokens, which can then be parsed.  
   This file maintains static `lexerState` and `lexerStateEOL` pointers to `LexerState`s from the `Context`s in `fstack.cpp`.  

@@ -25,6 +25,7 @@
 #include "platform.hpp" // strncasecmp
 #include "verbosity.hpp"
 
+#include "asm/intern.hpp"
 #include "asm/lexer.hpp"
 #include "asm/macro.hpp"
 #include "asm/main.hpp"
@@ -47,7 +48,7 @@ struct Context {
 	bool isForLoop = false;
 	int32_t forValue = 0;
 	int32_t forStep = 0;
-	std::string forName{};
+	InternedStr forName{};
 };
 
 static std::stack<Context> contextStack;
@@ -309,7 +310,7 @@ static void
 		}
 	}
 	fileInfoName.append(NODE_SEPARATOR);
-	fileInfoName.append(macro.name);
+	fileInfoName.append(macro.name.str());
 
 	auto fileInfo = std::make_shared<FileStackNode>(NODE_MACRO, fileInfoName, isQuiet);
 	assume(!contextStack.empty()); // The top level context cannot be a MACRO
@@ -389,9 +390,7 @@ bool fstk_RunInclude(std::string const &path, bool isQuiet) {
 	return fstk_FileError(path, "`INCLUDE`");
 }
 
-void fstk_RunMacro(
-    std::string const &macroName, std::shared_ptr<MacroArgs> macroArgs, bool isQuiet
-) {
+void fstk_RunMacro(InternedStr macroName, std::shared_ptr<MacroArgs> macroArgs, bool isQuiet) {
 	auto makeSuggestion = [&macroName, &macroArgs]() -> std::optional<std::string> {
 		std::shared_ptr<std::string> arg = macroArgs->getArg(1);
 		if (!arg) {
@@ -402,14 +401,14 @@ void fstk_RunMacro(
 		static char const *types[] = {"EQUS", "EQU", "RB", "RW", "RL", "="};
 		for (char const *type : types) {
 			if (strncasecmp(str, type, strlen(type)) == 0) {
-				return "\"DEF "s + macroName + " " + type + " ...\"";
+				return "\"DEF "s + macroName.str() + " " + type + " ...\"";
 			}
 		}
 		if (strncasecmp(str, "SET", literal_strlen("SET")) == 0) {
-			return "\"DEF "s + macroName + " = ...\"";
+			return "\"DEF "s + macroName.str() + " = ...\"";
 		}
 		if (str[0] == ':') {
-			return "a label \""s + macroName + (str[1] == ':' ? "::" : ":") + "\"";
+			return "a label \""s + macroName.str() + (str[1] == ':' ? "::" : ":") + "\"";
 		}
 
 		return std::nullopt;
@@ -439,7 +438,7 @@ void fstk_RunRept(uint32_t count, int32_t reptLineNo, ContentSpan const &span, b
 }
 
 void fstk_RunFor(
-    std::string const &symName,
+    InternedStr symName,
     int32_t start,
     int32_t stop,
     int32_t step,

@@ -21,9 +21,10 @@
 #include "itertools.hpp" // InsertionOrderedMap
 #include "util.hpp"
 
+#include "asm/intern.hpp"
 #include "asm/warning.hpp"
 
-#define DEFAULT_CHARMAP_NAME "main"
+static InternedStr mainCharmapName;
 
 static bool compareNode(std::pair<char, size_t> edge, char c) {
 	return edge.first < c;
@@ -50,7 +51,7 @@ struct CharmapNode {
 };
 
 struct Charmap {
-	std::string name;
+	InternedStr name;
 	std::vector<CharmapNode> nodes; // Trie of mappings (first node is reserved for the root node)
 
 	size_t nextIndexOrAdd(size_t nodeIdx, char c) {
@@ -88,18 +89,18 @@ bool forEachChar(
 	return true;
 }
 
-static InsertionOrderedMap<std::string, Charmap> charmaps;
+static InsertionOrderedMap<InternedStr, Charmap> charmaps;
 
 static Charmap *currentCharmap;
 static std::stack<Charmap *> charmapStack;
 
 void charmap_Init() {
-	charmap_New(DEFAULT_CHARMAP_NAME, nullptr);
+	mainCharmapName = intern("main");
+	charmap_New(mainCharmapName, nullptr);
 }
 
 bool charmap_ForEach(
-    void (*mapFunc)(std::string const &),
-    void (*charFunc)(std::string const &, std::vector<int32_t>)
+    void (*mapFunc)(InternedStr), void (*charFunc)(std::string const &, std::vector<int32_t>)
 ) {
 	for (Charmap const &charmap : charmaps) {
 		std::map<size_t, std::string> mappings;
@@ -116,7 +117,7 @@ bool charmap_ForEach(
 	return !charmaps.empty();
 }
 
-void charmap_New(std::string const &name, std::string const *baseName) {
+void charmap_New(InternedStr name, InternedStr const *baseName) {
 	std::optional<size_t> baseIdx = std::nullopt;
 
 	if (baseName != nullptr) {
@@ -143,7 +144,7 @@ void charmap_New(std::string const &name, std::string const *baseName) {
 	currentCharmap = &charmap;
 }
 
-void charmap_Set(std::string const &name) {
+void charmap_Set(InternedStr name) {
 	if (auto index = charmaps.findIndex(name); index) {
 		currentCharmap = &charmaps[*index];
 	} else {
@@ -294,11 +295,12 @@ size_t charmap_ConvertNext(std::string_view &input, std::vector<int32_t> *output
 		// Warn if this character is not mapped but any others are
 		if (int firstChar = input[inputIdx]; charmap.nodes.size() > 1) {
 			warning(WARNING_UNMAPPED_CHAR_1, "Unmapped character %s", printChar(firstChar));
-		} else if (charmap.name != DEFAULT_CHARMAP_NAME) {
+		} else if (charmap.name != mainCharmapName) {
 			warning(
 			    WARNING_UNMAPPED_CHAR_2,
-			    "Unmapped character %s not in `" DEFAULT_CHARMAP_NAME "` charmap",
-			    printChar(firstChar)
+			    "Unmapped character %s not in `%s` charmap",
+			    printChar(firstChar),
+			    mainCharmapName.c_str()
 			);
 		}
 
