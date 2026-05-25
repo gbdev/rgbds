@@ -558,7 +558,7 @@ int main(int argc, char *argv[]) {
 
 	options.printDep(*localOptions.inputFileName);
 
-	charmap_New(DEFAULT_CHARMAP_NAME, nullptr);
+	charmap_Init();
 
 	// Init lexer and file stack, and parse (`yy::parser` is auto-generated from `parser.y`)
 	if (yy::parser parser; fstk_Init(*localOptions.inputFileName) && parser.parse() != 0) {

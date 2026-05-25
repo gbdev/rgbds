@@ -23,6 +23,8 @@
 
 #include "asm/warning.hpp"
 
+#define DEFAULT_CHARMAP_NAME "main"
+
 static bool compareNode(std::pair<char, size_t> edge, char c) {
 	return edge.first < c;
 }
@@ -90,6 +92,10 @@ static InsertionOrderedMap<Charmap> charmaps;
 
 static Charmap *currentCharmap;
 static std::stack<Charmap *> charmapStack;
+
+void charmap_Init() {
+	charmap_New(DEFAULT_CHARMAP_NAME, nullptr);
+}
 
 bool charmap_ForEach(
     void (*mapFunc)(std::string const &),

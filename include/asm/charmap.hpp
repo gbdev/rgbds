@@ -10,8 +10,7 @@
 #include <string_view>
 #include <vector>
 
-#define DEFAULT_CHARMAP_NAME "main"
-
+void charmap_Init();
 bool charmap_ForEach(
     void (*mapFunc)(std::string const &),
     void (*charFunc)(std::string const &, std::vector<int32_t>)
