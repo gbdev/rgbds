@@ -47,7 +47,7 @@ struct SectionStackEntry {
 };
 
 static Section *currentSection = nullptr;
-static InsertionOrderedMap<Section> sections;
+static InsertionOrderedMap<std::string, Section> sections;
 
 static uint32_t curOffset; // Offset into the current section (see `sect_GetSymbolOffset`)
 

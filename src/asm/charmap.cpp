@@ -88,7 +88,7 @@ bool forEachChar(
 	return true;
 }
 
-static InsertionOrderedMap<Charmap> charmaps;
+static InsertionOrderedMap<std::string, Charmap> charmaps;
 
 static Charmap *currentCharmap;
 static std::stack<Charmap *> charmapStack;
