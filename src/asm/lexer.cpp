@@ -1688,10 +1688,8 @@ static Token yylex_NORMAL() {
 		case '?':
 			return Token(T_(QUESTIONMARK));
 
-		case '@': {
-			std::string symName("@");
-			return Token(T_(SYMBOL), symName);
-		}
+		case '@':
+			return Token(T_(SYMBOL), sym_GetPC()->name);
 
 		case '(':
 			return Token(T_(LPAREN));
@@ -1773,8 +1771,7 @@ static Token yylex_NORMAL() {
 		case ':': // Either :, ::, or an anonymous label ref
 			c = peek();
 			if (c == '+' || c == '-') {
-				std::string symName = readAnonLabelRef(c);
-				return Token(T_(ANON), symName);
+				return Token(T_(ANON), readAnonLabelRef(c));
 			}
 			return oneOrTwo(':', T_(DOUBLE_COLON), T_(COLON));
 
