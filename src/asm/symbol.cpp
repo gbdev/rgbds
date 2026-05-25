@@ -286,6 +286,10 @@ static bool isAutoScoped(std::string const &symName) {
 	return true;
 }
 
+static std::string expandedSymName(std::string const &symName) {
+	return isAutoScoped(symName) ? globalScope->name + symName : symName;
+}
+
 Symbol *sym_FindExactSymbol(std::string const &symName) {
 	assumeAlreadyExpanded(symName);
 
@@ -294,7 +298,7 @@ Symbol *sym_FindExactSymbol(std::string const &symName) {
 }
 
 Symbol *sym_FindScopedSymbol(std::string const &symName) {
-	return sym_FindExactSymbol(isAutoScoped(symName) ? globalScope->name + symName : symName);
+	return sym_FindExactSymbol(expandedSymName(symName));
 }
 
 Symbol *sym_FindScopedValidSymbol(std::string const &symName) {
@@ -366,7 +370,7 @@ bool sym_IsPurgedExact(std::string const &symName) {
 }
 
 bool sym_IsPurgedScoped(std::string const &symName) {
-	return sym_IsPurgedExact(isAutoScoped(symName) ? globalScope->name + symName : symName);
+	return sym_IsPurgedExact(expandedSymName(symName));
 }
 
 int32_t sym_GetRSValue() {
@@ -558,7 +562,7 @@ Symbol *sym_AddLocalLabel(std::string const &symName) {
 	// The symbol name should be local, qualified or not
 	assume(symName.find('.') != std::string::npos);
 
-	Symbol *sym = addLabel(isAutoScoped(symName) ? globalScope->name + symName : symName);
+	Symbol *sym = addLabel(expandedSymName(symName));
 
 	if (sym) {
 		localScope = sym;
@@ -678,7 +682,7 @@ Symbol *sym_Ref(std::string const &symName) {
 	Symbol *sym = sym_FindScopedSymbol(symName);
 
 	if (!sym) {
-		sym = &createSymbol(isAutoScoped(symName) ? globalScope->name + symName : symName);
+		sym = &createSymbol(expandedSymName(symName));
 		sym->type = SYM_REF;
 	}
 
