@@ -1203,14 +1203,14 @@ static Token readIdentifier(char firstChar, bool raw) {
 		builder += c;
 	}
 
-	InternedStr identifier = intern(builder);
-
 	// Check for a keyword if the identifier is not raw and not a local label
 	if (!raw && tokenType != T_(LOCAL)) {
 		if (auto search = keywords.find(builder); search != keywords.end()) {
 			return Token(search->second);
 		}
 	}
+
+	InternedStr identifier = intern(builder);
 
 	// Label scopes `.` and `..` are the only nonlocal identifiers that start with a dot
 	if (sym_IsDotScope(identifier)) {
@@ -1285,13 +1285,13 @@ static std::pair<Symbol const *, std::shared_ptr<std::string>> readInterpolation
 		return {nullptr, nullptr};
 	}
 
-	InternedStr identifier = intern(builder);
+	InternedStr symName = intern(builder);
 
-	if (Symbol const *sym = sym_FindScopedValidSymbol(identifier); !sym || !sym->isDefined()) {
-		if (sym_IsPurgedScoped(identifier)) {
-			error("Interpolated symbol `%s` does not exist; it was purged", identifier.c_str());
+	if (Symbol const *sym = sym_FindScopedValidSymbol(symName); !sym || !sym->isDefined()) {
+		if (sym_IsPurgedScoped(symName)) {
+			error("Interpolated symbol `%s` does not exist; it was purged", symName.c_str());
 		} else {
-			error("Interpolated symbol `%s` does not exist", identifier.c_str());
+			error("Interpolated symbol `%s` does not exist", symName.c_str());
 		}
 		return {sym, nullptr};
 	} else if (sym->type == SYM_EQUS) {
@@ -1303,7 +1303,7 @@ static std::pair<Symbol const *, std::shared_ptr<std::string>> readInterpolation
 		fmt.appendNumber(*buf, sym->getConstantValue());
 		return {sym, buf};
 	} else {
-		error("Interpolated symbol `%s` is not a numeric or string symbol", identifier.c_str());
+		error("Interpolated symbol `%s` is not a numeric or string symbol", symName.c_str());
 		return {sym, nullptr};
 	}
 }
