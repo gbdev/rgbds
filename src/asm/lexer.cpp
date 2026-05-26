@@ -351,9 +351,11 @@ void LexerState::setAsCurrentState() {
 }
 
 void LexerState::setFileAsNextState(std::string const &filePath, bool updateStateNow) {
+	int fd = -1;
+
 	if (filePath == "-") {
 		path = "<stdin>";
-		content.emplace<BufferedContent>(STDIN_FILENO);
+		fd = STDIN_FILENO;
 		verbosePrint(VERB_INFO, "Opening stdin\n"); // LCOV_EXCL_LINE
 	} else {
 		struct stat statBuf;
@@ -366,20 +368,20 @@ void LexerState::setFileAsNextState(std::string const &filePath, bool updateStat
 
 		if (std::streamsize size = statBuf.st_size; statBuf.st_size > 0) {
 			// Read the entire file for better performance
-			// Ideally we'd use C++20 `auto ptr = std::make_shared<char[]>(size)`,
+			// Ideally we'd use C++20 `content.ptr = std::make_shared<char[]>(size)`,
 			// but it has insufficient compiler support
-			auto ptr = std::shared_ptr<char[]>(new char[size]);
+			content.ptr = std::shared_ptr<char[]>(new char[size]);
+			content.size = static_cast<size_t>(size);
 
 			if (std::ifstream fs(path, std::ios::binary); !fs) {
 				// LCOV_EXCL_START
 				fatal("Failed to open file \"%s\": %s", path.c_str(), strerror(errno));
 				// LCOV_EXCL_STOP
-			} else if (!fs.read(ptr.get(), size) || fs.gcount() != size) {
+			} else if (!fs.read(content.ptr.get(), size) || fs.gcount() != size) {
 				// LCOV_EXCL_START
 				fatal("Failed to read file \"%s\": %s", path.c_str(), strerror(errno));
 				// LCOV_EXCL_STOP
 			}
-			content.emplace<ViewedContent>(ptr, static_cast<size_t>(size));
 
 			// LCOV_EXCL_START
 			verbosePrint(VERB_INFO, "File \"%s\" is fully read\n", path.c_str());
@@ -395,19 +397,56 @@ void LexerState::setFileAsNextState(std::string const &filePath, bool updateStat
 			}
 			// LCOV_EXCL_STOP
 
-			// Have a fallback if reading the file failed
-			int fd = open(path.c_str(), O_RDONLY);
+			// Have a fallback if measuring the file size failed
+			fd = open(path.c_str(), O_RDONLY);
 			if (fd < 0) {
 				// LCOV_EXCL_START
 				fatal("Failed to open file \"%s\": %s", path.c_str(), strerror(errno));
 				// LCOV_EXCL_STOP
 			}
-			content.emplace<BufferedContent>(fd);
 
 			verbosePrint(VERB_INFO, "File \"%s\" is opened\n", path.c_str()); // LCOV_EXCL_LINE
 		}
 	}
 
+	if (fd >= 0) {
+		// If the file is stdin, or if measuring its size failed, read it in pieces
+		Defer closeFile{[&] {
+			if (fd != STDIN_FILENO) {
+				close(fd);
+			}
+		}};
+
+		// Reasonably large buffer size for `read` performance
+		char buf[8192];
+		// POSIX specifies that lengths greater than SSIZE_MAX yield implementation-defined results
+		static_assert(sizeof(buf) <= SSIZE_MAX, "Lexer buffer size is too large");
+
+		auto vec = std::make_shared<std::vector<char>>();
+		for (;;) {
+			ssize_t ret = read(fd, buf, sizeof(buf));
+			// Exit on errors, unless we only were interrupted
+			if (ret == -1 && errno != EINTR) {
+				// LCOV_EXCL_START
+				fatal("Failed to read file \"%s\": %s", path.c_str(), strerror(errno));
+				// LCOV_EXCL_STOP
+			}
+			// EOF reached
+			if (ret == 0) {
+				break;
+			}
+			// If anything was read, accumulate it, and continue
+			if (ret != -1) {
+				vec->insert(vec->end(), buf, buf + ret);
+			}
+		}
+		content.ptr = std::shared_ptr<char[]>(vec, vec->data());
+		content.size = vec->size();
+
+		verbosePrint(VERB_INFO, "File \"%s\" is fully read\n", path.c_str()); // LCOV_EXCL_LINE
+	}
+
+	offset = 0;
 	clear(0);
 	if (updateStateNow) {
 		lexerState = this;
@@ -416,17 +455,18 @@ void LexerState::setFileAsNextState(std::string const &filePath, bool updateStat
 	}
 }
 
-void LexerState::setViewAsNextState(char const *name, ContentSpan const &span, uint32_t lineNo_) {
+void LexerState::setViewAsNextState(
+    char const *name, ContentSpan const &content_, uint32_t lineNo_
+) {
 	path = name; // Used to report read errors in `.peek()`
-	content.emplace<ViewedContent>(span);
+	content = content_;
+	offset = 0;
 	clear(lineNo_);
 	lexerStateEOL = this;
 }
 
 void lexer_RestartRept(uint32_t lineNo) {
-	if (std::holds_alternative<ViewedContent>(lexerState->content)) {
-		std::get<ViewedContent>(lexerState->content).offset = 0;
-	}
+	lexerState->offset = 0;
 	lexerState->clear(lineNo);
 }
 
@@ -448,66 +488,6 @@ LexerState::~LexerState() {
 bool Expansion::advance() {
 	assume(offset <= size());
 	return ++offset > size();
-}
-
-BufferedContent::~BufferedContent() {
-	close(fd);
-}
-
-void BufferedContent::advance() {
-	assume(offset < std::size(buf));
-	if (++offset == std::size(buf)) {
-		offset = 0; // Wrap around if necessary
-	}
-	if (size > 0) {
-		--size;
-	}
-}
-
-void BufferedContent::refill() {
-	assume(size <= std::size(buf));
-	size_t target = std::size(buf) - size; // Aim: making the buf full
-
-	// Compute the index we'll start writing to
-	size_t startIndex = (offset + size) % std::size(buf);
-
-	// If the range to fill passes over the buffer wrapping point, we need two reads
-	if (startIndex + target > std::size(buf)) {
-		size_t nbExpectedChars = std::size(buf) - startIndex;
-		size_t nbReadChars = readMore(startIndex, nbExpectedChars);
-
-		startIndex += nbReadChars;
-		if (startIndex == std::size(buf)) {
-			startIndex = 0;
-		}
-
-		// If the read was incomplete, don't perform a second read
-		target -= nbReadChars;
-		if (nbReadChars < nbExpectedChars) {
-			target = 0;
-		}
-	}
-	if (target != 0) {
-		readMore(startIndex, target);
-	}
-}
-
-size_t BufferedContent::readMore(size_t startIndex, size_t nbChars) {
-	// This buffer overflow made me lose WEEKS of my life. Never again.
-	assume(startIndex + nbChars <= std::size(buf));
-	ssize_t nbReadChars = read(fd, &buf[startIndex], nbChars);
-
-	if (nbReadChars == -1) {
-		// LCOV_EXCL_START
-		fatal("Error reading file \"%s\": %s", lexerState->path.c_str(), strerror(errno));
-		// LCOV_EXCL_STOP
-	}
-
-	size += nbReadChars;
-	assume(size <= std::size(buf));
-
-	// `nbReadChars` cannot be negative, so it's fine to cast to `size_t`
-	return static_cast<size_t>(nbReadChars);
 }
 
 void lexer_SetMode(LexerMode mode) {
@@ -683,20 +663,8 @@ int LexerState::peekChar() {
 		}
 	}
 
-	if (std::holds_alternative<ViewedContent>(content)) {
-		auto &view = std::get<ViewedContent>(content);
-		if (view.offset < view.span.size) {
-			return static_cast<uint8_t>(view.span.ptr[view.offset]);
-		}
-	} else {
-		auto &cbuf = std::get<BufferedContent>(content);
-		if (cbuf.size == 0) {
-			cbuf.refill();
-		}
-		assume(cbuf.offset < std::size(cbuf.buf));
-		if (cbuf.size > 0) {
-			return static_cast<uint8_t>(cbuf.buf[cbuf.offset]);
-		}
+	if (offset < content.size) {
+		return static_cast<uint8_t>(content.ptr[offset]);
 	}
 
 	// If there aren't enough chars, give up
@@ -719,20 +687,8 @@ int LexerState::peekCharAhead() {
 		distance -= exp.size() - exp.offset;
 	}
 
-	if (std::holds_alternative<ViewedContent>(content)) {
-		auto &view = std::get<ViewedContent>(content);
-		if (view.offset + distance < view.span.size) {
-			return static_cast<uint8_t>(view.span.ptr[view.offset + distance]);
-		}
-	} else {
-		auto &cbuf = std::get<BufferedContent>(content);
-		assume(distance < std::size(cbuf.buf));
-		if (cbuf.size <= distance) {
-			cbuf.refill();
-		}
-		if (cbuf.size > distance) {
-			return static_cast<uint8_t>(cbuf.buf[(cbuf.offset + distance) % std::size(cbuf.buf)]);
-		}
+	if (offset + distance < content.size) {
+		return static_cast<uint8_t>(content.ptr[offset + distance]);
 	}
 
 	// If there aren't enough chars, give up
@@ -808,11 +764,7 @@ static void shiftChar() {
 			}
 		} else {
 			// Advance within the file contents
-			if (std::holds_alternative<ViewedContent>(lexerState->content)) {
-				++std::get<ViewedContent>(lexerState->content).offset;
-			} else {
-				std::get<BufferedContent>(lexerState->content).advance();
-			}
+			++lexerState->offset;
 		}
 		return;
 	}
@@ -2165,13 +2117,13 @@ static Token skipToLeadingKeyword(
 static Token skipToLeadingKeyword() {
 	assume(!lexerState->enableExpansions);
 
-	if (std::holds_alternative<ViewedContent>(lexerState->content)
-	    && lexerState->expansionStack.empty()) {
-		// Optimize the common case (a fully-read assembly file without ongoing
-		// expansions) to avoid the bookkeeping of `peek` and `shiftChar`.
-		auto &view = std::get<ViewedContent>(lexerState->content);
-		char const *ptr = view.span.ptr.get();
-		auto quickPeek = [&]() { return view.offset < view.span.size ? ptr[view.offset] : EOF; };
+	if (lexerState->expansionStack.empty()) {
+		// Optimize the common case (no ongoing expansions) to avoid
+		// the bookkeeping of `peek` and `shiftChar`.
+		char const *ptr = lexerState->content.ptr.get();
+		auto quickPeek = [&]() {
+			return lexerState->offset < lexerState->content.size ? ptr[lexerState->offset] : EOF;
+		};
 		auto quickNextLine = []() { ++lexerState->lineNo; };
 		auto quickFinalize = []() {
 			// When `skipToLeadingKeyword` returns a token, there has been one more
@@ -2185,14 +2137,14 @@ static Token skipToLeadingKeyword() {
 		if (lexerState->capturing) {
 			assume(lexerState->captureBuf == nullptr);
 			auto quickCaptureShiftChar = [&]() {
-				++view.offset;
+				++lexerState->offset;
 				++lexerState->captureSize;
 			};
 			return skipToLeadingKeyword(
 			    quickPeek, quickCaptureShiftChar, quickNextLine, quickFinalize
 			);
 		} else {
-			auto quickShiftChar = [&]() { ++view.offset; };
+			auto quickShiftChar = [&]() { ++lexerState->offset; };
 			return skipToLeadingKeyword(quickPeek, quickShiftChar, quickNextLine, quickFinalize);
 		}
 	} else {
@@ -2389,10 +2341,10 @@ static Capture makeCapture(char const *name, InvocableR<int, int> auto callback)
 	Capture capture = {
 	    .lineNo = lexer_GetLineNo(), .span = {.ptr = nullptr, .size = 0}
 	};
-	if (std::holds_alternative<ViewedContent>(lexerState->content)
-	    && lexerState->expansionStack.empty()) {
-		auto &view = std::get<ViewedContent>(lexerState->content);
-		capture.span.ptr = view.makeSharedContentPtr();
+	if (lexerState->expansionStack.empty()) {
+		capture.span.ptr = std::shared_ptr<char[]>(
+		    lexerState->content.ptr, &lexerState->content.ptr[lexerState->offset]
+		);
 	} else {
 		assume(lexerState->captureBuf == nullptr);
 		lexerState->captureBuf = std::make_shared<std::vector<char>>();
@@ -2411,7 +2363,8 @@ static Capture makeCapture(char const *name, InvocableR<int, int> auto callback)
 		} else if (size_t endTokenLength = callback(token.type); endTokenLength > 0) {
 			if (!capture.span.ptr) {
 				// Retrieve the capture buffer now that we're done capturing
-				capture.span.ptr = lexerState->makeSharedCaptureBufPtr();
+				capture.span.ptr =
+				    std::shared_ptr<char[]>(lexerState->captureBuf, lexerState->captureBuf->data());
 			}
 			// Subtract the length of the ending token; we know we have read it exactly,
 			// not e.g. an interpolation or EQUS expansion, since those are disabled.

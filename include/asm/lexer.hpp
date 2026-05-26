@@ -9,20 +9,9 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <string>
-#include <variant>
 #include <vector>
 
-#include "platform.hpp" // SSIZE_MAX
-
 #include "asm/intern.hpp"
-
-// This value is a compromise between `LexerState` allocation performance when reading the entire
-// file works, and buffering performance when it doesn't (e.g. when piping a file into RGBASM).
-static constexpr size_t LEXER_BUF_SIZE = 64;
-// The buffer needs to be large enough for the maximum `lexerState->peek()` lookahead distance
-static_assert(LEXER_BUF_SIZE > 1, "Lexer buffer size is too small");
-// This caps the size of buffer reads, and according to POSIX, passing more than SSIZE_MAX is UB
-static_assert(LEXER_BUF_SIZE <= SSIZE_MAX, "Lexer buffer size is too large");
 
 enum LexerMode {
 	LEXER_NORMAL,
@@ -45,34 +34,6 @@ struct Expansion {
 struct ContentSpan {
 	std::shared_ptr<char[]> ptr;
 	size_t size;
-};
-
-struct ViewedContent {
-	ContentSpan span;  // Span of chars
-	size_t offset = 0; // Cursor into `span.ptr`
-
-	ViewedContent(ContentSpan const &span_) : span(span_) {}
-	ViewedContent(std::shared_ptr<char[]> ptr, size_t size) : span({.ptr = ptr, .size = size}) {}
-
-	std::shared_ptr<char[]> makeSharedContentPtr() const {
-		return std::shared_ptr<char[]>(span.ptr, &span.ptr[offset]);
-	}
-};
-
-struct BufferedContent {
-	int fd;                        // File from which to read chars
-	char buf[LEXER_BUF_SIZE] = {}; // Circular buffer of chars
-	size_t offset = 0;             // Cursor into `buf`
-	size_t size = 0;               // Number of "fresh" chars in `buf`
-
-	BufferedContent(int fd_) : fd(fd_) {}
-	~BufferedContent();
-
-	void advance(); // Increment `offset` circularly, decrement `size`
-	void refill();  // Read from `fd` to fill `buf`
-
-private:
-	size_t readMore(size_t startIndex, size_t nbChars);
 };
 
 struct IfStackEntry {
@@ -100,20 +61,17 @@ struct LexerState {
 	size_t expansionScanDistance;         // Max distance already scanned for expansions
 	std::deque<Expansion> expansionStack; // Front is the innermost current expansion
 
-	std::variant<std::monostate, ViewedContent, BufferedContent> content;
+	ContentSpan content; // Span of chars
+	size_t offset = 0;   // Cursor into `content.ptr`
 
 	~LexerState();
 
 	int peekChar();
 	int peekCharAhead();
 
-	std::shared_ptr<char[]> makeSharedCaptureBufPtr() const {
-		return std::shared_ptr<char[]>(captureBuf, captureBuf->data());
-	}
-
 	void setAsCurrentState();
 	void setFileAsNextState(std::string const &filePath, bool updateStateNow);
-	void setViewAsNextState(char const *name, ContentSpan const &span, uint32_t lineNo_);
+	void setViewAsNextState(char const *name, ContentSpan const &content_, uint32_t lineNo_);
 
 	void clear(uint32_t lineNo_);
 };
