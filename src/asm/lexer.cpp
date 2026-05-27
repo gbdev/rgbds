@@ -2058,6 +2058,22 @@ finish: // Can't `break` out of a nested `for`-`switch`
 	return Token(T_(YYEOF));
 }
 
+// This map lists all RGBASM keywords which `skipToLeadingKeyword` needs to recognize.
+// It is a subset of `keywords`.
+static UpperMap<int> const leadingKeywords{
+    // There is no need to recognize "MACRO", since macros cannot be nested
+    {"ENDM", T_(POP_ENDM)},
+
+    {"REPT", T_(POP_REPT)},
+    {"FOR",  T_(POP_FOR) },
+    {"ENDR", T_(POP_ENDR)},
+
+    {"IF",   T_(POP_IF)  },
+    {"ELSE", T_(POP_ELSE)},
+    {"ELIF", T_(POP_ELIF)},
+    {"ENDC", T_(POP_ENDC)},
+};
+
 static Token skipToLeadingKeywordFast(Procedure<> auto shiftFast) {
 	// This is essentially `skipToLeadingKeyword` with `peek` and `shiftChar` replaced,
 	// as well as anything that calls them like `nextChar` or `handleCRLF`.
@@ -2082,7 +2098,7 @@ static Token skipToLeadingKeywordFast(Procedure<> auto shiftFast) {
 					shiftFast();
 				}
 				std::string_view leading{ptr + start, ptr + lexerState->offset};
-				if (auto search = keywords.find(leading); search != keywords.end()) {
+				if (auto search = leadingKeywords.find(leading); search != leadingKeywords.end()) {
 					// When this branch returns a token, there has been one more call to `peekFast`
 					// than to `shiftFast`. Unlike `peek` and `shiftChar`, the optimized functions
 					// do not update `lexerState->expansionScanDistance`, so it must be incremented
@@ -2112,9 +2128,6 @@ static Token skipToLeadingKeywordFast(Procedure<> auto shiftFast) {
 // It expects that these constructs' `ENDC`/`ENDR`/`ENDM` closing tokens are only
 // valid at the start of their lines, which enables ignoring everything except
 // the leading keyword in lines that have one (as well as line continuations).
-//
-// The only keywords it needs to recognize are case-insensitive `IF`, `ELIF`,
-// `ELSE`, `ENDC`, `REPT`, `FOR`, `ENDR`, and `ENDM` (not `MACRO`).
 //
 // Note that when these constructs are *evaluated*, they can perform expansions
 // (for macro args, interpolations, and macro invocations) which may produce
@@ -2149,7 +2162,7 @@ static Token skipToLeadingKeyword() {
 				for (c = nextChar(); continuesIdentifier(c); c = nextChar()) {
 					builder += c;
 				}
-				if (auto search = keywords.find(builder); search != keywords.end()) {
+				if (auto search = leadingKeywords.find(builder); search != leadingKeywords.end()) {
 					return Token(search->second);
 				}
 			}
