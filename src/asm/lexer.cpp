@@ -46,6 +46,16 @@
 // Bison 3.6 changed token "types" to "kinds"; cast to int for simple compatibility
 #define T_(name) static_cast<int>(yy::parser::token::name)
 
+// Include this after the definition of `T_`
+#ifdef __GNUC__ // GCC or compatible
+	#pragma GCC diagnostic push
+	#pragma GCC diagnostic ignored "-Wold-style-cast" // `keywords.hpp` may have C-style casts
+#endif
+#include "keywords.hpp" // For keyword lookup, generated from `keywords.gperf`
+#ifdef __GNUC__         // GCC or compatible
+	#pragma GCC diagnostic pop
+#endif
+
 struct Token {
 	int type;
 	std::variant<std::monostate, InternedStr, uint32_t, std::string> value;
@@ -77,208 +87,11 @@ struct Token {
 	}
 };
 
-// This map lists all RGBASM keywords which `yylex_NORMAL` lexes as identifiers.
-// All non-identifier tokens are lexed separately.
-static UpperMap<int> const keywords{
-    {"ADC",           T_(SM83_ADC)         },
-    {"ADD",           T_(SM83_ADD)         },
-    {"AND",           T_(SM83_AND)         },
-    {"BIT",           T_(SM83_BIT)         },
-    {"CALL",          T_(SM83_CALL)        },
-    {"CCF",           T_(SM83_CCF)         },
-    {"CPL",           T_(SM83_CPL)         },
-    {"CP",            T_(SM83_CP)          },
-    {"DAA",           T_(SM83_DAA)         },
-    {"DEC",           T_(SM83_DEC)         },
-    {"DI",            T_(SM83_DI)          },
-    {"EI",            T_(SM83_EI)          },
-    {"HALT",          T_(SM83_HALT)        },
-    {"INC",           T_(SM83_INC)         },
-    {"JP",            T_(SM83_JP)          },
-    {"JR",            T_(SM83_JR)          },
-    {"LD",            T_(SM83_LD)          },
-    {"LDI",           T_(SM83_LDI)         },
-    {"LDD",           T_(SM83_LDD)         },
-    {"LDH",           T_(SM83_LDH)         },
-    {"NOP",           T_(SM83_NOP)         },
-    {"OR",            T_(SM83_OR)          },
-    {"POP",           T_(SM83_POP)         },
-    {"PUSH",          T_(SM83_PUSH)        },
-    {"RES",           T_(SM83_RES)         },
-    {"RETI",          T_(SM83_RETI)        },
-    {"RET",           T_(SM83_RET)         },
-    {"RLCA",          T_(SM83_RLCA)        },
-    {"RLC",           T_(SM83_RLC)         },
-    {"RLA",           T_(SM83_RLA)         },
-    {"RL",            T_(SM83_RL)          },
-    {"RRC",           T_(SM83_RRC)         },
-    {"RRCA",          T_(SM83_RRCA)        },
-    {"RRA",           T_(SM83_RRA)         },
-    {"RR",            T_(SM83_RR)          },
-    {"RST",           T_(SM83_RST)         },
-    {"SBC",           T_(SM83_SBC)         },
-    {"SCF",           T_(SM83_SCF)         },
-    {"SET",           T_(SM83_SET)         },
-    {"SLA",           T_(SM83_SLA)         },
-    {"SRA",           T_(SM83_SRA)         },
-    {"SRL",           T_(SM83_SRL)         },
-    {"STOP",          T_(SM83_STOP)        },
-    {"SUB",           T_(SM83_SUB)         },
-    {"SWAP",          T_(SM83_SWAP)        },
-    {"XOR",           T_(SM83_XOR)         },
-
-    {"NZ",            T_(CC_NZ)            },
-    {"Z",             T_(CC_Z)             },
-    {"NC",            T_(CC_NC)            },
-    // There is no `T_(CC_C)`; it's handled before as `T_(TOKEN_C)`
-
-    {"AF",            T_(MODE_AF)          },
-    {"BC",            T_(MODE_BC)          },
-    {"DE",            T_(MODE_DE)          },
-    {"HL",            T_(MODE_HL)          },
-    {"SP",            T_(MODE_SP)          },
-    {"HLD",           T_(MODE_HL_DEC)      },
-    {"HLI",           T_(MODE_HL_INC)      },
-
-    {"A",             T_(TOKEN_A)          },
-    {"B",             T_(TOKEN_B)          },
-    {"C",             T_(TOKEN_C)          },
-    {"D",             T_(TOKEN_D)          },
-    {"E",             T_(TOKEN_E)          },
-    {"H",             T_(TOKEN_H)          },
-    {"L",             T_(TOKEN_L)          },
-
-    {"DEF",           T_(OP_DEF)           },
-
-    {"FRAGMENT",      T_(POP_FRAGMENT)     },
-    {"BANK",          T_(OP_BANK)          },
-    {"ALIGN",         T_(POP_ALIGN)        },
-
-    {"SIZEOF",        T_(OP_SIZEOF)        },
-    {"STARTOF",       T_(OP_STARTOF)       },
-
-    {"ROUND",         T_(OP_ROUND)         },
-    {"CEIL",          T_(OP_CEIL)          },
-    {"FLOOR",         T_(OP_FLOOR)         },
-    {"DIV",           T_(OP_FDIV)          },
-    {"MUL",           T_(OP_FMUL)          },
-    {"FMOD",          T_(OP_FMOD)          },
-    {"POW",           T_(OP_POW)           },
-    {"LOG",           T_(OP_LOG)           },
-    {"SIN",           T_(OP_SIN)           },
-    {"COS",           T_(OP_COS)           },
-    {"TAN",           T_(OP_TAN)           },
-    {"ASIN",          T_(OP_ASIN)          },
-    {"ACOS",          T_(OP_ACOS)          },
-    {"ATAN",          T_(OP_ATAN)          },
-    {"ATAN2",         T_(OP_ATAN2)         },
-
-    {"HIGH",          T_(OP_HIGH)          },
-    {"LOW",           T_(OP_LOW)           },
-    {"ISCONST",       T_(OP_ISCONST)       },
-
-    {"BITWIDTH",      T_(OP_BITWIDTH)      },
-    {"TZCOUNT",       T_(OP_TZCOUNT)       },
-
-    {"BYTELEN",       T_(OP_BYTELEN)       },
-    {"READFILE",      T_(OP_READFILE)      },
-    {"STRBYTE",       T_(OP_STRBYTE)       },
-    {"STRCAT",        T_(OP_STRCAT)        },
-    {"STRCHAR",       T_(OP_STRCHAR)       },
-    {"STRCMP",        T_(OP_STRCMP)        },
-    {"STRFIND",       T_(OP_STRFIND)       },
-    {"STRFMT",        T_(OP_STRFMT)        },
-    {"STRIN",         T_(OP_STRIN)         },
-    {"STRLEN",        T_(OP_STRLEN)        },
-    {"STRLWR",        T_(OP_STRLWR)        },
-    {"STRRFIND",      T_(OP_STRRFIND)      },
-    {"STRRIN",        T_(OP_STRRIN)        },
-    {"STRRPL",        T_(OP_STRRPL)        },
-    {"STRSLICE",      T_(OP_STRSLICE)      },
-    {"STRSUB",        T_(OP_STRSUB)        },
-    {"STRUPR",        T_(OP_STRUPR)        },
-
-    {"CHARCMP",       T_(OP_CHARCMP)       },
-    {"CHARLEN",       T_(OP_CHARLEN)       },
-    {"CHARSIZE",      T_(OP_CHARSIZE)      },
-    {"CHARSUB",       T_(OP_CHARSUB)       },
-    {"CHARVAL",       T_(OP_CHARVAL)       },
-    {"INCHARMAP",     T_(OP_INCHARMAP)     },
-    {"REVCHAR",       T_(OP_REVCHAR)       },
-
-    {"INCLUDE",       T_(POP_INCLUDE)      },
-    {"PRINT",         T_(POP_PRINT)        },
-    {"PRINTLN",       T_(POP_PRINTLN)      },
-    {"EXPORT",        T_(POP_EXPORT)       },
-    {"DS",            T_(POP_DS)           },
-    {"DB",            T_(POP_DB)           },
-    {"DW",            T_(POP_DW)           },
-    {"DL",            T_(POP_DL)           },
-    {"SECTION",       T_(POP_SECTION)      },
-    {"ENDSECTION",    T_(POP_ENDSECTION)   },
-    {"PURGE",         T_(POP_PURGE)        },
-
-    {"RSRESET",       T_(POP_RSRESET)      },
-    {"RSSET",         T_(POP_RSSET)        },
-
-    {"INCBIN",        T_(POP_INCBIN)       },
-    {"CHARMAP",       T_(POP_CHARMAP)      },
-    {"NEWCHARMAP",    T_(POP_NEWCHARMAP)   },
-    {"SETCHARMAP",    T_(POP_SETCHARMAP)   },
-    {"PUSHC",         T_(POP_PUSHC)        },
-    {"POPC",          T_(POP_POPC)         },
-
-    {"FAIL",          T_(POP_FAIL)         },
-    {"WARN",          T_(POP_WARN)         },
-    {"FATAL",         T_(POP_FATAL)        },
-    {"ASSERT",        T_(POP_ASSERT)       },
-    {"STATIC_ASSERT", T_(POP_STATIC_ASSERT)},
-
-    {"MACRO",         T_(POP_MACRO)        },
-    {"ENDM",          T_(POP_ENDM)         },
-    {"SHIFT",         T_(POP_SHIFT)        },
-
-    {"REPT",          T_(POP_REPT)         },
-    {"FOR",           T_(POP_FOR)          },
-    {"ENDR",          T_(POP_ENDR)         },
-    {"BREAK",         T_(POP_BREAK)        },
-
-    {"LOAD",          T_(POP_LOAD)         },
-    {"ENDL",          T_(POP_ENDL)         },
-
-    {"IF",            T_(POP_IF)           },
-    {"ELSE",          T_(POP_ELSE)         },
-    {"ELIF",          T_(POP_ELIF)         },
-    {"ENDC",          T_(POP_ENDC)         },
-
-    {"UNION",         T_(POP_UNION)        },
-    {"NEXTU",         T_(POP_NEXTU)        },
-    {"ENDU",          T_(POP_ENDU)         },
-
-    {"WRAM0",         T_(SECT_WRAM0)       },
-    {"VRAM",          T_(SECT_VRAM)        },
-    {"ROMX",          T_(SECT_ROMX)        },
-    {"ROM0",          T_(SECT_ROM0)        },
-    {"HRAM",          T_(SECT_HRAM)        },
-    {"WRAMX",         T_(SECT_WRAMX)       },
-    {"SRAM",          T_(SECT_SRAM)        },
-    {"OAM",           T_(SECT_OAM)         },
-
-    {"RB",            T_(POP_RB)           },
-    {"RW",            T_(POP_RW)           },
-    // There is no `T_(POP_RL)`; it's handled before as `T_(SM83_RL)`
-
-    {"EQU",           T_(POP_EQU)          },
-    {"EQUS",          T_(POP_EQUS)         },
-    {"REDEF",         T_(POP_REDEF)        },
-
-    {"PUSHS",         T_(POP_PUSHS)        },
-    {"POPS",          T_(POP_POPS)         },
-    {"PUSHO",         T_(POP_PUSHO)        },
-    {"POPO",          T_(POP_POPO)         },
-
-    {"OPT",           T_(POP_OPT)          },
-};
+static int lookupKeyword(std::string const &identifier) {
+	// `Keyword` and `KeywordHash` are auto-generated from `keywords.gperf`
+	Keyword const *keyword = KeywordHash::lookup(identifier.c_str(), identifier.length());
+	return keyword ? keyword->tokenType : 0;
+}
 
 static LexerState *lexerState = nullptr;
 static LexerState *lexerStateEOL = nullptr;
@@ -1193,7 +1006,7 @@ static Token readIdentifier(char firstChar, bool raw) {
 		// If the char was a dot, the identifier is a local label
 		if (c == '.') {
 			// Check for a keyword before a non-raw local label
-			if (!raw && tokenType != T_(LOCAL) && keywords.find(builder) != keywords.end()) {
+			if (!raw && tokenType != T_(LOCAL) && lookupKeyword(builder) != 0) {
 				keywordBeforeLocal = true;
 			}
 
@@ -1205,8 +1018,8 @@ static Token readIdentifier(char firstChar, bool raw) {
 
 	// Check for a keyword if the identifier is not raw and not a local label
 	if (!raw && tokenType != T_(LOCAL)) {
-		if (auto search = keywords.find(builder); search != keywords.end()) {
-			return Token(search->second);
+		if (int keywordType = lookupKeyword(builder); keywordType != 0) {
+			return Token(keywordType);
 		}
 	}
 
@@ -1275,7 +1088,7 @@ static std::pair<Symbol const *, std::shared_ptr<std::string>> readInterpolation
 	if (builder.starts_with('#')) {
 		// Skip a '#' raw symbol prefix, but after expanding any nested interpolations.
 		builder.erase(0, 1);
-	} else if (keywords.find(builder) != keywords.end()) {
+	} else if (lookupKeyword(builder) != 0) {
 		// Don't allow symbols that alias keywords without a '#' prefix.
 		error(
 		    "Interpolated symbol `%s` is a reserved keyword; add a '#' prefix to use it as a raw "
@@ -2081,9 +1894,9 @@ static Token skipToLeadingKeyword(
 					builder += c;
 					shiftFn();
 				}
-				if (auto search = keywords.find(builder); search != keywords.end()) {
+				if (int keywordType = lookupKeyword(builder); keywordType != 0) {
 					finalizeFn();
-					return Token(search->second);
+					return Token(keywordType);
 				}
 			}
 		}

@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: MIT
 
 .SUFFIXES:
-.SUFFIXES: .cpp .y .o
+.SUFFIXES: .cpp .hpp .y .gperf .o
 
 .PHONY: all clean install checkdiff develop debug profile coverage format tidy iwyu wine-shim dist
 
@@ -82,7 +82,7 @@ rgbasm_obj := \
 	src/opmath.o \
 	src/verbosity.o
 
-src/asm/lexer.o src/asm/main.o: src/asm/parser.hpp
+src/asm/lexer.o src/asm/main.o: src/asm/keywords.hpp src/asm/parser.hpp
 
 rgblink_obj := \
 	${common_obj} \
@@ -161,6 +161,9 @@ src/asm/parser.hpp: src/asm/parser.cpp
 src/link/script.hpp: src/link/script.cpp
 	$Qtouch $@
 
+.gperf.hpp:
+	$Qgperf $< > $@
+
 # Only RGBGFX uses libpng (POSIX make doesn't support pattern rules to cover all these)
 src/gfx/color_set.o: src/gfx/color_set.cpp
 	$Q${CXX} ${REALCXXFLAGS} ${PNGCFLAGS} -c -o $@ $<
@@ -193,6 +196,7 @@ clean:
 	$Qfind src/ -name "*.o" -exec rm {} \;
 	$Qfind . -type f \( -name "*.gcno" -o -name "*.gcda" -o -name "*.gcov" \) -exec rm {} \;
 	$Q${RM} rgbshim.sh
+	$Q${RM} src/asm/keywords.hpp
 	$Q${RM} src/asm/parser.cpp src/asm/parser.hpp src/asm/stack.hh
 	$Q${RM} src/link/script.cpp src/link/script.hpp src/link/stack.hh
 	$Q${RM} test/gfx/randtilegen test/gfx/rgbgfx_test
@@ -250,8 +254,8 @@ format:
 	$Qclang-format -i $$(git ls-files '*.[hc]pp')
 
 # Target used in development to check code with clang-tidy.
-# Requires Bison-generated header files to exist.
-tidy: src/asm/parser.hpp src/link/script.hpp
+# Requires Bison-generated and gperf-generated files to exist.
+tidy: src/asm/keywords.hpp src/asm/parser.hpp src/link/script.hpp
 	$Qclang-tidy -p . $$(git ls-files '*.[hc]pp')
 
 # Target used in development to remove unused `#include` headers.

@@ -10,7 +10,7 @@ esac
 
 case "${OS%%-*}" in
 	ubuntu|debian)
-		pkgs=bison
+		pkgs="bison gperf"
 		case "$TOOLSET" in
 			mingw32)
 				pkgs="$pkgs libz-mingw-w64-dev g++-mingw-w64-i686-win32"
@@ -34,7 +34,7 @@ case "${OS%%-*}" in
 		sudo apt-get install -yq $pkgs
 		;;
 	macos)
-		pkgs=bison
+		pkgs="bison gperf"
 		case $TOOLSET in
 			lld)
 				pkgs="$pkgs $TOOLSET"
@@ -55,11 +55,11 @@ case "${OS%%-*}" in
 		printf 'PATH=%s\n' "$PATH" >>"$GITHUB_ENV" # Make it available to later CI steps too.
 		;;
 	freebsd)
-		pkg install -y bash bison cmake git png
+		pkg install -y bash bison cmake git gperf png
 		;;
 	windows)
 		# GitHub Actions' hosted runners ship CMake 3.x, but versions prior to 4.0.0 ignore `CPACK_PACKAGE_FILE_NAME`.
-		choco install -y winflexbison3 cmake
+		choco install -y winflexbison3 cmake gperf
 		# The below expects the base name, not the Windows-specific name.
 		bison() { win_bison "$@"; } # An alias doesn't work, so we use a function instead.
 		;;
@@ -81,7 +81,7 @@ echo ::group::PATH
 echo "PATH=($PATH)" | sed 's/:/\n      /g'
 echo ::endgroup::
 
-for prog in bison make cmake; do
+for prog in bison gperf make cmake; do
 	printf '::group::' # No line terminator, the next command's first line becomes the group's title.
 	$prog --version
 	type $prog

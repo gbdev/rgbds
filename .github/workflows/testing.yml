@@ -346,6 +346,7 @@ jobs:
             bison
             gcc-g++
             git
+            gperf
             libpng-devel
             make
             pkg-config

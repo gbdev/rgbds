@@ -28,11 +28,21 @@ if(BISON_VERSION VERSION_GREATER_EQUAL "3.7")
   set(BISON_FLAGS "${BISON_FLAGS} -Wcounterexamples")
 endif()
 
+find_program(GPERF_EXECUTABLE gperf REQUIRED)
+set(GPERF_ASM_INPUT "${CMAKE_SOURCE_DIR}/src/asm/keywords.gperf")
+set(GPERF_ASM_OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/keywords.hpp")
+add_custom_command(OUTPUT ${GPERF_ASM_OUTPUT}
+                   DEPENDS ${GPERF_ASM_INPUT}
+                   COMMENT "Generating perfect hash function for keywords"
+                   COMMAND ${GPERF_EXECUTABLE} ${GPERF_ASM_INPUT} > ${GPERF_ASM_OUTPUT}
+                   COMMAND_EXPAND_LISTS VERBATIM)
+
 bison_target(asm_parser "asm/parser.y"
              "${CMAKE_CURRENT_BINARY_DIR}/parser.cpp"
              COMPILE_FLAGS "${BISON_FLAGS}")
 add_executable(rgbasm $<TARGET_OBJECTS:common>
     "${BISON_asm_parser_OUTPUT_SOURCE}"
+    "${GPERF_ASM_OUTPUT}"
     "asm/actions.cpp"
     "asm/charmap.cpp"
     "asm/fixpoint.cpp"
