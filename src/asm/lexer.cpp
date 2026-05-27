@@ -2058,44 +2058,50 @@ finish: // Can't `break` out of a nested `for`-`switch`
 	return Token(T_(YYEOF));
 }
 
-static Token skipToLeadingKeyword(
-    InvocableR<int> auto peekFn,
-    Procedure<> auto shiftFn,
-    Procedure<> auto nextLineFn,
-    Procedure<> auto finalizeFn
-) {
+static Token skipToLeadingKeywordFast(Procedure<> auto shiftFast) {
+	// This is essentially `skipToLeadingKeyword` with `peek` and `shiftChar` replaced,
+	// as well as anything that calls them like `nextChar` or `handleCRLF`.
+	char const *ptr = lexerState->content.ptr.get();
+	auto peekFast = [&]() {
+		return lexerState->offset < lexerState->content.size ? ptr[lexerState->offset] : EOF;
+	};
 	for (;;) {
-		int c = peekFn();
+		int c = peekFast();
 		if (lexerState->atLineStart) {
 			lexerState->atLineStart = false;
 			while (isBlankSpace(c)) {
-				shiftFn();
-				c = peekFn();
+				shiftFast();
+				c = peekFast();
 			}
 			if (c == EOF) {
 				return Token(T_(YYEOF));
 			} else if (isLetter(c)) {
-				std::string builder(1, c);
-				shiftFn();
-				for (c = peekFn(); continuesIdentifier(c); c = peekFn()) {
-					builder += c;
-					shiftFn();
+				size_t start = lexerState->offset;
+				shiftFast();
+				for (c = peekFast(); continuesIdentifier(c); c = peekFast()) {
+					shiftFast();
 				}
-				if (auto search = keywords.find(builder); search != keywords.end()) {
-					finalizeFn();
+				std::string_view leading{ptr + start, ptr + lexerState->offset};
+				if (auto search = keywords.find(leading); search != keywords.end()) {
+					// When this branch returns a token, there has been one more call to `peekFast`
+					// than to `shiftFast`. Unlike `peek` and `shiftChar`, the optimized functions
+					// do not update `lexerState->expansionScanDistance`, so it must be incremented
+					// if it was previously zero.
+					if (lexerState->expansionScanDistance == 0) {
+						++lexerState->expansionScanDistance;
+					}
 					return Token(search->second);
 				}
 			}
 		}
-		shiftFn();
+		shiftFast();
 		if (c == EOF) {
 			return Token(T_(YYEOF));
 		} else if (isNewline(c)) {
-			// Like `handleCRLF` but calling generic `shiftFn`
-			if (c == '\r' && peekFn() == '\n') {
-				shiftFn();
+			if (c == '\r' && peekFast() == '\n') {
+				shiftFast();
 			}
-			nextLineFn();
+			++lexerState->lineNo;
 			lexerState->atLineStart = true;
 		}
 	}
@@ -2120,36 +2126,42 @@ static Token skipToLeadingKeyword() {
 	if (lexerState->expansionStack.empty()) {
 		// Optimize the common case (no ongoing expansions) to avoid
 		// the bookkeeping of `peek` and `shiftChar`.
-		char const *ptr = lexerState->content.ptr.get();
-		auto quickPeek = [&]() {
-			return lexerState->offset < lexerState->content.size ? ptr[lexerState->offset] : EOF;
-		};
-		auto quickNextLine = []() { ++lexerState->lineNo; };
-		auto quickFinalize = []() {
-			// When `skipToLeadingKeyword` returns a token, there has been one more
-			// call to `quickPeek` than to `quickNextLine`. Unlike `peek` and `shiftChar`,
-			// the optimized functions do not update `lexerState->expansionScanDistance`,
-			// so it must be incrementedif it was previously zero.
-			if (lexerState->expansionScanDistance == 0) {
-				++lexerState->expansionScanDistance;
-			}
-		};
 		if (lexerState->capturing) {
 			assume(lexerState->captureBuf == nullptr);
-			auto quickCaptureShiftChar = [&]() {
+			return skipToLeadingKeywordFast([&]() {
 				++lexerState->offset;
 				++lexerState->captureSize;
-			};
-			return skipToLeadingKeyword(
-			    quickPeek, quickCaptureShiftChar, quickNextLine, quickFinalize
-			);
+			});
 		} else {
-			auto quickShiftChar = [&]() { ++lexerState->offset; };
-			return skipToLeadingKeyword(quickPeek, quickShiftChar, quickNextLine, quickFinalize);
+			return skipToLeadingKeywordFast([&]() { ++lexerState->offset; });
 		}
-	} else {
-		auto finalize = []() {};
-		return skipToLeadingKeyword(peek, shiftChar, nextLine, finalize);
+	}
+
+	for (;;) {
+		int c = peek();
+		if (lexerState->atLineStart) {
+			lexerState->atLineStart = false;
+			c = skipChars(isBlankSpace);
+			if (c == EOF) {
+				return Token(T_(YYEOF));
+			} else if (isLetter(c)) {
+				std::string builder(1, c);
+				for (c = nextChar(); continuesIdentifier(c); c = nextChar()) {
+					builder += c;
+				}
+				if (auto search = keywords.find(builder); search != keywords.end()) {
+					return Token(search->second);
+				}
+			}
+		}
+		shiftChar();
+		if (c == EOF) {
+			return Token(T_(YYEOF));
+		} else if (isNewline(c)) {
+			handleCRLF(c);
+			nextLine();
+			lexerState->atLineStart = true;
+		}
 	}
 }
 
