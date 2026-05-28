@@ -101,6 +101,10 @@ static inline int clz(unsigned int x) {
 #define RANGE(s)  std::begin(s), std::end(s)
 #define RRANGE(s) std::rbegin(s), std::rend(s)
 
+// Macros to print-format a `std::string_view` (like <inttype.h> macros)
+#define PRI_SV         ".*s"
+#define PRI_SV_ARG(sv) static_cast<int>((sv).length()), (sv).data()
+
 // MSVC does not inline `strlen()` or `.length()` of a constant string
 template<int SizeOfString>
     requires(SizeOfString > 0)
