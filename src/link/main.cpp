@@ -176,6 +176,7 @@ static void parseScrambleSpec(char *spec) {
 			fatal("Unknown region name \"%s\" in spec for option '-S'", regionName);
 		}
 
+		uint16_t *scrambleLimit = search->second.first;
 		uint16_t limit = search->second.second;
 		if (regionSize) {
 			char const *ptr = regionSize + skipBlankSpace(regionSize);
@@ -183,24 +184,29 @@ static void parseScrambleSpec(char *spec) {
 				fatal("Invalid region size limit \"%s\" for option '-S'", regionSize);
 			} else if (*value > limit) {
 				fatal(
-				    "%s region size for option '-S' must be between 0 and %" PRIu16,
-				    search->first.c_str(),
+				    "%" PRI_SV " region size for option '-S' must be between 0 and %" PRIu16,
+				    PRI_SV_ARG(search->first),
 				    limit
 				);
 			} else {
 				limit = *value;
 			}
-		} else if (search->second.first != &options.scrambleWRAMX) {
+		} else if (scrambleLimit != &options.scrambleWRAMX) {
 			// Only WRAMX limit can be implied, since ROMX and SRAM size may vary.
-			fatal("Missing %s region size limit for option '-S'", search->first.c_str());
+			fatal(
+			    "Missing %" PRI_SV " region size limit for option '-S'", PRI_SV_ARG(search->first)
+			);
 		}
 
-		if (*search->second.first != limit && *search->second.first != 0) {
-			warnx("Overriding %s region size limit for option '-S'", search->first.c_str());
+		if (*scrambleLimit != limit && *search->second.first != 0) {
+			warnx(
+			    "Overriding %" PRI_SV " region size limit for option '-S'",
+			    PRI_SV_ARG(search->first)
+			);
 		}
 
 		// Update the scrambling region size limit.
-		*search->second.first = limit;
+		*scrambleLimit = limit;
 	}
 }
 

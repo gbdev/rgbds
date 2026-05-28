@@ -8,7 +8,7 @@
 #include <optional>
 #include <stddef.h>
 #include <stdint.h>
-#include <string>
+#include <string_view>
 #include <unordered_map>
 
 #include "helpers.hpp"
@@ -76,23 +76,25 @@ std::optional<uint64_t> parseWholeNumber(char const *str, NumberBase base = BASE
 char const *printChar(int c);
 
 struct Uppercase {
+	using is_transparent = void;
+
 	// FNV-1a hash of an uppercased string
-	constexpr size_t operator()(std::string const &str) const {
+	constexpr size_t operator()(std::string_view str) const {
 		return std::accumulate(RANGE(str), size_t(0x811C9DC5), [](size_t hash, char c) {
 			return (hash ^ toUpper(c)) * 16777619;
 		});
 	}
 
 	// Compare two strings without case-sensitivity (by converting to uppercase)
-	constexpr bool operator()(std::string const &str1, std::string const &str2) const {
+	constexpr bool operator()(std::string_view str1, std::string_view str2) const {
 		return std::equal(RANGE(str1), RANGE(str2), [](char c1, char c2) {
 			return toUpper(c1) == toUpper(c2);
 		});
 	}
 };
 
-// An unordered map from case-insensitive `std::string` keys to `ItemT` items
+// An unordered map from case-insensitive `std::string_view` keys to `ItemT` items
 template<typename ItemT>
-using UpperMap = std::unordered_map<std::string, ItemT, Uppercase, Uppercase>;
+using UpperMap = std::unordered_map<std::string_view, ItemT, Uppercase, Uppercase>;
 
 #endif // RGBDS_UTIL_HPP
