@@ -19,7 +19,7 @@
 [[gnu::format(printf, 1, 2)]]
 void warnx(char const *fmt, ...);
 
-enum WarningAbled { WARNING_DEFAULT, WARNING_ENABLED, WARNING_DISABLED };
+enum WarningAbled : uint8_t { WARNING_DEFAULT, WARNING_ENABLED, WARNING_DISABLED };
 
 struct WarningState {
 	WarningAbled state;
@@ -36,7 +36,7 @@ struct WarningFlag {
 	LevelEnumT level;
 };
 
-enum WarningBehavior { DISABLED, ENABLED, ERROR };
+enum WarningBehavior : uint8_t { DISABLED, ENABLED, ERROR };
 
 template<Enum WarningEnumT>
 struct ParamWarning {

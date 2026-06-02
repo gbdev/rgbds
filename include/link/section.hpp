@@ -17,39 +17,40 @@ struct Symbol;
 
 struct Patch {
 	FileStackNode const *src;
+	Section const *pcSection;
+	std::vector<uint8_t> rpnExpression;
 	uint32_t lineNo;
 	uint32_t offset;
-	Section const *pcSection;
 	uint32_t pcSectionID;
 	uint32_t pcOffset;
 	PatchType type;
-	std::vector<uint8_t> rpnExpression;
 };
 
 struct Section {
-	// Info contained in the object files
-	std::string name;
-	uint16_t size;
-	uint16_t offset;
-	SectionType type;
-	SectionModifier modifier;
-	bool isAddressFixed;
-	// This `struct`'s address in ROM.
-	// Importantly for fragments, this does not include `offset`!
-	uint16_t org;
-	bool isBankFixed;
-	uint32_t bank;
-	bool isAlignFixed;
-	uint16_t alignMask;
-	uint16_t alignOfs;
-	FileStackNode const *src;
-	int32_t lineNo;
-	std::vector<uint8_t> data; // Array of size `size`, or 0 if `type` does not have data
-	std::vector<Patch> patches;
 	// Extra info computed during linking
 	std::vector<Symbol> *fileSymbols;
 	std::vector<Symbol *> symbols;
 	std::unique_ptr<Section> nextPiece; // The next fragment or union "piece" of this section
+
+	// Info contained in the object files
+	std::string name;
+	std::vector<uint8_t> data; // Array of size `size`, or 0 if `type` does not have data
+	std::vector<Patch> patches;
+	FileStackNode const *src;
+	int32_t lineNo;
+	uint32_t bank;
+	uint16_t size;
+	uint16_t offset;
+	// This `struct`'s address in ROM.
+	// Importantly for fragments, this does not include `offset`!
+	uint16_t org;
+	uint16_t alignMask;
+	uint16_t alignOfs;
+	SectionType type;
+	SectionModifier modifier;
+	bool isAddressFixed;
+	bool isBankFixed;
+	bool isAlignFixed;
 
 private:
 	// Template class for both const and non-const iterators over the "pieces" of this section

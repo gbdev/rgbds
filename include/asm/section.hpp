@@ -20,27 +20,27 @@ struct Section;
 
 struct Patch {
 	std::shared_ptr<FileStackNode> src;
+	Section *pcSection;
+	std::vector<uint8_t> rpn;
 	uint32_t lineNo;
 	uint32_t offset;
-	Section *pcSection;
 	uint32_t pcOffset;
 	uint8_t type;
-	std::vector<uint8_t> rpn;
 };
 
 struct Section {
 	std::string name;
-	SectionType type;
-	SectionModifier modifier;
 	std::shared_ptr<FileStackNode> src; // Where the section was defined
-	uint32_t fileLine;                  // Line where the section was defined
+	std::deque<Patch> patches;
+	std::vector<uint8_t> data;
+	uint32_t fileLine; // Line where the section was defined
 	uint32_t size;
 	uint32_t org;
 	uint32_t bank;
-	uint8_t align; // Exactly as specified in `ALIGN[]`
 	uint16_t alignOfs;
-	std::deque<Patch> patches;
-	std::vector<uint8_t> data;
+	SectionType type;
+	SectionModifier modifier;
+	uint8_t align; // Exactly as specified in `ALIGN[]`
 
 	uint32_t getID() const; // ID of the section in the object file (`UINT32_MAX` if none)
 	bool isSizeKnown() const;
@@ -48,8 +48,8 @@ struct Section {
 
 struct SectionSpec {
 	uint32_t bank;
-	uint8_t alignment;
 	uint16_t alignOfs;
+	uint8_t alignment;
 };
 
 size_t sect_CountSections();

@@ -44,11 +44,11 @@ struct Context {
 	// parent's, and likewise "back-propagates" a unique ID if requested), hence using `shared_ptr`.
 	std::shared_ptr<std::string> uniqueIDStr = nullptr;
 	std::shared_ptr<MacroArgs> macroArgs = nullptr; // Macro args are *saved* here
+	InternedStr forName{};
 	uint32_t nbReptIters = 0;
-	bool isForLoop = false;
 	int32_t forValue = 0;
 	int32_t forStep = 0;
-	InternedStr forName{};
+	bool isForLoop = false;
 };
 
 static std::stack<Context> contextStack;

@@ -106,7 +106,7 @@ static uint8_t readByte(Location const &where, char const *str, NumberBase base)
 	return num;
 }
 
-enum AreaFlags {
+enum AreaFlags : uint8_t {
 	AREA_TYPE = 2, // 0: Concatenate, 1: overlay
 	AREA_ISABS,    // 0: Relative (???) address, 1: absolute address
 	AREA_PAGING,   // Unsupported
@@ -114,7 +114,7 @@ enum AreaFlags {
 	AREA_ALL_FLAGS = 1 << AREA_TYPE | 1 << AREA_ISABS | 1 << AREA_PAGING,
 };
 
-enum RelocFlags {
+enum RelocFlags : uint16_t {
 	RELOC_SIZE,      // 0: 16-bit, 1: 8-bit
 	RELOC_ISSYM,     // 0: Area, 1: Symbol
 	RELOC_ISPCREL,   // 0: Normal, 1: PC-relative
@@ -395,7 +395,7 @@ void sdobj_ReadFile(FileStackNode const &src, FILE *file, std::vector<Symbol> &f
 					value -= section->org;
 				}
 				// No need to set the `sectionID`, since we set the pointer
-				symbol.data = Label{.sectionID = 0, .offset = value, .section = section};
+				symbol.data = Label{.section = section, .sectionID = 0, .offset = value};
 			} else {
 				// Symbols without sections are just constants
 				symbol.data = value;

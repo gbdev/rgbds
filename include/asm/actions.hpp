@@ -17,8 +17,8 @@
 #include "asm/rpn.hpp"    // Expression
 
 struct AlignmentSpec {
-	uint8_t alignment;
 	uint16_t alignOfs;
+	uint8_t alignment;
 };
 
 void act_If(int32_t condition);

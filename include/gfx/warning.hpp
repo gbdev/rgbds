@@ -3,15 +3,17 @@
 #ifndef RGBDS_GFX_WARNING_HPP
 #define RGBDS_GFX_WARNING_HPP
 
+#include <stdint.h>
+
 #include "diagnostics.hpp"
 
-enum WarningLevel {
+enum WarningLevel : uint8_t {
 	LEVEL_DEFAULT,    // Warnings that are enabled by default
 	LEVEL_ALL,        // Warnings that probably indicate an error
 	LEVEL_EVERYTHING, // Literally every warning
 };
 
-enum WarningID {
+enum WarningID : uint8_t {
 	WARNING_EMBEDDED,      // Using an embedded PNG palette without '-c embedded'
 	WARNING_OBSOLETE,      // Obsolete/deprecated things
 	WARNING_TRIM_NONEMPTY, // '-x' trims nonempty tiles

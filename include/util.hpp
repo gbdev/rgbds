@@ -13,7 +13,7 @@
 
 #include "helpers.hpp"
 
-enum NumberBase {
+enum NumberBase : uint8_t {
 	BASE_AUTO = 0,
 	BASE_2 = 2,
 	BASE_8 = 8,

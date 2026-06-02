@@ -4,6 +4,7 @@
 #define RGBDS_VERBOSITY_HPP
 
 #include <stdarg.h>
+#include <stdint.h>
 #include <stdio.h>
 
 // This macro does not evaluate its arguments unless the condition is true.
@@ -14,7 +15,7 @@
 		} \
 	} while (0)
 
-enum Verbosity {
+enum Verbosity : uint8_t {
 	VERB_NONE,   // 0. Default, no extra output
 	VERB_CONFIG, // 1. Basic configuration, after parsing CLI options
 	VERB_NOTICE, // 2. Before significant actions

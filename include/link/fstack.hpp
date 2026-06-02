@@ -12,18 +12,20 @@
 #include "linkdefs.hpp"
 
 struct FileStackNode {
-	FileStackNodeType type;
 	std::variant<
 	    std::monostate,        // Default constructed; `.type` and `.data` must be set manually
 	    std::vector<uint32_t>, // NODE_REPT
 	    std::string            // NODE_FILE, NODE_MACRO
 	    >
 	    data;
-	bool isQuiet; // Whether to omit this node from error reporting
 
 	FileStackNode *parent;
 	// Line at which the parent context was exited; meaningless for the root level
 	uint32_t lineNo;
+
+	FileStackNodeType type;
+
+	bool isQuiet; // Whether to omit this node from error reporting
 
 	// REPT iteration counts since last named node, in reverse depth order
 	std::vector<uint32_t> &iters() { return std::get<std::vector<uint32_t>>(data); }

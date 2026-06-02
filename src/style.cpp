@@ -5,6 +5,7 @@
 
 #include "style.hpp"
 
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h> // getenv
 #include <string.h>
@@ -18,7 +19,7 @@
 // clang-format on
 #endif
 
-enum Tribool { TRI_NO, TRI_YES, TRI_MAYBE };
+enum Tribool : uint8_t { TRI_NO, TRI_YES, TRI_MAYBE };
 
 #if !STYLE_ANSI
 static HANDLE const outHandle = GetStdHandle(STD_OUTPUT_HANDLE);

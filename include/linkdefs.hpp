@@ -13,7 +13,7 @@
 
 enum AssertionType { ASSERT_WARN, ASSERT_ERROR, ASSERT_FATAL };
 
-enum RPNCommand {
+enum RPNCommand : uint8_t {
 	RPN_ADD = 0x00,
 	RPN_SUB = 0x01,
 	RPN_MUL = 0x02,
@@ -63,7 +63,7 @@ enum RPNCommand {
 	RPN_SYM = 0x81
 };
 
-enum SectionType {
+enum SectionType : uint8_t {
 	SECTTYPE_WRAM0,
 	SECTTYPE_VRAM,
 	SECTTYPE_ROMX,
@@ -82,7 +82,7 @@ static constexpr uint8_t SECTTYPE_TYPE_MASK = 0b111;
 static constexpr uint8_t SECTTYPE_UNION_BIT = 7;
 static constexpr uint8_t SECTTYPE_FRAGMENT_BIT = 6;
 
-enum FileStackNodeType {
+enum FileStackNodeType : uint8_t {
 	NODE_REPT,
 	NODE_FILE,
 	NODE_MACRO,
@@ -93,10 +93,10 @@ static constexpr uint8_t FSTACKNODE_QUIET_BIT = 7;
 // Nont-`const` members may be patched in RGBLINK depending on CLI flags
 extern struct SectionTypeInfo {
 	std::string const name;
-	uint16_t const startAddr;
-	uint16_t size;
 	uint32_t const firstBank;
 	uint32_t lastBank;
+	uint16_t const startAddr;
+	uint16_t size;
 } sectionTypeInfo[SECTTYPE_INVALID];
 
 // Tells whether a section has data in its object file definition,
@@ -116,13 +116,13 @@ static inline uint32_t sectTypeBanks(SectionType type) {
 	return sectionTypeInfo[type].lastBank - sectionTypeInfo[type].firstBank + 1;
 }
 
-enum SectionModifier { SECTION_NORMAL, SECTION_UNION, SECTION_FRAGMENT };
+enum SectionModifier : uint8_t { SECTION_NORMAL, SECTION_UNION, SECTION_FRAGMENT };
 
 extern char const * const sectionModNames[];
 
-enum ExportLevel { SYMTYPE_LOCAL, SYMTYPE_IMPORT, SYMTYPE_EXPORT, SYMTYPE_INVALID };
+enum ExportLevel : uint8_t { SYMTYPE_LOCAL, SYMTYPE_IMPORT, SYMTYPE_EXPORT, SYMTYPE_INVALID };
 
-enum PatchType {
+enum PatchType : uint8_t {
 	PATCHTYPE_BYTE,
 	PATCHTYPE_WORD,
 	PATCHTYPE_LONG,

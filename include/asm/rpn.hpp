@@ -15,8 +15,8 @@
 struct Symbol;
 
 struct RPNValue {
-	RPNCommand command;                                                // The RPN_* command ID
 	std::variant<std::monostate, uint8_t, uint32_t, InternedStr> data; // Data after the ID, if any
+	RPNCommand command;                                                // The RPN_* command ID
 
 	RPNValue(RPNCommand cmd);
 	RPNValue(RPNCommand cmd, uint8_t val);

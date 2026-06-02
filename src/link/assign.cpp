@@ -24,8 +24,8 @@
 #include "link/warning.hpp"
 
 struct MemoryLocation {
-	uint16_t address;
 	uint32_t bank;
+	uint16_t address;
 };
 
 struct FreeSpace {
@@ -246,9 +246,9 @@ static void placeSection(Section &section) {
 		// Unless the SECTION's address was fixed, the starting address
 		// is fine for any alignment, as checked in sect_DoSanityChecks.
 		MemoryLocation location = {
+		    .bank = section.isBankFixed ? section.bank : sectionTypeInfo[section.type].firstBank,
 		    .address =
 		        section.isAddressFixed ? section.org : sectionTypeInfo[section.type].startAddr,
-		    .bank = section.isBankFixed ? section.bank : sectionTypeInfo[section.type].firstBank,
 		};
 		assignSection(section, location);
 		return;

@@ -14,7 +14,7 @@
 #include "asm/lexer.hpp"
 #include "asm/section.hpp"
 
-enum SymbolType {
+enum SymbolType : uint8_t {
 	SYM_LABEL,
 	SYM_EQU,
 	SYM_VAR,
@@ -27,15 +27,6 @@ struct Symbol;                    // Forward declaration for `sym_IsPC`
 bool sym_IsPC(Symbol const *sym); // Forward declaration for `getSection`
 
 struct Symbol {
-	InternedStr name;
-	SymbolType type;
-	bool isBuiltin;
-	bool isExported; // Not relevant for SYM_MACRO or SYM_EQUS
-	bool isQuiet;    // Only relevant for SYM_MACRO
-	Section *section;
-	std::shared_ptr<FileStackNode> src; // Where the symbol was defined
-	uint32_t fileLine;                  // Line where the symbol was defined
-
 	std::variant<
 	    int32_t,                           // If isNumeric()
 	    int32_t (*)(),                     // If isNumeric() via a callback
@@ -45,8 +36,19 @@ struct Symbol {
 	    >
 	    data;
 
+	Section *section;
+	std::shared_ptr<FileStackNode> src; // Where the symbol was defined
+	InternedStr name;
+	uint32_t fileLine; // Line where the symbol was defined
+
 	uint32_t ID;       // ID of the symbol in the object file (`UINT32_MAX` if none)
 	uint32_t defIndex; // Ordering of the symbol in the state file
+
+	SymbolType type;
+
+	bool isBuiltin;
+	bool isExported; // Not relevant for SYM_MACRO or SYM_EQUS
+	bool isQuiet;    // Only relevant for SYM_MACRO
 
 	bool isDefined() const { return type != SYM_REF; }
 	bool isNumeric() const { return type == SYM_LABEL || type == SYM_EQU || type == SYM_VAR; }

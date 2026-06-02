@@ -9,7 +9,7 @@
 constexpr uint16_t UNSPECIFIED = 0x200;
 static_assert(UNSPECIFIED > 0xFF, "UNSPECIFIED should not be in byte range!");
 
-enum MbcType {
+enum MbcType : uint16_t {
 	ROM = 0x00,
 	ROM_RAM = 0x08,
 	ROM_RAM_BATTERY = 0x09,

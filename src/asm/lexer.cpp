@@ -47,29 +47,29 @@
 #define T_(name) static_cast<int>(yy::parser::token::name)
 
 struct Token {
-	int type;
 	std::variant<std::monostate, InternedStr, uint32_t, std::string> value;
+	int type;
 
-	Token() : type(T_(NUMBER)), value(std::monostate{}) {
+	Token() : value(std::monostate{}), type(T_(NUMBER)) {
 		assume(
 		    type != T_(NUMBER) && type != T_(STRING) && type != T_(CHARACTER) && type != T_(SYMBOL)
 		    && type != T_(LABEL) && type != T_(LOCAL) && type != T_(ANON) && type != T_(QMACRO)
 		);
 	}
-	Token(int type_) : type(type_), value(std::monostate{}) {
+	Token(int type_) : value(std::monostate{}), type(type_) {
 		assume(
 		    type != T_(NUMBER) && type != T_(STRING) && type != T_(CHARACTER) && type != T_(SYMBOL)
 		    && type != T_(LABEL) && type != T_(LOCAL) && type != T_(ANON) && type != T_(QMACRO)
 		);
 	}
-	Token(int type_, uint32_t value_) : type(type_), value(value_) { assume(type == T_(NUMBER)); }
-	Token(int type_, std::string const &value_) : type(type_), value(std::move(value_)) {
+	Token(int type_, uint32_t value_) : value(value_), type(type_) { assume(type == T_(NUMBER)); }
+	Token(int type_, std::string const &value_) : value(std::move(value_)), type(type_) {
 		assume(type == T_(STRING) || type == T_(CHARACTER));
 	}
-	Token(int type_, std::string &&value_) : type(type_), value(std::move(value_)) {
+	Token(int type_, std::string &&value_) : value(std::move(value_)), type(type_) {
 		assume(type == T_(STRING) || type == T_(CHARACTER));
 	}
-	Token(int type_, InternedStr value_) : type(type_), value(value_) {
+	Token(int type_, InternedStr value_) : value(value_), type(type_) {
 		assume(
 		    type == T_(SYMBOL) || type == T_(LABEL) || type == T_(LOCAL) || type == T_(ANON)
 		    || type == T_(QMACRO)
@@ -2364,7 +2364,8 @@ static Capture makeCapture(char const *name, InvocableR<int, int> auto callback)
 	lexerState->captureSize = 0;
 
 	Capture capture = {
-	    .lineNo = lexer_GetLineNo(), .span = {.ptr = nullptr, .size = 0}
+	    .span = {.ptr = nullptr, .size = 0},
+          .lineNo = lexer_GetLineNo()
 	};
 	if (lexerState->expansionStack.empty()) {
 		capture.span.ptr = std::shared_ptr<char[]>(

@@ -14,7 +14,14 @@ struct Expression;
 struct FileStackNode;
 struct Symbol;
 
-enum StateFeature { STATE_EQU, STATE_VAR, STATE_EQUS, STATE_CHAR, STATE_MACRO, NB_STATE_FEATURES };
+enum StateFeature : uint8_t {
+	STATE_EQU,
+	STATE_VAR,
+	STATE_EQUS,
+	STATE_CHAR,
+	STATE_MACRO,
+	NB_STATE_FEATURES
+};
 
 void out_RegisterNode(std::shared_ptr<FileStackNode> node);
 void out_RegisterSymbol(Symbol &sym);

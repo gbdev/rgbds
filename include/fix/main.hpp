@@ -18,7 +18,7 @@ static constexpr uint8_t FIX_GLOBAL_SUM   = 1 << 3;
 static constexpr uint8_t TRASH_GLOBAL_SUM = 1 << 2;
 // clang-format on
 
-enum Model { DMG, BOTH, CGB };
+enum Model : uint8_t { DMG, BOTH, CGB };
 
 struct Options {
 	uint8_t fixSpec = 0;                // -f, -v

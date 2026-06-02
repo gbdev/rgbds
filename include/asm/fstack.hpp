@@ -19,13 +19,11 @@
 #include "asm/lexer.hpp"
 
 struct FileStackNode {
-	FileStackNodeType type;
 	std::variant<
 	    std::vector<uint32_t>, // NODE_REPT
 	    std::string            // NODE_FILE, NODE_MACRO
 	    >
 	    data;
-	bool isQuiet; // Whether to omit this node from error reporting
 
 	std::shared_ptr<FileStackNode> parent; // Pointer to parent node, for error reporting
 	// Line at which the parent context was exited
@@ -34,6 +32,10 @@ struct FileStackNode {
 
 	// Set only if referenced: ID within the object file, `UINT32_MAX` if not output yet
 	uint32_t ID = UINT32_MAX;
+
+	FileStackNodeType type;
+
+	bool isQuiet; // Whether to omit this node from error reporting
 
 	// REPT iteration counts since last named node, in reverse depth order
 	std::vector<uint32_t> &iters() { return std::get<std::vector<uint32_t>>(data); }
@@ -47,7 +49,7 @@ struct FileStackNode {
 	    std::variant<std::vector<uint32_t>, std::string> data_,
 	    bool isQuiet_
 	)
-	    : type(type_), data(data_), isQuiet(isQuiet_) {}
+	    : data(data_), type(type_), isQuiet(isQuiet_) {}
 
 	void printBacktrace(uint32_t curLineNo) const;
 };

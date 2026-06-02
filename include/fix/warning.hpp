@@ -7,13 +7,13 @@
 
 #include "diagnostics.hpp"
 
-enum WarningLevel {
+enum WarningLevel : uint8_t {
 	LEVEL_DEFAULT,    // Warnings that are enabled by default
 	LEVEL_ALL,        // Warnings that probably indicate an error
 	LEVEL_EVERYTHING, // Literally every warning
 };
 
-enum WarningID {
+enum WarningID : uint8_t {
 	WARNING_MBC,        // Issues with MBC specs
 	WARNING_OBSOLETE,   // Obsolete/deprecated things
 	WARNING_OVERWRITE,  // Overwriting non-zero bytes

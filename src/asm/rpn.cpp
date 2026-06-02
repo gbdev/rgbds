@@ -534,7 +534,7 @@ void Expression::encode(std::vector<uint8_t> &buffer) const {
 	}
 }
 
-RPNValue::RPNValue(RPNCommand cmd) : command(cmd), data(std::monostate{}) {
+RPNValue::RPNValue(RPNCommand cmd) : data(std::monostate{}), command(cmd) {
 	assume(
 	    cmd != RPN_SIZEOF_SECTTYPE && cmd != RPN_STARTOF_SECTTYPE && cmd != RPN_BIT_INDEX
 	    && cmd != RPN_CONST && cmd != RPN_SYM && cmd != RPN_BANK_SYM && cmd != RPN_BANK_SECT
@@ -542,15 +542,15 @@ RPNValue::RPNValue(RPNCommand cmd) : command(cmd), data(std::monostate{}) {
 	);
 }
 
-RPNValue::RPNValue(RPNCommand cmd, uint8_t val) : command(cmd), data(val) {
+RPNValue::RPNValue(RPNCommand cmd, uint8_t val) : data(val), command(cmd) {
 	assume(cmd == RPN_SIZEOF_SECTTYPE || cmd == RPN_STARTOF_SECTTYPE || cmd == RPN_BIT_INDEX);
 }
 
-RPNValue::RPNValue(RPNCommand cmd, uint32_t val) : command(cmd), data(val) {
+RPNValue::RPNValue(RPNCommand cmd, uint32_t val) : data(val), command(cmd) {
 	assume(cmd == RPN_CONST);
 }
 
-RPNValue::RPNValue(RPNCommand cmd, InternedStr name) : command(cmd), data(name) {
+RPNValue::RPNValue(RPNCommand cmd, InternedStr name) : data(name), command(cmd) {
 	assume(
 	    cmd == RPN_SYM || cmd == RPN_BANK_SYM || cmd == RPN_BANK_SECT || cmd == RPN_SIZEOF_SECT
 	    || cmd == RPN_STARTOF_SECT

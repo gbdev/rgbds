@@ -81,11 +81,11 @@ void cli_ParseArgs(
     Usage usage
 ) {
 	struct AtFileStackEntry {
-		int parentInd;            // Saved offset into parent argv
 		std::vector<char *> argv; // This context's arg pointer vec
+		int parentInd;            // Saved offset into parent argv
 
 		AtFileStackEntry(int parentInd_, std::vector<char *> argv_)
-		    : parentInd(parentInd_), argv(argv_) {}
+		    : argv(argv_), parentInd(parentInd_) {}
 	};
 	std::vector<AtFileStackEntry> atFileStack;
 

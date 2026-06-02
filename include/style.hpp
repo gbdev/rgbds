@@ -3,6 +3,7 @@
 #ifndef RGBDS_STYLE_HPP
 #define RGBDS_STYLE_HPP
 
+#include <stdint.h>
 #include <stdio.h>
 
 #if defined(_MSC_VER) || defined(__MINGW32__) || defined(__CYGWIN__)
@@ -11,7 +12,7 @@
 	#define STYLE_ANSI 1
 #endif
 
-enum StyleColor {
+enum StyleColor : uint8_t {
 #if STYLE_ANSI
 	// Values analogous to ANSI foreground and background SGR colors
 	STYLE_BLACK,

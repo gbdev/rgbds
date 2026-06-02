@@ -13,7 +13,7 @@
 
 #include "asm/intern.hpp"
 
-enum LexerMode {
+enum LexerMode : uint8_t {
 	LEXER_NORMAL,
 	LEXER_RAW,
 	LEXER_SKIP_TO_ELIF,
@@ -44,25 +44,27 @@ struct IfStackEntry {
 struct LexerState {
 	std::string path;
 
-	LexerMode mode;
-	bool atLineStart;
-	uint32_t lineNo;
-	int lastToken;
-	int nextToken;
-
 	std::deque<IfStackEntry> ifStack; // Front is the innermost `IF` block
 
-	bool capturing;     // Whether the text being lexed should be captured
-	size_t captureSize; // Amount of text captured
+	size_t captureSize;                            // Amount of text captured
 	std::shared_ptr<std::vector<char>> captureBuf; // Buffer to send the captured text to if set
 
-	bool enableExpansions;
-	bool enableStringExpansions;
 	size_t expansionScanDistance;         // Max distance already scanned for expansions
 	std::deque<Expansion> expansionStack; // Front is the innermost current expansion
 
 	ContentSpan content; // Span of chars
 	size_t offset = 0;   // Cursor into `content.ptr`
+
+	uint32_t lineNo;
+	int lastToken;
+	int nextToken;
+
+	LexerMode mode;
+
+	bool atLineStart;
+	bool capturing; // Whether the text being lexed should be captured
+	bool enableExpansions;
+	bool enableStringExpansions;
 
 	~LexerState();
 
@@ -97,8 +99,8 @@ uint32_t lexer_GetLineNo();
 void lexer_TraceStringExpansions();
 
 struct Capture {
-	uint32_t lineNo;
 	ContentSpan span;
+	uint32_t lineNo;
 };
 
 Capture lexer_CaptureRept();

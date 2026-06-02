@@ -197,10 +197,9 @@ static void readSymbol(
 			symbol.data = value;
 		} else {
 			symbol.data = Label{
+			    .section = nullptr, // Set the `.section` later based on the `.sectionID`
 			    .sectionID = sectionID,
 			    .offset = value,
-			    // Set the `.section` later based on the `.sectionID`
-			    .section = nullptr,
 			};
 		}
 	} else {
@@ -461,11 +460,11 @@ void obj_ReadFile(std::string const &filePath, size_t fileID) {
 		// Since SDCC does not provide line info, everything will be reported as coming from the
 		// object file. It's better than nothing.
 		nodes[fileID].push_back({
-		    .type = NODE_FILE,
 		    .data = std::variant<std::monostate, std::vector<uint32_t>, std::string>(fileName),
-		    .isQuiet = false,
 		    .parent = nullptr,
 		    .lineNo = 0,
+		    .type = NODE_FILE,
+		    .isQuiet = false,
 		});
 
 		std::vector<Symbol> &fileSymbols = symbolLists.emplace_front();

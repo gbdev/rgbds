@@ -8,16 +8,16 @@
 #include <string>
 
 class FormatSpec {
+	size_t width;
+	size_t fracWidth;
+	size_t precision;
 	int sign;
+	int type;
 	bool exact;
 	bool alignLeft;
 	bool padZero;
-	size_t width;
 	bool hasFrac;
-	size_t fracWidth;
 	bool hasPrec;
-	size_t precision;
-	int type;
 	bool parsed;
 
 public:

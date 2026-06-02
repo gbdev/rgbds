@@ -84,7 +84,7 @@ struct Image {
 	Rgba &pixel(uint32_t x, uint32_t y) { return png.pixels[y * png.width + x]; }
 	Rgba const &pixel(uint32_t x, uint32_t y) const { return png.pixels[y * png.width + x]; }
 
-	enum GrayscaleResult {
+	enum GrayscaleResult : uint8_t {
 		GRAY_OK,
 		GRAY_TOO_MANY,
 		GRAY_NONGRAY,
@@ -218,13 +218,13 @@ struct Image {
 
 	class TilesVisitor {
 		Image const &_image;
-		bool const _columnMajor;
 		uint32_t const _width, _height;
+		bool const _columnMajor;
 		uint32_t const _limit = _columnMajor ? _height : _width;
 
 	public:
 		TilesVisitor(Image const &image, bool columnMajor, uint32_t width, uint32_t height)
-		    : _image(image), _columnMajor(columnMajor), _width(width), _height(height) {}
+		    : _image(image), _width(width), _height(height), _columnMajor(columnMajor) {}
 
 		class Tile {
 			Image const &_image;
@@ -562,7 +562,7 @@ public:
 	std::array<uint8_t, 16> const &data() const { return _data; }
 	uint16_t hash() const { return _hash; }
 
-	enum MatchType {
+	enum MatchType : uint8_t {
 		NOPE,
 		EXACT,
 		HFLIP,
