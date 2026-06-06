@@ -661,8 +661,8 @@ void sdobj_ReadFile(FileStackNode const &src, FILE *file, std::vector<Symbol> &f
 						patch.rpnExpression[0] = RPN_BANK_SYM;
 						patch.rpnExpression[1] = idx;
 						patch.rpnExpression[2] = idx >> 8;
-						patch.rpnExpression[3] = idx >> 16;
-						patch.rpnExpression[4] = idx >> 24;
+						patch.rpnExpression[3] = 0;
+						patch.rpnExpression[4] = 0;
 					} else if (sym.name.starts_with("l_")) {
 						patch.rpnExpression.resize(1 + sym.name.length() - 2 + 1);
 						patch.rpnExpression[0] = RPN_SIZEOF_SECT;
@@ -684,8 +684,8 @@ void sdobj_ReadFile(FileStackNode const &src, FILE *file, std::vector<Symbol> &f
 						patch.rpnExpression[0] = RPN_SYM;
 						patch.rpnExpression[1] = idx;
 						patch.rpnExpression[2] = idx >> 8;
-						patch.rpnExpression[3] = idx >> 16;
-						patch.rpnExpression[4] = idx >> 24;
+						patch.rpnExpression[3] = 0;
+						patch.rpnExpression[4] = 0;
 					}
 				} else {
 					if (idx >= fileSections.size()) {

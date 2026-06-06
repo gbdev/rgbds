@@ -1,0 +1,6 @@
+error: Section "test" already exists but with type `ROM0`
+    at multiple-section-errors.asm(3)
+error: Section "test" already declared as fixed at incompatible address $0000
+    at multiple-section-errors.asm(3)
+FATAL: Cannot create section "test" (2 errors)
+    at multiple-section-errors.asm(3)

@@ -320,7 +320,7 @@ static char *execProg(char const *name, char * const *argv) {
 		        nullptr,
 		        errnum,
 		        0,
-		        (LPTSTR)&buf,
+		        reinterpret_cast<LPTSTR>(&buf),
 		        0,
 		        nullptr
 		    )
@@ -341,7 +341,8 @@ static char *execProg(char const *name, char * const *argv) {
 
 	STARTUPINFOA startupInfo;
 	GetStartupInfoA(&startupInfo);
-	STARTUPINFOA childStartupInfo = {sizeof(startupInfo)};
+	STARTUPINFOA childStartupInfo = {};
+	childStartupInfo.cb = sizeof(startupInfo);
 
 	PROCESS_INFORMATION child;
 	if (CreateProcessA(

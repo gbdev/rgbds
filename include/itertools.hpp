@@ -12,6 +12,8 @@
 #include <unordered_map>
 #include <utility>
 
+#include "helpers.hpp" // Enum
+
 // A wrapper around iterables to reverse their iteration order; used in `for`-each loops.
 template<typename IterableT>
 struct ReversedIterable {
@@ -33,18 +35,18 @@ ReversedIterable<IterableT> reversed(IterableT &&_iterable) {
 	return {_iterable};
 }
 
-// A map from `std::string` keys to `ItemT` items, iterable in the order the items were inserted.
-template<typename ItemT>
+// A map from `KeyT` keys to `ItemT` items, iterable in the order the items were inserted.
+template<typename KeyT, typename ItemT>
 class InsertionOrderedMap {
-	std::deque<ItemT> list;
-	std::unordered_map<std::string, size_t> map; // Indexes into `list`
+	std::deque<ItemT> list;               // `deque` does not invalidate item references
+	std::unordered_map<KeyT, size_t> map; // Indexes into `list`
 
 public:
 	size_t size() const { return list.size(); }
 
 	bool empty() const { return list.empty(); }
 
-	bool contains(std::string const &name) const { return map.find(name) != map.end(); }
+	bool contains(KeyT const &key) const { return map.find(key) != map.end(); }
 
 	ItemT &operator[](size_t i) { return list[i]; }
 
@@ -53,13 +55,13 @@ public:
 	typename decltype(list)::const_iterator begin() const { return list.begin(); }
 	typename decltype(list)::const_iterator end() const { return list.end(); }
 
-	ItemT &add(std::string const &name) {
-		map[name] = list.size();
+	ItemT &add(KeyT const &key) {
+		map[key] = list.size();
 		return list.emplace_back();
 	}
 
-	ItemT &add(std::string const &name, ItemT &&value) {
-		map[name] = list.size();
+	ItemT &add(KeyT const &key, ItemT &&value) {
+		map[key] = list.size();
 		list.emplace_back(std::move(value));
 		return list.back();
 	}
@@ -69,8 +71,8 @@ public:
 		return list.emplace_back();
 	}
 
-	std::optional<size_t> findIndex(std::string const &name) const {
-		if (auto search = map.find(name); search != map.end()) {
+	std::optional<size_t> findIndex(KeyT const &key) const {
+		if (auto search = map.find(key); search != map.end()) {
 			return search->second;
 		}
 		return std::nullopt;
@@ -78,7 +80,7 @@ public:
 };
 
 // An iterable of `enum` values in the half-open range [start, stop).
-template<typename EnumT>
+template<Enum EnumT>
 class EnumSeq {
 	EnumT _start;
 	EnumT _stop;
@@ -169,7 +171,7 @@ template<typename IterableT>
 using ZipHolder = std::conditional_t<
     std::is_lvalue_reference_v<IterableT>,
     IterableT,
-    std::remove_cv_t<std::remove_reference_t<IterableT>>>;
+    std::remove_cvref_t<IterableT>>;
 
 // Iterates over N containers at once, yielding tuples of N items at a time.
 // Does the same number of iterations as the first container's iterator!

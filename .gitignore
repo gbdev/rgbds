@@ -14,6 +14,6 @@ CMakeCache.txt
 CMakeFiles/
 cmake_install.cmake
 CMakeUserPresets.json
-build/
+build*/
 *.dSYM/
 callgrind.out.*

@@ -310,8 +310,9 @@ static bool compareSymbols(SortedSymbol const &sym1, SortedSymbol const &sym2) {
 	       < std::tie(sym2.addr, sym2_local, sym2.parentAddr, sym2_name);
 }
 
-template<typename CallbackFnT>
-static void forEachSortedSection(SortedSections const &bankSections, CallbackFnT callback) {
+static void forEachSortedSection(
+    SortedSections const &bankSections, Procedure<Section const &> auto callback
+) {
 	for (Section const *sect : bankSections.zeroLenSections) {
 		for (Section const &piece : sect->pieces()) {
 			callback(piece);
@@ -411,8 +412,7 @@ static void writeSectionName(std::string const &name, FILE *file) {
 	}
 }
 
-template<typename CallbackFnT>
-uint16_t forEachSection(SortedSections const &sectList, CallbackFnT callback) {
+uint16_t forEachSection(SortedSections const &sectList, Procedure<Section const &> auto callback) {
 	uint16_t used = 0;
 	auto section = sectList.sections.begin();
 	auto zeroLenSection = sectList.zeroLenSections.begin();

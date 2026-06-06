@@ -22,6 +22,7 @@
 #include "version.hpp"
 
 #include "asm/fstack.hpp"
+#include "asm/intern.hpp"
 #include "asm/lexer.hpp"
 #include "asm/macro.hpp"
 #include "asm/main.hpp"
@@ -31,8 +32,8 @@
 
 using namespace std::literals;
 
-static std::unordered_map<std::string, Symbol> symbols;
-static std::unordered_set<std::string> purgedSymbols;
+static std::unordered_map<InternedStr, Symbol> symbols;
+static std::unordered_set<InternedStr> purgedSymbols;
 
 static Symbol const *globalScope = nullptr; // Current section's global label scope
 static Symbol const *localScope = nullptr;  // Current section's local label scope
@@ -44,6 +45,10 @@ static Symbol *globalScopeSymbol;
 static Symbol *localScopeSymbol;
 static Symbol *RSSymbol;
 
+static InternedStr PCName;
+static InternedStr globalScopeName;
+static InternedStr localScopeName;
+
 static char savedTIME[256];
 static char savedDATE[256];
 static char savedTIMESTAMP_ISO8601_LOCAL[256];
@@ -53,10 +58,10 @@ bool sym_IsPC(Symbol const *sym) {
 	return sym == PCSymbol;
 }
 
-bool sym_IsDotScope(std::string const &symName) {
+bool sym_IsDotScope(InternedStr symName) {
 	// Label scopes `.` and `..` are the only nonlocal identifiers that start with a dot.
 	// Three or more dots are considered a nonsensical local label.
-	return symName == "." || symName == "..";
+	return symName == globalScopeName || symName == localScopeName;
 }
 
 void sym_ForEach(void (*callback)(Symbol &)) {
@@ -76,9 +81,9 @@ static int32_t NARGCallback() {
 
 static std::shared_ptr<std::string> SCOPECallback() {
 	if (localScope) {
-		return std::make_shared<std::string>("..");
+		return std::make_shared<std::string>(localScopeName.str());
 	} else if (globalScope) {
-		return std::make_shared<std::string>(".");
+		return std::make_shared<std::string>(globalScopeName.str());
 	} else {
 		if (!sect_GetSymbolSection()) {
 			error("`__SCOPE__` has no value outside of a section");
@@ -92,7 +97,7 @@ static std::shared_ptr<std::string> globalScopeCallback() {
 		error("`.` has no value outside of a label scope");
 		return std::make_shared<std::string>("");
 	}
-	return std::make_shared<std::string>(globalScope->name);
+	return std::make_shared<std::string>(globalScope->name.str());
 }
 
 static std::shared_ptr<std::string> localScopeCallback() {
@@ -100,7 +105,7 @@ static std::shared_ptr<std::string> localScopeCallback() {
 		error("`..` has no value outside of a local label scope");
 		return std::make_shared<std::string>("");
 	}
-	return std::make_shared<std::string>(localScope->name);
+	return std::make_shared<std::string>(localScope->name.str());
 }
 
 static int32_t PCCallback() {
@@ -219,13 +224,13 @@ static void redefinedError(Symbol const &sym) {
 	}
 }
 
-static void assumeAlreadyExpanded(std::string const &symName) {
+static void assumeAlreadyExpanded(InternedStr symName) {
 	// Either the symbol name is `Global.local` or entirely '.'s (for scopes `.` and `..`),
 	// but cannot be unqualified `.local` or more than two '.'s
-	assume(!symName.starts_with('.') || sym_IsDotScope(symName));
+	assume(!symName.str().starts_with('.') || sym_IsDotScope(symName));
 }
 
-static Symbol &createSymbol(std::string const &symName) {
+static Symbol &createSymbol(InternedStr symName) {
 	assumeAlreadyExpanded(symName);
 
 	static uint32_t nextDefIndex = 0;
@@ -245,13 +250,13 @@ static Symbol &createSymbol(std::string const &symName) {
 	return sym;
 }
 
-static bool isAutoScoped(std::string const &symName) {
+static bool isAutoScoped(InternedStr symName) {
 	// `globalScope` should be global if it's defined
-	assume(!globalScope || globalScope->name.find('.') == std::string::npos);
+	assume(!globalScope || globalScope->name.str().find('.') == std::string::npos);
 	// `localScope` should be qualified local if it's defined
-	assume(!localScope || localScope->name.find('.') != std::string::npos);
+	assume(!localScope || localScope->name.str().find('.') != std::string::npos);
 
-	size_t dotPos = symName.find('.');
+	size_t dotPos = symName.str().find('.');
 
 	// If there are no dots, it's not a local label
 	if (dotPos == std::string::npos) {
@@ -264,12 +269,12 @@ static bool isAutoScoped(std::string const &symName) {
 	}
 
 	// Check for nothing after the dot
-	if (dotPos == symName.length() - 1) {
+	if (dotPos == symName.str().length() - 1) {
 		fatal("`%s` is a nonsensical reference to an empty local label", symName.c_str());
 	}
 
 	// Check for more than one dot
-	if (symName.find('.', dotPos + 1) != std::string::npos) {
+	if (symName.str().find('.', dotPos + 1) != std::string::npos) {
 		fatal("`%s` is a nonsensical reference to a nested local label", symName.c_str());
 	}
 
@@ -286,18 +291,22 @@ static bool isAutoScoped(std::string const &symName) {
 	return true;
 }
 
-Symbol *sym_FindExactSymbol(std::string const &symName) {
+static InternedStr expandedSymName(InternedStr symName) {
+	return isAutoScoped(symName) ? intern(globalScope->name.str() + symName.str()) : symName;
+}
+
+Symbol *sym_FindExactSymbol(InternedStr symName) {
 	assumeAlreadyExpanded(symName);
 
 	auto search = symbols.find(symName);
 	return search != symbols.end() ? &search->second : nullptr;
 }
 
-Symbol *sym_FindScopedSymbol(std::string const &symName) {
-	return sym_FindExactSymbol(isAutoScoped(symName) ? globalScope->name + symName : symName);
+Symbol *sym_FindScopedSymbol(InternedStr symName) {
+	return sym_FindExactSymbol(expandedSymName(symName));
 }
 
-Symbol *sym_FindScopedValidSymbol(std::string const &symName) {
+Symbol *sym_FindScopedValidSymbol(InternedStr symName) {
 	Symbol *sym = sym_FindScopedSymbol(symName);
 
 	// `@` has no value outside of a section
@@ -328,7 +337,7 @@ Symbol const *sym_GetPC() {
 	return PCSymbol;
 }
 
-void sym_Purge(std::string const &symName) {
+void sym_Purge(InternedStr symName) {
 	Symbol *sym = sym_FindScopedValidSymbol(symName);
 
 	if (!sym) {
@@ -359,14 +368,14 @@ void sym_Purge(std::string const &symName) {
 	}
 }
 
-bool sym_IsPurgedExact(std::string const &symName) {
+bool sym_IsPurgedExact(InternedStr symName) {
 	assumeAlreadyExpanded(symName);
 
 	return purgedSymbols.find(symName) != purgedSymbols.end();
 }
 
-bool sym_IsPurgedScoped(std::string const &symName) {
-	return sym_IsPurgedExact(isAutoScoped(symName) ? globalScope->name + symName : symName);
+bool sym_IsPurgedScoped(InternedStr symName) {
+	return sym_IsPurgedExact(expandedSymName(symName));
 }
 
 int32_t sym_GetRSValue() {
@@ -401,9 +410,9 @@ void sym_SetCurrentLabelScopes(std::pair<Symbol const *, Symbol const *> newScop
 	localScope = std::get<1>(newScopes);
 
 	// `globalScope` should be global if it's defined
-	assume(!globalScope || globalScope->name.find('.') == std::string::npos);
+	assume(!globalScope || globalScope->name.str().find('.') == std::string::npos);
 	// `localScope` should be qualified local if it's defined
-	assume(!localScope || localScope->name.find('.') != std::string::npos);
+	assume(!localScope || localScope->name.str().find('.') != std::string::npos);
 }
 
 void sym_ResetCurrentLabelScopes() {
@@ -411,7 +420,7 @@ void sym_ResetCurrentLabelScopes() {
 	localScope = nullptr;
 }
 
-static Symbol *createNonrelocSymbol(std::string const &symName, bool numeric) {
+static Symbol *createNonrelocSymbol(InternedStr symName, bool numeric) {
 	Symbol *sym = sym_FindExactSymbol(symName);
 
 	if (!sym) {
@@ -432,7 +441,7 @@ static Symbol *createNonrelocSymbol(std::string const &symName, bool numeric) {
 	return sym;
 }
 
-Symbol *sym_AddEqu(std::string const &symName, int32_t value) {
+Symbol *sym_AddEqu(InternedStr symName, int32_t value) {
 	Symbol *sym = createNonrelocSymbol(symName, true);
 
 	if (!sym) {
@@ -445,7 +454,7 @@ Symbol *sym_AddEqu(std::string const &symName, int32_t value) {
 	return sym;
 }
 
-Symbol *sym_RedefEqu(std::string const &symName, int32_t value) {
+Symbol *sym_RedefEqu(InternedStr symName, int32_t value) {
 	Symbol *sym = sym_FindExactSymbol(symName);
 
 	if (!sym) {
@@ -467,7 +476,7 @@ Symbol *sym_RedefEqu(std::string const &symName, int32_t value) {
 	return sym;
 }
 
-Symbol *sym_AddString(std::string const &symName, std::shared_ptr<std::string> str) {
+Symbol *sym_AddString(InternedStr symName, std::shared_ptr<std::string> str) {
 	Symbol *sym = createNonrelocSymbol(symName, false);
 
 	if (!sym) {
@@ -479,7 +488,7 @@ Symbol *sym_AddString(std::string const &symName, std::shared_ptr<std::string> s
 	return sym;
 }
 
-Symbol *sym_RedefString(std::string const &symName, std::shared_ptr<std::string> str) {
+Symbol *sym_RedefString(InternedStr symName, std::shared_ptr<std::string> str) {
 	Symbol *sym = sym_FindExactSymbol(symName);
 
 	if (!sym) {
@@ -507,7 +516,7 @@ Symbol *sym_RedefString(std::string const &symName, std::shared_ptr<std::string>
 	return sym;
 }
 
-Symbol *sym_AddVar(std::string const &symName, int32_t value) {
+Symbol *sym_AddVar(InternedStr symName, int32_t value) {
 	Symbol *sym = sym_FindExactSymbol(symName);
 
 	if (!sym) {
@@ -525,7 +534,7 @@ Symbol *sym_AddVar(std::string const &symName, int32_t value) {
 	return sym;
 }
 
-static Symbol *addLabel(std::string const &symName) {
+static Symbol *addLabel(InternedStr symName) {
 	assumeAlreadyExpanded(symName);
 
 	Symbol *sym = sym_FindExactSymbol(symName);
@@ -542,7 +551,7 @@ static Symbol *addLabel(std::string const &symName) {
 	sym->type = SYM_LABEL;
 	sym->data = static_cast<int32_t>(sect_GetSymbolOffset());
 	// Don't export anonymous labels
-	if (options.exportAll && !symName.starts_with('!')) {
+	if (options.exportAll && !symName.str().starts_with('!')) {
 		sym->isExported = true;
 	}
 	sym->section = sect_GetSymbolSection();
@@ -554,11 +563,11 @@ static Symbol *addLabel(std::string const &symName) {
 	return sym;
 }
 
-Symbol *sym_AddLocalLabel(std::string const &symName) {
+Symbol *sym_AddLocalLabel(InternedStr symName) {
 	// The symbol name should be local, qualified or not
-	assume(symName.find('.') != std::string::npos);
+	assume(symName.str().find('.') != std::string::npos);
 
-	Symbol *sym = addLabel(isAutoScoped(symName) ? globalScope->name + symName : symName);
+	Symbol *sym = addLabel(expandedSymName(symName));
 
 	if (sym) {
 		localScope = sym;
@@ -567,9 +576,9 @@ Symbol *sym_AddLocalLabel(std::string const &symName) {
 	return sym;
 }
 
-Symbol *sym_AddLabel(std::string const &symName) {
+Symbol *sym_AddLabel(InternedStr symName) {
 	// The symbol name should be global
-	assume(symName.find('.') == std::string::npos);
+	assume(symName.str().find('.') == std::string::npos);
 
 	Symbol *sym = addLabel(symName);
 
@@ -592,12 +601,12 @@ Symbol *sym_AddAnonLabel() {
 		// LCOV_EXCL_STOP
 	}
 
-	std::string anon = sym_MakeAnonLabelName(0, true); // The direction is important!
+	InternedStr anon = sym_MakeAnonLabelName(0, true); // The direction is important!
 	++anonLabelID;
 	return addLabel(anon);
 }
 
-std::string sym_MakeAnonLabelName(uint32_t ofs, bool neg) {
+InternedStr sym_MakeAnonLabelName(uint32_t ofs, bool neg) {
 	uint32_t id = 0;
 
 	if (neg) {
@@ -628,11 +637,11 @@ std::string sym_MakeAnonLabelName(uint32_t ofs, bool neg) {
 		}
 	}
 
-	return "!"s + std::to_string(id);
+	return intern("!"s + std::to_string(id));
 }
 
-void sym_Export(std::string const &symName) {
-	if (symName.starts_with('!')) {
+void sym_Export(InternedStr symName) {
+	if (symName.str().starts_with('!')) {
 		// LCOV_EXCL_START
 		// The parser does not accept anonymous labels for an `EXPORT` directive
 		error("Cannot export anonymous label");
@@ -651,9 +660,8 @@ void sym_Export(std::string const &symName) {
 	sym->isExported = true;
 }
 
-Symbol *sym_AddMacro(
-    std::string const &symName, int32_t defLineNo, ContentSpan const &span, bool isQuiet
-) {
+Symbol *
+    sym_AddMacro(InternedStr symName, int32_t defLineNo, ContentSpan const &span, bool isQuiet) {
 	Symbol *sym = createNonrelocSymbol(symName, false);
 
 	if (!sym) {
@@ -674,11 +682,11 @@ Symbol *sym_AddMacro(
 
 // Flag that a symbol is referenced in an RPN expression
 // and create it if it doesn't exist yet
-Symbol *sym_Ref(std::string const &symName) {
+Symbol *sym_Ref(InternedStr symName) {
 	Symbol *sym = sym_FindScopedSymbol(symName);
 
 	if (!sym) {
-		sym = &createSymbol(isAutoScoped(symName) ? globalScope->name + symName : symName);
+		sym = &createSymbol(expandedSymName(symName));
 		sym->type = SYM_REF;
 	}
 
@@ -687,41 +695,46 @@ Symbol *sym_Ref(std::string const &symName) {
 
 // Define the built-in symbols
 void sym_Init(time_t now) {
-	PCSymbol = &createSymbol("@"s);
+	PCName = intern("@");
+	PCSymbol = &createSymbol(PCName);
 	PCSymbol->type = SYM_LABEL;
 	PCSymbol->data = PCCallback;
 	PCSymbol->isBuiltin = true;
 
-	NARGSymbol = &createSymbol("_NARG"s);
+	NARGSymbol = &createSymbol(intern("_NARG"));
 	NARGSymbol->type = SYM_EQU;
 	NARGSymbol->data = NARGCallback;
 	NARGSymbol->isBuiltin = true;
 
-	globalScopeSymbol = &createSymbol("."s);
+	globalScopeName = intern(".");
+	globalScopeSymbol = &createSymbol(globalScopeName);
 	globalScopeSymbol->type = SYM_EQUS;
 	globalScopeSymbol->data = globalScopeCallback;
 	globalScopeSymbol->isBuiltin = true;
 
-	localScopeSymbol = &createSymbol(".."s);
+	localScopeName = intern("..");
+	localScopeSymbol = &createSymbol(localScopeName);
 	localScopeSymbol->type = SYM_EQUS;
 	localScopeSymbol->data = localScopeCallback;
 	localScopeSymbol->isBuiltin = true;
 
-	SCOPESymbol = &createSymbol("__SCOPE__"s);
+	SCOPESymbol = &createSymbol(intern("__SCOPE__"));
 	SCOPESymbol->type = SYM_EQUS;
 	SCOPESymbol->data = SCOPECallback;
 	SCOPESymbol->isBuiltin = true;
 
-	RSSymbol = sym_AddVar("_RS"s, 0);
+	RSSymbol = sym_AddVar(intern("_RS"), 0);
 	RSSymbol->isBuiltin = true;
 
-	sym_AddString("__RGBDS_VERSION__"s, std::make_shared<std::string>(get_package_version_string()))
+	sym_AddString(
+	    intern("__RGBDS_VERSION__"), std::make_shared<std::string>(get_package_version_string())
+	)
 	    ->isBuiltin = true;
-	sym_AddEqu("__RGBDS_MAJOR__"s, PACKAGE_VERSION_MAJOR)->isBuiltin = true;
-	sym_AddEqu("__RGBDS_MINOR__"s, PACKAGE_VERSION_MINOR)->isBuiltin = true;
-	sym_AddEqu("__RGBDS_PATCH__"s, PACKAGE_VERSION_PATCH)->isBuiltin = true;
+	sym_AddEqu(intern("__RGBDS_MAJOR__"), PACKAGE_VERSION_MAJOR)->isBuiltin = true;
+	sym_AddEqu(intern("__RGBDS_MINOR__"), PACKAGE_VERSION_MINOR)->isBuiltin = true;
+	sym_AddEqu(intern("__RGBDS_PATCH__"), PACKAGE_VERSION_PATCH)->isBuiltin = true;
 #ifdef PACKAGE_VERSION_RC
-	sym_AddEqu("__RGBDS_RC__"s, PACKAGE_VERSION_RC)->isBuiltin = true;
+	sym_AddEqu(intern("__RGBDS_RC__"), PACKAGE_VERSION_RC)->isBuiltin = true;
 #endif
 
 	// LCOV_EXCL_START
@@ -752,7 +765,7 @@ void sym_Init(time_t now) {
 	    time_utc
 	);
 
-	Symbol *timeSymbol = &createSymbol("__TIME__"s);
+	Symbol *timeSymbol = &createSymbol(intern("__TIME__"));
 	timeSymbol->type = SYM_EQUS;
 	timeSymbol->data = []() {
 		warning(WARNING_OBSOLETE, "`__TIME__` is deprecated; use `__ISO_8601_LOCAL__`");
@@ -760,7 +773,7 @@ void sym_Init(time_t now) {
 	};
 	timeSymbol->isBuiltin = true;
 
-	Symbol *dateSymbol = &createSymbol("__DATE__"s);
+	Symbol *dateSymbol = &createSymbol(intern("__DATE__"));
 	dateSymbol->type = SYM_EQUS;
 	dateSymbol->data = []() {
 		warning(WARNING_OBSOLETE, "`__DATE__` is deprecated; use `__ISO_8601_LOCAL__`");
@@ -769,16 +782,18 @@ void sym_Init(time_t now) {
 	dateSymbol->isBuiltin = true;
 
 	sym_AddString(
-	    "__ISO_8601_LOCAL__"s, std::make_shared<std::string>(savedTIMESTAMP_ISO8601_LOCAL)
+	    intern("__ISO_8601_LOCAL__"), std::make_shared<std::string>(savedTIMESTAMP_ISO8601_LOCAL)
 	)
 	    ->isBuiltin = true;
-	sym_AddString("__ISO_8601_UTC__"s, std::make_shared<std::string>(savedTIMESTAMP_ISO8601_UTC))
+	sym_AddString(
+	    intern("__ISO_8601_UTC__"), std::make_shared<std::string>(savedTIMESTAMP_ISO8601_UTC)
+	)
 	    ->isBuiltin = true;
 
-	sym_AddEqu("__UTC_YEAR__"s, time_utc->tm_year + 1900)->isBuiltin = true;
-	sym_AddEqu("__UTC_MONTH__"s, time_utc->tm_mon + 1)->isBuiltin = true;
-	sym_AddEqu("__UTC_DAY__"s, time_utc->tm_mday)->isBuiltin = true;
-	sym_AddEqu("__UTC_HOUR__"s, time_utc->tm_hour)->isBuiltin = true;
-	sym_AddEqu("__UTC_MINUTE__"s, time_utc->tm_min)->isBuiltin = true;
-	sym_AddEqu("__UTC_SECOND__"s, time_utc->tm_sec)->isBuiltin = true;
+	sym_AddEqu(intern("__UTC_YEAR__"), time_utc->tm_year + 1900)->isBuiltin = true;
+	sym_AddEqu(intern("__UTC_MONTH__"), time_utc->tm_mon + 1)->isBuiltin = true;
+	sym_AddEqu(intern("__UTC_DAY__"), time_utc->tm_mday)->isBuiltin = true;
+	sym_AddEqu(intern("__UTC_HOUR__"), time_utc->tm_hour)->isBuiltin = true;
+	sym_AddEqu(intern("__UTC_MINUTE__"), time_utc->tm_min)->isBuiltin = true;
+	sym_AddEqu(intern("__UTC_SECOND__"), time_utc->tm_sec)->isBuiltin = true;
 }

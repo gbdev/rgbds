@@ -175,8 +175,7 @@ void reverse() {
 		// Pick the smallest width that will result in a landscape-aspect rectangular image.
 		// Thus a prime number of tiles will result in a horizontal row.
 		// This avoids redundancy with `-r 1` which results in a vertical column.
-		width = static_cast<size_t>(ceil(sqrt(mapSize)));
-		for (; width < mapSize; ++width) {
+		for (width = static_cast<size_t>(ceil(sqrt(mapSize))); width < mapSize; ++width) {
 			if (mapSize % width == 0) {
 				break;
 			}

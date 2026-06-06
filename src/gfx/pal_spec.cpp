@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <array>
 #include <charconv>
+#include <concepts> // unsigned_integral
 #include <errno.h>
 #include <fstream>
 #include <inttypes.h>
@@ -21,7 +22,7 @@
 #include "diagnostics.hpp"
 #include "helpers.hpp"
 #include "platform.hpp"
-#include "util.hpp" // UpperMap, isDigit
+#include "util.hpp" // UpperMap, parseDigit
 
 #include "gfx/main.hpp"
 #include "gfx/png.hpp"
@@ -37,7 +38,7 @@ static void skipBlankSpace(std::string_view const &str, size_t &pos) {
 }
 
 static uint8_t toHex(char c1, char c2) {
-	return parseHexDigit(c1) * 16 + parseHexDigit(c2);
+	return parseDigit<16>(c1) * 16 + parseDigit<16>(c2);
 }
 
 static uint8_t singleToHex(char c) {
@@ -202,7 +203,7 @@ static void warnExtraColors(
 }
 
 // Parses the initial part of a string_view, advancing the "read index" as it does
-template<typename UintT> // Should be uint*_t
+template<std::unsigned_integral UintT>
 static std::optional<UintT> parseDec(std::string const &str, size_t &n) {
 	UintT value = 0;
 	auto result = std::from_chars(str.data() + n, str.data() + str.length(), value);

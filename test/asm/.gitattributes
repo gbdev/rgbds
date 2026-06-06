@@ -1,0 +1,4 @@
+# Some files test CRLF line endings
+character-escapes.out -text diff
+crlf.asm -text diff
+string-literal-macro-arg.out -text diff

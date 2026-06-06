@@ -22,6 +22,7 @@
 #include "asm/charmap.hpp"
 #include "asm/format.hpp"
 #include "asm/fstack.hpp"
+#include "asm/intern.hpp"
 #include "asm/lexer.hpp"
 #include "asm/output.hpp"
 #include "asm/rpn.hpp" // Expression
@@ -607,7 +608,7 @@ std::string act_StringFormat(
 	return str;
 }
 
-std::string act_SectionName(std::string const &symName) {
+std::string act_SectionName(InternedStr symName) {
 	Symbol *sym = sym_FindScopedValidSymbol(symName);
 	if (!sym) {
 		if (sym_IsPurgedScoped(symName)) {
@@ -625,7 +626,7 @@ std::string act_SectionName(std::string const &symName) {
 	return section->name;
 }
 
-void act_CompoundAssignment(std::string const &symName, RPNCommand op, int32_t constValue) {
+void act_CompoundAssignment(InternedStr symName, RPNCommand op, int32_t constValue) {
 	Expression oldExpr, constExpr, newExpr;
 	oldExpr.makeSymbol(symName);
 	constExpr.makeNumber(constValue);

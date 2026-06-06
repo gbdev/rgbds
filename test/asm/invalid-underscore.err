@@ -8,9 +8,9 @@ error: Invalid integer constant, '_' after another '_'
     at invalid-underscore.asm(17)
 error: Invalid integer constant, '_' after another '_'
     at invalid-underscore.asm(18)
-error: Invalid integer constant, '_' after another '_'
+error: Invalid fixed-point constant, '_' after another '_'
     at invalid-underscore.asm(19)
-error: Invalid integer constant, '_' after another '_'
+error: Invalid fixed-point constant, '_' after another '_'
     at invalid-underscore.asm(20)
 error: Invalid integer constant, trailing '_'
     at invalid-underscore.asm(23)
@@ -26,6 +26,10 @@ error: Invalid fixed-point constant, trailing '_'
     at invalid-underscore.asm(28)
 error: Invalid integer constant, trailing '_'
     at invalid-underscore.asm(31)
-error: Invalid integer constant, '_' after another '_'
+error: Invalid fixed-point constant, '_' after '.'
     at invalid-underscore.asm(32)
-Assembly aborted with 15 errors
+error: syntax error, unexpected symbol
+    at invalid-underscore.asm(35)
+error: syntax error, unexpected symbol
+    at invalid-underscore.asm(36)
+Assembly aborted with 17 errors

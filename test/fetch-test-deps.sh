@@ -58,7 +58,7 @@ case "$actionname" in
 		action() { # _ _ repo _
 			# libbet depends on PIL to build
 			if [ "$3" = "libbet" ]; then
-				case "${osname%-*}" in
+				case "${osname%%-*}" in
 					ubuntu | debian)
 						sudo apt-get install python3-pil
 						;;

@@ -8,6 +8,7 @@
 #include <string>
 #include <vector>
 
+#include "helpers.hpp" // QualifiedEquivalent
 #include "linkdefs.hpp"
 
 struct FileStackNode;
@@ -52,7 +53,7 @@ struct Section {
 
 private:
 	// Template class for both const and non-const iterators over the "pieces" of this section
-	template<typename SectionT>
+	template<QualifiedEquivalent<Section> SectionT>
 	class PiecesIterable {
 		SectionT *_firstPiece;
 

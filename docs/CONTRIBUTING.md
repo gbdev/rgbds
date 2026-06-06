@@ -4,7 +4,7 @@ RGBDS was created in the late '90s and has received contributions from several
 developers since then. It wouldn't have been possible to get to this point
 without their work, and it is always open to the contributions of other people.
 
-## Reporting Bugs
+## Reporting bugs
 
 Bug reports are essential to improve RGBDS and they are always welcome. If you
 want to report a bug:
@@ -35,6 +35,9 @@ implement it yourself, you can always contribute to RGBDS with your own code.
 
 ## Contributing code
 
+Thank you! Code contributions are the most appreciated.
+You can find a description of the project's layout in [`ARCHITECTURE.md`](ARCHITECTURE.md).
+
 If you want to contribute with your own code, whether it is to fix a current
 issue or to add something that nobody had requested, you should first consider
 if your change is going to be small (and likely to be accepted as-is) or big
@@ -62,7 +65,7 @@ years). If you are adding new files, you need to use the
    target checks for additional warnings. Your patches shouldn't introduce any
    new warning (but it may be possible to remove some warning checks if it makes
    the code much easier). You can also use `cmake --preset develop` if you prefer.
-5. Test your changes by running `./run-tests.sh` in the `test` directory.
+5. Test your changes by running `./run-tests.sh` in the `test` directory, or using `ctest`.
    (You must run `./fetch-test-deps.sh` first; if you forget to, the test suite
    will fail and remind you mid-way.)
 6. Format your changes according to `clang-format`, which will reformat the
@@ -250,3 +253,11 @@ manually running:
 docker build . --tag ghcr.io/gbdev/rgbds:master
 docker push ghcr.io/gbdev/rgbds:master
 ```
+
+## Publishing a new release
+
+Please refer to [`RELEASE.md`](RELEASE.md).
+
+## Closing remarks
+
+Feel free to add yourself to `CREDITS.md`!

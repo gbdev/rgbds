@@ -8,6 +8,15 @@ assert !strcmp("{s}", "Hello, world!")
  * block comment
  */
 
-DEF t EQUS """Hello,
+REPT 2
+	REDEF t EQUS """Hello,
 world!"""
-assert !strcmp("{t}", "Hello,\nworld!")
+	assert !strcmp("{t}", "Hello,\nworld!")
+ENDR
+
+MACRO m
+	assert "\1" === "Hello, world!"
+ENDM
+
+m Hello\, \
+world!

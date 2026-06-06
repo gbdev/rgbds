@@ -17,7 +17,7 @@
 #include "link/main.hpp"
 #include "link/warning.hpp"
 
-static InsertionOrderedMap<std::unique_ptr<Section>> sections;
+static InsertionOrderedMap<std::string, std::unique_ptr<Section>> sections;
 
 void sect_ForEach(void (*callback)(Section &)) {
 	for (std::unique_ptr<Section> &ptr : sections) {

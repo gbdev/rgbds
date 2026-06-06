@@ -5,7 +5,11 @@ on:
       - v[0-9]*
 
 env:
-  CLICOLOR_FORCE: 1 # Tells CMake to have colored output.
+  # Force colored output (see https://bixense.com/clicolors/ and https://force-color.org/)
+  TERM: xterm-256color
+  CLICOLOR: 1
+  CLICOLOR_FORCE: 1
+
   CMAKE_COLOR_DIAGNOSTICS: ON # Tells CMake-generated build systems to have colored output.
   # Approximate number of CPU cores in GitHub's runners as of 2026-03-18:
   # https://docs.github.com/en/actions/reference/runners/github-hosted-runners#standard-github-hosted-runners-for-public-repositories
@@ -15,8 +19,8 @@ env:
   CMAKE_CONFIG_TYPE: Release # `cmake --build` now implies `--config Release`.
 
   # We instruct CMake to download and build third-party projects in the same place as in `testing.yml`
-  # for the sources cache to remain valid.
-  DEPS_ROOT_DIR: ~/_deps # Note that this needs to be used in a position where Bash will trigger tilde expansion!
+  # to prevent divergence between testing and release workflows.
+  DEPS_ROOT_DIR: ~/_deps
 
 jobs:
   windows:
@@ -24,66 +28,45 @@ jobs:
     strategy:
       matrix:
         bits: [32, 64]
-        include:
-          - bits: 32
-            arch: x86
-          - bits: 64
-            arch: x86_x64
       fail-fast: false
     steps:
-      - name: Get version from tag
-        shell: bash
-        run: | # Turn "vX.Y.Z" into "X.Y.Z"
-          VERSION="${{ github.ref_name }}"
-          echo "version=${VERSION#v}" >> $GITHUB_ENV
       - name: Checkout repo
         uses: actions/checkout@v6
       - name: Install deps
-        run: .github/scripts/install_deps.sh windows
-      - name: Cache library deps
-        uses: actions/cache@v5
-        with:
-          path: ${{ env.DEPS_ROOT_DIR }}/*-tmp/
-          key: dep-srcs-${{ hashFiles('cmake/deps.cmake') }}
-          enableCrossOsArchive: true
+        run: |
+          bash .github/scripts/install_deps.sh windows
       - name: Build Windows binaries
-        shell: bash
+        shell: cmd
         run: |
-          cmake -S . -B build --preset msvc${{ matrix.bits }} -DFETCHCONTENT_BASE_DIR="${{ env.DEPS_ROOT_DIR }}"
-          cmake --build build
+          call .github\scripts\msvc-env.bat ${{ matrix.bits }}
+          cmake -B build -G Ninja -DFETCHCONTENT_BASE_DIR="${{ env.DEPS_ROOT_DIR }}" -DCMAKE_C_FLAGS="/nologo"
+          cmake --build build -- -k 0
       - name: Package binaries
+        working-directory: build
         run: |
-          cmake --install build --config Release --prefix install_dir --verbose
-          Compress-Archive -LiteralPath @("install_dir/bin/rgbasm.exe", "install_dir/bin/rgblink.exe", "install_dir/bin/rgbfix.exe", "install_dir/bin/rgbgfx.exe", "install_dir/bin/z.dll", "install_dir/bin/libpng16.dll") "rgbds-win${{ matrix.bits }}.zip"
+          cpack -DCPACK_PACKAGE_FILE_NAME=rgbds-win${{ matrix.bits }} -G ZIP --verbose
       - name: Upload Windows binaries
         uses: actions/upload-artifact@v7
         with:
           name: win${{ matrix.bits }}
-          path: rgbds-win${{ matrix.bits }}.zip
+          path: build/rgbds-win${{ matrix.bits }}.zip
           if-no-files-found: error
 
   macos:
-    runs-on: macos-14
+    runs-on: macos-26
     steps:
-      - name: Get version from tag
-        shell: bash
-        run: | # Turn "refs/tags/vX.Y.Z" into "X.Y.Z"
-          VERSION="${{ github.ref_name }}"
-          echo "version=${VERSION#v}" >> $GITHUB_ENV
       - name: Checkout repo
         uses: actions/checkout@v6
       - name: Install deps
-        shell: bash
         run: |
-          ./.github/scripts/install_deps.sh macos
-      - name: Build libpng
-        run: |
-          ./.github/scripts/build_libpng.sh
-      # We force linking libpng statically; the other libs are provided by macOS itself
+          ./.github/scripts/install_deps.sh macos lld
       - name: Build binaries
         run: |
-          make -kj CXXFLAGS="-O3 -flto -DNDEBUG -mmacosx-version-min=10.9 -arch x86_64 -arch arm64" PNGCFLAGS="-I libpng-staging/include" PNGLDLIBS="libpng-staging/lib/libpng.a -lz" Q=
+          cmake -B build -G Ninja --preset macos-static -DFETCHCONTENT_BASE_DIR="${{ env.DEPS_ROOT_DIR }}"
+          cmake --build build -- -k 0
           strip rgb{asm,link,fix,gfx}
+        env:
+          LDFLAGS: -fuse-ld=lld # cmake/macos-static.cmake comments explain why we use lld.
       - name: Package binaries
         run: |
           zip --junk-paths rgbds-macos.zip rgb{asm,link,fix,gfx} man/* .github/scripts/install.sh
@@ -97,15 +80,9 @@ jobs:
   linux:
     runs-on: ubuntu-22.04 # Oldest supported, for best glibc compatibility.
     steps:
-      - name: Get version from tag
-        shell: bash
-        run: | # Turn "refs/tags/vX.Y.Z" into "X.Y.Z"
-          VERSION="${{ github.ref_name }}"
-          echo "version=${VERSION#v}" >> $GITHUB_ENV
       - name: Checkout repo
         uses: actions/checkout@v6
       - name: Install deps
-        shell: bash
         run: |
           ./.github/scripts/install_deps.sh ubuntu-22.04
       - name: Build binaries
@@ -123,39 +100,21 @@ jobs:
           if-no-files-found: error
 
   release:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     needs: [windows, macos, linux]
     permissions:
       contents: write
     steps:
-      - name: Get version from tag
-        shell: bash
-        run: | # Turn "refs/tags/vX.Y.Z" into "X.Y.Z"
-          VERSION="${{ github.ref_name }}"
-          echo "version=${VERSION#v}" >> $GITHUB_ENV
       - name: Checkout repo
         uses: actions/checkout@v6
       - name: Package sources
         run: |
           make dist Q=
-          ls
-      - name: Download Linux binaries
+      - name: Download all binary packages
         uses: actions/download-artifact@v8
-      - name: Release
-        uses: softprops/action-gh-release@v2
-        with:
-          body: |
-            Please ensure that the packages below work properly.
-            Once that's done, replace this text with the changelog, un-draft the release, and update the `release` branch.
-            By the way, if you forgot to update `include/version.hpp`, RGBASM's version test is going to fail in the tag's regression testing! (Use `git push --delete origin <tag>` to delete it)
-          draft: true # Don't publish the release quite yet...
-          prerelease: ${{ contains(github.ref, '-rc') }}
-          files: |
-            win32/rgbds-win32.zip
-            win64/rgbds-win64.zip
-            macos/rgbds-macos.zip
-            linux/rgbds-linux-x86_64.tar.xz
-            rgbds-source.tar.gz
-          fail_on_unmatched_files: true
+      - name: Draft the release
+        run: |
+          .github/scripts/draft-release.sh "${ref#refs/tags/}"
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ref: ${{ github.ref_name }}
+          GH_TOKEN: ${{ github.token }} # Required by the `gh` command.

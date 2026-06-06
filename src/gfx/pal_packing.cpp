@@ -328,18 +328,16 @@ static void decant(std::vector<AssignedSets> &assignments, std::vector<ColorSet>
 			auto attrs = from.begin();
 			std::advance(attrs, wasProcessed - processed.begin());
 
+			// Build up the "component"; start by marking the first color set as processed
 			std::unordered_set<uint16_t> colors(RANGE(colorSets[attrs->colorSetIndex]));
 			std::vector<size_t> members = {static_cast<size_t>(wasProcessed - processed.begin())};
-			*wasProcessed = true; // Mark the first color set as processed
-
-			// Build up the "component"...
-			for (; ++wasProcessed != processed.end(); ++attrs) {
+			for (*wasProcessed = true; ++wasProcessed != processed.end(); ++attrs) {
 				// If at least one color matches, add it
 				if (ColorSet const &colorSet = colorSets[attrs->colorSetIndex];
 				    std::find_first_of(RANGE(colors), RANGE(colorSet)) != colors.end()) {
 					colors.insert(RANGE(colorSet));
 					members.push_back(wasProcessed - processed.begin());
-					*wasProcessed = true; // Mark that color set as processed
+					*wasProcessed = true; // Mark the added color set as processed
 				}
 			}
 

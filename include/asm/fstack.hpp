@@ -15,6 +15,7 @@
 
 #include "linkdefs.hpp"
 
+#include "asm/intern.hpp"
 #include "asm/lexer.hpp"
 
 struct FileStackNode {
@@ -68,12 +69,10 @@ bool fstk_FailedOnMissingInclude();
 
 bool yywrap();
 bool fstk_RunInclude(std::string const &path, bool isQuiet);
-void fstk_RunMacro(
-    std::string const &macroName, std::shared_ptr<MacroArgs> macroArgs, bool isQuiet
-);
+void fstk_RunMacro(InternedStr macroName, std::shared_ptr<MacroArgs> macroArgs, bool isQuiet);
 void fstk_RunRept(uint32_t count, int32_t reptLineNo, ContentSpan const &span, bool isQuiet);
 void fstk_RunFor(
-    std::string const &symName,
+    InternedStr symName,
     int32_t start,
     int32_t stop,
     int32_t step,

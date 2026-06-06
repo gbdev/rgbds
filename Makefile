@@ -3,7 +3,7 @@
 .SUFFIXES:
 .SUFFIXES: .cpp .y .o
 
-.PHONY: all clean install checkdiff develop debug profile coverage format tidy iwyu mingw32 mingw64 wine-shim dist
+.PHONY: all clean install checkdiff develop debug profile coverage format tidy iwyu wine-shim dist
 
 # User-defined variables
 
@@ -26,7 +26,8 @@ PNGLDLIBS  := `${PKG_CONFIG} --libs-only-l libpng`
 # Note: if this comes up empty, `version.cpp` will automatically fall back to last release number
 VERSION_STRING := `git --git-dir=.git -c safe.directory='*' describe --tags --dirty --always 2>/dev/null`
 
-WARNFLAGS := -Wall -pedantic -Wno-unknown-warning-option -Wno-gnu-zero-variadic-macro-arguments
+WARNFLAGS := -Wall -pedantic -Wno-unknown-warning-option \
+             -Wno-gnu-zero-variadic-macro-arguments -Wno-unused-but-set-variable
 
 # Overridable CXXFLAGS
 CXXFLAGS     ?= -O3 -flto -DNDEBUG
@@ -64,6 +65,7 @@ rgbasm_obj := \
 	src/asm/fixpoint.o \
 	src/asm/format.o \
 	src/asm/fstack.o \
+	src/asm/intern.o \
 	src/asm/lexer.o \
 	src/asm/macro.o \
 	src/asm/main.o \
@@ -232,23 +234,25 @@ debug:
 		CXXFLAGS="-ggdb3 -O0 -fno-omit-frame-pointer -fno-optimize-sibling-calls"
 
 # Target used in development to profile with callgrind.
+# Use `valgrind --tool=callgrind --dump-instr=yes --simulate-cache=yes --collect-jumps=yes ./rgbasm ...`.
 profile:
 	$Qenv ${MAKE} \
 		CXXFLAGS="-ggdb3 -O3 -fno-omit-frame-pointer -fno-optimize-sibling-calls"
 
 # Target used in development to inspect code coverage with gcov.
+# Use `./contrib/coverage.bash`.
 coverage:
 	$Qenv ${MAKE} \
 		CXXFLAGS="-ggdb3 -Og --coverage -fno-omit-frame-pointer -fno-optimize-sibling-calls"
 
 # Target used in development to format source code with clang-format.
 format:
-	$Qclang-format -i $$(git ls-files '*.hpp' '*.cpp')
+	$Qclang-format -i $$(git ls-files '*.[hc]pp')
 
 # Target used in development to check code with clang-tidy.
 # Requires Bison-generated header files to exist.
 tidy: src/asm/parser.hpp src/link/script.hpp
-	$Qclang-tidy -p . $$(git ls-files '*.hpp' '*.cpp')
+	$Qclang-tidy -p . $$(git ls-files '*.[hc]pp')
 
 # Target used in development to remove unused `#include` headers.
 iwyu:
@@ -256,22 +260,7 @@ iwyu:
 		CXX="include-what-you-use" \
 		REALCXXFLAGS="-std=c++20 -I include"
 
-# Targets for the project maintainer to easily create Windows exes.
-# This is not for Windows users!
-# If you're building on Windows with Cygwin or MinGW, just follow the Unix
-# install instructions instead.
-
-mingw32:
-	$Q${MAKE} all test/gfx/randtilegen test/gfx/rgbgfx_test \
-		CXX=i686-w64-mingw32-g++ \
-		CXXFLAGS="-O3 -flto -DNDEBUG -static-libgcc -static-libstdc++" \
-		PKG_CONFIG="PKG_CONFIG_SYSROOT_DIR=/usr/i686-w64-mingw32 pkg-config"
-
-mingw64:
-	$Q${MAKE} all test/gfx/randtilegen test/gfx/rgbgfx_test \
-		CXX=x86_64-w64-mingw32-g++ \
-		PKG_CONFIG="PKG_CONFIG_SYSROOT_DIR=/usr/x86_64-w64-mingw32 pkg-config"
-
+# Target used in development to conveniently invoke RGBDS binaries with Wine.
 wine-shim:
 	$Qecho '#!/usr/bin/env bash' > rgbshim.sh
 	$Qecho 'WINEDEBUG=-all wine $$0.exe "$${@:1}"' >> rgbshim.sh
@@ -283,7 +272,6 @@ wine-shim:
 
 # Target for the project maintainer to produce distributable release tarballs
 # of the source code.
-
 dist:
 	$Qgit ls-files | sed s~^~$${PWD##*/}/~ \
 	  | tar -czf rgbds-source.tar.gz -C .. -T -

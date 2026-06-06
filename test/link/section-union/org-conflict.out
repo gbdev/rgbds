@@ -4,7 +4,5 @@ FATAL: Section "conflicting address" is defined with address $beef, but also wit
     at section-union/org-conflict.asm(7)
 Linking aborted with 1 error
 ---
-error: Section already declared as fixed at different address $beef
-    at <stdin>(16)
-FATAL: Cannot create section "conflicting address" (1 error)
+FATAL: Section "conflicting address" already declared as fixed at different address $beef
     at <stdin>(16)

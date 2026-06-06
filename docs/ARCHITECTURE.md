@@ -35,6 +35,8 @@ rgbds/
 │   ├── zsh_compl/
 │   │   └── ...
 │   └── ...
+├── docs/
+│   └── ...
 ├── include/
 │   └── ...
 ├── man/
@@ -80,6 +82,12 @@ rgbds/
     Tab completion scripts for use with `bash`. Run them with `source` somewhere in your `.bashrc`, and they should auto-load when you open a shell.
   * **`zsh_compl/`:**  
     Tab completion scripts for use with `zsh`. Put them somewhere in your `fpath`, and they should auto-load when you open a shell.
+- **`docs/`:**  
+  Documentation related to the development and maintenance of RGBDS itself.
+  (The directory's name, as well as some of its file's names, are
+  [recognized by GitHub](https://docs.github.com/en/communities/setting-up-your-project-for-healthy-contributions/setting-guidelines-for-repository-contributors)
+  and linked to in parts of its UI.)
+  Documentation for RGBDS itself exists as manual pages in `man/`.
 - **`include/`:**  
   Header files for the respective source files in `src`.
 - **`man/`:**  
@@ -172,10 +180,13 @@ These files have been copied ("vendored") from external authors and adapted for 
 - **`fstack.cpp`:**  
   Functions and data related to "fstack" nodes (the contents of top-level or `INCLUDE`d files, macro expansions, or `REPT`/`FOR` loop iterations) and their "contexts" (metadata that is only relevant while a node's content is being lexed and parsed).  
   This file *owns* the `Context`s in its `contextStack` collection. Each of those `Context`s *owns* its `LexerState`, and *refers* to its `FileStackNode`, `uniqueIDStr`, and `macroArgs`. Each `FileStackNode` also *references* its `parent`.
+- **`intern.cpp`:**  
+  [Interned strings](https://en.wikipedia.org/wiki/String_interning), which are used for the names of keywords, symbols (labels, constants, variables, string constants, macros, etc), and charmaps.  
+  This file *owns* the strings in its `internedStrings` collection, which its `internedIndexes` collection *references* by view and index.
 - **`lexer.cpp`:**  
   Functions and data related to [lexing](https://en.wikipedia.org/wiki/Lexical_analysis) assembly source code into tokens, which can then be parsed.  
   This file maintains static `lexerState` and `lexerStateEOL` pointers to `LexerState`s from the `Context`s in `fstack.cpp`.  
-  Each `LexerState` *owns* its `content` and its `expansions`' content. Each `Expansion` (the contents of an `{interpolation}` or macro argument) in turn *owns* its `contents`.  
+  Each `LexerState` *owns* its `content` and its `expansionStack`'s content. Each `Expansion` (the contents of an `{interpolation}` or macro argument) in turn *owns* its `contents`.  
   The lexer and parser are interdependent: when the parser reaches certain tokens, it changes the lexer's mode, which affects how characters get lexed into tokens. For example, when the parser reaches a macro name, it changes the lexer to "raw" mode, which lexes the rest of the line as a sequence of string arguments to the macro.
 - **`macro.cpp`:**  
   `MacroArgs` methods related to macro arguments. Each `MacroArgs` *references* its arguments' contents.

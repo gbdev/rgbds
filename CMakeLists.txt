@@ -4,7 +4,7 @@
 #   Older versions *may* work, but we can't test them; compat patches are welcome.
 # - 3.17 is required for `CHECK_*` messages to display properly, but is not essential.
 # - 3.9 is required for LTO checks.
-cmake_minimum_required(VERSION 3.24...4.2 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.24...4.3 FATAL_ERROR)
 
 # Read the project version from the header (the canonical source of truth).
 file(STRINGS "include/version.hpp" version_defines REGEX "^[ \t]*#define[ \t]+PACKAGE_VERSION_")
@@ -33,31 +33,27 @@ endif()
 
 include(CTest) # Note: CTest only functions properly if included from the top-level CMakeLists.
 include(GNUInstallDirs)
-
-## Compiler switches.
-
 include(CMakeDependentOption)
+
+## Compiler switches that should apply to our deps too.
+
 option(SANITIZERS "Build with sanitizers enabled" OFF)
-cmake_dependent_option(MORE_WARNINGS "Turn on more warnings" OFF !MSVC OFF)
+cmake_dependent_option(MORE_WARNINGS "Turn on more warnings" OFF "NOT MSVC" OFF)
 
-if(MSVC)
-  add_compile_options(
-    /wd5030 # Warning C5030 is about unknown attributes (`[[gnu::ATTR]]`), none of ours being load-bearing.
-    /wd4996 # Warning C4996 is about using POSIX names, which we want to do for portability.
-    /Zc:preprocessor # Opt into the C++20-conformant preprocessor.
-  )
-  add_definitions(/D_CRT_SECURE_NO_WARNINGS)
+if(NOT DEFINED CMAKE_MSVC_RUNTIME_LIBRARY) # Allow this to be overridden from the CLI easily.
+  # We link against the Microsoft C++ runtime libs statically, except the debug-mode one.
+  # This is because Microsoft's license terms (through some indirection) allow us to redistribute
+  # the runtime lib code *except* the debug-mode libs'.
+  # Since we want to remain able to not think too hard about debug executables, we link against
+  # the debug libs dynamically, shifting the burden of obtaining them onto the recipient.
+  set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:DebugDLL>")
+endif()
 
-  if(SANITIZERS)
+if(SANITIZERS)
+  if(MSVC)
     message(STATUS "ASan enabled")
     add_compile_options(/fsanitize=address) # Note that this shouldn't be passed to the linker.
-  endif()
-else()
-  add_compile_options(-Wall -pedantic -fno-exceptions $<$<COMPILE_LANGUAGE:CXX>:-fno-rtti> -Wno-unknown-warning-option
-    # C++20 allows macros to take zero variadic arguments.
-    # Some versions of Clang don't recognize this, and treat them as a GNU extension.
-    -Wno-gnu-zero-variadic-macro-arguments)
-  if(SANITIZERS)
+  else() # We assume a GNU-like compiler.
     message(STATUS "ASan and UBSan enabled")
     set(SAN_FLAGS -fsanitize=address -fsanitize=undefined
                   -fsanitize=float-divide-by-zero)
@@ -68,19 +64,6 @@ else()
     # and the two codegen flags improve the sanitizers' backtraces, but we want the user to
     # be able to override these easily so we put them first.
     string(PREPEND CMAKE_CXX_FLAGS_DEBUG "-Og -fno-omit-frame-pointer -fno-optimize-sibling-calls ")
-  endif()
-
-  if(MORE_WARNINGS)
-    add_compile_options(-Werror -Wextra
-                        -Walloc-zero -Wcast-align -Wcast-qual -Wduplicated-branches -Wduplicated-cond
-                        -Wfloat-equal -Wlogical-op -Wnull-dereference -Wold-style-cast -Wshift-overflow=2
-                        -Wstringop-overflow=4 -Wtrampolines -Wundef -Wuninitialized -Wunused -Wshadow
-                        -Wformat=2 -Wformat-overflow=2 -Wformat-truncation=1
-                        -Wno-format-nonliteral -Wno-strict-overflow
-                        -Wno-unused-but-set-variable # bison's `yynerrs_` is incremented but unused
-                        -Wno-type-limits -Wno-tautological-constant-out-of-range-compare
-                        -Wvla # MSVC does not support VLAs
-                        -Wno-unknown-warning-option) # Clang shouldn't diagnose unknown warnings
   endif()
 endif()
 
@@ -137,11 +120,23 @@ endif()
 include(FetchContent)
 include(cmake/deps.cmake)
 
+# Be sure to make zlib available before libpng, otherwise libpng
+# will attempt to `find_package(ZLIB)` without going through `FetchContent`.
+if(NOT DEFINED ZLIB_BUILD_TESTING) # Unless overridden (e.g. in the cache), we don't care about zlib's tests.
+  set(ZLIB_BUILD_TESTING OFF)
+endif()
 FetchContent_MakeAvailable(ZLIB)
 if(NOT DEFINED ZLIB_INCLUDE_DIRS)
   set(ZLIB_INCLUDE_DIRS "${zlib_BINARY_DIR};${zlib_SOURCE_DIR}") # libpng's `genout` script relies on this variable to be set.
 endif()
+# Statically building zlib (from source) generates a target named differently.
+if(NOT TARGET ZLIB::ZLIB AND TARGET zlibstatic)
+  add_library(ZLIB::ZLIB ALIAS zlibstatic)
+endif()
 
+if(NOT DEFINED PNG_TESTS) # Unless overridden (e.g. in the cache), we don't care about libpng's tests.
+  set(PNG_TESTS OFF)
+endif()
 FetchContent_MakeAvailable(PNG)
 if(NOT TARGET PNG::PNG)
   if(PNG_SHARED)
@@ -159,8 +154,45 @@ include_directories("include")
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
+if(MSVC)
+  add_compile_options(
+    /wd5030 # Warning C5030 is about unknown attributes (`[[gnu::ATTR]]`), none of ours being load-bearing.
+    /wd4996 # Warning C4996 is about using POSIX names, which we want to do for portability.
+    /Zc:preprocessor # Opt into the C++20-conformant preprocessor.
+  )
+  add_definitions(/D_CRT_SECURE_NO_WARNINGS)
+else()
+  add_compile_options(-Wall -pedantic -Wno-unknown-warning-option -fno-exceptions -fno-rtti)
+
+  if(MORE_WARNINGS)
+    add_compile_options(-Wextra
+                        -Walloc-zero -Wcast-align -Wcast-qual -Wduplicated-branches -Wduplicated-cond
+                        -Wfloat-equal -Wlogical-op -Wnull-dereference -Wold-style-cast -Wshift-overflow=2
+                        -Wstringop-overflow=4 -Wtrampolines -Wundef -Wuninitialized -Wunused -Wshadow
+                        -Wformat=2 -Wformat-overflow=2 -Wformat-truncation=1
+                        -Wno-format-nonliteral -Wno-strict-overflow
+                        -Wno-type-limits -Wno-tautological-constant-out-of-range-compare
+                        -Wvla) # MSVC does not support VLAs
+  endif()
+
+  add_compile_options(-Wno-unused-but-set-variable # bison's `yynerrs_` is incremented but unused
+                      # C++20 allows macros to take zero variadic arguments.
+                      # Some versions of Clang don't recognize this, and treat them as a GNU extension.
+                      -Wno-gnu-zero-variadic-macro-arguments)
+
+  if(MINGW)
+    # MinGW warns about format specifiers like `%z` and `%j`, which are missing on Windows XP and earlier.
+    # We rely on runtimes more modern than that, so we can ignore those warnings.
+    # If this is a problem for you: use Microsoft's equivalents, or define `__USE_MINGW_ANSI_STDIO=1`.
+    # https://sourceforge.net/p/mingw-w64/wiki2/gnu%20printf/
+    add_compile_options(-Wno-error=format -Wno-error=format-extra-args)
+  endif()
+endif()
+
 add_subdirectory(src)
-add_subdirectory(test)
+if(BUILD_TESTING) # This option is defined implicitly by `include(CTest)`.
+  add_subdirectory(test)
+endif()
 
 set(man1 "man/rgbasm.1"
          "man/rgbfix.1"
@@ -174,5 +206,26 @@ set(man7 "man/gbz80.7"
          "man/rgbds.7")
 
 foreach(SECTION "man1" "man5" "man7")
-  install(FILES ${${SECTION}} DESTINATION "${CMAKE_INSTALL_MANDIR}/${SECTION}")
+  install(FILES ${${SECTION}} DESTINATION "${CMAKE_INSTALL_MANDIR}/${SECTION}" COMPONENT man)
 endforeach()
+
+## Packaging.
+
+# We only specify here the package-agnostic options;
+# the rest is rather convention from our side, and thus more appropriate for presets or CLI flags.
+## CPACK_PACKAGE_NAME: copied from `project()`
+set(CPACK_PACKAGE_VENDOR "GBDev")
+set(CPACK_PACKAGE_VERSION "${CMAKE_PROJECT_VERSION}") # The individual components are defined implicitly.
+set(CPACK_PACKAGE_DESCRIPTION "An assembly toolchain for the Nintendo Game Boy and Game Boy Color") # Same as our repo's description.
+## CPACK_PACKAGE_DESCRIPTION_SUMMARY: copied from `project()`
+set(CPACK_PACKAGE_HOMEPAGE_URL "https://rgbds.gbdev.io")
+## CPACK_PACKAGE_FILE_NAME: should be provided at runtime (`cpack -P`)
+set(CPACK_PACKAGE_CHECKSUM SHA256)
+set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_SOURCE_DIR}/LICENSE")
+set(CPACK_RESOURCE_FILE_README "${CMAKE_SOURCE_DIR}/README.md")
+set(CPACK_STRIP_FILES ON) # Only applies to binary packages, not sources.
+set(CPACK_VERBATIM_VARIABLES ON)
+set(CPACK_THREADS 0) # Use all available CPU cores.
+set(CPACK_INCLUDE_TOPLEVEL_DIRECTORY OFF)
+
+include(CPack)

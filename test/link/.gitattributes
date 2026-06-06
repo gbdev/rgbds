@@ -1,0 +1,2 @@
+# Some files test CRLF line endings
+linkerscript-escapes-test.link -text diff
