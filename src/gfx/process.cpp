@@ -1033,7 +1033,7 @@ void process() {
 				if (checkVerbosity(VERB_DEBUG)) {
 					fprintf(
 					    stderr,
-					    "- tile (%" PRIu32 ", %" PRIu32 ") overrides color set #%zu: [",
+					    "- Tile (%" PRIu32 ", %" PRIu32 ") overrides color set #%zu: [",
 					    tile.x,
 					    tile.y,
 					    n
@@ -1054,23 +1054,21 @@ void process() {
 				for (size_t m = n + 1; m < colorSets.size();) {
 					if (colorSet.compare(colorSets[m]) != ColorSet::STRICT_SUPERSET) {
 						++m;
-						continue;
-					}
-
-					for (size_t i = 0; i + 1 < attrmap.size(); ++i) {
-						AttrmapEntry &entry = attrmap[i];
-						if (entry.colorSetID == AttrmapEntry::transparent
-						    || entry.colorSetID == AttrmapEntry::background) {
-							continue;
+					} else {
+						for (size_t i = 0; i + 1 < attrmap.size(); ++i) {
+							AttrmapEntry &entry = attrmap[i];
+							if (entry.colorSetID == AttrmapEntry::transparent
+							    || entry.colorSetID == AttrmapEntry::background) {
+								continue;
+							}
+							if (entry.colorSetID == m) {
+								entry.colorSetID = n;
+							} else if (entry.colorSetID > m) {
+								--entry.colorSetID;
+							}
 						}
-						if (entry.colorSetID == m) {
-							entry.colorSetID = n;
-						} else if (entry.colorSetID > m) {
-							--entry.colorSetID;
-						}
+						colorSets.erase(colorSets.begin() + m);
 					}
-
-					colorSets.erase(colorSets.begin() + m);
 				}
 				[[fallthrough]];
 
