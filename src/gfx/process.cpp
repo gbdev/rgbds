@@ -1031,7 +1031,13 @@ void process() {
 				// Override the previous color set that this one is a strict superset of
 
 				if (checkVerbosity(VERB_DEBUG)) {
-					fprintf(stderr, "- tile (%" PRIu32 ", %" PRIu32 ") overrides color set #%zu: [", tile.x, tile.y, n);
+					fprintf(
+					    stderr,
+					    "- tile (%" PRIu32 ", %" PRIu32 ") overrides color set #%zu: [",
+					    tile.x,
+					    tile.y,
+					    n
+					);
 					for (uint16_t color : colorSets[n]) {
 						fprintf(stderr, "$%04x, ", color);
 					}
@@ -1089,7 +1095,13 @@ void process() {
 		}
 
 		if (checkVerbosity(VERB_DEBUG)) {
-			fprintf(stderr, "- tile (%" PRIu32 ", %" PRIu32 ") adds color set #%zu: [", tile.x, tile.y, colorSets.size());
+			fprintf(
+			    stderr,
+			    "- tile (%" PRIu32 ", %" PRIu32 ") adds color set #%zu: [",
+			    tile.x,
+			    tile.y,
+			    colorSets.size()
+			);
 			for (uint16_t color : colorSet) {
 				fprintf(stderr, "$%04x, ", color);
 			}
