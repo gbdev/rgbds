@@ -21,11 +21,7 @@ public:
 	// Adds the specified color to the set, or **silently drops it** if the set is full.
 	void add(uint16_t color);
 
-	enum ComparisonResult {
-		INCOMPARABLE,    // the two sets are incomparable
-		SUBSET_OR_EQUAL, // this set is a subset of or identical to the other
-		STRICT_SUPERSET, // this set is a strict superset of the other
-	};
+	enum ComparisonResult { INCOMPARABLE, SUBSET_OR_EQUAL, STRICT_SUPERSET };
 	ComparisonResult compare(ColorSet const &other) const;
 
 	size_t size() const;

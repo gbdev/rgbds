@@ -1055,6 +1055,8 @@ void process() {
 					if (colorSet.compare(colorSets[m]) != ColorSet::STRICT_SUPERSET) {
 						++m;
 					} else {
+						// We are about to remove a set, which will shift sets that may be
+						// already referenced in the attrmap: re-number to keep it consistent
 						for (size_t i = 0; i + 1 < attrmap.size(); ++i) {
 							AttrmapEntry &entry = attrmap[i];
 							if (entry.colorSetID == AttrmapEntry::transparent
