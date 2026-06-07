@@ -1097,7 +1097,7 @@ void process() {
 		if (checkVerbosity(VERB_DEBUG)) {
 			fprintf(
 			    stderr,
-			    "- tile (%" PRIu32 ", %" PRIu32 ") adds color set #%zu: [",
+			    "- Tile (%" PRIu32 ", %" PRIu32 ") adds color set #%zu: [",
 			    tile.x,
 			    tile.y,
 			    colorSets.size()
