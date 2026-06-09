@@ -1,2 +1,2 @@
 warning: Integer constant is too large [-Wlarge-constant]
-    at large-constant.inc(1) <- large-constant.link(3)
+    at large-constant.inc(1) <- large-constant.link(2)
