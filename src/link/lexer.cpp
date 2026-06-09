@@ -97,27 +97,39 @@ static std::string readKeyword(int initial) {
 
 template<uint32_t Base>
     requires ValidBaseV<Base>
-static yy::parser::symbol_type readNumber(int initial, char const *prefix, char const *name) {
+static yy::parser::symbol_type readNumber(int initial, char const *prefix) {
 	LexerStackEntry &context = lexerStack.back();
+
 	uint32_t number;
+	bool empty;
 	if constexpr (Base == 10) {
-		assume(prefix == nullptr && name == nullptr);
+		assume(prefix == nullptr);
 		number = parseDigit<Base>(initial);
+		empty = false;
 	} else {
-		assume(initial == 0 && prefix != nullptr && name != nullptr);
-		int c = context.file.sgetc();
-		if (!isDigit<Base>(c)) {
-			scriptError("No %s digits found after %s", name, prefix);
-			return yy::parser::make_number(0);
-		}
-		number = parseDigit<Base>(c);
-		context.file.sbumpc();
+		assume(initial == 0 && prefix != nullptr);
+		number = 0;
+		empty = true;
 	}
-	for (int c = context.file.sgetc(); isDigit<Base>(c) || c == '_'; c = context.file.snextc()) {
+
+	bool prevWasSeparator = false;
+
+	for (int c = context.file.sgetc();; c = context.file.snextc()) {
 		if (c == '_') {
+			if (prevWasSeparator) {
+				scriptError("Invalid integer constant, '_' after another '_'");
+			}
+			prevWasSeparator = true;
 			continue;
 		}
+
+		if (!isDigit<Base>(c)) {
+			break;
+		}
 		uint32_t digit = parseDigit<Base>(c);
+		empty = false;
+		prevWasSeparator = false;
+
 		if (number > (UINT32_MAX - digit) / Base) {
 			scriptWarning(WARNING_LARGE_CONSTANT, "Integer constant is too large");
 			// Discard any additional digits
@@ -127,19 +139,14 @@ static yy::parser::symbol_type readNumber(int initial, char const *prefix, char 
 		}
 		number = number * Base + digit;
 	}
+
+	if (empty) {
+		scriptError("Invalid integer constant, no digits after %s", prefix);
+	}
+	if (prevWasSeparator) {
+		scriptError("Invalid integer constant, trailing '_'");
+	}
 	return yy::parser::make_number(number);
-}
-
-static yy::parser::symbol_type parseBinNumber(char const *prefix) {
-	return readNumber<2>(0, prefix, "binary");
-}
-
-static yy::parser::symbol_type parseOctNumber(char const *prefix) {
-	return readNumber<8>(0, prefix, "octal");
-}
-
-static yy::parser::symbol_type parseHexNumber(char const *prefix) {
-	return readNumber<16>(0, prefix, "hexadecimal");
 }
 
 static yy::parser::symbol_type parseAnyNumber(int initial) {
@@ -149,18 +156,18 @@ static yy::parser::symbol_type parseAnyNumber(int initial) {
 		case 'x':
 		case 'X':
 			context.file.sbumpc();
-			return parseHexNumber("\"0x\"");
+			return readNumber<16>(0, "\"0x\"");
 		case 'o':
 		case 'O':
 			context.file.sbumpc();
-			return parseOctNumber("\"0o\"");
+			return readNumber<8>(0, "\"0o\"");
 		case 'b':
 		case 'B':
 			context.file.sbumpc();
-			return parseBinNumber("\"0b\"");
+			return readNumber<2>(0, "\"0b\"");
 		}
 	}
-	return readNumber<10>(initial, nullptr, nullptr);
+	return readNumber<10>(initial, nullptr);
 }
 
 static yy::parser::symbol_type parseString() {
@@ -226,11 +233,11 @@ yy::parser::symbol_type yylex() {
 	} else if (c == '"') {
 		return parseString();
 	} else if (c == '$') {
-		return parseHexNumber("'$'");
+		return readNumber<16>(0, "'$'");
 	} else if (c == '%') {
-		return parseBinNumber("'%'");
+		return readNumber<2>(0, "'%'");
 	} else if (c == '&') {
-		return parseOctNumber("'&'");
+		return readNumber<8>(0, "'&'");
 	} else if (isDigit<10>(c)) {
 		return parseAnyNumber(c);
 	} else if (isLetter(c)) {
