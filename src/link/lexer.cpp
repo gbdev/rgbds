@@ -52,11 +52,10 @@ void lexer_IncludeFile(std::string &&path) {
 		scriptError(
 		    "Failed to open included linker script \"%s\": %s", badPath.c_str(), strerror(errno)
 		);
+		// `.pop_back()` cannot invalidate an unpopped reference, so `prevContext`
+		// is still valid even if `.open()` failed.
+		++prevContext.lineNo;
 	}
-
-	// `.pop_back()` cannot invalidate an unpopped reference, so `prevContext`
-	// is still valid even if `.open()` failed.
-	++prevContext.lineNo;
 }
 
 void lexer_IncLineNo() {
@@ -74,6 +73,8 @@ static yy::parser::symbol_type yywrap() {
 			return yy::parser::make_newline();
 		}
 		lexerStack.pop_back();
+		// Increment the line number *after* an INCLUDE has finished.
+		++lexerStack.back().lineNo;
 		return yylex();
 	}
 	if (!atEof) {

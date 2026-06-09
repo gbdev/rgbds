@@ -52,7 +52,8 @@ lines:
 
 line:
 	INCLUDE string newline {
-		lexer_IncludeFile(std::move($2)); // Note: this additionally increments the line number!
+		// This does *not* increment the line number until the included content has finished parsing!
+		lexer_IncludeFile(std::move($2));
 	}
 	| directive newline {
 		lexer_IncLineNo();
