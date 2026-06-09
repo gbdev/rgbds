@@ -529,7 +529,7 @@ static void shiftChar();
 static int bumpChar();
 static int nextChar();
 template<uint32_t Base>
-    requires BaseV<Base>
+    requires ValidBaseV<Base>
 static uint32_t readNumber(int initial, char const *prefix);
 
 static uint32_t readBracketedMacroArgNum() {
@@ -1075,7 +1075,7 @@ void lexer_SetGfxDigits(char const digits[4]) {
 }
 
 template<uint32_t Base>
-    requires BaseV<Base>
+    requires ValidBaseV<Base>
 static uint32_t readNumber(int initial, char const *prefix) {
 	auto isSomeDigit = [](int c) {
 		if constexpr (Base == 2) {

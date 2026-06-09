@@ -96,7 +96,7 @@ static std::string readKeyword(int initial) {
 }
 
 template<uint32_t Base>
-    requires BaseV<Base>
+    requires ValidBaseV<Base>
 static yy::parser::symbol_type readNumber(int initial, char const *prefix, char const *name) {
 	LexerStackEntry &context = lexerStack.back();
 	uint32_t number;
