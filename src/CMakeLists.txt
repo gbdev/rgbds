@@ -143,7 +143,7 @@ file(GET_RUNTIME_DEPENDENCIES
     DIRECTORIES ${search_dirs_splat} \"$<TARGET_FILE_DIR:ZLIB::ZLIB>\" \"$<TARGET_FILE_DIR:PNG::PNG>\"
     PRE_EXCLUDE_REGEXES \"^kernel32\\\\.dll$\" \"^msvcrt.?.?\\\\.dll\" \"^api-ms-win-.*\\\\.dll$\")
   foreach(rgbgfx_dep IN LISTS rgbgfx_deps)
-    file(INSTALL DESTINATION \"$<INSTALL_PREFIX>/${CMAKE_INSTALL_BINDIR}\" TYPE SHARED_LIBRARY FILES \${rgbgfx_dep}
+    file(INSTALL DESTINATION \"\${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_BINDIR}\" TYPE SHARED_LIBRARY FILES \${rgbgfx_dep}
       FOLLOW_SYMLINK_CHAIN)
   endforeach()"
         COMPONENT shared-libs EXCLUDE_FROM_ALL) # Most platforms install those separately.
