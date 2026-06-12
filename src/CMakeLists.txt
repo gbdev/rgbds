@@ -118,7 +118,7 @@ add_custom_command(TARGET rgbgfx POST_BUILD COMMENT "Copying rgbgfx's DLLs"
                    COMMAND ${CMAKE_COMMAND} -E copy -t $<TARGET_FILE_DIR:rgbgfx> $<TARGET_RUNTIME_DLLS:rgbgfx>
                    COMMAND_EXPAND_LISTS VERBATIM)
 
-if(DEFINED DLL_SEARCH_DIRS)
+if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
   # On Windows, you don't link against DLLs directly, but against an import library for that DLL.
   # This leads to, sometimes, the DLL being stored in a directory far away from the import library itself!
   set(DLL_SEARCH_DIRS CACHE PATH "List of directories in which DLLs will be searched")
