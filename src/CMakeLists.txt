@@ -118,7 +118,11 @@ add_custom_command(TARGET rgbgfx POST_BUILD COMMENT "Copying rgbgfx's DLLs"
                    COMMAND ${CMAKE_COMMAND} -E copy -t $<TARGET_FILE_DIR:rgbgfx> $<TARGET_RUNTIME_DLLS:rgbgfx>
                    COMMAND_EXPAND_LISTS VERBATIM)
 
-if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
+if(WIN32)
+  # CMake 3.27 is required for `$<INSTALL_PREFIX>`, but is only needed when cross-compiling for MinGW.
+  if(CMAKE_VERSION VERSION_LESS "3.27")
+    message(WARNING "CMake 3.27 or higher is required for `\$<INSTALL_PREFIX>` inside `install(CODE)`")
+  endif()
   # On Windows, you don't link against DLLs directly, but against an import library for that DLL.
   # This leads to, sometimes, the DLL being stored in a directory far away from the import library itself!
   set(DLL_SEARCH_DIRS CACHE PATH "List of directories in which DLLs will be searched")
