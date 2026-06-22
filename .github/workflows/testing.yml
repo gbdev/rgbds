@@ -268,6 +268,9 @@ jobs:
     steps:
       - name: Checkout repo
         uses: actions/checkout@v6
+      - name: Install test deps
+        run: |
+          .github/scripts/install_deps.sh windowsmingw
       - name: Retrieve binaries
         uses: actions/download-artifact@v8
         with:

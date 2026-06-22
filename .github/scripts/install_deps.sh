@@ -2,6 +2,9 @@
 # This script requires `sh` instead of `bash` because the latter is not always installed on FreeBSD.
 set -eu
 
+# Python and the Pillow library are dependencies for libbet, a repo built by our external tests.
+# Other dependencies are for building rgbds itself.
+
 case $# in
 	1) OS="$1"; TOOLSET=     ;;
 	2) OS="$1"; TOOLSET="$2" ;;
@@ -34,7 +37,6 @@ case "${OS%%-*}" in
 		sudo apt-get install -yq $pkgs
 		case "$TOOLSET" in
 			mingw32 | mingw64)
-				# Python and the Pillow library are dependencies for libbet, a repo built by our external tests.
 				py -3 -m pip install pillow
 			;;
 		esac
@@ -66,9 +68,11 @@ case "${OS%%-*}" in
 	windows)
 		# GitHub Actions' hosted runners ship CMake 3.x, but versions prior to 4.0.0 ignore `CPACK_PACKAGE_FILE_NAME`.
 		choco install -y winflexbison3 cmake
-		# The below expects the base name, not the Windows-specific name.
+		# `bison` expects its argument to be the base name, not the Windows-specific name.
 		bison() { win_bison "$@"; } # An alias doesn't work, so we use a function instead.
-		# Python and the Pillow library are dependencies for libbet, a repo built by our external tests.
+		py -3 -m pip install pillow
+		;;
+	windowsmingw)
 		py -3 -m pip install pillow
 		;;
 	*)
