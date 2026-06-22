@@ -86,6 +86,10 @@ if [ -n "$TOOLSET" ]; then
 	exit 1
 fi
 
+if [ "$OS" = "windowsmingw" ]; then
+	exit 0
+fi
+
 # Print some system info, for easier debugging.
 # https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-commands#grouping-log-lines
 
