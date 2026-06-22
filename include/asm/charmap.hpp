@@ -10,14 +10,14 @@
 #include <string_view>
 #include <vector>
 
-#define DEFAULT_CHARMAP_NAME "main"
+#include "asm/intern.hpp"
 
+void charmap_Init();
 bool charmap_ForEach(
-    void (*mapFunc)(std::string const &),
-    void (*charFunc)(std::string const &, std::vector<int32_t>)
+    void (*mapFunc)(InternedStr), void (*charFunc)(std::string const &, std::vector<int32_t>)
 );
-void charmap_New(std::string const &name, std::string const *baseName);
-void charmap_Set(std::string const &name);
+void charmap_New(InternedStr name, InternedStr const *baseName);
+void charmap_Set(InternedStr name);
 void charmap_Push();
 void charmap_Pop();
 void charmap_CheckStack();

@@ -22,11 +22,12 @@ enum WarningLevel {
 };
 
 enum WarningID {
-	WARNING_ASSERT,       // Assertions
-	WARNING_DIV,          // Undefined division behavior
-	WARNING_OBSOLETE,     // Obsolete/deprecated things
-	WARNING_SHIFT,        // Undefined `SHIFT` behavior
-	WARNING_SHIFT_AMOUNT, // Strange `SHIFT` amount
+	WARNING_ASSERT,         // Assertions
+	WARNING_DIV,            // Undefined division behavior
+	WARNING_LARGE_CONSTANT, // Constants too large
+	WARNING_OBSOLETE,       // Obsolete/deprecated things
+	WARNING_SHIFT,          // Undefined `SHIFT` behavior
+	WARNING_SHIFT_AMOUNT,   // Strange `SHIFT` amount
 
 	NB_PLAIN_WARNINGS,
 
@@ -47,6 +48,8 @@ void warning(FileStackNode const *src, uint32_t lineNo, WarningID id, char const
 void warning(FileStackNode const *src, uint32_t lineNo, char const *fmt, ...);
 [[gnu::format(printf, 1, 2)]]
 void warning(char const *fmt, ...);
+[[gnu::format(printf, 2, 3)]]
+void scriptWarning(WarningID id, char const *fmt, ...);
 
 [[gnu::format(printf, 3, 4)]]
 void error(FileStackNode const *src, uint32_t lineNo, char const *fmt, ...);

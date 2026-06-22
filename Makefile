@@ -26,7 +26,8 @@ PNGLDLIBS  := `${PKG_CONFIG} --libs-only-l libpng`
 # Note: if this comes up empty, `version.cpp` will automatically fall back to last release number
 VERSION_STRING := `git --git-dir=.git -c safe.directory='*' describe --tags --dirty --always 2>/dev/null`
 
-WARNFLAGS := -Wall -pedantic -Wno-unknown-warning-option -Wno-gnu-zero-variadic-macro-arguments
+WARNFLAGS := -Wall -pedantic -Wno-unknown-warning-option \
+             -Wno-gnu-zero-variadic-macro-arguments -Wno-unused-but-set-variable
 
 # Overridable CXXFLAGS
 CXXFLAGS     ?= -O3 -flto -DNDEBUG
@@ -64,6 +65,7 @@ rgbasm_obj := \
 	src/asm/fixpoint.o \
 	src/asm/format.o \
 	src/asm/fstack.o \
+	src/asm/intern.o \
 	src/asm/lexer.o \
 	src/asm/macro.o \
 	src/asm/main.o \
@@ -232,11 +234,13 @@ debug:
 		CXXFLAGS="-ggdb3 -O0 -fno-omit-frame-pointer -fno-optimize-sibling-calls"
 
 # Target used in development to profile with callgrind.
+# Use `valgrind --tool=callgrind --dump-instr=yes --simulate-cache=yes --collect-jumps=yes ./rgbasm ...`.
 profile:
 	$Qenv ${MAKE} \
 		CXXFLAGS="-ggdb3 -O3 -fno-omit-frame-pointer -fno-optimize-sibling-calls"
 
 # Target used in development to inspect code coverage with gcov.
+# Use `./contrib/coverage.bash`.
 coverage:
 	$Qenv ${MAKE} \
 		CXXFLAGS="-ggdb3 -Og --coverage -fno-omit-frame-pointer -fno-optimize-sibling-calls"
@@ -256,6 +260,7 @@ iwyu:
 		CXX="include-what-you-use" \
 		REALCXXFLAGS="-std=c++20 -I include"
 
+# Target used in development to conveniently invoke RGBDS binaries with Wine.
 wine-shim:
 	$Qecho '#!/usr/bin/env bash' > rgbshim.sh
 	$Qecho 'WINEDEBUG=-all wine $$0.exe "$${@:1}"' >> rgbshim.sh
@@ -267,7 +272,6 @@ wine-shim:
 
 # Target for the project maintainer to produce distributable release tarballs
 # of the source code.
-
 dist:
 	$Qgit ls-files | sed s~^~$${PWD##*/}/~ \
 	  | tar -czf rgbds-source.tar.gz -C .. -T -

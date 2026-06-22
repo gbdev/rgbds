@@ -38,24 +38,8 @@ bool isLetter(int c) {
 	return isUpper(c) || isLower(c);
 }
 
-bool isDigit(int c) {
-	return c >= '0' && c <= '9';
-}
-
-bool isBinDigit(int c) {
-	return c == '0' || c == '1';
-}
-
-bool isOctDigit(int c) {
-	return c >= '0' && c <= '7';
-}
-
-bool isHexDigit(int c) {
-	return isDigit(c) || (c >= 'A' && c <= 'F') || (c >= 'a' && c <= 'f');
-}
-
 bool isAlphanumeric(int c) {
-	return isLetter(c) || isDigit(c);
+	return isLetter(c) || isDigit<10>(c);
 }
 
 char toLower(char c) {
@@ -73,18 +57,7 @@ bool startsIdentifier(int c) {
 }
 
 bool continuesIdentifier(int c) {
-	return startsIdentifier(c) || isDigit(c) || c == '#' || c == '$' || c == '@';
-}
-
-uint8_t parseHexDigit(int c) {
-	if (c >= 'A' && c <= 'F') {
-		return c - 'A' + 10;
-	} else if (c >= 'a' && c <= 'f') {
-		return c - 'a' + 10;
-	} else {
-		assume(isDigit(c));
-		return c - '0';
-	}
+	return startsIdentifier(c) || isDigit<10>(c) || c == '#' || c == '$' || c == '@';
 }
 
 // Parses a number from a string, moving the pointer to skip the parsed characters.
@@ -134,23 +107,23 @@ std::optional<uint64_t> parseNumber(char const *&str, NumberBase base) {
 	}
 
 	// Get the digit-condition function corresponding to the base
-	bool (*canParseDigit)(int c) = base == BASE_2    ? isBinDigit
-	                               : base == BASE_8  ? isOctDigit
-	                               : base == BASE_10 ? isDigit
-	                               : base == BASE_16 ? isHexDigit
-	                                                 : nullptr; // LCOV_EXCL_LINE
-	assume(canParseDigit != nullptr);
+	bool (*isSomeDigit)(int c) = base == BASE_2    ? isDigit<2>
+	                             : base == BASE_8  ? isDigit<8>
+	                             : base == BASE_10 ? isDigit<10>
+	                             : base == BASE_16 ? isDigit<16>
+	                                               : nullptr; // LCOV_EXCL_LINE
+	assume(isSomeDigit != nullptr);
 
 	char const * const startDigits = str;
 
 	// Parse the number one digit at a time
 	// Does *not* support '_' digit separators
 	uint64_t result = 0;
-	for (; canParseDigit(str[0]); ++str) {
-		uint8_t digit = parseHexDigit(str[0]);
+	for (; isSomeDigit(str[0]); ++str) {
+		uint8_t digit = parseDigit<16>(str[0]);
 		if (result > (UINT64_MAX - digit) / base) {
 			// Skip remaining digits and set errno = ERANGE on overflow
-			while (canParseDigit(str[0])) {
+			while (isSomeDigit(str[0])) {
 				++str;
 			}
 			result = UINT64_MAX;

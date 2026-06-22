@@ -61,12 +61,16 @@ extern Diagnostics<WarningLevel, WarningID> warnings;
 void warning(WarningID id, char const *fmt, ...);
 
 // Used for errors that compromise the whole assembly process by affecting the
-// following code, potencially making the assembler generate errors caused by
+// following code, potentially making the assembler generate errors caused by
 // the first one and unrelated to the code that the assembler complains about.
 // It is also used when the assembler goes into an invalid state (for example,
 // when it fails to allocate memory).
 [[gnu::format(printf, 1, 2), noreturn]]
 void fatal(char const *fmt, ...);
+
+// Used for fatal errors that handle their own backtrace output.
+[[noreturn]]
+void fatalNoTrace(std::function<void()> callback);
 
 // Used for errors that make it impossible to assemble correctly, but don't
 // affect the following code. The code will fail to assemble but the user will

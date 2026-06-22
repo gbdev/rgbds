@@ -40,6 +40,15 @@ include(CMakeDependentOption)
 option(SANITIZERS "Build with sanitizers enabled" OFF)
 cmake_dependent_option(MORE_WARNINGS "Turn on more warnings" OFF "NOT MSVC" OFF)
 
+if(NOT DEFINED CMAKE_MSVC_RUNTIME_LIBRARY) # Allow this to be overridden from the CLI easily.
+  # We link against the Microsoft C++ runtime libs statically, except the debug-mode one.
+  # This is because Microsoft's license terms (through some indirection) allow us to redistribute
+  # the runtime lib code *except* the debug-mode libs'.
+  # Since we want to remain able to not think too hard about debug executables, we link against
+  # the debug libs dynamically, shifting the burden of obtaining them onto the recipient.
+  set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:DebugDLL>")
+endif()
+
 if(SANITIZERS)
   if(MSVC)
     message(STATUS "ASan enabled")
@@ -111,12 +120,18 @@ endif()
 include(FetchContent)
 include(cmake/deps.cmake)
 
+# Be sure to make zlib available before libpng, otherwise libpng
+# will attempt to `find_package(ZLIB)` without going through `FetchContent`.
 if(NOT DEFINED ZLIB_BUILD_TESTING) # Unless overridden (e.g. in the cache), we don't care about zlib's tests.
   set(ZLIB_BUILD_TESTING OFF)
 endif()
 FetchContent_MakeAvailable(ZLIB)
 if(NOT DEFINED ZLIB_INCLUDE_DIRS)
   set(ZLIB_INCLUDE_DIRS "${zlib_BINARY_DIR};${zlib_SOURCE_DIR}") # libpng's `genout` script relies on this variable to be set.
+endif()
+# Statically building zlib (from source) generates a target named differently.
+if(NOT TARGET ZLIB::ZLIB AND TARGET zlibstatic)
+  add_library(ZLIB::ZLIB ALIAS zlibstatic)
 endif()
 
 if(NOT DEFINED PNG_TESTS) # Unless overridden (e.g. in the cache), we don't care about libpng's tests.
@@ -147,10 +162,7 @@ if(MSVC)
   )
   add_definitions(/D_CRT_SECURE_NO_WARNINGS)
 else()
-  add_compile_options(-Wall -pedantic -fno-exceptions -fno-rtti -Wno-unknown-warning-option
-                      # C++20 allows macros to take zero variadic arguments.
-                      # Some versions of Clang don't recognize this, and treat them as a GNU extension.
-                      -Wno-gnu-zero-variadic-macro-arguments)
+  add_compile_options(-Wall -pedantic -Wno-unknown-warning-option -fno-exceptions -fno-rtti)
 
   if(MORE_WARNINGS)
     add_compile_options(-Wextra
@@ -159,10 +171,14 @@ else()
                         -Wstringop-overflow=4 -Wtrampolines -Wundef -Wuninitialized -Wunused -Wshadow
                         -Wformat=2 -Wformat-overflow=2 -Wformat-truncation=1
                         -Wno-format-nonliteral -Wno-strict-overflow
-                        -Wno-unused-but-set-variable # bison's `yynerrs_` is incremented but unused
                         -Wno-type-limits -Wno-tautological-constant-out-of-range-compare
                         -Wvla) # MSVC does not support VLAs
   endif()
+
+  add_compile_options(-Wno-unused-but-set-variable # bison's `yynerrs_` is incremented but unused
+                      # C++20 allows macros to take zero variadic arguments.
+                      # Some versions of Clang don't recognize this, and treat them as a GNU extension.
+                      -Wno-gnu-zero-variadic-macro-arguments)
 
   if(MINGW)
     # MinGW warns about format specifiers like `%z` and `%j`, which are missing on Windows XP and earlier.

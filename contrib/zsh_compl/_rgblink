@@ -9,6 +9,7 @@ _rgblink_warnings() {
 
 		'assert:Warn when WARN-type asserts fail'
 		'div:Warn when dividing the smallest int by -1'
+		'large-constant:Warn on constants too large for a signed 32-bit int'
 		'obsolete:Warn when using deprecated features'
 		'shift:Warn when shifting negative values'
 		'shift-amount:Warn when a shift'\''s operand is negative or \> 32'

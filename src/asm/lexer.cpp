@@ -4,6 +4,7 @@
 #include <sys/stat.h>
 
 #include <algorithm>
+#include <concepts> // predicate
 #include <errno.h>
 #include <fcntl.h>
 #include <fstream>
@@ -12,7 +13,6 @@
 #include <limits.h>
 #include <math.h>
 #include <memory>
-#include <new> // nothrow
 #include <optional>
 #include <stdint.h>
 #include <stdio.h>
@@ -34,6 +34,7 @@
 
 #include "asm/format.hpp"
 #include "asm/fstack.hpp"
+#include "asm/intern.hpp"
 #include "asm/macro.hpp"
 #include "asm/main.hpp"
 #include "asm/rpn.hpp"
@@ -47,13 +48,33 @@
 
 struct Token {
 	int type;
-	std::variant<std::monostate, uint32_t, std::string> value;
+	std::variant<std::monostate, InternedStr, uint32_t, std::string> value;
 
-	Token() : type(T_(NUMBER)), value(std::monostate{}) {}
-	Token(int type_) : type(type_), value(std::monostate{}) {}
-	Token(int type_, uint32_t value_) : type(type_), value(value_) {}
-	Token(int type_, std::string const &value_) : type(type_), value(value_) {}
-	Token(int type_, std::string &&value_) : type(type_), value(value_) {}
+	Token() : type(T_(NUMBER)), value(std::monostate{}) {
+		assume(
+		    type != T_(NUMBER) && type != T_(STRING) && type != T_(CHARACTER) && type != T_(SYMBOL)
+		    && type != T_(LABEL) && type != T_(LOCAL) && type != T_(ANON) && type != T_(QMACRO)
+		);
+	}
+	Token(int type_) : type(type_), value(std::monostate{}) {
+		assume(
+		    type != T_(NUMBER) && type != T_(STRING) && type != T_(CHARACTER) && type != T_(SYMBOL)
+		    && type != T_(LABEL) && type != T_(LOCAL) && type != T_(ANON) && type != T_(QMACRO)
+		);
+	}
+	Token(int type_, uint32_t value_) : type(type_), value(value_) { assume(type == T_(NUMBER)); }
+	Token(int type_, std::string const &value_) : type(type_), value(std::move(value_)) {
+		assume(type == T_(STRING) || type == T_(CHARACTER));
+	}
+	Token(int type_, std::string &&value_) : type(type_), value(std::move(value_)) {
+		assume(type == T_(STRING) || type == T_(CHARACTER));
+	}
+	Token(int type_, InternedStr value_) : type(type_), value(value_) {
+		assume(
+		    type == T_(SYMBOL) || type == T_(LABEL) || type == T_(LOCAL) || type == T_(ANON)
+		    || type == T_(QMACRO)
+		);
+	}
 };
 
 // This map lists all RGBASM keywords which `yylex_NORMAL` lexes as identifiers.
@@ -277,18 +298,18 @@ void LexerState::clear(uint32_t lineNo_) {
 	capturing = false;
 	captureBuf = nullptr;
 
-	disableExpansions = false;
+	enableExpansions = true;
+	enableStringExpansions = true;
 	expansionScanDistance = 0;
-	expandStrings = true;
 
-	expansions.clear();
+	expansionStack.clear();
 
 	lineNo = lineNo_; // Will be incremented at next line start
 }
 
 static void nextLine() {
 	// Newlines read within an expansion should not increase the line count
-	if (lexerState->expansions.empty()) {
+	if (lexerState->expansionStack.empty()) {
 		++lexerState->lineNo;
 	}
 }
@@ -330,9 +351,11 @@ void LexerState::setAsCurrentState() {
 }
 
 void LexerState::setFileAsNextState(std::string const &filePath, bool updateStateNow) {
+	int fd = -1;
+
 	if (filePath == "-") {
 		path = "<stdin>";
-		content.emplace<BufferedContent>(STDIN_FILENO);
+		fd = STDIN_FILENO;
 		verbosePrint(VERB_INFO, "Opening stdin\n"); // LCOV_EXCL_LINE
 	} else {
 		struct stat statBuf;
@@ -345,20 +368,20 @@ void LexerState::setFileAsNextState(std::string const &filePath, bool updateStat
 
 		if (std::streamsize size = statBuf.st_size; statBuf.st_size > 0) {
 			// Read the entire file for better performance
-			// Ideally we'd use C++20 `auto ptr = std::make_shared<char[]>(size)`,
+			// Ideally we'd use C++20 `content.ptr = std::make_shared<char[]>(size)`,
 			// but it has insufficient compiler support
-			auto ptr = std::shared_ptr<char[]>(new (std::nothrow) char[size]);
+			content.ptr = std::shared_ptr<char[]>(new char[size]);
+			content.size = static_cast<size_t>(size);
 
 			if (std::ifstream fs(path, std::ios::binary); !fs) {
 				// LCOV_EXCL_START
 				fatal("Failed to open file \"%s\": %s", path.c_str(), strerror(errno));
 				// LCOV_EXCL_STOP
-			} else if (!fs.read(ptr.get(), size) || fs.gcount() != size) {
+			} else if (!fs.read(content.ptr.get(), size) || fs.gcount() != size) {
 				// LCOV_EXCL_START
 				fatal("Failed to read file \"%s\": %s", path.c_str(), strerror(errno));
 				// LCOV_EXCL_STOP
 			}
-			content.emplace<ViewedContent>(ptr, static_cast<size_t>(size));
 
 			// LCOV_EXCL_START
 			verbosePrint(VERB_INFO, "File \"%s\" is fully read\n", path.c_str());
@@ -374,19 +397,56 @@ void LexerState::setFileAsNextState(std::string const &filePath, bool updateStat
 			}
 			// LCOV_EXCL_STOP
 
-			// Have a fallback if reading the file failed
-			int fd = open(path.c_str(), O_RDONLY);
+			// Have a fallback if measuring the file size failed
+			fd = open(path.c_str(), O_RDONLY);
 			if (fd < 0) {
 				// LCOV_EXCL_START
 				fatal("Failed to open file \"%s\": %s", path.c_str(), strerror(errno));
 				// LCOV_EXCL_STOP
 			}
-			content.emplace<BufferedContent>(fd);
 
 			verbosePrint(VERB_INFO, "File \"%s\" is opened\n", path.c_str()); // LCOV_EXCL_LINE
 		}
 	}
 
+	if (fd >= 0) {
+		// If the file is stdin, or if measuring its size failed, read it in pieces
+		Defer closeFile{[&] {
+			if (fd != STDIN_FILENO) {
+				close(fd);
+			}
+		}};
+
+		// Reasonably large buffer size for `read` performance
+		char buf[8192];
+		// POSIX specifies that lengths greater than SSIZE_MAX yield implementation-defined results
+		static_assert(sizeof(buf) <= SSIZE_MAX, "Lexer buffer size is too large");
+
+		auto vec = std::make_shared<std::vector<char>>();
+		for (;;) {
+			ssize_t ret = read(fd, buf, sizeof(buf));
+			// Exit on errors, unless we only were interrupted
+			if (ret == -1 && errno != EINTR) {
+				// LCOV_EXCL_START
+				fatal("Failed to read file \"%s\": %s", path.c_str(), strerror(errno));
+				// LCOV_EXCL_STOP
+			}
+			// EOF reached
+			if (ret == 0) {
+				break;
+			}
+			// If anything was read, accumulate it, and continue
+			if (ret != -1) {
+				vec->insert(vec->end(), buf, buf + ret);
+			}
+		}
+		content.ptr = std::shared_ptr<char[]>(vec, vec->data());
+		content.size = vec->size();
+
+		verbosePrint(VERB_INFO, "File \"%s\" is fully read\n", path.c_str()); // LCOV_EXCL_LINE
+	}
+
+	offset = 0;
 	clear(0);
 	if (updateStateNow) {
 		lexerState = this;
@@ -395,17 +455,18 @@ void LexerState::setFileAsNextState(std::string const &filePath, bool updateStat
 	}
 }
 
-void LexerState::setViewAsNextState(char const *name, ContentSpan const &span, uint32_t lineNo_) {
+void LexerState::setViewAsNextState(
+    char const *name, ContentSpan const &content_, uint32_t lineNo_
+) {
 	path = name; // Used to report read errors in `.peek()`
-	content.emplace<ViewedContent>(span);
+	content = content_;
+	offset = 0;
 	clear(lineNo_);
 	lexerStateEOL = this;
 }
 
 void lexer_RestartRept(uint32_t lineNo) {
-	if (std::holds_alternative<ViewedContent>(lexerState->content)) {
-		std::get<ViewedContent>(lexerState->content).offset = 0;
-	}
+	lexerState->offset = 0;
 	lexerState->clear(lineNo);
 }
 
@@ -429,75 +490,17 @@ bool Expansion::advance() {
 	return ++offset > size();
 }
 
-BufferedContent::~BufferedContent() {
-	close(fd);
-}
-
-void BufferedContent::advance() {
-	assume(offset < std::size(buf));
-	if (++offset == std::size(buf)) {
-		offset = 0; // Wrap around if necessary
-	}
-	if (size > 0) {
-		--size;
-	}
-}
-
-void BufferedContent::refill() {
-	size_t target = std::size(buf) - size; // Aim: making the buf full
-
-	// Compute the index we'll start writing to
-	size_t startIndex = (offset + size) % std::size(buf);
-
-	// If the range to fill passes over the buffer wrapping point, we need two reads
-	if (startIndex + target > std::size(buf)) {
-		size_t nbExpectedChars = std::size(buf) - startIndex;
-		size_t nbReadChars = readMore(startIndex, nbExpectedChars);
-
-		startIndex += nbReadChars;
-		if (startIndex == std::size(buf)) {
-			startIndex = 0;
-		}
-
-		// If the read was incomplete, don't perform a second read
-		target -= nbReadChars;
-		if (nbReadChars < nbExpectedChars) {
-			target = 0;
-		}
-	}
-	if (target != 0) {
-		readMore(startIndex, target);
-	}
-}
-
-size_t BufferedContent::readMore(size_t startIndex, size_t nbChars) {
-	// This buffer overflow made me lose WEEKS of my life. Never again.
-	assume(startIndex + nbChars <= std::size(buf));
-	ssize_t nbReadChars = read(fd, &buf[startIndex], nbChars);
-
-	if (nbReadChars == -1) {
-		// LCOV_EXCL_START
-		fatal("Error reading file \"%s\": %s", lexerState->path.c_str(), strerror(errno));
-		// LCOV_EXCL_STOP
-	}
-
-	size += nbReadChars;
-
-	// `nbReadChars` cannot be negative, so it's fine to cast to `size_t`
-	return static_cast<size_t>(nbReadChars);
-}
-
 void lexer_SetMode(LexerMode mode) {
 	lexerState->mode = mode;
 }
 
 void lexer_ToggleStringExpansion(bool enable) {
-	lexerState->expandStrings = enable;
+	lexerState->enableStringExpansions = enable;
 }
 
 // Functions for the actual lexer to obtain characters
 
-static void beginExpansion(std::shared_ptr<std::string> str, std::optional<std::string> name) {
+static void beginExpansion(std::shared_ptr<std::string> str, std::optional<InternedStr> name) {
 	if (name) {
 		lexer_CheckRecursionDepth();
 	}
@@ -507,11 +510,11 @@ static void beginExpansion(std::shared_ptr<std::string> str, std::optional<std::
 		return;
 	}
 
-	lexerState->expansions.push_front({.name = name, .contents = str, .offset = 0});
+	lexerState->expansionStack.push_front({.name = name, .contents = str, .offset = 0});
 }
 
 void lexer_CheckRecursionDepth() {
-	if (lexerState->expansions.size() > options.maxRecursionDepth + 1) {
+	if (lexerState->expansionStack.size() > options.maxRecursionDepth + 1) {
 		fatal("Recursion limit (%zu) exceeded", options.maxRecursionDepth);
 	}
 }
@@ -525,12 +528,14 @@ static int peek();
 static void shiftChar();
 static int bumpChar();
 static int nextChar();
-static uint32_t readDecimalNumber(int initial);
+template<uint32_t Base>
+    requires ValidBaseV<Base>
+static uint32_t readNumber(int initial, char const *prefix);
 
 static uint32_t readBracketedMacroArgNum() {
-	bool disableExpansions = lexerState->disableExpansions;
-	lexerState->disableExpansions = false;
-	Defer restoreExpansions{[&] { lexerState->disableExpansions = disableExpansions; }};
+	bool enableExpansions = lexerState->enableExpansions;
+	lexerState->enableExpansions = true;
+	Defer restoreExpansions{[&] { lexerState->enableExpansions = enableExpansions; }};
 
 	int32_t num = 0;
 	int c = peek();
@@ -542,8 +547,8 @@ static uint32_t readBracketedMacroArgNum() {
 		c = nextChar();
 	}
 
-	if (isDigit(c)) {
-		uint32_t n = readDecimalNumber(bumpChar());
+	if (isDigit<10>(c)) {
+		uint32_t n = readNumber<10>(bumpChar(), nullptr);
 		if (n > INT32_MAX) {
 			error("Number in bracketed macro argument is too large");
 			return 0;
@@ -558,10 +563,12 @@ static uint32_t readBracketedMacroArgNum() {
 			}
 		}
 
-		std::string symName;
+		std::string builder;
 		for (; continuesIdentifier(c); c = nextChar()) {
-			symName += c;
+			builder += c;
 		}
+
+		InternedStr symName = intern(builder);
 
 		if (Symbol const *sym = sym_FindScopedValidSymbol(symName); !sym) {
 			if (sym_IsPurgedScoped(symName)) {
@@ -582,11 +589,13 @@ static uint32_t readBracketedMacroArgNum() {
 		empty = true;
 	}
 
-	c = bumpChar();
+	c = peek();
 	if (c != '>') {
 		error("Invalid character %s in bracketed macro argument", printChar(c));
 		return 0;
-	} else if (empty) {
+	}
+	shiftChar();
+	if (empty) {
 		error("Empty bracketed macro argument");
 		return 0;
 	} else if (num == 0 && !symbolError) {
@@ -604,8 +613,7 @@ static std::shared_ptr<std::string> readMacroArg() {
 			error("`\\@` cannot be used outside of a macro or loop (`REPT`/`FOR` block)");
 		}
 		return str;
-	} else if (c == '#') {
-		MacroArgs *macroArgs = fstk_GetCurrentMacroArgs();
+	} else if (MacroArgs const *macroArgs = fstk_GetCurrentMacroArgs(); c == '#') {
 		if (!macroArgs) {
 			error("`\\#` cannot be used outside of a macro");
 			return nullptr;
@@ -621,7 +629,6 @@ static std::shared_ptr<std::string> readMacroArg() {
 			return nullptr;
 		}
 
-		MacroArgs *macroArgs = fstk_GetCurrentMacroArgs();
 		if (!macroArgs) {
 			error("`\\<%" PRIu32 ">` cannot be used outside of a macro", num);
 			return nullptr;
@@ -635,7 +642,6 @@ static std::shared_ptr<std::string> readMacroArg() {
 	} else {
 		assume(c >= '1' && c <= '9');
 
-		MacroArgs *macroArgs = fstk_GetCurrentMacroArgs();
 		if (!macroArgs) {
 			error("`\\%c` cannot be used outside of a macro", c);
 			return nullptr;
@@ -651,26 +657,14 @@ static std::shared_ptr<std::string> readMacroArg() {
 
 int LexerState::peekChar() {
 	// This is `.peekCharAhead()` modified for zero lookahead distance
-	for (Expansion &exp : expansions) {
+	for (Expansion const &exp : expansionStack) {
 		if (exp.offset < exp.size()) {
 			return static_cast<uint8_t>((*exp.contents)[exp.offset]);
 		}
 	}
 
-	if (std::holds_alternative<ViewedContent>(content)) {
-		auto &view = std::get<ViewedContent>(content);
-		if (view.offset < view.span.size) {
-			return static_cast<uint8_t>(view.span.ptr[view.offset]);
-		}
-	} else {
-		auto &cbuf = std::get<BufferedContent>(content);
-		if (cbuf.size == 0) {
-			cbuf.refill();
-		}
-		assume(cbuf.offset < std::size(cbuf.buf));
-		if (cbuf.size > 0) {
-			return static_cast<uint8_t>(cbuf.buf[cbuf.offset]);
-		}
+	if (offset < content.size) {
+		return static_cast<uint8_t>(content.ptr[offset]);
 	}
 
 	// If there aren't enough chars, give up
@@ -681,7 +675,7 @@ int LexerState::peekCharAhead() {
 	// We only need one character of lookahead, for macro arguments
 	uint8_t distance = 1;
 
-	for (Expansion &exp : expansions) {
+	for (Expansion const &exp : expansionStack) {
 		// An expansion that has reached its end will have `exp.offset` == `exp.size()`,
 		// and `.peekCharAhead()` will continue with its parent
 		assume(exp.offset <= exp.size());
@@ -693,20 +687,8 @@ int LexerState::peekCharAhead() {
 		distance -= exp.size() - exp.offset;
 	}
 
-	if (std::holds_alternative<ViewedContent>(content)) {
-		auto &view = std::get<ViewedContent>(content);
-		if (view.offset + distance < view.span.size) {
-			return static_cast<uint8_t>(view.span.ptr[view.offset + distance]);
-		}
-	} else {
-		auto &cbuf = std::get<BufferedContent>(content);
-		assume(distance < std::size(cbuf.buf));
-		if (cbuf.size <= distance) {
-			cbuf.refill();
-		}
-		if (cbuf.size > distance) {
-			return static_cast<uint8_t>(cbuf.buf[(cbuf.offset + distance) % std::size(cbuf.buf)]);
-		}
+	if (offset + distance < content.size) {
+		return static_cast<uint8_t>(content.ptr[offset + distance]);
 	}
 
 	// If there aren't enough chars, give up
@@ -726,7 +708,7 @@ static int peek() {
 
 		++lexerState->expansionScanDistance; // Do not consider again
 
-		if (lexerState->disableExpansions) {
+		if (!lexerState->enableExpansions) {
 			return c;
 		} else if (c == '\\') {
 			// If character is a backslash, check for a macro arg
@@ -768,24 +750,21 @@ static void shiftChar() {
 		++lexerState->captureSize;
 	}
 
+	assume(lexerState->expansionScanDistance > 0);
 	--lexerState->expansionScanDistance;
 
 	for (;;) {
-		if (!lexerState->expansions.empty()) {
+		if (!lexerState->expansionStack.empty()) {
 			// Advance within the current expansion
-			if (Expansion &exp = lexerState->expansions.front(); exp.advance()) {
+			if (lexerState->expansionStack.front().advance()) {
 				// When advancing would go past an expansion's end,
 				// move up to its parent and try again to advance
-				lexerState->expansions.pop_front();
+				lexerState->expansionStack.pop_front();
 				continue;
 			}
 		} else {
 			// Advance within the file contents
-			if (std::holds_alternative<ViewedContent>(lexerState->content)) {
-				++std::get<ViewedContent>(lexerState->content).offset;
-			} else {
-				std::get<BufferedContent>(lexerState->content).advance();
-			}
+			++lexerState->offset;
 		}
 		return;
 	}
@@ -816,8 +795,7 @@ static int nextChar() {
 	return peek();
 }
 
-template<typename PredicateFnT>
-static int skipChars(PredicateFnT predicate) {
+static int skipChars(std::predicate<int> auto predicate) {
 	int c = peek();
 	while (predicate(c)) {
 		c = nextChar();
@@ -832,8 +810,8 @@ static void handleCRLF(int c) {
 }
 
 static auto scopedDisableExpansions() {
-	lexerState->disableExpansions = true;
-	return Defer{[&] { lexerState->disableExpansions = false; }};
+	lexerState->enableExpansions = false;
+	return Defer{[&] { lexerState->enableExpansions = true; }};
 }
 
 // "Services" provided by the lexer to the rest of the program
@@ -847,7 +825,7 @@ void lexer_TraceStringExpansions() {
 		return;
 	}
 
-	for (Expansion &exp : lexerState->expansions) {
+	for (Expansion const &exp : lexerState->expansionStack) {
 		// Only print EQUS expansions, not string args
 		if (exp.name) {
 			style_Set(stderr, STYLE_CYAN, false);
@@ -927,7 +905,9 @@ static void discardLineContinuation() {
 
 // Functions to read tokenizable values
 
-static std::string readAnonLabelRef(char c) {
+static InternedStr readAnonLabelRef(char c) {
+	assume(c == '+' || c == '-');
+
 	// We come here having already peeked at one char, so no need to do it again
 	uint32_t n = 1;
 	while (nextChar() == c) {
@@ -965,18 +945,18 @@ static std::tuple<uint32_t, uint32_t, bool> readFractionDigits() {
 		if (c == '_') {
 			checkDigitSeparator(prevWasSeparator, "fixed-point");
 			prevWasSeparator = true;
-		} else if (isDigit(c)) {
+		} else if (isDigit<10>(c)) {
 			prevWasSeparator = false;
-			c -= '0';
-			if (dividend > (UINT32_MAX - c) / 10 || divisor > UINT32_MAX / 10) {
+			int digit = c - '0';
+			if (dividend > (UINT32_MAX - digit) / 10 || divisor > UINT32_MAX / 10) {
 				warning(
 				    WARNING_LARGE_CONSTANT, "Fixed-point constant has too many fractional digits"
 				);
 				// Discard any additional digits
-				for (int d = peek(); isDigit(d) || d == '_'; c = d, d = nextChar()) {}
+				for (int d = peek(); isDigit<10>(d) || d == '_'; c = d, d = nextChar()) {}
 				return {dividend, divisor, c == '_'};
 			}
-			dividend = dividend * 10 + c;
+			dividend = dividend * 10 + digit;
 			divisor *= 10;
 		} else {
 			break;
@@ -995,17 +975,17 @@ static uint8_t readPrecisionSuffix() {
 	bool empty = true;
 
 	// '_' is not allowed after 'q'/'Q'
-	for (int c = peek(); isDigit(c); c = nextChar()) {
+	for (int c = peek(); isDigit<10>(c); c = nextChar()) {
 		empty = false;
-		c -= '0';
-		if (precision > (UINT8_MAX - c) / 10) {
+		int digit = c - '0';
+		if (precision > (UINT8_MAX - digit) / 10) {
 			// Discard any additional digits
-			skipChars(isDigit);
+			skipChars(isDigit<10>);
 			// Return an invalid precision to cause a subsequent error, which is checked afterwards
 			// to cover the default `options.fixPrecision` as well, just in case
 			return UINT8_MAX;
 		}
-		precision = precision * 10 + c;
+		precision = precision * 10 + digit;
 	}
 
 	if (empty) {
@@ -1048,8 +1028,13 @@ static bool isValidDigit(char c) {
 	return isAlphanumeric(c) || c == '.' || c == '#' || c == '@';
 }
 
-static bool isCustomBinDigit(int c) {
-	return isBinDigit(c) || c == options.binDigits[0] || c == options.binDigits[1];
+static bool isAsmBinDigit(int c) {
+	return isDigit<2>(c) || c == options.binDigits[0] || c == options.binDigits[1];
+}
+
+static uint8_t parseAsmBinDigit(int c) {
+	assume(isAsmBinDigit(c));
+	return c == '1' || c == options.binDigits[1]; // Returns 0 or 1
 }
 
 static bool checkDigitErrors(char const *digits, size_t n, char const *type) {
@@ -1089,45 +1074,36 @@ void lexer_SetGfxDigits(char const digits[4]) {
 	}
 }
 
-static uint32_t readBinaryNumber(char const *prefix) {
-	uint32_t value = 0;
-	bool empty = true;
-	bool prevWasSeparator = false;
-
-	for (int c = peek();; c = nextChar()) {
-		if (c == '_') {
-			checkDigitSeparator(prevWasSeparator, "integer");
-			prevWasSeparator = true;
-			continue;
-		}
-
-		int bit;
-		if (c == '0' || c == options.binDigits[0]) {
-			bit = 0;
-		} else if (c == '1' || c == options.binDigits[1]) {
-			bit = 1;
+template<uint32_t Base>
+    requires ValidBaseV<Base>
+static uint32_t readNumber(int initial, char const *prefix) {
+	auto isSomeDigit = [](int c) {
+		if constexpr (Base == 2) {
+			return isAsmBinDigit(c);
 		} else {
-			break;
+			return isDigit<Base>(c);
 		}
-		empty = false;
-		prevWasSeparator = false;
+	};
+	auto parseSomeDigit = [](int c) {
+		if constexpr (Base == 2) {
+			return parseAsmBinDigit(c);
+		} else {
+			return parseDigit<Base>(c);
+		}
+	};
 
-		if (value > (UINT32_MAX - bit) / 2) {
-			warning(WARNING_LARGE_CONSTANT, "Integer constant is too large");
-			// Discard any additional digits
-			skipChars([](int d) { return isCustomBinDigit(d) || d == '_'; });
-			return 0;
-		}
-		value = value * 2 + bit;
+	uint32_t number;
+	bool empty;
+	if constexpr (Base == 10) {
+		assume(prefix == nullptr);
+		number = parseSomeDigit(initial);
+		empty = false;
+	} else {
+		assume(initial == 0 && prefix != nullptr);
+		number = 0;
+		empty = true;
 	}
 
-	checkDigitsEnding(empty, prefix, prevWasSeparator, "integer");
-	return value;
-}
-
-static uint32_t readOctalNumber(char const *prefix) {
-	uint32_t value = 0;
-	bool empty = true;
 	bool prevWasSeparator = false;
 
 	for (int c = peek();; c = nextChar()) {
@@ -1137,87 +1113,24 @@ static uint32_t readOctalNumber(char const *prefix) {
 			continue;
 		}
 
-		if (!isOctDigit(c)) {
+		if (!isSomeDigit(c)) {
 			break;
 		}
-		c -= '0';
+		int digit = parseSomeDigit(c);
 		empty = false;
 		prevWasSeparator = false;
 
-		if (value > (UINT32_MAX - c) / 8) {
+		if (number > (UINT32_MAX - digit) / Base) {
 			warning(WARNING_LARGE_CONSTANT, "Integer constant is too large");
 			// Discard any additional digits
-			skipChars([](int d) { return isOctDigit(d) || d == '_'; });
+			skipChars([&isSomeDigit](int d) { return isSomeDigit(d) || d == '_'; });
 			return 0;
 		}
-		value = value * 8 + c;
+		number = number * Base + digit;
 	}
 
 	checkDigitsEnding(empty, prefix, prevWasSeparator, "integer");
-	return value;
-}
-
-static uint32_t readDecimalNumber(int initial) {
-	assume(isDigit(initial));
-	uint32_t value = initial - '0';
-	bool prevWasSeparator = false;
-
-	for (int c = peek();; c = nextChar()) {
-		if (c == '_') {
-			checkDigitSeparator(prevWasSeparator, "integer");
-			prevWasSeparator = true;
-			continue;
-		}
-
-		if (!isDigit(c)) {
-			break;
-		}
-		c -= '0';
-		prevWasSeparator = false;
-
-		if (value > (UINT32_MAX - c) / 10) {
-			warning(WARNING_LARGE_CONSTANT, "Integer constant is too large");
-			// Discard any additional digits
-			skipChars([](int d) { return isDigit(d) || d == '_'; });
-			return 0;
-		}
-		value = value * 10 + c;
-	}
-
-	checkDigitsEnding(false, nullptr, prevWasSeparator, "integer");
-	return value;
-}
-
-static uint32_t readHexNumber(char const *prefix) {
-	uint32_t value = 0;
-	bool empty = true;
-	bool prevWasSeparator = false;
-
-	for (int c = peek();; c = nextChar()) {
-		if (c == '_') {
-			checkDigitSeparator(prevWasSeparator, "integer");
-			prevWasSeparator = true;
-			continue;
-		}
-
-		if (!isHexDigit(c)) {
-			break;
-		}
-		c = parseHexDigit(c);
-		empty = false;
-		prevWasSeparator = false;
-
-		if (value > (UINT32_MAX - c) / 16) {
-			warning(WARNING_LARGE_CONSTANT, "Integer constant is too large");
-			// Discard any additional digits
-			skipChars([](int d) { return isHexDigit(d) || d == '_'; });
-			return 0;
-		}
-		value = value * 16 + c;
-	}
-
-	checkDigitsEnding(empty, prefix, prevWasSeparator, "integer");
-	return value;
+	return number;
 }
 
 static uint32_t readGfxConstant() {
@@ -1269,7 +1182,9 @@ static uint32_t readGfxConstant() {
 // Functions to read identifiers and keywords
 
 static Token readIdentifier(char firstChar, bool raw) {
-	std::string identifier(1, firstChar);
+	assume(startsIdentifier(firstChar));
+
+	std::string builder(1, firstChar);
 	bool keywordBeforeLocal = false;
 	int tokenType = firstChar == '.' ? T_(LOCAL) : T_(SYMBOL);
 
@@ -1278,22 +1193,24 @@ static Token readIdentifier(char firstChar, bool raw) {
 		// If the char was a dot, the identifier is a local label
 		if (c == '.') {
 			// Check for a keyword before a non-raw local label
-			if (!raw && tokenType != T_(LOCAL) && keywords.find(identifier) != keywords.end()) {
+			if (!raw && tokenType != T_(LOCAL) && keywords.find(builder) != keywords.end()) {
 				keywordBeforeLocal = true;
 			}
 
 			tokenType = T_(LOCAL);
 		}
 
-		identifier += c;
+		builder += c;
 	}
 
 	// Check for a keyword if the identifier is not raw and not a local label
 	if (!raw && tokenType != T_(LOCAL)) {
-		if (auto search = keywords.find(identifier); search != keywords.end()) {
+		if (auto search = keywords.find(builder); search != keywords.end()) {
 			return Token(search->second);
 		}
 	}
+
+	InternedStr identifier = intern(builder);
 
 	// Label scopes `.` and `..` are the only nonlocal identifiers that start with a dot
 	if (sym_IsDotScope(identifier)) {
@@ -1318,7 +1235,7 @@ static std::pair<Symbol const *, std::shared_ptr<std::string>> readInterpolation
 		fatal("Recursion limit (%zu) exceeded", options.maxRecursionDepth);
 	}
 
-	std::string identifier;
+	std::string builder;
 	FormatSpec fmt{};
 	bool invalid = false;
 
@@ -1339,15 +1256,15 @@ static std::pair<Symbol const *, std::shared_ptr<std::string>> readInterpolation
 			break;
 		} else if (c == ':' && !fmt.isParsed()) { // Format spec, only once
 			shiftChar();
-			size_t n = fmt.parseSpec(identifier.c_str());
-			if (!fmt.isValid() || n != identifier.length()) {
-				error("Invalid interpolation format spec \"%s\"", identifier.c_str());
+			size_t n = fmt.parseSpec(builder.c_str());
+			if (!fmt.isValid() || n != builder.length()) {
+				error("Invalid interpolation format spec \"%s\"", builder.c_str());
 				invalid = true;
 			}
-			identifier.clear(); // Now that format has been set, restart at beginning of string.
+			builder.clear(); // Now that format has been set, restart at beginning of string.
 		} else {
 			shiftChar();
-			identifier += c;
+			builder += c;
 		}
 	}
 
@@ -1355,24 +1272,26 @@ static std::pair<Symbol const *, std::shared_ptr<std::string>> readInterpolation
 		return {nullptr, nullptr}; // Don't allow invalid interpolation to occur.
 	}
 
-	if (identifier.starts_with('#')) {
+	if (builder.starts_with('#')) {
 		// Skip a '#' raw symbol prefix, but after expanding any nested interpolations.
-		identifier.erase(0, 1);
-	} else if (keywords.find(identifier) != keywords.end()) {
+		builder.erase(0, 1);
+	} else if (keywords.find(builder) != keywords.end()) {
 		// Don't allow symbols that alias keywords without a '#' prefix.
 		error(
 		    "Interpolated symbol `%s` is a reserved keyword; add a '#' prefix to use it as a raw "
 		    "symbol",
-		    identifier.c_str()
+		    builder.c_str()
 		);
 		return {nullptr, nullptr};
 	}
 
-	if (Symbol const *sym = sym_FindScopedValidSymbol(identifier); !sym || !sym->isDefined()) {
-		if (sym_IsPurgedScoped(identifier)) {
-			error("Interpolated symbol `%s` does not exist; it was purged", identifier.c_str());
+	InternedStr symName = intern(builder);
+
+	if (Symbol const *sym = sym_FindScopedValidSymbol(symName); !sym || !sym->isDefined()) {
+		if (sym_IsPurgedScoped(symName)) {
+			error("Interpolated symbol `%s` does not exist; it was purged", symName.c_str());
 		} else {
-			error("Interpolated symbol `%s` does not exist", identifier.c_str());
+			error("Interpolated symbol `%s` does not exist", symName.c_str());
 		}
 		return {sym, nullptr};
 	} else if (sym->type == SYM_EQUS) {
@@ -1384,7 +1303,7 @@ static std::pair<Symbol const *, std::shared_ptr<std::string>> readInterpolation
 		fmt.appendNumber(*buf, sym->getConstantValue());
 		return {sym, buf};
 	} else {
-		error("Interpolated symbol `%s` is not a numeric or string symbol", identifier.c_str());
+		error("Interpolated symbol `%s` is not a numeric or string symbol", symName.c_str());
 		return {sym, nullptr};
 	}
 }
@@ -1433,11 +1352,11 @@ static void appendCharInLiteral(std::string &str, int c) {
 	// Symbol interpolation
 	if (c == '{') {
 		// We'll be exiting the string/character scope, so re-enable expansions
-		lexerState->disableExpansions = false;
+		lexerState->enableExpansions = true;
 		if (auto interp = readInterpolation(0); interp.second) {
 			appendExpandedString(str, *interp.second);
 		}
-		lexerState->disableExpansions = true;
+		lexerState->enableExpansions = false;
 		return;
 	}
 
@@ -1728,10 +1647,8 @@ static Token yylex_NORMAL() {
 		case '?':
 			return Token(T_(QUESTIONMARK));
 
-		case '@': {
-			std::string symName("@");
-			return Token(T_(SYMBOL), symName);
-		}
+		case '@':
+			return Token(T_(SYMBOL), sym_GetPC()->name);
 
 		case '(':
 			return Token(T_(LPAREN));
@@ -1813,8 +1730,7 @@ static Token yylex_NORMAL() {
 		case ':': // Either :, ::, or an anonymous label ref
 			c = peek();
 			if (c == '+' || c == '-') {
-				std::string symName = readAnonLabelRef(c);
-				return Token(T_(ANON), symName);
+				return Token(T_(ANON), readAnonLabelRef(c));
 			}
 			return oneOrTwo(':', T_(DOUBLE_COLON), T_(COLON));
 
@@ -1825,15 +1741,15 @@ static Token yylex_NORMAL() {
 			case 'x':
 			case 'X':
 				shiftChar();
-				return Token(T_(NUMBER), readHexNumber("\"0x\""));
+				return Token(T_(NUMBER), readNumber<16>(0, "\"0x\""));
 			case 'o':
 			case 'O':
 				shiftChar();
-				return Token(T_(NUMBER), readOctalNumber("\"0o\""));
+				return Token(T_(NUMBER), readNumber<8>(0, "\"0o\""));
 			case 'b':
 			case 'B':
 				shiftChar();
-				return Token(T_(NUMBER), readBinaryNumber("\"0b\""));
+				return Token(T_(NUMBER), readNumber<2>(0, "\"0b\""));
 			}
 			[[fallthrough]];
 
@@ -1848,7 +1764,7 @@ static Token yylex_NORMAL() {
 		case '7':
 		case '8':
 		case '9': {
-			uint32_t n = readDecimalNumber(c);
+			uint32_t n = readNumber<10>(c, nullptr);
 
 			if (peek() == '.') {
 				shiftChar();
@@ -1859,20 +1775,20 @@ static Token yylex_NORMAL() {
 
 		case '&': // Either &=, binary AND, logical AND, or an octal constant
 			c = peek();
-			if (isOctDigit(c) || c == '_') {
-				return Token(T_(NUMBER), readOctalNumber("'&'"));
+			if (isDigit<8>(c) || c == '_') {
+				return Token(T_(NUMBER), readNumber<8>(0, "'&'"));
 			}
 			return oneOrTwo('=', T_(POP_ANDEQ), '&', T_(OP_LOGICAND), T_(OP_AND));
 
 		case '%': // Either %=, MOD, or a binary constant
 			c = peek();
-			if (isCustomBinDigit(c) || c == '_') {
-				return Token(T_(NUMBER), readBinaryNumber("'%'"));
+			if (isAsmBinDigit(c) || c == '_') {
+				return Token(T_(NUMBER), readNumber<2>(0, "'%'"));
 			}
 			return oneOrTwo('=', T_(POP_MODEQ), T_(OP_MOD));
 
 		case '$': // Hex constant
-			return Token(T_(NUMBER), readHexNumber("'$'"));
+			return Token(T_(NUMBER), readNumber<16>(0, "'$'"));
 
 		case '`': // Gfx constant
 			return Token(T_(NUMBER), readGfxConstant());
@@ -1945,12 +1861,12 @@ static Token yylex_NORMAL() {
 				return token;
 			}
 
-			// `token` is either a `SYMBOL` or a `LOCAL`, and both have a `std::string` value.
-			assume(std::holds_alternative<std::string>(token.value));
-			std::string const &identifier = std::get<std::string>(token.value);
+			// `token` is either a `SYMBOL` or a `LOCAL`, and both have an `InternedStr` value.
+			assume(std::holds_alternative<InternedStr>(token.value));
+			InternedStr identifier = std::get<InternedStr>(token.value);
 
 			// Raw symbols and local symbols cannot be string expansions
-			if (!raw && token.type == T_(SYMBOL) && lexerState->expandStrings) {
+			if (!raw && token.type == T_(SYMBOL) && lexerState->enableStringExpansions) {
 				// Attempt string expansion
 				if (Symbol const *sym = sym_FindExactSymbol(identifier);
 				    sym && sym->type == SYM_EQUS) {
@@ -2142,42 +2058,122 @@ finish: // Can't `break` out of a nested `for`-`switch`
 	return Token(T_(YYEOF));
 }
 
-static int skipPastEOL() {
-	if (lexerState->atLineStart) {
-		lexerState->atLineStart = false;
-		return skipChars(isBlankSpace);
-	}
+// This map lists all RGBASM keywords which `skipToLeadingKeyword` needs to recognize.
+// It is a subset of `keywords`.
+static UpperMap<int> const leadingKeywords{
+    // There is no need to recognize "MACRO", since macros cannot be nested
+    {"ENDM", T_(POP_ENDM)},
 
+    {"REPT", T_(POP_REPT)},
+    {"FOR",  T_(POP_FOR) },
+    {"ENDR", T_(POP_ENDR)},
+
+    {"IF",   T_(POP_IF)  },
+    {"ELSE", T_(POP_ELSE)},
+    {"ELIF", T_(POP_ELIF)},
+    {"ENDC", T_(POP_ENDC)},
+};
+
+static Token skipToLeadingKeywordFast(Procedure<> auto shiftFast) {
+	// This is essentially `skipToLeadingKeyword` with `peek` and `shiftChar` replaced,
+	// as well as anything that calls them like `nextChar` or `handleCRLF`.
+	char const *ptr = lexerState->content.ptr.get();
+	auto peekFast = [&]() {
+		return lexerState->offset < lexerState->content.size ? ptr[lexerState->offset] : EOF;
+	};
 	for (;;) {
-		if (int c = bumpChar(); c == EOF) {
-			return EOF;
-		} else if (isNewline(c)) {
-			handleCRLF(c);
-			nextLine();
-			return skipChars(isBlankSpace);
-		} else if (c == '\\') {
-			// Unconditionally skip the next char, including line continuations
-			c = bumpChar();
-			if (isNewline(c)) {
-				handleCRLF(c);
-				nextLine();
+		int c = peekFast();
+		if (lexerState->atLineStart) {
+			lexerState->atLineStart = false;
+			while (isBlankSpace(c)) {
+				shiftFast();
+				c = peekFast();
 			}
+			if (c == EOF) {
+				return Token(T_(YYEOF));
+			} else if (isLetter(c)) {
+				size_t start = lexerState->offset;
+				shiftFast();
+				for (c = peekFast(); continuesIdentifier(c); c = peekFast()) {
+					shiftFast();
+				}
+				std::string_view leading{ptr + start, ptr + lexerState->offset};
+				if (auto search = leadingKeywords.find(leading); search != leadingKeywords.end()) {
+					// When this branch returns a token, there has been one more call to `peekFast`
+					// than to `shiftFast`. Unlike `peek` and `shiftChar`, the optimized functions
+					// do not update `lexerState->expansionScanDistance`, so it must be incremented
+					// if it was previously zero.
+					if (lexerState->expansionScanDistance == 0) {
+						++lexerState->expansionScanDistance;
+					}
+					return Token(search->second);
+				}
+			}
+		}
+		shiftFast();
+		if (c == EOF) {
+			return Token(T_(YYEOF));
+		} else if (isNewline(c)) {
+			if (c == '\r' && peekFast() == '\n') {
+				shiftFast();
+			}
+			++lexerState->lineNo;
+			lexerState->atLineStart = true;
 		}
 	}
 }
 
-// This function uses the fact that `IF` and `REPT` constructs are only valid
-// when there's nothing before them on their lines. This enables filtering
-// "meaningful" tokens (at line start) vs. "meaningless" (everything else) ones.
-// It's especially important due to macro args not being handled in this
-// state, and lexing them in "normal" mode potentially producing such tokens.
-static Token skipToLeadingIdentifier() {
+// This function is called when capturing `REPT`/`FOR` loops and `MACRO` bodies,
+// and when skipping unexecuted `IF`/`ELIF`/`ELSE` blocks and `REPT`/`FOR` loops.
+// It expects that these constructs' `ENDC`/`ENDR`/`ENDM` closing tokens are only
+// valid at the start of their lines, which enables ignoring everything except
+// the leading keyword in lines that have one (as well as line continuations).
+//
+// Note that when these constructs are *evaluated*, they can perform expansions
+// (for macro args, interpolations, and macro invocations) which may produce
+// tokens that would change how these constructs were captured or skipped, if
+// they had been produced during the capture/skip non-evaluating phase.
+static Token skipToLeadingKeyword() {
+	assume(!lexerState->enableExpansions);
+
+	if (lexerState->expansionStack.empty()) {
+		// Optimize the common case (no ongoing expansions) to avoid
+		// the bookkeeping of `peek` and `shiftChar`.
+		if (lexerState->capturing) {
+			assume(lexerState->captureBuf == nullptr);
+			return skipToLeadingKeywordFast([&]() {
+				++lexerState->offset;
+				++lexerState->captureSize;
+			});
+		} else {
+			return skipToLeadingKeywordFast([&]() { ++lexerState->offset; });
+		}
+	}
+
 	for (;;) {
-		if (int c = skipPastEOL(); c == EOF) {
+		int c = peek();
+		if (lexerState->atLineStart) {
+			lexerState->atLineStart = false;
+			c = skipChars(isBlankSpace);
+			if (c == EOF) {
+				return Token(T_(YYEOF));
+			} else if (isLetter(c)) {
+				std::string builder(1, c);
+				for (c = nextChar(); continuesIdentifier(c); c = nextChar()) {
+					builder += c;
+				}
+				if (auto search = leadingKeywords.find(builder); search != leadingKeywords.end()) {
+					return Token(search->second);
+				}
+			}
+		}
+		shiftChar();
+		if (c == EOF) {
 			return Token(T_(YYEOF));
-		} else if (startsIdentifier(c)) {
-			shiftChar();
-			return readIdentifier(c, false);
+		} else if (isNewline(c)) {
+			handleCRLF(c);
+			nextLine();
+			lexerState->atLineStart = true;
 		}
 	}
 }
@@ -2187,7 +2183,7 @@ static Token skipIfBlock(bool toEndc) {
 
 	Defer reenableExpansions = scopedDisableExpansions();
 	for (uint32_t startingDepth = lexer_GetIFDepth();;) {
-		switch (Token token = skipToLeadingIdentifier(); token.type) {
+		switch (Token token = skipToLeadingKeyword(); token.type) {
 		case T_(YYEOF):
 			return token;
 
@@ -2241,7 +2237,7 @@ static Token yylex_SKIP_TO_ENDR() {
 	// context, which yields an EOF.
 	Defer reenableExpansions = scopedDisableExpansions();
 	for (;;) {
-		switch (Token token = skipToLeadingIdentifier(); token.type) {
+		switch (Token token = skipToLeadingKeyword(); token.type) {
 		case T_(YYEOF):
 			return token;
 
@@ -2255,6 +2251,36 @@ static Token yylex_SKIP_TO_ENDR() {
 		}
 	}
 }
+
+// LCOV_EXCL_START
+static void verboseOutputString(std::string_view str) {
+	static constexpr size_t max_len = 40;
+	putc('"', stderr);
+	for (size_t i = 0, n = str.length(); i < n; ++i) {
+		if (n > max_len && i == max_len / 2) {
+			fputs("[...]", stderr);
+			i = n - max_len / 2 - 1;
+			continue;
+		}
+		if (char c = str[i]; c == '\\') {
+			fputs("\\\\", stderr);
+		} else if (c == '"') {
+			fputs("\\\"", stderr);
+		} else if (c == '\n') {
+			fputs("\\n", stderr);
+		} else if (c == '\r') {
+			fputs("\\r", stderr);
+		} else if (c == '\t') {
+			fputs("\\t", stderr);
+		} else if (isPrintable(c)) {
+			putc(c, stderr);
+		} else {
+			fprintf(stderr, "\\x%02X", c);
+		}
+	}
+	putc('"', stderr);
+}
+// LCOV_EXCL_STOP
 
 yy::parser::symbol_type yylex() {
 	if (lexerState->atLineStart && lexerStateEOL) {
@@ -2284,22 +2310,50 @@ yy::parser::symbol_type yylex() {
 	lexerState->lastToken = token.type;
 	lexerState->atLineStart = token.type == T_(NEWLINE) || token.type == T_(EOB);
 
-	// LCOV_EXCL_START
-	verbosePrint(VERB_TRACE, "Lexed `%s` token\n", yy::parser::symbol_type(token.type).name());
-	// LCOV_EXCL_STOP
-
 	if (std::holds_alternative<uint32_t>(token.value)) {
+		// LCOV_EXCL_START
+		verbosePrint(
+		    VERB_TRACE,
+		    "Lexed `%s` token (0x%" PRIX32 ")\n",
+		    yy::parser::symbol_type(token.type).name(),
+		    std::get<uint32_t>(token.value)
+		);
+		// LCOV_EXCL_STOP
 		return yy::parser::symbol_type(token.type, std::get<uint32_t>(token.value));
 	} else if (std::holds_alternative<std::string>(token.value)) {
+		// LCOV_EXCL_START
+		if (checkVerbosity(VERB_TRACE)) {
+			style_Set(stderr, STYLE_MAGENTA, false);
+			fprintf(stderr, "Lexed `%s` token (", yy::parser::symbol_type(token.type).name());
+			verboseOutputString(std::get<std::string>(token.value));
+			fputs(")\n", stderr);
+			style_Reset(stderr);
+		}
+		// LCOV_EXCL_STOP
 		return yy::parser::symbol_type(token.type, std::get<std::string>(token.value));
+	} else if (std::holds_alternative<InternedStr>(token.value)) {
+		// LCOV_EXCL_START
+		if (checkVerbosity(VERB_TRACE)) {
+			style_Set(stderr, STYLE_MAGENTA, false);
+			fprintf(
+			    stderr, "Lexed `%s` token (interned ", yy::parser::symbol_type(token.type).name()
+			);
+			verboseOutputString(std::get<InternedStr>(token.value).str());
+			fputs(")\n", stderr);
+			style_Reset(stderr);
+		}
+		// LCOV_EXCL_STOP
+		return yy::parser::symbol_type(token.type, std::get<InternedStr>(token.value));
 	} else {
+		// LCOV_EXCL_START
+		verbosePrint(VERB_TRACE, "Lexed `%s` token\n", yy::parser::symbol_type(token.type).name());
+		// LCOV_EXCL_STOP
 		assume(std::holds_alternative<std::monostate>(token.value));
 		return yy::parser::symbol_type(token.type);
 	}
 }
 
-template<typename CallbackFnT>
-static Capture makeCapture(char const *name, CallbackFnT callback) {
+static Capture makeCapture(char const *name, InvocableR<int, int> auto callback) {
 	// Due to parser internals, it reads the EOL after the expression before calling this.
 	// Thus, we don't need to keep one in the buffer afterwards.
 	// The following assumption checks that.
@@ -2312,10 +2366,10 @@ static Capture makeCapture(char const *name, CallbackFnT callback) {
 	Capture capture = {
 	    .lineNo = lexer_GetLineNo(), .span = {.ptr = nullptr, .size = 0}
 	};
-	if (std::holds_alternative<ViewedContent>(lexerState->content)
-	    && lexerState->expansions.empty()) {
-		auto &view = std::get<ViewedContent>(lexerState->content);
-		capture.span.ptr = view.makeSharedContentPtr();
+	if (lexerState->expansionStack.empty()) {
+		capture.span.ptr = std::shared_ptr<char[]>(
+		    lexerState->content.ptr, &lexerState->content.ptr[lexerState->offset]
+		);
 	} else {
 		assume(lexerState->captureBuf == nullptr);
 		lexerState->captureBuf = std::make_shared<std::vector<char>>();
@@ -2323,38 +2377,39 @@ static Capture makeCapture(char const *name, CallbackFnT callback) {
 		assume(capture.span.ptr == nullptr);
 	}
 
+	nextLine();
+
 	Defer reenableExpansions = scopedDisableExpansions();
 	for (;;) {
-		nextLine();
-
-		if (int c = skipChars(isBlankSpace); startsIdentifier(c)) {
-			shiftChar();
-			int tokenType = readIdentifier(c, false).type;
-			if (size_t endTokenLength = callback(tokenType); endTokenLength > 0) {
-				if (!capture.span.ptr) {
-					// Retrieve the capture buffer now that we're done capturing
-					capture.span.ptr = lexerState->makeSharedCaptureBufPtr();
-				}
-				// Subtract the length of the ending token; we know we have read it exactly, not
-				// e.g. an interpolation or EQUS expansion, since those are disabled.
-				capture.span.size = lexerState->captureSize - endTokenLength;
-				break;
-			}
-		}
-
-		// Just consume characters until EOL or EOF
-		if (int c = skipChars([](int d) { return d != EOF && !isNewline(d); }); c == EOF) {
+		if (Token token = skipToLeadingKeyword(); token.type == T_(YYEOF)) {
 			error("Unterminated %s", name);
 			capture.span = {.ptr = nullptr, .size = lexerState->captureSize};
 			break;
-		} else {
-			assume(isNewline(c));
-			shiftChar();
-			handleCRLF(c);
+		} else if (size_t endTokenLength = callback(token.type); endTokenLength > 0) {
+			if (!capture.span.ptr) {
+				// Retrieve the capture buffer now that we're done capturing
+				capture.span.ptr =
+				    std::shared_ptr<char[]>(lexerState->captureBuf, lexerState->captureBuf->data());
+			}
+			// Subtract the length of the ending token; we know we have read it exactly,
+			// not e.g. an interpolation or EQUS expansion, since those are disabled.
+			capture.span.size = lexerState->captureSize - endTokenLength;
+			break;
 		}
 	}
 
-	lexerState->atLineStart = false; // The ending token or EOF puts us past the start of the line
+	// LCOV_EXCL_START
+	if (checkVerbosity(VERB_TRACE) && capture.span.ptr) {
+		style_Set(stderr, STYLE_MAGENTA, false);
+		fprintf(stderr, "Captured %s (", name);
+		verboseOutputString(std::string_view{capture.span.ptr.get(), capture.span.size});
+		fputs(")\n", stderr);
+		style_Reset(stderr);
+	}
+	// LCOV_EXCL_STOP
+
+	assume(!lexerState->atLineStart); // `skipToLeadingKeyword` moves past the start of the line
+
 	lexerState->capturing = false;
 	lexerState->captureBuf = nullptr;
 	return capture;

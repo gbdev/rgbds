@@ -2,10 +2,14 @@
 # in order to generate executables compatible with old macOS versions.
 # See our `macos-static` CMake preset for how it's meant to be used.
 
-# The `-mmacosx-version-min=10.9` flag ensures that the binary only uses APIs available on Mac OS X 10.9 Mavericks.
+# Note that targeting old enough versions of Mac OS X on recent enough versions of macOS
+# triggers some poorly-tested code paths within Apple's linker, which then crashes.
+# This can be worked around by using LLVM's LLD linker and passing `-fuse-ld=lld` when linking.
+
+# The `-mmacosx-version-min=10.4` flag ensures that the binary only uses APIs available on Mac OS X 10.4 Tiger.
 # The `-arch` flags build a "fat binary" that works on both Apple architectures:
 # older Intel x64 Macs and newer ARM "Apple Silicon" ones.
-set(secret_sauce -mmacosx-version-min=10.9 "SHELL:-arch x86_64" "SHELL:-arch arm64") # Avoid `-arch` being dedup'd.
+set(secret_sauce -mmacosx-version-min=10.4 "SHELL:-arch x86_64" "SHELL:-arch arm64") # Avoid `-arch` being dedup'd.
 add_compile_options(${secret_sauce})
 add_link_options(${secret_sauce})
 set(PNG_HARDWARE_OPTIMIZATIONS OFF) # These do not play well with a dual-arch build.

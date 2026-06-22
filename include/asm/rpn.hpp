@@ -10,16 +10,18 @@
 
 #include "linkdefs.hpp"
 
+#include "asm/intern.hpp"
+
 struct Symbol;
 
 struct RPNValue {
 	RPNCommand command;                                                // The RPN_* command ID
-	std::variant<std::monostate, uint8_t, uint32_t, std::string> data; // Data after the ID, if any
+	std::variant<std::monostate, uint8_t, uint32_t, InternedStr> data; // Data after the ID, if any
 
 	RPNValue(RPNCommand cmd);
 	RPNValue(RPNCommand cmd, uint8_t val);
 	RPNValue(RPNCommand cmd, uint32_t val);
-	RPNValue(RPNCommand cmd, std::string const &name);
+	RPNValue(RPNCommand cmd, InternedStr name);
 
 	void appendEncoded(std::vector<uint8_t> &buffer) const;
 };
@@ -40,8 +42,8 @@ struct Expression {
 	bool isDiffConstant(Symbol const *symName) const;
 
 	void makeNumber(uint32_t value);
-	void makeSymbol(std::string const &symName);
-	void makeBankSymbol(std::string const &symName);
+	void makeSymbol(InternedStr symName);
+	void makeBankSymbol(InternedStr symName);
 	void makeBankSection(std::string const &sectName);
 	void makeSizeOfSection(std::string const &sectName);
 	void makeStartOfSection(std::string const &sectName);

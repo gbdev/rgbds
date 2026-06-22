@@ -1,0 +1,2 @@
+FATAL: Ended block with 2 unterminated conditionals (`IF`/`ELIF`/`ELSE` blocks)
+    at local-after-end.asm(22)

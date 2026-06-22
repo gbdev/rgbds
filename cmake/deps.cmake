@@ -3,15 +3,15 @@
 # These are kept in a separate file so that it can be hashed as a key for our CI's `actions/cache`.
 
 FetchContent_Declare(PNG
-                     URL https://download.sourceforge.net/libpng/libpng-1.6.56.tar.xz
-                     URL_HASH SHA256=f7d8bf1601b7804f583a254ab343a6549ca6cf27d255c302c47af2d9d36a6f18
+                     URL https://download.sourceforge.net/libpng/libpng-1.6.57.tar.xz
+                     URL_HASH SHA256=d10c20d7171569804cae8dfc13ba6dcd0662c41ed39d43d4d429314aafb10a80
                      EXCLUDE_FROM_ALL # We only install the runtime dependencies, and do so separately.
                      FIND_PACKAGE_ARGS 1.5.4)
 
-set(PNG_TESTS OFF CACHE INTERNAL "") # We do not care for these two (and they can even cause compile errors!)
-set(PNG_TOOLS OFF CACHE INTERNAL "")
-set(PNG_SHARED ON CACHE INTERNAL "") # Upstream seems to favour the dynamic lib over the static one?
-set(PNG_STATIC OFF CACHE INTERNAL "")
+set(PNG_TESTS OFF CACHE INTERNAL "") # We do not need libpng's tests or tools
+set(PNG_TOOLS OFF CACHE INTERNAL "") # (and they can even cause compile errors!)
+set(PNG_SHARED OFF CACHE INTERNAL "")
+set(PNG_STATIC ON CACHE INTERNAL "")
 
 FetchContent_Declare(ZLIB
                      URL https://www.zlib.net/zlib-1.3.2.tar.xz
@@ -21,5 +21,5 @@ FetchContent_Declare(ZLIB
 # We thus enforce 1.0.4, but note that the libpng source code mentions that "it may work with versions as old as zlib 0.95".
                      FIND_PACKAGE_ARGS 1.0.4)
 
-set(ZLIB_BUILD_SHARED ON CACHE INTERNAL "")
-set(ZLIB_BUILD_STATIC OFF CACHE INTERNAL "")
+set(ZLIB_BUILD_SHARED OFF CACHE INTERNAL "")
+set(ZLIB_BUILD_STATIC ON CACHE INTERNAL "")

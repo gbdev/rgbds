@@ -20,6 +20,7 @@
 
 #include "asm/charmap.hpp"
 #include "asm/fstack.hpp"
+#include "asm/intern.hpp"
 #include "asm/lexer.hpp"
 #include "asm/main.hpp"
 #include "asm/rpn.hpp"
@@ -107,7 +108,7 @@ static void writeSection(Section const &sect, FILE *file) {
 }
 
 static void writeSymbol(Symbol const &sym, FILE *file) {
-	putString(sym.name, file);
+	putString(sym.name.str(), file);
 	if (!sym.isDefined()) {
 		putc(SYMTYPE_IMPORT, file);
 	} else {
@@ -338,7 +339,7 @@ static bool dumpCharmaps(FILE *file) {
 
 	// Characters are ordered by charmap, then by definition order
 	return charmap_ForEach(
-	    [](std::string const &name) { fprintf(charmapFile, "newcharmap %s\n", name.c_str()); },
+	    [](InternedStr name) { fprintf(charmapFile, "newcharmap %s\n", name.c_str()); },
 	    [](std::string const &mapping, std::vector<int32_t> value) {
 		    fputs("charmap \"", charmapFile);
 		    dumpString(mapping, charmapFile);

@@ -1,3 +1,25 @@
+error: Invalid integer constant, trailing '_'
+    at script-num-fmt.link(4)
+error: Invalid integer constant, trailing '_'
+    at script-num-fmt.link(5)
+error: Invalid integer constant, '_' after another '_'
+    at script-num-fmt.link(6)
+error: Invalid integer constant, '_' after another '_'
+    at script-num-fmt.link(7)
 error: Cannot decrease the current address (from $002a to $0029)
     at script-num-fmt.link(9)
-Linking failed with 1 error
+error: Invalid integer constant, no digits after '%'
+    at script-num-fmt.link(10)
+error: Invalid integer constant, trailing '_'
+    at script-num-fmt.link(10)
+error: Cannot decrease the current address (from $002a to $0000)
+    at script-num-fmt.link(10)
+error: Invalid integer constant, '_' after another '_'
+    at script-num-fmt.link(11)
+error: Invalid integer constant, no digits after "0x"
+    at script-num-fmt.link(11)
+error: Invalid integer constant, trailing '_'
+    at script-num-fmt.link(11)
+error: Cannot decrease the current address (from $002a to $0000)
+    at script-num-fmt.link(11)
+Linking failed with 12 errors
