@@ -68,7 +68,7 @@ case "${OS%%-*}" in
 	windows)
 		# GitHub Actions' hosted runners ship CMake 3.x, but versions prior to 4.0.0 ignore `CPACK_PACKAGE_FILE_NAME`.
 		choco install -y winflexbison3 cmake
-		# `bison` expects its argument to be the base name, not the Windows-specific name.
+		# The version-printing code below will invoke `bison`, not the Windows-specific name `win_bison`.
 		bison() { win_bison "$@"; } # An alias doesn't work, so we use a function instead.
 		py -3 -m pip install pillow
 		;;
@@ -86,6 +86,7 @@ if [ -n "$TOOLSET" ]; then
 	exit 1
 fi
 
+# We do not build RGBDS *in* MinGW on Windows, so skip printing build tool info.
 if [ "$OS" = "windowsmingw" ]; then
 	exit 0
 fi
