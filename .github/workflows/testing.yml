@@ -60,7 +60,7 @@ jobs:
         run: |
           sudo make install -j Q=
           type rgbasm rgblink rgbfix rgbgfx
-          man -w 5 rgbasm
+          man -w 1 rgbasm rgblink rgbfix rgbgfx
       - name: Build using CMake
         if: matrix.buildsys == 'cmake'
         # Since GitHub's runners are basically kitchen sinks,
@@ -76,7 +76,7 @@ jobs:
         run: |
           sudo cmake --install build --verbose
           type rgbasm rgblink rgbfix rgbgfx
-          man -w 5 rgbasm
+          man -w 1 rgbasm rgblink rgbfix rgbgfx
       - name: Package binaries
         run: |
           mkdir bins
@@ -138,7 +138,7 @@ jobs:
         run: |
           sudo cmake --install build --verbose
           type rgbasm rgblink rgbfix rgbgfx
-          man -w 5 rgbasm
+          man -w 1 rgbasm rgblink rgbfix rgbgfx
       - name: Package binaries
         run: |
           mkdir bins
@@ -195,15 +195,14 @@ jobs:
         run: | # ASan seems to be broken on Windows, so we disable it.
           call .github\scripts\msvc-env.bat ${{ matrix.bits }}
           cmake -B build -G Ninja --preset develop -DSANITIZERS=OFF -DTESTS_OS_NAME=${{ matrix.os }} ^
-                -DFETCHCONTENT_BASE_DIR="${{ env.DEPS_ROOT_DIR }}" -DCMAKE_C_FLAGS="/nologo" ^
-                -DCMAKE_INSTALL_PREFIX="${{ github.workspace }}/install"
+                -DFETCHCONTENT_BASE_DIR="${{ env.DEPS_ROOT_DIR }}" -DCMAKE_C_FLAGS="/nologo"
           cmake --build build -- -k 0
       - name: Install
+        shell: cmd
         run: |
-          cmake --install build --verbose
+          cmake --install build --prefix "${{ github.workspace }}/install" --verbose
           echo "${{ github.workspace }}/install" >> $GITHUB_PATH
-          type rgbasm rgblink rgbfix rgbgfx
-          man -w 5 rgbasm
+          where rgbasm rgblink rgbfix rgbgfx
       - name: Package binaries
         working-directory: build
         run: |
@@ -369,7 +368,7 @@ jobs:
         run: |
           make install -j Q=
           type rgbasm rgblink rgbfix rgbgfx
-          man -w 5 rgbasm
+          man -w 1 rgbasm rgblink rgbfix rgbgfx
       - name: Run tests
         run: |
           test/run-tests.sh --only-internal
@@ -402,4 +401,4 @@ jobs:
             cmake --build build --verbose -- -k -j 4
             ASAN_OPTIONS=detect_leaks=0 ctest --test-dir build --schedule-random --label-exclude external
             cmake --install build --verbose
-            man -w 5 rgbasm
+            man -w 1 rgbasm rgblink rgbfix rgbgfx
