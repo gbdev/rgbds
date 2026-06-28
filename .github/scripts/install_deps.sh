@@ -35,15 +35,10 @@ case "${OS%%-*}" in
 		sudo apt-get update -qq
 		# shellcheck disable=SC2086 # (This word splitting is intentional.)
 		sudo apt-get install -yq $pkgs
-		case "$TOOLSET" in
-			mingw32 | mingw64)
-				py -3 -m pip install pillow
-			;;
-		esac
 		;;
 	macos)
 		pkgs="bison make pillow"
-		case $TOOLSET in
+		case "$TOOLSET" in
 			lld)
 				pkgs="$pkgs $TOOLSET"
 				TOOLSET=
