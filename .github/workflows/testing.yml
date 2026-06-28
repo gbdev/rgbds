@@ -196,12 +196,12 @@ jobs:
           call .github\scripts\msvc-env.bat ${{ matrix.bits }}
           cmake -B build -G Ninja --preset develop -DSANITIZERS=OFF -DTESTS_OS_NAME=${{ matrix.os }} ^
                 -DFETCHCONTENT_BASE_DIR="${{ env.DEPS_ROOT_DIR }}" -DCMAKE_C_FLAGS="/nologo" ^
-                -DCMAKE_INSTALL_PREFIX="./install"
+                -DCMAKE_INSTALL_PREFIX="${{ github.workspace }}/install"
           cmake --build build -- -k 0
       - name: Install
         run: |
           cmake --install build --verbose
-          echo "./install" >> $GITHUB_PATH
+          echo "${{ github.workspace }}/install" >> $GITHUB_PATH
           type rgbasm rgblink rgbfix rgbgfx
           MANPAGER=head man 5 rgbasm
       - name: Package binaries
