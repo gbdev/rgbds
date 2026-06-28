@@ -200,8 +200,7 @@ jobs:
       - name: Install
         shell: cmd
         run: |
-          cmake --install build --prefix "${{ github.workspace }}/install" --verbose
-          echo "${{ github.workspace }}/install" >> $GITHUB_PATH
+          cmake --install build --verbose
           where rgbasm rgblink rgbfix rgbgfx
       - name: Package binaries
         working-directory: build
