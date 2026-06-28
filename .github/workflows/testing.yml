@@ -400,4 +400,5 @@ jobs:
             cmake --build build --verbose -- -k -j 4
             ASAN_OPTIONS=detect_leaks=0 ctest --test-dir build --schedule-random --label-exclude external
             cmake --install build --verbose
+            type rgbasm rgblink rgbfix rgbgfx
             man -w 1 rgbasm rgblink rgbfix rgbgfx
