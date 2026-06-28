@@ -51,12 +51,17 @@ jobs:
       - name: Install deps
         run: |
           .github/scripts/install_deps.sh ${{ matrix.os }} ${{ matrix.cxx }}
-      - name: Build & install using Make
+      - name: Build using Make
         if: matrix.buildsys == 'make'
         run: |
           make develop -kj Q= CXX=${{ matrix.cxx }}
+      - name: Install using Make
+        if: matrix.buildsys == 'make'
+        run: |
           sudo make install -j Q=
-      - name: Build & install using CMake
+          type rgbasm rgblink rgbfix rgbgfx
+          man -w 1 rgbasm rgblink rgbfix rgbgfx
+      - name: Build using CMake
         if: matrix.buildsys == 'cmake'
         # Since GitHub's runners are basically kitchen sinks,
         # the Mono framework exposes a libpng 1.4.x header, breaking everything.
@@ -66,7 +71,12 @@ jobs:
         run: |
           CXX=${{ matrix.cxx }} cmake -B build -G Ninja --preset develop -DCMAKE_FIND_FRAMEWORK=LAST -DTESTS_OS_NAME=${{ matrix.os }}
           cmake --build build -- -k 0
+      - name: Install using CMake
+        if: matrix.buildsys == 'cmake'
+        run: |
           sudo cmake --install build --verbose
+          type rgbasm rgblink rgbfix rgbgfx
+          man -w 1 rgbasm rgblink rgbfix rgbgfx
       - name: Package binaries
         run: |
           mkdir bins
@@ -118,12 +128,17 @@ jobs:
           path: ${{ env.DEPS_ROOT_DIR }}/*-tmp/
           key: dep-srcs-${{ hashFiles('cmake/deps.cmake') }}
           enableCrossOsArchive: true
-      - name: Build & install
+      - name: Build
         run: |
           cmake -B build -G Ninja --preset macos-static -DFETCHCONTENT_BASE_DIR="${{ env.DEPS_ROOT_DIR }}" -DTESTS_OS_NAME=macos
           cmake --build build -- -k 0
         env:
           LDFLAGS: -fuse-ld=lld # cmake/macos-static.cmake comments explain why we use lld.
+      - name: Install
+        run: |
+          sudo cmake --install build --verbose
+          type rgbasm rgblink rgbfix rgbgfx
+          man -w 1 rgbasm rgblink rgbfix rgbgfx
       - name: Package binaries
         run: |
           mkdir bins
@@ -175,13 +190,18 @@ jobs:
           path: ${{ env.DEPS_ROOT_DIR }}/*-tmp/
           key: dep-srcs-${{ hashFiles('cmake/deps.cmake') }}
           enableCrossOsArchive: true
-      - name: Build Windows binaries
+      - name: Build
         shell: cmd
         run: | # ASan seems to be broken on Windows, so we disable it.
           call .github\scripts\msvc-env.bat ${{ matrix.bits }}
           cmake -B build -G Ninja --preset develop -DSANITIZERS=OFF -DTESTS_OS_NAME=${{ matrix.os }} ^
                 -DFETCHCONTENT_BASE_DIR="${{ env.DEPS_ROOT_DIR }}" -DCMAKE_C_FLAGS="/nologo"
           cmake --build build -- -k 0
+      - name: Install
+        shell: cmd
+        run: |
+          cmake --install build --verbose
+          where rgbasm rgblink rgbfix rgbgfx
       - name: Package binaries
         working-directory: build
         run: |
@@ -238,7 +258,7 @@ jobs:
           cmake -B build -G Ninja --preset develop -DSANITIZERS=OFF --toolchain cmake/toolchain-mingw${{ matrix.bits }}.cmake \
             -DFETCHCONTENT_BASE_DIR="${{ env.DEPS_ROOT_DIR }}" -DDLL_SEARCH_DIRS="$dll_search_dir"
           cmake --build build -- -k 0
-      - name: Package binaries
+      - name: Package Windows binaries
         run: |
           cmake --install build --prefix . --verbose --component binaries
           cmake --install build --prefix . --verbose --component shared-libs
@@ -340,10 +360,14 @@ jobs:
             libpng-devel
             make
             pkg-config
-      - name: Build & install using Make
+      - name: Build
         run: | # Cygwin does not support `make develop` sanitizers ASan or UBSan
           make -kj Q=
+      - name: Install
+        run: |
           make install -j Q=
+          type rgbasm rgblink rgbfix rgbgfx
+          man -w 1 rgbasm rgblink rgbfix rgbgfx
       - name: Run tests
         run: |
           test/run-tests.sh --only-internal
@@ -376,3 +400,5 @@ jobs:
             cmake --build build --verbose -- -k -j 4
             ASAN_OPTIONS=detect_leaks=0 ctest --test-dir build --schedule-random --label-exclude external
             cmake --install build --verbose
+            type rgbasm rgblink rgbfix rgbgfx
+            man -w 1 rgbasm rgblink rgbfix rgbgfx
