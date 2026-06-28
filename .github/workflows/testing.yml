@@ -30,6 +30,9 @@ defaults:
   run:
     shell: bash
 
+# We use Ninja as the generator for CMake below because it provides synchronous output by default,
+# and only shows full command lines when they fail.
+
 jobs:
   unix:
     strategy:

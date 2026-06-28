@@ -22,6 +22,9 @@ env:
   # to prevent divergence between testing and release workflows.
   DEPS_ROOT_DIR: ~/_deps
 
+# We use Ninja as the generator for CMake below because it provides synchronous output by default,
+# and only shows full command lines when they fail.
+
 jobs:
   windows:
     runs-on: windows-2022
