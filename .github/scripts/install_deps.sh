@@ -2,10 +2,13 @@
 # This script requires `sh` instead of `bash` because the latter is not always installed on FreeBSD.
 set -eu
 
+# Python and the Pillow library are dependencies for libbet, a repo built by our external tests.
+# Other dependencies are for building rgbds itself.
+
 case $# in
-	1) OS="$1"; TOOLSET=    ;;
-	2) OS="$1"; TOOLSET="$2";;
-	*) echo >&2 "Usage: $0 <os> [toolset]" && exit 1;;
+	1) OS="$1"; TOOLSET=     ;;
+	2) OS="$1"; TOOLSET="$2" ;;
+	*) echo >&2 "Usage: $0 <os> [<toolset>]" && exit 1 ;;
 esac
 
 case "${OS%%-*}" in
@@ -21,11 +24,11 @@ case "${OS%%-*}" in
 				TOOLSET=
 			;;
 			g++-10 | lcov)
-				pkgs="$pkgs libpng-dev pkgconf $TOOLSET"
+				pkgs="$pkgs libpng-dev pkgconf python3-pil $TOOLSET"
 				TOOLSET=
 			;;
 			'' | g++ | clang++)
-				pkgs="$pkgs libpng-dev pkgconf"
+				pkgs="$pkgs libpng-dev pkgconf python3-pil"
 				TOOLSET=
 			;;
 		esac
@@ -34,8 +37,8 @@ case "${OS%%-*}" in
 		sudo apt-get install -yq $pkgs
 		;;
 	macos)
-		pkgs=bison
-		case $TOOLSET in
+		pkgs="bison make pillow"
+		case "$TOOLSET" in
 			lld)
 				pkgs="$pkgs $TOOLSET"
 				TOOLSET=
@@ -48,7 +51,7 @@ case "${OS%%-*}" in
 		# We leave it as the default in `PATH`, to test that our Makefile works with it.
 		# However, CMake automatically uses Homebrew's `gmake`, so our CI has synced output.
 		# shellcheck disable=SC2086 # (This word splitting is intentional.)
-		brew install $pkgs make
+		brew install $pkgs
 		# Export `bison` to allow using the version we install from Homebrew,
 		# instead of the outdated one preinstalled on macOS (which doesn't even support `-Wall`...).
 		export PATH="$(brew --prefix)/opt/bison/bin:$PATH"
@@ -60,8 +63,12 @@ case "${OS%%-*}" in
 	windows)
 		# GitHub Actions' hosted runners ship CMake 3.x, but versions prior to 4.0.0 ignore `CPACK_PACKAGE_FILE_NAME`.
 		choco install -y winflexbison3 cmake
-		# The below expects the base name, not the Windows-specific name.
+		# The version-printing code below will invoke `bison`, not the Windows-specific name `win_bison`.
 		bison() { win_bison "$@"; } # An alias doesn't work, so we use a function instead.
+		py -3 -m pip install pillow
+		;;
+	windowsmingw)
+		py -3 -m pip install pillow
 		;;
 	*)
 		echo "Cannot install deps for OS '$1'"
@@ -72,6 +79,11 @@ esac
 if [ -n "$TOOLSET" ]; then
 	printf >&2 'Unknown toolset `%s` for OS `%s`\n' "$TOOLSET" "$OS"
 	exit 1
+fi
+
+# We do not build RGBDS *in* MinGW on Windows, so skip printing build tool info.
+if [ "$OS" = "windowsmingw" ]; then
+	exit 0
 fi
 
 # Print some system info, for easier debugging.

@@ -18,9 +18,6 @@ jobs:
       - name: Install deps
         run: |
           .github/scripts/install_deps.sh ubuntu-latest lcov
-      - name: Install test dependency dependencies
-        run: |
-          test/fetch-test-deps.sh --get-deps ubuntu
       - name: Generate coverage report
         run: |
           contrib/coverage.bash ubuntu-ci
