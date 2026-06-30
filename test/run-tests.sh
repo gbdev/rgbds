@@ -29,8 +29,6 @@ internal=true
 external=true
 installedrgbds=false
 osname=
-FETCH_TEST_DEPS="fetch-test-deps.sh"
-RGBDS_PATH="RGBDS=../../"
 while [[ $# -gt 0 ]]; do
 	case "$1" in
 		-h|--help)
@@ -45,11 +43,9 @@ while [[ $# -gt 0 ]]; do
 			;;
 		--only-free)
 			nonfree=false
-			FETCH_TEST_DEPS="$FETCH_TEST_DEPS --only-free"
 			;;
 		--installed-rgbds)
 			installedrgbds=true
-			RGBDS_PATH=
 			;;
 		--os)
 			shift
