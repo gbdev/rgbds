@@ -25,10 +25,10 @@ test_downstream() {
 	popd
 }
 
-if [ ! -f "external/$1.sh" ]; then
-	echo >&2 'External test file '"$1"'.sh does not exist'
+if [ ! -f "external/$1.cfg" ]; then
+	echo >&2 'External test file '"$1"'.cfg does not exist'
 	exit 1
 fi
 
-# Sourcing "external/$1.sh" defines `EXTERNAL_TEST_*` values used by `test_downstream`.
-. "external/$1.sh" && test_downstream
+# Sourcing "external/$1.cfg" defines `EXTERNAL_TEST_*` values used by `test_downstream`.
+. "external/$1.cfg" && test_downstream

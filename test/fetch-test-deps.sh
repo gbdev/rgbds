@@ -73,13 +73,13 @@ case "$actionname" in
 		}
 esac
 
-# Sourcing each "external/*.sh" file defines `EXTERNAL_TEST_*` values used by the `action` functions.
+# Sourcing each "external/*.cfg" file defines `EXTERNAL_TEST_*` values used by the `action` functions.
 if "$nonfree"; then
-	. external/pokecrystal.sh && action
-	. external/pokered.sh     && action
-	. external/ladx.sh        && action
+	. external/pokecrystal.cfg && action
+	. external/pokered.cfg     && action
+	. external/ladx.cfg        && action
 fi
-. external/ucity.sh          && action
-. external/libbet.sh         && action
-. external/sameboy.sh        && action
-. external/gb-starter-kit.sh && action
+. external/ucity.cfg          && action
+. external/libbet.cfg         && action
+. external/sameboy.cfg        && action
+. external/gb-starter-kit.cfg && action
