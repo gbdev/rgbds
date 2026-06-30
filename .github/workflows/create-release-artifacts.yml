@@ -70,9 +70,12 @@ jobs:
           strip rgb{asm,link,fix,gfx}
         env:
           LDFLAGS: -fuse-ld=lld # cmake/macos-static.cmake comments explain why we use lld.
+      - name: Create install script
+        run: |
+          make install.sh
       - name: Package binaries
         run: |
-          zip --junk-paths rgbds-macos.zip rgb{asm,link,fix,gfx} man/* .github/scripts/install.sh
+          zip --junk-paths rgbds-macos.zip rgb{asm,link,fix,gfx} man/* install.sh
       - name: Upload macOS binaries
         uses: actions/upload-artifact@v7
         with:
@@ -92,9 +95,12 @@ jobs:
         run: |
           make -kj WARNFLAGS="-Wall -Wextra -pedantic -static" PKG_CONFIG="pkg-config --static" Q=
           strip rgb{asm,link,fix,gfx}
+      - name: Create install script
+        run: |
+          make install.sh Q=
       - name: Package binaries
         run: |
-          tar caf rgbds-linux-x86_64.tar.xz --transform='s#.*/##' rgb{asm,link,fix,gfx} man/* .github/scripts/install.sh
+          tar caf rgbds-linux-x86_64.tar.xz --transform='s#.*/##' rgb{asm,link,fix,gfx} man/* install.sh
       - name: Upload Linux binaries
         uses: actions/upload-artifact@v7
         with:

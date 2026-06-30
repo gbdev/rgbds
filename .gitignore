@@ -2,6 +2,7 @@
 /rgblink
 /rgbfix
 /rgbgfx
+/install.sh
 /rgbshim.sh
 /coverage/
 *.o
