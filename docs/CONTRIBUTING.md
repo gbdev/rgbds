@@ -233,25 +233,7 @@ Each one defines the parameters for a real external project that builds using RG
    While the test suite supports any Make target name, only
    [Make](//gnu.org/software/make) is currently supported, and the Makefile must
    support a `RGBDS` variable to use a non-system RGBDS directory.
-2. Add the project to `test/fetch-test-deps.sh`: add a new line at the bottom,
-   following the existing pattern:
-   
-   ```sh
-   . external/<name>.cfg && action
-   ```
-3. Add the project to `test/run-tests.sh`: add a new line at the bottom,
-   following the existing pattern:
-   
-   ```sh
-   ./external/test.sh <name>
-   ```
-4. Add the project to `CMakeLists.txt`: add it to the `foreach(project ...)`
-   list, and add new lines at the bottom, following the existing pattern:
-   
-   ```cmake
-   set_tests_properties(<name> PROPERTIES LABELS "<name>;external;free"
-                               FIXTURES_REQUIRED "free-repos")
-   ```
+2. Create the new `.cfg` file, following the existing ones.
 
 ## Container images
 
