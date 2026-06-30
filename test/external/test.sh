@@ -18,7 +18,7 @@ fi
 # Sourcing "external/$1.cfg" defines `EXTERNAL_TEST_*` values used below.
 . "external/$1.cfg"
 
-if ! pushd "$EXTERNAL_TEST_REPO"; then
+if ! cd "$EXTERNAL_TEST_REPO"; then
 	echo >&2 'Please fetch test deps before running any external test'
 	exit 1
 fi
@@ -26,7 +26,10 @@ make clean $RGBDS_PATH
 make -j4 "$EXTERNAL_TEST_TARGET" $RGBDS_PATH
 hash="$(sha1sum -b "$EXTERNAL_TEST_FILE" | head -c 40)"
 if [ "$hash" != "$EXTERNAL_TEST_HASH" ]; then
-	echo >&2 'SHA-1 hash of '"$EXTERNAL_TEST_FILE"' did not match: '"$hash"
+	cat >&2 <<EOM
+error: "$EXTERNAL_TEST_FILE" checksum did not match!
+    Expected $EXTERNAL_TEST_HASH,
+         got $hash
+EOM
 	exit 1
 fi
-popd

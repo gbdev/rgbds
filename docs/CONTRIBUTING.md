@@ -73,7 +73,8 @@ years). If you are adding new files, you need to use the
    remind you mid-way.)
    
    You can also use `ctest --test-dir build` if you prefer.
-   `ctest --test-dir build --print-labels` will print its available test labels.
+   `ctest --test-dir build --print-labels` will print its available
+   [test labels](https://cmake.org/cmake/help/latest/manual/ctest.1.html#label-matching).
 6. Format your changes according to `clang-format`, which will reformat the
    coding style according to our standards defined in `.clang-format`. You can
    use `make format` to format all the C++ files.
