@@ -5,20 +5,18 @@ cd "$(dirname "$0")"
 
 usage() {
 	cat <<"EOF"
-Downloads source code of Game Boy programs used as RGBDS test cases.
+Downloads source code of Game Boy project repos used as RGBDS test cases.
 Options:
-    -h, --help          show this help message
-    --only-free         download only freely licensed codebases
-    --only-internal     do not download any codebases
-    --get-hash          print programs' commit hashes instead of downloading them
-    --get-paths         print programs' GitHub paths instead of downloading them
+    -h, --help      show this help message
+    --only-free     download only freely licensed codebases
+    --get-hash      print repos' commit hashes instead of downloading them
+    --get-paths     print repos' clone paths instead of downloading them
 EOF
 }
 
 # Parse options in pure Bash because macOS `getopt` is stuck
 # in what util-linux `getopt` calls `GETOPT_COMPATIBLE` mode
 nonfree=true
-external=true
 actionname=
 osname=
 while [[ $# -gt 0 ]]; do
@@ -29,9 +27,6 @@ while [[ $# -gt 0 ]]; do
 			;;
 		--only-free)
 			nonfree=false
-			;;
-		--only-internal)
-			external=false
 			;;
 		--get-hash|--get-paths)
 			actionname="$1"
@@ -49,43 +44,42 @@ done
 
 case "$actionname" in
 	--get-hash)
-		action() { # _ _ repo commit
-			printf "%s@%s-" "$3" "$4"
+		action() {
+			printf "%s@%s-" "$EXTERNAL_TEST_REPO" "$EXTERNAL_TEST_COMMIT"
 		}
 		;;
 
 	--get-paths)
-		action() { # _ _ repo _
-			printf "test/%s," "$3"
+		action() {
+			printf "test/%s," "$EXTERNAL_TEST_REPO"
 		}
 		;;
 
 	*)
 		echo "Fetching test dependency repositories"
 
-		action() { # domain owner repo commit
-			if [ ! -d "$3" ]; then
-				git clone "https://$1/$2/$3.git" --revision="$4" --depth=1 --recursive --shallow-submodules --config advice.detachedHead=false
+		action() {
+			if [ ! -d "$EXTERNAL_TEST_REPO" ]; then
+				git clone "https://$EXTERNAL_TEST_DOMAIN/$EXTERNAL_TEST_OWNER/$EXTERNAL_TEST_REPO.git" \
+					--revision="$EXTERNAL_TEST_COMMIT" --depth=1 --recursive --shallow-submodules \
+					--config advice.detachedHead=false
 			fi
-			pushd "$3"
-			git checkout --force --detach "$4" --
-			if [ -f "../patches/$3.patch" ]; then
-				git apply --ignore-whitespace "../patches/$3.patch"
+			pushd "$EXTERNAL_TEST_REPO"
+			git checkout --force --detach "$EXTERNAL_TEST_COMMIT" --
+			if [ -f "../patches/$EXTERNAL_TEST_REPO.patch" ]; then
+				git apply --ignore-whitespace "../patches/$EXTERNAL_TEST_REPO.patch"
 			fi
 			popd
 		}
 esac
 
-if ! "$external"; then
-	exit
-fi
-
+# Sourcing each "external/*.cfg" file defines `EXTERNAL_TEST_*` values used by the `action` functions.
 if "$nonfree"; then
-	action github.com pret  pokecrystal      2bbb15675de0d2bbebc8cc9978f5c7fb15bc73b9
-	action github.com pret  pokered          0555b42dc0ceffaae613e97cc0cf2e8c0b45013c
-	action github.com zladx LADX-Disassembly c77af4473e7a877c68e1de34a2aaf80e9076dc35
+	. external/pokecrystal.cfg && action
+	. external/pokered.cfg     && action
+	. external/ladx.cfg        && action
 fi
-action github.com   AntonioND ucity          d1880a2a112d7c26f16c0fc06a15b6c32fdc9137
-action github.com   pinobatch libbet         e42c0036b18e6e715987b88b4973389b283974c9
-action github.com   LIJI32    SameBoy        2f4a6f231ec40ecfc0ab7df0a09eb932e7ccddec
-action codeberg.org ISSOtm    gb-starter-kit 74b647d62ff74b40d2b52e585cbebe148463212e
+. external/ucity.cfg          && action
+. external/libbet.cfg         && action
+. external/sameboy.cfg        && action
+. external/gb-starter-kit.cfg && action

@@ -64,20 +64,28 @@ years). If you are adding new files, you need to use the
 4. Compile your changes with `make develop` instead of just `make`. This
    target checks for additional warnings. Your patches shouldn't introduce any
    new warning (but it may be possible to remove some warning checks if it makes
-   the code much easier). You can also use `cmake --preset develop` if you prefer.
-5. Test your changes by running `./run-tests.sh` in the `test` directory, or using `ctest`.
-   (You must run `./fetch-test-deps.sh` first; if you forget to, the test suite
-   will fail and remind you mid-way.)
+   the code much easier).
+   
+   You can also use `cmake --preset develop` if you prefer.
+5. Test your changes by running `./run-tests.sh` in the `test` directory.
+   `./run-tests.sh --help` will print its available options. (You must run
+   `./fetch-test-deps.sh` first; if you forget to, the test suite will fail and
+   remind you mid-way.)
+   
+   You can also use `ctest --test-dir build` if you prefer.
+   `ctest --test-dir build --print-labels` will print its available
+   [test labels](https://cmake.org/cmake/help/latest/manual/ctest.1.html#label-matching).
 6. Format your changes according to `clang-format`, which will reformat the
-   coding style according to our standards defined in `.clang-format`.
+   coding style according to our standards defined in `.clang-format`. You can
+   use `make format` to format all the C++ files.
 7. Create a pull request against the branch `master`.
 8. Check the results of the GitHub Actions CI jobs for your pull request. The
    "Code format checking" and "Regression testing" jobs should all succeed.
-   The "Diff completeness check" and "Static analysis" jobs should be manually
-   checked, as they may output warnings which do not count as failure errors.
-   The "Code coverage report" provides an
-   [LCOV](https://github.com/linux-test-project/lcov)-generated report which
-   can be downloaded and checked to see if your new code has full test coverage.
+   The "Diff completeness check" job should be manually checked, as it may
+   output warnings which do not count as failure errors. The "Code coverage
+   report" provides an [LCOV](https://github.com/linux-test-project/lcov)-generated
+   report which can be downloaded and checked to see if your new code has full
+   test coverage.
 9. Be prepared to get some comments about your code and to modify it. Tip: Use
    `git rebase -i origin/master` to modify chains of commits.
 
@@ -215,24 +223,34 @@ If a `.flags` file exists, it will be used as part of the RGBGFX invocation
 Each `seed*.bin` file corresponds to one test.
 Each one is a binary RNG file which is passed to the `rgbgfx_test` program.
 
-### Downstream projects
+### External projects
+
+Each `*.cfg` file corresponds to one test.
+Each one defines the parameters for a real external project that builds using RGBDS.
 
 1. Make sure the downstream project supports
    <code>make <var>&lt;target&gt;</var> RGBDS=<var>&lt;path/to/RGBDS/&gt;</var></code>.
    While the test suite supports any Make target name, only
    [Make](//gnu.org/software/make) is currently supported, and the Makefile must
    support a `RGBDS` variable to use a non-system RGBDS directory.
-2. Add the project to `test/fetch-test-deps.sh`: add a new `action` line at the
-   bottom, following the existing pattern:
+2. Add the project to `test/fetch-test-deps.sh`: add a new line at the bottom,
+   following the existing pattern:
    
    ```sh
-   action  <domain>  <owner>  <repo>  <hash of last commit>
+   . external/<name>.cfg && action
    ```
-3. Add the project to `test/run-tests.sh`: add a new `test_downstream` line at
-   the bottom, following the existing pattern:
+3. Add the project to `test/run-tests.sh`: add a new line at the bottom,
+   following the existing pattern:
    
    ```sh
-   test_downstream  <owner>  <repo>  <makefile target>  <build file>  <sha1 hash of build file>
+   ./external/test.sh <name>
+   ```
+4. Add the project to `CMakeLists.txt`: add it to the `foreach(project ...)`
+   list, and add new lines at the bottom, following the existing pattern:
+   
+   ```cmake
+   set_tests_properties(<name> PROPERTIES LABELS "<name>;external;free"
+                               FIXTURES_REQUIRED "free-repos")
    ```
 
 ## Container images

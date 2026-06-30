@@ -1,6 +1,5 @@
 # SPDX-License-Identifier: MIT
 
-option(TESTS_RUN_NONFREE "Run tests that build nonfree codebases." ON)
 set(TESTS_OS_NAME "" CACHE STRING "Skip running tests known to fail on this OS.")
 
 add_executable(randtilegen gfx/randtilegen.cpp)
@@ -18,35 +17,52 @@ foreach(prog "randtilegen" "rgbgfx_test")
                      COMMAND_EXPAND_LISTS VERBATIM)
 endforeach()
 
-set(ONLY_FREE)
-if(NOT TESTS_RUN_NONFREE)
-  set(ONLY_FREE "--only-free")
-endif()
-
-set(OS_NAME)
-if(NOT TESTS_OS_NAME STREQUAL "")
-  set(OS_NAME "--os" "${TESTS_OS_NAME}")
-endif()
-
 foreach(component "asm" "link" "fix" "gfx")
   add_test(NAME "rgb${component}"
            COMMAND bash -- test.sh
            WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/${component}")
   set_tests_properties("rgb${component}" PROPERTIES REQUIRED_FILES "$<TARGET_FILE:rgb${component}>"
                                                     PROCESSORS 1
-                                                    LABELS "rgb${component}")
+                                                    LABELS "rgb${component};internal;free")
 endforeach()
 set_tests_properties(rgbgfx PROPERTIES REQUIRED_FILES "$<TARGET_FILE:rgbgfx>;$<TARGET_FILE:randtilegen>;$<TARGET_FILE:rgbgfx_test>")
 
 add_test(NAME fetch-test-deps
-         COMMAND bash -- fetch-test-deps.sh ${ONLY_FREE}
+         COMMAND bash -- fetch-test-deps.sh --only-free
          WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}")
-set_tests_properties(fetch-test-deps PROPERTIES FIXTURES_SETUP "external-repos"
+set_tests_properties(fetch-test-deps PROPERTIES FIXTURES_SETUP "free-repos"
                                                 LABELS "external")
-add_test(NAME external
-         COMMAND bash -- run-tests.sh --only-external ${ONLY_FREE} ${OS_NAME}
+add_test(NAME fetch-nonfree-deps
+         COMMAND bash -- fetch-test-deps.sh
          WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}")
-set_tests_properties(external PROPERTIES DEPENDS "rgbasm;rgblink;rgbfix;rgbgfx" # Only attempt building whole projects if each tool passes muster on its own.
-                                         PROCESSORS 4
-                                         FIXTURES_REQUIRED "external-repos"
-                                         LABELS "external") # Allow filtering out external tests.
+set_tests_properties(fetch-nonfree-deps PROPERTIES FIXTURES_SETUP "external-repos"
+                                                   FIXTURES_REQUIRED "free-repos"
+                                                   LABELS "external;nonfree")
+
+foreach(project "pokecrystal" "pokered" "ladx" "ucity" "libbet" "sameboy" "gb-starter-kit")
+  add_test(NAME "${project}"
+           COMMAND bash -- external/test.sh ${project}
+           WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}")
+  set_tests_properties(${project} PROPERTIES DEPENDS "rgbasm;rgblink;rgbfix;rgbgfx" # Only attempt building whole projects if each tool passes muster on its own.
+                                             PROCESSORS 4)
+endforeach()
+set_tests_properties(pokecrystal    PROPERTIES LABELS "pokecrystal;external;nonfree"
+                                               FIXTURES_REQUIRED "external-repos")
+set_tests_properties(pokered        PROPERTIES LABELS "pokered;external;nonfree"
+                                               FIXTURES_REQUIRED "external-repos")
+set_tests_properties(ladx           PROPERTIES LABELS "ladx;external;nonfree"
+                                               FIXTURES_REQUIRED "external-repos")
+set_tests_properties(ucity          PROPERTIES LABELS "ucity;external;free"
+                                               FIXTURES_REQUIRED "free-repos")
+set_tests_properties(libbet         PROPERTIES LABELS "libbet;external;free"
+                                               FIXTURES_REQUIRED "free-repos")
+set_tests_properties(sameboy        PROPERTIES LABELS "sameboy;external;free"
+                                               FIXTURES_REQUIRED "free-repos")
+set_tests_properties(gb-starter-kit PROPERTIES LABELS "gb-starter-kit;external;free"
+                                               FIXTURES_REQUIRED "free-repos")
+
+# gb-starter kit fails with any `make` on Windows: https://codeberg.org/ISSOtm/gb-starter-kit/issues/1
+# gb-starter-kit fails with macOS/BSD `make`: https://codeberg.org/ISSOtm/gb-starter-kit/issues/29
+if(TESTS_OS_NAME MATCHES "^(windows|macos|.*bsd)(-.*)?")
+  set_tests_properties(gb-starter-kit PROPERTIES DISABLED TRUE)
+endif()
