@@ -97,7 +97,7 @@ jobs:
           strip rgb{asm,link,fix,gfx}
       - name: Create install script
         run: |
-          make install.sh
+          make install.sh Q=
       - name: Package binaries
         run: |
           tar caf rgbds-linux-x86_64.tar.xz --transform='s#.*/##' rgb{asm,link,fix,gfx} man/* install.sh

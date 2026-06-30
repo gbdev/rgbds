@@ -13,7 +13,7 @@ RUN ./.github/scripts/install_deps.sh debian
 RUN make -j CXXFLAGS="-O3 -flto -DNDEBUG -static" PKG_CONFIG="pkg-config --static" Q=
 
 # Create the install script
-RUN make install.sh
+RUN make install.sh Q=
 
 # Create an archive with the compiled executables, man pages, and install script,
 # so it can be copied outside of the container and installed/used in another system
