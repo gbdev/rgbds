@@ -18,7 +18,6 @@ EOF
 # in what util-linux `getopt` calls `GETOPT_COMPATIBLE` mode
 nonfree=true
 actionname=
-osname=
 while [[ $# -gt 0 ]]; do
 	case "$1" in
 		-h|--help)
@@ -73,13 +72,13 @@ case "$actionname" in
 		}
 esac
 
-# Sourcing each "external/*.cfg" file defines `EXT_TEST_*` values used by the `action` functions.
-if "$nonfree"; then
-	. external/pokecrystal.cfg && action
-	. external/pokered.cfg     && action
-	. external/ladx.cfg        && action
-fi
-. external/ucity.cfg          && action
-. external/libbet.cfg         && action
-. external/sameboy.cfg        && action
-. external/gb-starter-kit.cfg && action
+# Since each iteration sources variables into the shell itself,
+#   we do that in a subshell so that they don't "leak" out.
+for cfg in external/*.cfg; do (
+	# The sourced file defines `EXT_TEST_*` variables that get used by `action`.
+	. "$cfg"
+	# Only run a nonfree action if nonfree tests are opted into.
+	if ! $EXT_TEST_IS_NONFREE || $nonfree; then
+		action
+	fi
+); done

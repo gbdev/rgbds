@@ -39,27 +39,33 @@ set_tests_properties(fetch-nonfree-deps PROPERTIES FIXTURES_SETUP "external-repo
                                                    FIXTURES_REQUIRED "free-repos"
                                                    LABELS "external;nonfree")
 
-foreach(project "pokecrystal" "pokered" "ladx" "ucity" "libbet" "sameboy" "gb-starter-kit")
+file(GLOB ext_projects "external/*.cfg") # This will not be re-computed if a new project is added! You must manually reconfigure.
+foreach(cfg_file IN LISTS ext_projects)
+  cmake_path(GET cfg_file STEM LAST_ONLY project) # Extract the project's name from the config file's name.
+
+  # Parse the config file, using it to set some variables for more convenient access.
+  file(STRINGS "${cfg_file}" proj_props REGEX "^[^# \t]*[^#]") # Ignore comments and empty lines.
+  foreach(line LIST proj_props)
+    string(REGEX MATCH "^[ \t]*EXT_TEST_([A-Za-z0-9_]+)=(.+)" matched "${line}")
+    set(${project}_${CMAKE_MATCH_1} "${CMAKE_MATCH_2}")
+  endforeach()
+
   add_test(NAME "${project}"
            COMMAND bash -- external/test.sh ${project}
            WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}")
   set_tests_properties(${project} PROPERTIES DEPENDS "rgbasm;rgblink;rgbfix;rgbgfx" # Only attempt building whole projects if each tool passes muster on its own.
-                                             PROCESSORS 4)
+                                             PROCESSORS 4
+                                             LABELS "external;${project}")
+
+  # Wire it up according to whether it's free (as in speech) or not.
+  if(${project}_IS_NONFREE)
+    set_property(TEST "${project}" APPEND PROPERTY LABELS "nonfree")
+    set_tests_properties("${project}" PROPERTIES FIXTURES_REQUIRED "external-repos")
+  else()
+    set_property(TEST "${project}" APPEND PROPERTY LABELS "free")
+    set_tests_properties("${project}" PROPERTIES FIXTURES_REQUIRED "free-repos")
+  endif()
 endforeach()
-set_tests_properties(pokecrystal    PROPERTIES LABELS "pokecrystal;external;nonfree"
-                                               FIXTURES_REQUIRED "external-repos")
-set_tests_properties(pokered        PROPERTIES LABELS "pokered;external;nonfree"
-                                               FIXTURES_REQUIRED "external-repos")
-set_tests_properties(ladx           PROPERTIES LABELS "ladx;external;nonfree"
-                                               FIXTURES_REQUIRED "external-repos")
-set_tests_properties(ucity          PROPERTIES LABELS "ucity;external;free"
-                                               FIXTURES_REQUIRED "free-repos")
-set_tests_properties(libbet         PROPERTIES LABELS "libbet;external;free"
-                                               FIXTURES_REQUIRED "free-repos")
-set_tests_properties(sameboy        PROPERTIES LABELS "sameboy;external;free"
-                                               FIXTURES_REQUIRED "free-repos")
-set_tests_properties(gb-starter-kit PROPERTIES LABELS "gb-starter-kit;external;free"
-                                               FIXTURES_REQUIRED "free-repos")
 
 # gb-starter kit fails with any `make` on Windows: https://codeberg.org/ISSOtm/gb-starter-kit/issues/1
 # gb-starter-kit fails with macOS/BSD `make`: https://codeberg.org/ISSOtm/gb-starter-kit/issues/29

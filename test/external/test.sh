@@ -15,7 +15,7 @@ if [ ! -f "external/$1.cfg" ]; then
 	exit 1
 fi
 
-# Sourcing "external/$1.cfg" defines `EXT_TEST_*` values used below.
+# Sourcing "$1.cfg" defines `EXT_TEST_*` variables used below.
 . "external/$1.cfg"
 
 if ! cd "$EXT_TEST_REPO"; then

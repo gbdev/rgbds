@@ -62,7 +62,7 @@ while [[ $# -gt 0 ]]; do
 	shift
 done
 
-if ! ("$internal" || "$external"); then
+if ! "$internal" && ! "$external"; then
 	echo "Specifying --only-internal with --only-external is a contradiction"
 	false
 fi
@@ -102,20 +102,26 @@ if ! "$external"; then
 	exit
 fi
 
-# Test some significant external projects that use RGBDS
-# When adding new ones, don't forget to add them to the .gitignore!
+# Test some significant external projects that use RGBDS.
+# Note that they are intentionally sequenced after the internal tests, since
+# failures reported by internal tests will be easier to debug than external ones.
+cd external
+# Each iteration is isolated in a (subshell) so the sourced cfg variables don't "leak" out.
+for cfg in *.cfg; do (
+	# Sourcing "$cfg" defines the `EXT_TEST_IS_NONFREE` variable used below.
+	. "$cfg"
+	test_name="${cfg%.cfg}"
 
-if "$nonfree"; then
-	./external/test.sh pokecrystal
-	./external/test.sh pokered
-	./external/test.sh ladx
-fi
-./external/test.sh ucity
-./external/test.sh libbet
-./external/test.sh sameboy
-# gb-starter kit fails with any `make` on Windows: https://codeberg.org/ISSOtm/gb-starter-kit/issues/1
-# gb-starter-kit fails with macOS/BSD `make`: https://codeberg.org/ISSOtm/gb-starter-kit/issues/29
-case "${osname%%-*}" in
-	windows | macos | *bsd) ;;
-	*) ./external/test.sh gb-starter-kit
-esac
+	if [ "$test_name" = gb-starter-kit ]; then
+		# gb-starter kit fails with any `make` on Windows: https://codeberg.org/ISSOtm/gb-starter-kit/issues/1
+		# gb-starter-kit fails with macOS/BSD `make`: https://codeberg.org/ISSOtm/gb-starter-kit/issues/29
+		case "${osname%%-*}" in
+			windows | macos | *bsd) exit 0 ;; # Note that this only exits the subshell!
+		esac
+	fi
+
+	# Run nonfree tests only if they are opted into.
+	if ! "$EXT_TEST_IS_NONFREE" || "$nonfree"; then
+		./test.sh "$test_name"
+	fi
+); done
