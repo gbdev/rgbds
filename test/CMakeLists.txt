@@ -39,7 +39,7 @@ set_tests_properties(fetch-nonfree-deps PROPERTIES FIXTURES_SETUP "external-repo
                                                    FIXTURES_REQUIRED "free-repos"
                                                    LABELS "external;nonfree")
 
-foreach(project "pokecrystal" "pokered" "ladx" "ucity" "libbet" "sameboy")
+foreach(project "pokecrystal" "pokered" "ladx" "ucity" "libbet" "sameboy" "gb-starter-kit")
   add_test(NAME "${project}"
            COMMAND bash -- external/test.sh ${project}
            WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}")
@@ -58,15 +58,11 @@ set_tests_properties(libbet         PROPERTIES LABELS "libbet;external;free"
                                                FIXTURES_REQUIRED "free-repos")
 set_tests_properties(sameboy        PROPERTIES LABELS "sameboy;external;free"
                                                FIXTURES_REQUIRED "free-repos")
+set_tests_properties(gb-starter-kit PROPERTIES LABELS "gb-starter-kit;external;free"
+                                               FIXTURES_REQUIRED "free-repos")
 
 # gb-starter kit fails with any `make` on Windows: https://codeberg.org/ISSOtm/gb-starter-kit/issues/1
 # gb-starter-kit fails with macOS/BSD `make`: https://codeberg.org/ISSOtm/gb-starter-kit/issues/29
-if(NOT TESTS_OS_NAME MATCHES "^(windows|macos|.*bsd)(-.*)?")
-  add_test(NAME "gb-starter-kit"
-           COMMAND bash -- external/test.sh gb-starter-kit
-           WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}")
-  set_tests_properties(gb-starter-kit PROPERTIES DEPENDS "rgbasm;rgblink;rgbfix;rgbgfx"
-                                                 PROCESSORS 4
-                                                 LABELS "gb-starter-kit;external;free"
-                                                 FIXTURES_REQUIRED "free-repos")
+if(TESTS_OS_NAME MATCHES "^(windows|macos|.*bsd)(-.*)?")
+  set_tests_properties(gb-starter-kit PROPERTIES DISABLED TRUE)
 endif()
