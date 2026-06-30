@@ -45,13 +45,13 @@ done
 case "$actionname" in
 	--get-hash)
 		action() {
-			printf "%s@%s-" "$EXTERNAL_TEST_REPO" "$EXTERNAL_TEST_COMMIT"
+			printf "%s@%s-" "$EXT_TEST_REPO" "$EXT_TEST_COMMIT"
 		}
 		;;
 
 	--get-paths)
 		action() {
-			printf "test/%s," "$EXTERNAL_TEST_REPO"
+			printf "test/%s," "$EXT_TEST_REPO"
 		}
 		;;
 
@@ -59,21 +59,21 @@ case "$actionname" in
 		echo "Fetching test dependency repositories"
 
 		action() {
-			if [ ! -d "$EXTERNAL_TEST_REPO" ]; then
-				git clone "https://$EXTERNAL_TEST_DOMAIN/$EXTERNAL_TEST_OWNER/$EXTERNAL_TEST_REPO.git" \
-					--revision="$EXTERNAL_TEST_COMMIT" --depth=1 --recursive --shallow-submodules \
+			if [ ! -d "$EXT_TEST_REPO" ]; then
+				git clone "https://$EXT_TEST_DOMAIN/$EXT_TEST_OWNER/$EXT_TEST_REPO.git" \
+					--revision="$EXT_TEST_COMMIT" --depth=1 --recursive --shallow-submodules \
 					--config advice.detachedHead=false
 			fi
-			pushd "$EXTERNAL_TEST_REPO"
-			git checkout --force --detach "$EXTERNAL_TEST_COMMIT" --
-			if [ -f "../patches/$EXTERNAL_TEST_REPO.patch" ]; then
-				git apply --ignore-whitespace "../patches/$EXTERNAL_TEST_REPO.patch"
+			pushd "$EXT_TEST_REPO"
+			git checkout --force --detach "$EXT_TEST_COMMIT" --
+			if [ -f "../patches/$EXT_TEST_REPO.patch" ]; then
+				git apply --ignore-whitespace "../patches/$EXT_TEST_REPO.patch"
 			fi
 			popd
 		}
 esac
 
-# Sourcing each "external/*.cfg" file defines `EXTERNAL_TEST_*` values used by the `action` functions.
+# Sourcing each "external/*.cfg" file defines `EXT_TEST_*` values used by the `action` functions.
 if "$nonfree"; then
 	. external/pokecrystal.cfg && action
 	. external/pokered.cfg     && action
