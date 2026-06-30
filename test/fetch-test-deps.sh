@@ -7,18 +7,16 @@ usage() {
 	cat <<"EOF"
 Downloads source code of Game Boy programs used as RGBDS test cases.
 Options:
-    -h, --help          show this help message
-    --only-free         download only freely licensed codebases
-    --only-internal     do not download any codebases
-    --get-hash          print programs' commit hashes instead of downloading them
-    --get-paths         print programs' GitHub paths instead of downloading them
+    -h, --help      show this help message
+    --only-free     download only freely licensed codebases
+    --get-hash      print programs' commit hashes instead of downloading them
+    --get-paths     print programs' GitHub paths instead of downloading them
 EOF
 }
 
 # Parse options in pure Bash because macOS `getopt` is stuck
 # in what util-linux `getopt` calls `GETOPT_COMPATIBLE` mode
 nonfree=true
-external=true
 actionname=
 osname=
 while [[ $# -gt 0 ]]; do
@@ -29,9 +27,6 @@ while [[ $# -gt 0 ]]; do
 			;;
 		--only-free)
 			nonfree=false
-			;;
-		--only-internal)
-			external=false
 			;;
 		--get-hash|--get-paths)
 			actionname="$1"
@@ -76,16 +71,14 @@ case "$actionname" in
 		}
 esac
 
-if ! "$external"; then
-	exit
-fi
-
+# Sourcing each "external/*.sh" file defines a `fetch_action` function, which calls the
+# above `action` function with the appropriate arguments for its external repository.
 if "$nonfree"; then
-	action github.com pret  pokecrystal      2bbb15675de0d2bbebc8cc9978f5c7fb15bc73b9
-	action github.com pret  pokered          0555b42dc0ceffaae613e97cc0cf2e8c0b45013c
-	action github.com zladx LADX-Disassembly c77af4473e7a877c68e1de34a2aaf80e9076dc35
+	. external/pokecrystal.sh && fetch_action
+	. external/pokered.sh     && fetch_action
+	. external/ladx.sh        && fetch_action
 fi
-action github.com   AntonioND ucity          d1880a2a112d7c26f16c0fc06a15b6c32fdc9137
-action github.com   pinobatch libbet         e42c0036b18e6e715987b88b4973389b283974c9
-action github.com   LIJI32    SameBoy        2f4a6f231ec40ecfc0ab7df0a09eb932e7ccddec
-action codeberg.org ISSOtm    gb-starter-kit 74b647d62ff74b40d2b52e585cbebe148463212e
+. external/ucity.sh          && fetch_action
+. external/libbet.sh         && fetch_action
+. external/sameboy.sh        && fetch_action
+. external/gb-starter-kit.sh && fetch_action
