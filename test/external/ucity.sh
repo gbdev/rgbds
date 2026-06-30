@@ -1,9 +1,9 @@
 #!/bin/false
 
-fetch_action() {
-	action github.com AntonioND ucity d1880a2a112d7c26f16c0fc06a15b6c32fdc9137
-}
-
-test_action() {
-	action AntonioND ucity all ucity.gbc 5f026649611c9606ce0bf70dc1552e054e7df5bc
-}
+EXTERNAL_TEST_OWNER=AntonioND
+EXTERNAL_TEST_REPO=ucity
+EXTERNAL_TEST_DOMAIN=github.com
+EXTERNAL_TEST_COMMIT=d1880a2a112d7c26f16c0fc06a15b6c32fdc9137
+EXTERNAL_TEST_TARGET=all
+EXTERNAL_TEST_FILE=ucity.gbc
+EXTERNAL_TEST_HASH=5f026649611c9606ce0bf70dc1552e054e7df5bc

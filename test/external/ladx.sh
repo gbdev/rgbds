@@ -1,9 +1,9 @@
 #!/bin/false
 
-fetch_action() {
-	action github.com zladx LADX-Disassembly c77af4473e7a877c68e1de34a2aaf80e9076dc35
-}
-
-test_action() {
-	action zladx LADX-Disassembly default azle.gbc d90ac17e9bf17b6c61624ad9f05447bdb5efc01a
-}
+EXTERNAL_TEST_OWNER=zladx
+EXTERNAL_TEST_REPO=LADX-Disassembly
+EXTERNAL_TEST_DOMAIN=github.com
+EXTERNAL_TEST_COMMIT=c77af4473e7a877c68e1de34a2aaf80e9076dc35
+EXTERNAL_TEST_TARGET=default
+EXTERNAL_TEST_FILE=azle.gbc
+EXTERNAL_TEST_HASH=d90ac17e9bf17b6c61624ad9f05447bdb5efc01a

@@ -1,9 +1,9 @@
 #!/bin/false
 
-fetch_action() {
-	action codeberg.org ISSOtm gb-starter-kit 74b647d62ff74b40d2b52e585cbebe148463212e
-}
-
-test_action() {
-	action ISSOtm gb-starter-kit all bin/boilerplate.gb b4f130169ba73284e0d0e71b53e7baa4eca2f7fe
-}
+EXTERNAL_TEST_OWNER=ISSOtm
+EXTERNAL_TEST_REPO=gb-starter-kit
+EXTERNAL_TEST_DOMAIN=codeberg.org
+EXTERNAL_TEST_COMMIT=74b647d62ff74b40d2b52e585cbebe148463212e
+EXTERNAL_TEST_TARGET=all
+EXTERNAL_TEST_FILE=bin/boilerplate.gb
+EXTERNAL_TEST_HASH=b4f130169ba73284e0d0e71b53e7baa4eca2f7fe

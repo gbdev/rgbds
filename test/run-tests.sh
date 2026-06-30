@@ -108,8 +108,6 @@ fi
 
 # Test some significant external projects that use RGBDS
 # When adding new ones, don't forget to add them to the .gitignore!
-# When updating subprojects, change the commit being checked out, and set the `shallow-since`
-# to the day before, to reduce the amount of refs being transferred and thus speed up CI.
 
 if "$nonfree"; then
 	./external/test.sh pokecrystal

@@ -44,41 +44,42 @@ done
 
 case "$actionname" in
 	--get-hash)
-		action() { # _ _ repo commit
-			printf "%s@%s-" "$3" "$4"
+		action() {
+			printf "%s@%s-" "$EXTERNAL_TEST_REPO" "$EXTERNAL_TEST_COMMIT"
 		}
 		;;
 
 	--get-paths)
-		action() { # _ _ repo _
-			printf "test/%s," "$3"
+		action() {
+			printf "test/%s," "$EXTERNAL_TEST_REPO"
 		}
 		;;
 
 	*)
 		echo "Fetching test dependency repositories"
 
-		action() { # domain owner repo commit
-			if [ ! -d "$3" ]; then
-				git clone "https://$1/$2/$3.git" --revision="$4" --depth=1 --recursive --shallow-submodules --config advice.detachedHead=false
+		action() {
+			if [ ! -d "$EXTERNAL_TEST_REPO" ]; then
+				git clone "https://$EXTERNAL_TEST_DOMAIN/$EXTERNAL_TEST_OWNER/$EXTERNAL_TEST_REPO.git" \
+					--revision="$EXTERNAL_TEST_COMMIT" --depth=1 --recursive --shallow-submodules \
+					--config advice.detachedHead=false
 			fi
-			pushd "$3"
-			git checkout --force --detach "$4" --
-			if [ -f "../patches/$3.patch" ]; then
-				git apply --ignore-whitespace "../patches/$3.patch"
+			pushd "$EXTERNAL_TEST_REPO"
+			git checkout --force --detach "$EXTERNAL_TEST_COMMIT" --
+			if [ -f "../patches/$EXTERNAL_TEST_REPO.patch" ]; then
+				git apply --ignore-whitespace "../patches/$EXTERNAL_TEST_REPO.patch"
 			fi
 			popd
 		}
 esac
 
-# Sourcing each "external/*.sh" file defines a `fetch_action` function, which calls the
-# above `action` function with the appropriate arguments for its external repository.
+# Sourcing each "external/*.sh" file defines `EXTERNAL_TEST_*` values used by the `action` functions.
 if "$nonfree"; then
-	. external/pokecrystal.sh && fetch_action
-	. external/pokered.sh     && fetch_action
-	. external/ladx.sh        && fetch_action
+	. external/pokecrystal.sh && action
+	. external/pokered.sh     && action
+	. external/ladx.sh        && action
 fi
-. external/ucity.sh          && fetch_action
-. external/libbet.sh         && fetch_action
-. external/sameboy.sh        && fetch_action
-. external/gb-starter-kit.sh && fetch_action
+. external/ucity.sh          && action
+. external/libbet.sh         && action
+. external/sameboy.sh        && action
+. external/gb-starter-kit.sh && action
