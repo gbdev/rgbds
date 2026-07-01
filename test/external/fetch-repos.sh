@@ -17,6 +17,7 @@ EOF
 # Parse options in pure Bash because macOS `getopt` is stuck
 # in what util-linux `getopt` calls `GETOPT_COMPATIBLE` mode
 nonfree=true
+free=true
 actionname=
 while [[ $# -gt 0 ]]; do
 	case "$1" in
@@ -26,6 +27,9 @@ while [[ $# -gt 0 ]]; do
 			;;
 		--only-free)
 			nonfree=false
+			;;
+		--only-nonfree)
+			free=false
 			;;
 		--get-hash|--get-paths)
 			actionname="$1"
@@ -40,6 +44,11 @@ while [[ $# -gt 0 ]]; do
 	esac
 	shift
 done
+
+if ! "$nonfree" && ! "$free"; then
+	echo "Specifying --only-nonfree with --only-free is a contradiction"
+	exit 1
+fi
 
 case "$actionname" in
 	--get-hash)
@@ -76,8 +85,14 @@ esac
 for cfg in *.cfg; do (
 	# Sourcing "$cfg" defines `EXT_TEST_*` variables that get used by `action`.
 	. "$cfg"
-	# Only run a nonfree action if nonfree tests are opted into.
-	if ! $EXT_TEST_IS_NONFREE || $nonfree; then
-		action
+
+	if $EXT_TEST_IS_NONFREE; then
+		if $nonfree; then
+			action
+		fi
+	else
+		if $free; then
+			action
+		fi
 	fi
 ); done
