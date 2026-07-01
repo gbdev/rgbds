@@ -10,7 +10,7 @@ GitHub.
      `PACKAGE_VERSION_MINOR`, `PACKAGE_VERSION_PATCH`, and `PACKAGE_VERSION_RC`.
      **Only** define `PACKAGE_VERSION_RC` if you are publishing a release candidate!
    - [Dockerfile](Dockerfile): update `ARG version`.
-   - [test/fetch-test-deps.sh](test/fetch-test-deps.sh): update test dependency commits
+   - [test/external/*.cfg](test/external): update test dependency commits
      (preferably, use the latest available).
    - [man/\*](man/): update dates and authors.
 

@@ -50,7 +50,7 @@ case "$actionname" in
 
 	--get-paths)
 		action() {
-			printf "test/%s," "$EXT_TEST_REPO"
+			printf "test/external/%s," "$EXT_TEST_REPO"
 		}
 		;;
 
@@ -72,10 +72,9 @@ case "$actionname" in
 		}
 esac
 
-# Since each iteration sources variables into the shell itself,
-#   we do that in a subshell so that they don't "leak" out.
-for cfg in external/*.cfg; do (
-	# The sourced file defines `EXT_TEST_*` variables that get used by `action`.
+# Each iteration is isolated in a (subshell) so the sourced cfg variables don't "leak" out.
+for cfg in *.cfg; do (
+	# Sourcing "$cfg" defines `EXT_TEST_*` variables that get used by `action`.
 	. "$cfg"
 	# Only run a nonfree action if nonfree tests are opted into.
 	if ! $EXT_TEST_IS_NONFREE || $nonfree; then

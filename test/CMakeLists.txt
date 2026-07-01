@@ -28,15 +28,15 @@ endforeach()
 set_tests_properties(rgbgfx PROPERTIES REQUIRED_FILES "$<TARGET_FILE:rgbgfx>;$<TARGET_FILE:randtilegen>;$<TARGET_FILE:rgbgfx_test>")
 
 add_test(NAME fetch-test-deps
-         COMMAND bash -- fetch-test-deps.sh --only-free
+         COMMAND bash -- external/fetch-repos.sh --only-free
          WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}")
 set_tests_properties(fetch-test-deps PROPERTIES FIXTURES_SETUP "free-repos"
                                                 LABELS "external")
 add_test(NAME fetch-nonfree-deps
-         COMMAND bash -- fetch-test-deps.sh
+         COMMAND bash -- external/fetch-repos.sh
          WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}")
-set_tests_properties(fetch-nonfree-deps PROPERTIES FIXTURES_SETUP "external-repos"
-                                                   FIXTURES_REQUIRED "free-repos"
+set_tests_properties(fetch-nonfree-deps PROPERTIES FIXTURES_SETUP "external-repos" # *All* external repos.
+                                                   FIXTURES_REQUIRED "free-repos" # Sequence after the other to avoid concurrent access.
                                                    LABELS "external;nonfree")
 
 file(GLOB ext_projects "external/*.cfg") # This will not be re-computed if a new project is added! You must manually reconfigure.

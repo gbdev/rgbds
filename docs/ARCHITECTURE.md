@@ -56,8 +56,10 @@ rgbds/
 │   ├── bison.sh
 │   └── ...
 ├── test/
-│   ├── fetch-test-deps.sh
 │   ├── run-tests.sh
+│   ├── external/
+│   │   ├── fetch-repos.sh
+│   │   └── ...
 │   └── ...
 ├── .clang-format
 ├── .clang-tidy
@@ -110,10 +112,15 @@ rgbds/
     Script used to run the Bison parser generator with the latest flags that the user's version supports.
 - **`test/`:**  
   Testing framework used to verify that changes to the code don't break or modify the behavior of RGBDS.
-  * **`fetch-test-deps.sh`:**  
-    Script used to fetch dependencies for building external repositories. `fetch-test-deps.sh --help` describes its options.
+  The `test.sh` scripts inside each of the subdirectories are the individual test drivers.
   * **`run-tests.sh`:**  
     Script used to run tests, including internal test cases and external repositories. `run-tests.sh --help` describes its options.
+  * **`external/`:**  
+    Directory for third-party repos making use of RGBDS, which get cloned here and built during testing.
+    - **`fetch-repos.sh`:**  
+      Script used to clone the external repositories. `fetch-repos.sh --help` describes its options.
+    - **`*.cfg`:**  
+      Each `.cfg` file defines the parameters to clone, build, and verify an external repository.
 - **`.clang-format`:**  
   Code style for automated C++ formatting with [`clang-format`](https://clang.llvm.org/docs/ClangFormat.html) (for which we define the shortcut `make format`).
 - **`.clang-tidy`:**  
