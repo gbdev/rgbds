@@ -30,7 +30,7 @@ foreach(component "asm" "link" "fix" "gfx")
            WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/${component}")
   set_tests_properties("rgb${component}" PROPERTIES REQUIRED_FILES "$<TARGET_FILE:rgb${component}>"
                                                     PROCESSORS 1
-                                                    LABELS "rgb${component};internal;free")
+                                                    LABELS "internal;free")
 endforeach()
 set_tests_properties(rgbgfx PROPERTIES REQUIRED_FILES "$<TARGET_FILE:rgbgfx>;$<TARGET_FILE:randtilegen>;$<TARGET_FILE:rgbgfx_test>")
 
@@ -70,7 +70,7 @@ foreach(cfg_file IN LISTS ext_projects)
            WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}")
   set_tests_properties(${project} PROPERTIES DEPENDS "rgbasm;rgblink;rgbfix;rgbgfx" # Only attempt external tests after all individual tool tests.
                                              PROCESSORS 4
-                                             LABELS "external;${project};${freedom}"
+                                             LABELS "external;${freedom}"
                                              FIXTURES_REQUIRED "${freedom}-repos")
 endforeach()
 
