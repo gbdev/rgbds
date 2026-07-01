@@ -1,6 +1,13 @@
 # SPDX-License-Identifier: MIT
 
-set(TESTS_OS_NAME "" CACHE STRING "Skip running tests known to fail on this OS.")
+if(DEFINED TESTS_OS_NAME)
+  # Avoid re-computing the default value if the cache entry already exists.
+elseif(APPLE)
+  set(TESTS_OS_NAME "macos-${CMAKE_SYSTEM_VERSION}")
+else()
+  string(TOLOWER "${CMAKE_SYSTEM}" TESTS_OS_NAME)
+endif()
+set(TESTS_OS_NAME "${TESTS_OS_NAME}" CACHE STRING "Skip running tests known to fail on this OS.")
 
 add_executable(randtilegen gfx/randtilegen.cpp)
 add_executable(rgbgfx_test gfx/rgbgfx_test.cpp)
@@ -69,6 +76,6 @@ endforeach()
 
 # gb-starter kit fails with any `make` on Windows: https://codeberg.org/ISSOtm/gb-starter-kit/issues/1
 # gb-starter-kit fails with macOS/BSD `make`: https://codeberg.org/ISSOtm/gb-starter-kit/issues/29
-if(TESTS_OS_NAME MATCHES "^(windows|macos|.*bsd)(-.*)?")
+if(TESTS_OS_NAME MATCHES "^(windows|macos|[^-]*bsd)(-.*)?")
   set_tests_properties(gb-starter-kit PROPERTIES DISABLED TRUE)
 endif()
