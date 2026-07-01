@@ -61,7 +61,7 @@ foreach(cfg_file IN LISTS ext_projects)
   add_test(NAME "${project}"
            COMMAND bash -- external/test.sh ${project}
            WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}")
-  set_tests_properties(${project} PROPERTIES DEPENDS "rgbasm;rgblink;rgbfix;rgbgfx" # Only attempt building whole projects if each tool passes muster on its own.
+  set_tests_properties(${project} PROPERTIES DEPENDS "rgbasm;rgblink;rgbfix;rgbgfx" # Only attempt external tests after all individual tool tests.
                                              PROCESSORS 4
                                              LABELS "external;${project};${freedom}"
                                              FIXTURES_REQUIRED "${freedom}-repos")
