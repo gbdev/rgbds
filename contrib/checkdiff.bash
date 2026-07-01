@@ -79,7 +79,7 @@ dependency src/gfx/main.cpp        contrib/zsh_compl/_rgbgfx \
 dependency src/gfx/main.cpp        contrib/bash_compl/_rgbgfx.bash \
            "Did the rgbgfx CLI change?"
 
-dependency test/fetch-test-deps.sh docs/CONTRIBUTING.md \
+dependency test/external/fetch-repos.sh docs/CONTRIBUTING.md \
            "Did the test protocol change?"
 dependency test/run-tests.sh       docs/CONTRIBUTING.md \
            "Did the test protocol change?"

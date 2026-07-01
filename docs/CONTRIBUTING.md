@@ -69,7 +69,7 @@ years). If you are adding new files, you need to use the
    You can also use `cmake --preset develop` if you prefer.
 5. Test your changes by running `./run-tests.sh` in the `test` directory.
    `./run-tests.sh --help` will print its available options. (You must run
-   `./fetch-test-deps.sh` first; if you forget to, the test suite will fail and
+   `external/fetch-repos.sh` first; if you forget to, the test suite will fail and
    remind you mid-way.)
    
    You can also use `ctest --test-dir build` if you prefer.

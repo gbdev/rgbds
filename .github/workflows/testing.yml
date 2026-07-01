@@ -93,8 +93,8 @@ jobs:
       - name: Compute test dependency cache params
         id: test-deps-cache-params
         run: |
-          paths=$(test/fetch-test-deps.sh --get-paths)
-          hash=$(test/fetch-test-deps.sh --get-hash)
+          paths=$(test/external/fetch-repos.sh --get-paths)
+          hash=$(test/external/fetch-repos.sh --get-hash)
           tee -a <<<"paths=\"${paths//,/\\n}\"" $GITHUB_OUTPUT
           tee -a <<<"hash=${hash%-}" $GITHUB_OUTPUT
       - name: Check test dependency repositories cache
@@ -107,7 +107,7 @@ jobs:
         if: steps.test-deps-cache.outputs.cache-hit != 'true'
         continue-on-error: true
         run: |
-          test/fetch-test-deps.sh
+          test/external/fetch-repos.sh
       - name: Run tests using our script
         if: matrix.buildsys == 'make'
         run: |
@@ -155,8 +155,8 @@ jobs:
       - name: Compute test dependency cache params
         id: test-deps-cache-params
         run: |
-          paths=$(test/fetch-test-deps.sh --get-paths)
-          hash=$(test/fetch-test-deps.sh --get-hash)
+          paths=$(test/external/fetch-repos.sh --get-paths)
+          hash=$(test/external/fetch-repos.sh --get-hash)
           tee -a <<<"paths=\"${paths//,/\\n}\"" $GITHUB_OUTPUT
           tee -a <<<"hash=${hash%-}" $GITHUB_OUTPUT
       - name: Check test dependency repositories cache
@@ -169,7 +169,7 @@ jobs:
         if: steps.test-deps-cache.outputs.cache-hit != 'true'
         continue-on-error: true
         run: |
-          test/fetch-test-deps.sh
+          test/external/fetch-repos.sh
       - name: Run tests
         run: |
           ctest --test-dir build --schedule-random
@@ -218,8 +218,8 @@ jobs:
       - name: Compute test dependency cache params
         id: test-deps-cache-params
         run: |
-          paths=$(test/fetch-test-deps.sh --get-paths)
-          hash=$(test/fetch-test-deps.sh --get-hash)
+          paths=$(test/external/fetch-repos.sh --get-paths)
+          hash=$(test/external/fetch-repos.sh --get-hash)
           tee -a <<<"paths=\"${paths//,/\\n}\"" $GITHUB_OUTPUT
           tee -a <<<"hash=${hash%-}" $GITHUB_OUTPUT
       - name: Check test dependency repositories cache
@@ -232,7 +232,7 @@ jobs:
         if: steps.test-deps-cache.outputs.cache-hit != 'true'
         continue-on-error: true
         run: |
-          test/fetch-test-deps.sh
+          test/external/fetch-repos.sh
       - name: Run tests using CTest
         run: |
           ctest --test-dir build --schedule-random
@@ -311,8 +311,8 @@ jobs:
       - name: Compute test dependency cache params
         id: test-deps-cache-params
         run: |
-          paths=$(test/fetch-test-deps.sh --get-paths)
-          hash=$(test/fetch-test-deps.sh --get-hash)
+          paths=$(test/external/fetch-repos.sh --get-paths)
+          hash=$(test/external/fetch-repos.sh --get-hash)
           tee -a <<<"paths=\"${paths//,/\\n}\"" $GITHUB_OUTPUT
           tee -a <<<"hash=${hash%-}" $GITHUB_OUTPUT
       - name: Check test dependency repositories cache
@@ -325,7 +325,7 @@ jobs:
         if: steps.test-deps-cache.outputs.cache-hit != 'true'
         continue-on-error: true
         run: |
-          test/fetch-test-deps.sh
+          test/external/fetch-repos.sh
       - name: Run tests
         run: |
           test/run-tests.sh --os ${{ matrix.os }}

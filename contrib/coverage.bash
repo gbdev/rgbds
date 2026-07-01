@@ -6,7 +6,7 @@ make coverage -j
 
 # Run the tests
 pushd test
-./fetch-test-deps.sh
+external/fetch-repos.sh
 if [[ $# -eq 0 ]]; then
   ./run-tests.sh
 else
