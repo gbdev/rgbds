@@ -27,16 +27,15 @@ foreach(component "asm" "link" "fix" "gfx")
 endforeach()
 set_tests_properties(rgbgfx PROPERTIES REQUIRED_FILES "$<TARGET_FILE:rgbgfx>;$<TARGET_FILE:randtilegen>;$<TARGET_FILE:rgbgfx_test>")
 
-add_test(NAME fetch-test-deps
+add_test(NAME fetch-free-deps
          COMMAND bash -- external/fetch-repos.sh --only-free
          WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}")
-set_tests_properties(fetch-test-deps PROPERTIES FIXTURES_SETUP "free-repos"
-                                                LABELS "external")
+set_tests_properties(fetch-free-deps PROPERTIES FIXTURES_SETUP "free-repos"
+                                                LABELS "external;free")
 add_test(NAME fetch-nonfree-deps
-         COMMAND bash -- external/fetch-repos.sh
+         COMMAND bash -- external/fetch-repos.sh --only-nonfree
          WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}")
-set_tests_properties(fetch-nonfree-deps PROPERTIES FIXTURES_SETUP "external-repos" # *All* external repos.
-                                                   FIXTURES_REQUIRED "free-repos" # Sequence after the other to avoid concurrent access.
+set_tests_properties(fetch-nonfree-deps PROPERTIES FIXTURES_SETUP "nonfree-repos"
                                                    LABELS "external;nonfree")
 
 file(GLOB ext_projects "external/*.cfg") # This will not be re-computed if a new project is added! You must manually reconfigure.
@@ -45,26 +44,27 @@ foreach(cfg_file IN LISTS ext_projects)
 
   # Parse the config file, using it to set some variables for more convenient access.
   file(STRINGS "${cfg_file}" proj_props REGEX "^[^# \t]*[^#]") # Ignore comments and empty lines.
-  foreach(line LIST proj_props)
-    string(REGEX MATCH "^[ \t]*EXT_TEST_([A-Za-z0-9_]+)=(.+)" matched "${line}")
-    set(${project}_${CMAKE_MATCH_1} "${CMAKE_MATCH_2}")
+  foreach(line IN LISTS proj_props)
+    string(REGEX MATCH "^[ \t]*EXT_TEST_([A-Za-z0-9_]+)=(.+)\$" matched "${line}")
+    if(NOT matched STREQUAL "")
+      set(${project}_${CMAKE_MATCH_1} "${CMAKE_MATCH_2}")
+    endif()
   endforeach()
+
+  # Wire it up according to whether it's free (as in speech) or not.
+  if(${project}_IS_NONFREE)
+    set(freedom "nonfree")
+  else()
+    set(freedom "free")
+  endif()
 
   add_test(NAME "${project}"
            COMMAND bash -- external/test.sh ${project}
            WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}")
   set_tests_properties(${project} PROPERTIES DEPENDS "rgbasm;rgblink;rgbfix;rgbgfx" # Only attempt building whole projects if each tool passes muster on its own.
                                              PROCESSORS 4
-                                             LABELS "external;${project}")
-
-  # Wire it up according to whether it's free (as in speech) or not.
-  if(${project}_IS_NONFREE)
-    set_property(TEST "${project}" APPEND PROPERTY LABELS "nonfree")
-    set_tests_properties("${project}" PROPERTIES FIXTURES_REQUIRED "external-repos")
-  else()
-    set_property(TEST "${project}" APPEND PROPERTY LABELS "free")
-    set_tests_properties("${project}" PROPERTIES FIXTURES_REQUIRED "free-repos")
-  endif()
+                                             LABELS "external;${project};${freedom}"
+                                             FIXTURES_REQUIRED "${freedom}-repos")
 endforeach()
 
 # gb-starter kit fails with any `make` on Windows: https://codeberg.org/ISSOtm/gb-starter-kit/issues/1
