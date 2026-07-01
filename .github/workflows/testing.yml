@@ -72,7 +72,7 @@ jobs:
         # Note that since this is specific to our CI environment, the workaround is
         # better applied here than in our CMakeLists, where it could affect and break someone else.
         run: |
-          CXX=${{ matrix.cxx }} cmake -B build -G Ninja --preset develop -DCMAKE_FIND_FRAMEWORK=LAST -DTESTS_OS_NAME=${{ matrix.os }}
+          CXX=${{ matrix.cxx }} cmake -B build -G Ninja --preset develop -DCMAKE_FIND_FRAMEWORK=LAST
           cmake --build build -- -k 0
       - name: Install using CMake
         if: matrix.buildsys == 'cmake'
@@ -133,7 +133,7 @@ jobs:
           enableCrossOsArchive: true
       - name: Build
         run: |
-          cmake -B build -G Ninja --preset macos-static -DFETCHCONTENT_BASE_DIR="${{ env.DEPS_ROOT_DIR }}" -DTESTS_OS_NAME=macos
+          cmake -B build -G Ninja --preset macos-static -DFETCHCONTENT_BASE_DIR="${{ env.DEPS_ROOT_DIR }}"
           cmake --build build -- -k 0
         env:
           LDFLAGS: -fuse-ld=lld # cmake/macos-static.cmake comments explain why we use lld.
@@ -197,7 +197,7 @@ jobs:
         shell: cmd
         run: | # ASan seems to be broken on Windows, so we disable it.
           call .github\scripts\msvc-env.bat ${{ matrix.bits }}
-          cmake -B build -G Ninja --preset develop -DSANITIZERS=OFF -DTESTS_OS_NAME=${{ matrix.os }} ^
+          cmake -B build -G Ninja --preset develop -DSANITIZERS=OFF ^
                 -DFETCHCONTENT_BASE_DIR="${{ env.DEPS_ROOT_DIR }}" -DCMAKE_C_FLAGS="/nologo"
           cmake --build build -- -k 0
       - name: Install
@@ -399,7 +399,7 @@ jobs:
           prepare: |
             .github/scripts/install_deps.sh freebsd
           run: | # Leak detection is not supported on FreeBSD, so disable it.
-            cmake -B build --preset develop -DTESTS_OS_NAME=freebsd
+            cmake -B build --preset develop
             cmake --build build --verbose -- -k -j 4
             ASAN_OPTIONS=detect_leaks=0 ctest --test-dir build --schedule-random --label-exclude external
             cmake --install build --verbose
