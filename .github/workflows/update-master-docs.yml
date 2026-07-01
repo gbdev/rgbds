@@ -19,12 +19,12 @@ jobs:
     runs-on: ubuntu-slim
     steps:
       - name: Checkout rgbds
-        uses: actions/checkout@v6
+        uses: actions/checkout@v6.0.3
         with:
           path: rgbds
           sparse-checkout: man # Avoid checking out other files, we don't use them here.
       - name: Checkout rgbds-www
-        uses: actions/checkout@v6
+        uses: actions/checkout@v6.0.3
         with:
           path: rgbds-www
           repository: ${{ github.repository_owner }}/rgbds-www

@@ -50,7 +50,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v6
+        uses: actions/checkout@v6.0.3
       - name: Install deps
         run: |
           .github/scripts/install_deps.sh ${{ matrix.os }} ${{ matrix.cxx }}
@@ -99,7 +99,7 @@ jobs:
           tee -a <<<"hash=${hash%-}" $GITHUB_OUTPUT
       - name: Check test dependency repositories cache
         id: test-deps-cache
-        uses: actions/cache@v5
+        uses: actions/cache@v5.0.5
         with:
           path: ${{ fromJSON(steps.test-deps-cache-params.outputs.paths) }}
           key: ${{ matrix.os }}-${{ steps.test-deps-cache-params.outputs.hash }}
@@ -121,12 +121,12 @@ jobs:
     runs-on: macos-26
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v6
+        uses: actions/checkout@v6.0.3
       - name: Install deps
         run: |
           .github/scripts/install_deps.sh macos lld
       - name: Cache library deps
-        uses: actions/cache@v5
+        uses: actions/cache@v5.0.5
         with:
           path: ${{ env.DEPS_ROOT_DIR }}/*-tmp/
           key: dep-srcs-${{ hashFiles('cmake/deps.cmake') }}
@@ -161,7 +161,7 @@ jobs:
           tee -a <<<"hash=${hash%-}" $GITHUB_OUTPUT
       - name: Check test dependency repositories cache
         id: test-deps-cache
-        uses: actions/cache@v5
+        uses: actions/cache@v5.0.5
         with:
           path: ${{ fromJSON(steps.test-deps-cache-params.outputs.paths) }}
           key: macos-26-${{ steps.test-deps-cache-params.outputs.hash }}
@@ -183,12 +183,12 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v6
+        uses: actions/checkout@v6.0.3
       - name: Install deps
         run: |
           bash .github/scripts/install_deps.sh ${{ matrix.os }}
       - name: Cache library deps
-        uses: actions/cache@v5
+        uses: actions/cache@v5.0.5
         with:
           path: ${{ env.DEPS_ROOT_DIR }}/*-tmp/
           key: dep-srcs-${{ hashFiles('cmake/deps.cmake') }}
@@ -224,7 +224,7 @@ jobs:
           tee -a <<<"hash=${hash%-}" $GITHUB_OUTPUT
       - name: Check test dependency repositories cache
         id: test-deps-cache
-        uses: actions/cache@v5
+        uses: actions/cache@v5.0.5
         with:
           path: ${{ fromJSON(steps.test-deps-cache-params.outputs.paths) }}
           key: ${{ matrix.os }}-${{ matrix.bits }}-${{ steps.test-deps-cache-params.outputs.hash }}
@@ -245,12 +245,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v6
+        uses: actions/checkout@v6.0.3
       - name: Install deps
         run: |
           .github/scripts/install_deps.sh ubuntu mingw${{ matrix.bits }}
       - name: Cache library deps
-        uses: actions/cache@v5
+        uses: actions/cache@v5.0.5
         with:
           path: ${{ env.DEPS_ROOT_DIR }}/*-tmp/
           key: dep-srcs-${{ hashFiles('cmake/deps.cmake') }}
@@ -290,7 +290,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v6
+        uses: actions/checkout@v6.0.3
       - name: Install test deps
         run: |
           .github/scripts/install_deps.sh windowsmingw
@@ -317,7 +317,7 @@ jobs:
           tee -a <<<"hash=${hash%-}" $GITHUB_OUTPUT
       - name: Check test dependency repositories cache
         id: test-deps-cache
-        uses: actions/cache@v5
+        uses: actions/cache@v5.0.5
         with:
           path: ${{ fromJSON(steps.test-deps-cache-params.outputs.paths) }}
           key: mingw-${{ matrix.bits }}-${{ steps.test-deps-cache-params.outputs.hash }}
@@ -351,7 +351,7 @@ jobs:
         run: | # The `cygwin/cygwin-install-action` step will override the PATH with Cygwin's binaries
           "ORIGINAL_GIT_DIR=$(Split-Path (Get-Command git).Source)" >> $env:GITHUB_ENV
       - name: Checkout repo
-        uses: actions/checkout@v6
+        uses: actions/checkout@v6.0.3
       - name: Setup Cygwin
         uses: cygwin/cygwin-install-action@v6
         with:
@@ -384,9 +384,9 @@ jobs:
     timeout-minutes: 30
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v6
+        uses: actions/checkout@v6.0.3
       - name: Build & test using CMake on FreeBSD
-        uses: vmactions/freebsd-vm@v1
+        uses: vmactions/freebsd-vm@v1.4.6
         with:
           envs: >-
             TERM CLICOLOR CLICOLOR_FORCE
