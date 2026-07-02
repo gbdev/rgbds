@@ -228,16 +228,16 @@ Each one is a binary RNG file which is passed to the `rgbgfx_test` program.
 Each `.cfg` file corresponds to one test.
 Each one defines the parameters for a real external project that builds using RGBDS.
 
-1. Make sure the downstream project supports
-   <code>make <var>&lt;target&gt;</var> RGBDS=<var>&lt;path/to/rgbds/&gt;</var></code>.
-   While the test suite supports any Make target name, only
-   [Make](//gnu.org/software/make) is currently supported, and the Makefile must
-   support a `RGBDS` variable to use a non-system RGBDS directory.
+1. Ensure that the downstream project supports a `RGBDS` variable to use a
+   non-system RGBDS directory, i.e.
+   <code>make <var>&lt;target&gt;</var> RGBDS=<var>&lt;path/to/rgbds/&gt;</var></code>,
+   as well as a `make clean` target to delete any build products.
+   Only [GNU Make](https://www.gnu.org/software/make/) is currently supported.
 2. Create the new `.cfg` file, following the existing ones.
 
-If an external project does not support `make RGBDS=`, or otherwise fails to
-build with current RGBDS, then then you can edit the project to build correctly,
-and create a patch with `git diff` to be committed as
+If an external project does not support `make RGBDS=` or `make clean`, or
+otherwise fails to build with current RGBDS, then then you can edit the project
+to build correctly, and create a patch with `git diff` to be committed as
 <code>test/external/patches/<var>&lt;project&gt;</var>.patch</code>.
 
 ## Container images

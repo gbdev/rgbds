@@ -7,10 +7,11 @@ usage() {
 	cat <<"EOF"
 Downloads source code of Game Boy project repos used as RGBDS test cases.
 Options:
-    -h, --help      show this help message
-    --only-free     download only freely licensed codebases
-    --get-hash      print repos' commit hashes instead of downloading them
-    --get-paths     print repos' clone paths instead of downloading them
+    -h, --help         show this help message
+    --only-free        download only freely licensed codebases
+    --only-nonfree     download only non-freely licensed codebases
+    --get-hash         print repos' commit hashes instead of downloading them
+    --get-paths        print repos' clone paths instead of downloading them
 EOF
 }
 

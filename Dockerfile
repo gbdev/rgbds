@@ -10,7 +10,7 @@ RUN apt-get update && \
 
 # Install dependencies and compile RGBDS
 RUN ./.github/scripts/install_deps.sh debian
-RUN make -j CXXFLAGS="-O3 -flto -DNDEBUG -static" PKG_CONFIG="pkg-config --static" Q=
+RUN make -j $(getconf _NPROCESSORS_ONLN) CXXFLAGS="-O3 -flto -DNDEBUG -static" PKG_CONFIG="pkg-config --static" Q=
 
 # Create the install script
 RUN make install.sh Q=
