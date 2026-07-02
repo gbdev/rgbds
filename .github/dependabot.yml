@@ -11,4 +11,9 @@ updates:
     groups:
       actions:
         patterns: [ "*" ]
+    ignore:
+      - dependency-name: "*"
+        update-types:
+          - "version-update:semver-minor"
+          - "version-update:semver-patch"
     labels: [ builds ] # Since those are CI-related updates...
