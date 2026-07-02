@@ -50,7 +50,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       - name: Install deps
         run: |
           .github/scripts/install_deps.sh ${{ matrix.os }} ${{ matrix.cxx }}
@@ -121,7 +121,7 @@ jobs:
     runs-on: macos-26
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       - name: Install deps
         run: |
           .github/scripts/install_deps.sh macos lld
@@ -183,7 +183,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       - name: Install deps
         run: |
           bash .github/scripts/install_deps.sh ${{ matrix.os }}
@@ -245,7 +245,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       - name: Install deps
         run: |
           .github/scripts/install_deps.sh ubuntu mingw${{ matrix.bits }}
@@ -290,7 +290,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       - name: Install test deps
         run: |
           .github/scripts/install_deps.sh windowsmingw
@@ -351,7 +351,7 @@ jobs:
         run: | # The `cygwin/cygwin-install-action` step will override the PATH with Cygwin's binaries
           "ORIGINAL_GIT_DIR=$(Split-Path (Get-Command git).Source)" >> $env:GITHUB_ENV
       - name: Checkout repo
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       - name: Setup Cygwin
         uses: cygwin/cygwin-install-action@v6
         with:
@@ -384,7 +384,7 @@ jobs:
     timeout-minutes: 30
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       - name: Build & test using CMake on FreeBSD
         uses: vmactions/freebsd-vm@v1
         with:
