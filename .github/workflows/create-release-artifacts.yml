@@ -14,7 +14,6 @@ env:
   # Approximate number of CPU cores in GitHub's runners as of 2026-03-18:
   # https://docs.github.com/en/actions/reference/runners/github-hosted-runners#standard-github-hosted-runners-for-public-repositories
   CMAKE_BUILD_PARALLEL_LEVEL: 4 # `cmake --build` now implies `--parallel 4`.
-  CMAKE_INSTALL_PARALLEL_LEVEL: 4 # `cmake --install` now implies `--parallel 4`.
   CMAKE_BUILD_TYPE: Release # `cmake -S` now implies `-DCMAKE_BUILD_TYPE=Release`.
   CMAKE_CONFIG_TYPE: Release # `cmake --build` now implies `--config Release`.
 
