@@ -11,7 +11,6 @@ env:
 
   CMAKE_COLOR_DIAGNOSTICS: ON # Tells CMake-generated build systems to have colored output.
   CMAKE_BUILD_PARALLEL_LEVEL: "" # `cmake --build` now implies `--parallel` (default number of logical CPUs).
-  CMAKE_INSTALL_PARALLEL_LEVEL: "" # `cmake --install` now implies `--parallel` (default number of logical CPUs).
   CMAKE_CONFIG_TYPE: Debug # `cmake --build` now implies `--config Debug`.
 
   CTEST_PARALLEL_LEVEL: "" # `ctest` now implies `--parallel` (default number of logical CPUs).
