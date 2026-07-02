@@ -20,7 +20,7 @@ jobs:
           .github/scripts/install_deps.sh ubuntu-latest lcov
       - name: Generate coverage report
         run: |
-          contrib/coverage.bash ubuntu-ci
+          contrib/coverage.bash --os ubuntu-latest --jobs "$(getconf _NPROCESSORS_ONLN)"
       - name: Upload coverage report
         uses: actions/upload-artifact@v7
         with:

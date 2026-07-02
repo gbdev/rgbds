@@ -9,6 +9,15 @@ else()
 endif()
 set(TESTS_OS_NAME "${TESTS_OS_NAME}" CACHE STRING "Skip running tests known to fail on this OS.")
 
+include(ProcessorCount)
+ProcessorCount(PROCESSOR_COUNT)
+if(PROCESSOR_COUNT EQUAL 0)
+  set(PROCESSOR_COUNT 4)
+  message(STATUS "Could not determine CPU count; defaulting to ${PROCESSOR_COUNT}.")
+else()
+  message(STATUS "Counted ${PROCESSOR_COUNT} logical CPU cores.")
+endif()
+
 add_executable(randtilegen gfx/randtilegen.cpp)
 add_executable(rgbgfx_test gfx/rgbgfx_test.cpp)
 set_target_properties(randtilegen rgbgfx_test PROPERTIES
@@ -29,7 +38,7 @@ foreach(component "asm" "link" "fix" "gfx")
            COMMAND bash -- test.sh
            WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/${component}")
   set_tests_properties("rgb${component}" PROPERTIES REQUIRED_FILES "$<TARGET_FILE:rgb${component}>"
-                                                    PROCESSORS 1
+                                                    PROCESSORS 1 # These cannot be parallelized.
                                                     LABELS "internal;free")
 endforeach()
 set_tests_properties(rgbgfx PROPERTIES REQUIRED_FILES "$<TARGET_FILE:rgbgfx>;$<TARGET_FILE:randtilegen>;$<TARGET_FILE:rgbgfx_test>")
@@ -69,10 +78,10 @@ foreach(cfg_file IN LISTS ext_projects)
   endif()
 
   add_test(NAME "${project}"
-           COMMAND bash -- external/test.sh ${project}
+           COMMAND bash -- external/test.sh ${project} -j "${PROCESSOR_COUNT}"
            WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}")
   set_tests_properties(${project} PROPERTIES DEPENDS "rgbasm;rgblink;rgbfix;rgbgfx" # Only attempt external tests after all individual tool tests.
-                                             PROCESSORS 4
+                                             PROCESSORS "${PROCESSOR_COUNT}"
                                              LABELS "external;${freedom}"
                                              FIXTURES_REQUIRED "${freedom}-repos")
 endforeach()
