@@ -10,10 +10,11 @@ env:
   CLICOLOR_FORCE: 1
 
   CMAKE_COLOR_DIAGNOSTICS: ON # Tells CMake-generated build systems to have colored output.
+  CMAKE_BUILD_PARALLEL_LEVEL: "" # `cmake --build` now implies `--parallel` (default number of logical CPUs).
+  CMAKE_INSTALL_PARALLEL_LEVEL: "" # `cmake --install` now implies `--parallel` (default number of logical CPUs).
   CMAKE_CONFIG_TYPE: Debug # `cmake --build` now implies `--config Debug`.
-  # Approximate number of CPU cores in GitHub's runners as of 2026-03-18:
-  # https://docs.github.com/en/actions/reference/runners/github-hosted-runners#standard-github-hosted-runners-for-public-repositories
-  CTEST_PARALLEL_LEVEL: 0 # `ctest` now implies `--parallel 0` (number of logical CPUs).
+
+  CTEST_PARALLEL_LEVEL: "" # `ctest` now implies `--parallel` (default number of logical CPUs).
   CTEST_NO_TESTS_ACTION: error # Make CTest fail if it cannot find any tests. (That should never happen.)
   CTEST_OUTPUT_ON_FAILURE: ON # CTest reports test program output on failure.
 
@@ -57,11 +58,11 @@ jobs:
       - name: Build using Make
         if: matrix.buildsys == 'make'
         run: |
-          make develop -kj Q= CXX=${{ matrix.cxx }}
+          make develop -k -j $(getconf _NPROCESSORS_ONLN) Q= CXX=${{ matrix.cxx }}
       - name: Install using Make
         if: matrix.buildsys == 'make'
         run: |
-          sudo make install -j Q=
+          sudo make install Q=
           type rgbasm rgblink rgbfix rgbgfx
           man -w 1 rgbasm rgblink rgbfix rgbgfx
       - name: Build using CMake
@@ -111,7 +112,7 @@ jobs:
       - name: Run tests using our script
         if: matrix.buildsys == 'make'
         run: |
-          CXX=${{ matrix.cxx }} test/run-tests.sh --os ${{ matrix.os }}
+          CXX=${{ matrix.cxx }} test/run-tests.sh --os ${{ matrix.os }} --jobs $(getconf _NPROCESSORS_ONLN)
       - name: Run tests using CTest
         if: matrix.buildsys == 'cmake'
         run: |
@@ -328,7 +329,7 @@ jobs:
           test/external/fetch-repos.sh
       - name: Run tests
         run: |
-          test/run-tests.sh --os ${{ matrix.os }}
+          test/run-tests.sh --os ${{ matrix.os }} --jobs $(getconf _NPROCESSORS_ONLN)
 
   cygwin:
     strategy:
@@ -365,15 +366,15 @@ jobs:
             pkg-config
       - name: Build
         run: | # Cygwin does not support `make develop` sanitizers ASan or UBSan
-          make -kj Q=
+          make -k -j $(getconf _NPROCESSORS_ONLN) Q=
       - name: Install
         run: |
-          make install -j Q=
+          make install Q=
           type rgbasm rgblink rgbfix rgbgfx
           man -w 1 rgbasm rgblink rgbfix rgbgfx
       - name: Run tests
         run: |
-          test/run-tests.sh --only-internal
+          test/run-tests.sh --os cygwin --jobs $(getconf _NPROCESSORS_ONLN) --only-internal
       - name: Use Windows git location in the PATH
         shell: pwsh
         run: | # Prevents the `actions/checkout` post-job cleanup from using Cygwin's git binary
@@ -400,7 +401,7 @@ jobs:
             .github/scripts/install_deps.sh freebsd
           run: | # Leak detection is not supported on FreeBSD, so disable it.
             cmake -B build --preset develop
-            cmake --build build --verbose -- -k -j 4
+            cmake --build build --verbose -- -k -j $(getconf _NPROCESSORS_ONLN)
             ASAN_OPTIONS=detect_leaks=0 ctest --test-dir build --schedule-random --label-exclude external
             cmake --install build --verbose
             type rgbasm rgblink rgbfix rgbgfx

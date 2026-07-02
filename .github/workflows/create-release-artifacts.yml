@@ -11,10 +11,8 @@ env:
   CLICOLOR_FORCE: 1
 
   CMAKE_COLOR_DIAGNOSTICS: ON # Tells CMake-generated build systems to have colored output.
-  # Approximate number of CPU cores in GitHub's runners as of 2026-03-18:
-  # https://docs.github.com/en/actions/reference/runners/github-hosted-runners#standard-github-hosted-runners-for-public-repositories
-  CMAKE_BUILD_PARALLEL_LEVEL: 4 # `cmake --build` now implies `--parallel 4`.
-  CMAKE_INSTALL_PARALLEL_LEVEL: 4 # `cmake --install` now implies `--parallel 4`.
+  CMAKE_BUILD_PARALLEL_LEVEL: "" # `cmake --build` now implies `--parallel` (default number of logical CPUs).
+  CMAKE_INSTALL_PARALLEL_LEVEL: "" # `cmake --install` now implies `--parallel` (default number of logical CPUs).
   CMAKE_BUILD_TYPE: Release # `cmake -S` now implies `-DCMAKE_BUILD_TYPE=Release`.
   CMAKE_CONFIG_TYPE: Release # `cmake --build` now implies `--config Release`.
 
@@ -93,7 +91,7 @@ jobs:
           ./.github/scripts/install_deps.sh ubuntu-22.04
       - name: Build binaries
         run: |
-          make -kj WARNFLAGS="-Wall -Wextra -pedantic -static" PKG_CONFIG="pkg-config --static" Q=
+          make -k -j $(getconf _NPROCESSORS_ONLN) WARNFLAGS="-Wall -Wextra -pedantic -static" PKG_CONFIG="pkg-config --static" Q=
           strip rgb{asm,link,fix,gfx}
       - name: Create install script
         run: |

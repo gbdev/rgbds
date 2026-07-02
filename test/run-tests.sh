@@ -16,6 +16,7 @@ Options:
     --only-internal       only run tests that build local examples
     --only-external       only run tests that build external codebases
     --only-free           skip tests that build nonfree codebases
+    --jobs <n>            build external codebases with `make -j<n>`
     --os <os>             skip tests known to fail on <os> (e.g. `macos-14`)
     --installed-rgbds     use the system installed RGBDS
                           (only compatible with external codebases)
@@ -28,6 +29,7 @@ nonfree=true
 internal=true
 external=true
 installedrgbds=false
+make_jobs=
 osname=
 while [[ $# -gt 0 ]]; do
 	case "$1" in
@@ -46,6 +48,10 @@ while [[ $# -gt 0 ]]; do
 			;;
 		--installed-rgbds)
 			installedrgbds=true
+			;;
+		--jobs)
+			shift
+			make_jobs="-j$1"
 			;;
 		--os)
 			shift
@@ -122,6 +128,6 @@ for cfg in *.cfg; do (
 
 	# Run nonfree tests only if they are opted into.
 	if ! "$EXT_TEST_IS_NONFREE" || "$nonfree"; then
-		./test.sh "$test_name"
+		./test.sh "$test_name" "$make_jobs"
 	fi
 ); done
