@@ -42,9 +42,9 @@ static uint8_t const utf8d[] = {
 };
 // clang-format on
 
-uint32_t decode(uint32_t *state, uint32_t *codep, uint8_t byte) {
+uint32_t Utf8Decoder::update(uint8_t byte) {
 	uint8_t type = utf8d[byte];
-	*codep = *state != UTF8_ACCEPT ? (byte & 0b111111) | (*codep << 6) : (0xff >> type) & byte;
-	*state = utf8d[0x100 + *state + type];
-	return *state;
+	codepoint = state != UTF8_ACCEPT ? (byte & 0b111111) | (codepoint << 6) : (0xff >> type) & byte;
+	state = utf8d[0x100 + state + type];
+	return state;
 }

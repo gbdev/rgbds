@@ -279,18 +279,17 @@ static void errorInvalidUTF8Byte(uint8_t byte, char const *functionName) {
 
 size_t act_StringLen(std::string const &str, bool printErrors) {
 	size_t len = 0;
-	uint32_t state = UTF8_ACCEPT;
-	uint32_t codepoint = 0;
+	Utf8Decoder decoder;
 
 	for (char c : str) {
 		uint8_t byte = static_cast<uint8_t>(c);
 
-		switch (decode(&state, &codepoint, byte)) {
+		switch (decoder.update(byte)) {
 		case UTF8_REJECT:
 			if (printErrors) {
 				errorInvalidUTF8Byte(byte, "STRLEN");
 			}
-			state = UTF8_ACCEPT;
+			decoder.state = UTF8_ACCEPT;
 			// fallthrough
 		case UTF8_ACCEPT:
 			++len;
@@ -299,7 +298,7 @@ size_t act_StringLen(std::string const &str, bool printErrors) {
 	}
 
 	// Check for partial code point.
-	if (state != UTF8_ACCEPT) {
+	if (decoder.state != UTF8_ACCEPT) {
 		if (printErrors) {
 			error("STRLEN: Incomplete UTF-8 character");
 		}
@@ -317,16 +316,15 @@ std::string
 
 	size_t strLen = str.length();
 	size_t index = 0;
-	uint32_t state = UTF8_ACCEPT;
-	uint32_t codepoint = 0;
+	Utf8Decoder decoder;
 	uint32_t curIdx = 0;
 
 	// Advance to starting index in source string.
 	while (index < strLen && curIdx < start) {
-		switch (decode(&state, &codepoint, str[index])) {
+		switch (decoder.update(str[index])) {
 		case UTF8_REJECT:
 			errorInvalidUTF8Byte(str[index], "STRSLICE");
-			state = UTF8_ACCEPT;
+			decoder.state = UTF8_ACCEPT;
 			// fallthrough
 		case UTF8_ACCEPT:
 			++curIdx;
@@ -349,10 +347,10 @@ std::string
 
 	// Advance to ending index in source string.
 	while (index < strLen && curIdx < stop) {
-		switch (decode(&state, &codepoint, str[index])) {
+		switch (decoder.update(str[index])) {
 		case UTF8_REJECT:
 			errorInvalidUTF8Byte(str[index], "STRSLICE");
-			state = UTF8_ACCEPT;
+			decoder.state = UTF8_ACCEPT;
 			// fallthrough
 		case UTF8_ACCEPT:
 			++curIdx;
@@ -362,7 +360,7 @@ std::string
 	}
 
 	// Check for partial code point.
-	if (state != UTF8_ACCEPT) {
+	if (decoder.state != UTF8_ACCEPT) {
 		error("STRSLICE: Incomplete UTF-8 character");
 		++curIdx;
 	}
@@ -387,16 +385,15 @@ std::string act_StringSub(std::string const &str, int32_t negPos, std::optional<
 
 	size_t strLen = str.length();
 	size_t index = 0;
-	uint32_t state = UTF8_ACCEPT;
-	uint32_t codepoint = 0;
+	Utf8Decoder decoder;
 	uint32_t curPos = 1;
 
 	// Advance to starting position in source string.
 	while (index < strLen && curPos < pos) {
-		switch (decode(&state, &codepoint, str[index])) {
+		switch (decoder.update(str[index])) {
 		case UTF8_REJECT:
 			errorInvalidUTF8Byte(str[index], "STRSUB");
-			state = UTF8_ACCEPT;
+			decoder.state = UTF8_ACCEPT;
 			// fallthrough
 		case UTF8_ACCEPT:
 			++curPos;
@@ -418,10 +415,10 @@ std::string act_StringSub(std::string const &str, int32_t negPos, std::optional<
 
 	// Compute the result length in bytes.
 	while (index < strLen && curLen < len) {
-		switch (decode(&state, &codepoint, str[index])) {
+		switch (decoder.update(str[index])) {
 		case UTF8_REJECT:
 			errorInvalidUTF8Byte(str[index], "STRSUB");
-			state = UTF8_ACCEPT;
+			decoder.state = UTF8_ACCEPT;
 			// fallthrough
 		case UTF8_ACCEPT:
 			++curLen;
@@ -431,7 +428,7 @@ std::string act_StringSub(std::string const &str, int32_t negPos, std::optional<
 	}
 
 	// Check for partial code point.
-	if (state != UTF8_ACCEPT) {
+	if (decoder.state != UTF8_ACCEPT) {
 		error("STRSUB: Incomplete UTF-8 character");
 		++curLen;
 	}
