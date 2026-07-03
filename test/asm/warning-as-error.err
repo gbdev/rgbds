@@ -8,3 +8,4 @@ error: warning or error? [-Werror=user]
     at warning-as-error.asm::test(5) <- warning-as-error.asm(11)
 warning: warning or error? [-Wuser]
     at warning-as-error.asm::test(5) <- warning-as-error.asm(14)
+Assembly aborted with 2 errors

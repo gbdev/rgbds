@@ -54,3 +54,4 @@ error: Expression must be 8-bit; use `LOW()` to force 8-bit [-Werror=truncation]
     at warn-truncation.asm::try(30) <- warn-truncation.asm(40)
 error: Expression must be 16-bit [-Werror=truncation]
     at warn-truncation.asm::try(31) <- warn-truncation.asm(40)
+Assembly aborted with 12 errors

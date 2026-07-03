@@ -171,6 +171,8 @@ void warning(WarningID id, char const *fmt, ...) {
 
 	case WarningBehavior::ERROR:
 		printDiag(fmt, args, "error", STYLE_RED, "[-Werror=%s]", flag);
+
+		incrementErrors();
 		break;
 	}
 
