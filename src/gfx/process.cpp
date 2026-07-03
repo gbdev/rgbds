@@ -691,7 +691,7 @@ static void outputUnoptimizedMaps(
 			file.emplace();
 			if (!file->open(path, std::ios_base::out | std::ios_base::binary)) {
 				// LCOV_EXCL_START
-				fatal("Failed to create \"%s\": %s", file->c_str(options.tilemap), strerror(errno));
+				fatal("Failed to create \"%s\": %s", file->c_str(path), strerror(errno));
 				// LCOV_EXCL_STOP
 			}
 		}
