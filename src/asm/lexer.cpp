@@ -63,7 +63,7 @@ struct Token {
 		);
 	}
 	Token(int type_, uint32_t value_) : type(type_), value(value_) { assume(type == T_(NUMBER)); }
-	Token(int type_, std::string const &value_) : type(type_), value(std::move(value_)) {
+	Token(int type_, std::string const &value_) : type(type_), value(value_) {
 		assume(type == T_(STRING) || type == T_(CHARACTER));
 	}
 	Token(int type_, std::string &&value_) : type(type_), value(std::move(value_)) {
