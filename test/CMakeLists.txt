@@ -45,7 +45,7 @@ add_test(NAME fetch-nonfree-deps
 set_tests_properties(fetch-nonfree-deps PROPERTIES FIXTURES_SETUP "nonfree-repos"
                                                    LABELS "external;nonfree")
 
-file(GLOB ext_projects "external/*.cfg") # This will not be re-computed if a new project is added! You must manually reconfigure.
+file(GLOB ext_projects CONFIGURE_DEPENDS "external/*.cfg")
 foreach(cfg_file IN LISTS ext_projects)
   cmake_path(GET cfg_file STEM LAST_ONLY project) # Extract the project's name from the config file's name.
 
