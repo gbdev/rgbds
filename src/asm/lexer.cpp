@@ -50,12 +50,6 @@ struct Token {
 	int type;
 	std::variant<std::monostate, InternedStr, uint32_t, std::string> value;
 
-	Token() : type(T_(NUMBER)), value(std::monostate{}) {
-		assume(
-		    type != T_(NUMBER) && type != T_(STRING) && type != T_(CHARACTER) && type != T_(SYMBOL)
-		    && type != T_(LABEL) && type != T_(LOCAL) && type != T_(ANON) && type != T_(QMACRO)
-		);
-	}
 	Token(int type_) : type(type_), value(std::monostate{}) {
 		assume(
 		    type != T_(NUMBER) && type != T_(STRING) && type != T_(CHARACTER) && type != T_(SYMBOL)
