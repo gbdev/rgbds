@@ -41,15 +41,7 @@ public:
 		return std::holds_alternative<std::filebuf>(_file) ? std::get<std::filebuf>(_file)
 		                                                   : *std::get<std::streambuf *>(_file);
 	}
-	std::streambuf const &operator*() const {
-		// The non-`const` version does not perform any modifications, so it's okay.
-		return **const_cast<File *>(this);
-	}
 	std::streambuf *operator->() { return &**this; }
-	std::streambuf const *operator->() const {
-		// See the `operator*` equivalent.
-		return const_cast<File *>(this)->operator->();
-	}
 
 	char const *c_str(std::string const &path) const {
 		return std::holds_alternative<std::filebuf>(_file)             ? path.c_str()
