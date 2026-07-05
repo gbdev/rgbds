@@ -15,9 +15,20 @@
 
 #include "helpers.hpp"
 #include "itertools.hpp"
+#include "style.hpp"
 
 [[gnu::format(printf, 1, 2)]]
 void warnx(char const *fmt, ...);
+[[gnu::format(printf, 1, 0)]]
+void vwarnx(char const *fmt, va_list args);
+[[gnu::format(printf, 1, 2)]]
+void errorx(char const *fmt, ...);
+[[gnu::format(printf, 1, 0)]]
+void verrorx(char const *fmt, va_list args);
+[[gnu::format(printf, 1, 2)]]
+void fatalx(char const *fmt, ...);
+[[gnu::format(printf, 1, 0)]]
+void vfatalx(char const *fmt, va_list args);
 
 enum WarningAbled { WARNING_DEFAULT, WARNING_ENABLED, WARNING_DISABLED };
 
@@ -206,6 +217,45 @@ void Diagnostics<LevelEnumT, WarningEnumT>::processWarningFlag(char const *flag)
 	}
 
 	warnx("Unknown warning flag \"%s\"", rootFlag.c_str());
+}
+
+template<Enum LevelEnumT, Enum WarningEnumT>
+[[gnu::format(printf, 3, 0)]]
+WarningBehavior printDiagnostic(
+    Diagnostics<LevelEnumT, WarningEnumT> const &warnings,
+    WarningEnumT id,
+    char const *fmt,
+    va_list args
+) {
+	char const *flag = warnings.warningFlags[id].name;
+	WarningBehavior behavior = warnings.getWarningBehavior(id);
+
+	switch (behavior) {
+	case WarningBehavior::DISABLED:
+		break;
+
+	case WarningBehavior::ENABLED:
+		style_Set(stderr, STYLE_YELLOW, true);
+		fputs("warning: ", stderr);
+		style_Reset(stderr);
+		vfprintf(stderr, fmt, args);
+		style_Set(stderr, STYLE_YELLOW, true);
+		fprintf(stderr, " [-W%s]\n", flag);
+		style_Reset(stderr);
+		break;
+
+	case WarningBehavior::ERROR:
+		style_Set(stderr, STYLE_RED, true);
+		fputs("error: ", stderr);
+		style_Reset(stderr);
+		vfprintf(stderr, fmt, args);
+		style_Set(stderr, STYLE_RED, true);
+		fprintf(stderr, " [-Werror=%s]\n", flag);
+		style_Reset(stderr);
+		break;
+	}
+
+	return behavior;
 }
 
 #endif // RGBDS_DIAGNOSTICS_HPP
