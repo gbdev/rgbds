@@ -121,7 +121,8 @@ static std::vector<std::string> sectErrors;
 // `snprintf`; but passing `fmt` to `snprintf` triggers a `-Wformat-security` warning which we
 // can't prevent because GCC only supports the `[[gnu::format(printf, 1, 2)]]` attribute on
 // C-style variadic functions, not on variadic templates; so we have to use `vsnprintf`.
-void sectError(char const *fmt, ...) {
+[[gnu::format(printf, 1, 2)]]
+static void sectError(char const *fmt, ...) {
 	std::string result;
 	va_list args1, args2;
 	va_start(args1, fmt);
