@@ -22,7 +22,7 @@ if ! cd "$EXT_TEST_REPO"; then
 fi
 
 RGBDS_PATH="RGBDS=../../../"
-make clean $RGBDS_PATH
+git clean -fdx # Clean any previous build products so `make` rebuilds everything from scratch.
 make -j4 "$EXT_TEST_TARGET" $RGBDS_PATH
 
 hash="$(sha1sum -b "$EXT_TEST_FILE" | head -c 40)"
