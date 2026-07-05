@@ -61,28 +61,6 @@ Diagnostics<WarningLevel, WarningID> warnings = {
 };
 // clang-format on
 
-static void printDiag(
-    char const *fmt,
-    va_list args,
-    char const *type,
-    StyleColor color,
-    char const *flagfmt,
-    char const *flag
-) {
-	style_Set(stderr, color, true);
-	fprintf(stderr, "%s: ", type);
-	style_Reset(stderr);
-	vfprintf(stderr, fmt, args);
-	if (flagfmt) {
-		style_Set(stderr, color, true);
-		putc(' ', stderr);
-		fprintf(stderr, flagfmt, flag);
-	}
-	putc('\n', stderr);
-
-	fstk_TraceCurrent();
-}
-
 static void incrementErrors() {
 	// This intentionally makes 0 act as "unlimited"
 	warnings.incrementErrors();
@@ -103,11 +81,11 @@ static void incrementErrors() {
 
 void error(char const *fmt, ...) {
 	va_list args;
-
 	va_start(args, fmt);
-	printDiag(fmt, args, "error", STYLE_RED, nullptr, nullptr);
+	verrorx(fmt, args);
 	va_end(args);
 
+	fstk_TraceCurrent();
 	incrementErrors();
 }
 
@@ -115,19 +93,19 @@ void errorNoTrace(std::function<void()> callback) {
 	style_Set(stderr, STYLE_RED, true);
 	fputs("error: ", stderr);
 	style_Reset(stderr);
-	callback();
 
+	callback();
 	incrementErrors();
 }
 
 [[noreturn]]
 void fatal(char const *fmt, ...) {
 	va_list args;
-
 	va_start(args, fmt);
-	printDiag(fmt, args, "FATAL", STYLE_RED, nullptr, nullptr);
+	vfatalx(fmt, args);
 	va_end(args);
 
+	fstk_TraceCurrent();
 	exit(1);
 }
 
@@ -136,8 +114,8 @@ void fatalNoTrace(std::function<void()> callback) {
 	style_Set(stderr, STYLE_RED, true);
 	fputs("FATAL: ", stderr);
 	style_Reset(stderr);
-	callback();
 
+	callback();
 	exit(1);
 }
 
@@ -156,25 +134,15 @@ void requireZeroErrors() {
 }
 
 void warning(WarningID id, char const *fmt, ...) {
-	char const *flag = warnings.warningFlags[id].name;
 	va_list args;
-
 	va_start(args, fmt);
-
-	switch (warnings.getWarningBehavior(id)) {
-	case WarningBehavior::DISABLED:
-		break;
-
-	case WarningBehavior::ENABLED:
-		printDiag(fmt, args, "warning", STYLE_YELLOW, "[-W%s]", flag);
-		break;
-
-	case WarningBehavior::ERROR:
-		printDiag(fmt, args, "error", STYLE_RED, "[-Werror=%s]", flag);
-
-		incrementErrors();
-		break;
-	}
-
+	WarningBehavior behavior = printDiagnostic(warnings, id, fmt, args);
 	va_end(args);
+
+	if (behavior != WarningBehavior::DISABLED) {
+		fstk_TraceCurrent();
+		if (behavior == WarningBehavior::ERROR) {
+			incrementErrors();
+		}
+	}
 }
