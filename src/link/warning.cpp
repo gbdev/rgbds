@@ -212,16 +212,18 @@ void scriptWarning(WarningID id, char const *fmt, ...) {
 
 	case WarningBehavior::ENABLED:
 		printDiag(nullptr, 0, fmt, args, "warning", STYLE_YELLOW, "[-W%s]", flag);
+
+		lexer_TraceCurrent();
 		break;
 
 	case WarningBehavior::ERROR:
 		printDiag(nullptr, 0, fmt, args, "error", STYLE_RED, "[-Werror=%s]", flag);
 
+		lexer_TraceCurrent();
 		warnings.incrementErrors();
 		break;
 	}
 
 	va_end(args);
 
-	lexer_TraceCurrent();
 }

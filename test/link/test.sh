@@ -93,19 +93,24 @@ for i in *.asm; do
 	startTest
 	"$RGBASM" -o "$otemp" "${test}.asm"
 
+	RGBLINKFLAGS=""
+	if [ -f "${test}.flags" ]; then
+		RGBLINKFLAGS="$RGBLINKFLAGS @${test}.flags"
+	fi
+
 	# Some tests have variants depending on flags
 	ran_flag=false
 	for flag in '-d' '-t' '-w'; do
 		if [ -f "${test}-no${flag}.out" ]; then
 			continueTest "-no${flag}"
-			rgblinkQuiet -o "$gbtemp" "$otemp" 2>"$outtemp"
+			rgblinkQuiet $RGBLINKFLAGS -o "$gbtemp" "$otemp" 2>"$outtemp"
 			tryDiff "${test}-no${flag}.out" "$outtemp"
 			evaluateTest
 			ran_flag=true
 		fi
 		if [ -f "${test}${flag}.out" ]; then
 			continueTest "$flag"
-			rgblinkQuiet ${flag} -o "$gbtemp" "$otemp" 2>"$outtemp"
+			rgblinkQuiet $RGBLINKFLAGS ${flag} -o "$gbtemp" "$otemp" 2>"$outtemp"
 			tryDiff "${test}${flag}.out" "$outtemp"
 			evaluateTest
 			ran_flag=true
@@ -120,7 +125,7 @@ for i in *.asm; do
 		[[ -e "$script" ]] || break # If the glob doesn't match, it just... doesn't expand!
 
 		continueTest "${script#${test}}"
-		rgblinkQuiet -l "$script" -o "$gbtemp" "$otemp" 2>"$outtemp"
+		rgblinkQuiet $RGBLINKFLAGS -l "$script" -o "$gbtemp" "$otemp" 2>"$outtemp"
 		tryDiff "${script%.link}.out" "$outtemp"
 		evaluateTest
 		ran_flag=true
@@ -131,7 +136,7 @@ for i in *.asm; do
 
 	# The rest of the tests just links a file, and maybe checks the binary
 	continueTest
-	rgblinkQuiet -o "$gbtemp" "$otemp" 2>"$outtemp"
+	rgblinkQuiet $RGBLINKFLAGS -o "$gbtemp" "$otemp" 2>"$outtemp"
 	tryDiff "${test}.out" "$outtemp"
 	bin=${test}.out.bin
 	if [ -f "$bin" ]; then
