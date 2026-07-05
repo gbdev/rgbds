@@ -65,7 +65,6 @@ rgbds/
 ├── .clang-tidy
 ├── CMakeLists.txt
 ├── CMakePresets.json
-├── compile_flags.txt
 ├── Dockerfile
 └── Makefile
 ```
@@ -129,8 +128,6 @@ rgbds/
   Defines how to build RGBDS with CMake.
 - **`CMakePresets.json`:**  
   Defines some [presets](https://cmake.org/cmake/help/latest/manual/cmake-presets.7.html) useful for working with our CMake.
-- **`compile_flags.txt`:**  
-  Compiler flags for `clang-tidy`.
 - **`Dockerfile`:**  
   Defines how to build RGBDS with Docker (which we do in CI to provide a [container image](https://github.com/gbdev/rgbds/pkgs/container/rgbds)).
 - **`Makefile`:**  

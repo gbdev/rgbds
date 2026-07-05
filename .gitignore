@@ -11,6 +11,7 @@
 *.gcno
 *.gcda
 *.gcov
+/compile_flags.txt
 CMakeCache.txt
 CMakeFiles/
 cmake_install.cmake
