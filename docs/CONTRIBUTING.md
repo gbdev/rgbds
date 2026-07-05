@@ -142,6 +142,10 @@ linked in various ways depending on the test.
 
 These simply check that RGBLINK's output matches some expected output.
 
+If a `.flags` file exists, its first line contains flags to pass to RGBLINK.
+(There may be more lines, which will be ignored; they can serve as comments to
+explain what the test is about.)
+
 A `.out` file **must** exist, and RGBLINK's total output must match that file's
 contents.
 
