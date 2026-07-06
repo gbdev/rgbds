@@ -227,9 +227,9 @@ static int32_t tryConstMask(Expression const &lhs, Expression const &rhs) {
 		return -1;
 	}
 
-	assume(sym.isNumeric());
+	assume(sym.type == SYM_LABEL);
+	// We can now safely use `expr.value()` and `sym.getSection()`
 
-	// We can now safely use `expr.value()`
 	int32_t mask = expr.value();
 
 	// The mask must not cover any unknown bits
