@@ -11,8 +11,7 @@ input="$(mktemp)"
 output="$(mktemp)"
 errput="$(mktemp)"
 
-# Immediate expansion is the desired behavior.
-# shellcheck disable=SC2064
+# shellcheck disable=SC2064 # (Immediate expansion is the desired behavior.)
 trap "rm -f ${o@Q} ${gb@Q} ${input@Q} ${output@Q} ${errput@Q}" EXIT
 
 tests=0
@@ -91,11 +90,7 @@ for i in *.asm notexist.asm; do
 				continue
 			fi
 
-			# Stop! This is not a Useless Use Of Cat. Using cat instead of
-			# stdin redirection makes the input an unseekable pipe - a scenario
-			# that's harder to deal with and was broken when the feature was
-			# first implemented.
-			# shellcheck disable=SC2002
+			# shellcheck disable=SC2002 # (This use of `cat` intentionally makes the input an unseekable pipe.)
 			cat "$i" | "$RGBASM" "${RGBASMFLAGS[@]}" -o "$o" - >"$output" 2>"$errput"
 
 			# Use two otherwise unused files for temp storage
@@ -230,7 +225,7 @@ for variant in '' '.pipe'; do
 	if [ -z "$variant" ]; then
 		"$RGBASM" "${RGBASMFLAGS[@]}" -s "$state_features:$state_outname" "$i"/a.asm >"$output" 2>"$errput"
 	else
-		# shellcheck disable=SC2002
+		# shellcheck disable=SC2002 # (This use of `cat` intentionally makes the input an unseekable pipe.)
 		cat "$i"/a.asm | "$RGBASM" "${RGBASMFLAGS[@]}" -s "$state_features:$state_outname" - >"$output" 2>"$errput"
 	fi
 
