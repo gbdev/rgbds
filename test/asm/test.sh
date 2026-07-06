@@ -61,9 +61,9 @@ else
 fi
 
 for i in *.asm notexist.asm; do
-	RGBASMFLAGS="-Weverything -Bcollapse"
+	RGBASMFLAGS=(-Weverything -Bcollapse)
 	if [ -f "${i%.asm}.flags" ]; then
-		RGBASMFLAGS="$RGBASMFLAGS @${i%.asm}.flags"
+		RGBASMFLAGS+=("@${i%.asm}.flags")
 	fi
 	for variant in '' ' piped'; do
 		(( tests++ ))
@@ -79,7 +79,7 @@ for i in *.asm notexist.asm; do
 			desired_errname=/dev/null
 		fi
 		if [ -z "$variant" ]; then
-			"$RGBASM" $RGBASMFLAGS -o "$o" "$i" >"$output" 2>"$errput"
+			"$RGBASM" "${RGBASMFLAGS[@]}" -o "$o" "$i" >"$output" 2>"$errput"
 			desired_output=$desired_outname
 			desired_errput=$desired_errname
 		else
@@ -96,7 +96,7 @@ for i in *.asm notexist.asm; do
 			# that's harder to deal with and was broken when the feature was
 			# first implemented.
 			# shellcheck disable=SC2002
-			cat "$i" | "$RGBASM" $RGBASMFLAGS -o "$o" - >"$output" 2>"$errput"
+			cat "$i" | "$RGBASM" "${RGBASMFLAGS[@]}" -o "$o" - >"$output" 2>"$errput"
 
 			# Use two otherwise unused files for temp storage
 			desired_output="$input"
@@ -162,10 +162,10 @@ done
 # These tests do their own thing
 
 i="invalid-source-date-epoch"
-RGBASMFLAGS="-Weverything -Bcollapse"
+RGBASMFLAGS=(-Weverything -Bcollapse)
 (( tests++ ))
 echo "${bold}${green}${i}...${rescolors}${resbold}"
-SOURCE_DATE_EPOCH=0x1234 "$RGBASM" $RGBASMFLAGS /dev/null >"$output" 2>"$errput"
+SOURCE_DATE_EPOCH=0x1234 "$RGBASM" "${RGBASMFLAGS[@]}" /dev/null >"$output" 2>"$errput"
 tryDiff /dev/null "$output" out
 our_rc=$?
 tryDiff invalid-source-date-epoch.err "$errput" err
@@ -177,15 +177,15 @@ fi
 
 evaluateDepTest () {
 	i="$1"
-	RGBASMFLAGS="-Weverything -Bcollapse -M -"
+	RGBASMFLAGS=(-Weverything -Bcollapse -M -)
 	if [ -f "$i/a.flags" ]; then
-		RGBASMFLAGS="$RGBASMFLAGS @$i/a.flags"
+		RGBASMFLAGS+=("@$i/a.flags")
 	fi
 	# Piping the .asm file to rgbasm would not make sense for dependency generation,
 	# so just test the normal variant
 	(( tests++ ))
 	echo "${bold}${green}${i}...${rescolors}${resbold}"
-	"$RGBASM" $RGBASMFLAGS -o "$o" "$i"/a.asm >"$output" 2>"$errput"
+	"$RGBASM" "${RGBASMFLAGS[@]}" -o "$o" "$i"/a.asm >"$output" 2>"$errput"
 
 	fixed_output="$input"
 	if type -t cygpath >/dev/null; then
@@ -223,15 +223,15 @@ else
 	state_outname="$o"
 fi
 state_features="  all  " # Test trimming whitespace
-RGBASMFLAGS="-Weverything -Bcollapse"
+RGBASMFLAGS=(-Weverything -Bcollapse)
 for variant in '' '.pipe'; do
 	(( tests++ ))
 	echo "${bold}${green}${i%.asm}${variant}...${rescolors}${resbold}"
 	if [ -z "$variant" ]; then
-		"$RGBASM" $RGBASMFLAGS -s "$state_features:$state_outname" "$i"/a.asm >"$output" 2>"$errput"
+		"$RGBASM" "${RGBASMFLAGS[@]}" -s "$state_features:$state_outname" "$i"/a.asm >"$output" 2>"$errput"
 	else
 		# shellcheck disable=SC2002
-		cat "$i"/a.asm | "$RGBASM" $RGBASMFLAGS -s "$state_features:$state_outname" - >"$output" 2>"$errput"
+		cat "$i"/a.asm | "$RGBASM" "${RGBASMFLAGS[@]}" -s "$state_features:$state_outname" - >"$output" 2>"$errput"
 	fi
 
 	tryDiff /dev/null "$output" out

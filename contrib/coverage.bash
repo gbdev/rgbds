@@ -28,12 +28,12 @@ while [[ $# -gt 0 ]]; do
 			;;
 		--jobs)
 			shift
-			make_args+=("-j" "$1")
-			runtests_args+=("--jobs" "$1")
+			make_args+=(-j "$1")
+			runtests_args+=(--jobs "$1")
 			;;
 		--os)
 			shift
-			runtests_args+=("--os" "$1")
+			runtests_args+=(--os "$1")
 			;;
 		*)
 			echo "$(basename "$0"): unknown option '$1'"
