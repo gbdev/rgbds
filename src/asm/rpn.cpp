@@ -375,8 +375,7 @@ void Expression::makeBinaryOp(RPNCommand op, Expression &&src1, Expression const
 		case RPN_DIV:
 			if (rval == 0) {
 				fatal("Division by zero");
-			}
-			if (lval == INT32_MIN && rval == -1) {
+			} else if (lval == INT32_MIN && rval == -1) {
 				warning(
 				    WARNING_DIV,
 				    "Division of %" PRId32 " by -1 yields %" PRId32,
@@ -391,8 +390,8 @@ void Expression::makeBinaryOp(RPNCommand op, Expression &&src1, Expression const
 		case RPN_MOD:
 			if (rval == 0) {
 				fatal("Modulo by zero");
-			}
-			if (lval == INT32_MIN && rval == -1) {
+			} else if (lval == INT32_MIN && rval == -1) {
+				warning(WARNING_DIV, "Modulo of %" PRId32 " by -1 yields 0", INT32_MIN);
 				data = 0;
 			} else {
 				data = op_modulo(lval, rval);

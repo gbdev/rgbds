@@ -6,9 +6,11 @@
 
 #include <stdint.h>
 
-#include "helpers.hpp" // clz, ctz
+#include "helpers.hpp" // assume, clz, ctz
 
 int32_t op_divide(int32_t dividend, int32_t divisor) {
+	assume(divisor != 0);                           // Division by 0 is UB
+	assume(dividend != INT32_MIN || divisor != -1); // INT32_MIN / -1 is UB
 	// Adjust division to floor toward negative infinity,
 	// not truncate toward zero
 	int32_t remainder = dividend % divisor;
@@ -16,6 +18,8 @@ int32_t op_divide(int32_t dividend, int32_t divisor) {
 }
 
 int32_t op_modulo(int32_t dividend, int32_t divisor) {
+	assume(divisor != 0);                           // Modulo by 0 is UB
+	assume(dividend != INT32_MIN || divisor != -1); // INT32_MIN % -1 is UB
 	// Adjust modulo to have the sign of the divisor,
 	// not the sign of the dividend
 	return static_cast<int32_t>(

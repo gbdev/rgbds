@@ -143,8 +143,11 @@ static int32_t computeRPNExpr(Patch const &patch, std::vector<Symbol> const &fil
 				firstErrorAt(patch, "Modulo by 0");
 				popRPN(patch);
 				value = 0;
+			} else if (int32_t lval = popRPN(patch); lval == INT32_MIN && value == -1) {
+				diagnosticAt(patch, WARNING_DIV, "Modulo of %" PRId32 " by -1 yields 0", INT32_MIN);
+				value = 0;
 			} else {
-				value = op_modulo(popRPN(patch), value);
+				value = op_modulo(lval, value);
 			}
 			break;
 		case RPN_NEG:
