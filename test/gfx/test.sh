@@ -5,8 +5,7 @@
 
 errtmp="$(mktemp)"
 
-# Immediate expansion is the desired behavior.
-# shellcheck disable=SC2064
+# shellcheck disable=SC2064 # (Immediate expansion is the desired behavior.)
 trap "rm -f ${errtmp@Q} result.{png,1bpp,2bpp,pal,tilemap,attrmap,palmap} out*.png" EXIT
 
 tests=0
