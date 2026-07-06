@@ -537,6 +537,12 @@ Symbol *sym_AddVar(InternedStr symName, int32_t value) {
 static Symbol *addLabel(InternedStr symName) {
 	assumeAlreadyExpanded(symName);
 
+	Section *section = sect_GetSymbolSection();
+	if (!section) {
+		error("Cannot define label `%s` outside of a `SECTION`", symName.c_str());
+		return nullptr;
+	}
+
 	Symbol *sym = sym_FindExactSymbol(symName);
 
 	if (!sym) {
@@ -547,6 +553,7 @@ static Symbol *addLabel(InternedStr symName) {
 	} else {
 		updateSymbolFilename(*sym);
 	}
+
 	// If the symbol already exists as a ref, just "take over" it
 	sym->type = SYM_LABEL;
 	sym->data = static_cast<int32_t>(sect_GetSymbolOffset());
@@ -554,11 +561,7 @@ static Symbol *addLabel(InternedStr symName) {
 	if (options.exportAll && !symName.str().starts_with('!')) {
 		sym->isExported = true;
 	}
-	sym->section = sect_GetSymbolSection();
-
-	if (sym && !sym->section) {
-		error("Label `%s` created outside of a `SECTION`", symName.c_str());
-	}
+	sym->section = section;
 
 	return sym;
 }
