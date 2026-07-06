@@ -1,0 +1,19 @@
+error: Macro argument `\<999>` not defined
+    at negative-shifted-macro-args.asm::test(5) <- negative-shifted-macro-args.asm(22)
+error: Macro argument `\<-999>` not defined
+    at negative-shifted-macro-args.asm::test(6) <- negative-shifted-macro-args.asm(22)
+error: Macro argument `\<8>` not defined
+    at negative-shifted-macro-args.asm::test(10) <- negative-shifted-macro-args.asm(22)
+error: Macro argument `\<-8>` not defined
+    at negative-shifted-macro-args.asm::test(11) <- negative-shifted-macro-args.asm(22)
+error: Macro argument `\<-999>` not defined
+    at negative-shifted-macro-args.asm::test(12) <- negative-shifted-macro-args.asm(22)
+error: Macro argument `\1` not defined
+    at negative-shifted-macro-args.asm::test(15) <- negative-shifted-macro-args.asm(22)
+error: Macro argument `\<-1>` not defined
+    at negative-shifted-macro-args.asm::test(16) <- negative-shifted-macro-args.asm(22)
+error: Number in bracketed macro argument is too large
+    at negative-shifted-macro-args.asm::test(19) <- negative-shifted-macro-args.asm(22)
+error: syntax error, unexpected >
+    at negative-shifted-macro-args.asm::test(19) <- negative-shifted-macro-args.asm(22)
+Assembly aborted with 9 errors
