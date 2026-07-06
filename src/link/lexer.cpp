@@ -24,8 +24,9 @@ struct LexerStackEntry {
 	std::filebuf file;
 	std::string path;
 	uint32_t lineNo;
+	bool atEof;
 
-	explicit LexerStackEntry(std::string &&path_) : file(), path(path_), lineNo(1) {}
+	explicit LexerStackEntry(std::string &&path_) : file(), path(path_), lineNo(1), atEof(false) {}
 };
 
 static std::vector<LexerStackEntry> lexerStack;
@@ -65,24 +66,18 @@ void lexer_IncLineNo() {
 yy::parser::symbol_type yylex(); // Forward declaration for `yywrap`
 
 static yy::parser::symbol_type yywrap() {
-	static bool atEof = false;
-	if (lexerStack.size() != 1) {
-		if (!atEof) {
-			// Inject a newline at EOF to simplify parsing.
-			atEof = true;
-			return yy::parser::make_newline();
-		}
-		lexerStack.pop_back();
-		// Increment the line number *after* an INCLUDE has finished.
-		++lexerStack.back().lineNo;
-		return yylex();
-	}
-	if (!atEof) {
+	if (LexerStackEntry &context = lexerStack.back(); !context.atEof) {
 		// Inject a newline at EOF to simplify parsing.
-		atEof = true;
+		context.atEof = true;
 		return yy::parser::make_newline();
 	}
-	return yy::parser::make_YYEOF();
+	if (lexerStack.size() == 1) {
+		return yy::parser::make_YYEOF();
+	}
+	lexerStack.pop_back();
+	// Increment the line number *after* an INCLUDE has finished.
+	++lexerStack.back().lineNo;
+	return yylex();
 }
 
 static std::string readKeyword(int initial) {
