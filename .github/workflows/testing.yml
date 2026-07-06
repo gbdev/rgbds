@@ -372,7 +372,7 @@ jobs:
           man -w 1 rgbasm rgblink rgbfix rgbgfx
       - name: Run tests
         run: |
-          test/run-tests.sh --only-internal --jobs "$(getconf _NPROCESSORS_ONLN)"
+          test/run-tests.sh --os cygwin --only-internal --jobs "$(getconf _NPROCESSORS_ONLN)"
       - name: Use Windows git location in the PATH
         shell: pwsh
         run: | # Prevents the `actions/checkout` post-job cleanup from using Cygwin's git binary
