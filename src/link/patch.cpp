@@ -456,6 +456,11 @@ static int32_t computeRPNExpr(Patch const &patch, std::vector<Symbol> const &fil
 			}
 			break;
 		}
+
+			// LCOV_EXCL_START
+		default:
+			fatalAt(patch, "Invalid RPN command $%02x", static_cast<uint32_t>(command));
+			// LCOV_EXCL_STOP
 		}
 
 		pushRPN(value, isError);
