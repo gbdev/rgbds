@@ -204,12 +204,14 @@ static void doSanityChecks(Section &section) {
 		return;
 	}
 
+	bool bankModeError = false;
 	if (options.is32kMode && section.type == SECTTYPE_ROMX) {
 		if (section.isBankFixed && section.bank != 1) {
 			error(
 			    "Section \"%s\" has type `ROMX`, which must be in bank 1 (if any) with option '-t'",
 			    section.name.c_str()
 			);
+			bankModeError = true;
 		} else {
 			section.type = SECTTYPE_ROM0;
 		}
@@ -221,15 +223,18 @@ static void doSanityChecks(Section &section) {
 			    "'-d'",
 			    section.name.c_str()
 			);
+			bankModeError = true;
 		} else {
 			section.type = SECTTYPE_WRAM0;
 		}
 	}
-	if (options.isDmgMode && section.type == SECTTYPE_VRAM && section.bank == 1) {
+	if (options.isDmgMode && section.type == SECTTYPE_VRAM && section.isBankFixed
+	    && section.bank != 0) {
 		error(
 		    "Section \"%s\" has type `VRAM`, which must be in bank 0 with option '-d'",
 		    section.name.c_str()
 		);
+		bankModeError = true;
 	}
 
 	// Check if alignment is reasonable, this is important to avoid UB
@@ -251,7 +256,8 @@ static void doSanityChecks(Section &section) {
 	uint32_t minbank = sectionTypeInfo[section.type].firstBank,
 	         maxbank = sectionTypeInfo[section.type].lastBank;
 
-	if (section.isBankFixed && section.bank < minbank && section.bank > maxbank) {
+	if (!bankModeError && section.isBankFixed
+	    && (section.bank < minbank || section.bank > maxbank)) {
 		error(
 		    minbank == maxbank
 		        ? "Cannot place section \"%s\" in bank %" PRIu32 ", it must be %" PRIu32
