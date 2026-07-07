@@ -8,6 +8,8 @@
 #include <numbers>
 #include <stdint.h>
 
+#include "helpers.hpp" // assume
+
 static constexpr double tau = std::numbers::pi * 2;
 
 static double fix2double(int32_t i, int32_t q) {
@@ -21,7 +23,8 @@ static int32_t double2fix(double d, int32_t q) {
 	if (isinf(d)) {
 		return d < 0 ? INT32_MIN : INT32_MAX;
 	}
-	return static_cast<int32_t>(round(d * pow(2.0, q)));
+	double v = round(d * pow(2.0, q));
+	return v < INT32_MIN ? INT32_MIN : v > INT32_MAX ? INT32_MAX : static_cast<int32_t>(v);
 }
 
 static double turn2rad(double t) {
