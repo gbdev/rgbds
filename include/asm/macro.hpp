@@ -13,7 +13,7 @@ struct MacroArgs {
 	std::vector<std::shared_ptr<std::string>> args;
 
 	uint32_t nbArgs() const { return args.size() - shift; }
-	std::shared_ptr<std::string> getArg(int32_t i) const;
+	std::shared_ptr<std::string> getArg(int32_t num) const;
 	std::shared_ptr<std::string> getAllArgs() const;
 
 	void appendArg(std::shared_ptr<std::string> arg);

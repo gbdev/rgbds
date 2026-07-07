@@ -8,18 +8,26 @@
 #include <string.h>
 #include <string>
 
+#include "helpers.hpp" // assume
+
 #include "asm/warning.hpp"
 
-std::shared_ptr<std::string> MacroArgs::getArg(int32_t i) const {
-	// Bracketed macro arguments adjust negative indexes such that -1 is the last argument.
-	if (i < 0) {
-		i += args.size() + 1;
+std::shared_ptr<std::string> MacroArgs::getArg(int32_t num) const {
+	assume(num != 0);
+	if (num > 0) {
+		// Macro arguments adjust 1-based indexes by the shift amount.
+		if (size_t i = num - 1 + shift; i < args.size()) {
+			return args[i];
+		}
+	} else {
+		// Bracketed macro arguments adjust negative indexes such that -1 is the last argument.
+		if (num == INT32_MIN || static_cast<size_t>(-num) > args.size()) {
+			return nullptr;
+		} else if (size_t i = args.size() - static_cast<size_t>(-num); i >= shift) {
+			return args[i];
+		}
 	}
-
-	int32_t realIndex = i + shift - 1;
-
-	return realIndex < 0 || static_cast<uint32_t>(realIndex) >= args.size() ? nullptr
-	                                                                        : args[realIndex];
+	return nullptr;
 }
 
 std::shared_ptr<std::string> MacroArgs::getAllArgs() const {
