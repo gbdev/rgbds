@@ -267,6 +267,7 @@ static void parseArg(int ch, char *arg) {
 	}
 
 	case 'r':
+		errno = 0;
 		if (std::optional<uint64_t> maxDepth = parseWholeNumber(arg); !maxDepth) {
 			fatal("Invalid argument for option '-r'");
 		} else if (errno == ERANGE) {
