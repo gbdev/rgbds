@@ -1,0 +1,5 @@
+error: No digit after minus sign in bracketed macro argument
+    at macro-arg-negative-symbol.asm::test(3) <- macro-arg-negative-symbol.asm(5)
+error: syntax error, unexpected end of line
+    at macro-arg-negative-symbol.asm::test(3) <- macro-arg-negative-symbol.asm(5)
+Assembly aborted with 2 errors

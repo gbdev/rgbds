@@ -535,13 +535,16 @@ static uint32_t readBracketedMacroArgNum() {
 	int c = peek();
 	bool empty = false;
 	bool symbolError = false;
-	bool negative = c == '-';
 
-	if (negative) {
-		c = nextChar();
-	}
-
-	if (isDigit<10>(c)) {
+	if (c == '-' || isDigit<10>(c)) {
+		bool negative = c == '-';
+		if (negative) {
+			c = nextChar();
+			if (!isDigit<10>(c)) {
+				error("No digit after minus sign in bracketed macro argument");
+				return 0;
+			}
+		}
 		uint32_t n = readNumber<10>(bumpChar(), nullptr);
 		if (n > INT32_MAX) {
 			error("Number in bracketed macro argument is too large");
