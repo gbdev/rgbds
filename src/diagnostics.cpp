@@ -91,8 +91,8 @@ std::pair<WarningState, std::optional<uint32_t>> getInitialWarningState(std::str
 	// Check if there is an "equals" sign followed by a decimal number
 	// Ignore an equals sign at the very end of the string
 	auto equals = flag.find('=');
-	// `-Wno-<flag>` and `-Wno-error=<flag>` negation cannot have an `=` parameter, but without
-	// one, the 0 value will apply to all levels of a parametric warning
+	// `-Wno-<flag>` and `-Wno-error=<flag>` negation will apply to all levels of a parametric
+	// warning. An `=` parameter cannot be specified for `-Wno-*` negated warnings.
 	if (state.state != WARNING_ENABLED || equals == flag.npos || equals == flag.size() - 1) {
 		return {state, std::nullopt};
 	}
