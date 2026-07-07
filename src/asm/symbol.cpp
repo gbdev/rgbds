@@ -748,25 +748,26 @@ void sym_Init(time_t now) {
 	}
 	// LCOV_EXCL_STOP
 
-	tm const *time_local = localtime(&now);
-
-	strftime(savedTIME, sizeof(savedTIME), "\"%H:%M:%S\"", time_local);
-	strftime(savedDATE, sizeof(savedDATE), "\"%d %B %Y\"", time_local);
-	strftime(
-	    savedTIMESTAMP_ISO8601_LOCAL,
-	    sizeof(savedTIMESTAMP_ISO8601_LOCAL),
-	    "\"%Y-%m-%dT%H:%M:%S%z\"",
-	    time_local
-	);
+	if (tm const *time_local = localtime(&now); time_local != nullptr) {
+		strftime(savedTIME, sizeof(savedTIME), "\"%H:%M:%S\"", time_local);
+		strftime(savedDATE, sizeof(savedDATE), "\"%d %B %Y\"", time_local);
+		strftime(
+		    savedTIMESTAMP_ISO8601_LOCAL,
+		    sizeof(savedTIMESTAMP_ISO8601_LOCAL),
+		    "\"%Y-%m-%dT%H:%M:%S%z\"",
+		    time_local
+		);
+	}
 
 	tm const *time_utc = gmtime(&now);
-
-	strftime(
-	    savedTIMESTAMP_ISO8601_UTC,
-	    sizeof(savedTIMESTAMP_ISO8601_UTC),
-	    "\"%Y-%m-%dT%H:%M:%SZ\"",
-	    time_utc
-	);
+	if (time_utc != nullptr) {
+		strftime(
+		    savedTIMESTAMP_ISO8601_UTC,
+		    sizeof(savedTIMESTAMP_ISO8601_UTC),
+		    "\"%Y-%m-%dT%H:%M:%SZ\"",
+		    time_utc
+		);
+	}
 
 	Symbol *timeSymbol = &createSymbol(intern("__TIME__"));
 	timeSymbol->type = SYM_EQUS;
@@ -793,10 +794,10 @@ void sym_Init(time_t now) {
 	)
 	    ->isBuiltin = true;
 
-	sym_AddEqu(intern("__UTC_YEAR__"), time_utc->tm_year + 1900)->isBuiltin = true;
-	sym_AddEqu(intern("__UTC_MONTH__"), time_utc->tm_mon + 1)->isBuiltin = true;
-	sym_AddEqu(intern("__UTC_DAY__"), time_utc->tm_mday)->isBuiltin = true;
-	sym_AddEqu(intern("__UTC_HOUR__"), time_utc->tm_hour)->isBuiltin = true;
-	sym_AddEqu(intern("__UTC_MINUTE__"), time_utc->tm_min)->isBuiltin = true;
-	sym_AddEqu(intern("__UTC_SECOND__"), time_utc->tm_sec)->isBuiltin = true;
+	sym_AddEqu(intern("__UTC_YEAR__"), time_utc ? time_utc->tm_year + 1900 : 0)->isBuiltin = true;
+	sym_AddEqu(intern("__UTC_MONTH__"), time_utc ? time_utc->tm_mon + 1 : 0)->isBuiltin = true;
+	sym_AddEqu(intern("__UTC_DAY__"), time_utc ? time_utc->tm_mday : 0)->isBuiltin = true;
+	sym_AddEqu(intern("__UTC_HOUR__"), time_utc ? time_utc->tm_hour : 0)->isBuiltin = true;
+	sym_AddEqu(intern("__UTC_MINUTE__"), time_utc ? time_utc->tm_min : 0)->isBuiltin = true;
+	sym_AddEqu(intern("__UTC_SECOND__"), time_utc ? time_utc->tm_sec : 0)->isBuiltin = true;
 }
