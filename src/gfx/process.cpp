@@ -1146,10 +1146,10 @@ continue_visiting_tiles:;
 		uint32_t const nbTilesH = image.png.height / 8, nbTilesW = image.png.width / 8;
 
 		// Check the tile count
-		if (uint32_t nbTiles = nbTilesW * nbTilesH;
+		if (uint64_t nbTiles = nbTilesW * nbTilesH;
 		    nbTiles > options.maxNbTiles[0] + options.maxNbTiles[1]) {
 			fatal(
-			    "Image contains %" PRIu32 " tiles, exceeding the limit of %" PRIu16 " + %" PRIu16,
+			    "Image contains %" PRIu64 " tiles, exceeding the limit of %" PRIu16 " + %" PRIu16,
 			    nbTiles,
 			    options.maxNbTiles[0],
 			    options.maxNbTiles[1]

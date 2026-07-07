@@ -100,7 +100,8 @@ Png::Png(char const *filename, std::streambuf &file) {
 	    png, info, &width, &height, &bitDepth, &colorType, &interlaceType, nullptr, nullptr
 	);
 
-	pixels.resize(static_cast<size_t>(width) * static_cast<size_t>(height));
+	size_t nbPixels = static_cast<size_t>(width) * static_cast<size_t>(height);
+	pixels.resize(nbPixels);
 
 	auto colorTypeName = [](int type) {
 		switch (type) {
@@ -212,7 +213,7 @@ Png::Png(char const *filename, std::streambuf &file) {
 	assume(png_get_bit_depth(png, info) == 8);
 
 	// Now that metadata has been read, we can read the image data
-	std::vector<png_byte> image(width * height * 4);
+	std::vector<png_byte> image(nbPixels * 4);
 	std::vector<png_bytep> rowPtrs(height);
 	for (uint32_t y = 0; y < height; ++y) {
 		rowPtrs[y] = image.data() + y * width * 4;
