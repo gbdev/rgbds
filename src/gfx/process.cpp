@@ -73,8 +73,8 @@ public:
 	}
 	decltype(_colors) const &raw() const { return _colors; }
 
-	auto begin() const { return _colors.begin(); }
-	auto end() const { return _colors.end(); }
+	auto begin() const -> decltype(_colors)::const_iterator { return _colors.begin(); }
+	auto end() const -> decltype(_colors)::const_iterator { return _colors.end(); }
 };
 
 struct Image {
@@ -755,8 +755,8 @@ struct UniqueTiles {
 
 	size_t size() const { return tiles.size(); }
 
-	auto begin() const { return tiles.begin(); }
-	auto end() const { return tiles.end(); }
+	auto begin() const -> decltype(tiles)::const_iterator { return tiles.begin(); }
+	auto end() const -> decltype(tiles)::const_iterator { return tiles.end(); }
 };
 
 // Generate tile data while deduplicating unique tiles (via mirroring if enabled)
