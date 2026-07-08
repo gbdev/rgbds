@@ -727,8 +727,8 @@ static int peek() {
 		} else if (c == '{') {
 			// If character is an open brace, do symbol interpolation
 			shiftChar();
-			if (auto interp = readInterpolation(0); interp.first && interp.second) {
-				beginExpansion(interp.second, interp.first->name);
+			if (auto [sym, exp] = readInterpolation(0); sym && exp) {
+				beginExpansion(exp, sym->name);
 			}
 			// Continue in the next iteration
 		} else {
@@ -1240,8 +1240,8 @@ static std::pair<Symbol const *, std::shared_ptr<std::string>> readInterpolation
 		// Use `consumeChar()` since `peek()` might expand nested interpolations and recursively
 		// call `readInterpolation()`, which can cause stack overflow.
 		if (consumeChar('{')) {
-			if (auto interp = readInterpolation(depth + 1); interp.first && interp.second) {
-				beginExpansion(interp.second, interp.first->name);
+			if (auto [sym, exp] = readInterpolation(depth + 1); sym && exp) {
+				beginExpansion(exp, sym->name);
 			}
 			continue; // Restart, reading from the new buffer
 		} else if (int c = peek(); c == EOF || isNewline(c) || c == '"') {
@@ -1350,8 +1350,8 @@ static void appendCharInLiteral(std::string &str, int c) {
 	if (c == '{') {
 		// We'll be exiting the string/character scope, so re-enable expansions
 		lexerState->enableExpansions = true;
-		if (auto interp = readInterpolation(0); interp.second) {
-			appendExpandedString(str, *interp.second);
+		if (auto exp = readInterpolation(0).second; exp) {
+			appendExpandedString(str, *exp);
 		}
 		lexerState->enableExpansions = false;
 		return;
