@@ -169,7 +169,7 @@ void parseInlinePalSpec(char const * const rawArg) {
 
 // Appends the first line read from `file` to the end of the provided `buffer`.
 // Returns true if a line was read.
-[[gnu::warn_unused_result]]
+[[nodiscard]]
 static bool readLine(std::filebuf &file, std::string &buffer) {
 	assume(buffer.empty());
 	for (;;) {
