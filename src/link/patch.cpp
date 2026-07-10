@@ -521,8 +521,8 @@ void patch_CheckAssertions() {
 }
 
 static void checkPatchSize(Patch const &patch, int32_t v, uint8_t n) {
-	assume(n != 0);                     // That doesn't make sense
-	assume(n < CHAR_BIT * sizeof(int)); // Otherwise `1 << n` is UB
+	assume(n != 0);                         // That doesn't make sense
+	assume(n < CHAR_BIT * sizeof(int) - 1); // Otherwise `1 << n` is UB
 
 	if (v < -(1 << n) || v >= 1 << n) {
 		diagnosticAt(
