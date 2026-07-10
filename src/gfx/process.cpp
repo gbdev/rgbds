@@ -822,7 +822,7 @@ static UniqueTiles dedupTiles(
 			attr.bank = 0;
 			attr.tileID = 0;
 		} else {
-			auto [tileID, matchType] = tiles.addTile({tile, palettes[mappings[attr.colorSetID]]});
+			auto [tileID, matchType] = tiles.addTile({tile, palettes[attr.getPalID(mappings)]});
 
 			if (inputWithoutOutput && matchType == TileData::NOPE) {
 				error(
