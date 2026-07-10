@@ -1086,13 +1086,13 @@ void process() {
 		}
 
 		// This color set is incomparable with all previous ones, so add it as a new one
-		attrs.colorSetID = colorSets.size();
+
 		if (colorSets.size() == AttrmapEntry::background) { // Check for overflow
-			fatal(
-			    "Reached %zu color sets... sorry, this image is too much for me to handle :(",
-			    AttrmapEntry::transparent
-			);
+			fatal("Cannot create more than %zu color sets", colorSets.size());
 		}
+
+		attrs.colorSetID = colorSets.size();
+		colorSets.push_back(colorSet);
 
 		if (checkVerbosity(VERB_DEBUG)) {
 			fprintf(
@@ -1100,7 +1100,7 @@ void process() {
 			    "- Tile (%" PRIu32 ", %" PRIu32 ") adds color set #%zu: [",
 			    tile.x,
 			    tile.y,
-			    colorSets.size()
+			    attrs.colorSetID
 			);
 			for (uint16_t color : colorSet) {
 				fprintf(stderr, "$%04x, ", color);
@@ -1108,7 +1108,6 @@ void process() {
 			fputs("]\n", stderr);
 		}
 
-		colorSets.push_back(colorSet);
 continue_visiting_tiles:;
 	}
 
