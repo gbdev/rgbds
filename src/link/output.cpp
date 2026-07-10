@@ -527,7 +527,7 @@ static void writeMapSummary() {
 
 		fprintf(
 		    mapFile,
-		    "\t%s: %" PRId32 " byte%s used / %" PRId32 " free",
+		    "\t%s: %" PRIu32 " byte%s used / %" PRIu32 " free",
 		    sectionTypeInfo[type].name.c_str(),
 		    usedTotal,
 		    usedTotal == 1 ? "" : "s",
