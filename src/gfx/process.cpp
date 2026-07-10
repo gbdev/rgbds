@@ -853,20 +853,36 @@ static void outputTileData(UniqueTiles const &tiles) {
 		// LCOV_EXCL_STOP
 	}
 
-	uint16_t tileID = 0;
-	for (auto iter = tiles.begin(), end = tiles.end() - options.trim; iter != end; ++iter) {
-		TileData const *tile = *iter;
-		assume(tile->tileID == tileID);
-		++tileID;
-		if (options.bitDepth == 2) {
-			output->sputn(reinterpret_cast<char const *>(tile->data().data()), 16);
-		} else {
-			assume(options.bitDepth == 1);
-			for (size_t y = 0; y < 8; ++y) {
-				output->sputc(tile->data()[y * 2]);
+	uint64_t nbTiles = tiles.size();
+	uint64_t nbKeptTiles = nbTiles > options.trim ? nbTiles - options.trim : 0;
+	uint64_t tileIdx = 0;
+
+	for (TileData const *tile : tiles) {
+		assume(tile->tileID == tileIdx);
+		bool empty = true;
+		for (uint32_t y = 0; y < 8; ++y) {
+			uint8_t bitplane0 = tile->data()[y * 2];
+			uint8_t bitplane1 = tile->data()[y * 2 + 1];
+			if (bitplane0 || bitplane1) {
+				empty = false;
+			}
+			if (tileIdx < nbKeptTiles) {
+				output->sputc(bitplane0);
+				if (options.bitDepth == 2) {
+					output->sputc(bitplane1);
+				}
 			}
 		}
+
+		if (!empty && tileIdx >= nbKeptTiles) {
+			warning(
+			    WARNING_TRIM_NONEMPTY, "Trimming a nonempty tile (configure with '-x/--trim-end')"
+			);
+			break; // Don't repeat the warning for subsequent tiles
+		}
+		++tileIdx;
 	}
+	assume(nbKeptTiles <= tileIdx && tileIdx <= nbTiles);
 }
 
 static void outputTilemap(std::vector<AttrmapEntry> const &attrmap) {
