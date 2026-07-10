@@ -649,7 +649,6 @@ void parseExternalPalSpec(char const *arg) {
 	// Some parsers read the file in text mode, others in binary mode
 	if (!file.open(path, search->second.second ? std::ios::in | std::ios::binary : std::ios::in)) {
 		fatal("Failed to open palette file \"%s\": %s", path, strerror(errno));
-		return;
 	}
 
 	search->second.first(path, file);
