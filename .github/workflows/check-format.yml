@@ -8,7 +8,7 @@ env:
   CLICOLOR_FORCE: 1
 
 jobs:
-  checkformat:
+  check-format:
     runs-on: ubuntu-slim
     steps:
       - name: Checkout repo
@@ -18,4 +18,4 @@ jobs:
           sudo apt install -Uyq clang-format
       - name: Check format
         run: |
-          contrib/checkformat.sh
+          .github/scripts/check-format.sh
