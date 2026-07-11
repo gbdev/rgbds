@@ -393,7 +393,7 @@ jobs:
             CTEST_PARALLEL_LEVEL
             CTEST_NO_TESTS_ACTION CTEST_OUTPUT_ON_FAILURE
             GIT_CONFIG_COUNT GIT_CONFIG_KEY_0 GIT_CONFIG_VALUE_0
-          release: "14.3"
+          release: "15.1"
           usesh: true
           prepare: |
             .github/scripts/install-deps.sh freebsd
