@@ -1,0 +1,23 @@
+name: Contrib script syntax checking
+on:
+  - push
+  - pull_request
+
+env:
+  # Force colored output (see https://bixense.com/clicolors/ and https://force-color.org/)
+  TERM: xterm-256color
+  CLICOLOR: 1
+  CLICOLOR_FORCE: 1
+
+jobs:
+  check-contrib:
+    runs-on: ubuntu-slim
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v7
+      - name: Install zsh
+        run: |
+          sudo apt install -Uyq zsh
+      - name: Check contrib scripts
+        run: |
+          .github/scripts/check-contrib.sh
