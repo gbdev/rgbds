@@ -700,12 +700,17 @@ static void outputUnoptimizedMaps(
 	autoOpenPath(options.attrmap, attrmapOutput);
 	autoOpenPath(options.palmap, palmapOutput);
 
-	uint8_t tileID = 0;
+	uint8_t tileIdx = 0;
 	uint8_t bank = 0;
 	for (AttrmapEntry const &attr : attrmap) {
+		// The update-increment logic at the end of this loop may increment `bank` from 1 to 2,
+		// if both banks 0 and 1 are full, but by then all the `attrmap` entries should have been
+		// processed, since there cannot be more tiles than could fit in both banks.
+		assume(bank < 2);
+
 		if (tilemapOutput.has_value()) {
-			(*tilemapOutput)
-			    ->sputc((attr.isBackgroundTile() ? 0 : tileID) + options.baseTileIDs[bank]);
+			uint8_t tileID = (attr.isBackgroundTile() ? 0 : tileIdx) + options.baseTileIDs[bank];
+			(*tilemapOutput)->sputc(tileID);
 		}
 		uint8_t palID = attr.getPalID(mappings) + options.basePalID;
 		if (attrmapOutput.has_value()) {
@@ -715,18 +720,16 @@ static void outputUnoptimizedMaps(
 			(*palmapOutput)->sputc(palID);
 		}
 
-		// Background tiles are skipped in the tile data, so they should be skipped in the maps too.
+		// Background tiles were not emitted in the tile data, so their ID and bank do not update.
 		if (attr.isBackgroundTile()) {
 			continue;
 		}
 
-		// Compare with `maxNbTiles` *before* incrementing, due to unsigned overflow!
-		if (tileID + 1 < options.maxNbTiles[bank]) {
-			++tileID;
+		if (tileIdx + 1 < options.maxNbTiles[bank]) {
+			++tileIdx;
 		} else {
-			assume(bank == 0);
-			bank = 1;
-			tileID = 0;
+			++bank;
+			tileIdx = 0;
 		}
 	}
 }
@@ -1158,13 +1161,13 @@ continue_visiting_tiles:;
 
 	// If deduplication is not happening, we just need to output the tile data and/or maps as-is
 	if (!options.allowDedup) {
-		uint32_t const nbTilesH = image.png.height / 8, nbTilesW = image.png.width / 8;
-
 		// Check the tile count
-		if (uint64_t nbTiles = nbTilesW * nbTilesH;
+		if (size_t nbTiles = std::count_if(
+		        RANGE(attrmap), [](AttrmapEntry const &attr) { return !attr.isBackgroundTile(); }
+		    );
 		    nbTiles > options.maxNbTiles[0] + options.maxNbTiles[1]) {
 			fatal(
-			    "Image contains %" PRIu64 " tiles, exceeding the limit of %" PRIu16 " + %" PRIu16,
+			    "Image contains %zu tiles, exceeding the limit of %" PRIu16 " + %" PRIu16,
 			    nbTiles,
 			    options.maxNbTiles[0],
 			    options.maxNbTiles[1]
@@ -1192,6 +1195,7 @@ continue_visiting_tiles:;
 		verbosePrint(VERB_NOTICE, "Deduplicating tiles...\n");
 		UniqueTiles tiles = dedupTiles(image, attrmap, palettes, mappings);
 
+		// Check the tile count
 		if (size_t nbTiles = tiles.size();
 		    nbTiles > options.maxNbTiles[0] + options.maxNbTiles[1]) {
 			fatal(
