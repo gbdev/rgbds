@@ -3,7 +3,7 @@
 .SUFFIXES:
 .SUFFIXES: .cpp .y .o
 
-.PHONY: all clean install checkdiff develop debug profile coverage format tidy iwyu wine-shim dist
+.PHONY: all clean install develop debug profile coverage format tidy iwyu wine-shim dist
 
 # User-defined variables
 
@@ -43,9 +43,6 @@ REALLDFLAGS  := ${LDFLAGS} ${WARNFLAGS} -DBUILD_VERSION_STRING=\"${VERSION_STRIN
 BISON := src/bison.sh
 
 RM := rm -rf
-
-# Used for checking pull requests
-BASE_REF := origin/master
 
 # Rules to build the RGBDS binaries
 
@@ -213,10 +210,6 @@ install: all
 	$Qinstall -m ${MANMODE} ${MANSRC}rgbasm.1 ${MANSRC}rgblink.1 ${MANSRC}rgbfix.1 ${MANSRC}rgbgfx.1 ${DESTDIR}${mandir}/man1/
 	$Qinstall -m ${MANMODE} ${MANSRC}rgbds.5 ${MANSRC}rgbasm.5 ${MANSRC}rgbasm-old.5 ${MANSRC}rgblink.5 ${DESTDIR}${mandir}/man5/
 	$Qinstall -m ${MANMODE} ${MANSRC}rgbds.7 ${MANSRC}gbz80.7 ${DESTDIR}${mandir}/man7/
-
-# Target used to check for suspiciously missing changed files.
-checkdiff:
-	$Qcontrib/checkdiff.bash `git merge-base HEAD ${BASE_REF}`
 
 # Target used in development to prevent adding new issues to the source code.
 # All warnings are treated as errors to block the compilation and make the
