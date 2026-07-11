@@ -33,11 +33,13 @@ WARNFLAGS := -Wall -pedantic -Wno-unknown-warning-option \
 # Overridable CXXFLAGS
 CXXFLAGS     ?= -O3 -flto -DNDEBUG
 # Non-overridable CXXFLAGS
-REALCXXFLAGS := ${CXXFLAGS} ${WARNFLAGS} -std=c++20 -I include -fno-exceptions -fno-rtti
+REQUIREDCXXFLAGS := -std=c++20 -I include -fno-exceptions -fno-rtti
+REALCXXFLAGS := ${CXXFLAGS} ${WARNFLAGS} ${REQUIREDCXXFLAGS}
 # Overridable LDFLAGS
 LDFLAGS      ?=
 # Non-overridable LDFLAGS
-REALLDFLAGS  := ${LDFLAGS} ${WARNFLAGS} -DBUILD_VERSION_STRING=\"${VERSION_STRING}\"
+REQUIREDLDFLAGS := -DBUILD_VERSION_STRING=\"${VERSION_STRING}\"
+REALLDFLAGS  := ${LDFLAGS} ${WARNFLAGS} ${REQUIREDLDFLAGS}
 
 # Wrapper around bison that passes flags depending on what the version supports
 BISON := src/bison.sh
@@ -250,8 +252,10 @@ format:
 
 # Target used in development to check code with clang-tidy.
 # Requires Bison-generated header files to exist.
-tidy: src/asm/parser.hpp src/link/script.hpp
+tidy: src/asm/parser.hpp src/link/script.hpp compile_flags.txt
 	$Qclang-tidy -p . $$(git ls-files '*.[hc]pp')
+compile_flags.txt:
+	$Qprintf '%s\n' ${REQUIREDCXXFLAGS} ${REQUIREDLDFLAGS} >$@
 
 # Target used in development to remove unused `#include` headers.
 iwyu:
