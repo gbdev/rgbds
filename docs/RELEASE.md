@@ -6,23 +6,24 @@ GitHub.
 1. Update the following files, then commit and push.
    You can use <code>git commit -m "Release <i>&lt;version&gt;</i>"</code> and `git push origin master`.
 
-   - [include/version.hpp](include/version.hpp): set appropriate values for `PACKAGE_VERSION_MAJOR`,
+   - [include/version.hpp](/include/version.hpp): set appropriate values for `PACKAGE_VERSION_MAJOR`,
      `PACKAGE_VERSION_MINOR`, `PACKAGE_VERSION_PATCH`, and `PACKAGE_VERSION_RC`.
      **Only** define `PACKAGE_VERSION_RC` if you are publishing a release candidate!
-   - [Dockerfile](Dockerfile): update `ARG version`.
-   - [test/external/*.cfg](test/external): update test dependency commits
+   - [Dockerfile](/Dockerfile): update `ARG version`.
+   - [test/external/\*.cfg](/test/external): update test dependency commits
      (preferably, use the latest available).
-   - [man/\*](man/): update dates and authors.
+   - [man/\*](/man/): update dates and authors.
 
 2. Create a Git tag formatted as <code>v<i>&lt;MAJOR&gt;</i>.<i>&lt;MINOR&gt;</i>.<i>&lt;PATCH&gt;</i></code>,
    or <code>v<i>&lt;MAJOR&gt;</i>.<i>&lt;MINOR&gt;</i>.<i>&lt;PATCH&gt;</i>-rc<i>&lt;RC&gt;</i></code>
    for a release candidate. <code><i>MAJOR</i></code>, <code><i>MINOR</i></code>,
    <code><i>PATCH</i></code>, and <code><i>RC</i></code> should match their values from
-   [include/version.hpp](include/version.hpp). You can use <code>git tag <i>&lt;tag&gt;</i></code>.
+   [include/version.hpp](/include/version.hpp). You can use <code>git tag <i>&lt;tag&gt;</i></code>.
 
 3. Push the tag to GitHub. You can use <code>git push origin <i>&lt;tag&gt;</i></code>.
 
-   GitHub Actions will run the [create-release-artifacts.yaml](.github/workflows/create-release-artifacts.yaml)
+   GitHub Actions will run the
+   [create-release-artifacts.yml](/.github/workflows/create-release-artifacts.yml)
    workflow to detect the tag starting with "`v[0-9]`" and automatically do the following:
 
    1. Build 32-bit and 64-bit RGBDS binaries for Windows with `cmake`.
@@ -38,7 +39,7 @@ GitHub.
       procedure. You can use <code>git push --delete origin <i>&lt;tag&gt;</i></code> and
       <code>git tag --delete <i>&lt;tag&gt;</i></code>.
 
-4. GitHub Actions will run the [create-release-docs.yml](.github/workflows/create-release-docs.yml)
+4. GitHub Actions will run the [create-release-docs.yml](/.github/workflows/create-release-docs.yml)
    workflow to add the release documentation to [rgbds-www](https://github.com/gbdev/rgbds-www).
 
    This is not done automatically for prereleases, since we do not normally publish documentation

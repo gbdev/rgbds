@@ -36,7 +36,7 @@ implement it yourself, you can always contribute to RGBDS with your own code.
 ## Contributing code
 
 Thank you! Code contributions are the most appreciated.
-You can find a description of the project's layout in [`ARCHITECTURE.md`](ARCHITECTURE.md).
+You can find a description of the project's layout in [`ARCHITECTURE.md`](/ARCHITECTURE.md).
 
 If you want to contribute with your own code, whether it is to fix a current
 issue or to add something that nobody had requested, you should first consider
@@ -264,7 +264,7 @@ docker push ghcr.io/gbdev/rgbds:master
 
 ## Publishing a new release
 
-Please refer to [`RELEASE.md`](RELEASE.md).
+Please refer to [`RELEASE.md`](/RELEASE.md).
 
 ## Closing remarks
 

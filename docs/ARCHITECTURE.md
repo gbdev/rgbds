@@ -208,7 +208,7 @@ These files have been copied ("vendored") from external authors and adapted for 
   Grammar for the RGBASM assembly language, which Bison preprocesses into a [LALR(1) parser](https://en.wikipedia.org/wiki/LALR_parser).  
   The Bison-generated parser calls `yylex` (defined in `lexer.cpp`) to get the next token, and calls `yywrap` (defined in `fstack.cpp`) when the current context is out of tokens and returns `EOF`.
 - **`rpn.cpp`:**  
-  `Expression` methods and data related to "[RPN](https://en.wikipedia.org/wiki/Reverse_Polish_notation)" expressions. When a numeric expression is parsed, if its value cannot be calculated at assembly time, it is built up into a buffer of RPN-encoded operations to do so at link time by RGBLINK. The valid RPN operations are defined in [man/rgbds.5](man/rgbds.5).
+  `Expression` methods and data related to "[RPN](https://en.wikipedia.org/wiki/Reverse_Polish_notation)" expressions. When a numeric expression is parsed, if its value cannot be calculated at assembly time, it is built up into a buffer of RPN-encoded operations to do so at link time by RGBLINK. The valid RPN operations are defined in [man/rgbds.5](/man/rgbds.5).
 - **`section.cpp`:**  
   Functions and data related to `SECTION`s.  
   This file *owns* the `Section`s in its `sections` collection. It also maintains various static pointers to those sections, including the `currentSection`, `currentLoadSection`, and `sectionStack` (which is affected by `PUSHS` and `POPS` directives). (Note that sections cannot be deleted.)
@@ -283,7 +283,7 @@ These files have been copied ("vendored") from external authors and adapted for 
   Functions and data related to outputting ROM files (with `-o/--output`), symbol files (with `-n/--sym`), and map files (with `-m/--map`).  
   This file *references* some `Symbol`s and `Section`s, in collections that keep them sorted by address and name, which allows the symbol and map output to be in order.
 - **`patch.cpp`:**  
-  Functions and data related to "[RPN](https://en.wikipedia.org/wiki/Reverse_Polish_notation)" expression patches read from the object files, including the ones for `ASSERT` conditions. After sections have been assigned specific locations, the RPN patches can have their values calculated and applied to the ROM. The valid RPN operations are defined in [man/rgbds.5](man/rgbds.5).  
+  Functions and data related to "[RPN](https://en.wikipedia.org/wiki/Reverse_Polish_notation)" expression patches read from the object files, including the ones for `ASSERT` conditions. After sections have been assigned specific locations, the RPN patches can have their values calculated and applied to the ROM. The valid RPN operations are defined in [man/rgbds.5](/man/rgbds.5).  
   This file *owns* the `Assertion`s in its `assertions` collection, and the `RPNStackEntry`s in its `rpnStack` collection.
 - **`script.y`:**  
   Grammar for the linker script language, which Bison preprocesses into a [LALR(1) parser](https://en.wikipedia.org/wiki/LALR_parser).  
