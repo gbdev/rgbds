@@ -377,6 +377,7 @@ static std::pair<std::vector<size_t>, std::vector<Palette>>
 			pal.addColor(color);
 		}
 	}
+	assume(!palettes.empty());
 
 	// "Sort" colors in the generated palettes, see the man page for the flowchart
 	if (options.palSpecType == Options::DMG) {
@@ -1149,6 +1150,10 @@ continue_visiting_tiles:;
 		style_Reset(stderr);
 	}
 	// LCOV_EXCL_STOP
+
+	if (colorSets.empty()) {
+		fatal("Image does not contain any colors");
+	}
 
 	if (options.palSpecType == Options::EMBEDDED) {
 		generatePalSpec(image);
