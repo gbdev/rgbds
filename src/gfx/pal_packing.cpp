@@ -279,6 +279,8 @@ static void verboseOutputAssignments(
 // LCOV_EXCL_STOP
 
 static void decant(std::vector<AssignedSets> &assignments, std::vector<ColorSet> const &colorSets) {
+	assume(!assignments.empty());
+
 	// "Decanting" is the process of moving all *things* that can fit in a lower index there
 	auto decantOn = [&assignments](auto const &tryDecanting) {
 		// No need to attempt decanting on palette #0, as there are no palettes to decant to
@@ -294,8 +296,7 @@ static void decant(std::vector<AssignedSets> &assignments, std::vector<ColorSet>
 			// properties
 			// NB: this does mean that the first step might get empty palettes as its input!
 			// NB: this is safe to do because we go towards the beginning of the vector, thereby not
-			// invalidating our iteration (thus, iterators should not be used to drivethe outer
-			// loop)
+			// invalidating our iteration (so iterators should not be used to drive the outer loop)
 			if (assignments[from].empty()) {
 				assignments.erase(assignments.begin() + from);
 			}

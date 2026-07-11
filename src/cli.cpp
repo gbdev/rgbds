@@ -9,8 +9,8 @@
 #include <string>
 #include <vector>
 
+#include "diagnostics.hpp" // fatalx
 #include "extern/getopt.hpp"
-#include "style.hpp"
 #include "usage.hpp"
 #include "util.hpp" // isBlankSpace
 
@@ -24,10 +24,7 @@ static std::vector<size_t>
 	std::filebuf file;
 	if (!file.open(path, std::ios_base::in)) {
 		int errnum = errno;
-		style_Set(stderr, STYLE_RED, true);
-		fputs("FATAL: ", stderr);
-		style_Reset(stderr);
-		fprintf(stderr, "Failed to open at-file \"%s\": %s\n", path.c_str(), strerror(errnum));
+		fatalx("Failed to open at-file \"%s\": %s", path.c_str(), strerror(errnum));
 		usage.printAndExit(1);
 	}
 

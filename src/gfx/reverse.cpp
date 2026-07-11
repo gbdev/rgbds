@@ -420,7 +420,7 @@ void reverse() {
 	}
 	png_structp png = png_create_write_struct(
 	    PNG_LIBPNG_VER_STRING,
-	    const_cast<png_voidp>(static_cast<void const *>(pngFile.c_str(options.input))),
+	    const_cast<char *>(pngFile.c_str(options.input)),
 	    pngError,
 	    pngWarning
 	);
@@ -531,7 +531,7 @@ void reverse() {
 				// If vertically mirrored, fetch the bytes from the other end
 				uint8_t realY = (attribute & 0x40 ? 7 - y : y) * options.bitDepth;
 				uint8_t bitplane0 = tileData[realY];
-				uint8_t bitplane1 = tileData[realY + 1 % options.bitDepth];
+				uint8_t bitplane1 = options.bitDepth == 2 ? tileData[realY + 1] : bitplane0;
 				if (attribute & 0x20) { // Handle horizontal flip
 					bitplane0 = flipTable[bitplane0];
 					bitplane1 = flipTable[bitplane1];
@@ -572,7 +572,7 @@ void reverse() {
 		// signature.
 		// (AIUI, casting away const-ness is okay as long as you don't actually modify the
 		// pointed-to data)
-		png_write_rows(png, const_cast<png_bytepp>(rowPtrs), 8);
+		png_write_rows(png, const_cast<uint8_t **>(rowPtrs), 8);
 	}
 
 	// Finalize the write

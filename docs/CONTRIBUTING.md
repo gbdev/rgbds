@@ -142,6 +142,10 @@ linked in various ways depending on the test.
 
 These simply check that RGBLINK's output matches some expected output.
 
+If a `.flags` file exists, its first line contains flags to pass to RGBLINK.
+(There may be more lines, which will be ignored; they can serve as comments to
+explain what the test is about.)
+
 A `.out` file **must** exist, and RGBLINK's total output must match that file's
 contents.
 
@@ -228,16 +232,15 @@ Each one is a binary RNG file which is passed to the `rgbgfx_test` program.
 Each `.cfg` file corresponds to one test.
 Each one defines the parameters for a real external project that builds using RGBDS.
 
-1. Make sure the downstream project supports
+1. Ensure that the downstream project supports a `RGBDS` variable to build with
+   a non-system copy of RGBDS in some directory, i.e.
    <code>make <var>&lt;target&gt;</var> RGBDS=<var>&lt;path/to/rgbds/&gt;</var></code>.
-   While the test suite supports any Make target name, only
-   [Make](//gnu.org/software/make) is currently supported, and the Makefile must
-   support a `RGBDS` variable to use a non-system RGBDS directory.
+   Only [GNU Make](https://www.gnu.org/software/make/) is currently supported.
 2. Create the new `.cfg` file, following the existing ones.
 
 If an external project does not support `make RGBDS=`, or otherwise fails to
-build with current RGBDS, then then you can edit the project to build correctly,
-and create a patch with `git diff` to be committed as
+build with current RGBDS, then you can edit the project to build correctly, and
+create a patch with `git diff` to be committed as
 <code>test/external/patches/<var>&lt;project&gt;</var>.patch</code>.
 
 ## Container images

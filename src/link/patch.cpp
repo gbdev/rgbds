@@ -143,8 +143,11 @@ static int32_t computeRPNExpr(Patch const &patch, std::vector<Symbol> const &fil
 				firstErrorAt(patch, "Modulo by 0");
 				popRPN(patch);
 				value = 0;
+			} else if (int32_t lval = popRPN(patch); lval == INT32_MIN && value == -1) {
+				diagnosticAt(patch, WARNING_DIV, "Modulo of %" PRId32 " by -1 yields 0", INT32_MIN);
+				value = 0;
 			} else {
-				value = op_modulo(popRPN(patch), value);
+				value = op_modulo(lval, value);
 			}
 			break;
 		case RPN_NEG:
@@ -453,6 +456,11 @@ static int32_t computeRPNExpr(Patch const &patch, std::vector<Symbol> const &fil
 			}
 			break;
 		}
+
+			// LCOV_EXCL_START
+		default:
+			fatalAt(patch, "Invalid RPN command $%02x", static_cast<uint32_t>(command));
+			// LCOV_EXCL_STOP
 		}
 
 		pushRPN(value, isError);
@@ -513,8 +521,8 @@ void patch_CheckAssertions() {
 }
 
 static void checkPatchSize(Patch const &patch, int32_t v, uint8_t n) {
-	assume(n != 0);                     // That doesn't make sense
-	assume(n < CHAR_BIT * sizeof(int)); // Otherwise `1 << n` is UB
+	assume(n != 0);                         // That doesn't make sense
+	assume(n < CHAR_BIT * sizeof(int) - 1); // Otherwise `1 << n` is UB
 
 	if (v < -(1 << n) || v >= 1 << n) {
 		diagnosticAt(

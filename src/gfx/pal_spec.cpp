@@ -169,7 +169,7 @@ void parseInlinePalSpec(char const * const rawArg) {
 
 // Appends the first line read from `file` to the end of the provided `buffer`.
 // Returns true if a line was read.
-[[gnu::warn_unused_result]]
+[[nodiscard]]
 static bool readLine(std::filebuf &file, std::string &buffer) {
 	assume(buffer.empty());
 	for (;;) {
@@ -649,7 +649,6 @@ void parseExternalPalSpec(char const *arg) {
 	// Some parsers read the file in text mode, others in binary mode
 	if (!file.open(path, search->second.second ? std::ios::in | std::ios::binary : std::ios::in)) {
 		fatal("Failed to open palette file \"%s\": %s", path, strerror(errno));
-		return;
 	}
 
 	search->second.first(path, file);

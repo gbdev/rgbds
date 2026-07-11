@@ -267,6 +267,7 @@ static void parseArg(int ch, char *arg) {
 	}
 
 	case 'r':
+		errno = 0;
 		if (std::optional<uint64_t> maxDepth = parseWholeNumber(arg); !maxDepth) {
 			fatal("Invalid argument for option '-r'");
 		} else if (errno == ERANGE) {
@@ -314,8 +315,6 @@ static void parseArg(int ch, char *arg) {
 	case 'X':
 		if (std::optional<uint64_t> maxErrors = parseWholeNumber(arg); !maxErrors) {
 			fatal("Invalid argument for option '-X'");
-		} else if (*maxErrors > UINT64_MAX) {
-			fatal("Argument for option '-X' must be between 0 and %" PRIu64, UINT64_MAX);
 		} else {
 			options.maxErrors = *maxErrors;
 		}

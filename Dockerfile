@@ -5,12 +5,13 @@ WORKDIR /rgbds
 
 COPY . .
 
+# Install dependencies
 RUN apt-get update && \
     apt-get install sudo make cmake gcc build-essential -y
+RUN ./.github/scripts/install-deps.sh debian
 
-# Install dependencies and compile RGBDS
-RUN ./.github/scripts/install_deps.sh debian
-RUN make -j CXXFLAGS="-O3 -flto -DNDEBUG -static" PKG_CONFIG="pkg-config --static" Q=
+# Build RGBDS
+RUN make -j "$(getconf _NPROCESSORS_ONLN)" CXXFLAGS="-O3 -flto -DNDEBUG -static" PKG_CONFIG="pkg-config --static" Q=
 
 # Create the install script
 RUN make install.sh Q=

@@ -227,9 +227,9 @@ static int32_t tryConstMask(Expression const &lhs, Expression const &rhs) {
 		return -1;
 	}
 
-	assume(sym.isNumeric());
+	assume(sym.type == SYM_LABEL);
+	// We can now safely use `expr.value()` and `sym.getSection()`
 
-	// We can now safely use `expr.value()`
 	int32_t mask = expr.value();
 
 	// The mask must not cover any unknown bits
@@ -375,8 +375,7 @@ void Expression::makeBinaryOp(RPNCommand op, Expression &&src1, Expression const
 		case RPN_DIV:
 			if (rval == 0) {
 				fatal("Division by zero");
-			}
-			if (lval == INT32_MIN && rval == -1) {
+			} else if (lval == INT32_MIN && rval == -1) {
 				warning(
 				    WARNING_DIV,
 				    "Division of %" PRId32 " by -1 yields %" PRId32,
@@ -391,8 +390,8 @@ void Expression::makeBinaryOp(RPNCommand op, Expression &&src1, Expression const
 		case RPN_MOD:
 			if (rval == 0) {
 				fatal("Modulo by zero");
-			}
-			if (lval == INT32_MIN && rval == -1) {
+			} else if (lval == INT32_MIN && rval == -1) {
+				warning(WARNING_DIV, "Modulo of %" PRId32 " by -1 yields 0", INT32_MIN);
 				data = 0;
 			} else {
 				data = op_modulo(lval, rval);
@@ -486,8 +485,8 @@ void Expression::checkNBit(uint8_t n) const {
 }
 
 bool checkNBit(int32_t v, uint8_t n, char const *name) {
-	assume(n != 0);                     // That doesn't make sense
-	assume(n < CHAR_BIT * sizeof(int)); // Otherwise `1 << n` is UB
+	assume(n != 0);                         // That doesn't make sense
+	assume(n < CHAR_BIT * sizeof(int) - 1); // Otherwise `1 << n` is UB
 
 	if (v < -(1 << n) || v >= 1 << n) {
 		warning(

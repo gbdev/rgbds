@@ -1,5 +1,7 @@
-name: Code format checking
-on: pull_request
+name: Contrib script syntax checking
+on:
+  - push
+  - pull_request
 
 env:
   # Force colored output (see https://bixense.com/clicolors/ and https://force-color.org/)
@@ -8,14 +10,14 @@ env:
   CLICOLOR_FORCE: 1
 
 jobs:
-  checkformat:
+  check-contrib:
     runs-on: ubuntu-slim
     steps:
       - name: Checkout repo
         uses: actions/checkout@v7
-      - name: Install clang-format
+      - name: Install zsh
         run: |
-          sudo apt-get -Uyq install clang-format
-      - name: Check format
+          sudo apt install -Uyq zsh
+      - name: Check contrib scripts
         run: |
-          contrib/checkformat.sh
+          .github/scripts/check-contrib.sh

@@ -14,13 +14,47 @@
 #include "util.hpp" // parseNumber
 
 void warnx(char const *fmt, ...) {
-	va_list ap;
+	va_list args;
+	va_start(args, fmt);
+	vwarnx(fmt, args);
+	va_end(args);
+}
+
+void vwarnx(char const *fmt, va_list args) {
 	style_Set(stderr, STYLE_YELLOW, true);
 	fputs("warning: ", stderr);
 	style_Reset(stderr);
-	va_start(ap, fmt);
-	vfprintf(stderr, fmt, ap);
-	va_end(ap);
+	vfprintf(stderr, fmt, args);
+	putc('\n', stderr);
+}
+
+void errorx(char const *fmt, ...) {
+	va_list args;
+	va_start(args, fmt);
+	verrorx(fmt, args);
+	va_end(args);
+}
+
+void verrorx(char const *fmt, va_list args) {
+	style_Set(stderr, STYLE_RED, true);
+	fputs("error: ", stderr);
+	style_Reset(stderr);
+	vfprintf(stderr, fmt, args);
+	putc('\n', stderr);
+}
+
+void fatalx(char const *fmt, ...) {
+	va_list args;
+	va_start(args, fmt);
+	vfatalx(fmt, args);
+	va_end(args);
+}
+
+void vfatalx(char const *fmt, va_list args) {
+	style_Set(stderr, STYLE_RED, true);
+	fputs("FATAL: ", stderr);
+	style_Reset(stderr);
+	vfprintf(stderr, fmt, args);
 	putc('\n', stderr);
 }
 
@@ -57,8 +91,8 @@ std::pair<WarningState, std::optional<uint32_t>> getInitialWarningState(std::str
 	// Check if there is an "equals" sign followed by a decimal number
 	// Ignore an equals sign at the very end of the string
 	auto equals = flag.find('=');
-	// `-Wno-<flag>` and `-Wno-error=<flag>` negation cannot have an `=` parameter, but without
-	// one, the 0 value will apply to all levels of a parametric warning
+	// `-Wno-<flag>` and `-Wno-error=<flag>` negation will apply to all levels of a parametric
+	// warning. An `=` parameter cannot be specified for `-Wno-*` negated warnings.
 	if (state.state != WARNING_ENABLED || equals == flag.npos || equals == flag.size() - 1) {
 		return {state, std::nullopt};
 	}

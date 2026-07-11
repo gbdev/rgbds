@@ -4,32 +4,18 @@
 
 #include "extern/getopt.hpp"
 
-#include <limits.h>
-#include <stdarg.h>
+#include <limits.h> // MB_LEN_MAX
 #include <stddef.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <wchar.h>
 
-#include "style.hpp"
+#include "diagnostics.hpp" // errorx
 
 char *musl_optarg;
 int musl_optind = 1, musl_optopt;
 
 static int musl_optpos;
-
-[[gnu::format(printf, 1, 2)]]
-static void musl_getopt_error(char const *fmt, ...) {
-	style_Set(stderr, STYLE_RED, true);
-	fputs("error: ", stderr);
-	style_Reset(stderr);
-	va_list args;
-	va_start(args, fmt);
-	vfprintf(stderr, fmt, args);
-	va_end(args);
-	putc('\n', stderr);
-}
 
 static int musl_getopt(int argc, char *argv[], char const *optstring) {
 	if (!musl_optind) {
@@ -96,7 +82,7 @@ static int musl_getopt(int argc, char *argv[], char const *optstring) {
 	if (d != c || c == ':') {
 		musl_optopt = c;
 		if (optstring[0] != ':') {
-			musl_getopt_error("Unrecognized option '-%s'", optchar);
+			errorx("Unrecognized option '-%s'", optchar);
 		}
 		return '?';
 	}
@@ -111,7 +97,7 @@ static int musl_getopt(int argc, char *argv[], char const *optstring) {
 			if (optstring[0] == ':') {
 				return ':';
 			}
-			musl_getopt_error("Missing argument for option '-%s'", optchar);
+			errorx("Missing argument for option '-%s'", optchar);
 			return '?';
 		}
 	}
@@ -183,7 +169,7 @@ static int
 				if (colon) {
 					return '?';
 				}
-				musl_getopt_error("Option '--%s' does not take an argument", longopts[i].name);
+				errorx("Option '--%s' does not take an argument", longopts[i].name);
 				return '?';
 			}
 			musl_optarg = opt + 1;
@@ -194,7 +180,7 @@ static int
 				if (colon) {
 					return ':';
 				}
-				musl_getopt_error("Missing argument for option '--%s'", longopts[i].name);
+				errorx("Missing argument for option '--%s'", longopts[i].name);
 				return '?';
 			}
 			++musl_optind;
@@ -209,9 +195,9 @@ static int
 		musl_optopt = 0;
 		if (!colon) {
 			if (cnt) {
-				musl_getopt_error("Ambiguous option '--%s'", argv[musl_optind] + 2);
+				errorx("Ambiguous option '--%s'", argv[musl_optind] + 2);
 			} else {
-				musl_getopt_error("Unrecognized option '--%s'", argv[musl_optind] + 2);
+				errorx("Unrecognized option '--%s'", argv[musl_optind] + 2);
 			}
 		}
 		++musl_optind;

@@ -198,7 +198,7 @@ static void parseScrambleSpec(char *spec) {
 			);
 		}
 
-		if (*scrambleLimit != limit && *search->second.first != 0) {
+		if (*scrambleLimit != limit && *scrambleLimit != 0) {
 			warnx(
 			    "Overriding %" PRI_SV " region size limit for option '-S'",
 			    PRI_SV_ARG(search->first)

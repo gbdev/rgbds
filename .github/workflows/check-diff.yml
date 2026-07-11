@@ -8,7 +8,7 @@ env:
   CLICOLOR_FORCE: 1
 
 jobs:
-  checkdiff:
+  check-diff:
     runs-on: ubuntu-slim
     steps:
       - name: Clone repo
@@ -20,7 +20,7 @@ jobs:
         run: |
           MERGE_BASE=$(gh api "/repos/{owner}/{repo}/compare/$BASE_SHA...$HEAD_SHA" --jq '.merge_base_commit.sha')
           git fetch origin "$MERGE_BASE"
-          contrib/checkdiff.bash "$MERGE_BASE" | sed -E 's/^/::warning::/'
+          .github/scripts/check-diff.bash "$MERGE_BASE" | sed -E 's/^/::warning::/'
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}

@@ -1,4 +1,4 @@
-error: Label `DisallowedContent` created outside of a `SECTION`
+error: Cannot define label `DisallowedContent` outside of a `SECTION`
     at pops-restore-no-section.asm(9)
 error: Cannot output data outside of a `SECTION`
     at pops-restore-no-section.asm(10)

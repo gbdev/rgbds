@@ -3,8 +3,7 @@
 export LC_ALL=C
 
 tmpdir="$(mktemp -d)"
-# Immediate expansion is the desired behavior.
-# shellcheck disable=SC2064
+# shellcheck disable=SC2064 # (Immediate expansion is the desired behavior.)
 trap "cd; rm -rf ${tmpdir@Q}" EXIT
 
 src="$PWD"
@@ -73,10 +72,7 @@ runTest () {
 			eval "$RGBFIX" $flags out.gb '>out.out' '2>out.err'
 			subst=out.gb
 		elif [[ "$variant" = ' piped' ]]; then
-			# Stop! This is not a Useless Use Of Cat. Using cat instead of
-			# stdin redirection makes the input an unseekable pipe - a scenario
-			# that's harder to deal with.
-			# shellcheck disable=SC2002
+			# shellcheck disable=SC2002 # (This use of `cat` intentionally makes the input an unseekable pipe.)
 			cat "$desired_input" | eval "$RGBFIX" $flags - '>out.gb' '2>out.err'
 			subst='<stdin>'
 		elif [[ "$variant" = ' output' ]]; then

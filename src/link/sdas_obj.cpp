@@ -53,7 +53,7 @@ static int nextLine(std::vector<char> &lineBuf, Location &where, FILE *file) {
 			} while (firstChar != EOF && firstChar != '\r' && firstChar != '\n');
 			[[fallthrough]];
 		case '\r':
-			if (firstChar == '\r' && getc(file) != '\n') {
+			if (firstChar == '\r') {
 				consumeLF(where, file);
 			}
 			[[fallthrough]];

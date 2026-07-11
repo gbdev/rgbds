@@ -290,7 +290,7 @@ size_t act_StringLen(std::string const &str, bool printErrors) {
 				errorInvalidUTF8Byte(byte, "STRLEN");
 			}
 			decoder.state = UTF8_ACCEPT;
-			// fallthrough
+			[[fallthrough]];
 		case UTF8_ACCEPT:
 			++len;
 			break;
@@ -325,7 +325,7 @@ std::string
 		case UTF8_REJECT:
 			errorInvalidUTF8Byte(str[index], "STRSLICE");
 			decoder.state = UTF8_ACCEPT;
-			// fallthrough
+			[[fallthrough]];
 		case UTF8_ACCEPT:
 			++curIdx;
 			break;
@@ -351,7 +351,7 @@ std::string
 		case UTF8_REJECT:
 			errorInvalidUTF8Byte(str[index], "STRSLICE");
 			decoder.state = UTF8_ACCEPT;
-			// fallthrough
+			[[fallthrough]];
 		case UTF8_ACCEPT:
 			++curIdx;
 			break;
@@ -394,7 +394,7 @@ std::string act_StringSub(std::string const &str, int32_t negPos, std::optional<
 		case UTF8_REJECT:
 			errorInvalidUTF8Byte(str[index], "STRSUB");
 			decoder.state = UTF8_ACCEPT;
-			// fallthrough
+			[[fallthrough]];
 		case UTF8_ACCEPT:
 			++curPos;
 			break;
@@ -419,7 +419,7 @@ std::string act_StringSub(std::string const &str, int32_t negPos, std::optional<
 		case UTF8_REJECT:
 			errorInvalidUTF8Byte(str[index], "STRSUB");
 			decoder.state = UTF8_ACCEPT;
-			// fallthrough
+			[[fallthrough]];
 		case UTF8_ACCEPT:
 			++curLen;
 			break;

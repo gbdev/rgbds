@@ -73,8 +73,8 @@ public:
 	}
 	decltype(_colors) const &raw() const { return _colors; }
 
-	auto begin() const { return _colors.begin(); }
-	auto end() const { return _colors.end(); }
+	auto begin() const -> decltype(_colors)::const_iterator { return _colors.begin(); }
+	auto end() const -> decltype(_colors)::const_iterator { return _colors.end(); }
 };
 
 struct Image {
@@ -377,6 +377,7 @@ static std::pair<std::vector<size_t>, std::vector<Palette>>
 			pal.addColor(color);
 		}
 	}
+	assume(!palettes.empty());
 
 	// "Sort" colors in the generated palettes, see the man page for the flowchart
 	if (options.palSpecType == Options::DMG) {
@@ -700,12 +701,17 @@ static void outputUnoptimizedMaps(
 	autoOpenPath(options.attrmap, attrmapOutput);
 	autoOpenPath(options.palmap, palmapOutput);
 
-	uint8_t tileID = 0;
+	uint8_t tileIdx = 0;
 	uint8_t bank = 0;
 	for (AttrmapEntry const &attr : attrmap) {
+		// The update-increment logic at the end of this loop may increment `bank` from 1 to 2,
+		// if both banks 0 and 1 are full, but by then all the `attrmap` entries should have been
+		// processed, since there cannot be more tiles than could fit in both banks.
+		assume(bank < 2);
+
 		if (tilemapOutput.has_value()) {
-			(*tilemapOutput)
-			    ->sputc((attr.isBackgroundTile() ? 0 : tileID) + options.baseTileIDs[bank]);
+			uint8_t tileID = (attr.isBackgroundTile() ? 0 : tileIdx) + options.baseTileIDs[bank];
+			(*tilemapOutput)->sputc(tileID);
 		}
 		uint8_t palID = attr.getPalID(mappings) + options.basePalID;
 		if (attrmapOutput.has_value()) {
@@ -715,18 +721,16 @@ static void outputUnoptimizedMaps(
 			(*palmapOutput)->sputc(palID);
 		}
 
-		// Background tiles are skipped in the tile data, so they should be skipped in the maps too.
+		// Background tiles were not emitted in the tile data, so their ID and bank do not update.
 		if (attr.isBackgroundTile()) {
 			continue;
 		}
 
-		// Compare with `maxNbTiles` *before* incrementing, due to unsigned overflow!
-		if (tileID + 1 < options.maxNbTiles[bank]) {
-			++tileID;
+		if (tileIdx + 1 < options.maxNbTiles[bank]) {
+			++tileIdx;
 		} else {
-			assume(bank == 0);
-			bank = 1;
-			tileID = 0;
+			++bank;
+			tileIdx = 0;
 		}
 	}
 }
@@ -755,8 +759,8 @@ struct UniqueTiles {
 
 	size_t size() const { return tiles.size(); }
 
-	auto begin() const { return tiles.begin(); }
-	auto end() const { return tiles.end(); }
+	auto begin() const -> decltype(tiles)::const_iterator { return tiles.begin(); }
+	auto end() const -> decltype(tiles)::const_iterator { return tiles.end(); }
 };
 
 // Generate tile data while deduplicating unique tiles (via mirroring if enabled)
@@ -822,7 +826,7 @@ static UniqueTiles dedupTiles(
 			attr.bank = 0;
 			attr.tileID = 0;
 		} else {
-			auto [tileID, matchType] = tiles.addTile({tile, palettes[mappings[attr.colorSetID]]});
+			auto [tileID, matchType] = tiles.addTile({tile, palettes[attr.getPalID(mappings)]});
 
 			if (inputWithoutOutput && matchType == TileData::NOPE) {
 				error(
@@ -853,20 +857,36 @@ static void outputTileData(UniqueTiles const &tiles) {
 		// LCOV_EXCL_STOP
 	}
 
-	uint16_t tileID = 0;
-	for (auto iter = tiles.begin(), end = tiles.end() - options.trim; iter != end; ++iter) {
-		TileData const *tile = *iter;
-		assume(tile->tileID == tileID);
-		++tileID;
-		if (options.bitDepth == 2) {
-			output->sputn(reinterpret_cast<char const *>(tile->data().data()), 16);
-		} else {
-			assume(options.bitDepth == 1);
-			for (size_t y = 0; y < 8; ++y) {
-				output->sputc(tile->data()[y * 2]);
+	uint64_t nbTiles = tiles.size();
+	uint64_t nbKeptTiles = nbTiles > options.trim ? nbTiles - options.trim : 0;
+	uint64_t tileIdx = 0;
+
+	for (TileData const *tile : tiles) {
+		assume(tile->tileID == tileIdx);
+		bool empty = true;
+		for (uint32_t y = 0; y < 8; ++y) {
+			uint8_t bitplane0 = tile->data()[y * 2];
+			uint8_t bitplane1 = tile->data()[y * 2 + 1];
+			if (bitplane0 || bitplane1) {
+				empty = false;
+			}
+			if (tileIdx < nbKeptTiles) {
+				output->sputc(bitplane0);
+				if (options.bitDepth == 2) {
+					output->sputc(bitplane1);
+				}
 			}
 		}
+
+		if (!empty && tileIdx >= nbKeptTiles) {
+			warning(
+			    WARNING_TRIM_NONEMPTY, "Trimming a nonempty tile (configure with '-x/--trim-end')"
+			);
+			break; // Don't repeat the warning for subsequent tiles
+		}
+		++tileIdx;
 	}
+	assume(nbKeptTiles <= tileIdx && tileIdx <= nbTiles);
 }
 
 static void outputTilemap(std::vector<AttrmapEntry> const &attrmap) {
@@ -1086,13 +1106,13 @@ void process() {
 		}
 
 		// This color set is incomparable with all previous ones, so add it as a new one
-		attrs.colorSetID = colorSets.size();
+
 		if (colorSets.size() == AttrmapEntry::background) { // Check for overflow
-			fatal(
-			    "Reached %zu color sets... sorry, this image is too much for me to handle :(",
-			    AttrmapEntry::transparent
-			);
+			fatal("Cannot create more than %zu color sets", colorSets.size());
 		}
+
+		attrs.colorSetID = colorSets.size();
+		colorSets.push_back(colorSet);
 
 		if (checkVerbosity(VERB_DEBUG)) {
 			fprintf(
@@ -1100,7 +1120,7 @@ void process() {
 			    "- Tile (%" PRIu32 ", %" PRIu32 ") adds color set #%zu: [",
 			    tile.x,
 			    tile.y,
-			    colorSets.size()
+			    attrs.colorSetID
 			);
 			for (uint16_t color : colorSet) {
 				fprintf(stderr, "$%04x, ", color);
@@ -1108,7 +1128,6 @@ void process() {
 			fputs("]\n", stderr);
 		}
 
-		colorSets.push_back(colorSet);
 continue_visiting_tiles:;
 	}
 
@@ -1132,6 +1151,10 @@ continue_visiting_tiles:;
 	}
 	// LCOV_EXCL_STOP
 
+	if (colorSets.empty()) {
+		fatal("Image does not contain any colors");
+	}
+
 	if (options.palSpecType == Options::EMBEDDED) {
 		generatePalSpec(image);
 	}
@@ -1143,13 +1166,13 @@ continue_visiting_tiles:;
 
 	// If deduplication is not happening, we just need to output the tile data and/or maps as-is
 	if (!options.allowDedup) {
-		uint32_t const nbTilesH = image.png.height / 8, nbTilesW = image.png.width / 8;
-
 		// Check the tile count
-		if (uint32_t nbTiles = nbTilesW * nbTilesH;
+		if (size_t nbTiles = std::count_if(
+		        RANGE(attrmap), [](AttrmapEntry const &attr) { return !attr.isBackgroundTile(); }
+		    );
 		    nbTiles > options.maxNbTiles[0] + options.maxNbTiles[1]) {
 			fatal(
-			    "Image contains %" PRIu32 " tiles, exceeding the limit of %" PRIu16 " + %" PRIu16,
+			    "Image contains %zu tiles, exceeding the limit of %" PRIu16 " + %" PRIu16,
 			    nbTiles,
 			    options.maxNbTiles[0],
 			    options.maxNbTiles[1]
@@ -1177,6 +1200,7 @@ continue_visiting_tiles:;
 		verbosePrint(VERB_NOTICE, "Deduplicating tiles...\n");
 		UniqueTiles tiles = dedupTiles(image, attrmap, palettes, mappings);
 
+		// Check the tile count
 		if (size_t nbTiles = tiles.size();
 		    nbTiles > options.maxNbTiles[0] + options.maxNbTiles[1]) {
 			fatal(

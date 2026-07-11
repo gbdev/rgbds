@@ -105,6 +105,7 @@ void opt_Parse(char const *s) {
 		break;
 
 	case 'r':
+		errno = 0;
 		if (std::optional<uint64_t> maxRecursionDepth = parseWholeNumber(s); !maxRecursionDepth) {
 			error("Invalid argument for option 'r'");
 		} else if (errno == ERANGE) {

@@ -217,7 +217,7 @@ static void parseArg(int ch, char *arg) {
 	case 'd':
 		options.bitDepth = readNumber(argPtr, "Bit depth", 2);
 		if (*argPtr != '\0') {
-			error("Bit depth ('-b') argument must be a valid number, not \"%s\"", arg);
+			error("Bit depth ('-d') argument must be a valid number, not \"%s\"", arg);
 		} else if (options.bitDepth != 1 && options.bitDepth != 2) {
 			error("Bit depth must be 1 or 2, not %" PRIu8, options.bitDepth);
 			options.bitDepth = 2;

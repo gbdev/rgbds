@@ -1,0 +1,2 @@
+include "linkerscript-no-newline-eof.inc"
+	"test" ; no newline after this

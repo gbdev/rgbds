@@ -47,65 +47,32 @@ void requireZeroErrors() {
 }
 
 void error(char const *fmt, ...) {
-	va_list ap;
-	style_Set(stderr, STYLE_RED, true);
-	fputs("error: ", stderr);
-	style_Reset(stderr);
-	va_start(ap, fmt);
-	vfprintf(stderr, fmt, ap);
-	va_end(ap);
-	putc('\n', stderr);
+	va_list args;
+	va_start(args, fmt);
+	verrorx(fmt, args);
+	va_end(args);
 
 	warnings.incrementErrors();
 }
 
 [[noreturn]]
 void fatal(char const *fmt, ...) {
-	va_list ap;
-	style_Set(stderr, STYLE_RED, true);
-	fputs("FATAL: ", stderr);
-	style_Reset(stderr);
-	va_start(ap, fmt);
-	vfprintf(stderr, fmt, ap);
-	va_end(ap);
-	putc('\n', stderr);
+	va_list args;
+	va_start(args, fmt);
+	vfatalx(fmt, args);
+	va_end(args);
 
 	warnings.incrementErrors();
 	giveUp();
 }
 
 void warning(WarningID id, char const *fmt, ...) {
-	char const *flag = warnings.warningFlags[id].name;
-	va_list ap;
+	va_list args;
+	va_start(args, fmt);
+	WarningBehavior behavior = printDiagnostic(warnings, id, fmt, args);
+	va_end(args);
 
-	switch (warnings.getWarningBehavior(id)) {
-	case WarningBehavior::DISABLED:
-		break;
-
-	case WarningBehavior::ENABLED:
-		style_Set(stderr, STYLE_YELLOW, true);
-		fputs("warning: ", stderr);
-		style_Reset(stderr);
-		va_start(ap, fmt);
-		vfprintf(stderr, fmt, ap);
-		va_end(ap);
-		style_Set(stderr, STYLE_YELLOW, true);
-		fprintf(stderr, " [-W%s]\n", flag);
-		style_Reset(stderr);
-		break;
-
-	case WarningBehavior::ERROR:
-		style_Set(stderr, STYLE_RED, true);
-		fputs("error: ", stderr);
-		style_Reset(stderr);
-		va_start(ap, fmt);
-		vfprintf(stderr, fmt, ap);
-		va_end(ap);
-		style_Set(stderr, STYLE_RED, true);
-		fprintf(stderr, " [-Werror=%s]\n", flag);
-		style_Reset(stderr);
-
+	if (behavior == WarningBehavior::ERROR) {
 		warnings.incrementErrors();
-		break;
 	}
 }
