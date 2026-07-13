@@ -62,15 +62,6 @@ tryCmpRom () {
 	tryCmp "$1" "$otemp"
 }
 
-tryCmpRomSize () {
-	rom_size=$(printf %s $(wc -c <"$1"))
-	if [ "$rom_size" -ne "$2" ]; then
-		echo "$bold${red}${test} binary size mismatch! ${rescolors}${resbold}"
-		false
-	fi
-	(( our_rc = our_rc || $? ))
-}
-
 rgblinkQuiet () {
 	out="$(env "$RGBLINK" -Weverything -Bcollapse "$@")" || return $?
 	if [[ -n "$out" ]]; then
@@ -321,14 +312,14 @@ rgblinkQuiet -o "$gbtemp" -S "romx := 4" "$otemp" 2>"$outtemp"
 tryDiff "$test"/out.err "$outtemp"
 evaluateTest
 
-test="scramble-romx"
+test="scramble-specs"
 startTest
 "$RGBASM" -o "$otemp" "$test"/a.asm
 continueTest
 rgblinkQuiet -o "$gbtemp" -S "romx=3,wramx=4,sram=4" "$otemp" 2>"$outtemp"
 tryDiff "$test"/out.err "$outtemp"
-# This test does not compare its exact output with 'tryCmpRom' because no scrambling order is guaranteed
-tryCmpRomSize "$gbtemp" 65536
+# This test does not trim its output with 'dd' because it needs to verify the correct output size
+tryCmp "$test"/out.gb "$gbtemp"
 evaluateTest
 
 test="script-include"

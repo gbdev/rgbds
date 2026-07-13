@@ -257,22 +257,27 @@ an at-file, it only disables option processing within that at-file, and processi
 The default section placement algorithm tries to place sections into as few banks as possible.
 (It turns out that section placement is an NP-complete problem known as "bin packing", so
 .Nm
-does not attempt to find the optimal solution, but instead uses a "first-fit" heuristic to find a good one in a reasonable amount of time.
-There are no guarantees about where this algorithm will place sections, apart from the bank, address, and alignment constraints manually specified for the sections.)
+does not attempt to find the optimal solution, but instead uses a "first-fit" heuristic to find a good one in a reasonable amount of time.)
+There are no guarantees about where this algorithm will place sections, apart from the bank, address, and alignment constraints manually specified for the sections.
 .Pp
 .Dq Scrambling
 instead places sections into a given pool of banks, trying to minimize the number of sections sharing a given bank.
 This is useful to catch broken bank assumptions, such as expecting two different sections to land in the same bank (that is not guaranteed unless both are manually assigned the same bank number).
+There are still no guarantees about where this algorithm will place sections, apart from the bank pool size and any manually specified section constraints.
 .Pp
 A scrambling spec is a comma-separated list of region specs.
 A trailing comma is allowed, as well as whitespace between all specs and their components.
 Each region spec has the following form:
 .D1 Ar region Ns Op = Ns Ar size
 .Ar region
+specifies the section type, and
+.Ar size
+specifies the number of banks in the pool for that section type.
+.Ar region
 must be one of the following (case-insensitive), while
 .Ar size
 must be a positive decimal integer between 1 and the corresponding maximum.
-Certain regions allow omitting the size, in which case it defaults to its max value.
+Certain regions allow omitting the size, in which case it defaults to its maximum value.
 .Bl -column "Region name" "Max value" "Size optional"
 Region name Ta Max size Ta Size optional
 .Cm romx Ta 65535 Ta \&No
@@ -285,14 +290,14 @@ A
 of 0 disables scrambling for that region.
 .Pp
 For example,
-.Ql romx=64,wramx=4
+.Ql romx=64,wramx,sram=4
 will scramble
 .Ic ROMX
 sections among ROM banks 1 to 64,
 .Ic WRAMX
-sections among RAM banks 1 to 4, and will not scramble
+sections among RAM banks 1 to 7, and
 .Ic SRAM
-sections.
+sections among SRAM banks 0 to 3.
 .Pp
 Later region specs override earlier ones; for example,
 .Ql romx=42, Romx=0

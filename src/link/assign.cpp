@@ -70,31 +70,34 @@ static bool isLocationSuitable(
 
 static MemoryLocation getStartLocation(Section const &section) {
 	static uint16_t curScrambleROM = 0;
-	static uint8_t curScrambleWRAM = 0;
-	static int8_t curScrambleSRAM = 0;
+	static uint16_t curScrambleWRAM = 0;
+	static uint16_t curScrambleSRAM = 0;
 
 	MemoryLocation location;
 
 	// Determine which bank we should start searching in
 	if (section.isBankFixed) {
 		location.bank = section.bank;
-	} else if (options.scrambleROMX && section.type == SECTTYPE_ROMX) {
-		if (curScrambleROM < 1) {
-			curScrambleROM = options.scrambleROMX;
-		}
-		location.bank = curScrambleROM--;
-	} else if (options.scrambleWRAMX && section.type == SECTTYPE_WRAMX) {
-		if (curScrambleWRAM < 1) {
-			curScrambleWRAM = options.scrambleWRAMX;
-		}
-		location.bank = curScrambleWRAM--;
-	} else if (options.scrambleSRAM && section.type == SECTTYPE_SRAM) {
-		if (curScrambleSRAM < 0) {
-			curScrambleSRAM = options.scrambleSRAM;
-		}
-		location.bank = curScrambleSRAM--;
 	} else {
 		location.bank = sectionTypeInfo[section.type].firstBank;
+
+		// Scramble the bank if applicable
+		if (options.scrambleROMX && section.type == SECTTYPE_ROMX) {
+			if (curScrambleROM == 0) {
+				curScrambleROM = options.scrambleROMX;
+			}
+			location.bank += --curScrambleROM;
+		} else if (options.scrambleWRAMX && section.type == SECTTYPE_WRAMX) {
+			if (curScrambleWRAM == 0) {
+				curScrambleWRAM = options.scrambleWRAMX;
+			}
+			location.bank += --curScrambleWRAM;
+		} else if (options.scrambleSRAM && section.type == SECTTYPE_SRAM) {
+			if (curScrambleSRAM == 0) {
+				curScrambleSRAM = options.scrambleSRAM;
+			}
+			location.bank += --curScrambleSRAM;
+		}
 	}
 
 	return location;
