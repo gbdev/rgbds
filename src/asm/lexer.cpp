@@ -2315,26 +2315,22 @@ yy::parser::symbol_type yylex() {
 		return yy::parser::symbol_type(token.type, std::get<uint32_t>(token.value));
 	} else if (std::holds_alternative<std::string>(token.value)) {
 		// LCOV_EXCL_START
-		if (checkVerbosity(VERB_TRACE)) {
-			style_Set(stderr, STYLE_MAGENTA, false);
+		verboseDo(VERB_TRACE, [&]() {
 			fprintf(stderr, "Lexed `%s` token (", yy::parser::symbol_type(token.type).name());
 			verboseOutputString(std::get<std::string>(token.value));
 			fputs(")\n", stderr);
-			style_Reset(stderr);
-		}
+		});
 		// LCOV_EXCL_STOP
 		return yy::parser::symbol_type(token.type, std::get<std::string>(token.value));
 	} else if (std::holds_alternative<InternedStr>(token.value)) {
 		// LCOV_EXCL_START
-		if (checkVerbosity(VERB_TRACE)) {
-			style_Set(stderr, STYLE_MAGENTA, false);
+		verboseDo(VERB_TRACE, [&]() {
 			fprintf(
 			    stderr, "Lexed `%s` token (interned ", yy::parser::symbol_type(token.type).name()
 			);
 			verboseOutputString(std::get<InternedStr>(token.value).str());
 			fputs(")\n", stderr);
-			style_Reset(stderr);
-		}
+		});
 		// LCOV_EXCL_STOP
 		return yy::parser::symbol_type(token.type, std::get<InternedStr>(token.value));
 	} else {
@@ -2392,13 +2388,13 @@ static Capture makeCapture(char const *name, InvocableR<int, int> auto callback)
 	}
 
 	// LCOV_EXCL_START
-	if (checkVerbosity(VERB_TRACE) && capture.span.ptr) {
-		style_Set(stderr, STYLE_MAGENTA, false);
-		fprintf(stderr, "Captured %s (", name);
-		verboseOutputString(std::string_view{capture.span.ptr.get(), capture.span.size});
-		fputs(")\n", stderr);
-		style_Reset(stderr);
-	}
+	verboseDo(VERB_TRACE, [&]() {
+		if (capture.span.ptr) {
+			fprintf(stderr, "Captured %s (", name);
+			verboseOutputString(std::string_view{capture.span.ptr.get(), capture.span.size});
+			fputs(")\n", stderr);
+		}
+	});
 	// LCOV_EXCL_STOP
 
 	assume(!lexerState->atLineStart); // `skipToLeadingKeyword` moves past the start of the line

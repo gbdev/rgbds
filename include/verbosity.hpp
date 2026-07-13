@@ -6,6 +6,9 @@
 #include <stdarg.h>
 #include <stdio.h>
 
+#include "helpers.hpp" // Procedure
+#include "style.hpp"
+
 // This macro does not evaluate its arguments unless the condition is true.
 #define verbosePrint(level, ...) \
 	do { \
@@ -29,6 +32,14 @@ bool checkVerbosity(Verbosity level);
 
 [[gnu::format(printf, 1, 2)]]
 void printVerbosely(char const *fmt, ...);
+
+void verboseDo(Verbosity level, Procedure<> auto callback) {
+	if (checkVerbosity(level)) {
+		style_Set(stderr, STYLE_MAGENTA, false);
+		callback();
+		style_Reset(stderr);
+	}
+}
 
 void printVVVVVVerbosity();
 

@@ -24,7 +24,7 @@
 #include "helpers.hpp"
 #include "parser.hpp" // Generated from parser.y
 #include "platform.hpp"
-#include "style.hpp"
+#include "style.hpp" // style_Parse
 #include "usage.hpp"
 #include "util.hpp" // UpperMap
 #include "verbosity.hpp"
@@ -373,12 +373,6 @@ static void parseArg(int ch, char *arg) {
 
 // LCOV_EXCL_START
 static void verboseOutputConfig() {
-	if (!checkVerbosity(VERB_CONFIG)) {
-		return;
-	}
-
-	style_Set(stderr, STYLE_MAGENTA, false);
-
 	usage.printVersion(true);
 
 	printVVVVVVerbosity();
@@ -490,8 +484,6 @@ static void verboseOutputConfig() {
 		}
 	}
 	fputs("Ready for assembly\n", stderr);
-
-	style_Reset(stderr);
 }
 // LCOV_EXCL_STOP
 
@@ -519,7 +511,7 @@ int main(int argc, char *argv[]) {
 		options.targetFileName = options.objectFileName;
 	}
 
-	verboseOutputConfig();
+	verboseDo(VERB_CONFIG, verboseOutputConfig);
 
 	if (!localOptions.inputFileName) {
 		usage.printAndExit("No input file specified (pass \"-\" to read from standard input)");

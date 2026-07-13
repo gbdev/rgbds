@@ -16,7 +16,6 @@
 
 #include "diagnostics.hpp"
 #include "helpers.hpp"
-#include "style.hpp"
 #include "verbosity.hpp"
 
 #include "gfx/rgba.hpp"
@@ -158,15 +157,13 @@ Png::Png(char const *filename, std::streambuf &file) {
 			);
 		}
 
-		if (checkVerbosity(VERB_INFO)) {
-			style_Set(stderr, STYLE_MAGENTA, false);
+		verboseDo(VERB_INFO, [&]() {
 			fprintf(stderr, "Embedded PNG palette has %d colors: [", nbColors);
 			for (int i = 0; i < nbColors; ++i) {
 				fprintf(stderr, "%s#%08x", i > 0 ? ", " : "", palette[i].toCSS());
 			}
 			fprintf(stderr, "]\n");
-			style_Reset(stderr);
-		}
+		});
 	} else {
 		verbosePrint(VERB_INFO, "No embedded PNG palette\n");
 	}

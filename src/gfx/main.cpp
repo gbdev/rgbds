@@ -19,7 +19,7 @@
 #include "file.hpp"
 #include "helpers.hpp"
 #include "platform.hpp"
-#include "style.hpp"
+#include "style.hpp" // style_Parse
 #include "usage.hpp"
 #include "util.hpp"
 #include "verbosity.hpp"
@@ -474,12 +474,6 @@ static void parseArg(int ch, char *arg) {
 
 // LCOV_EXCL_START
 static void verboseOutputConfig() {
-	if (!checkVerbosity(VERB_CONFIG)) {
-		return;
-	}
-
-	style_Set(stderr, STYLE_MAGENTA, false);
-
 	usage.printVersion(true);
 
 	printVVVVVVerbosity();
@@ -609,8 +603,6 @@ static void verboseOutputConfig() {
 		fprintf(stderr, "\tReverse image width: %" PRIu16 " tiles\n", options.reversedWidth);
 	}
 	fputs("Ready for conversion\n", stderr);
-
-	style_Reset(stderr);
 }
 // LCOV_EXCL_STOP
 
@@ -684,7 +676,7 @@ int main(int argc, char *argv[]) {
 		parseExternalPalSpec(localOptions.externalPalSpec->c_str());
 	}
 
-	verboseOutputConfig(); // LCOV_EXCL_LINE
+	verboseDo(VERB_CONFIG, verboseOutputConfig);
 
 	// Do not do anything if option parsing went wrong.
 	requireZeroErrors();

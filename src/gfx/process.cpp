@@ -22,7 +22,6 @@
 #include "file.hpp"
 #include "helpers.hpp"
 #include "itertools.hpp"
-#include "style.hpp"
 #include "verbosity.hpp"
 
 #include "gfx/color_set.hpp"
@@ -350,16 +349,16 @@ static std::pair<std::vector<size_t>, std::vector<Palette>>
 	assume(mappings.size() == colorSets.size());
 
 	// LCOV_EXCL_START
-	if (checkVerbosity(VERB_INFO)) {
-		style_Set(stderr, STYLE_MAGENTA, false);
+	// Ideally we'd use an implicit `[&]` capture, but C++20 P0588R1 (which allows "reference to
+	// local binding declared in enclosing function") is not sufficiently supported by clang.
+	verboseDo(VERB_INFO, [&mappingsV = mappings, &nbPalettesV = nbPalettes]() {
 		fprintf(
-		    stderr, "Color set mappings: (%zu palette%s)\n", nbPalettes, nbPalettes != 1 ? "s" : ""
+		    stderr, "Color set mappings: (%zu palette%s)\n", nbPalettesV, nbPalettesV != 1 ? "s" : ""
 		);
-		for (size_t i = 0; i < mappings.size(); ++i) {
-			fprintf(stderr, "%zu -> %zu\n", i, mappings[i]);
+		for (size_t i = 0; i < mappingsV.size(); ++i) {
+			fprintf(stderr, "%zu -> %zu\n", i, mappingsV[i]);
 		}
-		style_Reset(stderr);
-	}
+	});
 	// LCOV_EXCL_STOP
 
 	std::vector<Palette> palettes(nbPalettes);
@@ -455,8 +454,7 @@ static std::pair<std::vector<size_t>, std::vector<Palette>>
 
 static void outputPalettes(std::vector<Palette> const &palettes) {
 	// LCOV_EXCL_START
-	if (checkVerbosity(VERB_INFO)) {
-		style_Set(stderr, STYLE_MAGENTA, false);
+	verboseDo(VERB_INFO, [&]() {
 		for (Palette const &palette : palettes) {
 			fputs("{ ", stderr);
 			for (uint16_t colorIndex : palette) {
@@ -464,8 +462,7 @@ static void outputPalettes(std::vector<Palette> const &palettes) {
 			}
 			fputs("}\n", stderr);
 		}
-		style_Reset(stderr);
-	}
+	});
 	// LCOV_EXCL_STOP
 
 	if (palettes.size() > options.nbPalettes) {
@@ -950,8 +947,7 @@ void process() {
 	Image image(options.input); // This also sets `hasTransparentPixels` as a side effect
 
 	// LCOV_EXCL_START
-	if (checkVerbosity(VERB_INFO)) {
-		style_Set(stderr, STYLE_MAGENTA, false);
+	verboseDo(VERB_INFO, [&]() {
 		fputs("Image colors: [ ", stderr);
 		for (std::optional<Rgba> const &slot : image.colors) {
 			if (!slot.has_value()) {
@@ -960,8 +956,7 @@ void process() {
 			fprintf(stderr, "#%08x, ", slot->toCSS());
 		}
 		fputs("]\n", stderr);
-		style_Reset(stderr);
-	}
+	});
 	// LCOV_EXCL_STOP
 
 	if (options.palSpecType == Options::DMG) {
@@ -1050,8 +1045,7 @@ void process() {
 			case ColorSet::STRICT_SUPERSET:
 				// Override the previous color set that this one is a strict superset of
 
-				if (checkVerbosity(VERB_DEBUG)) {
-					style_Set(stderr, STYLE_MAGENTA, false);
+				verboseDo(VERB_DEBUG, [&]() {
 					fprintf(
 					    stderr,
 					    "- Tile (%" PRIu32 ", %" PRIu32 ") overrides color set #%zu: [",
@@ -1067,8 +1061,7 @@ void process() {
 						fprintf(stderr, "$%04x, ", color);
 					}
 					fputs("]\n", stderr);
-					style_Reset(stderr);
-				}
+				});
 
 				colorSets[n] = colorSet;
 				// Remove any other color sets that we are also a strict superset of
@@ -1116,8 +1109,7 @@ void process() {
 		attrs.colorSetID = colorSets.size();
 		colorSets.push_back(colorSet);
 
-		if (checkVerbosity(VERB_DEBUG)) {
-			style_Set(stderr, STYLE_MAGENTA, false);
+		verboseDo(VERB_DEBUG, [&]() {
 			fprintf(
 			    stderr,
 			    "- Tile (%" PRIu32 ", %" PRIu32 ") adds color set #%zu: [",
@@ -1129,8 +1121,7 @@ void process() {
 				fprintf(stderr, "$%04x, ", color);
 			}
 			fputs("]\n", stderr);
-			style_Reset(stderr);
-		}
+		});
 
 continue_visiting_tiles:;
 	}
@@ -1142,8 +1133,7 @@ continue_visiting_tiles:;
 	    colorSets.size() != 1 ? "s" : ""
 	);
 	// LCOV_EXCL_START
-	if (checkVerbosity(VERB_INFO)) {
-		style_Set(stderr, STYLE_MAGENTA, false);
+	verboseDo(VERB_INFO, [&]() {
 		for (ColorSet const &colorSet : colorSets) {
 			fputs("[ ", stderr);
 			for (uint16_t color : colorSet) {
@@ -1151,8 +1141,7 @@ continue_visiting_tiles:;
 			}
 			fputs("]\n", stderr);
 		}
-		style_Reset(stderr);
-	}
+	});
 	// LCOV_EXCL_STOP
 
 	if (colorSets.empty()) {

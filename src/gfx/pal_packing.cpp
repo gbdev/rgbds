@@ -18,7 +18,6 @@
 #include <vector>
 
 #include "helpers.hpp"
-#include "style.hpp"
 #include "verbosity.hpp"
 
 #include "gfx/color_set.hpp"
@@ -259,22 +258,18 @@ public:
 static void verboseOutputAssignments(
     std::vector<AssignedSets> const &assignments, std::vector<ColorSet> const &colorSets
 ) {
-	if (!checkVerbosity(VERB_INFO)) {
-		return;
-	}
-
-	style_Set(stderr, STYLE_MAGENTA, false);
-	for (AssignedSets const &assignment : assignments) {
-		fputs("{ ", stderr);
-		for (ColorSetAttrs const &attrs : assignment) {
-			fprintf(stderr, "[%zu] ", attrs.colorSetIndex);
-			for (uint16_t colorIndex : colorSets[attrs.colorSetIndex]) {
-				fprintf(stderr, "%04" PRIx16 ", ", colorIndex);
+	verboseDo(VERB_INFO, [&]() {
+		for (AssignedSets const &assignment : assignments) {
+			fputs("{ ", stderr);
+			for (ColorSetAttrs const &attrs : assignment) {
+				fprintf(stderr, "[%zu] ", attrs.colorSetIndex);
+				for (uint16_t colorIndex : colorSets[attrs.colorSetIndex]) {
+					fprintf(stderr, "%04" PRIx16 ", ", colorIndex);
+				}
 			}
+			fprintf(stderr, "} (volume = %zu)\n", assignment.volume());
 		}
-		fprintf(stderr, "} (volume = %zu)\n", assignment.volume());
-	}
-	style_Reset(stderr);
+	});
 }
 // LCOV_EXCL_STOP
 
@@ -553,13 +548,13 @@ std::pair<std::vector<size_t>, size_t> overloadAndRemove(std::vector<ColorSet> c
 		}
 	}
 
-	verboseOutputAssignments(assignments, colorSets); // LCOV_EXCL_LINE
+	verboseOutputAssignments(assignments, colorSets);
 
 	// "Decant" the result
 	decant(assignments, colorSets);
 	// Note that the result does not contain any empty palettes
 
-	verboseOutputAssignments(assignments, colorSets); // LCOV_EXCL_LINE
+	verboseOutputAssignments(assignments, colorSets);
 
 	std::vector<size_t> mappings(colorSets.size());
 	for (size_t i = 0; i < assignments.size(); ++i) {

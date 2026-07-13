@@ -17,7 +17,7 @@
 #include "diagnostics.hpp"
 #include "linkdefs.hpp"
 #include "script.hpp" // Generated from script.y
-#include "style.hpp"
+#include "style.hpp"  // style_Parse
 #include "usage.hpp"
 #include "util.hpp" // UpperMap, printChar
 #include "verbosity.hpp"
@@ -329,12 +329,6 @@ static void parseArg(int ch, char *arg) {
 
 // LCOV_EXCL_START
 static void verboseOutputConfig() {
-	if (!checkVerbosity(VERB_CONFIG)) {
-		return;
-	}
-
-	style_Set(stderr, STYLE_MAGENTA, false);
-
 	usage.printVersion(true);
 
 	printVVVVVVerbosity();
@@ -414,15 +408,13 @@ static void verboseOutputConfig() {
 	// -n/--sym
 	printPath("Output sym file", options.symFileName);
 	fputs("Ready for linking\n", stderr);
-
-	style_Reset(stderr);
 }
 // LCOV_EXCL_STOP
 
 int main(int argc, char *argv[]) {
 	cli_ParseArgs(argc, argv, optstring, longopts, parseArg, usage);
 
-	verboseOutputConfig();
+	verboseDo(VERB_CONFIG, verboseOutputConfig);
 
 	if (localOptions.inputFileNames.empty()) {
 		usage.printAndExit("No input file specified (pass \"-\" to read from standard input)");
