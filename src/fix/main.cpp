@@ -308,7 +308,7 @@ static void initLogo() {
 			fatal("Failed to open \"%s\" for reading: %s", logoFilename, strerror(errno));
 			// LCOV_EXCL_STOP
 		}
-		Defer closeLogo{[&] { fclose(logoFile); }};
+		Defer closeLogo{[&] { xfclose(logoFile); }};
 
 		uint8_t logoBpp[sizeof(options.logo)];
 		if (size_t nbRead = fread(logoBpp, 1, sizeof(logoBpp), logoFile);

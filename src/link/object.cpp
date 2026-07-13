@@ -19,6 +19,7 @@
 #include "helpers.hpp"
 #include "linkdefs.hpp"
 #include "platform.hpp"
+#include "util.hpp" // xfclose
 #include "verbosity.hpp"
 #include "version.hpp"
 
@@ -446,7 +447,7 @@ void obj_ReadFile(std::string const &filePath, size_t fileID) {
 	if (!file) {
 		fatal("Failed to open file \"%s\": %s", fileName, strerror(errno));
 	}
-	Defer closeFile{[&] { fclose(file); }};
+	Defer closeFile{[&] { xfclose(file); }};
 
 	// First, check if the object is a RGBDS object, a SDCC one, or neither.
 	// A single `ungetc` is guaranteed to work.

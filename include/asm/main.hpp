@@ -9,6 +9,7 @@
 #include <string>
 
 #include "helpers.hpp" // assume
+#include "util.hpp"    // xfclose
 
 enum MissingInclude {
 	INC_ERROR,    // A missing included file is an error that halts assembly
@@ -32,7 +33,7 @@ struct Options {
 
 	~Options() {
 		if (dependFile) {
-			fclose(dependFile);
+			xfclose(dependFile);
 		}
 	}
 

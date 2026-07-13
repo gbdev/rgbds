@@ -405,11 +405,7 @@ void LexerState::setFileAsNextState(std::string const &filePath, bool updateStat
 
 	if (fd >= 0) {
 		// If the file is stdin, or if measuring its size failed, read it in pieces
-		Defer closeFile{[&] {
-			if (fd != STDIN_FILENO) {
-				close(fd);
-			}
-		}};
+		Defer closeFile{[&] { xclose(fd); }};
 
 		// Reasonably large buffer size for `read` performance
 		char buf[8192];

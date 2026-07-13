@@ -21,6 +21,7 @@
 #include "helpers.hpp"
 #include "itertools.hpp" // InsertionOrderedMap
 #include "linkdefs.hpp"
+#include "util.hpp" // xfclose
 
 #include "asm/fstack.hpp"
 #include "asm/lexer.hpp"
@@ -974,7 +975,7 @@ bool sect_BinaryFile(std::string const &name, uint32_t startPos) {
 	if (!file) {
 		return fstk_FileError(name, "`INCBIN`");
 	}
-	Defer closeFile{[&] { fclose(file); }};
+	Defer closeFile{[&] { xfclose(file); }};
 
 	if (fseek(file, 0, SEEK_END) == 0) {
 		if (unsigned long fsize = ftell(file);
@@ -1035,7 +1036,7 @@ bool sect_BinaryFileSlice(std::string const &name, uint32_t startPos, uint32_t l
 	if (!file) {
 		return fstk_FileError(name, "`INCBIN`");
 	}
-	Defer closeFile{[&] { fclose(file); }};
+	Defer closeFile{[&] { xfclose(file); }};
 
 	if (fseek(file, 0, SEEK_END) == 0) {
 		if (unsigned long fsize = ftell(file);

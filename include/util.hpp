@@ -8,6 +8,7 @@
 #include <optional>
 #include <stddef.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <string_view>
 #include <unordered_map>
 
@@ -20,6 +21,10 @@ enum NumberBase {
 	BASE_10 = 10,
 	BASE_16 = 16,
 };
+
+// File-closing functions that will not close standard streams
+int xfclose(FILE *file);
+int xclose(int fd);
 
 // Locale-independent character class functions
 bool isNewline(int c);

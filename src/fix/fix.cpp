@@ -15,6 +15,7 @@
 #include "diagnostics.hpp"
 #include "helpers.hpp"
 #include "platform.hpp"
+#include "util.hpp" // xclose, xfclose
 
 #include "fix/main.hpp"
 #include "fix/mbc.hpp"
@@ -463,7 +464,6 @@ bool fix_ProcessFile(char const *name, char const *outputName) {
 	}
 
 	int output = -1;
-	bool openedOutput = false;
 	if (outputName) {
 		if (!strcmp(outputName, "-")) {
 			output = STDOUT_FILENO;
@@ -476,12 +476,11 @@ bool fix_ProcessFile(char const *name, char const *outputName) {
 				return true;
 				// LCOV_EXCL_STOP
 			}
-			openedOutput = true;
 		}
 	}
 	Defer closeOutput{[&] {
-		if (openedOutput) {
-			close(output);
+		if (outputName) {
+			xclose(output);
 		}
 	}};
 
@@ -497,7 +496,7 @@ bool fix_ProcessFile(char const *name, char const *outputName) {
 		// operations may fail, all of which we handle.
 		error("Failed to open \"%s\" for reading+writing: %s", name, strerror(errno));
 	} else {
-		Defer closeInput{[&] { close(input); }};
+		Defer closeInput{[&] { xclose(input); }};
 		struct stat stat;
 		if (fstat(input, &stat) == -1) {
 			error("Failed to stat \"%s\": %s", name, strerror(errno)); // LCOV_EXCL_LINE

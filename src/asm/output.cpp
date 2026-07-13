@@ -17,6 +17,7 @@
 #include "helpers.hpp" // assume, Defer
 #include "linkdefs.hpp"
 #include "platform.hpp"
+#include "util.hpp" // xfclose
 
 #include "asm/charmap.hpp"
 #include "asm/fstack.hpp"
@@ -210,7 +211,7 @@ void out_WriteObject() {
 		fatal("Failed to open object file \"%s\": %s", objectFileName, strerror(errno));
 		// LCOV_EXCL_STOP
 	}
-	Defer closeFile{[&] { fclose(file); }};
+	Defer closeFile{[&] { xfclose(file); }};
 
 	// Also write symbols that weren't written above
 	sym_ForEach(out_RegisterSymbol);
@@ -389,7 +390,7 @@ void out_WriteState(std::string name, std::vector<StateFeature> const &features)
 		fatal("Failed to open state file \"%s\": %s", name.c_str(), strerror(errno));
 		// LCOV_EXCL_STOP
 	}
-	Defer closeFile{[&] { fclose(file); }};
+	Defer closeFile{[&] { xfclose(file); }};
 
 	static char const *dumpHeadings[NB_STATE_FEATURES] = {
 	    "Numeric constants",

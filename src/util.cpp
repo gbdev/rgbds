@@ -9,6 +9,21 @@
 #include <string.h> // strspn
 
 #include "helpers.hpp" // assume
+#include "platform.hpp"
+
+int xfclose(FILE *file) {
+	if (file == stdin || file == stdout || file == stderr) {
+		return 0;
+	}
+	return fclose(file);
+}
+
+int xclose(int fd) {
+	if (fd == STDIN_FILENO || fd == STDOUT_FILENO || fd == STDERR_FILENO) {
+		return 0;
+	}
+	return close(fd);
+}
 
 bool isNewline(int c) {
 	return c == '\r' || c == '\n';

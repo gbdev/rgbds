@@ -18,6 +18,7 @@
 #include "extern/utf8decoder.hpp"
 #include "helpers.hpp"
 #include "linkdefs.hpp"
+#include "util.hpp" // xfclose
 
 #include "asm/charmap.hpp"
 #include "asm/format.hpp"
@@ -147,7 +148,7 @@ std::optional<std::string> act_ReadFile(std::string const &name, uint32_t maxLen
 		}
 		return "";
 	}
-	Defer closeFile{[&] { fclose(file); }};
+	Defer closeFile{[&] { xfclose(file); }};
 
 	size_t readSize = maxLen;
 	if (fseek(file, 0, SEEK_END) == 0) {
