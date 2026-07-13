@@ -291,7 +291,16 @@ static int32_t computeRPNExpr(Patch const &patch, std::vector<Symbol> const &fil
 				isError = true;
 				value = 1;
 			} else if (std::holds_alternative<Label>(symbol->data)) {
-				value = std::get<Label>(symbol->data).section->bank;
+				if (Label const &label = std::get<Label>(symbol->data); !label.section) {
+					errorAt(
+					    patch,
+					    "Requested `BANK()` of label `%s` outside of a section",
+					    fileSymbols[symID].name.c_str()
+					);
+					value = 0;
+				} else {
+					value = label.section->bank;
+				}
 			} else {
 				errorAt(
 				    patch,
@@ -449,8 +458,16 @@ static int32_t computeRPNExpr(Patch const &patch, std::vector<Symbol> const &fil
 				value = 0;
 				isError = true;
 			} else if (std::holds_alternative<Label>(symbol->data)) {
-				Label const &label = std::get<Label>(symbol->data);
-				value = label.section->org + label.offset;
+				if (Label const &label = std::get<Label>(symbol->data); !label.section) {
+					errorAt(
+					    patch,
+					    "Requested value of label `%s` outside of a section",
+					    fileSymbols[symID].name.c_str()
+					);
+					value = 0;
+				} else {
+					value = label.section->org + label.offset;
+				}
 			} else {
 				value = std::get<int32_t>(symbol->data);
 			}
@@ -568,21 +585,27 @@ static void applyFilePatches(Section &section, Section &dataSection) {
 			    dataSection.name.c_str(),
 			    dataSection.data.size()
 			);
-		} else if (patch.type == PATCHTYPE_JR) { // `jr` is quite unlike the others...
-			// Offset is relative to the byte *after* the operand
-			// PC as operand to `jr` is lower than reference PC by 2
-			uint16_t address = patch.pcSection->org + patch.pcOffset + 2;
-			int16_t jumpOffset = value - address;
+		} else if (patch.type == PATCHTYPE_JR) {
+			if (!patch.pcSection) {
+				errorAt(patch, "PC has no value outside of a section");
+				dataSection.data[offset] = 0;
+				isError = true;
+			} else {
+				// Offset is relative to the byte *after* the operand
+				// PC as operand to `jr` is lower than reference PC by 2
+				uint16_t address = patch.pcSection->org + patch.pcOffset + 2;
+				int16_t jumpOffset = value - address;
 
-			if (jumpOffset < -128 || jumpOffset > 127) {
-				firstErrorAt(
-				    patch,
-				    "`JR` target must be between -128 and 127 bytes away, not %" PRId16
-				    "; use `JP` instead",
-				    jumpOffset
-				);
+				if (jumpOffset < -128 || jumpOffset > 127) {
+					firstErrorAt(
+					    patch,
+					    "`JR` target must be between -128 and 127 bytes away, not %" PRId16
+					    "; use `JP` instead",
+					    jumpOffset
+					);
+				}
+				dataSection.data[offset] = jumpOffset & 0xFF;
 			}
-			dataSection.data[offset] = jumpOffset & 0xFF;
 		} else {
 			// Patch a certain number of bytes
 			if (typeSize < sizeof(int)) {
