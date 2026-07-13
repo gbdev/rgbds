@@ -296,14 +296,24 @@ void reverse() {
 			uint8_t attr = (*attrmap)[index];
 			size_t tx = index % width, ty = index / width;
 
-			if (uint8_t palID = attr & 0b111; palID >= palettes.size() + options.basePalID) {
+			if (uint8_t palID = attr & 0b111; palID < options.basePalID) {
 				error(
-				    "Attribute map references palette #%u at (%zu, %zu), but there are only %zu "
-				    "palettes",
+				    "Attribute map references palette #%" PRIu8
+				    " at (%zu, %zu), but the base palette ID is #%" PRIu8,
 				    palID,
 				    tx,
 				    ty,
-				    palettes.size()
+				    options.basePalID
+				);
+			} else if (palID >= palettes.size() + options.basePalID) {
+				error(
+				    "Attribute map references palette #%" PRIu8
+				    " at (%zu, %zu), but there are only %zu palette%s",
+				    palID,
+				    tx,
+				    ty,
+				    palettes.size(),
+				    palettes.size() == 1 ? "" : "s"
 				);
 			}
 
@@ -313,8 +323,7 @@ void reverse() {
 				if (bank) {
 					warnx(
 					    "Attribute map assigns tile at (%zu, %zu) to bank 1, but no tilemap "
-					    "specified; "
-					    "ignoring the bank bit",
+					    "specified; ignoring the bank bit",
 					    tx,
 					    ty
 					);
@@ -368,7 +377,10 @@ void reverse() {
 				uint8_t attr = (*attrmap)[index];
 				bool bank = attr & 0b1000;
 
-				if (tileID >= options.maxNbTiles[bank] + options.baseTileIDs[bank]) {
+				// The unsigned underflow for `tileOfs` is intentional, since a nonzero
+				// base tile ID may overflow and continue with IDs from 0.
+				if (uint8_t tileOfs = tileID - options.baseTileIDs[bank];
+				    tileOfs >= options.maxNbTiles[bank]) {
 					error(
 					    "Tilemap references tile #%" PRIu8
 					    " at (%zu, %zu), but the limit for bank %u is %" PRIu16,
@@ -383,8 +395,12 @@ void reverse() {
 		} else {
 			size_t const limit = std::min<size_t>(nbTiles, options.maxNbTiles[0]);
 			for (size_t index = 0; index < mapSize; ++index) {
-				if (uint8_t tileID = (*tilemap)[index]; tileID >= limit + options.baseTileIDs[0]) {
-					size_t tx = index % width, ty = index / width;
+				size_t tx = index % width, ty = index / width;
+				uint8_t tileID = (*tilemap)[index];
+
+				// The unsigned underflow for `tileOfs` is intentional, since a nonzero
+				// base tile ID may overflow and continue with IDs from 0.
+				if (uint8_t tileOfs = tileID - options.baseTileIDs[0]; tileOfs >= limit) {
 					error(
 					    "Tilemap references tile #%" PRIu8 " at (%zu, %zu), but the limit is %zu",
 					    tileID,
