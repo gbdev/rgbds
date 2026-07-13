@@ -296,7 +296,7 @@ void reverse() {
 			uint8_t attr = (*attrmap)[index];
 			size_t tx = index % width, ty = index / width;
 
-			if (uint8_t palID = (attr & 0b111) - options.basePalID; palID > palettes.size()) {
+			if (uint8_t palID = attr & 0b111; palID >= palettes.size() + options.basePalID) {
 				error(
 				    "Attribute map references palette #%u at (%zu, %zu), but there are only %zu "
 				    "palettes",
@@ -320,9 +320,9 @@ void reverse() {
 					);
 				}
 			} else {
-				if (uint8_t tileOfs = (*tilemap)[index] - options.baseTileIDs[bank];
-				    tileOfs >= nbTilesInBank[bank]) {
-					nbTilesInBank[bank] = tileOfs + 1;
+				if (uint8_t tileID = (*tilemap)[index];
+				    tileID >= nbTilesInBank[bank] + options.baseTileIDs[bank]) {
+					nbTilesInBank[bank] = tileID - options.baseTileIDs[bank] + 1;
 				}
 			}
 		}
@@ -366,8 +366,7 @@ void reverse() {
 				uint8_t attr = (*attrmap)[index];
 				bool bank = attr & 0b1000;
 
-				if (uint8_t tileOfs = tileID - options.baseTileIDs[bank];
-				    tileOfs >= options.maxNbTiles[bank]) {
+				if (tileID >= options.maxNbTiles[bank] + options.baseTileIDs[bank]) {
 					error(
 					    "Tilemap references tile #%" PRIu8
 					    " at (%zu, %zu), but the limit for bank %u is %" PRIu16,
@@ -382,8 +381,7 @@ void reverse() {
 		} else {
 			size_t const limit = std::min<size_t>(nbTiles, options.maxNbTiles[0]);
 			for (size_t index = 0; index < mapSize; ++index) {
-				if (uint8_t tileID = (*tilemap)[index];
-				    static_cast<uint8_t>(tileID - options.baseTileIDs[0]) >= limit) {
+				if (uint8_t tileID = (*tilemap)[index]; tileID >= limit + options.baseTileIDs[0]) {
 					size_t tx = index % width, ty = index / width;
 					error(
 					    "Tilemap references tile #%" PRIu8 " at (%zu, %zu), but the limit is %zu",
@@ -519,14 +517,14 @@ void reverse() {
 			            : index;
 			// This should have been enforced by the earlier checking.
 			assume(tileOfs < nbTiles + options.trim);
-			size_t palID = (palmap ? (*palmap)[index] : attribute & 0b111) - options.basePalID;
-			assume(palID < palettes.size()); // Should be ensured on data read
+			size_t palOfs = (palmap ? (*palmap)[index] : attribute & 0b111) - options.basePalID;
+			assume(palOfs < palettes.size()); // Should be ensured on data read
 
 			// We do not have data for tiles trimmed with `-x`, so assume they are "blank"
 			static std::array<uint8_t, 16> const trimmedTile{0x00};
 			uint8_t const *tileData =
 			    tileOfs >= nbTiles ? trimmedTile.data() : &tiles[tileOfs * tileSize];
-			auto const &palette = palettes[palID];
+			auto const &palette = palettes[palOfs];
 			for (uint8_t y = 0; y < 8; ++y) {
 				// If vertically mirrored, fetch the bytes from the other end
 				uint8_t realY = (attribute & 0x40 ? 7 - y : y) * options.bitDepth;
@@ -547,7 +545,7 @@ void reverse() {
 					if (pngColorType == PNG_COLOR_TYPE_GRAY) {
 						gray = gray << pngDepth | (pixel.red & ((1 << pngDepth) - 1));
 					} else if (pngColorType == PNG_COLOR_TYPE_PALETTE) {
-						*ptr++ = palID * 4 + colorID;
+						*ptr++ = palOfs * 4 + colorID;
 					} else {
 						*ptr++ = pixel.red;
 						*ptr++ = pixel.green;
