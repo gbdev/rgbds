@@ -550,7 +550,7 @@ static void applyFilePatches(Section &section, Section &dataSection) {
 	verbosePrint(VERB_INFO, "Patching section \"%s\"...\n", section.name.c_str());
 	for (Patch &patch : section.patches) {
 		int32_t value = computeRPNExpr(patch, *section.fileSymbols);
-		uint16_t offset = patch.offset + section.offset;
+		uint32_t offset = patch.offset + section.offset;
 
 		uint8_t typeSizes[PATCHTYPE_INVALID] = {
 		    1, // PATCHTYPE_BYTE
