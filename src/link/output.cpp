@@ -126,7 +126,8 @@ static uint32_t checkOverlaySize() {
 		warnx("Overlay file does not have a size multiple of 0x4000");
 	} else if (options.is32kMode && overlaySize != 0x8000) {
 		warnx("Overlay is not exactly 0x8000 bytes large");
-	} else if (overlaySize < 0x8000) {
+	}
+	if (overlaySize < 0x8000) {
 		warnx("Overlay is less than 0x8000 bytes large");
 	}
 
@@ -140,9 +141,11 @@ static void coverOverlayBanks(uint32_t nbOverlayBanks) {
 	// 2 if options.is32kMode, 1 otherwise
 	uint32_t nbRom0Banks = sectionTypeInfo[SECTTYPE_ROM0].size / BANK_SIZE;
 	// Discount ROM0 banks to avoid outputting too much
-	uint32_t nbUncoveredBanks = nbOverlayBanks - nbRom0Banks > sections[SECTTYPE_ROMX].size()
-	                                ? nbOverlayBanks - nbRom0Banks
-	                                : 0;
+	uint32_t nbUncoveredBanks =
+	    nbOverlayBanks >= nbRom0Banks
+	            && nbOverlayBanks - nbRom0Banks > sections[SECTTYPE_ROMX].size()
+	        ? nbOverlayBanks - nbRom0Banks
+	        : 0;
 
 	if (nbUncoveredBanks > sections[SECTTYPE_ROMX].size()) {
 		for (uint32_t i = sections[SECTTYPE_ROMX].size(); i < nbUncoveredBanks; ++i) {

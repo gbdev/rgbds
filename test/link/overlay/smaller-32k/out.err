@@ -1,2 +1,3 @@
 warning: Overlay file does not have a size multiple of 0x4000
 warning: Overlay is less than 0x8000 bytes large
+warning: Output is larger than overlay file, but no padding value was specified

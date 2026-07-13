@@ -260,6 +260,16 @@ tryDiff "$test"/out.err "$outtemp"
 tryCmp "$test"/out.gb "$gbtemp"
 evaluateTest
 
+test="overlay/smaller-32k"
+startTest
+"$RGBASM" -o "$otemp" "$test"/a.asm
+continueTest
+rgblinkQuiet -o "$gbtemp" -t -O "$test"/overlay.gb "$otemp" 2>"$outtemp"
+tryDiff "$test"/out.err "$outtemp"
+# This test does not trim its output with 'dd' because it needs to verify the correct output size
+tryCmp "$test"/out.gb "$gbtemp"
+evaluateTest
+
 test="overlay/unfixed"
 startTest
 "$RGBASM" -o "$otemp" "$test"/a.asm
