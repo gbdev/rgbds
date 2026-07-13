@@ -305,10 +305,12 @@ static void placeSection(Section &section) {
 		);
 	} else {
 		// Otherwise there is overlap with another section
+		Section const *overlap = out_OverlappingSection(section);
+		assume(overlap != nullptr);
 		fatal(
 		    "Unable to place %s: section overlaps with \"%s\"",
 		    getSectionDescription(section).c_str(),
-		    out_OverlappingSection(section)->name.c_str()
+		    overlap->name.c_str()
 		);
 	}
 }
