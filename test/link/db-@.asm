@@ -6,5 +6,5 @@ SECTION "fixed", ROM0[0]
 SECTION "floating", ROM0
 	db @, @, @
 
-; We rely on this landing at address $0003, which isn't *guaranteed*...
+; XXX: We rely on this landing at address $0003, which isn't *guaranteed*...
 assert STARTOF("floating") == 3
