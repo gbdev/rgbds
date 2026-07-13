@@ -641,8 +641,8 @@ static void outputUnoptimizedTileData(
 		// LCOV_EXCL_STOP
 	}
 
-	uint16_t widthTiles = options.inputSlice.width ? options.inputSlice.width : image.png.width / 8;
-	uint16_t heightTiles =
+	uint64_t widthTiles = options.inputSlice.width ? options.inputSlice.width : image.png.width / 8;
+	uint64_t heightTiles =
 	    options.inputSlice.height ? options.inputSlice.height : image.png.height / 8;
 	uint64_t nbTiles = widthTiles * heightTiles;
 	uint64_t nbKeptTiles = nbTiles > options.trim ? nbTiles - options.trim : 0;
