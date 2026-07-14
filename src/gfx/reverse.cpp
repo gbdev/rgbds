@@ -320,9 +320,11 @@ void reverse() {
 					);
 				}
 			} else {
-				if (uint8_t tileID = (*tilemap)[index];
-				    tileID >= nbTilesInBank[bank] + options.baseTileIDs[bank]) {
-					nbTilesInBank[bank] = tileID - options.baseTileIDs[bank] + 1;
+				// The unsigned underflow for `tileOfs` is intentional, since a nonzero
+				// base tile ID may overflow and continue with IDs from 0.
+				if (uint8_t tileOfs = (*tilemap)[index] - options.baseTileIDs[bank];
+				    tileOfs >= nbTilesInBank[bank]) {
+					nbTilesInBank[bank] = tileOfs + 1;
 				}
 			}
 		}
