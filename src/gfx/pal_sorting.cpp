@@ -60,7 +60,7 @@ void sortGrayscale(
 static unsigned int luminance(uint16_t color) {
 	uint8_t red = color & 0b11111;
 	uint8_t green = color >> 5 & 0b11111;
-	uint8_t blue = color >> 10;
+	uint8_t blue = color >> 10 & 0b11111;
 	return 2126 * red + 7152 * green + 722 * blue;
 }
 
