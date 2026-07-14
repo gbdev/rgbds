@@ -260,12 +260,14 @@ static void verboseOutputAssignments(
 ) {
 	verboseDo(VERB_INFO, [&]() {
 		for (AssignedSets const &assignment : assignments) {
-			fputs("{ ", stderr);
+			fputs("- { ", stderr);
 			for (ColorSetAttrs const &attrs : assignment) {
-				fprintf(stderr, "[%zu] ", attrs.colorSetIndex);
-				for (uint16_t colorIndex : colorSets[attrs.colorSetIndex]) {
-					fprintf(stderr, "%04" PRIx16 ", ", colorIndex);
-				}
+				fprintf(
+				    stderr,
+				    "[%zu] %s ",
+				    attrs.colorSetIndex,
+				    listCGBColors(colorSets[attrs.colorSetIndex]).c_str()
+				);
 			}
 			fprintf(stderr, "} (volume = %zu)\n", assignment.volume());
 		}

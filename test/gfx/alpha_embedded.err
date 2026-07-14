@@ -1,4 +1,4 @@
-error: Failed to fit tile colors [$1527, $15cc, $1ab4] in specified palettes
+error: Failed to fit tile colors [GB:07,09,05; GB:12,14,05; GB:20,21,06] in specified palettes
 note: The following palette was specified:
-        [$1ab4, $15cc]
+      - [GB:20,21,06; GB:12,14,05]
 Conversion aborted after 1 error
