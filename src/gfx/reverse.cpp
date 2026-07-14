@@ -553,9 +553,24 @@ void reverse() {
 				for (uint8_t x = 0; x < 8; ++x) {
 					uint8_t bit0 = bitplane0 & 0x80, bit1 = bitplane1 & 0x80;
 					uint8_t colorID = bit0 >> 7 | bit1 >> 6;
-					Rgba const &pixel = *palette[colorID];
 
-					if (pngColorType == PNG_COLOR_TYPE_GRAY) {
+					std::optional<Rgba> const &color = palette[colorID];
+					// Unlike most of the inconsistency checks above, this one is simpler to handle
+					// here in the main loop, since checking each pixel beforehand would duplicate
+					// much of the logic.
+					if (!color.has_value()) {
+						fatal(
+						    "Tile at (%zu, %zu) references color #%" PRIu8
+						    ", but there are only %" PRIu8 " color%s per palette",
+						    tx,
+						    ty,
+						    colorID,
+						    options.nbColorsPerPal,
+						    options.nbColorsPerPal == 1 ? "" : "s"
+						);
+					}
+
+					if (Rgba const &pixel = *color; pngColorType == PNG_COLOR_TYPE_GRAY) {
 						gray = gray << pngDepth | (pixel.red & ((1 << pngDepth) - 1));
 					} else if (pngColorType == PNG_COLOR_TYPE_PALETTE) {
 						*ptr++ = palOfs * 4 + colorID;
