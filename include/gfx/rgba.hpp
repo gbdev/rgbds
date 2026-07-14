@@ -20,6 +20,10 @@ struct Rgba {
 	explicit constexpr Rgba(uint32_t rgba = 0)
 	    : red(rgba >> 24), green(rgba >> 16), blue(rgba >> 8), alpha(rgba) {}
 
+	// CGB colors are RGB555, so we use bit 15 to signify that the color is transparent instead
+	// Since the rest of the bits don't matter then, we return 0x8000 (1 << 15) exactly.
+	static constexpr uint16_t transparent = 0b1'00000'00000'00000;
+
 	static constexpr Rgba fromCGBColor(uint16_t color) {
 		constexpr auto _5to8 = [](uint8_t channel) -> uint8_t {
 			channel &= 0b11111; // For caller's convenience
@@ -29,7 +33,7 @@ struct Rgba {
 		    _5to8(color),
 		    _5to8(color >> 5),
 		    _5to8(color >> 10),
-		    static_cast<uint8_t>(color & 0x8000 ? 0x00 : 0xFF),
+		    static_cast<uint8_t>(color & transparent ? 0x00 : 0xFF),
 		};
 	}
 
@@ -43,10 +47,6 @@ struct Rgba {
 	}
 
 	bool operator==(Rgba const &rhs) const { return toCSS() == rhs.toCSS(); }
-
-	// CGB colors are RGB555, so we use bit 15 to signify that the color is transparent instead
-	// Since the rest of the bits don't matter then, we return 0x8000 exactly.
-	static constexpr uint16_t transparent = 0b1'00000'00000'00000;
 
 	static constexpr uint8_t transparency_threshold = 0x10;
 	bool isTransparent() const { return alpha < transparency_threshold; }
