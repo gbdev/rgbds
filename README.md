@@ -1,33 +1,39 @@
 # RGBDS
 
-RGBDS (Rednex Game Boy Development System) is a free assembler/linker package
-for the Game Boy and Game Boy Color. It consists of:
+[RGBDS](https://github.com/gbdev/rgbds) (Rednex Game Boy Development System) is
+a free assembler/linker package for the Game Boy and Game Boy Color.
 
-- RGBASM (assembler)
-- RGBLINK (linker)
-- RGBFIX (checksum/header fixer)
-- RGBGFX (PNG-to-Game Boy graphics converter)
+It consists of four tools:
 
-This is a fork of the original RGBDS which aims to make the programs more like
-other UNIX tools.
+- **RGBASM:** assembler
+- **RGBLINK:** linker
+- **RGBFIX:** ROM checksum/header fixer
+- **RGBGFX:** PNG-to-Game Boy graphics converter
 
-This toolchain is maintained [on GitHub](https://github.com/gbdev/rgbds).
+## Documentation
 
-The documentation of this toolchain can be [viewed online](https://rgbds.gbdev.io/docs/),
-including its [basic usage and development history](https://rgbds.gbdev.io/docs/rgbds.7).
-It is generated from the man pages found in this repository.
-The source code of the website itself is on GitHub as well under the repository
-[rgbds-www](https://github.com/gbdev/rgbds-www).
+The [full documentation](https://rgbds.gbdev.io/docs/) is available online,
+including the [development history](https://rgbds.gbdev.io/docs/rgbds.7) and
+[version history](https://rgbds.gbdev.io/versions), generated from the man pages
+in this repository.
 
-If you want to contribute or maintain RGBDS, please read [our contribution guide](/docs/CONTRIBUTING.md).
-If you have questions regarding the code, its organization, etc. you can find the maintainers
-[on the GBDev community channels](https://gbdev.io/chat) or via mail at `rgbds at gbdev dot io`.
+The documentation website's own source code is available in the
+[rgbds-www](https://github.com/gbdev/rgbds-www) repository.
 
-## Installing RGBDS
+## Community
 
-The [installation procedure](https://rgbds.gbdev.io/install) is available
-online for various platforms. [Building from source](https://rgbds.gbdev.io/install/source)
-is possible using `make` or `cmake`; follow the link for more detailed instructions.
+If you have questions about the RGBDS code or its organization, you can contact
+the maintainers on the [GBDev Discord server](https://discord.gg/RjJKA8wrD4) or
+[other community channels](https://gbdev.io/chat), or via email at
+`rgbds at gbdev dot io`.
+
+If you want to help maintain RGBDS, please read [the contribution guide](/docs/CONTRIBUTING.md).
+
+## Installing
+
+The [platform-specific installation instructions](https://rgbds.gbdev.io/install/)
+are available online. To [build from source](https://rgbds.gbdev.io/install/source)
+using `make` or `cmake`, briefly:
 
 ```sh
 make
@@ -40,8 +46,8 @@ cmake --build build
 cmake --install build
 ```
 
-Two parameters available when building are a prefix (e.g. to put the executables in a directory)
-and a suffix (e.g. to append the version number or commit ID).
+Both build systems support a prefix (e.g. to install into a specific directory)
+and a suffix (e.g. to append the version number or commit ID):
 
 ```sh
 make
@@ -54,4 +60,4 @@ cmake --build build
 cmake --install build --prefix install_dir
 ```
 
-(If you set a `SUFFIX`, it should include the `.exe` extension on Windows.)
+On Windows, any `SUFFIX` should include the `.exe` extension.
