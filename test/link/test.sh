@@ -322,6 +322,15 @@ tryDiff "$test"/out.err "$outtemp"
 tryCmp "$test"/out.gb "$gbtemp"
 evaluateTest
 
+test="script-ds"
+startTest
+"$RGBASM" -o "$otemp" "$test"/a.asm
+"$RGBASM" -o "$gbtemp2" "$test"/b.asm
+continueTest
+rgblinkQuiet -o "$gbtemp" -l "$test"/script.link "$otemp" "$gbtemp2" 2>"$outtemp"
+tryDiff "$test"/out.err "$outtemp"
+evaluateTest
+
 test="script-include"
 startTest
 "$RGBASM" -o "$otemp" "$test"/a.asm

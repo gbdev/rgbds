@@ -1,0 +1,3 @@
+error: Cannot increase the current address by 4294967280 bytes: only 12286 bytes to $4000
+    at script-ds/script.link(4)
+Linking failed with 1 error

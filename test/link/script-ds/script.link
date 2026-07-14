@@ -1,0 +1,5 @@
+ROM0
+	org $1000
+	"foo"
+	ds $ffff_fff0
+	"bar"

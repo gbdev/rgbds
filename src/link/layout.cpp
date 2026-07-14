@@ -204,7 +204,9 @@ void layout_Pad(uint32_t length) {
 	uint16_t &pc = curAddr[activeType][activeBankIdx];
 
 	assume(pc >= typeInfo.startAddr);
-	if (uint16_t offset = pc - typeInfo.startAddr; length + offset > typeInfo.size) {
+	// `length + offset` can overflow `uint32_t`, so check just `length` first
+	if (uint16_t offset = pc - typeInfo.startAddr;
+	    length > typeInfo.size || length + offset > typeInfo.size) {
 		scriptError(
 		    "Cannot increase the current address by %u bytes: only %u bytes to $%04" PRIx16,
 		    length,
