@@ -1,0 +1,5 @@
+-b 255
+-l 3
+-t reverse_base_wrap.tilemap
+-q reverse_base_wrap.palmap
+-p reverse_base_wrap.pal

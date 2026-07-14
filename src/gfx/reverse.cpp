@@ -293,19 +293,13 @@ void reverse() {
 		// 1. Checking those during the main loop is harmful to optimization, and
 		// 2. It clutters the code more, and it's not in great shape to begin with
 		for (size_t index = 0; index < mapSize; ++index) {
-			uint8_t attr = (*attrmap)[index];
 			size_t tx = index % width, ty = index / width;
+			uint8_t attr = (*attrmap)[index];
+			uint8_t palID = attr & 0b111;
 
-			if (uint8_t palID = attr & 0b111; palID < options.basePalID) {
-				error(
-				    "Attribute map references palette #%" PRIu8
-				    " at (%zu, %zu), but the base palette ID is #%" PRIu8,
-				    palID,
-				    tx,
-				    ty,
-				    options.basePalID
-				);
-			} else if (palID >= palettes.size() + options.basePalID) {
+			// The unsigned underflow for `palOfs` is intentional, since a nonzero
+			// base palette ID may overflow and continue with IDs from 0.
+			if (uint8_t palOfs = (palID - options.basePalID) & 0b111; palOfs >= palettes.size()) {
 				error(
 				    "Attribute map references palette #%" PRIu8
 				    " at (%zu, %zu), but there are only %zu palette%s",
@@ -535,7 +529,8 @@ void reverse() {
 			            : index;
 			// This should have been enforced by the earlier checking.
 			assume(tileOfs < nbTiles + options.trim);
-			size_t palOfs = (palmap ? (*palmap)[index] : attribute & 0b111) - options.basePalID;
+			size_t palOfs =
+			    ((palmap ? (*palmap)[index] : attribute & 0b111) - options.basePalID) & 0b111;
 			assume(palOfs < palettes.size()); // Should be ensured on data read
 
 			// We do not have data for tiles trimmed with `-x`, so assume they are "blank"
