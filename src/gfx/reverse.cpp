@@ -419,6 +419,27 @@ void reverse() {
 			    mapSize
 			);
 		}
+
+		for (size_t index = 0; index < mapSize; ++index) {
+			size_t tx = index % width, ty = index / width;
+			uint8_t palID = (*palmap)[index];
+
+			// The unsigned underflow for `palOfs` is intentional, since a nonzero
+			// base palette ID may overflow and continue with IDs from 0.
+			if (uint8_t palOfs = (palID - options.basePalID) & 0b111; palOfs >= palettes.size()) {
+				error(
+				    "Palette map references palette #%" PRIu8
+				    " at (%zu, %zu), but there are only %zu palette%s",
+				    palID,
+				    tx,
+				    ty,
+				    palettes.size(),
+				    palettes.size() == 1 ? "" : "s"
+				);
+			}
+		}
+
+		requireZeroErrors();
 	}
 
 	verbosePrint(VERB_NOTICE, "Writing image...\n");
