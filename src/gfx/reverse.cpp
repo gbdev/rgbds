@@ -252,7 +252,7 @@ void reverse() {
 			warnx("Colors in the palette file do not match those specified with '-c'");
 			// This spacing aligns "...versus with `-c`" above the column of `-c` palettes
 			fputs("Colors specified in the palette file:         ...versus with '-c':\n", stderr);
-			for (size_t i = 0; i < palettes.size() && i < options.palSpec.size(); ++i) {
+			for (size_t i = 0; i < palettes.size() || i < options.palSpec.size(); ++i) {
 				if (i < palettes.size()) {
 					printPalette(palettes[i]);
 				} else {
