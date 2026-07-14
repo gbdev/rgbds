@@ -622,7 +622,8 @@ void sdobj_ReadFile(FileStackNode const &src, FILE *file, std::vector<Symbol> &f
 					);
 				}
 				for (uint8_t i = 0; i < nbBaseBytes; ++i) {
-					baseValue = baseValue | data[offset + i] << (8 * i);
+					// Cast to `uint32_t` to avoid UB when shifting a byte >= 128 by a count >= 24.
+					baseValue = baseValue | static_cast<uint32_t>(data[offset + i]) << (8 * i);
 				}
 
 				// Bit 4 specifies signedness, but I don't think that matters?
