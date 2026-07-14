@@ -25,6 +25,20 @@ int xclose(int fd) {
 	return close(fd);
 }
 
+long seekSize(FILE *file) {
+	if (fseek(file, 0, SEEK_END) != 0) {
+		return -1;
+	}
+	long size = ftell(file);
+	if (size < 0) {
+		return -1;
+	}
+	if (fseek(file, 0, SEEK_SET) != 0) {
+		return -1;
+	}
+	return size;
+}
+
 bool isNewline(int c) {
 	return c == '\r' || c == '\n';
 }

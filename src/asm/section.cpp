@@ -21,7 +21,7 @@
 #include "helpers.hpp"
 #include "itertools.hpp" // InsertionOrderedMap
 #include "linkdefs.hpp"
-#include "util.hpp" // xfclose
+#include "util.hpp" // xfclose, seekSize
 
 #include "asm/fstack.hpp"
 #include "asm/lexer.hpp"
@@ -977,14 +977,13 @@ bool sect_BinaryFile(std::string const &name, uint32_t startPos) {
 	}
 	Defer closeFile{[&] { xfclose(file); }};
 
-	if (fseek(file, 0, SEEK_END) == 0) {
-		if (unsigned long fsize = ftell(file);
-		    startPos > fsize) { // `ftell` cannot fail here, since `fseek` succeeded.
+	if (long fileSize = seekSize(file); fileSize != -1) {
+		if (startPos > static_cast<size_t>(fileSize)) {
 			error(
-			    "Specified start position (%" PRIu32 ") is greater than length of \"%s\" (%lu)",
+			    "Specified start position (%" PRIu32 ") is greater than length of \"%s\" (%ld)",
 			    startPos,
 			    name.c_str(),
-			    fsize
+			    fileSize
 			);
 			return false;
 		}
@@ -1038,24 +1037,23 @@ bool sect_BinaryFileSlice(std::string const &name, uint32_t startPos, uint32_t l
 	}
 	Defer closeFile{[&] { xfclose(file); }};
 
-	if (fseek(file, 0, SEEK_END) == 0) {
-		if (unsigned long fsize = ftell(file);
-		    startPos > fsize) { // `ftell` cannot fail here, since `fseek` succeeded.
+	if (long fileSize = seekSize(file); fileSize != -1) {
+		if (startPos > static_cast<size_t>(fileSize)) {
 			error(
-			    "Specified start position (%" PRIu32 ") is greater than length of \"%s\" (%lu)",
+			    "Specified start position (%" PRIu32 ") is greater than length of \"%s\" (%ld)",
 			    startPos,
 			    name.c_str(),
-			    fsize
+			    fileSize
 			);
 			return false;
-		} else if (startPos + length > fsize) {
+		} else if (startPos + length > static_cast<size_t>(fileSize)) {
 			error(
 			    "Specified range in `INCBIN` file \"%s\" is out of bounds (%" PRIu32 " + %" PRIu32
 			    " > %ld)",
 			    name.c_str(),
 			    startPos,
 			    length,
-			    fsize
+			    fileSize
 			);
 			return false;
 		}

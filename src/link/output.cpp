@@ -112,15 +112,12 @@ static uint32_t checkOverlaySize() {
 		return 0;
 	}
 
-	if (fseek(overlayFile, 0, SEEK_END) != 0) {
+	long overlaySize = seekSize(overlayFile);
+
+	if (overlaySize == -1) {
 		warnx("Overlay file is not seekable, cannot check if properly formed");
 		return 0;
 	}
-
-	long overlaySize = ftell(overlayFile);
-
-	// Reset back to beginning
-	fseek(overlayFile, 0, SEEK_SET);
 
 	if (overlaySize % BANK_SIZE) {
 		warnx("Overlay file does not have a size multiple of 0x4000");

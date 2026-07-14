@@ -26,6 +26,9 @@ enum NumberBase {
 int xfclose(FILE *file);
 int xclose(int fd);
 
+// Measure file size with `fseek` and `ftell` idiom
+long seekSize(FILE *file);
+
 // Locale-independent character class functions
 bool isNewline(int c);
 bool isBlankSpace(int c);

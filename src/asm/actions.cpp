@@ -18,7 +18,7 @@
 #include "extern/utf8decoder.hpp"
 #include "helpers.hpp"
 #include "linkdefs.hpp"
-#include "util.hpp" // xfclose
+#include "util.hpp" // xfclose, seekSize
 
 #include "asm/charmap.hpp"
 #include "asm/format.hpp"
@@ -151,13 +151,12 @@ std::optional<std::string> act_ReadFile(std::string const &name, uint32_t maxLen
 	Defer closeFile{[&] { xfclose(file); }};
 
 	size_t readSize = maxLen;
-	if (fseek(file, 0, SEEK_END) == 0) {
+	if (long fileSize = seekSize(file); fileSize != -1) {
 		// If the file is seekable and shorter than the max length,
 		// just read as many bytes as there are
-		if (long fileSize = ftell(file); static_cast<size_t>(fileSize) < readSize) {
+		if (static_cast<size_t>(fileSize) < readSize) {
 			readSize = fileSize;
 		}
-		fseek(file, 0, SEEK_SET);
 		// LCOV_EXCL_START
 	} else if (errno != ESPIPE) {
 		error(
