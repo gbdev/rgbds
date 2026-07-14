@@ -353,7 +353,10 @@ static std::pair<std::vector<size_t>, std::vector<Palette>>
 	// local binding declared in enclosing function") is not sufficiently supported by clang.
 	verboseDo(VERB_INFO, [&mappingsV = mappings, &nbPalettesV = nbPalettes]() {
 		fprintf(
-		    stderr, "Color set mappings: (%zu palette%s)\n", nbPalettesV, nbPalettesV != 1 ? "s" : ""
+		    stderr,
+		    "Color set mappings: (%zu palette%s)\n",
+		    nbPalettesV,
+		    nbPalettesV != 1 ? "s" : ""
 		);
 		for (size_t i = 0; i < mappingsV.size(); ++i) {
 			fprintf(stderr, "%zu -> %zu\n", i, mappingsV[i]);
