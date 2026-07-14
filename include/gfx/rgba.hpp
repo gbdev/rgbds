@@ -4,6 +4,9 @@
 #define RGBDS_GFX_RGBA_HPP
 
 #include <stdint.h>
+#include <string>
+
+#include "helpers.hpp" // literal_strlen
 
 struct Rgba {
 	uint8_t red;
@@ -30,8 +33,8 @@ struct Rgba {
 		};
 	}
 
-	// Returns this RGBA as a 32-bit number that can be printed in hex (`%08x`) to yield its CSS
-	// representation
+	// Returns this RGBA as a 32-bit number that can be printed in hex (`#%08x`)
+	// to yield its CSS representation (`#rrggbbaa`).
 	uint32_t toCSS() const {
 		constexpr auto shl = [](uint8_t val, unsigned shift) {
 			return static_cast<uint32_t>(val) << shift;
@@ -55,5 +58,20 @@ struct Rgba {
 	bool isGray() const { return red == green && green == blue; }
 	uint8_t grayIndex() const;
 };
+
+// Returns a CGB color as a rendered string "GB:rr,gg,bb" or "transparent".
+std::string toCGB(uint16_t color);
+
+std::string listCGBColors(auto const &list) {
+	std::string buf;
+	for (uint16_t color : list) {
+		buf += toCGB(color) + "; ";
+	}
+	static constexpr size_t n = literal_strlen("; ");
+	if (buf.size() >= n) {
+		buf.erase(buf.size() - n, n);
+	}
+	return buf;
+}
 
 #endif // RGBDS_GFX_RGBA_HPP

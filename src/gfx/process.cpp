@@ -200,11 +200,11 @@ struct Image {
 					if (std::pair fused{color.toCSS(), other->toCSS()};
 					    fusions.find(fused) == fusions.end()) {
 						warnx(
-						    "Colors #%08x and #%08x both reduce to the same Game Boy color $%04x "
+						    "Colors #%08x and #%08x both reduce to the same RGB555 color %s "
 						    "(first seen at (%" PRIu32 ", %" PRIu32 "))",
 						    fused.first,
 						    fused.second,
-						    color.cgbColor(),
+						    toCGB(color.cgbColor()).c_str(),
 						    x,
 						    y
 						);
@@ -411,15 +411,6 @@ static std::pair<std::vector<size_t>, std::vector<Palette>>
 		}
 	}
 
-	auto listColors = [](auto const &list) {
-		static char buf[sizeof(", $xxxx, $xxxx, $xxxx, $xxxx")];
-		char *ptr = buf;
-		for (uint16_t color : list) {
-			ptr += snprintf(ptr, sizeof(", $xxxx"), ", $%04x", color);
-		}
-		return &buf[literal_strlen(", ")];
-	};
-
 	// Iterate through color sets, and try mapping them to the specified palettes
 	std::vector<size_t> mappings(colorSets.size());
 	bool bad = false;
@@ -435,7 +426,10 @@ static std::pair<std::vector<size_t>, std::vector<Palette>>
 
 		if (iter == palettes.end()) {
 			assume(!colorSet.empty());
-			error("Failed to fit tile colors [%s] in specified palettes", listColors(colorSet));
+			error(
+			    "Failed to fit tile colors [%s] in specified palettes",
+			    listCGBColors(colorSet).c_str()
+			);
 			bad = true;
 		}
 		mappings[i] = iter - palettes.begin(); // Bogus value, but whatever
@@ -447,7 +441,7 @@ static std::pair<std::vector<size_t>, std::vector<Palette>>
 		    palettes.size() == 1 ? " was" : "s were"
 		);
 		for (Palette const &pal : palettes) {
-			fprintf(stderr, "        [%s]\n", listColors(pal));
+			fprintf(stderr, "      - [%s]\n", listCGBColors(pal).c_str());
 		}
 		giveUp();
 	}
@@ -459,11 +453,7 @@ static void outputPalettes(std::vector<Palette> const &palettes) {
 	// LCOV_EXCL_START
 	verboseDo(VERB_INFO, [&]() {
 		for (Palette const &palette : palettes) {
-			fputs("{ ", stderr);
-			for (uint16_t colorIndex : palette) {
-				fprintf(stderr, "%04" PRIx16 ", ", colorIndex);
-			}
-			fputs("}\n", stderr);
+			fprintf(stderr, "- { %s }\n", listCGBColors(palette).c_str());
 		}
 	});
 	// LCOV_EXCL_STOP
@@ -1048,23 +1038,16 @@ void process() {
 			case ColorSet::STRICT_SUPERSET:
 				// Override the previous color set that this one is a strict superset of
 
-				verboseDo(VERB_DEBUG, [&]() {
-					fprintf(
-					    stderr,
-					    "- Tile (%" PRIu32 ", %" PRIu32 ") overrides color set #%zu: [",
-					    tile.x,
-					    tile.y,
-					    n
-					);
-					for (uint16_t color : colorSets[n]) {
-						fprintf(stderr, "$%04x, ", color);
-					}
-					fputs("] becomes [", stderr);
-					for (uint16_t color : colorSet) {
-						fprintf(stderr, "$%04x, ", color);
-					}
-					fputs("]\n", stderr);
-				});
+				verbosePrint(
+				    VERB_DEBUG,
+				    "- Tile (%" PRIu32 ", %" PRIu32
+				    ") overrides color set #%zu: [%s] becomes [%s]\n",
+				    tile.x,
+				    tile.y,
+				    n,
+				    listCGBColors(colorSets[n]).c_str(),
+				    listCGBColors(colorSet).c_str()
+				);
 
 				colorSets[n] = colorSet;
 				// Remove any other color sets that we are also a strict superset of
@@ -1112,19 +1095,14 @@ void process() {
 		attrs.colorSetID = colorSets.size();
 		colorSets.push_back(colorSet);
 
-		verboseDo(VERB_DEBUG, [&]() {
-			fprintf(
-			    stderr,
-			    "- Tile (%" PRIu32 ", %" PRIu32 ") adds color set #%zu: [",
-			    tile.x,
-			    tile.y,
-			    attrs.colorSetID
-			);
-			for (uint16_t color : colorSet) {
-				fprintf(stderr, "$%04x, ", color);
-			}
-			fputs("]\n", stderr);
-		});
+		verbosePrint(
+		    VERB_DEBUG,
+		    "- Tile (%" PRIu32 ", %" PRIu32 ") adds color set #%zu: [%s]\n",
+		    tile.x,
+		    tile.y,
+		    attrs.colorSetID,
+		    listCGBColors(colorSet).c_str()
+		);
 
 continue_visiting_tiles:;
 	}
@@ -1138,11 +1116,7 @@ continue_visiting_tiles:;
 	// LCOV_EXCL_START
 	verboseDo(VERB_INFO, [&]() {
 		for (ColorSet const &colorSet : colorSets) {
-			fputs("[ ", stderr);
-			for (uint16_t color : colorSet) {
-				fprintf(stderr, "$%04x, ", color);
-			}
-			fputs("]\n", stderr);
+			fprintf(stderr, "- [%s]\n", listCGBColors(colorSet).c_str());
 		}
 	});
 	// LCOV_EXCL_STOP

@@ -4,12 +4,25 @@
 
 #include <algorithm>
 #include <array>
+#include <inttypes.h>
 #include <math.h>
 #include <stdint.h>
 
 #include "helpers.hpp" // assume
 
 #include "gfx/main.hpp" // options
+
+std::string toCGB(uint16_t color) {
+	if (color == Rgba::transparent) {
+		return "transparent"; // same length as "GB:rr,gg,bb"
+	}
+	uint8_t red = color & 0b11111;
+	uint8_t green = color >> 5 & 0b11111;
+	uint8_t blue = color >> 10 & 0b11111;
+	char buf[sizeof("GB:rr,gg,bb")];
+	snprintf(buf, sizeof(buf), "GB:%02" PRIu8 ",%02" PRIu8 ",%02" PRIu8, red, green, blue);
+	return buf;
+}
 
 // Based on inverting the "Modern - Accurate" formula used by SameBoy
 // since commit b5a611c5db46d6a0649d04d24d8d6339200f9ca1 (Dec 2020),
