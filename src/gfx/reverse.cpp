@@ -302,10 +302,11 @@ void reverse() {
 			if (uint8_t palOfs = (palID - options.basePalID) & 0b111; palOfs >= palettes.size()) {
 				error(
 				    "Attribute map references palette #%" PRIu8
-				    " at (%zu, %zu), but there are only %zu palette%s",
+				    " at (%zu, %zu), but there %s only %zu palette%s",
 				    palID,
 				    tx,
 				    ty,
+				    palettes.size() == 1 ? "is" : "are",
 				    palettes.size(),
 				    palettes.size() == 1 ? "" : "s"
 				);
@@ -429,10 +430,11 @@ void reverse() {
 			if (uint8_t palOfs = (palID - options.basePalID) & 0b111; palOfs >= palettes.size()) {
 				error(
 				    "Palette map references palette #%" PRIu8
-				    " at (%zu, %zu), but there are only %zu palette%s",
+				    " at (%zu, %zu), but there %s only %zu palette%s",
 				    palID,
 				    tx,
 				    ty,
+				    palettes.size() == 1 ? "is" : "are",
 				    palettes.size(),
 				    palettes.size() == 1 ? "" : "s"
 				);
@@ -582,10 +584,11 @@ void reverse() {
 					if (!color.has_value()) {
 						fatal(
 						    "Tile at (%zu, %zu) references color #%" PRIu8
-						    ", but there are only %" PRIu8 " color%s per palette",
+						    ", but there %s only %" PRIu8 " color%s per palette",
 						    tx,
 						    ty,
 						    colorID,
+						    options.nbColorsPerPal == 1 ? "is" : "are",
 						    options.nbColorsPerPal,
 						    options.nbColorsPerPal == 1 ? "" : "s"
 						);
