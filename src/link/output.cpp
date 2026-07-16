@@ -529,11 +529,11 @@ static void writeMapSummary() {
 
 		fprintf(
 		    mapFile,
-		    "\t%s: %" PRIu32 " byte%s used / %" PRIu32 " free",
+		    "\t%s: %" PRIu32 " byte%s used / %zu free",
 		    sectionTypeInfo[type].name.c_str(),
 		    usedTotal,
 		    usedTotal == 1 ? "" : "s",
-		    nbBanks * sectionTypeInfo[type].size - usedTotal
+		    static_cast<size_t>(nbBanks) * sectionTypeInfo[type].size - usedTotal
 		);
 		if (sectionTypeInfo[type].firstBank != sectionTypeInfo[type].lastBank || nbBanks > 1) {
 			fprintf(mapFile, " in %u bank%s", nbBanks, nbBanks == 1 ? "" : "s");
