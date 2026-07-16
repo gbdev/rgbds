@@ -279,7 +279,7 @@ static void decant(std::vector<AssignedSets> &assignments, std::vector<ColorSet>
 	assume(!assignments.empty());
 
 	// "Decanting" is the process of moving all *things* that can fit in a lower index there
-	auto decantOn = [&assignments](auto const &tryDecanting) {
+	auto decantOn = [&assignments](Procedure<AssignedSets &, AssignedSets &> auto tryDecanting) {
 		// No need to attempt decanting on palette #0, as there are no palettes to decant to
 		for (size_t from = assignments.size(); --from;) {
 			// Scan all palettes before this one
