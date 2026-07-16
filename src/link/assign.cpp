@@ -144,6 +144,8 @@ static std::optional<size_t> getPlacement(Section const &section, MemoryLocation
 				location.address = section.org;
 			} else if (section.isAlignFixed) {
 				// Move to next aligned location
+				// We have previously ensured alignment to 15 or fewer bits, so this will progress
+				assume(section.alignMask < (1 << 16) - 1);
 				// Move back to alignment boundary
 				location.address -= section.alignOfs;
 				// Ensure we're there (e.g. on first check)

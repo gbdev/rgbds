@@ -321,6 +321,17 @@ static void doSanityChecks(Section &section) {
 			);
 		}
 	}
+
+	// An alignment of 16 is impossible to output from RGBASM, since it's treated as
+	// fixing the address, but is still satisfiable. A fixed address different from the
+	// alignment offset would not be, but we checked for that already above.
+	if (section.isAlignFixed && section.alignMask == (1 << 16) - 1) {
+		assume(!section.isAddressFixed || section.org == section.alignOfs);
+		section.isAddressFixed = true;
+		section.org = section.alignOfs;
+		section.isAlignFixed = false;
+		section.alignMask = section.alignOfs = 0;
+	}
 }
 
 void sect_DoSanityChecks() {
