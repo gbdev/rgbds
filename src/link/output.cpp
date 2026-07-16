@@ -181,6 +181,7 @@ static void
 			}
 
 			// Output the section itself
+			assume(section->size == section->data.size());
 			fwrite(section->data.data(), 1, section->size, outputFile);
 			offset += section->size;
 
@@ -473,6 +474,7 @@ static void writeMapBank(SortedSections const &sectList, SectionType type, uint3
 
 		writeEmptySpace(prevEndAddr, sect.org);
 
+		assume(sect.org + sect.size <= UINT16_MAX);
 		prevEndAddr = sect.org + sect.size;
 
 		fprintf(mapFile, "\tSECTION: $%04" PRIx16, sect.org);

@@ -270,6 +270,7 @@ static void placeSection(Section &section) {
 		assignSection(section, location);
 
 		// Update the free space
+		assume(section.org + section.size <= UINT16_MAX);
 		uint16_t sectionEnd = section.org + section.size;
 		bool noLeftSpace = freeSpace.address == section.org;
 		bool noRightSpace = freeSpace.address + freeSpace.size == sectionEnd;
