@@ -699,6 +699,8 @@ static void outputUnoptimizedMaps(
 		// processed, since there cannot be more tiles than could fit in both banks.
 		assume(bank < 2);
 
+		// The unsigned overflow for `tileID` and `palID` is intentional, since
+		// nonzero base IDs may overflow beyond 255 and continue with IDs from 0.
 		if (tilemapOutput.has_value()) {
 			uint8_t tileID = (attr.isBackgroundTile() ? 0 : tileIdx) + options.baseTileIDs[bank];
 			(*tilemapOutput)->sputc(tileID);
@@ -904,6 +906,8 @@ static void
 	for (AttrmapEntry const &entry : attrmap) {
 		uint8_t attr = entry.xFlip << 5 | entry.yFlip << 6;
 		attr |= entry.bank << 3;
+		// The unsigned underflow for the palette ID is intentional, since a
+		// nonzero base palette ID may overflow and continue with IDs from 0.
 		attr |= (entry.getPalID(mappings) + options.basePalID) & 0b111;
 		output->sputc(attr);
 	}
@@ -919,6 +923,8 @@ static void
 	}
 
 	for (AttrmapEntry const &entry : attrmap) {
+		// The unsigned underflow for the palette ID is intentional, since a
+		// nonzero base palette ID may overflow and continue with IDs from 0.
 		output->sputc(entry.getPalID(mappings) + options.basePalID);
 	}
 }
