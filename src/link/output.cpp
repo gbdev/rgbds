@@ -450,9 +450,9 @@ static void writeMapSymbols(Section const &sect) {
 				announced = true;
 			}
 			assume(std::holds_alternative<Label>(sym->data));
-			uint32_t address = std::get<Label>(sym->data).offset + sect.org;
+			uint16_t addr = static_cast<uint16_t>(std::get<Label>(sym->data).offset + sect.org);
 			// Space matches "\tSECTION: $xxxx ..."
-			fprintf(mapFile, "\t         $%04" PRIx32 " = ", address);
+			fprintf(mapFile, "\t         $%04" PRIx16 " = ", addr);
 			writeSymName(sym->name, mapFile);
 			putc('\n', mapFile);
 		}
