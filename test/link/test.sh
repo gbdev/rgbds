@@ -191,6 +191,16 @@ tryDiff "$test"/ref.out.map "$outtemp"
 tryDiff "$test"/ref.out.sym "$outtemp2"
 evaluateTest
 
+test="jr-wraparound"
+startTest
+"$RGBASM" -o "$otemp" "$test"/a.asm
+"$RGBASM" -o "$outtemp" "$test"/b.asm
+continueTest
+rgblinkQuiet -o "$gbtemp" -n "$outtemp2" "$otemp" "$outtemp"
+tryCmpRom "$test"/ref.out.bin
+tryDiff "$test"/ref.out.sym "$outtemp2"
+evaluateTest
+
 test="high-low"
 startTest
 "$RGBASM" -o "$otemp" "$test"/a.asm
