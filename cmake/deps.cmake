@@ -3,8 +3,8 @@
 # These are kept in a separate file so that it can be hashed as a key for our CI's `actions/cache`.
 
 FetchContent_Declare(PNG
-                     URL https://download.sourceforge.net/libpng/libpng-1.6.57.tar.xz
-                     URL_HASH SHA256=d10c20d7171569804cae8dfc13ba6dcd0662c41ed39d43d4d429314aafb10a80
+                     URL https://download.sourceforge.net/libpng/libpng-1.6.58.tar.xz
+                     URL_HASH SHA256=28eb403f51f0f7405249132cecfe82ea5c0ef97f1b32c5a65828814ae0d34775
                      EXCLUDE_FROM_ALL # We only install the runtime dependencies, and do so separately.
                      FIND_PACKAGE_ARGS 1.5.4)
 
