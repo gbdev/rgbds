@@ -585,7 +585,7 @@ static void writeSym() {
 		       < std::tie(std::get<int32_t>(sym2->data), sym2->name);
 	});
 	for (Symbol *sym : constants) {
-		int32_t val = std::get<int32_t>(sym->data);
+		uint32_t val = static_cast<uint32_t>(std::get<int32_t>(sym->data));
 		int width = val < 0x100 ? 2 : val < 0x10000 ? 4 : 8;
 		fprintf(symFile, "%0*" PRIx32 " ", width, val);
 		writeSymName(sym->name, symFile);
