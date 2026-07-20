@@ -691,7 +691,7 @@ static void outputUnoptimizedMaps(
 	autoOpenPath(options.attrmap, attrmapOutput);
 	autoOpenPath(options.palmap, palmapOutput);
 
-	uint8_t tileIdx = 0;
+	uint16_t tileIdx = 0;
 	uint8_t bank = 0;
 	for (AttrmapEntry const &attr : attrmap) {
 		// The update-increment logic at the end of this loop may increment `bank` from 1 to 2,
