@@ -108,9 +108,9 @@ static void readFileStackNode(
 	    node.lineNo, file, "%s: Cannot read node #%" PRIu32 "'s line number: %s", fileName, nodeID
 	);
 
-	uint8_t type;
-	tryGetc(type, file, "%s: Cannot read node #%" PRIu32 "'s type: %s", fileName, nodeID);
-	switch (type & ~(1 << FSTACKNODE_QUIET_BIT)) {
+	uint8_t typeAndQuiet;
+	tryGetc(typeAndQuiet, file, "%s: Cannot read node #%" PRIu32 "'s type: %s", fileName, nodeID);
+	switch (uint8_t type = typeAndQuiet & ~(1 << FSTACKNODE_QUIET_BIT); type) {
 	case NODE_FILE:
 	case NODE_MACRO:
 		node.type = FileStackNodeType(type);
@@ -149,7 +149,7 @@ static void readFileStackNode(
 		fatal("%s: Node #%" PRIu32 " has unknown type 0x%02x", fileName, nodeID, type);
 	}
 
-	node.isQuiet = (type & (1 << FSTACKNODE_QUIET_BIT)) != 0;
+	node.isQuiet = (typeAndQuiet & (1 << FSTACKNODE_QUIET_BIT)) != 0;
 }
 
 // Reads a symbol from a file.
