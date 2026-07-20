@@ -47,11 +47,16 @@ static bool isError = false;
 		} \
 	} while (0)
 
+#define rpnErrorAt(...) \
+	do { \
+		errorAt(__VA_ARGS__); \
+		isError = true; \
+	} while (0)
+
 #define firstErrorAt(...) \
 	do { \
 		if (!isError) { \
-			errorAt(__VA_ARGS__); \
-			isError = true; \
+			rpnErrorAt(__VA_ARGS__); \
 		} \
 	} while (0)
 
@@ -283,16 +288,15 @@ static int32_t computeRPNExpr(Patch const &patch, std::vector<Symbol> const &fil
 			if (symID >= fileSymbols.size()) {
 				fatalAt(patch, "Requested `BANK()` of invalid symbol ID #%" PRIu32, symID);
 			} else if (Symbol const *symbol = getSymbol(fileSymbols, symID); !symbol) {
-				errorAt(
+				rpnErrorAt(
 				    patch,
 				    "Requested `BANK()` of undefined symbol `%s`",
 				    fileSymbols[symID].name.c_str()
 				);
-				isError = true;
 				value = 1;
 			} else if (std::holds_alternative<Label>(symbol->data)) {
 				if (Label const &label = std::get<Label>(symbol->data); !label.section) {
-					errorAt(
+					rpnErrorAt(
 					    patch,
 					    "Requested `BANK()` of label `%s` outside of a section",
 					    fileSymbols[symID].name.c_str()
@@ -302,12 +306,11 @@ static int32_t computeRPNExpr(Patch const &patch, std::vector<Symbol> const &fil
 					value = label.section->bank;
 				}
 			} else {
-				errorAt(
+				rpnErrorAt(
 				    patch,
 				    "Requested `BANK()` of non-label symbol `%s`",
 				    fileSymbols[symID].name.c_str()
 				);
-				isError = true;
 				value = 1;
 			}
 			break;
@@ -320,8 +323,7 @@ static int32_t computeRPNExpr(Patch const &patch, std::vector<Symbol> const &fil
 			while (getRPNByte(expression, size, patch)) {}
 
 			if (Section const *sect = sect_GetSection(name); !sect) {
-				errorAt(patch, "Requested `BANK()` of undefined section \"%s\"", name);
-				isError = true;
+				rpnErrorAt(patch, "Requested `BANK()` of undefined section \"%s\"", name);
 				value = 1;
 			} else {
 				value = sect->bank;
@@ -331,8 +333,7 @@ static int32_t computeRPNExpr(Patch const &patch, std::vector<Symbol> const &fil
 
 		case RPN_BANK_SELF:
 			if (!patch.pcSection) {
-				errorAt(patch, "PC has no bank outside of a section");
-				isError = true;
+				rpnErrorAt(patch, "PC has no bank outside of a section");
 				value = 1;
 			} else {
 				value = patch.pcSection->bank;
@@ -345,8 +346,7 @@ static int32_t computeRPNExpr(Patch const &patch, std::vector<Symbol> const &fil
 			while (getRPNByte(expression, size, patch)) {}
 
 			if (Section const *sect = sect_GetSection(name); !sect) {
-				errorAt(patch, "Requested `SIZEOF()` of undefined section \"%s\"", name);
-				isError = true;
+				rpnErrorAt(patch, "Requested `SIZEOF()` of undefined section \"%s\"", name);
 				value = 1;
 			} else {
 				value = sect->size;
@@ -360,8 +360,7 @@ static int32_t computeRPNExpr(Patch const &patch, std::vector<Symbol> const &fil
 			while (getRPNByte(expression, size, patch)) {}
 
 			if (Section const *sect = sect_GetSection(name); !sect) {
-				errorAt(patch, "Requested `STARTOF()` of undefined section \"%s\"", name);
-				isError = true;
+				rpnErrorAt(patch, "Requested `STARTOF()` of undefined section \"%s\"", name);
 				value = 1;
 			} else {
 				assume(sect->offset == 0);
@@ -373,8 +372,7 @@ static int32_t computeRPNExpr(Patch const &patch, std::vector<Symbol> const &fil
 		case RPN_SIZEOF_SECTTYPE:
 			value = getRPNByte(expression, size, patch);
 			if (value < 0 || value >= SECTTYPE_INVALID) {
-				errorAt(patch, "Requested `SIZEOF()` of an invalid section type");
-				isError = true;
+				rpnErrorAt(patch, "Requested `SIZEOF()` of an invalid section type");
 				value = 0;
 			} else {
 				value = sectionTypeInfo[value].size;
@@ -384,8 +382,7 @@ static int32_t computeRPNExpr(Patch const &patch, std::vector<Symbol> const &fil
 		case RPN_STARTOF_SECTTYPE:
 			value = getRPNByte(expression, size, patch);
 			if (value < 0 || value >= SECTTYPE_INVALID) {
-				errorAt(patch, "Requested `STARTOF()` of an invalid section type");
-				isError = true;
+				rpnErrorAt(patch, "Requested `STARTOF()` of an invalid section type");
 				value = 0;
 			} else {
 				value = sectionTypeInfo[value].startAddr;
@@ -446,20 +443,18 @@ static int32_t computeRPNExpr(Patch const &patch, std::vector<Symbol> const &fil
 				if (patch.pcSection) {
 					value = patch.pcOffset + patch.pcSection->org;
 				} else {
-					errorAt(patch, "PC has no value outside of a section");
+					rpnErrorAt(patch, "PC has no value outside of a section");
 					value = 0;
-					isError = true;
 				}
 			} else if (symID >= fileSymbols.size()) {
 				fatalAt(patch, "Invalid symbol ID #%" PRIu32, symID);
 			} else if (Symbol const *symbol = getSymbol(fileSymbols, symID); !symbol) {
-				errorAt(patch, "Undefined symbol `%s`", fileSymbols[symID].name.c_str());
+				rpnErrorAt(patch, "Undefined symbol `%s`", fileSymbols[symID].name.c_str());
 				sym_TraceLocalAliasedSymbols(fileSymbols[symID].name);
 				value = 0;
-				isError = true;
 			} else if (std::holds_alternative<Label>(symbol->data)) {
 				if (Label const &label = std::get<Label>(symbol->data); !label.section) {
-					errorAt(
+					rpnErrorAt(
 					    patch,
 					    "Requested value of label `%s` outside of a section",
 					    fileSymbols[symID].name.c_str()
@@ -484,7 +479,7 @@ static int32_t computeRPNExpr(Patch const &patch, std::vector<Symbol> const &fil
 	}
 
 	if (rpnStack.size() > 1) {
-		errorAt(patch, "RPN stack has %zu entries on exit, not 1", rpnStack.size());
+		rpnErrorAt(patch, "RPN stack has %zu entries on exit, not 1", rpnStack.size());
 	}
 
 	isError = false;
@@ -511,7 +506,7 @@ void patch_CheckAssertions() {
 				    !assert.message.empty() ? assert.message.c_str() : "assert failure"
 				);
 			case ASSERT_ERROR:
-				errorAt(
+				rpnErrorAt(
 				    assert.patch,
 				    "%s",
 				    !assert.message.empty() ? assert.message.c_str() : "assert failure"
@@ -578,7 +573,7 @@ static void applyFilePatches(Section &section, Section &dataSection) {
 		uint8_t typeSize = typeSizes[patch.type];
 
 		if (dataSection.data.size() < offset + typeSize) {
-			errorAt(
+			rpnErrorAt(
 			    patch,
 			    "Patch would write %zu bytes past the end of section \"%s\" (%zu bytes long)",
 			    offset + typeSize - dataSection.data.size(),
@@ -587,9 +582,8 @@ static void applyFilePatches(Section &section, Section &dataSection) {
 			);
 		} else if (patch.type == PATCHTYPE_JR) {
 			if (!patch.pcSection) {
-				errorAt(patch, "PC has no value outside of a section");
+				rpnErrorAt(patch, "PC has no value outside of a section");
 				dataSection.data[offset] = 0;
-				isError = true;
 			} else {
 				// Offset is relative to the byte *after* the operand
 				// PC as operand to `jr` is lower than reference PC by 2
