@@ -29,7 +29,7 @@ jobs:
           ssh-key: !!str ${{ secrets.SSH_KEY_SECRET }}
       - name: Install groff and mandoc
         run: |
-          sudo apt install -Uyq groff mandoc -o APT::Color=yes -o Acquire::Queue-Mode
+          sudo apt install -Uyq groff mandoc -o APT::Color=yes -o Acquire::Queue-Mode=access
       - name: Update pages
         working-directory: rgbds/man
         run: | # The ref appears to be in the format "refs/tags/<version>", so strip that
