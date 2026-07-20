@@ -588,12 +588,12 @@ static void applyFilePatches(Section &section, Section &dataSection) {
 				// Offset is relative to the byte *after* the operand
 				// PC as operand to `jr` is lower than reference PC by 2
 				uint16_t address = patch.pcSection->org + patch.pcOffset + 2;
-				int16_t jumpOffset = value - address;
+				int32_t jumpOffset = value - address;
 
 				if (jumpOffset < -128 || jumpOffset > 127) {
 					firstErrorAt(
 					    patch,
-					    "`JR` target must be between -128 and 127 bytes away, not %" PRId16
+					    "`JR` target must be between -128 and 127 bytes away, not %" PRId32
 					    "; use `JP` instead",
 					    jumpOffset
 					);
