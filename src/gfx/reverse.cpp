@@ -427,7 +427,7 @@ void reverse() {
 
 			// The unsigned underflow for `palOfs` is intentional, since a nonzero
 			// base palette ID may overflow and continue with IDs from 0.
-			if (uint8_t palOfs = (palID - options.basePalID) & 0b111; palOfs >= palettes.size()) {
+			if (uint8_t palOfs = (palID - options.basePalID) & 0xff; palOfs >= palettes.size()) {
 				error(
 				    "Palette map references palette #%" PRIu8
 				    " at (%zu, %zu), but there %s only %zu palette%s",
@@ -553,7 +553,9 @@ void reverse() {
 			// This should have been enforced by the earlier checking.
 			assume(tileOfs < nbTiles + options.trim);
 			size_t palOfs =
-			    ((palmap ? (*palmap)[index] : attribute & 0b111) - options.basePalID) & 0b111;
+			    (palmap    ? ((*palmap)[index] - options.basePalID) & 0xff
+			     : attrmap ? (attribute - options.basePalID) & 0b111
+			               : 0);
 			assume(palOfs < palettes.size()); // Should be ensured on data read
 
 			// We do not have data for tiles trimmed with `-x`, so assume they are "blank"
