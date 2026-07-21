@@ -50,42 +50,40 @@ static inline void unreachable_() {
 	#pragma intrinsic(_BitScanReverse, _BitScanForward)
 
 static inline int ctz(unsigned int x) {
-	unsigned long cnt;
-
 	assume(x != 0);
-	_BitScanForward(&cnt, x);
-	return cnt;
+	unsigned long count;
+	_BitScanForward(&count, x);
+	return count;
 }
 
 static inline int clz(unsigned int x) {
-	unsigned long cnt;
-
 	assume(x != 0);
-	_BitScanReverse(&cnt, x);
-	return 31 - cnt;
+	unsigned long count;
+	_BitScanReverse(&count, x);
+	return 31 - count;
 }
 
 #else
 	#include <limits.h>
 
 static inline int ctz(unsigned int x) {
-	int cnt = 0;
-
+	assume(x != 0);
+	int count = 0;
 	while (!(x & 1)) {
 		x >>= 1;
-		++cnt;
+		++count;
 	}
-	return cnt;
+	return count;
 }
 
 static inline int clz(unsigned int x) {
-	int cnt = 0;
-
+	assume(x != 0);
+	int count = 0;
 	while (x <= UINT_MAX / 2) {
 		x <<= 1;
-		++cnt;
+		++count;
 	}
-	return cnt;
+	return count;
 }
 #endif
 
