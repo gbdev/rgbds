@@ -130,7 +130,7 @@ void cli_ParseArgs(
 				// This happens if `--` is passed, process the remaining arg(s) as positional
 				assume(musl_optind < curArgc);
 				for (int i = musl_optind; i < curArgc; ++i) {
-					parseArg(1, argv[i]); // Positional argument
+					parseArg(1, curArgv[i]); // Positional argument
 				}
 			}
 
