@@ -708,6 +708,7 @@ void parseBackgroundPalSpec(char const *arg) {
 		break;
 	default:
 		error("Unknown background color specification \"%s\"", arg);
+		return;
 	}
 
 	if (arg[size + 1] != '\0') {
