@@ -34,6 +34,9 @@ public:
 		} else {
 			assume(mode & std::ios_base::out);
 			_file.emplace<std::streambuf *>(std::cout.rdbuf());
+			if (setmode(STDOUT_FILENO, (mode & std::ios_base::binary) ? O_BINARY : O_TEXT) == -1) {
+				return nullptr;
+			}
 		}
 		return this;
 	}
