@@ -151,11 +151,11 @@ std::optional<std::string> act_ReadFile(std::string const &name, uint32_t maxLen
 	Defer closeFile{[&] { xfclose(file); }};
 
 	size_t readSize = maxLen;
-	if (long fileSize = seekSize(file); fileSize != -1) {
+	if (std::optional<uint64_t> fileSize = seekSize(file); fileSize.has_value()) {
 		// If the file is seekable and shorter than the max length,
 		// just read as many bytes as there are
-		if (static_cast<size_t>(fileSize) < readSize) {
-			readSize = fileSize;
+		if (*fileSize < readSize) {
+			readSize = *fileSize;
 		}
 		// LCOV_EXCL_START
 	} else if (errno != ESPIPE) {

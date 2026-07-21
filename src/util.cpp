@@ -25,18 +25,18 @@ int xclose(int fd) {
 	return close(fd);
 }
 
-long seekSize(FILE *file) {
+std::optional<uint64_t> seekSize(FILE *file) {
 	if (fseek(file, 0, SEEK_END) != 0) {
-		return -1;
+		return std::nullopt;
 	}
 	long size = ftell(file);
 	if (size < 0) {
-		return -1;
+		return std::nullopt;
 	}
 	if (fseek(file, 0, SEEK_SET) != 0) {
-		return -1;
+		return std::nullopt;
 	}
-	return size;
+	return static_cast<uint64_t>(size);
 }
 
 bool isNewline(int c) {

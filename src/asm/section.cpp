@@ -977,13 +977,14 @@ bool sect_BinaryFile(std::string const &name, uint32_t startPos) {
 	}
 	Defer closeFile{[&] { xfclose(file); }};
 
-	if (long fileSize = seekSize(file); fileSize != -1) {
-		if (startPos > static_cast<size_t>(fileSize)) {
+	if (std::optional<uint64_t> fileSize = seekSize(file); fileSize.has_value()) {
+		if (startPos > *fileSize) {
 			error(
-			    "Specified start position (%" PRIu32 ") is greater than length of \"%s\" (%ld)",
+			    "Specified start position (%" PRIu32 ") is greater than length of \"%s\" (%" PRIu64
+			    ")",
 			    startPos,
 			    name.c_str(),
-			    fileSize
+			    *fileSize
 			);
 			return false;
 		}
@@ -1037,23 +1038,24 @@ bool sect_BinaryFileSlice(std::string const &name, uint32_t startPos, uint32_t l
 	}
 	Defer closeFile{[&] { xfclose(file); }};
 
-	if (long fileSize = seekSize(file); fileSize != -1) {
-		if (startPos > static_cast<size_t>(fileSize)) {
+	if (std::optional<uint64_t> fileSize = seekSize(file); fileSize.has_value()) {
+		if (startPos > *fileSize) {
 			error(
-			    "Specified start position (%" PRIu32 ") is greater than length of \"%s\" (%ld)",
+			    "Specified start position (%" PRIu32 ") is greater than length of \"%s\" (%" PRIu64
+			    ")",
 			    startPos,
 			    name.c_str(),
-			    fileSize
+			    *fileSize
 			);
 			return false;
-		} else if (startPos + length > static_cast<size_t>(fileSize)) {
+		} else if (startPos + length > *fileSize) {
 			error(
 			    "Specified range in `INCBIN` file \"%s\" is out of bounds (%" PRIu32 " + %" PRIu32
-			    " > %ld)",
+			    " > %" PRIu64 ")",
 			    name.c_str(),
 			    startPos,
 			    length,
-			    fileSize
+			    *fileSize
 			);
 			return false;
 		}

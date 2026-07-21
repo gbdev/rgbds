@@ -27,7 +27,7 @@ int xfclose(FILE *file);
 int xclose(int fd);
 
 // Measure file size with `fseek` and `ftell` idiom
-long seekSize(FILE *file);
+std::optional<uint64_t> seekSize(FILE *file);
 
 // Locale-independent character class functions
 bool isNewline(int c);

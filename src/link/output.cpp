@@ -6,6 +6,7 @@
 #include <deque>
 #include <errno.h>
 #include <inttypes.h>
+#include <optional>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -112,23 +113,23 @@ static uint32_t checkOverlaySize() {
 		return 0;
 	}
 
-	long overlaySize = seekSize(overlayFile);
+	std::optional<uint64_t> overlaySize = seekSize(overlayFile);
 
-	if (overlaySize == -1) {
+	if (!overlaySize.has_value()) {
 		warnx("Overlay file is not seekable, cannot check if properly formed");
 		return 0;
 	}
 
-	if (overlaySize % BANK_SIZE) {
+	if (*overlaySize % BANK_SIZE) {
 		warnx("Overlay file does not have a size multiple of 0x4000");
-	} else if (options.is32kMode && overlaySize != 0x8000) {
+	} else if (options.is32kMode && *overlaySize != 0x8000) {
 		warnx("Overlay is not exactly 0x8000 bytes large");
 	}
-	if (overlaySize < 0x8000) {
+	if (*overlaySize < 0x8000) {
 		warnx("Overlay is less than 0x8000 bytes large");
 	}
 
-	return (overlaySize + BANK_SIZE - 1) / BANK_SIZE;
+	return (*overlaySize + BANK_SIZE - 1) / BANK_SIZE;
 }
 
 // Expand `sections[SECTTYPE_ROMX]` to cover all the overlay banks.
