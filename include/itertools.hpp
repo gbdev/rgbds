@@ -12,7 +12,7 @@
 #include <unordered_map>
 #include <utility>
 
-#include "helpers.hpp" // Enum
+#include "helpers.hpp" // Enum, assume
 
 // A wrapper around iterables to reverse their iteration order; used in `for`-each loops.
 template<typename IterableT>
@@ -55,12 +55,18 @@ public:
 	typename decltype(list)::const_iterator begin() const { return list.begin(); }
 	typename decltype(list)::const_iterator end() const { return list.end(); }
 
+	// Adding a key that already exists would make the previous value unreachable.
+	// `InsertionOrderedMap`s are only used for charmaps and sections, which each
+	// avoid `add`ing if already present, so we can `assume` this is not a concern.
+
 	ItemT &add(KeyT const &key) {
+		assume(!contains(key));
 		map[key] = list.size();
 		return list.emplace_back();
 	}
 
 	ItemT &add(KeyT const &key, ItemT &&value) {
+		assume(!contains(key));
 		map[key] = list.size();
 		list.emplace_back(std::move(value));
 		return list.back();
