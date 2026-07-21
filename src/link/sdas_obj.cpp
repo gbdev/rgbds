@@ -575,9 +575,8 @@ void sdobj_ReadFile(FileStackNode const &src, FILE *file, std::vector<Symbol> &f
 
 				expectRelocation();
 				uint16_t idx = readByte(where, token, numberBase);
-
 				expectRelocation();
-				idx |= static_cast<uint16_t>(readByte(where, token, numberBase));
+				idx |= static_cast<uint16_t>(readByte(where, token, numberBase)) << 8;
 
 				// Loudly fail on unknown flags
 				if (flags & (1 << RELOC_ZPAGE | 1 << RELOC_NPAGE)) {
