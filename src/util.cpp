@@ -29,7 +29,7 @@ std::optional<uint64_t> seekSize(FILE *file) {
 	if (fseek(file, 0, SEEK_END) != 0) {
 		return std::nullopt;
 	}
-	long size = ftell(file);
+	auto size = ftell(file); // Use `auto` since Windows' `_ftelli64` returns `__int64`, not `long`
 	if (size < 0) {
 		return std::nullopt;
 	}

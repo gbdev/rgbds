@@ -21,7 +21,8 @@
 #include "helpers.hpp"
 #include "itertools.hpp" // InsertionOrderedMap
 #include "linkdefs.hpp"
-#include "util.hpp" // xfclose, seekSize
+#include "platform.hpp" // fseek
+#include "util.hpp"     // xfclose, seekSize
 
 #include "asm/fstack.hpp"
 #include "asm/lexer.hpp"

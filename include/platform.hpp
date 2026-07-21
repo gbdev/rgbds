@@ -55,6 +55,12 @@
 	#define setmode(fd, mode) (0)
 #endif
 
+// Windows has 32-bit `long`, which limits `fseek` and `ftell` to 2 GiB
+#if defined(_MSC_VER) || defined(__MINGW32__)
+	#define fseek _fseeki64
+	#define ftell _ftelli64
+#endif
+
 // MingGW and Cygwin need POSIX functions which are not standard C explicitly enabled,
 #if defined(__MINGW32__) || defined(__CYGWIN__)
 	#define _POSIX_C_SOURCE 200809L
