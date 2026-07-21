@@ -1,0 +1,2 @@
+SECTION "jr", ROM0
+	jr CONSTANT

@@ -585,12 +585,15 @@ static void applyFilePatches(Section &section, Section &dataSection) {
 				rpnErrorAt(patch, "PC has no value outside of a section");
 				dataSection.data[offset] = 0;
 			} else {
+				// A `jr` is *encoded* in ROM as a 1-byte (8-bit) offset, so here `typeSize == 8`,
+				// but the object's *value* size is a 16-bit absolute address, so we pass 16 here.
+				checkPatchSize(patch, value, 16);
 				// Offset is relative to the byte *after* the operand
 				// PC as operand to `jr` is lower than reference PC by 2
 				uint16_t address = patch.pcSection->org + patch.pcOffset + 2;
-				// The truncation of `value - address` is intentional, since
-				// a low ROM0 address may `jr` to a high HRAM one.
-				int16_t jumpOffset = value - address;
+				// The 16-bit truncation of `value - address` is intentional, since
+				// a low ROM0 address may `jr` backwards to a high HRAM one.
+				int16_t jumpOffset = static_cast<int16_t>(value - address);
 
 				if (jumpOffset < -128 || jumpOffset > 127) {
 					firstErrorAt(

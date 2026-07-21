@@ -1,0 +1,2 @@
+warning: Value $12340078 is not 16-bit [-Wtruncation]
+    at jr-truncation/a.asm(2)

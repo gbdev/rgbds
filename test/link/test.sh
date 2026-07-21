@@ -201,6 +201,17 @@ tryCmpRom "$test"/ref.out.bin
 tryDiff "$test"/ref.out.sym "$outtemp2"
 evaluateTest
 
+test="jr-truncation"
+startTest
+"$RGBASM" -o "$otemp" "$test"/a.asm
+"$RGBASM" -o "$outtemp" "$test"/b.asm
+continueTest
+rgblinkQuiet -o "$gbtemp" -n "$outtemp2" "$otemp" "$outtemp" 2>"$outtemp3"
+tryDiff "$test"/out.err "$outtemp3"
+tryCmpRom "$test"/ref.out.bin
+tryDiff "$test"/ref.out.sym "$outtemp2"
+evaluateTest
+
 test="high-low"
 startTest
 "$RGBASM" -o "$otemp" "$test"/a.asm
