@@ -152,6 +152,9 @@ Trash the global checksum.
 .El
 .It Fl h , Fl \-help
 Print help text for the program and exit.
+(Help text wraps to the value of the
+.Dv COLUMNS
+environment variable if that is defined as nonzero; or else to the console window width if output is to a TTY.)
 .It Fl i Ar game_id , Fl \-game-id Ar game_id
 Set the game ID string
 .Pq Ad 0x13F Ns \(en Ns Ad 0x142

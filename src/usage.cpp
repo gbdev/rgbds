@@ -10,6 +10,7 @@
 #include "helpers.hpp"
 #include "platform.hpp"
 #include "style.hpp"
+#include "util.hpp" // parseWholeNumber
 #include "version.hpp"
 
 #if defined(_MSC_VER) || defined(__MINGW32__)
@@ -24,20 +25,19 @@ void Usage::printVersion(bool error) const {
 }
 
 void Usage::printAndExit(int code) const {
-	FILE *file;
-	bool isTerminal;
-	if (code) {
-		file = stderr;
-		isTerminal = isatty(STDERR_FILENO);
-	} else {
-		file = stdout;
-		isTerminal = isatty(STDOUT_FILENO);
+	// Usage flags can be long lines, so wrap them at a maximum line length
+	uint64_t maxLineLen = 0;
+	// Use the conventional COLUMNS environment variable, if it is defined and nonzero
+	if (char const *columnsStr = getenv("COLUMNS"); columnsStr) {
+		if (std::optional<uint64_t> columns = parseWholeNumber(columnsStr, BASE_10);
+		    columns && *columns > 0) {
+			maxLineLen = *columns;
+		} else {
+			warnx("Ignoring invalid `COLUMNS` value \"%s\"", columnsStr);
+		}
 	}
-
-	// Use the console window width minus 1 as the maximum line length for flags,
-	// or the historically common 80 minus 1 if the output is not to a console TTY
-	size_t maxLineLen = 79;
-	if (isTerminal) {
+	// Otherwise, use the console window width minus 1, if the output is to a console TTY
+	if (maxLineLen == 0 && isatty(code ? STDERR_FILENO : STDOUT_FILENO)) {
 		// LCOV_EXCL_START
 #if defined(_MSC_VER) || defined(__MINGW32__)
 		CONSOLE_SCREEN_BUFFER_INFO csbi;
@@ -54,8 +54,13 @@ void Usage::printAndExit(int code) const {
 #endif
 		// LCOV_EXCL_STOP
 	}
+	// Otherwise, just use the historically common 80 minus 1
+	if (maxLineLen == 0) {
+		maxLineLen = 79;
+	}
 
 	// Print "Usage: <program name>"
+	FILE *file = code ? stderr : stdout;
 	style_Set(file, STYLE_GREEN, true);
 	fputs("Usage: ", file);
 	style_Set(file, STYLE_CYAN, true);

@@ -257,6 +257,9 @@ Set the bit depth of the output tile data, in bits per pixel (bpp), either 1 or 
 This changes how tile data is output, and the maximum number of colors per palette (2 and 4 respectively).
 .It Fl h , Fl \-help
 Print help text for the program and exit.
+(Help text wraps to the value of the
+.Dv COLUMNS
+environment variable if that is defined as nonzero; or else to the console window width if output is to a TTY.)
 .It Fl i Ar input_tiles , Fl \-input-tileset Ar input_tiles
 Use the specified input tiles in addition to having
 .Nm
