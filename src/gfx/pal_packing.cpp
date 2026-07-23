@@ -136,6 +136,12 @@ public:
 	}
 	const_iterator end() const { return const_iterator{&_assigned, _assigned.end()}; }
 
+	iterator at(size_t index) {
+		auto iter = _assigned.begin();
+		std::advance(iter, index);
+		return iterator{&_assigned, std::move(iter)};
+	}
+
 	void assign(ColorSetAttrs const &&attrs) {
 		auto freeSlot =
 		    std::find_if_not(RANGE(_assigned), [](std::optional<ColorSetAttrs> const &slot) {
@@ -160,7 +166,9 @@ public:
 		});
 	}
 
-	size_t nbColorSets() const { return std::distance(RANGE(*this)); }
+	size_t nbSlots() const { return _assigned.size(); }
+
+	bool isFree(size_t slotIndex) const { return !_assigned[slotIndex].has_value(); }
 
 private:
 	template<typename IteratorT>
@@ -318,24 +326,30 @@ static void decant(std::vector<AssignedSets> &assignments, std::vector<ColorSet>
 	decantOn([&colorSets](AssignedSets &to, AssignedSets &from) {
 		// We need to iterate on all the "components", which are groups of color sets sharing at
 		// least one color with another color set in the group.
-		// We do this by adding the first available color set, and then looking for palettes with
-		// common colors. (As an optimization, we know we can skip palettes already scanned.)
-		std::vector<bool> processed(from.nbColorSets(), false);
-		for (std::vector<bool>::iterator wasProcessed;
-		     (wasProcessed = std::find(RANGE(processed), false)) != processed.end();) {
-			auto attrs = from.begin();
-			std::advance(attrs, wasProcessed - processed.begin());
+		// We do this by adding the first free color set, and then looking for palettes with
+		// common colors. (As an optimization, we know we can skip palettes already processed.)
+		std::vector<bool> processed(from.nbSlots(), false);
+		for (size_t startIdx = 0; startIdx < processed.size(); ++startIdx) {
+			if (processed[startIdx] || from.isFree(startIdx)) {
+				continue;
+			}
+			size_t startColorSetIdx = from.at(startIdx)->colorSetIndex;
 
 			// Build up the "component"; start by marking the first color set as processed
-			std::unordered_set<uint16_t> colors(RANGE(colorSets[attrs->colorSetIndex]));
-			std::vector<size_t> members = {static_cast<size_t>(wasProcessed - processed.begin())};
-			for (*wasProcessed = true; ++wasProcessed != processed.end(); ++attrs) {
+			std::unordered_set<uint16_t> colors(RANGE(colorSets[startColorSetIdx]));
+			std::vector<size_t> members = {startIdx};
+			processed[startIdx] = true;
+			for (size_t nextIdx = startIdx + 1; nextIdx < processed.size(); ++nextIdx) {
+				if (processed[nextIdx] || from.isFree(nextIdx)) {
+					continue;
+				}
+				size_t nextColorSetIdx = from.at(nextIdx)->colorSetIndex;
 				// If at least one color matches, add it
-				if (ColorSet const &colorSet = colorSets[attrs->colorSetIndex];
+				if (ColorSet const &colorSet = colorSets[nextColorSetIdx];
 				    std::find_first_of(RANGE(colors), RANGE(colorSet)) != colors.end()) {
 					colors.insert(RANGE(colorSet));
-					members.push_back(wasProcessed - processed.begin());
-					*wasProcessed = true; // Mark the added color set as processed
+					members.push_back(nextIdx);
+					processed[nextIdx] = true; // Mark the added color set as processed
 				}
 			}
 
@@ -344,11 +358,8 @@ static void decant(std::vector<AssignedSets> &assignments, std::vector<ColorSet>
 			}
 
 			// Iterate through the component's color sets, and transfer them
-			auto member = from.begin();
-			size_t curIndex = 0;
 			for (size_t index : members) {
-				std::advance(member, index - curIndex);
-				curIndex = index;
+				auto member = from.at(index);
 				to.assign(std::move(*member));
 				from.remove(member); // Removing does not shift elements, so it's cheap
 			}
