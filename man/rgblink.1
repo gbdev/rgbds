@@ -152,6 +152,9 @@ This option automatically enables
 .Fl w .
 .It Fl h , Fl \-help
 Print help text for the program and exit.
+(Help text wraps to the value of the
+.Dv COLUMNS
+environment variable if that is defined as nonzero; or else to the console window width if output is to a TTY.)
 .It Fl l Ar linker_script , Fl \-linkerscript Ar linker_script
 Specify a linker script file that tells the linker how sections must be placed in the ROM.
 The attributes assigned in the linker script must be consistent with any assigned in the code.
