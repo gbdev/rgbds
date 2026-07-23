@@ -77,7 +77,11 @@ int32_t fix_Div(int32_t i, int32_t j, int32_t q) {
 }
 
 int32_t fix_Mod(int32_t i, int32_t j, int32_t q) {
-	return double2fix(fmod(fix2double(i, q), fix2double(j, q)), q);
+	double divisor = fix2double(j, q);
+	if (fpclassify(divisor) == FP_ZERO) {
+		return 0;
+	}
+	return double2fix(fmod(fix2double(i, q), divisor), q);
 }
 
 int32_t fix_Pow(int32_t i, int32_t j, int32_t q) {
@@ -86,6 +90,9 @@ int32_t fix_Pow(int32_t i, int32_t j, int32_t q) {
 
 int32_t fix_Log(int32_t i, int32_t j, int32_t q) {
 	double divisor = log(fix2double(j, q));
+	if (isnan(divisor) || isinf(divisor)) {
+		return 0;
+	}
 	if (fpclassify(divisor) == FP_ZERO) {
 		return INT32_MAX;
 	}
