@@ -136,11 +136,7 @@ public:
 	}
 	const_iterator end() const { return const_iterator{&_assigned, _assigned.end()}; }
 
-	iterator at(size_t index) {
-		auto iter = _assigned.begin();
-		std::advance(iter, index);
-		return iterator{&_assigned, std::move(iter)};
-	}
+	iterator slotAt(size_t index) { return iterator{&_assigned, _assigned.begin() + index}; }
 
 	void assign(ColorSetAttrs const &&attrs) {
 		auto freeSlot =
@@ -333,7 +329,7 @@ static void decant(std::vector<AssignedSets> &assignments, std::vector<ColorSet>
 			if (processed[startIdx] || from.isFree(startIdx)) {
 				continue;
 			}
-			size_t startColorSetIdx = from.at(startIdx)->colorSetIndex;
+			size_t startColorSetIdx = from.slotAt(startIdx)->colorSetIndex;
 
 			// Build up the "component"; start by marking the first color set as processed
 			std::unordered_set<uint16_t> colors(RANGE(colorSets[startColorSetIdx]));
@@ -343,7 +339,7 @@ static void decant(std::vector<AssignedSets> &assignments, std::vector<ColorSet>
 				if (processed[nextIdx] || from.isFree(nextIdx)) {
 					continue;
 				}
-				size_t nextColorSetIdx = from.at(nextIdx)->colorSetIndex;
+				size_t nextColorSetIdx = from.slotAt(nextIdx)->colorSetIndex;
 				// If at least one color matches, add it
 				if (ColorSet const &colorSet = colorSets[nextColorSetIdx];
 				    std::find_first_of(RANGE(colors), RANGE(colorSet)) != colors.end()) {
@@ -359,7 +355,7 @@ static void decant(std::vector<AssignedSets> &assignments, std::vector<ColorSet>
 
 			// Iterate through the component's color sets, and transfer them
 			for (size_t index : members) {
-				auto member = from.at(index);
+				auto member = from.slotAt(index);
 				to.assign(std::move(*member));
 				from.remove(member); // Removing does not shift elements, so it's cheap
 			}
