@@ -59,7 +59,7 @@ case "${OS%%-*}" in
 		;;
 	freebsd)
 		# GNU `gmake` and `gcc` are dependencies for most repos built by our external tests.
-		pkg install -y bash bison cmake git png gmake lang/gcc python3 py312-pillow
+		pkg install -y bash bison cmake ninja git png gmake lang/gcc python3 py312-pillow
 		;;
 	windows)
 		# GitHub Actions' hosted runners ship CMake 3.x, but versions prior to 4.0.0 ignore `CPACK_PACKAGE_FILE_NAME`.
