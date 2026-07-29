@@ -399,8 +399,8 @@ jobs:
           prepare: |
             .github/scripts/install-deps.sh freebsd
           run: | # Leak detection is not supported on FreeBSD, so disable it.
-            cmake -B build --preset develop
-            cmake --build build --verbose -- -k -j "$(getconf _NPROCESSORS_ONLN)"
+            cmake -B build -G Ninja --preset develop
+            cmake --build build -- -k 0
             . .github/scripts/freebsd-env.sh
             ASAN_OPTIONS=detect_leaks=0 ctest --test-dir build --schedule-random
             cmake --install build --verbose
