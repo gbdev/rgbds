@@ -58,7 +58,8 @@ case "${OS%%-*}" in
 		printf 'PATH=%s\n' "$PATH" >>"$GITHUB_ENV" # Make it available to later CI steps too.
 		;;
 	freebsd)
-		pkg install -y bash bison cmake git png
+		# GNU `gmake` and `gcc` are dependencies for most repos built by our external tests.
+		pkg install -y bash bison cmake git png gmake lang/gcc python3 py312-pillow
 		;;
 	windows)
 		# GitHub Actions' hosted runners ship CMake 3.x, but versions prior to 4.0.0 ignore `CPACK_PACKAGE_FILE_NAME`.
