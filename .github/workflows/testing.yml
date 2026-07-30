@@ -333,12 +333,7 @@ jobs:
   cygwin:
     strategy:
       matrix:
-        bits: [32, 64]
-        include:
-          - bits: 32
-            arch: x86
-          - bits: 64
-            arch: x86_64
+        arch: [x86, x86_64]
       fail-fast: false
     runs-on: windows-2022
     timeout-minutes: 30
@@ -358,22 +353,63 @@ jobs:
           platform: ${{ matrix.arch }}
           packages: >-
             bison
+            cmake
             gcc-g++
             git
             libpng-devel
             make
+            ninja
             pkg-config
-      - name: Build
+            python3
+            python-imaging
+      - name: Build using Make
+        if: matrix.arch == 'x86'
         run: | # Cygwin doesn't support `make develop` sanitizers ASan or UBSan, so we don't use it.
           make -k -j "$(getconf _NPROCESSORS_ONLN)" Q=
-      - name: Install
+      - name: Install using Make
+        if: matrix.arch == 'x86'
         run: |
           make install Q=
           type rgbasm rgblink rgbfix rgbgfx
           man -w 1 rgbasm rgblink rgbfix rgbgfx
-      - name: Run tests
+      - name: Build using CMake
+        if: matrix.arch == 'x86_64'
+        run: | # Cygwin doesn't support `--preset develop` sanitizers ASan or UBSan, so we disable them.
+          cmake -B build -G Ninja --preset develop -DSANITIZERS=OFF
+          cmake --build build -- -k 0
+      - name: Install using CMake
+        if: matrix.arch == 'x86_64'
+        run: |
+          cmake --install build --verbose
+          type rgbasm rgblink rgbfix rgbgfx
+          man -w 1 rgbasm rgblink rgbfix rgbgfx
+      - name: Compute test dependency cache params
+        id: test-deps-cache-params
+        run: |
+          paths=$(test/external/fetch-repos.sh --get-paths)
+          hash=$(test/external/fetch-repos.sh --get-hash)
+          tee -a <<<"paths=\"${paths//,/\\n}\"" $GITHUB_OUTPUT
+          tee -a <<<"hash=${hash%-}" $GITHUB_OUTPUT
+      - name: Check test dependency repositories cache
+        id: test-deps-cache
+        uses: actions/cache@v5
+        with:
+          path: ${{ fromJSON(steps.test-deps-cache-params.outputs.paths) }}
+          key: cygwin-${{ matrix.bits }}-${{ steps.test-deps-cache-params.outputs.hash }}
+      - name: Fetch test dependency repositories
+        if: steps.test-deps-cache.outputs.cache-hit != 'true'
+        continue-on-error: true
+        run: |
+          test/external/fetch-repos.sh
+      - name: Run tests using our script
+        if: matrix.arch == 'x86'
         run: | # 32-bit Cygwin's `git` 2.38 doesn't support `git clone --revision`, so we don't fetch/run external tests.
           test/run-tests.sh --os cygwin --only-internal --jobs "$(getconf _NPROCESSORS_ONLN)"
+      - name: Run tests using CTest
+        if: matrix.arch == 'x86_64'
+        run: | # The external test repo `libbet` uses `py -3` instead of `python3` if `COMSPEC` is defined, so we clear it.
+          unset COMSPEC
+          ctest --test-dir build --schedule-random
       - name: Use Windows git location in the PATH
         shell: pwsh
         run: | # Prevents the `actions/checkout` post-job cleanup from using Cygwin's git binary
