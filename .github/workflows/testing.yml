@@ -339,7 +339,7 @@ jobs:
     timeout-minutes: 30
     defaults:
       run:
-        shell: C:\cygwin\bin\env.exe CYGWIN_NOWINPATH=1 CHERE_INVOKING=1 C:\cygwin\bin\bash.exe -o igncr '{0}'
+        shell: C:\cygwin\bin\env.exe CYGWIN_NOWINPATH=1 CHERE_INVOKING=1 C:\cygwin\bin\bash.exe -eo igncr '{0}'
     steps:
       - name: Save Windows git location for the PATH
         shell: pwsh
@@ -368,8 +368,8 @@ jobs:
           make -k -j "$(getconf _NPROCESSORS_ONLN)" Q=
       - name: Install using Make
         if: matrix.arch == 'x86'
-        run: |
-          make install Q=
+        run: | # `/usr/local/bin` is not in the PATH but `/usr/bin` is, so we install to `/usr`.
+          make install PREFIX=/usr Q=
           type rgbasm rgblink rgbfix rgbgfx
           man -w 1 rgbasm rgblink rgbfix rgbgfx
       - name: Build using CMake
@@ -379,8 +379,8 @@ jobs:
           cmake --build build -- -k 0
       - name: Install using CMake
         if: matrix.arch == 'x86_64'
-        run: |
-          cmake --install build --verbose
+        run: | # `/usr/local/bin` is not in the PATH but `/usr/bin` is, so we install to `/usr`.
+          cmake --install build --prefix /usr --verbose
           type rgbasm rgblink rgbfix rgbgfx
           man -w 1 rgbasm rgblink rgbfix rgbgfx
       - name: Compute test dependency cache params
