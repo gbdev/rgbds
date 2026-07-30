@@ -196,8 +196,8 @@ jobs:
         shell: cmd
         run: | # ASan seems to be broken on Windows, so we disable it.
           call .github\scripts\msvc-env.bat ${{ matrix.bits }}
-          cmake -B build -G Ninja --preset develop -DSANITIZERS=OFF ^
-                -DFETCHCONTENT_BASE_DIR="${{ env.DEPS_ROOT_DIR }}" -DCMAKE_C_FLAGS="/nologo"
+          cmake -B build -G Ninja --preset develop -DFETCHCONTENT_BASE_DIR="${{ env.DEPS_ROOT_DIR }}" ^
+                -DSANITIZERS=OFF -DCMAKE_C_FLAGS="/nologo"
           cmake --build build -- -k 0
       - name: Install
         shell: cmd
@@ -255,10 +255,11 @@ jobs:
           key: dep-srcs-${{ hashFiles('cmake/deps.cmake') }}
           enableCrossOsArchive: true
       - name: Cross-build Windows binaries
-        run: | # MinGW does not support `--preset develop` sanitizers ASan or UBSan.
+        run: | # MinGW doesn't support `--preset develop` sanitizers ASan or UBSan, so we disable them.
           dll_search_dir=$(printf '%s\n' /usr/lib/gcc/*-w64-mingw32/*-win32 | tee -a /dev/stderr)
-          cmake -B build -G Ninja --preset develop -DSANITIZERS=OFF --toolchain cmake/toolchain-mingw${{ matrix.bits }}.cmake \
-            -DFETCHCONTENT_BASE_DIR="${{ env.DEPS_ROOT_DIR }}" -DDLL_SEARCH_DIRS="$dll_search_dir"
+          cmake -B build -G Ninja --preset develop -DFETCHCONTENT_BASE_DIR="${{ env.DEPS_ROOT_DIR }}" \
+                -DSANITIZERS=OFF -DDLL_SEARCH_DIRS="$dll_search_dir" \
+                --toolchain cmake/toolchain-mingw${{ matrix.bits }}.cmake
           cmake --build build -- -k 0
       - name: Package Windows binaries
         run: |
@@ -363,7 +364,7 @@ jobs:
             make
             pkg-config
       - name: Build
-        run: | # Cygwin does not support `make develop` sanitizers ASan or UBSan
+        run: | # Cygwin doesn't support `make develop` sanitizers ASan or UBSan, so we don't use it.
           make -k -j "$(getconf _NPROCESSORS_ONLN)" Q=
       - name: Install
         run: |
@@ -371,7 +372,7 @@ jobs:
           type rgbasm rgblink rgbfix rgbgfx
           man -w 1 rgbasm rgblink rgbfix rgbgfx
       - name: Run tests
-        run: |
+        run: | # 32-bit Cygwin's `git` 2.38 doesn't support `git clone --revision`, so we don't fetch/run external tests.
           test/run-tests.sh --os cygwin --only-internal --jobs "$(getconf _NPROCESSORS_ONLN)"
       - name: Use Windows git location in the PATH
         shell: pwsh
@@ -398,11 +399,15 @@ jobs:
           copyback: false
           prepare: |
             .github/scripts/install-deps.sh freebsd
-          run: | # Leak detection is not supported on FreeBSD, so disable it.
+          run: |
+            : # Build
             cmake -B build -G Ninja --preset develop
             cmake --build build -- -k 0
-            . .github/scripts/freebsd-env.sh
-            ASAN_OPTIONS=detect_leaks=0 ctest --test-dir build --schedule-random
+            : # Install
             cmake --install build --verbose
             type rgbasm rgblink rgbfix rgbgfx
             man -w 1 rgbasm rgblink rgbfix rgbgfx
+            : # Run tests
+            : # Leak detection is not supported on FreeBSD, so we disable it.
+            . .github/scripts/freebsd-env.sh
+            ASAN_OPTIONS=detect_leaks=0 ctest --test-dir build --schedule-random
