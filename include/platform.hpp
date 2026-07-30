@@ -61,8 +61,8 @@
 	#define ftell _ftelli64
 #endif
 
-// MingGW and Cygwin need POSIX functions which are not standard C explicitly enabled,
-#if defined(__MINGW32__) || defined(__CYGWIN__)
+// MingGW and Cygwin may need POSIX functions which are not standard C explicitly enabled
+#if (defined(__MINGW32__) || defined(__CYGWIN__)) && !defined(_POSIX_C_SOURCE)
 	#define _POSIX_C_SOURCE 200809L
 #endif
 
