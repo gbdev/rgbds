@@ -337,9 +337,12 @@ jobs:
       fail-fast: false
     runs-on: windows-2022
     timeout-minutes: 30
+    env:
+      CYGWIN_NOWINPATH: 1
+      CHERE_INVOKING: 1
     defaults:
       run:
-        shell: C:\cygwin\bin\env.exe CYGWIN_NOWINPATH=1 CHERE_INVOKING=1 C:\cygwin\bin\bash.exe -eo igncr '{0}'
+        shell: C:\cygwin\bin\bash.exe -leo igncr '{0}'
     steps:
       - name: Save Windows git location for the PATH
         shell: pwsh
@@ -368,8 +371,8 @@ jobs:
           make -k -j "$(getconf _NPROCESSORS_ONLN)" Q=
       - name: Install using Make
         if: matrix.arch == 'x86'
-        run: | # `/usr/local/bin` is not in the PATH but `/usr/bin` is, so we install to `/usr`.
-          make install PREFIX=/usr Q=
+        run: |
+          make install Q=
           type rgbasm rgblink rgbfix rgbgfx
           man -w 1 rgbasm rgblink rgbfix rgbgfx
       - name: Build using CMake
@@ -379,8 +382,8 @@ jobs:
           cmake --build build -- -k 0
       - name: Install using CMake
         if: matrix.arch == 'x86_64'
-        run: | # `/usr/local/bin` is not in the PATH but `/usr/bin` is, so we install to `/usr`.
-          cmake --install build --prefix /usr --verbose
+        run: |
+          cmake --install build --verbose
           type rgbasm rgblink rgbfix rgbgfx
           man -w 1 rgbasm rgblink rgbfix rgbgfx
       - name: Compute test dependency cache params
@@ -407,8 +410,7 @@ jobs:
           test/run-tests.sh --os cygwin --only-internal --jobs "$(getconf _NPROCESSORS_ONLN)"
       - name: Run tests using CTest
         if: matrix.arch == 'x86_64'
-        run: | # The external test repo `libbet` uses `py -3` instead of `python3` if `COMSPEC` is defined, so we clear it.
-          unset COMSPEC
+        run: |
           ctest --test-dir build --schedule-random
       - name: Use Windows git location in the PATH
         shell: pwsh
