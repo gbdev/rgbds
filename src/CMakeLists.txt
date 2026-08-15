@@ -9,7 +9,7 @@ add_library(common OBJECT
     "util.cpp"
     "version.cpp"
 )
-target_compile_definitions(common PRIVATE "BUILD_VERSION_STRING=\"${GIT_REV}\"")
+target_compile_definitions(common PRIVATE "BUILD_VERSION_STRING=\"${RGBDS_VERSION_STRING}\"")
 
 find_package(BISON 3.0.0 REQUIRED)
 # BISON 4.0 deprecates passing this BISON_FLAGS string to `bison_target`'s `COMPILE_FLAGS`,

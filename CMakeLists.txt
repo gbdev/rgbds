@@ -82,35 +82,45 @@ endif()
 # Use versioning consistent with Makefile:
 # the git revision is used but uses the fallback in an archive.
 
-message(CHECK_START "Determining RGBDS version from Git history")
-list(APPEND CMAKE_MESSAGE_INDENT "  ")
-set(GIT_REV "") # This fallback is important!
-find_package(Git)
-list(POP_BACK CMAKE_MESSAGE_INDENT)
-if(NOT Git_FOUND)
-  message(CHECK_FAIL "Git not found")
-else()
-  execute_process(COMMAND "${GIT_EXECUTABLE}" --git-dir=.git -c safe.directory='*'
-                            describe --tags --dirty --always --match "v[0-9]*"
-                  WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
-                  OUTPUT_VARIABLE GIT_REV OUTPUT_STRIP_TRAILING_WHITESPACE
-                  ERROR_VARIABLE git_err ERROR_STRIP_TRAILING_WHITESPACE
-                  RESULT_VARIABLE result)
-  if(NOT result EQUAL 0)
-    # Note that this happens e.g. when building from a tarball, so it shouldn't fail the build!
-    message(CHECK_FAIL "error ${result} from Git:")
-    list(APPEND CMAKE_MESSAGE_INDENT "     ")
-    message("${git_err}")
-    list(POP_BACK CMAKE_MESSAGE_INDENT)
+if(DEFINED RGBDS_VERSION_STRING) # Possibly stored in the cache, e.g. if specified on the CLI.
+  if(RGBDS_VERSION_STRING STREQUAL "")
+    message(STATUS "Will generate version string from `version.hpp`")
   else()
-    message(CHECK_PASS "${GIT_REV}")
-    if(NOT "${GIT_REV}" MATCHES "^v[0-9]+\\.[0-9]+\\.[0-9]+(-rc[0-9]+)?")
-      # Can't find an ancestor tag! (That passes `--match`, anyway.)
-      message(WARNING "No `v*` Git tag reachable; falling back")
-    elseif(NOT CMAKE_MATCH_0 STREQUAL "v${PROJECT_VERSION}")
-      message(SEND_ERROR "\
+    message(STATUS "Using provided version string - ${RGBDS_VERSION_STRING}")
+  endif()
+else()
+  message(CHECK_START "Determining RGBDS version from Git history")
+  # Note that we do NOT store this in the cache, since the Git revision is fairly volatile.
+  set(RGBDS_VERSION_STRING "") # An empty value causes `version.cpp` to generate a version string.
+
+  list(APPEND CMAKE_MESSAGE_INDENT "  ")
+  find_package(Git)
+  list(POP_BACK CMAKE_MESSAGE_INDENT)
+  if(NOT Git_FOUND)
+    message(CHECK_FAIL "Git not found")
+  else()
+    execute_process(COMMAND "${GIT_EXECUTABLE}" --git-dir=.git -c safe.directory='*'
+                              describe --tags --dirty --always --match "v[0-9]*"
+                    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+                    OUTPUT_VARIABLE RGBDS_VERSION_STRING OUTPUT_STRIP_TRAILING_WHITESPACE
+                    ERROR_VARIABLE git_err ERROR_STRIP_TRAILING_WHITESPACE
+                    RESULT_VARIABLE result)
+    if(NOT result EQUAL 0)
+      # Note that this happens e.g. when building from a tarball, so it shouldn't fail the build!
+      message(CHECK_FAIL "error ${result} from Git:")
+      list(APPEND CMAKE_MESSAGE_INDENT "     ")
+      message("${git_err}")
+      list(POP_BACK CMAKE_MESSAGE_INDENT)
+    else()
+      message(CHECK_PASS "${RGBDS_VERSION_STRING}")
+      if(NOT "${RGBDS_VERSION_STRING}" MATCHES "^v[0-9]+\\.[0-9]+\\.[0-9]+(-rc[0-9]+)?")
+        # Can't find an ancestor tag! (That passes `--match`, anyway.)
+        message(WARNING "No `v*` Git tag reachable; falling back")
+      elseif(NOT CMAKE_MATCH_0 STREQUAL "v${PROJECT_VERSION}")
+        message(SEND_ERROR "\
 Version mismatch! Git says ${CMAKE_MATCH_0},
-          version.hpp says v${PROJECT_VERSION}!")
+            version.hpp says v${PROJECT_VERSION}")
+      endif()
     endif()
   endif()
 endif()
