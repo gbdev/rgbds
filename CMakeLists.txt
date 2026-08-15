@@ -11,21 +11,21 @@ file(STRINGS "include/version.hpp" version_defines REGEX "^[ \t]*#define[ \t]+PA
 foreach(line IN LISTS version_defines)
   # We want the `CMAKE_MATCH_n` variables, so we just need to run *some* regex op.
   string(REGEX MATCH "PACKAGE_(VERSION_[^ \t]+)[ \t]+([0-9]+)" dummy "${line}")
-  set("${CMAKE_MATCH_1}" "${CMAKE_MATCH_2}")
+  set("RGBDS_${CMAKE_MATCH_1}" "${CMAKE_MATCH_2}")
 endforeach()
 
 project(rgbds
-        VERSION "${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}"
+        VERSION "${RGBDS_VERSION_MAJOR}.${RGBDS_VERSION_MINOR}.${RGBDS_VERSION_PATCH}"
         LANGUAGES CXX
         DESCRIPTION "Game Boy assembly toolchain"
         HOMEPAGE_URL "https://rgbds.gbdev.io")
 if(DEFINED VERSION_RC)
-  string(APPEND CMAKE_PROJECT_VERSION "-rc${VERSION_RC}")
+  string(APPEND PROJECT_VERSION "-rc${RGBDS_VERSION_RC}")
 endif()
 
 # Reject in-source builds, as they may conflict with the Makefile.
-get_filename_component(srcdir "${CMAKE_SOURCE_DIR}" REALPATH)
-get_filename_component(bindir "${CMAKE_BINARY_DIR}" REALPATH)
+get_filename_component(srcdir "${CMAKE_CURRENT_SOURCE_DIR}" REALPATH)
+get_filename_component(bindir "${CMAKE_CURRENT_BINARY_DIR}" REALPATH)
 if(srcdir STREQUAL bindir)
   message(FATAL_ERROR "RGBDS should not be built in the source directory.
 Instead, create a separate build directory and specify to CMake the path to the source directory.")
@@ -92,7 +92,7 @@ if(NOT Git_FOUND)
 else()
   execute_process(COMMAND "${GIT_EXECUTABLE}" --git-dir=.git -c safe.directory='*'
                             describe --tags --dirty --always --match "v[0-9]*"
-                  WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+                  WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
                   OUTPUT_VARIABLE GIT_REV OUTPUT_STRIP_TRAILING_WHITESPACE
                   ERROR_VARIABLE git_err ERROR_STRIP_TRAILING_WHITESPACE
                   RESULT_VARIABLE result)
@@ -107,10 +107,10 @@ else()
     if(NOT "${GIT_REV}" MATCHES "^v[0-9]+\\.[0-9]+\\.[0-9]+(-rc[0-9]+)?")
       # Can't find an ancestor tag! (That passes `--match`, anyway.)
       message(WARNING "No `v*` Git tag reachable; falling back")
-    elseif(NOT CMAKE_MATCH_0 STREQUAL "v${CMAKE_PROJECT_VERSION}")
+    elseif(NOT CMAKE_MATCH_0 STREQUAL "v${PROJECT_VERSION}")
       message(SEND_ERROR "\
 Version mismatch! Git says ${CMAKE_MATCH_0},
-          version.hpp says v${CMAKE_PROJECT_VERSION}!")
+          version.hpp says v${PROJECT_VERSION}!")
     endif()
   endif()
 endif()
@@ -215,14 +215,14 @@ endforeach()
 # the rest is rather convention from our side, and thus more appropriate for presets or CLI flags.
 ## CPACK_PACKAGE_NAME: copied from `project()`
 set(CPACK_PACKAGE_VENDOR "GBDev")
-set(CPACK_PACKAGE_VERSION "${CMAKE_PROJECT_VERSION}") # The individual components are defined implicitly.
+set(CPACK_PACKAGE_VERSION "${PROJECT_VERSION}") # The individual components are defined implicitly.
 set(CPACK_PACKAGE_DESCRIPTION "An assembly toolchain for the Nintendo Game Boy and Game Boy Color") # Same as our repo's description.
 ## CPACK_PACKAGE_DESCRIPTION_SUMMARY: copied from `project()`
 set(CPACK_PACKAGE_HOMEPAGE_URL "https://rgbds.gbdev.io")
 ## CPACK_PACKAGE_FILE_NAME: should be provided at runtime (`cpack -P`)
 set(CPACK_PACKAGE_CHECKSUM SHA256)
-set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_SOURCE_DIR}/LICENSE")
-set(CPACK_RESOURCE_FILE_README "${CMAKE_SOURCE_DIR}/README.md")
+set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE")
+set(CPACK_RESOURCE_FILE_README "${CMAKE_CURRENT_SOURCE_DIR}/README.md")
 set(CPACK_STRIP_FILES ON) # Only applies to binary packages, not sources.
 set(CPACK_VERBATIM_VARIABLES ON)
 set(CPACK_THREADS 0) # Use all available CPU cores.
