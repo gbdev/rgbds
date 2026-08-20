@@ -262,6 +262,19 @@ docker build . --tag ghcr.io/gbdev/rgbds:master
 docker push ghcr.io/gbdev/rgbds:master
 ```
 
+## AI coding assistants
+
+You may find AI helpful in finding bugs, reviewing code, generating test cases,
+and so on.
+Contrary to the [gbdev-wide AI policy](https://gbdev.io/aipolicy.html), we do
+*not* discourage AI usage for contributing *to RGBDS*.
+However, you must still disclose which AI-based tool and model you used, as per
+the [gbdev-wide attribution guidelines](https://gbdev.io/aipolicy.html#attribution).
+
+RGBDS has had a good track record so far of AI assisting its contributors and
+maintainers to find and fix bugs that would otherwise be unlikely to solve.
+Your contribution is appreciated whether or not AI was used in its creation.
+
 ## Publishing a new release
 
 Please refer to [`RELEASE.md`](/RELEASE.md).
