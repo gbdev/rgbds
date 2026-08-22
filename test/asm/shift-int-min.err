@@ -1,0 +1,2 @@
+warning: Cannot shift macro arguments past their beginning [-Wmacro-shift]
+    at shift-int-min.asm::m(3) <- shift-int-min.asm(6)

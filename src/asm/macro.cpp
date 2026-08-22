@@ -72,7 +72,7 @@ void MacroArgs::shiftArgs(int32_t count) {
 	    count > 0 && (static_cast<uint32_t>(count) > nbArgs || shift > nbArgs - count)) {
 		warning(WARNING_MACRO_SHIFT, "Cannot shift macro arguments past their end");
 		shift = nbArgs;
-	} else if (count < 0 && shift < static_cast<uint32_t>(-count)) {
+	} else if (count < 0 && (count == INT32_MIN || shift < static_cast<uint32_t>(-count))) {
 		warning(WARNING_MACRO_SHIFT, "Cannot shift macro arguments past their beginning");
 		shift = 0;
 	} else {
