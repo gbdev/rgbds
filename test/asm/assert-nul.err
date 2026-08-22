@@ -1,0 +1,2 @@
+FATAL: Assertion messages cannot contain '\0' characters
+    at assert-nul.asm(1)

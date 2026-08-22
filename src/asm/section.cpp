@@ -544,6 +544,10 @@ void sect_NewSection(
     SectionSpec const &attrs,
     SectionModifier mod
 ) {
+	if (name.find('\0') != std::string::npos) {
+		fatal("Section names cannot contain '\\0' characters");
+	}
+
 	for (SectionStackEntry &entry : sectionStack) {
 		if (entry.section && entry.section->name == name) {
 			fatal("Section \"%s\" is already on the stack", name.c_str());

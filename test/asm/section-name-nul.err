@@ -1,0 +1,2 @@
+FATAL: Section names cannot contain '\0' characters
+    at section-name-nul.asm(1)

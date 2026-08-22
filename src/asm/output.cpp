@@ -162,6 +162,10 @@ void out_CreatePatch(uint32_t type, Expression const &expr, uint32_t ofs, uint32
 void out_CreateAssert(
     AssertionType type, Expression const &expr, std::string const &message, uint32_t ofs
 ) {
+	if (message.find('\0') != std::string::npos) {
+		fatal("Assertion messages cannot contain '\\0' characters");
+	}
+
 	Assertion &assertion = assertions.emplace_front();
 
 	initPatch(assertion.patch, type, expr, ofs);
