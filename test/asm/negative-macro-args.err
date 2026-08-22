@@ -12,9 +12,8 @@ error: Macro argument `\<2147483647>` not defined
     at negative-macro-args.asm::mac(11) <- negative-macro-args.asm(21)
 error: Macro argument `\<-2147483648>` not defined
     at negative-macro-args.asm::mac(14) <- negative-macro-args.asm(21)
-error: Number in bracketed macro argument is too large
+error: Macro argument `\<-2147483648>` not defined
     at negative-macro-args.asm::mac(14) <- negative-macro-args.asm(21)
-    while expanding symbol `i`
 error: Macro argument `\<-2147483648>` not defined
     at negative-macro-args.asm::mac(15) <- negative-macro-args.asm(21)
 error: Number in bracketed macro argument is too large

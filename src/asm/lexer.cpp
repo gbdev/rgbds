@@ -542,7 +542,7 @@ static uint32_t readBracketedMacroArgNum() {
 			}
 		}
 		uint32_t n = readNumber<10>(bumpChar(), nullptr);
-		if (n > INT32_MAX) {
+		if (n > INT32_MAX && !(negative && n == static_cast<uint32_t>(INT32_MAX) + 1)) {
 			error("Number in bracketed macro argument is too large");
 			return 0;
 		}

@@ -12,8 +12,6 @@ error: Macro argument `\1` not defined
     at negative-shifted-macro-args.asm::test(15) <- negative-shifted-macro-args.asm(22)
 error: Macro argument `\<-1>` not defined
     at negative-shifted-macro-args.asm::test(16) <- negative-shifted-macro-args.asm(22)
-error: Number in bracketed macro argument is too large
+error: Macro argument `\<-2147483648>` not defined
     at negative-shifted-macro-args.asm::test(19) <- negative-shifted-macro-args.asm(22)
-error: syntax error, unexpected >
-    at negative-shifted-macro-args.asm::test(19) <- negative-shifted-macro-args.asm(22)
-Assembly aborted with 9 errors
+Assembly aborted with 8 errors
