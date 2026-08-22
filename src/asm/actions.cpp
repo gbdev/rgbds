@@ -555,7 +555,7 @@ std::string act_StringFormat(
 	std::string str;
 	size_t argIndex = 0;
 
-	for (size_t i = 0; spec[i] != '\0';) {
+	for (size_t i = 0; i < spec.length();) {
 		if (int c = spec[i]; c != '%') {
 			str += c;
 			++i;

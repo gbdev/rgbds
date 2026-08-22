@@ -26,3 +26,7 @@ PRINTLN STRFMT("%d eol %", 1)
 PRINTLN STRFMT("invalid %w spec", 42)
 
 PRINTLN STRFMT("one=%d two=%d three=%d", 1)
+
+DEF NUL EQUS STRFMT("%s \0 %s", "goodbye", "world")
+ASSERT #NUL === "goodbye \0 world"
+PRINTLN #NUL
