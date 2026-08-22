@@ -1,0 +1,5 @@
+FATAL: Section "output" fragments combined are larger than the GB address space
+    at section-fragment/size-overflow/a.asm(1)
+    and also:
+    at section-fragment/size-overflow/a.asm(1)
+Linking aborted with 1 error

@@ -146,6 +146,15 @@ static void mergeSections(Section &target, std::unique_ptr<Section> &&other) {
 
 	case SECTION_FRAGMENT:
 		checkPieceCompat(target, *other, target.size);
+		// Check that `target.size += other->size` below will not overflow
+		if (target.size + other->size > UINT16_MAX) {
+			fatalTwoAt(
+			    target,
+			    *other,
+			    "Section \"%s\" fragments combined are larger than the GB address space",
+			    target.name.c_str()
+			);
+		}
 		// Append `other` to `target`
 		other->offset = target.size;
 		target.size += other->size;

@@ -1,0 +1,2 @@
+SECTION FRAGMENT "output", ROM0
+ds $4000

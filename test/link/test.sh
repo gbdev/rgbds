@@ -398,6 +398,14 @@ rgblinkQuiet -o "$gbtemp" "$otemp" "$gbtemp2"
 tryCmpRom "$test"/ref.out.bin
 evaluateTest
 
+test="section-fragment/size-overflow"
+startTest
+"$RGBASM" -o "$otemp" "$test"/a.asm
+continueTest
+rgblinkQuiet "$otemp" "$otemp" "$otemp" "$otemp" 2>"$outtemp"
+tryDiff "$test"/out.err "$outtemp"
+evaluateTest
+
 test="section-fragment/jr-offset"
 startTest
 "$RGBASM" -o "$otemp" "$test"/a.asm
