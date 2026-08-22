@@ -279,8 +279,7 @@ static void writeSymName(std::string const &name, FILE *file) {
 		// Decode the UTF-8 codepoint; or at least attempt to
 		Utf8Decoder decoder;
 		do {
-			if (decoder.update(*ptr) != UTF8_REJECT) {
-				++ptr;
+			if (decoder.update(*ptr++) != UTF8_REJECT) {
 				continue;
 			}
 			// This sequence was invalid; emit a U+FFFD, and recover
