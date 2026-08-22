@@ -1,5 +1,6 @@
 rom0 1
 romx 0
+romx 0xffff_ffff
 vram 2
 wram0 1
 wramx 0

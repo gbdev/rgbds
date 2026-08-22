@@ -72,6 +72,7 @@ void layout_SetSectionType(SectionType type, uint32_t bank) {
 		    bank,
 		    typeInfo.lastBank
 		);
+		bank = typeInfo.lastBank;
 	}
 
 	setActiveTypeAndIdx(type, bank - typeInfo.firstBank);
