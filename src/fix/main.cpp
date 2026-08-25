@@ -240,7 +240,7 @@ static void parseArg(int ch, char *arg) {
 			len = maxLen;
 			warning(
 			    WARNING_TRUNCATION,
-			    "Truncating title \"%s\" to %u chars",
+			    "Truncating title \"%s\" to %" PRIu8 " chars",
 			    options.title->c_str(),
 			    maxLen
 			);
