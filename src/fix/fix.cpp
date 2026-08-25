@@ -251,9 +251,9 @@ static void
 		error("\"%s\" has more than 65536 banks", name); // LCOV_EXCL_LINE
 	};
 	static constexpr off_t NB_BANKS_LIMIT = 0x10000;
-	static_assert(NB_BANKS_LIMIT * BANK_SIZE <= SSIZE_MAX, "Max input file size too large for OS");
+	static_assert(NB_BANKS_LIMIT * BANK_SIZE < SSIZE_MAX, "Max input file size too large for OS");
 	if (input == output) {
-		if (fileSize >= NB_BANKS_LIMIT * BANK_SIZE) {
+		if (fileSize > NB_BANKS_LIMIT * BANK_SIZE) {
 			return errorTooLarge(); // LCOV_EXCL_LINE
 		}
 		// Compute number of banks and ROMX len from file size
