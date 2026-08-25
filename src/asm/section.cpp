@@ -1053,7 +1053,7 @@ bool sect_BinaryFileSlice(std::string const &name, uint32_t startPos, uint32_t l
 			    *fileSize
 			);
 			return false;
-		} else if (startPos + length > *fileSize) {
+		} else if (length > *fileSize - startPos) {
 			error(
 			    "Specified range in `INCBIN` file \"%s\" is out of bounds (%" PRIu32 " + %" PRIu32
 			    " > %" PRIu64 ")",
