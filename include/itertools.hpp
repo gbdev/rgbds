@@ -30,8 +30,12 @@ auto end(ReversedIterable<IterableT> r) {
 	return std::rend(r._iterable);
 }
 
+// Prevent creation of a dangling reference to a temporary rvalue
 template<typename IterableT>
-ReversedIterable<IterableT> reversed(IterableT &&_iterable) {
+ReversedIterable<IterableT> reversed(IterableT &&_iterable) = delete;
+
+template<typename IterableT>
+ReversedIterable<IterableT> reversed(IterableT &_iterable) {
 	return {_iterable};
 }
 
