@@ -387,6 +387,7 @@ jobs:
           type rgbasm rgblink rgbfix rgbgfx
           man -w 1 rgbasm rgblink rgbfix rgbgfx
       - name: Compute test dependency cache params
+        if: matrix.arch == 'x86_64'
         id: test-deps-cache-params
         run: |
           paths=$(test/external/fetch-repos.sh --get-paths)
@@ -394,13 +395,14 @@ jobs:
           tee -a <<<"paths=\"${paths//,/\\n}\"" $GITHUB_OUTPUT
           tee -a <<<"hash=${hash%-}" $GITHUB_OUTPUT
       - name: Check test dependency repositories cache
+        if: matrix.arch == 'x86_64'
         id: test-deps-cache
         uses: actions/cache@v5
         with:
           path: ${{ fromJSON(steps.test-deps-cache-params.outputs.paths) }}
           key: cygwin-${{ matrix.bits }}-${{ steps.test-deps-cache-params.outputs.hash }}
       - name: Fetch test dependency repositories
-        if: steps.test-deps-cache.outputs.cache-hit != 'true'
+        if: matrix.arch == 'x86_64' && steps.test-deps-cache.outputs.cache-hit != 'true'
         continue-on-error: true
         run: |
           test/external/fetch-repos.sh
