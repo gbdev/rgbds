@@ -363,8 +363,8 @@ jobs:
             make
             ninja
             pkg-config
-            python3
-            python-imaging
+            python312
+            python312-imaging
       - name: Build using Make
         if: matrix.arch == 'x86'
         run: | # Cygwin doesn't support `make develop` sanitizers ASan or UBSan, so we don't use it.
