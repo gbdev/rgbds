@@ -216,12 +216,13 @@ void reverse() {
 		}
 
 		palettes.clear();
-		std::array<uint8_t, sizeof(uint16_t) * 4> buf; // 4 colors
+		std::array<uint8_t, sizeof(uint16_t) * 4> buf; // max 4 colors
+		assume(buf.size() >= sizeof(uint16_t) * options.nbColorsPerPal);
 		for (;;) {
 			if (size_t nbRead = file->sgetn(reinterpret_cast<char *>(buf.data()), buf.size());
 			    nbRead == 0) {
 				break;
-			} else if (nbRead != buf.size()) {
+			} else if (nbRead != sizeof(uint16_t) * options.nbColorsPerPal) {
 				fatal(
 				    "Palette data size (%zu) is not a multiple of %zu bytes\n",
 				    palettes.size() * buf.size() + nbRead,
@@ -599,7 +600,7 @@ void reverse() {
 					if (Rgba const &pixel = *color; pngColorType == PNG_COLOR_TYPE_GRAY) {
 						gray = gray << pngDepth | (pixel.red & ((1 << pngDepth) - 1));
 					} else if (pngColorType == PNG_COLOR_TYPE_PALETTE) {
-						*ptr++ = palOfs * 4 + colorID;
+						*ptr++ = palOfs * options.nbColorsPerPal + colorID;
 					} else {
 						*ptr++ = pixel.red;
 						*ptr++ = pixel.green;
