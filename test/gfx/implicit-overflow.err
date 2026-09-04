@@ -1,0 +1,3 @@
+warning: Implicit transparent color #0 is deprecated; leave an explicit gap in the palette specs [-Wobsolete]
+error: Each palette spec can only contain up to 1 color plus the implict transparent color
+Conversion aborted after 1 error

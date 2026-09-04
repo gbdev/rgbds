@@ -585,15 +585,11 @@ for example because you want to use palette swaps, please use
 .Fl c
 to specify the palette explicitly.
 .Pp
-First, if the image contains
+Note that if the image contains
 .Em any
-transparent pixel, color #0 of
+transparent pixels, color #0 of
 .Em all
-palettes will be allocated to it.
-This is done
-.Sy even if palettes were explicitly specified using Fl c ;
-then the specification only covers color #1 onwards.
-.Pq If you do not want this, ask your image editor to remove the alpha channel.
+palettes will be transparent.
 .Pp
 After generating palettes,
 .Nm
