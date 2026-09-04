@@ -57,10 +57,12 @@ struct Expression {
 	void addCheckBitIndex(uint8_t mask);
 
 	void checkNBit(uint8_t n) const;
+	void checkSignedNBit(uint8_t n) const;
 
 	void encode(std::vector<uint8_t> &buffer) const;
 };
 
 bool checkNBit(int32_t v, uint8_t n, char const *name);
+bool checkSignedNBit(int32_t v, uint8_t n, char const *name);
 
 #endif // RGBDS_ASM_RPN_HPP

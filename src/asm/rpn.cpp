@@ -512,6 +512,25 @@ bool checkNBit(int32_t v, uint8_t n, char const *name) {
 	return true;
 }
 
+// Checks that an RPN expression's value fits within N bits (must be signed)
+void Expression::checkSignedNBit(uint8_t n) const {
+	if (isKnown()) {
+		::checkSignedNBit(value(), n, nullptr);
+	}
+}
+
+bool checkSignedNBit(int32_t v, uint8_t n, char const *name) {
+	assume(n != 0);                         // That doesn't make sense
+	assume(n < CHAR_BIT * sizeof(int) - 1); // Otherwise `1 << n` is UB
+
+	if (v < -(1 << (n - 1)) || v >= 1 << (n - 1)) {
+		warning(WARNING_TRUNCATION_1, "%s must be signed %u-bit", name ? name : "Expression", n);
+		return false;
+	}
+
+	return true;
+}
+
 void Expression::encode(std::vector<uint8_t> &buffer) const {
 	assume(buffer.empty());
 

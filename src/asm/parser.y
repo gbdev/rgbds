@@ -340,6 +340,7 @@
 %type <Expression> reloc_3bit
 %type <Expression> reloc_8bit
 %type <Expression> reloc_16bit
+%type <Expression> reloc_8bit_signed
 
 // Constant numbers
 %type <int32_t> iconst
@@ -1241,6 +1242,13 @@ reloc_8bit:
 	}
 ;
 
+reloc_8bit_signed:
+	relocexpr {
+		$$ = std::move($1);
+		$$.checkSignedNBit(8);
+	}
+;
+
 reloc_16bit:
 	relocexpr {
 		$$ = std::move($1);
@@ -1886,7 +1894,7 @@ sm83_add:
 	| SM83_ADD MODE_HL COMMA reg_ss {
 		sect_ConstByte(0x09 | ($4 << 4));
 	}
-	| SM83_ADD MODE_SP COMMA reloc_8bit {
+	| SM83_ADD MODE_SP COMMA reloc_8bit_signed {
 		sect_ConstByte(0xE8);
 		sect_RelByte($4, 1);
 	}
@@ -2434,11 +2442,11 @@ op_a_n:
 op_sp_offset:
 	OP_ADD relocexpr {
 		$$ = std::move($2);
-		$$.checkNBit(8);
+		$$.checkSignedNBit(8);
 	}
 	| OP_SUB relocexpr {
 		$$.makeUnaryOp(RPN_NEG, std::move($2));
-		$$.checkNBit(8);
+		$$.checkSignedNBit(8);
 	}
 	| %empty {
 		::error("\"LD HL, SP\" is not a valid instruction; use \"LD HL, SP + 0\"");

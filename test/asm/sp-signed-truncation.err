@@ -1,0 +1,16 @@
+warning: Expression must be signed 8-bit [-Wtruncation]
+    at sp-signed-truncation.asm(15)
+warning: Expression must be signed 8-bit [-Wtruncation]
+    at sp-signed-truncation.asm(16)
+warning: Expression must be signed 8-bit [-Wtruncation]
+    at sp-signed-truncation.asm(17)
+warning: Expression must be signed 8-bit [-Wtruncation]
+    at sp-signed-truncation.asm(18)
+warning: Expression must be signed 8-bit [-Wtruncation]
+    at sp-signed-truncation.asm(19)
+warning: Expression must be signed 8-bit [-Wtruncation]
+    at sp-signed-truncation.asm(20)
+warning: Expression must be signed 8-bit [-Wtruncation]
+    at sp-signed-truncation.asm(21)
+warning: Expression must be signed 8-bit [-Wtruncation]
+    at sp-signed-truncation.asm(22)
