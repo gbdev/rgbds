@@ -36,13 +36,13 @@ Options options;
 
 // Flags which must be processed after the option parsing finishes
 static struct LocalOptions {
-	std::optional<std::string> externalPalSpec; // -c
-	bool autoAttrmap;                           // -A
-	bool autoTilemap;                           // -T
-	bool autoPalettes;                          // -P
-	bool autoPalmap;                            // -Q
-	bool groupOutputs;                          // -O
-	bool reverse;                               // -r
+	std::optional<std::string> palSpec; // -c
+	bool autoAttrmap;                   // -A
+	bool autoTilemap;                   // -T
+	bool autoPalettes;                  // -P
+	bool autoPalmap;                    // -Q
+	bool groupOutputs;                  // -O
+	bool reverse;                       // -r
 
 	bool autoAny() const { return autoAttrmap || autoTilemap || autoPalettes || autoPalmap; }
 } localOptions;
@@ -193,10 +193,10 @@ static void parseArg(int ch, char *arg) {
 		break;
 
 	case 'c':
-		localOptions.externalPalSpec = std::nullopt; // Allow overriding a previous pal spec
+		localOptions.palSpec = std::nullopt; // Allow overriding a previous pal spec
 		if (arg[0] == '#') {
-			options.palSpecType = Options::EXPLICIT;
-			parseInlinePalSpec(arg);
+			options.palSpecType = Options::INLINE;
+			localOptions.palSpec = arg;
 		} else if (strcasecmp(arg, "embedded") == 0) {
 			// Use PLTE, error out if missing
 			options.palSpecType = Options::EMBEDDED;
@@ -204,13 +204,13 @@ static void parseArg(int ch, char *arg) {
 			options.palSpecType = Options::NO_SPEC;
 		} else if (strcasecmp(arg, "dmg") == 0) {
 			options.palSpecType = Options::DMG;
-			parseDmgPalSpec(0xE4); // Same darkest-first order as `sortGrayscale`
+			localOptions.palSpec = "e4"; // Same darkest-first order as `sortGrayscale`
 		} else if (strncasecmp(arg, "dmg=", literal_strlen("dmg=")) == 0) {
 			options.palSpecType = Options::DMG;
-			parseDmgPalSpec(&arg[literal_strlen("dmg=")]);
+			localOptions.palSpec = &arg[literal_strlen("dmg=")];
 		} else {
-			options.palSpecType = Options::EXPLICIT;
-			localOptions.externalPalSpec = arg;
+			options.palSpecType = Options::EXTERNAL;
+			localOptions.palSpec = arg;
 		}
 		break;
 
@@ -514,24 +514,13 @@ static void verboseOutputConfig() {
 	// -s/--palette-size
 	fprintf(stderr, "\tPalettes contain %" PRIu8 " colors\n", options.nbColorsPerPal);
 	// -c/--colors
-	if (options.palSpecType == Options::NO_SPEC) {
+	switch (options.palSpecType) {
+	case Options::NO_SPEC:
 		fputs("\tAutomatic palette generation\n", stderr);
-	} else {
-		fprintf(stderr, "\t%s palette spec\n", [] {
-			switch (options.palSpecType) {
-			case Options::EXPLICIT:
-				return "Explicit";
-			case Options::EMBEDDED:
-				return "Embedded";
-			case Options::DMG:
-				return "DMG";
-			default:
-				return "???";
-			}
-		}());
-	}
-	if (options.palSpecType == Options::EXPLICIT) {
-		fputs("\t[\n", stderr);
+		break;
+	case Options::INLINE:
+	case Options::EXTERNAL:
+		fputs("\tExplicit palette spec\n\t[\n", stderr);
 		for (auto const &pal : options.palSpec) {
 			fputs("\t\t", stderr);
 			for (auto const &color : pal) {
@@ -544,6 +533,13 @@ static void verboseOutputConfig() {
 			putc('\n', stderr);
 		}
 		fputs("\t]\n", stderr);
+		break;
+	case Options::EMBEDDED:
+		fputs("\tEmbedded palette spec\n", stderr);
+		break;
+	case Options::DMG:
+		fprintf(stderr, "\tDMG palette spec $%02" PRIx8 "\n", options.palSpecDmg);
+		break;
 	}
 	// -L/--slice
 	if (options.inputSlice.width || options.inputSlice.height || options.inputSlice.left
@@ -671,9 +667,24 @@ int main(int argc, char *argv[]) {
 	autoOutPath(localOptions.autoPalettes, options.palettes, ".pal");
 	autoOutPath(localOptions.autoPalmap, options.palmap, ".palmap");
 
-	// Execute deferred external pal spec parsing, now that all other params are known
-	if (localOptions.externalPalSpec) {
-		parseExternalPalSpec(localOptions.externalPalSpec->c_str());
+	// Execute deferred pal spec parsing, now that all other params are known
+	switch (options.palSpecType) {
+	case Options::NO_SPEC:
+	case Options::EMBEDDED:
+		assume(!localOptions.palSpec);
+		break;
+	case Options::INLINE:
+		assume(localOptions.palSpec);
+		parseInlinePalSpec(localOptions.palSpec->c_str());
+		break;
+	case Options::EXTERNAL:
+		assume(localOptions.palSpec);
+		parseExternalPalSpec(localOptions.palSpec->c_str());
+		break;
+	case Options::DMG:
+		assume(localOptions.palSpec);
+		parseDmgPalSpec(localOptions.palSpec->c_str());
+		break;
 	}
 
 	verboseDo(VERB_CONFIG, verboseOutputConfig);
@@ -687,8 +698,7 @@ int main(int argc, char *argv[]) {
 		} else {
 			process();
 		}
-	} else if (!options.palettes.empty() && options.palSpecType == Options::EXPLICIT
-	           && !localOptions.reverse) {
+	} else if (!options.palettes.empty() && options.hasExplicitPalSpec() && !localOptions.reverse) {
 		processPalettes();
 	} else {
 		usage.printAndExit("No input file specified (pass \"-\" to read from standard input)");

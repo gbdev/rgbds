@@ -249,7 +249,7 @@ void reverse() {
 			);
 		}
 
-		if (options.palSpecType == Options::EXPLICIT && palettes != options.palSpec) {
+		if (options.hasExplicitPalSpec() && palettes != options.palSpec) {
 			warnx("Colors in the palette file do not match those specified with '-c'");
 			// This spacing aligns "...versus with `-c`" above the column of `-c` palettes
 			fputs("Colors specified in the palette file:         ...versus with '-c':\n", stderr);
@@ -273,7 +273,7 @@ void reverse() {
 	} else if (options.palSpecType == Options::EMBEDDED) {
 		warnx("An embedded palette was requested, but no palette file was specified; ignoring "
 		      "request");
-	} else if (options.palSpecType == Options::EXPLICIT) {
+	} else if (options.hasExplicitPalSpec()) {
 		palettes = std::move(options.palSpec); // We won't be using it again.
 	}
 

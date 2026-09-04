@@ -25,7 +25,8 @@ struct Options {
 	std::array<uint8_t, 2> baseTileIDs{0, 0}; // -b
 	enum {
 		NO_SPEC,
-		EXPLICIT,
+		INLINE,
+		EXTERNAL,
 		EMBEDDED,
 		DMG,
 	} palSpecType = NO_SPEC; // -c
@@ -58,6 +59,8 @@ struct Options {
 	uint8_t maxOpaqueColors() const { return nbColorsPerPal - hasTransparentPixels; }
 
 	uint16_t maxNbColors() const { return nbColorsPerPal * nbPalettes; }
+
+	bool hasExplicitPalSpec() const { return palSpecType == INLINE || palSpecType == EXTERNAL; }
 
 	uint8_t dmgColors[4] = {};
 	uint8_t dmgValue(uint8_t i) const {
