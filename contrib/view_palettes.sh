@@ -22,4 +22,4 @@ for (( i = 0; i < NB_PALS; i++ )); do
 	printf $(printf '\\x%x' $i{,,,}) >> "$TMP/tmp.palmap"
 done
 
-"${RGBGFX:-${RGBDS+$RGBDS/}rgbgfx}" -r 4 "$2" -o "$TMP/tmp.2bpp" -OTQ -p "$1" -n "$NB_PALS"
+"${RGBGFX:-${RGBDS+$RGBDS/}rgbgfx}" -o "$TMP/tmp.2bpp" -OTQ -p "$1" -n "$NB_PALS" -r 4 "$2"

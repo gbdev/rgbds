@@ -52,6 +52,7 @@ struct Rgba {
 	bool isTransparent() const { return alpha < transparency_threshold; }
 	static constexpr uint8_t opacity_threshold = 0xF0;
 	bool isOpaque() const { return alpha >= opacity_threshold; }
+	bool isAmbiguous() const { return isTransparent() == isOpaque(); }
 	// Computes the equivalent CGB color, respects the color curve depending on options
 	uint16_t cgbColor() const;
 

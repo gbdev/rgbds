@@ -181,7 +181,7 @@ struct Image {
 		// Register colors from `png` into `colors`
 		for (uint32_t y = 0; y < png.height; ++y) {
 			for (uint32_t x = 0; x < png.width; ++x) {
-				if (Rgba const &color = pixel(x, y); color.isTransparent() == color.isOpaque()) {
+				if (Rgba const &color = pixel(x, y); color.isAmbiguous()) {
 					// Report ambiguously transparent or opaque colors
 					if (uint32_t css = color.toCSS(); ambiguous.find(css) == ambiguous.end()) {
 						error(
@@ -402,12 +402,41 @@ static std::pair<std::vector<size_t>, std::vector<Palette>>
     makePalsAsSpecified(std::vector<ColorSet> const &colorSets) {
 	// Convert the palette spec to actual palettes
 	std::vector<Palette> palettes(options.palSpec.size());
+	bool gaveDeprecationWarning = false;
 	for (auto [spec, pal] : zip(options.palSpec, palettes)) {
+		bool skipFirst = false;
+		// If the image contains any transparent pixels, color #0 of all palettes is transparent.
+		// Thus, all explicit palette specs should leave color #0 as "#none" or transparent.
+		// If they specify an opaque color #0, we have legacy behavior of implicitly inserting
+		// a transparent color #0, and expecting the spec to only cover the subsequent colors.
+		if (options.hasTransparentPixels && spec.front().has_value() && spec.front()->isOpaque()) {
+			skipFirst = true;
+			if (!gaveDeprecationWarning) {
+				warning(
+				    WARNING_OBSOLETE,
+				    "Implicit transparent color #0 is deprecated; leave an explicit gap in the "
+				    "palette specs"
+				);
+				gaveDeprecationWarning = true;
+			}
+		}
 		for (size_t i = 0; i < options.nbColorsPerPal; ++i) {
 			// If the spec has a gap, there's no need to copy anything.
-			if (spec[i].has_value() && spec[i]->isOpaque()) {
-				pal[i] = spec[i]->cgbColor();
+			if (!spec[i].has_value() || !spec[i]->isOpaque()) {
+				continue;
 			}
+			// If we're skipping color #0 as implicitly transparent, a full spec
+			// plus the implicit transparent color will be too large for a palette.
+			if (i + skipFirst == options.nbColorsPerPal) {
+				error(
+				    "Each palette spec can only contain up to %" PRIu8
+				    " color%s plus the implict transparent color",
+				    options.nbColorsPerPal - 1,
+				    options.nbColorsPerPal - 1 == 1 ? "" : "s"
+				);
+				giveUp();
+			}
+			pal[i + skipFirst] = spec[i]->cgbColor();
 		}
 	}
 
