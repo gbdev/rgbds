@@ -2,6 +2,10 @@
 
 export LC_ALL=C
 
+# Screen width for help/usage text (for reproducible test results)
+export COLUMNS=79
+shopt -u checkwinsize # Prevent subsequent commands from resetting `COLUMNS`
+
 # Game Boy release date, 1989-04-21T12:34:56Z (for reproducible test results)
 export SOURCE_DATE_EPOCH=609165296
 
