@@ -1,7 +1,12 @@
 #!/usr/bin/env bash
 
-export LC_ALL=C
 set -o pipefail
+
+export LC_ALL=C
+
+# Screen width for help/usage text (for reproducible test results)
+export COLUMNS=79
+shopt -u checkwinsize # Prevent subsequent commands from resetting `COLUMNS`
 
 otemp="$(mktemp)"
 gbtemp="$(mktemp)"

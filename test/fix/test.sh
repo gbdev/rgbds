@@ -2,6 +2,10 @@
 
 export LC_ALL=C
 
+# Screen width for help/usage text (for reproducible test results)
+export COLUMNS=79
+shopt -u checkwinsize # Prevent subsequent commands from resetting `COLUMNS`
+
 tmpdir="$(mktemp -d)"
 # shellcheck disable=SC2064 # (Immediate expansion is the desired behavior.)
 trap "cd; rm -rf ${tmpdir@Q}" EXIT

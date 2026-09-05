@@ -3,6 +3,12 @@
 [[ -e ./rgbgfx_test ]] || make -C ../.. test/gfx/rgbgfx_test Q= ${CXX:+"CXX=$CXX"} || exit
 [[ -e ./randtilegen ]] || make -C ../.. test/gfx/randtilegen Q= ${CXX:+"CXX=$CXX"} || exit
 
+export LC_ALL=C
+
+# Screen width for help/usage text (for reproducible test results)
+export COLUMNS=79
+shopt -u checkwinsize # Prevent subsequent commands from resetting `COLUMNS`
+
 errtmp="$(mktemp)"
 
 # shellcheck disable=SC2064 # (Immediate expansion is the desired behavior.)
