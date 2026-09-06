@@ -1525,7 +1525,7 @@ Set according to result.
 .Ss RLC r8
 Rotate register
 .Ar r8
-left.
+Left Circularly.
 .Bd -literal
 ┏━ Flags ━┓   ┏━━━━━━━ r8 ━━━━━━┓
 ┃    C   ←╂─┬─╂─ b7 ← ... ← b0 ←╂─┐
@@ -1551,7 +1551,7 @@ Set according to result.
 .Ss RLC [HL]
 Rotate the byte pointed to by
 .Sy HL
-left.
+Left Circularly.
 .Bd -literal
 ┏━ Flags ━┓   ┏━━━━━━ [HL] ━━━━━┓
 ┃    C   ←╂─┬─╂─ b7 ← ... ← b0 ←╂─┐
@@ -1568,7 +1568,7 @@ Flags: See
 .Ss RLCA
 Rotate register
 .Sy A
-left.
+Left Circularly.
 .Bd -literal
 ┏━ Flags ━┓   ┏━━━━━━━ A ━━━━━━━┓
 ┃    C   ←╂─┬─╂─ b7 ← ... ← b0 ←╂─┐
@@ -1663,7 +1663,7 @@ Set according to result.
 .Ss RRC r8
 Rotate register
 .Ar r8
-right.
+Right Circularly.
 .Bd -literal
   ┏━━━━━━━ r8 ━━━━━━┓   ┏━ Flags ━┓
 ┌─╂→ b7 → ... → b0 ─╂─┬─╂→   C    ┃
@@ -1689,7 +1689,7 @@ Set according to result.
 .Ss RRC [HL]
 Rotate the byte pointed to by
 .Sy HL
-right.
+Right Circularly.
 .Bd -literal
   ┏━━━━━━ [HL] ━━━━━┓   ┏━ Flags ━┓
 ┌─╂→ b7 → ... → b0 ─╂─┬─╂→   C    ┃
@@ -1706,7 +1706,7 @@ Flags: See
 .Ss RRCA
 Rotate register
 .Sy A
-right.
+Right Circularly.
 .Bd -literal
   ┏━━━━━━━ A ━━━━━━━┓   ┏━ Flags ━┓
 ┌─╂→ b7 → ... → b0 ─╂─┬─╂→   C    ┃
