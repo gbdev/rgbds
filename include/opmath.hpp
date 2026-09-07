@@ -5,6 +5,9 @@
 
 #include <stdint.h>
 
+int32_t op_add(int32_t augend, int32_t addend);
+int32_t op_sub(int32_t minuend, int32_t subtrahend);
+int32_t op_mul(int32_t multiplicand, int32_t multiplier);
 int32_t op_divide(int32_t dividend, int32_t divisor);
 int32_t op_modulo(int32_t dividend, int32_t divisor);
 int32_t op_exponent(int32_t base, uint32_t power);

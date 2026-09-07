@@ -114,14 +114,14 @@ static int32_t computeRPNExpr(Patch const &patch, std::vector<Symbol> const &fil
 		int32_t value;
 		switch (command) {
 		case RPN_ADD:
-			value = popRPN(patch) + popRPN(patch);
+			value = op_add(popRPN(patch), popRPN(patch));
 			break;
 		case RPN_SUB:
 			value = popRPN(patch);
-			value = popRPN(patch) - value;
+			value = op_sub(popRPN(patch), value);
 			break;
 		case RPN_MUL:
-			value = popRPN(patch) * popRPN(patch);
+			value = op_mul(popRPN(patch), popRPN(patch));
 			break;
 		case RPN_DIV:
 			value = popRPN(patch);

@@ -297,7 +297,6 @@ void Expression::makeBinaryOp(RPNCommand op, Expression &&src1, Expression const
 	if (src1.isKnown() && src2.isKnown()) {
 		// If both expressions are known, just compute the value
 		int32_t lval = src1.value(), rval = src2.value();
-		uint32_t ulval = static_cast<uint32_t>(lval), urval = static_cast<uint32_t>(rval);
 
 		switch (op) {
 		case RPN_LOGOR:
@@ -325,10 +324,10 @@ void Expression::makeBinaryOp(RPNCommand op, Expression &&src1, Expression const
 			data = lval != rval;
 			break;
 		case RPN_ADD:
-			data = static_cast<int32_t>(ulval + urval);
+			data = op_add(lval, rval);
 			break;
 		case RPN_SUB:
-			data = static_cast<int32_t>(ulval - urval);
+			data = op_sub(lval, rval);
 			break;
 		case RPN_XOR:
 			data = lval ^ rval;
@@ -370,7 +369,7 @@ void Expression::makeBinaryOp(RPNCommand op, Expression &&src1, Expression const
 			data = op_shift_right_unsigned(lval, rval);
 			break;
 		case RPN_MUL:
-			data = static_cast<int32_t>(ulval * urval);
+			data = op_mul(lval, rval);
 			break;
 		case RPN_DIV:
 			if (rval == 0) {
