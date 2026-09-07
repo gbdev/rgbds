@@ -8,6 +8,23 @@
 
 #include "helpers.hpp" // assume, clz, ctz
 
+// Signed overflow is UB, so these compute with unsigned arithmetic, which wraps around.
+// Casting back is OK because the types implement two's complement behavior.
+
+int32_t op_add(int32_t augend, int32_t addend) {
+	return static_cast<int32_t>(static_cast<uint32_t>(augend) + static_cast<uint32_t>(addend));
+}
+
+int32_t op_sub(int32_t minuend, int32_t subtrahend) {
+	return static_cast<int32_t>(static_cast<uint32_t>(minuend) - static_cast<uint32_t>(subtrahend));
+}
+
+int32_t op_mul(int32_t multiplicand, int32_t multiplier) {
+	return static_cast<int32_t>(
+	    static_cast<uint32_t>(multiplicand) * static_cast<uint32_t>(multiplier)
+	);
+}
+
 int32_t op_divide(int32_t dividend, int32_t divisor) {
 	assume(divisor != 0);                           // Division by 0 is UB
 	assume(dividend != INT32_MIN || divisor != -1); // INT32_MIN / -1 is UB
