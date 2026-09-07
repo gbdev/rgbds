@@ -535,7 +535,7 @@ static void verboseOutputConfig() {
 		fputs("\t]\n", stderr);
 		break;
 	case Options::EMBEDDED:
-		fputs("\tEmbedded palette spec\n", stderr);
+		fputs("\tEmbedded palette spec from PNG indexed PLTE chunk\n", stderr);
 		break;
 	case Options::DMG:
 		fprintf(stderr, "\tDMG palette spec $%02" PRIx8 "\n", options.palSpecDmg);
