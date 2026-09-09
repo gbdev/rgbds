@@ -219,8 +219,6 @@ foreach(SECTION "man1" "man5" "man7")
   install(FILES ${${SECTION}} DESTINATION "${CMAKE_INSTALL_MANDIR}/${SECTION}" COMPONENT man)
 endforeach()
 
-install(SCRIPT "${CMAKE_SOURCE_DIR}/cmake/flatten.cmake")
-
 ## Packaging.
 
 # We only specify here the package-agnostic options;
@@ -241,6 +239,5 @@ set(CPACK_THREADS 0) # Use all available CPU cores.
 set(CPACK_INCLUDE_TOPLEVEL_DIRECTORY OFF)
 set(CPACK_COMPONENTS_GROUPING ALL_COMPONENTS_IN_ONE)
 set(CPACK_ARCHIVE_COMPONENT_INSTALL ON)
-set(CPACK_COMPONENTS_ALL binaries) # Only package the `binaries`, not the `man` pages.
 
 include(CPack)
