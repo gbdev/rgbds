@@ -219,6 +219,8 @@ foreach(SECTION "man1" "man5" "man7")
   install(FILES ${${SECTION}} DESTINATION "${CMAKE_INSTALL_MANDIR}/${SECTION}" COMPONENT man)
 endforeach()
 
+install(SCRIPT "${CMAKE_SOURCE_DIR}/cmake/flatten.cmake")
+
 ## Packaging.
 
 # We only specify here the package-agnostic options;
