@@ -29,6 +29,7 @@
 #include "gfx/rgba.hpp"
 #include "gfx/warning.hpp"
 
+using namespace std::literals;
 using namespace std::string_view_literals;
 
 static char const *hexDigits = "0123456789ABCDEFabcdef";
@@ -131,8 +132,14 @@ void parseInlinePalSpec(char const * const rawArg) {
 			if (n == arg.length()) {
 				break;
 			} else if (arg[n] != ';' && arg[n] != ':') {
-				if (nbColors == 4) {
-					parseError(n, 1, "Each palette can only contain up to 4 colors");
+				if (nbColors == options.nbColorsPerPal) {
+					// `parseError` cannot take variadic arguments, since `format_` and
+					// `-Wformat-security` would complain about passing a template parameter pack
+					// to the C-style variadic `error` function, so we format the error message
+					// before passing it to `parseError`.
+					std::string msg = "Each palette can only contain up to "s
+					                  + std::to_string(options.nbColorsPerPal) + " colors";
+					parseError(n, 1, msg.c_str());
 					return;
 				}
 				break;
@@ -664,11 +671,7 @@ void parseDmgPalSpec(char const * const rawArg) {
 		return;
 	}
 
-	parseDmgPalSpec(toHex(arg[0], arg[1]));
-}
-
-void parseDmgPalSpec(uint8_t palSpecDmg) {
-	options.palSpecDmg = palSpecDmg;
+	options.palSpecDmg = toHex(arg[0], arg[1]);
 
 	// Map gray shades to their DMG color indexes for fast lookup by `Rgba::grayIndex`
 	for (uint8_t i = 0; i < 4; ++i) {

@@ -1,0 +1,4 @@
+error: Each palette can only contain up to 2 colors
+In inline palette spec: "#ffffff,#888888,#000000"
+                                         ^
+Conversion aborted after 1 error
