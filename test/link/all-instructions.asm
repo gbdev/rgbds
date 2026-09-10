@@ -221,9 +221,9 @@ jrlabel:
 
     ; Stack Operations Instructions
 
-    add sp,$DB
+    add sp,$25
     ld  [$ABCD],sp
-    ld  hl,sp+$DB
+    ld  hl,sp+$25
     ld  hl,sp-$25
     ld  sp,hl
 
