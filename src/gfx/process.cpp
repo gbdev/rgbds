@@ -365,8 +365,9 @@ static std::pair<std::vector<size_t>, std::vector<Palette>>
 	// LCOV_EXCL_STOP
 
 	std::vector<Palette> palettes(nbPalettes);
+
 	// If the image contains at least one transparent pixel, force transparency in the first slot of
-	// all palettes
+	// all palettes.
 	if (options.hasTransparentPixels) {
 		for (Palette &pal : palettes) {
 			pal.colors[0] = Rgba::transparent;
@@ -400,8 +401,17 @@ static std::pair<std::vector<size_t>, std::vector<Palette>>
 
 static std::pair<std::vector<size_t>, std::vector<Palette>>
     makePalsAsSpecified(std::vector<ColorSet> const &colorSets) {
-	// Convert the palette spec to actual palettes
 	std::vector<Palette> palettes(options.palSpec.size());
+
+	// If the image contains at least one transparent pixel, force transparency in the first slot of
+	// all palettes
+	if (options.hasTransparentPixels) {
+		for (Palette &pal : palettes) {
+			pal.colors[0] = Rgba::transparent;
+		}
+	}
+
+	// Convert the palette spec to actual palettes
 	bool gaveDeprecationWarning = false;
 	for (auto [spec, pal] : zip(options.palSpec, palettes)) {
 		bool skipFirst = false;
