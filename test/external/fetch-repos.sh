@@ -69,12 +69,16 @@ case "$actionname" in
 
 		action() {
 			if [ ! -d "$EXT_TEST_REPO" ]; then
-				git clone "https://$EXT_TEST_DOMAIN/$EXT_TEST_OWNER/$EXT_TEST_REPO.git" \
+				git clone "https://$EXT_TEST_DOMAIN/$EXT_TEST_OWNER/$EXT_TEST_REPO" \
 					--revision="$EXT_TEST_COMMIT" --depth=1 --recursive --shallow-submodules \
-					--config advice.detachedHead=false
+					--jobs=0 --config advice.detachedHead=false
+				pushd "$EXT_TEST_REPO"
+			else
+				pushd "$EXT_TEST_REPO"
+				git remote set-url origin "https://$EXT_TEST_DOMAIN/$EXT_TEST_OWNER/$EXT_TEST_REPO"
+				git fetch --depth=1 --recurse-submodules --jobs=0 origin -- "$EXT_TEST_COMMIT"
+				git checkout --force --detach "$EXT_TEST_COMMIT" --
 			fi
-			pushd "$EXT_TEST_REPO"
-			git checkout --force --detach "$EXT_TEST_COMMIT" --
 			if [ -f "../patches/$EXT_TEST_REPO.patch" ]; then
 				git apply --ignore-whitespace "../patches/$EXT_TEST_REPO.patch"
 			fi
