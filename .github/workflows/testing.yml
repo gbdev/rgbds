@@ -81,8 +81,7 @@ jobs:
           man -w 1 rgbasm rgblink rgbfix rgbgfx
       - name: Package binaries
         run: |
-          mkdir bins
-          cp rgb{asm,link,fix,gfx} bins
+          install -D --target-directory bins rgb{asm,link,fix,gfx}
       - name: Upload binaries
         uses: actions/upload-artifact@v7
         with:
@@ -143,8 +142,7 @@ jobs:
           man -w 1 rgbasm rgblink rgbfix rgbgfx
       - name: Package binaries
         run: |
-          mkdir bins
-          cp rgb{asm,link,fix,gfx} bins
+          install -D --target-directory bins rgb{asm,link,fix,gfx}
       - name: Upload binaries
         uses: actions/upload-artifact@v7
         with:
