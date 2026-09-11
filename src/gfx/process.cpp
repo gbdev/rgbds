@@ -733,35 +733,47 @@ static void outputUnoptimizedMaps(
 	uint16_t tileIdx = 0;
 	uint8_t bank = 0;
 	for (AttrmapEntry const &attr : attrmap) {
-		// The update-increment logic at the end of this loop may increment `bank` from 1 to 2,
-		// if both banks 0 and 1 are full, but by then all the `attrmap` entries should have been
-		// processed, since there cannot be more tiles than could fit in both banks.
-		assume(bank < 2);
-
-		// The unsigned overflow for `tileID` and `palID` is intentional, since
-		// nonzero base IDs may overflow beyond 255 and continue with IDs from 0.
-		if (tilemapOutput.has_value()) {
-			uint8_t tileID = (attr.isBackgroundTile() ? 0 : tileIdx) + options.baseTileIDs[bank];
-			(*tilemapOutput)->sputc(tileID);
-		}
-		uint8_t palID = attr.getPalID(mappings) + options.basePalID;
-		if (attrmapOutput.has_value()) {
-			(*attrmapOutput)->sputc((palID & 0b111) | bank << 3); // The other flags are all 0
-		}
-		if (palmapOutput.has_value()) {
-			(*palmapOutput)->sputc(palID);
-		}
-
-		// Background tiles were not emitted in the tile data, so their ID and bank do not update.
 		if (attr.isBackgroundTile()) {
-			continue;
-		}
+			// The unsigned overflow for `tileID` and `palID` is intentional, since
+			// nonzero base IDs may overflow beyond 255 and continue with IDs from 0.
+			if (tilemapOutput.has_value()) {
+				(*tilemapOutput)->sputc(options.baseTileIDs[0]);
+			}
+			uint8_t palID = attr.getPalID(mappings) + options.basePalID;
+			if (attrmapOutput.has_value()) {
+				(*attrmapOutput)->sputc(palID & 0b111); // The bank and other flags are all 0
+			}
+			if (palmapOutput.has_value()) {
+				(*palmapOutput)->sputc(palID);
+			}
 
-		if (tileIdx + 1 < options.maxNbTiles[bank]) {
-			++tileIdx;
+			// Background tiles are not emitted in tile data, so their index and bank do not update.
 		} else {
-			++bank;
-			tileIdx = 0;
+			// The update-increment logic at the end of this loop may increment `bank` from 1 to 2,
+			// if both banks 0 and 1 are full. By then all the `attrmap` entries should have been
+			// processed, since there cannot be more tiles than could fit in both banks, but there
+			// may still be background tiles.
+			assume(bank < 2);
+
+			// The unsigned overflow for `tileID` and `palID` is intentional, since
+			// nonzero base IDs may overflow beyond 255 and continue with IDs from 0.
+			if (tilemapOutput.has_value()) {
+				(*tilemapOutput)->sputc(tileIdx + options.baseTileIDs[bank]);
+			}
+			uint8_t palID = attr.getPalID(mappings) + options.basePalID;
+			if (attrmapOutput.has_value()) {
+				(*attrmapOutput)->sputc((palID & 0b111) | bank << 3); // The other flags are all 0
+			}
+			if (palmapOutput.has_value()) {
+				(*palmapOutput)->sputc(palID);
+			}
+
+			if (tileIdx + 1 < options.maxNbTiles[bank]) {
+				++tileIdx;
+			} else {
+				++bank;
+				tileIdx = 0;
+			}
 		}
 	}
 }
