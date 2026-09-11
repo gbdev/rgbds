@@ -742,7 +742,7 @@ static void outputUnoptimizedMaps(
 		// overflow beyond 255 and continue with IDs from 0.
 		uint8_t palID = attr.getPalID(mappings) + options.basePalID;
 		if (attr.isBackgroundTile()) {
-			// The tile bank may me 2 here, which is fine since background tiles are emitted as
+			// The tile bank may be 2 here, which is fine since background tiles are emitted as
 			// if they used the base tile ID in bank 0.
 			assume(bank <= 2);
 
