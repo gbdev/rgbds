@@ -730,7 +730,7 @@ static void outputUnoptimizedMaps(
 	autoOpenPath(options.attrmap, attrmapOutput);
 	autoOpenPath(options.palmap, palmapOutput);
 
-	auto const emit = [](std::optional<File>& output, uint8_t byte) {
+	auto const emit = [](std::optional<File> &output, uint8_t byte) {
 		if (output.has_value()) {
 			output.value()->sputc(byte);
 		}
@@ -738,31 +738,30 @@ static void outputUnoptimizedMaps(
 	uint16_t tileIdx = 0;
 	uint8_t bank = 0;
 	for (AttrmapEntry const &attr : attrmap) {
-		// The overflow / truncation for `tileID` and `palID` is intentional, since
-		// nonzero base IDs may overflow beyond 255 and continue with IDs from 0.
+		// The unsigned overflow for `palID` is intentional, since nonzero base IDs may
+		// overflow beyond 255 and continue with IDs from 0.
 		uint8_t palID = attr.getPalID(mappings) + options.basePalID;
 		if (attr.isBackgroundTile()) {
-			// Background tiles do not count towards tile count, so the bank number may have reached
-			// 2 at this point; this is fine. Values larger than that should be impossible, though.
 			assume(bank <= 2);
 
 			// Background tiles are always treated as if they were in bank 0...
 			emit(tilemapOutput, options.baseTileIDs[0]);
 			emit(attrmapOutput, palID & 0b111); // The other flags are all zeros.
 			emit(palmapOutput, palID);
-			// ...and, since they are not emitted either, they do not increase the tile ID.
+			// ...and, since they are not present in tile data, they do not increment the tile ID.
 		} else {
-			// The update-increment logic at the end of this loop may increment `bank` from 1 to 2,
-			// if both banks 0 and 1 are full. By then all the `attrmap` entries should have been
-			// processed, since there cannot be more tiles than could fit in both banks, but there
-			// may still be background tiles.
 			assume(bank < 2);
 
+			// The unsigned overflow for `tileID` is intentional, since nonzero base IDs may
+			// overflow beyond 255 and continue with IDs from 0.
 			uint8_t tileID = tileIdx + options.baseTileIDs[bank];
 			emit(tilemapOutput, tileID);
 			emit(attrmapOutput, (palID & 0b111) | bank << 3); // The other flags are all zeros.
 			emit(palmapOutput, palID);
 
+			// This loop-update logic may increment `bank` from 1 to 2, if banks 0 and 1 are both
+			// full. By then all the tiles should have been emitted, since there cannot be more
+			// tiles than could fit in both banks, but there may still be background tiles to skip.
 			++tileIdx;
 			if (tileIdx >= options.maxNbTiles[bank]) {
 				tileIdx = 0;
