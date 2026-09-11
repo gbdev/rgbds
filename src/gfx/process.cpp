@@ -742,14 +742,16 @@ static void outputUnoptimizedMaps(
 		// overflow beyond 255 and continue with IDs from 0.
 		uint8_t palID = attr.getPalID(mappings) + options.basePalID;
 		if (attr.isBackgroundTile()) {
+			// The tile bank may me 2 here, which is fine since background tiles are emitted as
+			// if they used the base tile ID in bank 0.
 			assume(bank <= 2);
 
-			// Background tiles are always treated as if they were in bank 0...
 			emit(tilemapOutput, options.baseTileIDs[0]);
 			emit(attrmapOutput, palID & 0b111); // The other flags are all zeros.
 			emit(palmapOutput, palID);
-			// ...and, since they are not present in tile data, they do not increment the tile ID.
+			// Since background tiles are not in tile data, they do not increment the tile index.
 		} else {
+			// The only valid tile banks are 0 and 1.
 			assume(bank < 2);
 
 			// The unsigned overflow for `tileID` is intentional, since nonzero base IDs may
@@ -759,10 +761,10 @@ static void outputUnoptimizedMaps(
 			emit(attrmapOutput, (palID & 0b111) | bank << 3); // The other flags are all zeros.
 			emit(palmapOutput, palID);
 
-			// This loop-update logic may increment `bank` from 1 to 2, if banks 0 and 1 are both
-			// full. By then all the tiles should have been emitted, since there cannot be more
-			// tiles than could fit in both banks, but there may still be background tiles to skip.
 			++tileIdx;
+			// The `bank` may increment from 1 to 2, if banks 0 and 1 are both full. By then all
+			// the tiles should have been emitted, since there cannot be more tiles than could fit
+			// in both banks, but there may still be background tiles to skip.
 			if (tileIdx >= options.maxNbTiles[bank]) {
 				tileIdx = 0;
 				++bank;
