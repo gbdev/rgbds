@@ -738,8 +738,8 @@ static void outputUnoptimizedMaps(
 	uint16_t tileIdx = 0;
 	uint8_t bank = 0;
 	for (AttrmapEntry const &attr : attrmap) {
-		// The unsigned overflow for `palID` is intentional, since nonzero base IDs may
-		// overflow beyond 255 and continue with IDs from 0.
+		// A non-zero base ID may make this addition overflow, wrapping around the available
+		// palette IDs. Since the operands are unsigned, this won't cause undefined behavior.
 		uint8_t palID = attr.getPalID(mappings) + options.basePalID;
 		if (attr.isBackgroundTile()) {
 			// The tile bank may be 2 here, which is fine since background tiles are emitted as
@@ -754,8 +754,8 @@ static void outputUnoptimizedMaps(
 			// The only valid tile banks are 0 and 1.
 			assume(bank < 2);
 
-			// The unsigned overflow for `tileID` is intentional, since nonzero base IDs may
-			// overflow beyond 255 and continue with IDs from 0.
+			// A non-zero base ID may make this addition overflow, wrapping around the available
+			// tile IDs. Since the operands are unsigned, this won't cause undefined behavior.
 			uint8_t tileID = tileIdx + options.baseTileIDs[bank];
 			emit(tilemapOutput, tileID);
 			emit(attrmapOutput, (palID & 0b111) | bank << 3); // The other flags are all zeros.
