@@ -730,38 +730,45 @@ static void outputUnoptimizedMaps(
 	autoOpenPath(options.attrmap, attrmapOutput);
 	autoOpenPath(options.palmap, palmapOutput);
 
+	auto const emit = [](std::optional<File> &output, uint8_t byte) {
+		if (output.has_value()) {
+			output.value()->sputc(byte);
+		}
+	};
 	uint16_t tileIdx = 0;
 	uint8_t bank = 0;
 	for (AttrmapEntry const &attr : attrmap) {
-		// The update-increment logic at the end of this loop may increment `bank` from 1 to 2,
-		// if both banks 0 and 1 are full, but by then all the `attrmap` entries should have been
-		// processed, since there cannot be more tiles than could fit in both banks.
-		assume(bank < 2);
-
-		// The unsigned overflow for `tileID` and `palID` is intentional, since
-		// nonzero base IDs may overflow beyond 255 and continue with IDs from 0.
-		if (tilemapOutput.has_value()) {
-			uint8_t tileID = (attr.isBackgroundTile() ? 0 : tileIdx) + options.baseTileIDs[bank];
-			(*tilemapOutput)->sputc(tileID);
-		}
+		// A non-zero base ID may make this addition overflow, wrapping around the available
+		// palette IDs. Since the operands are unsigned, this won't cause undefined behavior.
 		uint8_t palID = attr.getPalID(mappings) + options.basePalID;
-		if (attrmapOutput.has_value()) {
-			(*attrmapOutput)->sputc((palID & 0b111) | bank << 3); // The other flags are all 0
-		}
-		if (palmapOutput.has_value()) {
-			(*palmapOutput)->sputc(palID);
-		}
-
-		// Background tiles were not emitted in the tile data, so their ID and bank do not update.
 		if (attr.isBackgroundTile()) {
-			continue;
-		}
+			// The tile bank may be 2 here, which is fine since background tiles are emitted as
+			// if they used the base tile ID and bank 0.
+			assume(bank <= 2);
 
-		if (tileIdx + 1 < options.maxNbTiles[bank]) {
-			++tileIdx;
+			emit(tilemapOutput, options.baseTileIDs[0]);
+			emit(attrmapOutput, palID & 0b111); // The other flags are all zeros.
+			emit(palmapOutput, palID);
+			// Since background tiles are not in tile data, they do not increment the tile index.
 		} else {
-			++bank;
-			tileIdx = 0;
+			// The only valid tile banks are 0 and 1.
+			assume(bank < 2);
+
+			// A non-zero base ID may make this addition overflow, wrapping around the available
+			// tile IDs. Since the operands are unsigned, this won't cause undefined behavior.
+			uint8_t tileID = tileIdx + options.baseTileIDs[bank];
+			emit(tilemapOutput, tileID);
+			emit(attrmapOutput, (palID & 0b111) | bank << 3); // The other flags are all zeros.
+			emit(palmapOutput, palID);
+
+			++tileIdx;
+			// The `bank` may increment from 1 to 2, if banks 0 and 1 are both full. By then all
+			// the tiles should have been emitted, since there cannot be more tiles than could fit
+			// in both banks, but there may still be background tiles to skip.
+			if (tileIdx >= options.maxNbTiles[bank]) {
+				tileIdx = 0;
+				++bank;
+			}
 		}
 	}
 }
