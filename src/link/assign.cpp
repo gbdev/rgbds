@@ -143,18 +143,19 @@ static std::optional<size_t> getPlacement(Section const &section, MemoryLocation
 				}
 				location.address = section.org;
 			} else if (section.isAlignFixed) {
-				// Move to next aligned location
-				// We have previously ensured alignment to 15 or fewer bits, so this will progress
+				// If the alignment is fixed, move to the next aligned location.
+				// We have previously ensured alignment to 15 or fewer bits.
 				assume(section.alignMask < (1 << 16) - 1);
 				uint16_t prevAddress = location.address;
-				// Move back to alignment boundary
+				// Move back to the alignment boundary.
+				// Subtracting the alignment offset may underflow on the first check from address
+				// $0000, so applying the alignment mask ensures we have a valid address.
 				location.address -= section.alignOfs;
-				// Ensure we're there (e.g. on first check)
 				location.address &= ~section.alignMask;
-				// Go to next align boundary and add offset
+				// Go to the next align boundary and add the alignment offset.
 				location.address += section.alignMask + 1 + section.alignOfs;
 				// If the aligned address wrapped around past the end of the address space,
-				// no further aligned location can fit in this bank
+				// no further aligned location can fit in this bank.
 				if (location.address <= prevAddress) {
 					break;
 				}
