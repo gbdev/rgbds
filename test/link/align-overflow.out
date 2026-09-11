@@ -1,0 +1,2 @@
+FATAL: Unable to place "B" (HRAM section) with align mask $ff80 and offset $0
+Linking aborted with 1 error
