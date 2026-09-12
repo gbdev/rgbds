@@ -179,8 +179,13 @@ struct Image {
 		std::unordered_set<std::pair<uint32_t, uint32_t>, decltype(hashPair)> fusions;
 
 		// Register colors from `png` into `colors`
-		for (uint32_t y = 0; y < png.height; ++y) {
-			for (uint32_t x = 0; x < png.width; ++x) {
+		uint32_t const pxLeft = options.inputSlice.width ? options.inputSlice.left : 0;
+		uint32_t const pxTop = options.inputSlice.height ? options.inputSlice.top : 0;
+		uint32_t const pxRight = options.inputSlice.width ? options.inputSlice.right() : png.width;
+		uint32_t const pxBottom =
+		    options.inputSlice.height ? options.inputSlice.bottom() : png.height;
+		for (uint32_t y = pxTop; y < pxBottom; ++y) {
+			for (uint32_t x = pxLeft; x < pxRight; ++x) {
 				if (Rgba const &color = pixel(x, y); color.isAmbiguous()) {
 					// Report ambiguously transparent or opaque colors
 					if (uint32_t css = color.toCSS(); ambiguous.find(css) == ambiguous.end()) {
