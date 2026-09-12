@@ -2052,8 +2052,8 @@ It's possible to pass arguments to macros as well!
 MACRO lb
     ld \e1, (\e2) << 8 | (\e3)
 ENDM
-    lb hl, 20, 18        ; Expands to "ld hl, ((20) << 8) | (18)"
-    lb de, 3 + 1, NUM**2 ; Expands to "ld de, ((3 + 1) << 8) | (NUM**2)"
+    lb hl, 20, 18        ; Expands to "ld hl, (20) << 8 | (18)"
+    lb de, 3 + 1, NUM**2 ; Expands to "ld de, (3 + 1) << 8 | (NUM**2)"
 .Ed
 .Pp
 You expand the arguments inside the macro body by using the escape sequences
