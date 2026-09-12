@@ -1,0 +1,4 @@
+FATAL: Section "test" already defined
+    at load-already-defined.asm(2)
+    and also:
+    at load-already-defined.asm(1)

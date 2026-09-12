@@ -274,14 +274,6 @@ static void mergeSections(
 ) {
 	sectErrors.clear();
 
-	if (type != sect.type) {
-		sectError(
-		    "Section \"%s\" already exists but with type `%s`",
-		    sect.name.c_str(),
-		    sectionTypeInfo[sect.type].name.c_str()
-		);
-	}
-
 	if (sect.modifier != mod) {
 		sectError(
 		    "Section \"%s\" already declared as `SECTION %s`",
@@ -290,8 +282,29 @@ static void mergeSections(
 		);
 	} else {
 		switch (mod) {
+		case SECTION_NORMAL:
+			// Only union/fragment sections can end up with multiple errors queued in `sectErrors`,
+			// and they cannot encounter this error, so it's okay for this one to skip the queue.
+			// Queueing it in `sectErrors` would require a sentinel value anyway (e.g. an empty
+			// string) to handle the "no trace" callback.
+			assume(sectErrors.empty());
+			fatalNoTrace([&sect]() {
+				fprintf(stderr, "Section \"%s\" already defined\n", sect.name.c_str());
+				fstk_TraceCurrent();
+				fputs("    and also:\n", stderr);
+				sect.src->printBacktrace(sect.fileLine);
+			});
+
 		case SECTION_UNION:
 		case SECTION_FRAGMENT: {
+			if (type != sect.type) {
+				sectError(
+				    "Section \"%s\" already exists but with type `%s`",
+				    sect.name.c_str(),
+				    sectionTypeInfo[sect.type].name.c_str()
+				);
+			}
+
 			void (*merge)(Section &, uint32_t, uint8_t, uint16_t) =
 			    mod == SECTION_UNION ? mergeSectUnion : mergeFragments;
 			merge(sect, org, alignment, alignOffset);
@@ -310,20 +323,6 @@ static void mergeSections(
 			}
 			break;
 		}
-
-		case SECTION_NORMAL:
-			// Only union/fragment sections can end up with multiple errors queued in `sectErrors`,
-			// and they cannot encounter this error, so it's okay for this one to skip the queue.
-			// Queueing it in `sectErrors` would require a sentinel value anyway (e.g. an empty
-			// string) to handle the "no trace" callback.
-			assume(sectErrors.empty());
-			fatalNoTrace([&sect]() {
-				fprintf(stderr, "Section \"%s\" already defined\n", sect.name.c_str());
-				fstk_TraceCurrent();
-				fputs("    and also:\n", stderr);
-				sect.src->printBacktrace(sect.fileLine);
-			});
-			break;
 		}
 	}
 

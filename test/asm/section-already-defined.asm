@@ -1,0 +1,2 @@
+SECTION "test", ROM0
+SECTION "test", WRAM0

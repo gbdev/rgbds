@@ -1,0 +1,3 @@
+SECTION "test", ROM0
+LOAD "test", WRAM0
+ENDL
