@@ -217,16 +217,17 @@ void reverse() {
 
 		palettes.clear();
 		std::array<uint8_t, sizeof(uint16_t) * 4> buf; // max 4 colors
-		assume(buf.size() >= sizeof(uint16_t) * options.nbColorsPerPal);
+		size_t const palSize = sizeof(uint16_t) * options.nbColorsPerPal;
+		assume(buf.size() >= palSize);
 		for (;;) {
-			if (size_t nbRead = file->sgetn(reinterpret_cast<char *>(buf.data()), buf.size());
+			if (size_t nbRead = file->sgetn(reinterpret_cast<char *>(buf.data()), palSize);
 			    nbRead == 0) {
 				break;
-			} else if (nbRead != sizeof(uint16_t) * options.nbColorsPerPal) {
+			} else if (nbRead != palSize) {
 				fatal(
-				    "Palette data size (%zu) is not a multiple of %zu bytes\n",
-				    palettes.size() * buf.size() + nbRead,
-				    buf.size()
+				    "Palette data size (%zu) is not a multiple of %zu bytes",
+				    palettes.size() * palSize + nbRead,
+				    palSize
 				);
 			}
 			// Expand the colors

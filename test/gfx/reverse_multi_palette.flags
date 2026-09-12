@@ -1,0 +1,5 @@
+-s 2
+-u
+-t reverse_multi_palette.tilemap
+-a reverse_multi_palette.attrmap
+-p reverse_multi_palette.pal
