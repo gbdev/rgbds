@@ -862,9 +862,9 @@ static UniqueTiles dedupTiles(
 			attr.xFlip = false;
 			attr.yFlip = false;
 			attr.bank = 0;
-			attr.tileID = 0;
+			attr.tileID = options.baseTileIDs[attr.bank];
 		} else {
-			auto [tileID, matchType] = tiles.addTile({tile, palettes[attr.getPalID(mappings)]});
+			auto [tileIdx, matchType] = tiles.addTile({tile, palettes[attr.getPalID(mappings)]});
 
 			if (inputWithoutOutput && matchType == TileData::NOPE) {
 				error(
@@ -877,8 +877,8 @@ static UniqueTiles dedupTiles(
 
 			attr.xFlip = matchType == TileData::HFLIP || matchType == TileData::VHFLIP;
 			attr.yFlip = matchType == TileData::VFLIP || matchType == TileData::VHFLIP;
-			attr.bank = tileID >= options.maxNbTiles[0];
-			attr.tileID = (attr.bank ? tileID - options.maxNbTiles[0] : tileID)
+			attr.bank = tileIdx >= options.maxNbTiles[0];
+			attr.tileID = (attr.bank ? tileIdx - options.maxNbTiles[0] : tileIdx)
 			              + options.baseTileIDs[attr.bank];
 		}
 	}

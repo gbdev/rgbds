@@ -1,0 +1,5 @@
+-b 16
+-u
+-t reverse_bg.tilemap
+-a reverse_bg.attrmap
+-p reverse_bg.pal
