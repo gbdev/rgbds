@@ -299,6 +299,10 @@ static void parseArg(int ch, char *arg) {
 		break;
 
 	case 'N':
+		// Explicit numbers for either tile bank cannot be greater than 256.
+		// If they were greater than 256, it would permit tile IDs to be truncated in the tilemap.
+		// We do warn that tile IDs may be truncated for the implicit/default unlimited number of
+		// tiles in bank 0.
 		options.maxNbTiles[0] = readNumber(argPtr, "Number of tiles in bank 0", 256);
 		if (options.maxNbTiles[0] > 256) {
 			error("Bank 0 cannot contain more than 256 tiles");

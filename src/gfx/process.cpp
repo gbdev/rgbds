@@ -502,14 +502,14 @@ static void outputPalettes(std::vector<Palette> const &palettes) {
 	});
 	// LCOV_EXCL_STOP
 
-	if (palettes.size() > options.nbPalettes) {
+	if (size_t nbPals = palettes.size(); nbPals > options.nbPalettes) {
 		// If the palette generation is wrong, other (dependee) operations are likely to be
 		// nonsensical, so fatal-error outright
-		fatal(
-		    "Generated %zu palettes, over the maximum of %" PRIu16,
-		    palettes.size(),
-		    options.nbPalettes
-		);
+		fatal("Generated %zu palettes, over the maximum of %" PRIu16, nbPals, options.nbPalettes);
+	} else if (nbPals > 8 && !options.attrmap.empty() && options.palmap.empty()) {
+		// With `-n/--nb-palettes` greater than 8, palette IDs may be truncated in the attrmap
+		// (though not in the palmap), so warn about that.
+		warnx("Generated %zu palettes, of which only 8 are representable in the attrmap", nbPals);
 	}
 
 	if (!options.palettes.empty()) {
@@ -745,6 +745,8 @@ static void outputUnoptimizedMaps(
 	for (AttrmapEntry const &attr : attrmap) {
 		// A non-zero base ID may make this addition overflow, wrapping around the available
 		// palette IDs. Since the operands are unsigned, this won't cause undefined behavior.
+		// With `-n/--nb-palettes` greater than 8, palette IDs may be truncated in the attrmap
+		// (though not in the palmap), which was already warned about.
 		uint8_t palID = attr.getPalID(mappings) + options.basePalID;
 		if (attr.isBackgroundTile()) {
 			// The tile bank may be 2 here, which is fine since background tiles are emitted as
@@ -761,6 +763,8 @@ static void outputUnoptimizedMaps(
 
 			// A non-zero base ID may make this addition overflow, wrapping around the available
 			// tile IDs. Since the operands are unsigned, this won't cause undefined behavior.
+			// With `-N/--nb-tiles` unlimited (by default) for bank 0, tile IDs may be truncated in
+			// the tilemap, which was already warned about.
 			uint8_t tileID = tileIdx + options.baseTileIDs[bank];
 			emit(tilemapOutput, tileID);
 			emit(attrmapOutput, (palID & 0b111) | bank << 3); // The other flags are all zeros.
@@ -940,6 +944,8 @@ static void outputTilemap(std::vector<AttrmapEntry> const &attrmap) {
 		// LCOV_EXCL_STOP
 	}
 
+	// With `-N/--nb-tiles` unlimited (by default) for bank 0, tile IDs may be truncated in the
+	// tilemap, which was already warned about.
 	for (AttrmapEntry const &entry : attrmap) {
 		output->sputc(entry.tileID); // The tile ID has already been converted
 	}
@@ -959,6 +965,8 @@ static void
 		attr |= entry.bank << 3;
 		// The unsigned underflow for the palette ID is intentional, since a
 		// nonzero base palette ID may overflow and continue with IDs from 0.
+		// With `-n/--nb-palettes` greater than 8, palette IDs may be truncated in the attrmap
+		// (though not in the palmap), which was already warned about.
 		attr |= (entry.getPalID(mappings) + options.basePalID) & 0b111;
 		output->sputc(attr);
 	}
@@ -1191,20 +1199,31 @@ continue_visiting_tiles:;
 	        : makePalsAsSpecified(colorSets);
 	outputPalettes(palettes);
 
-	// If deduplication is not happening, we just need to output the tile data and/or maps as-is
-	if (!options.allowDedup) {
-		// Check the tile count
-		if (size_t nbTiles = std::count_if(
-		        RANGE(attrmap), [](AttrmapEntry const &attr) { return !attr.isBackgroundTile(); }
-		    );
-		    nbTiles > options.maxNbTiles[0] + options.maxNbTiles[1]) {
+	auto checkTileCountLimit = [](size_t nbTiles) {
+		if (nbTiles > options.maxNbTiles[0] + options.maxNbTiles[1]) {
 			fatal(
 			    "Image contains %zu tiles, exceeding the limit of %" PRIu16 " + %" PRIu16,
 			    nbTiles,
 			    options.maxNbTiles[0],
 			    options.maxNbTiles[1]
 			);
+		} else if (((nbTiles > 256 && options.maxNbTiles[0] > 256)
+		            || (nbTiles > options.maxNbTiles[0] + 256u && options.maxNbTiles[1] > 256))
+		           && !options.tilemap.empty()) {
+			// With `-N/--nb-tiles` unlimited (by default) for bank 0, tile IDs may be truncated in
+			// the tilemap, so warn about that.
+			warnx(
+			    "Image contains %zu tiles, of which only 256 are representable in the tilemap",
+			    nbTiles
+			);
 		}
+	};
+
+	// If deduplication is not happening, we just need to output the tile data and/or maps as-is
+	if (!options.allowDedup) {
+		checkTileCountLimit(std::count_if(RANGE(attrmap), [](AttrmapEntry const &attr) {
+			return !attr.isBackgroundTile();
+		}));
 
 		// I currently cannot figure out useful semantics for this combination of flags.
 		if (!options.inputTileset.empty()) {
@@ -1227,16 +1246,7 @@ continue_visiting_tiles:;
 		verbosePrint(VERB_NOTICE, "Deduplicating tiles...\n");
 		UniqueTiles tiles = dedupTiles(image, attrmap, palettes, mappings);
 
-		// Check the tile count
-		if (size_t nbTiles = tiles.size();
-		    nbTiles > options.maxNbTiles[0] + options.maxNbTiles[1]) {
-			fatal(
-			    "Image contains %zu tiles, exceeding the limit of %" PRIu16 " + %" PRIu16,
-			    nbTiles,
-			    options.maxNbTiles[0],
-			    options.maxNbTiles[1]
-			);
-		}
+		checkTileCountLimit(tiles.size());
 
 		if (!options.output.empty()) {
 			verbosePrint(VERB_NOTICE, "Generating optimized tile data...\n");
