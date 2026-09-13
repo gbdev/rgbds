@@ -552,7 +552,7 @@ void reverse() {
 			// Get the tile ID at this location
 			size_t tileOfs =
 			    tilemap ? static_cast<uint8_t>((*tilemap)[index] - options.baseTileIDs[bank])
-			                  + (bank ? nbTilesInBank[0] : 0)
+			                  + (bank ? options.maxNbTiles[0] : 0)
 			            : index;
 			// This should have been enforced by the earlier checking.
 			assume(tileOfs < nbTiles + options.trim);

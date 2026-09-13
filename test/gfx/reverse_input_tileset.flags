@@ -1,0 +1,5 @@
+-u
+-N 3,2
+-i reverse_input_tileset.in.2bpp
+-t reverse_input_tileset.tilemap
+-a reverse_input_tileset.attrmap
