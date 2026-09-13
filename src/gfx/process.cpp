@@ -506,7 +506,7 @@ static void outputPalettes(std::vector<Palette> const &palettes) {
 		// If the palette generation is wrong, other (dependee) operations are likely to be
 		// nonsensical, so fatal-error outright
 		fatal("Generated %zu palettes, over the maximum of %" PRIu16, nbPals, options.nbPalettes);
-	} else if (nbPals > 8 && !options.attrmap.empty()) {
+	} else if (nbPals > 8 && !options.attrmap.empty() && options.palmap.empty()) {
 		// With `-n/--nb-palettes` greater than 8, palette IDs may be truncated in the attrmap
 		// (though not in the palmap), so warn about that.
 		warnx("Generated %zu palettes, of which only 8 are representable in the attrmap", nbPals);
