@@ -763,8 +763,8 @@ static void outputUnoptimizedMaps(
 
 			// A non-zero base ID may make this addition overflow, wrapping around the available
 			// tile IDs. Since the operands are unsigned, this won't cause undefined behavior.
-			// With `-N/--nb-tiles` greater than 256 for either tile bank, tile IDs may be truncated
-			// in the tilemap, which was already warned about.
+			// With `-N/--nb-tiles` unlimited (by default) for bank 0, tile IDs may be truncated in
+			// the tilemap, which was already warned about.
 			uint8_t tileID = tileIdx + options.baseTileIDs[bank];
 			emit(tilemapOutput, tileID);
 			emit(attrmapOutput, (palID & 0b111) | bank << 3); // The other flags are all zeros.
@@ -944,7 +944,7 @@ static void outputTilemap(std::vector<AttrmapEntry> const &attrmap) {
 		// LCOV_EXCL_STOP
 	}
 
-	// With `-N/--nb-tiles` greater than 256 for either tile bank, tile IDs may be truncated in the
+	// With `-N/--nb-tiles` unlimited (by default) for bank 0, tile IDs may be truncated in the
 	// tilemap, which was already warned about.
 	for (AttrmapEntry const &entry : attrmap) {
 		output->sputc(entry.tileID); // The tile ID has already been converted
@@ -1210,8 +1210,8 @@ continue_visiting_tiles:;
 		} else if (((nbTiles > 256 && options.maxNbTiles[0] > 256)
 		            || (nbTiles > options.maxNbTiles[0] + 256u && options.maxNbTiles[1] > 256))
 		           && !options.tilemap.empty()) {
-			// With `-N/--nb-tiles` greater than 256 for either tile bank, tile IDs may be truncated
-			// in the tilemap, so warn about that.
+			// With `-N/--nb-tiles` unlimited (by default) for bank 0, tile IDs may be truncated in
+			// the tilemap, so warn about that.
 			warnx(
 			    "Image contains %zu tiles, of which only 256 are representable in the tilemap",
 			    nbTiles
