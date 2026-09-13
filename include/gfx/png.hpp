@@ -14,6 +14,7 @@ struct Png {
 	uint32_t height = 0;
 	std::vector<Rgba> pixels{};
 	std::vector<Rgba> palette{};
+	bool isIndexed = false;
 
 	Png() {}
 	Png(char const *filename, std::streambuf &file);

@@ -177,6 +177,7 @@ Png::Png(char const *filename, std::streambuf &file) {
 		break;
 	case PNG_COLOR_TYPE_PALETTE:
 		png_set_palette_to_rgb(png);
+		isIndexed = true; // This enables sorting generated palette colors by the PLTE chunk
 		break;
 	}
 

@@ -390,7 +390,14 @@ static std::pair<std::vector<size_t>, std::vector<Palette>>
 	// "Sort" colors in the generated palettes, see the man page for the flowchart
 	if (options.palSpecType == Options::DMG) {
 		sortGrayscale(palettes, image.colors.raw());
-	} else if (!image.png.palette.empty()) {
+	} else if (image.png.isIndexed) {
+		// A PNG image using PNG_COLOR_TYPE_RGB (2) or PNG_COLOR_TYPE_RGBA (6) can still
+		// contain a PLTE chunk. From the PNG spec: "If present, it provides a suggested set of
+		// from 1 to 256 colors to which the truecolor image can be quantized if the viewer
+		// cannot display truecolor directly." We only sort palette colors by the PLTE chunk's
+		// color order if the image uses PNG_COLOR_TYPE_PALETTE (3), since that guarantees every
+		// color used will also be in the embedded palette.
+		assume(!image.png.palette.empty());
 		warning(
 		    WARNING_EMBEDDED,
 		    "Sorting palette colors by PNG's embedded PLTE chunk without '-c/--colors embedded'"

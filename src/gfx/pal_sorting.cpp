@@ -33,13 +33,7 @@ void sortIndexed(std::vector<Palette> &palettes, std::vector<Rgba> const &embPal
 					return true;
 				}
 			}
-			// A PNG image using PNG_COLOR_TYPE_RGB (2) or PNG_COLOR_TYPE_RGBA (6) can still
-			// contain a PLTE chunk. From the PNG spec: "If present, it provides a suggested set of
-			// from 1 to 256 colors to which the truecolor image can be quantized if the viewer
-			// cannot display truecolor directly." This means that an input image may have pixels
-			// with colors that are not in the PLTE chunk, so iterating through `embPal` may finish
-			// without returning. In that case, we compare `lhs` and `rhs` directly.
-			return lhs < rhs;
+			unreachable_(); // LCOV_EXCL_LINE
 		});
 	}
 }
