@@ -1199,7 +1199,7 @@ continue_visiting_tiles:;
 	        : makePalsAsSpecified(colorSets);
 	outputPalettes(palettes);
 
-	auto checkTileCount = [](size_t nbTiles) {
+	auto checkTileCountLimit = [](size_t nbTiles) {
 		if (nbTiles > options.maxNbTiles[0] + options.maxNbTiles[1]) {
 			fatal(
 			    "Image contains %zu tiles, exceeding the limit of %" PRIu16 " + %" PRIu16,
@@ -1221,7 +1221,7 @@ continue_visiting_tiles:;
 
 	// If deduplication is not happening, we just need to output the tile data and/or maps as-is
 	if (!options.allowDedup) {
-		checkTileCount(std::count_if(RANGE(attrmap), [](AttrmapEntry const &attr) {
+		checkTileCountLimit(std::count_if(RANGE(attrmap), [](AttrmapEntry const &attr) {
 			return !attr.isBackgroundTile();
 		}));
 
@@ -1246,7 +1246,7 @@ continue_visiting_tiles:;
 		verbosePrint(VERB_NOTICE, "Deduplicating tiles...\n");
 		UniqueTiles tiles = dedupTiles(image, attrmap, palettes, mappings);
 
-		checkTileCount(tiles.size());
+		checkTileCountLimit(tiles.size());
 
 		if (!options.output.empty()) {
 			verbosePrint(VERB_NOTICE, "Generating optimized tile data...\n");
