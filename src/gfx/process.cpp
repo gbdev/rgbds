@@ -507,7 +507,7 @@ static void outputPalettes(std::vector<Palette> const &palettes) {
 		// nonsensical, so fatal-error outright
 		fatal("Generated %zu palettes, over the maximum of %" PRIu16, nbPals, options.nbPalettes);
 	} else if (nbPals > 8 && !options.attrmap.empty()) {
-		// With `-n/--nb-palettes` greater than 8, palette IDs may wrap around in the attrmap
+		// With `-n/--nb-palettes` greater than 8, palette IDs may be truncated in the attrmap
 		// (though not in the palmap), so warn about that.
 		warnx("Generated %zu palettes, of which only 8 are representable in the attrmap", nbPals);
 	}
@@ -745,7 +745,7 @@ static void outputUnoptimizedMaps(
 	for (AttrmapEntry const &attr : attrmap) {
 		// A non-zero base ID may make this addition overflow, wrapping around the available
 		// palette IDs. Since the operands are unsigned, this won't cause undefined behavior.
-		// With `-n/--nb-palettes` greater than 8, palette IDs may wrap around in the attrmap
+		// With `-n/--nb-palettes` greater than 8, palette IDs may be truncated in the attrmap
 		// (though not in the palmap), which was already warned about.
 		uint8_t palID = attr.getPalID(mappings) + options.basePalID;
 		if (attr.isBackgroundTile()) {
@@ -763,7 +763,7 @@ static void outputUnoptimizedMaps(
 
 			// A non-zero base ID may make this addition overflow, wrapping around the available
 			// tile IDs. Since the operands are unsigned, this won't cause undefined behavior.
-			// With `-N/--nb-tiles` greater than 256 for either tile bank, tile IDs may wrap around
+			// With `-N/--nb-tiles` greater than 256 for either tile bank, tile IDs may be truncated
 			// in the tilemap, which was already warned about.
 			uint8_t tileID = tileIdx + options.baseTileIDs[bank];
 			emit(tilemapOutput, tileID);
@@ -944,7 +944,7 @@ static void outputTilemap(std::vector<AttrmapEntry> const &attrmap) {
 		// LCOV_EXCL_STOP
 	}
 
-	// With `-N/--nb-tiles` greater than 256 for either tile bank, tile IDs may wrap around in the
+	// With `-N/--nb-tiles` greater than 256 for either tile bank, tile IDs may be truncated in the
 	// tilemap, which was already warned about.
 	for (AttrmapEntry const &entry : attrmap) {
 		output->sputc(entry.tileID); // The tile ID has already been converted
@@ -965,7 +965,7 @@ static void
 		attr |= entry.bank << 3;
 		// The unsigned underflow for the palette ID is intentional, since a
 		// nonzero base palette ID may overflow and continue with IDs from 0.
-		// With `-n/--nb-palettes` greater than 8, palette IDs may wrap around in the attrmap
+		// With `-n/--nb-palettes` greater than 8, palette IDs may be truncated in the attrmap
 		// (though not in the palmap), which was already warned about.
 		attr |= (entry.getPalID(mappings) + options.basePalID) & 0b111;
 		output->sputc(attr);
@@ -1210,7 +1210,7 @@ continue_visiting_tiles:;
 		} else if (((nbTiles > 256 && options.maxNbTiles[0] > 256)
 		            || (nbTiles > options.maxNbTiles[0] + 256u && options.maxNbTiles[1] > 256))
 		           && !options.tilemap.empty()) {
-			// With `-N/--nb-tiles` greater than 256 for either tile bank, tile IDs may wrap around
+			// With `-N/--nb-tiles` greater than 256 for either tile bank, tile IDs may be truncated
 			// in the tilemap, so warn about that.
 			warnx(
 			    "Image contains %zu tiles, of which only 256 are representable in the tilemap",
