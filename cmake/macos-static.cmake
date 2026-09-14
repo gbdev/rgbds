@@ -6,13 +6,16 @@
 # triggers some poorly-tested code paths within Apple's linker, which then crashes.
 # This can be worked around by using LLVM's LLD linker and passing `-fuse-ld=lld` when linking.
 
-# The `-mmacosx-version-min=10.4` flag ensures that the binary only uses APIs available on Mac OS X 10.4 Tiger.
-# The `-arch` flags build a "fat binary" that works on both Apple architectures:
+set(CMAKE_OSX_DEPLOYMENT_TARGET 10.4 CACHE STRING "Minimum Mac OS X version to target for deployment (at runtime)")
+# This builds a "fat binary" that works on both Apple architectures:
 # older Intel x64 Macs and newer ARM "Apple Silicon" ones.
-set(secret_sauce -mmacosx-version-min=10.4 "SHELL:-arch x86_64" "SHELL:-arch arm64") # Avoid `-arch` being dedup'd.
-add_compile_options(${secret_sauce})
-add_link_options(${secret_sauce})
-set(PNG_HARDWARE_OPTIMIZATIONS OFF) # These do not play well with a dual-arch build.
+# Due to a libpng build script limitation/bug (as of 1.6.58), the native architecture has to be first...
+# and since our CI builds this executable on an ARM machine, that's what we're putting first.
+set(CMAKE_OSX_ARCHITECTURES arm64 x86_64 CACHE STRING "Build architectures for Mac OS X")
+# This controls the SIMD optimizations, which include architecture-specific headers that get rejected
+# in a dual-arch build, thus we have to disable them.
+# This shouldn't be a big deal for RGBGFX, anyway?
+set(PNG_HARDWARE_OPTIMIZATIONS OFF)
 
 # Mac OS X has always provided zlib, so we can safely link dynamically against it.
 # However, libpng is *not* provided by default, so we link it statically, which requires downloading and building it from source.
