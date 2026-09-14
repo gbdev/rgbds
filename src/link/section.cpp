@@ -223,7 +223,6 @@ static void doSanityChecks(Section &section) {
 			bankModeError = true;
 		} else {
 			section.type = SECTTYPE_ROM0;
-			section.bank = 0;
 			section.isBankFixed = false;
 		}
 	}
@@ -237,7 +236,6 @@ static void doSanityChecks(Section &section) {
 			bankModeError = true;
 		} else {
 			section.type = SECTTYPE_WRAM0;
-			section.bank = 0;
 			section.isBankFixed = false;
 		}
 	}
