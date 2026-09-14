@@ -279,7 +279,7 @@ void reverse() {
 	}
 
 	std::optional<std::vector<uint8_t>> attrmap;
-	uint16_t nbTilesInBank[2] = {0, 0}; // Only used if there is an attrmap.
+	uint16_t nbTilesMappedInBank[2] = {0, 0}; // Only used if there is an attrmap.
 	if (!options.attrmap.empty()) {
 		attrmap = readInto(options.attrmap);
 		if (attrmap->size() != mapSize) {
@@ -329,8 +329,8 @@ void reverse() {
 				// The unsigned underflow for `tileOfs` is intentional, since a nonzero
 				// base tile ID may overflow and continue with IDs from 0.
 				if (uint8_t tileOfs = (*tilemap)[index] - options.baseTileIDs[bank];
-				    tileOfs >= nbTilesInBank[bank]) {
-					nbTilesInBank[bank] = tileOfs + 1;
+				    tileOfs >= nbTilesMappedInBank[bank]) {
+					nbTilesMappedInBank[bank] = tileOfs + 1;
 				}
 			}
 		}
@@ -338,33 +338,33 @@ void reverse() {
 		verbosePrint(
 		    VERB_INFO,
 		    "Number of tiles in bank {0: %" PRIu16 ", 1: %" PRIu16 "}\n",
-		    nbTilesInBank[0],
-		    nbTilesInBank[1]
+		    nbTilesMappedInBank[0],
+		    nbTilesMappedInBank[1]
 		);
 
 		for (int bank = 0; bank < 2; ++bank) {
-			if (nbTilesInBank[bank] > options.maxNbTiles[bank]) {
+			if (nbTilesMappedInBank[bank] > options.maxNbTiles[bank]) {
 				error(
 				    "Bank %d contains %" PRIu16 " tiles, but the specified limit is %" PRIu16,
 				    bank,
-				    nbTilesInBank[bank],
+				    nbTilesMappedInBank[bank],
 				    options.maxNbTiles[bank]
 				);
 			}
 		}
 
 		if (uint16_t const maxTotalNbTiles = std::max<uint16_t>(
-		        nbTilesInBank[0],
-		        nbTilesInBank[1] > 0 ? options.maxNbTiles[0] + nbTilesInBank[1] : 0
+		        nbTilesMappedInBank[0],
+		        nbTilesMappedInBank[1] > 0 ? options.maxNbTiles[0] + nbTilesMappedInBank[1] : 0
 		    );
 		    maxTotalNbTiles > nbTiles + options.trim) {
 			std::string message =
-			    "The tilemap references " + std::to_string(nbTilesInBank[0]) + " tiles";
-			if (nbTilesInBank[1] > 0) {
-				if (nbTilesInBank[0] != options.maxNbTiles[0]) {
+			    "The tilemap references " + std::to_string(nbTilesMappedInBank[0]) + " tiles";
+			if (nbTilesMappedInBank[1] > 0) {
+				if (nbTilesMappedInBank[0] != options.maxNbTiles[0]) {
 					message += " out of a maximum " + std::to_string(options.maxNbTiles[0]);
 				}
-				message += " in bank 0, and " + std::to_string(nbTilesInBank[1])
+				message += " in bank 0, and " + std::to_string(nbTilesMappedInBank[1])
 				           + " in bank 1 (total: " + std::to_string(maxTotalNbTiles) + ")";
 			}
 			message += ", but only " + std::to_string(nbTiles) + " have been read";
