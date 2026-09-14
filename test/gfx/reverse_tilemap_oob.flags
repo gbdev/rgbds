@@ -1,0 +1,4 @@
+-N 8,8
+-x 1
+-t reverse_tilemap_oob.tilemap
+-a reverse_tilemap_oob.attrmap

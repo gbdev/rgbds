@@ -353,14 +353,26 @@ void reverse() {
 			}
 		}
 
-		if (nbTilesInBank[0] + nbTilesInBank[1] > nbTiles + options.trim) {
-			fatal(
-			    "The tilemap references %" PRIu16 " tiles in bank 0 and %" PRIu16
-			    " in bank 1, but only %zu have been read in total",
-			    nbTilesInBank[0],
-			    nbTilesInBank[1],
-			    nbTiles
-			);
+		if (uint16_t const maxTotalNbTiles = std::max<uint16_t>(
+		        nbTilesInBank[0],
+		        nbTilesInBank[1] > 0 ? options.maxNbTiles[0] + nbTilesInBank[1] : 0
+		    );
+		    maxTotalNbTiles > nbTiles + options.trim) {
+			std::string message =
+			    "The tilemap references " + std::to_string(nbTilesInBank[0]) + " tiles";
+			if (nbTilesInBank[1] > 0) {
+				if (nbTilesInBank[0] != options.maxNbTiles[0]) {
+					message += " out of a maximum " + std::to_string(options.maxNbTiles[0]);
+				}
+				message += " in bank 0, and " + std::to_string(nbTilesInBank[1])
+				           + " in bank 1 (total: " + std::to_string(maxTotalNbTiles) + ")";
+			}
+			message += ", but only " + std::to_string(nbTiles) + " have been read";
+			if (options.trim > 0) {
+				message += " plus " + std::to_string(options.trim)
+				           + " trimmed (total: " + std::to_string(nbTiles + options.trim) + ")";
+			}
+			fatal("%s", message.c_str());
 		}
 
 		requireZeroErrors();
