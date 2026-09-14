@@ -1,0 +1,2 @@
+FATAL: The tilemap references 2 tiles out of a maximum 8 in bank 0, and 2 in bank 1 (total: 10), but only 8 have been read plus 1 trimmed (total: 9)
+Conversion aborted after 1 error

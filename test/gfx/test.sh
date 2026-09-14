@@ -104,14 +104,20 @@ done
 
 for f in *.[12]bpp; do
 	# Do not process outputs or sample outputs of other tests as test inputs themselves
-	if [[ "$f" = result.[12]bpp ]] || [[ "$f" = *.out.[12]bpp ]]; then
+	if [[ "$f" = result.[12]bpp ]] || [[ "$f" = *.in.[12]bpp ]] || [[ "$f" = *.out.[12]bpp ]]; then
 		continue
 	fi
 
 	flags="$([[ -e "${f%.[12]bpp}.flags" ]] && echo "@${f%.[12]bpp}.flags") $([[ -e "${f%.1bpp}.flags" ]] && echo "-d 1")"
 
-	newTest "$RGBGFX $flags -o $f -r 1 result.png && $RGBGFX $flags -o result.2bpp result.png"
-	runTest && tryCmp "$f" result.2bpp || failTest $?
+	if [[ -e "${f%.[12]bpp}.err" ]]; then
+		newTest "$RGBGFX $flags -o $f -r 1 result.png"
+		runTest 2>"$errtmp"
+		diff -au --strip-trailing-cr <(sed "s/$f/<stdin>/g" "${f%.[12]bpp}.err") "$errtmp" || failTest
+	else
+		newTest "$RGBGFX $flags -o $f -r 1 result.png && $RGBGFX $flags -o result.2bpp result.png"
+		runTest && tryCmp "$f" result.2bpp || failTest $?
+	fi
 done
 
 # Test writing to stdout
