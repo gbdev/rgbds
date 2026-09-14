@@ -195,7 +195,7 @@ else()
     # We rely on runtimes more modern than that, so we can ignore those warnings.
     # If this is a problem for you: use Microsoft's equivalents, or define `__USE_MINGW_ANSI_STDIO=1`.
     # https://sourceforge.net/p/mingw-w64/wiki2/gnu%20printf/
-    add_compile_options(-Wno-error=format -Wno-error=format-extra-args)
+    add_compile_options(-Wno-format -Wno-format-extra-args)
   endif()
 endif()
 
