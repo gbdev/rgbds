@@ -1,0 +1,6 @@
+warning: Magnitude of fixed-point constant is too large [-Wlarge-constant]
+    at fixed-point-carry.asm(5)
+warning: Magnitude of fixed-point constant is too large [-Wlarge-constant]
+    at fixed-point-carry.asm(11)
+warning: Magnitude of fixed-point constant is too large [-Wlarge-constant]
+    at fixed-point-carry.asm(17)
