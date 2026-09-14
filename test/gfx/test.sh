@@ -74,11 +74,14 @@ done
 
 for f in *.png; do
 	# Do not process outputs or palette inputs of other tests as test inputs themselves
-	if [[ "$f" = result.png ]] || [[ "$f" = *.pal.png ]]; then
-		continue
-	fi
+	case "$f" in
+		result.png | *.pal.png) continue;;
+	esac
 
-	flags="$([[ -e "${f%.png}.flags" ]] && echo "@${f%.png}.flags")"
+	flags=
+	if [[ -e "${f%.png}.flags" ]]; then
+		flags="@${f%.png}.flags"
+	fi
 	for f_ext in o_1bpp o_2bpp p_pal t_tilemap a_attrmap q_palmap; do
 		if [[ -e "${f%.png}.out.${f_ext#*_}" ]]; then
 			flags="$flags -${f_ext%_*} result.${f_ext#*_}"
@@ -96,7 +99,7 @@ for f in *.png; do
 	newTest "$RGBGFX" $flags - "<$f"
 	if [[ -e "${f%.png}.err" ]]; then
 		runTest 2>"$errtmp"
-		diff -au --strip-trailing-cr <(sed "s/$f/<stdin>/g" "${f%.png}.err") "$errtmp" || failTest
+		diff -au --strip-trailing-cr "${f%.png}.err" <(sed "s#<stdin>#${f//#/\\#}#g" "$errtmp") || failTest
 	else
 		runTest && checkOutput "${f%.png}" || failTest $?
 	fi
@@ -104,16 +107,22 @@ done
 
 for f in *.[12]bpp; do
 	# Do not process outputs or sample outputs of other tests as test inputs themselves
-	if [[ "$f" = result.[12]bpp ]] || [[ "$f" = *.in.[12]bpp ]] || [[ "$f" = *.out.[12]bpp ]]; then
-		continue
-	fi
+	case "$f" in
+		result.[12]bpp | *.in.[12]bpp | *.out.[12]bpp) continue;;
+	esac
 
-	flags="$([[ -e "${f%.[12]bpp}.flags" ]] && echo "@${f%.[12]bpp}.flags") $([[ -e "${f%.1bpp}.flags" ]] && echo "-d 1")"
+	flags=
+	if [[ -e "${f%.[12]bpp}.flags" ]]; then
+		flags="@${f%.[12]bpp}.flags"
+		if [[ -e "${f%.1bpp}.flags" ]]; then
+			flags="$flags -d 1"
+		fi
+	fi
 
 	if [[ -e "${f%.[12]bpp}.err" ]]; then
 		newTest "$RGBGFX $flags -o $f -r 1 result.png"
 		runTest 2>"$errtmp"
-		diff -au --strip-trailing-cr <(sed "s/$f/<stdin>/g" "${f%.[12]bpp}.err") "$errtmp" || failTest
+		diff -au --strip-trailing-cr "${f%.[12]bpp}.err" <(sed "s#<stdin>#${f//#/\\#}#g" "$errtmp") || failTest
 	else
 		newTest "$RGBGFX $flags -o $f -r 1 result.png && $RGBGFX $flags -o result.2bpp result.png"
 		runTest && tryCmp "$f" result.2bpp || failTest $?

@@ -90,9 +90,9 @@ for i in *.asm notexist.asm; do
 			# "make-deps.asm" refers to its output filename in its desired output.
 			# "notexist.asm" doesn't exist, so there's no point in trying to `cat` it.
 			# Skip testing with stdin input for those files.
-			if [[ "$i" = include-recursion.asm || "$i" = make-deps.asm || "$i" = notexist.asm ]]; then
-				continue
-			fi
+			case "$i" in
+				include-recursion.asm | make-deps.asm | notexist.asm) continue;;
+			esac
 
 			# shellcheck disable=SC2002 # (This use of `cat` intentionally makes the input an unseekable pipe.)
 			cat "$i" | "$RGBASM" "${RGBASMFLAGS[@]}" -o "$o" - >"$output" 2>"$errput"
