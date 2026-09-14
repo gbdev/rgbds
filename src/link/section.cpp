@@ -223,6 +223,8 @@ static void doSanityChecks(Section &section) {
 			bankModeError = true;
 		} else {
 			section.type = SECTTYPE_ROM0;
+			section.bank = 0;
+			section.isBankFixed = false;
 		}
 	}
 	if (options.isWRAM0Mode && section.type == SECTTYPE_WRAMX) {
@@ -235,6 +237,8 @@ static void doSanityChecks(Section &section) {
 			bankModeError = true;
 		} else {
 			section.type = SECTTYPE_WRAM0;
+			section.bank = 0;
+			section.isBankFixed = false;
 		}
 	}
 	if (options.isDmgMode && section.type == SECTTYPE_VRAM && section.isBankFixed
