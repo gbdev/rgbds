@@ -1010,12 +1010,14 @@ static uint32_t finishReadingFixedPoint(uint32_t integer) {
 	    static_cast<uint32_t>(round(static_cast<double>(dividend) / divisor * (1ULL << precision)));
 	// Carry from `fractional` to `integer` if `round` rounded up to the next integer
 	assume(fractional <= 1ULL << precision);
+	bool overflowed = false;
 	if (fractional == 1ULL << precision) {
-		++integer;
+		overflowed = integer == UINT32_MAX;
+		++integer; // This may overflow from UINT32_MAX to 0
 		fractional = 0;
 	}
 
-	if (integer >= 1ULL << (32 - precision)) {
+	if (overflowed || integer >= 1ULL << (32 - precision)) {
 		warning(WARNING_LARGE_CONSTANT, "Magnitude of fixed-point constant is too large");
 		return 0;
 	}
