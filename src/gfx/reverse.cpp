@@ -353,10 +353,12 @@ void reverse() {
 			}
 		}
 
-		if (uint16_t const maxTotalNbTiles = std::max<uint16_t>(
-		        nbTilesMappedInBank[0],
-		        nbTilesMappedInBank[1] > 0 ? options.maxNbTiles[0] + nbTilesMappedInBank[1] : 0
-		    );
+		if (uint16_t const maxTotalNbTiles =
+		        nbTilesMappedInBank[1] > 0
+		            ? std::max<uint16_t>(
+		                  nbTilesMappedInBank[0], options.maxNbTiles[0] + nbTilesMappedInBank[1]
+		              )
+		            : nbTilesMappedInBank[0];
 		    maxTotalNbTiles > nbTiles + options.trim) {
 			std::string message =
 			    "The tilemap references " + std::to_string(nbTilesMappedInBank[0]) + " tiles";
