@@ -34,12 +34,12 @@ WARNFLAGS := -Wall -pedantic -Wno-unknown-warning-option \
 CXXFLAGS     ?= -O3 -flto -DNDEBUG
 # Non-overridable CXXFLAGS
 REQUIREDCXXFLAGS := -std=c++20 -I include -fno-exceptions -fno-rtti
-REALCXXFLAGS := ${CXXFLAGS} ${WARNFLAGS} ${REQUIREDCXXFLAGS}
+REALCXXFLAGS := ${CXXFLAGS} ${REQUIREDCXXFLAGS}
 # Overridable LDFLAGS
 LDFLAGS      ?=
 # Non-overridable LDFLAGS
 REQUIREDLDFLAGS := -DBUILD_VERSION_STRING=\"${VERSION_STRING}\"
-REALLDFLAGS  := ${LDFLAGS} ${WARNFLAGS} ${REQUIREDLDFLAGS}
+REALLDFLAGS  := ${LDFLAGS} ${REQUIREDLDFLAGS}
 
 # Wrapper around bison that passes flags depending on what the version supports
 BISON := src/bison.sh
@@ -130,22 +130,22 @@ rgbgfx_obj := \
 	src/verbosity.o
 
 rgbasm: ${rgbasm_obj}
-	$Q${CXX} ${REALLDFLAGS} -o $@ ${rgbasm_obj} ${REALCXXFLAGS} src/version.cpp
+	$Q${CXX} ${WARNFLAGS} ${REALLDFLAGS} -o $@ ${rgbasm_obj} ${REALCXXFLAGS} src/version.cpp
 
 rgblink: ${rgblink_obj}
-	$Q${CXX} ${REALLDFLAGS} -o $@ ${rgblink_obj} ${REALCXXFLAGS} src/version.cpp
+	$Q${CXX} ${WARNFLAGS} ${REALLDFLAGS} -o $@ ${rgblink_obj} ${REALCXXFLAGS} src/version.cpp
 
 rgbfix: ${rgbfix_obj}
-	$Q${CXX} ${REALLDFLAGS} -o $@ ${rgbfix_obj} ${REALCXXFLAGS} src/version.cpp
+	$Q${CXX} ${WARNFLAGS} ${REALLDFLAGS} -o $@ ${rgbfix_obj} ${REALCXXFLAGS} src/version.cpp
 
 rgbgfx: ${rgbgfx_obj}
-	$Q${CXX} ${REALLDFLAGS} ${PNGLDFLAGS} -o $@ ${rgbgfx_obj} ${REALCXXFLAGS} ${PNGLDLIBS} src/version.cpp
+	$Q${CXX} ${WARNFLAGS} ${REALLDFLAGS} ${PNGLDFLAGS} -o $@ ${rgbgfx_obj} ${REALCXXFLAGS} ${PNGLDLIBS} src/version.cpp
 
 test/gfx/randtilegen: test/gfx/randtilegen.cpp
-	$Q${CXX} ${REALLDFLAGS} ${PNGLDFLAGS} -o $@ $^ ${REALCXXFLAGS} ${PNGCFLAGS} ${PNGLDLIBS}
+	$Q${CXX} ${WARNFLAGS} ${REALLDFLAGS} ${PNGLDFLAGS} -o $@ $^ ${REALCXXFLAGS} ${PNGCFLAGS} ${PNGLDLIBS}
 
 test/gfx/rgbgfx_test: test/gfx/rgbgfx_test.cpp
-	$Q${CXX} ${REALLDFLAGS} ${PNGLDFLAGS} -o $@ $^ ${REALCXXFLAGS} ${PNGCFLAGS} ${PNGLDLIBS}
+	$Q${CXX} ${WARNFLAGS} ${REALLDFLAGS} ${PNGLDFLAGS} -o $@ $^ ${REALCXXFLAGS} ${PNGCFLAGS} ${PNGLDLIBS}
 
 # Rules to process files
 
@@ -163,26 +163,26 @@ src/link/script.hpp: src/link/script.cpp
 
 # Only RGBGFX uses libpng (POSIX make doesn't support pattern rules to cover all these)
 src/gfx/color_set.o: src/gfx/color_set.cpp
-	$Q${CXX} ${REALCXXFLAGS} ${PNGCFLAGS} -c -o $@ $<
+	$Q${CXX} ${WARNFLAGS} ${REALCXXFLAGS} ${PNGCFLAGS} -c -o $@ $<
 src/gfx/main.o: src/gfx/main.cpp
-	$Q${CXX} ${REALCXXFLAGS} ${PNGCFLAGS} -c -o $@ $<
+	$Q${CXX} ${WARNFLAGS} ${REALCXXFLAGS} ${PNGCFLAGS} -c -o $@ $<
 src/gfx/pal_packing.o: src/gfx/pal_packing.cpp
-	$Q${CXX} ${REALCXXFLAGS} ${PNGCFLAGS} -c -o $@ $<
+	$Q${CXX} ${WARNFLAGS} ${REALCXXFLAGS} ${PNGCFLAGS} -c -o $@ $<
 src/gfx/pal_sorting.o: src/gfx/pal_sorting.cpp
-	$Q${CXX} ${REALCXXFLAGS} ${PNGCFLAGS} -c -o $@ $<
+	$Q${CXX} ${WARNFLAGS} ${REALCXXFLAGS} ${PNGCFLAGS} -c -o $@ $<
 src/gfx/pal_spec.o: src/gfx/pal_spec.cpp
-	$Q${CXX} ${REALCXXFLAGS} ${PNGCFLAGS} -c -o $@ $<
+	$Q${CXX} ${WARNFLAGS} ${REALCXXFLAGS} ${PNGCFLAGS} -c -o $@ $<
 src/gfx/png.o: src/gfx/png.cpp
-	$Q${CXX} ${REALCXXFLAGS} ${PNGCFLAGS} -c -o $@ $<
+	$Q${CXX} ${WARNFLAGS} ${REALCXXFLAGS} ${PNGCFLAGS} -c -o $@ $<
 src/gfx/process.o: src/gfx/process.cpp
-	$Q${CXX} ${REALCXXFLAGS} ${PNGCFLAGS} -c -o $@ $<
+	$Q${CXX} ${WARNFLAGS} ${REALCXXFLAGS} ${PNGCFLAGS} -c -o $@ $<
 src/gfx/reverse.o: src/gfx/reverse.cpp
-	$Q${CXX} ${REALCXXFLAGS} ${PNGCFLAGS} -c -o $@ $<
+	$Q${CXX} ${WARNFLAGS} ${REALCXXFLAGS} ${PNGCFLAGS} -c -o $@ $<
 src/gfx/rgba.o: src/gfx/rgba.cpp
-	$Q${CXX} ${REALCXXFLAGS} ${PNGCFLAGS} -c -o $@ $<
+	$Q${CXX} ${WARNFLAGS} ${REALCXXFLAGS} ${PNGCFLAGS} -c -o $@ $<
 
 .cpp.o:
-	$Q${CXX} ${REALCXXFLAGS} -c -o $@ $<
+	$Q${CXX} ${WARNFLAGS} ${REALCXXFLAGS} -c -o $@ $<
 
 install.sh:
 	$Qecho '#!/usr/bin/env bash' > $@
