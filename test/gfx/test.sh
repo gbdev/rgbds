@@ -78,7 +78,10 @@ for f in *.png; do
 		continue
 	fi
 
-	flags="$([[ -e "${f%.png}.flags" ]] && echo "@${f%.png}.flags")"
+	flags=
+	if [[ -e "${f%.png}.flags" ]]; then
+		flags="@${f%.png}.flags"
+	fi
 	for f_ext in o_1bpp o_2bpp p_pal t_tilemap a_attrmap q_palmap; do
 		if [[ -e "${f%.png}.out.${f_ext#*_}" ]]; then
 			flags="$flags -${f_ext%_*} result.${f_ext#*_}"
@@ -108,7 +111,13 @@ for f in *.[12]bpp; do
 		continue
 	fi
 
-	flags="$([[ -e "${f%.[12]bpp}.flags" ]] && echo "@${f%.[12]bpp}.flags") $([[ -e "${f%.1bpp}.flags" ]] && echo "-d 1")"
+	flags=
+	if [[ -e "${f%.[12]bpp}.flags" ]]; then
+		flags="@${f%.[12]bpp}.flags"
+		if [[ -e "${f%.1bpp}.flags" ]]; then
+			flags="$flags -d 1"
+		fi
+	fi
 
 	if [[ -e "${f%.[12]bpp}.err" ]]; then
 		newTest "$RGBGFX $flags -o $f -r 1 result.png"
