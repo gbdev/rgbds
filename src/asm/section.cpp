@@ -709,8 +709,21 @@ void sect_AlignPC(uint8_t alignment, uint16_t offset) {
 	} else if (alignment == 16) {
 		// Treat an alignment large enough as fixing the address.
 		// Note that this also ensures that a section's alignment never becomes 16 or greater.
-		sect->align = 0; // Reset the alignment, since we're fixing the address.
-		sect->org = offset - curOffset;
+		if (offset < curOffset) {
+			error(
+			    "Section is misaligned ($%04" PRIx32
+			    " bytes into the section, expected ALIGN[%" PRIu32 ", %" PRIu32
+			    "], got ALIGN[%" PRIu32 ", %" PRIu32 "])",
+			    curOffset,
+			    alignment,
+			    offset,
+			    alignment,
+			    actualOffset
+			);
+		} else {
+			sect->align = 0; // Reset the alignment, since we're fixing the address.
+			sect->org = offset - curOffset;
+		}
 	} else if (alignment > sect->align) {
 		sect->align = alignment;
 		// We need `(sect->alignOfs + curOffset) & alignMask == offset`
