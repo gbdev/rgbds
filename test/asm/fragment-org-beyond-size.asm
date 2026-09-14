@@ -1,0 +1,4 @@
+SECTION FRAGMENT "test", ROM0
+ds $11, 42
+
+SECTION FRAGMENT "test", ROM0[$10]
