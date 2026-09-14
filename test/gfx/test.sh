@@ -74,9 +74,9 @@ done
 
 for f in *.png; do
 	# Do not process outputs or palette inputs of other tests as test inputs themselves
-	if [[ "$f" = result.png ]] || [[ "$f" = *.pal.png ]]; then
-		continue
-	fi
+	case "$f" in
+		result.png | *.pal.png) continue;;
+	esac
 
 	flags=
 	if [[ -e "${f%.png}.flags" ]]; then
@@ -107,9 +107,9 @@ done
 
 for f in *.[12]bpp; do
 	# Do not process outputs or sample outputs of other tests as test inputs themselves
-	if [[ "$f" = result.[12]bpp ]] || [[ "$f" = *.in.[12]bpp ]] || [[ "$f" = *.out.[12]bpp ]]; then
-		continue
-	fi
+	case "$f" in
+		result.[12]bpp | *.in.[12]bpp | *.out.[12]bpp) continue;;
+	esac
 
 	flags=
 	if [[ -e "${f%.[12]bpp}.flags" ]]; then
