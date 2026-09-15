@@ -711,14 +711,10 @@ void sect_AlignPC(uint8_t alignment, uint16_t offset) {
 		// Note that this also ensures that a section's alignment never becomes 16 or greater.
 		if (offset < curOffset) {
 			error(
-			    "Section is misaligned ($%04" PRIx32
-			    " bytes into the section, expected ALIGN[%" PRIu32 ", %" PRIu32
-			    "], got ALIGN[%" PRIu32 ", %" PRIu32 "])",
+			    "Section already contains %" PRIu32
+			    " bytes, higher than this aligned address $%04" PRIx32,
 			    curOffset,
-			    alignment,
-			    offset,
-			    alignment,
-			    actualOffset
+			    offset
 			);
 		} else {
 			sect->align = 0; // Reset the alignment, since we're fixing the address.
