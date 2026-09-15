@@ -214,15 +214,6 @@ static void mergeFragments(Section &sect, uint32_t org, uint8_t alignment, uint1
 	// combination of both.
 	// The merging is however performed at the *end* of the original section!
 	if (org != UINT32_MAX) {
-		if (org < sect.size) {
-			sectError(
-			    "Section \"%s\" already contains %" PRIu32
-			    " bytes, incompatible with address $%04" PRIx32,
-			    sect.name.c_str(),
-			    sect.size,
-			    org
-			);
-		}
 		// If both are fixed, they must be compatible
 		if (uint16_t curOrg = org - sect.size; sect.org != UINT32_MAX && sect.org != curOrg) {
 			sectError(
@@ -237,6 +228,16 @@ static void mergeFragments(Section &sect, uint32_t org, uint8_t alignment, uint1
 			    sect.name.c_str(),
 			    sectAlignSize,
 			    sect.alignOfs
+			);
+		} else if (org < sect.size) {
+			// Check that `curOrg` did not underflow. Note that it's safe for the above checks to
+			// use an underflowed value, since their reported errors will still be accurate.
+			sectError(
+			    "Section \"%s\" already contains %" PRIu32
+			    " bytes, higher than this fragment's fixed address $%04" PRIx32,
+			    sect.name.c_str(),
+			    sect.size,
+			    org
 			);
 		} else {
 			// Otherwise, just override
