@@ -216,7 +216,8 @@ static void mergeFragments(Section &sect, uint32_t org, uint8_t alignment, uint1
 	if (org != UINT32_MAX) {
 		if (org < sect.size) {
 			sectError(
-			    "Section \"%s\" already contains %" PRIu32 " bytes, incompatible with address $%04" PRIx32,
+			    "Section \"%s\" already contains %" PRIu32
+			    " bytes, incompatible with address $%04" PRIx32,
 			    sect.name.c_str(),
 			    sect.size,
 			    org
