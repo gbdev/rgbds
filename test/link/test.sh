@@ -312,14 +312,6 @@ continueTest
 tryCmp "$test"/out.gb "$gbtemp"
 evaluateTest
 
-test="rept-trace"
-startTest
-"$RGBASM" -o "$otemp" "$test"/a.asm
-continueTest
-rgblinkQuiet -Bno-collapse -o "$gbtemp" "$otemp" 2>"$outtemp"
-tryDiff "$test"/out.err "$outtemp"
-evaluateTest
-
 test="same-consts"
 startTest
 "$RGBASM" -o "$otemp" "$test"/a.asm
@@ -333,6 +325,7 @@ test="scramble-invalid"
 startTest
 "$RGBASM" -o "$otemp" "$test"/a.asm
 continueTest
+# This `-S` argument contains spaces, so cannot be specified in a .flags file.
 rgblinkQuiet -o "$gbtemp" -S "romx := 4" "$otemp" 2>"$outtemp"
 tryDiff "$test"/out.err "$outtemp"
 evaluateTest
@@ -521,22 +514,6 @@ startTest
 continueTest
 rgblinkQuiet "$otemp" "$gbtemp" "$gbtemp2" "$outtemp" "$outtemp2" 2>"$outtemp3"
 tryDiff "$test"/out.err "$outtemp3"
-evaluateTest
-
-test="truncation/level1"
-startTest
-"$RGBASM" -o "$otemp" "$test"/a.asm
-continueTest
-rgblinkQuiet -Wtruncation=1 -o "$gbtemp" "$otemp" 2>"$outtemp"
-tryDiff "$test"/out.err "$outtemp"
-evaluateTest
-
-test="truncation/level2"
-startTest
-"$RGBASM" -o "$otemp" "$test"/a.asm
-continueTest
-rgblinkQuiet -Wtruncation=2 -o "$gbtemp" "$otemp" 2>"$outtemp"
-tryDiff "$test"/out.err "$outtemp"
 evaluateTest
 
 if [[ "$failed" -eq 0 ]]; then
