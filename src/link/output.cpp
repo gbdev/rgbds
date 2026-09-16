@@ -624,3 +624,8 @@ void out_WriteFiles() {
 	writeSym();
 	writeMap();
 }
+
+void out_WriteSymMap() {
+	writeSym();
+	writeMap();
+}

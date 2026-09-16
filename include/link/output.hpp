@@ -14,4 +14,7 @@ Section const *out_OverlappingSection(Section const &section);
 // Writes all output (bin, sym, map) files.
 void out_WriteFiles();
 
+// Writes the symbol and map files before assertions are checked.
+void out_WriteSymMap();
+
 #endif // RGBDS_LINK_OUTPUT_HPP

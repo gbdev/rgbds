@@ -457,6 +457,10 @@ int main(int argc, char *argv[]) {
 	sect_DoSanityChecks();
 	requireZeroErrors();
 	assign_AssignSections();
+	// Assertions may fail before the final output phase. Emit the symbol and
+	// map files now, while the section layout is valid, so they can be used to
+	// diagnose the failed assertion.
+	out_WriteSymMap();
 	patch_CheckAssertions();
 
 	// and finally output the result.
