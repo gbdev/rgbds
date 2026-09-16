@@ -92,7 +92,7 @@ void layout_SetAddr(uint32_t addr) {
 
 	if (uint16_t &pc = curAddr[activeType][activeBankIdx]; addr < pc) {
 		scriptError("Cannot decrease the current address (from $%04x to $%04x)", pc, addr);
-	} else if (addr > typeInfo.endAddr()) { // Allow "one past the end" sections.
+	} else if (addr > typeInfo.endAddr() + 1u) { // Allow "one past the end" zero-sized sections.
 		scriptError(
 		    "Cannot set the current address to $%04" PRIx32 ": %s ends at $%04" PRIx16,
 		    addr,
