@@ -1,0 +1,2 @@
+FATAL: Section "test" already contains 17 bytes, higher than this fragment's fixed address $0010
+    at fragment-org-beyond-size.asm(4)
