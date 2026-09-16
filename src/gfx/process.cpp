@@ -218,6 +218,13 @@ struct Image {
 				}
 			}
 		}
+		if (size_t nbAmbiguousColors = ambiguous.size(); nbAmbiguousColors > 0) {
+			fatal(
+			    "Image contains %zu ambiguous color%s (neither transparent nor opaque)",
+			    nbAmbiguousColors,
+			    nbAmbiguousColors == 1 ? "" : "s"
+			);
+		}
 	}
 
 	class TilesVisitor {
@@ -1056,12 +1063,14 @@ void process() {
 	for (auto tile : image.visitAsTiles()) {
 		AttrmapEntry &attrs = attrmap.emplace_back();
 
-		// Count the unique non-transparent colors for packing
+		// Count the unique opaque colors for packing
 		std::unordered_set<uint16_t> tileColors;
 		for (uint32_t y = 0; y < 8; ++y) {
 			for (uint32_t x = 0; x < 8; ++x) {
-				if (Rgba color = tile.pixel(x, y);
-				    color.isOpaque() || !options.hasTransparentPixels) {
+				Rgba color = tile.pixel(x, y);
+				// Ambiguous colors should not be in `tileColors`
+				assume(color.isOpaque() != color.isTransparent());
+				if (color.isOpaque() || !options.hasTransparentPixels) {
 					tileColors.insert(color.cgbColor());
 				}
 			}

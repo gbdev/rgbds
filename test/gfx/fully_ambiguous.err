@@ -1,0 +1,4 @@
+error: Color #ff000080 is neither transparent (alpha < 16) nor opaque (alpha >= 240) (first seen at (0, 0))
+error: Color #0000ff80 is neither transparent (alpha < 16) nor opaque (alpha >= 240) (first seen at (0, 4))
+FATAL: Image contains 2 ambiguous colors (neither transparent nor opaque)
+Conversion aborted after 3 errors
