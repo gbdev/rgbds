@@ -100,7 +100,7 @@ void sect_ForEach(void (*callback)(Section &)) {
 
 void sect_CheckSizes() {
 	for (Section const &sect : sections) {
-		if (uint32_t maxSize = sectionTypeInfo[sect.type].size; sect.size > maxSize) {
+		if (uint32_t maxSize = sect.typeInfo().size; sect.size > maxSize) {
 			error(
 			    "Section \"%s\" grew too big (max size = 0x%" PRIX32 " bytes, reached 0x%" PRIX32
 			    ")",
@@ -309,7 +309,7 @@ static void mergeSections(
 				sectError(
 				    "Section \"%s\" already exists but with type `%s`",
 				    sect.name.c_str(),
-				    sectionTypeInfo[sect.type].name.c_str()
+				    sect.typeInfo().name.c_str()
 				);
 			}
 
@@ -377,8 +377,8 @@ static Section *createSection(
 	out_RegisterNode(sect.src);
 
 	// It is only needed to allocate memory for ROM sections.
-	if (sectTypeHasData(type)) {
-		sect.data.resize(sectionTypeInfo[type].size);
+	if (sectTypeHasData(sect.type)) {
+		sect.data.resize(sect.typeInfo().size);
 	}
 
 	return &sect;
@@ -403,7 +403,7 @@ static Section *createSectionFragmentLiteral(Section const &parent) {
 
 	// Section fragment literals must be ROM sections.
 	assume(sectTypeHasData(sect.type));
-	sect.data.resize(sectionTypeInfo[sect.type].size);
+	sect.data.resize(sect.typeInfo().size);
 
 	return &sect;
 }
@@ -424,24 +424,24 @@ static Section *getSection(
 	uint32_t alignMask = alignSize - 1;
 
 	// First, validate parameters, and normalize them if applicable
+	SectionTypeInfo const &typeInfo = sectionTypeInfo[type];
 
 	if (bank != UINT32_MAX) {
 		if (type != SECTTYPE_ROMX && type != SECTTYPE_VRAM && type != SECTTYPE_SRAM
 		    && type != SECTTYPE_WRAMX) {
 			error("`BANK` only allowed for `ROMX`, `WRAMX`, `SRAM`, or `VRAM` sections");
-		} else if (bank < sectionTypeInfo[type].firstBank
-		           || bank > sectionTypeInfo[type].lastBank) {
+		} else if (bank < typeInfo.firstBank || bank > typeInfo.lastBank) {
 			error(
 			    "%s bank value $%04" PRIx32 " out of range ($%04" PRIx32 " to $%04" PRIx32 ")",
-			    sectionTypeInfo[type].name.c_str(),
+			    typeInfo.name.c_str(),
 			    bank,
-			    sectionTypeInfo[type].firstBank,
-			    sectionTypeInfo[type].lastBank
+			    typeInfo.firstBank,
+			    typeInfo.lastBank
 			);
 		}
-	} else if (sectTypeBanks(type) == 1) {
+	} else if (!typeInfo.isBanked()) {
 		// If the section type only has a single bank, implicitly force it
-		bank = sectionTypeInfo[type].firstBank;
+		bank = typeInfo.firstBank;
 	}
 
 	// This should be redundant, as the parser guarantees that `AlignmentSpec` will be valid.
@@ -457,14 +457,14 @@ static Section *getSection(
 	}
 
 	if (org != UINT32_MAX) {
-		if (org < sectionTypeInfo[type].startAddr || org > sectTypeEndAddr(type)) {
+		if (org < typeInfo.startAddr || org > typeInfo.endAddr()) {
 			error(
 			    "Section \"%s\"'s fixed address $%04" PRIx32 " is outside of range [$%04" PRIx16
 			    "; $%04" PRIx16 "]",
 			    name.c_str(),
 			    org,
-			    sectionTypeInfo[type].startAddr,
-			    sectTypeEndAddr(type)
+			    typeInfo.startAddr,
+			    typeInfo.endAddr()
 			);
 		}
 	}
@@ -476,11 +476,11 @@ static Section *getSection(
 				error("Section \"%s\"'s fixed address does not match its alignment", name.c_str());
 			}
 			alignment = 0; // Ignore it if it's satisfied
-		} else if (sectionTypeInfo[type].startAddr & alignMask) {
+		} else if (typeInfo.startAddr & alignMask) {
 			error(
 			    "Section \"%s\"'s alignment cannot be attained in %s",
 			    name.c_str(),
-			    sectionTypeInfo[type].name.c_str()
+			    typeInfo.name.c_str()
 			);
 			alignment = 0; // Ignore it if it's unattainable
 			org = 0;

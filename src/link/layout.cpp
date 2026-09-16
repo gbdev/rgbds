@@ -31,7 +31,7 @@ static void setActiveTypeAndIdx(SectionType type, uint32_t idx) {
 }
 
 void layout_SetFloatingSectionType(SectionType type) {
-	if (sectTypeBanks(type) == 1) {
+	if (!sectionTypeInfo[type].isBanked()) {
 		// There is only a single bank anyway, so just set the index to 0.
 		setActiveTypeAndIdx(type, 0);
 	} else {
@@ -46,8 +46,8 @@ void layout_SetFloatingSectionType(SectionType type) {
 }
 
 void layout_SetSectionType(SectionType type) {
-	if (sectTypeBanks(type) != 1) {
-		scriptError("A bank number must be specified for %s", sectionTypeInfo[type].name.c_str());
+	if (SectionTypeInfo const &typeInfo = sectionTypeInfo[type]; typeInfo.isBanked()) {
+		scriptError("A bank number must be specified for %s", typeInfo.name.c_str());
 		// Keep going with a default value for the bank index.
 	}
 
@@ -88,22 +88,22 @@ void layout_SetAddr(uint32_t addr) {
 		return;
 	}
 
-	uint16_t &pc = curAddr[activeType][activeBankIdx];
 	SectionTypeInfo const &typeInfo = sectionTypeInfo[activeType];
 
-	if (addr < pc) {
+	if (uint16_t &pc = curAddr[activeType][activeBankIdx]; addr < pc) {
 		scriptError("Cannot decrease the current address (from $%04x to $%04x)", pc, addr);
-	} else if (addr > sectTypeEndAddr(activeType)) { // Allow "one past the end" sections.
+	} else if (addr > typeInfo.endAddr()) { // Allow "one past the end" sections.
 		scriptError(
 		    "Cannot set the current address to $%04" PRIx32 ": %s ends at $%04" PRIx16,
 		    addr,
 		    typeInfo.name.c_str(),
-		    sectTypeEndAddr(activeType)
+		    typeInfo.endAddr()
 		);
-		pc = sectTypeEndAddr(activeType);
+		pc = typeInfo.endAddr();
 	} else {
 		pc = addr;
 	}
+
 	isPcFloating = false;
 }
 
@@ -182,7 +182,7 @@ void layout_AlignTo(uint32_t alignment, uint32_t alignOfs) {
 		    ", past $%04" PRIx16,
 		    pc,
 		    static_cast<uint16_t>(pc + length),
-		    static_cast<uint16_t>(sectTypeEndAddr(activeType) + 1)
+		    static_cast<uint16_t>(typeInfo.endAddr() + 1)
 		);
 		return;
 	}
@@ -212,7 +212,7 @@ void layout_Pad(uint32_t length) {
 		    "Cannot increase the current address by %u bytes: only %u bytes to $%04" PRIx16,
 		    length,
 		    typeInfo.size - offset,
-		    static_cast<uint16_t>(sectTypeEndAddr(activeType) + 1)
+		    static_cast<uint16_t>(typeInfo.endAddr() + 1)
 		);
 	} else {
 		pc += length;

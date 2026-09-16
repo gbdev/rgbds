@@ -71,7 +71,7 @@ void out_AddSection(Section const &section) {
 	    1,          // SECTTYPE_OAM
 	};
 
-	uint32_t targetBank = section.bank - sectionTypeInfo[section.type].firstBank;
+	uint32_t targetBank = section.bank - section.typeInfo().firstBank;
 	if (targetBank >= maxNbBanks[section.type]) {
 		fatal(
 		    "Section \"%s\" has an invalid bank range (%" PRIu32 " > %" PRIu32 ")",
@@ -96,7 +96,7 @@ void out_AddSection(Section const &section) {
 }
 
 Section const *out_OverlappingSection(Section const &section) {
-	uint32_t bank = section.bank - sectionTypeInfo[section.type].firstBank;
+	uint32_t bank = section.bank - section.typeInfo().firstBank;
 
 	for (Section const *ptr : sections[section.type][bank].sections) {
 		if (ptr->org < section.org + section.size && section.org < ptr->org + ptr->size) {
@@ -491,12 +491,10 @@ static void writeMapBank(SortedSections const &sectList, SectionType type, uint3
 	if (used == 0) {
 		fputs("\tEMPTY\n", mapFile);
 	} else {
-		uint16_t bankEndAddr = sectionTypeInfo[type].startAddr + sectionTypeInfo[type].size;
-
+		uint16_t bankEndAddr = sectionTypeInfo[type].endAddr() + 1;
 		writeEmptySpace(prevEndAddr, bankEndAddr);
 
 		uint16_t slack = sectionTypeInfo[type].size - used;
-
 		fprintf(mapFile, "\tTOTAL EMPTY: $%04" PRIx16 " byte%s\n", slack, slack == 1 ? "" : "s");
 	}
 }
@@ -513,13 +511,12 @@ static void writeMapSummary() {
 			continue;
 		}
 
-		// Do not output unused section types
+		// Skip types which haven't been used at all.
 		if (nbBanks == 0) {
 			continue;
 		}
 
 		uint32_t usedTotal = 0;
-
 		for (uint32_t bank = 0; bank < nbBanks; ++bank) {
 			usedTotal += forEachSection(sections[type][bank], [](Section const &) {});
 		}
@@ -532,7 +529,7 @@ static void writeMapSummary() {
 		    usedTotal == 1 ? "" : "s",
 		    static_cast<size_t>(nbBanks) * sectionTypeInfo[type].size - usedTotal
 		);
-		if (sectionTypeInfo[type].firstBank != sectionTypeInfo[type].lastBank) {
+		if (sectionTypeInfo[type].isBanked()) {
 			fprintf(mapFile, " in %u bank%s", nbBanks, nbBanks == 1 ? "" : "s");
 		}
 		putc('\n', mapFile);

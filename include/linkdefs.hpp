@@ -82,6 +82,13 @@ static constexpr uint8_t SECTTYPE_TYPE_MASK = 0b111;
 static constexpr uint8_t SECTTYPE_UNION_BIT = 7;
 static constexpr uint8_t SECTTYPE_FRAGMENT_BIT = 6;
 
+// Tells whether a section has data in its object file definition,
+// depending on type.
+static inline bool sectTypeHasData(SectionType type) {
+	assume(type != SECTTYPE_INVALID);
+	return type == SECTTYPE_ROM0 || type == SECTTYPE_ROMX;
+}
+
 enum FileStackNodeType {
 	NODE_REPT,
 	NODE_FILE,
@@ -90,31 +97,24 @@ enum FileStackNodeType {
 
 static constexpr uint8_t FSTACKNODE_QUIET_BIT = 7;
 
-// Nont-`const` members may be patched in RGBLINK depending on CLI flags
-extern struct SectionTypeInfo {
+// Non-`const` members may be patched in RGBLINK depending on CLI flags
+struct SectionTypeInfo {
 	std::string const name;
 	uint16_t const startAddr;
 	uint16_t size;
 	uint32_t const firstBank;
 	uint32_t lastBank;
-} sectionTypeInfo[SECTTYPE_INVALID];
 
-// Tells whether a section has data in its object file definition,
-// depending on type.
-static inline bool sectTypeHasData(SectionType type) {
-	assume(type != SECTTYPE_INVALID);
-	return type == SECTTYPE_ROM0 || type == SECTTYPE_ROMX;
-}
+	// Returns a memory region's end address (last byte), e.g. 0x7FFF
+	uint16_t endAddr() const { return startAddr + size - 1; }
 
-// Returns a memory region's end address (last byte), e.g. 0x7FFF
-static inline uint16_t sectTypeEndAddr(SectionType type) {
-	return sectionTypeInfo[type].startAddr + sectionTypeInfo[type].size - 1;
-}
+	// Returns a memory region's number of banks, or 1 for regions without banking
+	uint32_t nbBanks() const { return lastBank - firstBank + 1; }
 
-// Returns a memory region's number of banks, or 1 for regions without banking
-static inline uint32_t sectTypeBanks(SectionType type) {
-	return sectionTypeInfo[type].lastBank - sectionTypeInfo[type].firstBank + 1;
-}
+	bool isBanked() const { return nbBanks() != 1; }
+};
+
+extern SectionTypeInfo sectionTypeInfo[SECTTYPE_INVALID];
 
 enum SectionModifier { SECTION_NORMAL, SECTION_UNION, SECTION_FRAGMENT };
 

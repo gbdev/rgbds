@@ -254,18 +254,20 @@ static void doSanityChecks(Section &section) {
 		section.isAlignFixed = false;
 	}
 
+	// The section's type is determined now, so we can get its type info
+	SectionTypeInfo const &typeInfo = section.typeInfo();
+
 	// Too large an alignment may not be satisfiable
-	if (section.isAlignFixed && (section.alignMask & sectionTypeInfo[section.type].startAddr)) {
+	if (section.isAlignFixed && (section.alignMask & typeInfo.startAddr)) {
 		error(
 		    "Section \"%s\" has type `%s`, which cannot be aligned to $%04x bytes",
 		    section.name.c_str(),
-		    sectionTypeInfo[section.type].name.c_str(),
+		    typeInfo.name.c_str(),
 		    section.alignMask + 1
 		);
 	}
 
-	uint32_t minbank = sectionTypeInfo[section.type].firstBank,
-	         maxbank = sectionTypeInfo[section.type].lastBank;
+	uint32_t minbank = typeInfo.firstBank, maxbank = typeInfo.lastBank;
 
 	if (!bankModeError && section.isBankFixed
 	    && (section.bank < minbank || section.bank > maxbank)) {
@@ -282,12 +284,12 @@ static void doSanityChecks(Section &section) {
 	}
 
 	// Check if section has a chance to be placed
-	if (section.size > sectionTypeInfo[section.type].size) {
+	if (section.size > typeInfo.size) {
 		error(
 		    "Section \"%s\" is bigger than the max size for that type: $%" PRIx16 " > $%" PRIx16,
 		    section.name.c_str(),
 		    section.size,
-		    sectionTypeInfo[section.type].size
+		    typeInfo.size
 		);
 	}
 
@@ -311,24 +313,23 @@ static void doSanityChecks(Section &section) {
 		}
 
 		// Ensure the target address is valid
-		if (section.org < sectionTypeInfo[section.type].startAddr
-		    || section.org > sectTypeEndAddr(section.type)) {
+		if (section.org < typeInfo.startAddr || section.org > typeInfo.endAddr()) {
 			error(
 			    "Section \"%s\"'s fixed address $%04" PRIx16 " is outside of range [$%04" PRIx16
 			    "; $%04" PRIx16 "]",
 			    section.name.c_str(),
 			    section.org,
-			    sectionTypeInfo[section.type].startAddr,
-			    sectTypeEndAddr(section.type)
+			    typeInfo.startAddr,
+			    typeInfo.endAddr()
 			);
 		}
 
-		if (section.org + section.size > sectTypeEndAddr(section.type) + 1) {
+		if (section.org + section.size > typeInfo.endAddr() + 1) {
 			error(
 			    "Section \"%s\"'s end address $%04x is greater than last address $%04x",
 			    section.name.c_str(),
 			    section.org + section.size,
-			    sectTypeEndAddr(section.type) + 1
+			    typeInfo.endAddr() + 1
 			);
 		}
 	}

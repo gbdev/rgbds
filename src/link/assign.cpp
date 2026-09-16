@@ -79,7 +79,7 @@ static MemoryLocation getStartLocation(Section const &section) {
 	if (section.isBankFixed) {
 		location.bank = section.bank;
 	} else {
-		location.bank = sectionTypeInfo[section.type].firstBank;
+		location.bank = section.typeInfo().firstBank;
 
 		// Scramble the bank if applicable
 		if (options.scrambleROMX && section.type == SECTTYPE_ROMX) {
@@ -106,14 +106,14 @@ static MemoryLocation getStartLocation(Section const &section) {
 // Returns a suitable free space index into `memory[section->type]` at which to place the given
 // section, or `std::nullopt` if none was found.
 static std::optional<size_t> getPlacement(Section const &section, MemoryLocation &location) {
-	SectionTypeInfo const &typeInfo = sectionTypeInfo[section.type];
+	SectionTypeInfo const &typeInfo = section.typeInfo();
 
 	for (;;) {
 		if (location.bank < typeInfo.firstBank
 		    || location.bank >= memory[section.type].size() + typeInfo.firstBank) {
 			fatal(
 			    "Invalid bank for %s section \"%s\": %" PRIu32,
-			    sectionTypeInfo[section.type].name.c_str(),
+			    typeInfo.name.c_str(),
 			    section.name.c_str(),
 			    location.bank
 			);
@@ -217,9 +217,8 @@ static std::optional<size_t> getPlacement(Section const &section, MemoryLocation
 }
 
 static std::string getSectionDescription(Section const &section) {
-	std::string description =
-	    "\"" + section.name + "\" (" + sectionTypeInfo[section.type].name + " section) ";
-	if (section.isBankFixed && sectTypeBanks(section.type) != 1) {
+	std::string description = "\"" + section.name + "\" (" + section.typeInfo().name + " section) ";
+	if (section.isBankFixed && section.typeInfo().isBanked()) {
 		char bank[8];
 		snprintf(bank, sizeof(bank), "%02" PRIx32, section.bank);
 		if (section.isAddressFixed) {
@@ -253,14 +252,15 @@ static std::string getSectionDescription(Section const &section) {
 // Places a section in a suitable location, or error out if it fails to.
 // Due to the implemented algorithm, this should be called with sections of decreasing size!
 static void placeSection(Section &section) {
+	SectionTypeInfo const &typeInfo = section.typeInfo();
+
 	// Specially handle 0-byte SECTIONs, as they can't overlap anything
 	if (section.size == 0) {
 		// Unless the SECTION's address was fixed, the starting address
 		// is fine for any alignment, as checked in sect_DoSanityChecks.
 		MemoryLocation location = {
-		    .address =
-		        section.isAddressFixed ? section.org : sectionTypeInfo[section.type].startAddr,
-		    .bank = section.isBankFixed ? section.bank : sectionTypeInfo[section.type].firstBank,
+		    .address = section.isAddressFixed ? section.org : typeInfo.startAddr,
+		    .bank = section.isBankFixed ? section.bank : typeInfo.firstBank,
 		};
 		assignSection(section, location);
 		return;
@@ -270,8 +270,7 @@ static void placeSection(Section &section) {
 	// https://en.wikipedia.org/wiki/Bin_packing_problem#First-fit_algorithm
 	MemoryLocation location = getStartLocation(section);
 	if (std::optional<size_t> spaceIdx = getPlacement(section, location); spaceIdx) {
-		std::deque<FreeSpace> &bankMem =
-		    memory[section.type][location.bank - sectionTypeInfo[section.type].firstBank];
+		std::deque<FreeSpace> &bankMem = memory[section.type][location.bank - typeInfo.firstBank];
 		FreeSpace &freeSpace = bankMem[*spaceIdx];
 
 		assignSection(section, location);
@@ -308,13 +307,14 @@ static void placeSection(Section &section) {
 	if (!section.isBankFixed || !section.isAddressFixed) {
 		// If a section failed to go to several places, nothing we can report
 		fatal("Unable to place %s", getSectionDescription(section).c_str());
-	} else if (section.org + section.size > sectTypeEndAddr(section.type) + 1) {
+	} else if (uint16_t onePastEnd = typeInfo.endAddr() + 1;
+	           section.org + section.size > onePastEnd) {
 		// If the section just can't fit the bank, report that
 		fatal(
 		    "Unable to place %s: section runs past end of region ($%04x > $%04x)",
 		    getSectionDescription(section).c_str(),
 		    section.org + section.size,
-		    sectTypeEndAddr(section.type) + 1
+		    onePastEnd
 		);
 	} else {
 		// Otherwise there is overlap with another section
@@ -430,11 +430,12 @@ void assign_AssignSections() {
 
 	// Initialize the free space-modelling structs
 	for (SectionType type : EnumSeq(SECTTYPE_INVALID)) {
-		memory[type].resize(sectTypeBanks(type));
+		SectionTypeInfo const &typeInfo = sectionTypeInfo[type];
+		memory[type].resize(typeInfo.nbBanks());
 		for (std::deque<FreeSpace> &bankMem : memory[type]) {
 			bankMem.push_back({
-			    .address = sectionTypeInfo[type].startAddr,
-			    .size = sectionTypeInfo[type].size,
+			    .address = typeInfo.startAddr,
+			    .size = typeInfo.size,
 			});
 		}
 	}

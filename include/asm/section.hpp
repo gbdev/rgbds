@@ -42,6 +42,8 @@ struct Section {
 	std::deque<Patch> patches;
 	std::vector<uint8_t> data;
 
+	SectionTypeInfo const &typeInfo() const { return sectionTypeInfo[type]; }
+
 	uint32_t getID() const; // ID of the section in the object file (`UINT32_MAX` if none)
 	bool isSizeKnown() const;
 };

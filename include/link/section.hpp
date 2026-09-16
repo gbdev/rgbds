@@ -51,6 +51,8 @@ struct Section {
 	std::vector<Symbol *> symbols;
 	std::unique_ptr<Section> nextPiece; // The next fragment or union "piece" of this section
 
+	SectionTypeInfo const &typeInfo() const { return sectionTypeInfo[type]; }
+
 private:
 	// Template class for both const and non-const iterators over the "pieces" of this section
 	template<QualifiedEquivalent<Section> SectionT>
