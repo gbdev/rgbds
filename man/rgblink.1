@@ -308,7 +308,9 @@ Later region specs override earlier ones; for example,
 disables scrambling for
 .Cm romx .
 .Pp
-Multiple scrambling spec options will "stack"; for example,
+The arguments to multiple
+.Fl S
+options are processed as if concatenated; for example,
 .Fl S Cm romx=16 Fl S Cm wramx=8 Fl S Cm sram=4
 will work the same as
 .Fl S Cm romx=16,wramx=8,sram=4 .
