@@ -101,7 +101,7 @@ static void parseScrambleSpec(char *spec) {
 	// clang-format off: vertically align nested initializers
 	static UpperMap<std::pair<uint16_t *, uint16_t>> scrambleSpecs{
 	    {"ROMX",  std::pair{&options.scrambleROMX,  65535}},
-	    {"SRAM",  std::pair{&options.scrambleSRAM,  255  }},
+	    {"SRAM",  std::pair{&options.scrambleSRAM,  256  }},
 	    {"WRAMX", std::pair{&options.scrambleWRAMX, 7    }},
 	};
 	// clang-format on
