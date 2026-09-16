@@ -11,6 +11,7 @@
 #include "helpers.hpp"
 #include "linkdefs.hpp"
 
+#include "link/main.hpp" // options
 #include "link/section.hpp"
 #include "link/warning.hpp"
 
@@ -46,7 +47,10 @@ void layout_SetFloatingSectionType(SectionType type) {
 }
 
 void layout_SetSectionType(SectionType type) {
-	if (sectTypeBanks(type) != 1) {
+	// `sect_DoSanityChecks` will later convert ROMX to ROM0 in 32K tiny mode,
+	// and WRAMX to WRAM0 in WRAM0 mode
+	if (sectTypeBanks(type) != 1 && !(options.is32kMode && type == SECTTYPE_ROMX)
+	    && !(options.isWRAM0Mode && type == SECTTYPE_WRAMX)) {
 		scriptError("A bank number must be specified for %s", sectionTypeInfo[type].name.c_str());
 		// Keep going with a default value for the bank index.
 	}
