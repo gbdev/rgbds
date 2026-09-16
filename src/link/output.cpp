@@ -267,30 +267,27 @@ static void writeROM() {
 }
 
 static void writeSymName(std::string const &name, FILE *file) {
-	for (char const *ptr = name.c_str(); *ptr != '\0';) {
+	for (size_t i = 0; i < name.length();) {
 		// Output legal ASCII characters as-is
-		if (char c = *ptr; continuesIdentifier(c)) {
+		if (char c = name[i]; continuesIdentifier(c)) {
 			putc(c, file);
-			++ptr;
+			++i;
 			continue;
 		}
 
 		// Output illegal characters using Unicode escapes ('\u' or '\U')
 		// Decode the UTF-8 codepoint; or at least attempt to
 		Utf8Decoder decoder;
-		do {
-			if (decoder.update(*ptr++) != UTF8_REJECT) {
-				continue;
+		while (i < name.length()) {
+			decoder.update(static_cast<uint8_t>(name[i++]));
+			if (decoder.state == UTF8_ACCEPT || decoder.state == UTF8_REJECT) {
+				break;
 			}
-			// This sequence was invalid; emit a U+FFFD, and recover
+		}
+		if (decoder.state != UTF8_ACCEPT) {
+			// This sequence was invalid or incomplete; emit a U+FFFD instead
 			decoder.codepoint = 0xFFFD;
-			// Skip continuation bytes
-			// A NUL byte does not qualify, so we're good
-			while ((*ptr & 0xC0) == 0x80) {
-				++ptr;
-			}
-			break;
-		} while (decoder.state != UTF8_ACCEPT);
+		}
 		fprintf(
 		    file, decoder.codepoint <= 0xFFFF ? "\\u%04" PRIx32 : "\\U%08" PRIx32, decoder.codepoint
 		);
