@@ -16,6 +16,7 @@
 #include "helpers.hpp"
 #include "itertools.hpp"
 #include "linkdefs.hpp"
+#include "platform.hpp"
 #include "verbosity.hpp"
 
 #include "link/main.hpp"
@@ -286,14 +287,14 @@ static std::string describeConstraintsOf(Section const &section) {
 	std::string description = "\"" + section.name + "\" (" + section.typeInfo().name + " section) ";
 	if (section.isBankFixed && section.typeInfo().isBanked()) {
 		char bank[9];
-		snprintf(bank, sizeof(bank), "%02" PRIx32, section.bank);
+		sprintf_to_array(bank, "%02" PRIx32, section.bank);
 		if (section.isAddressFixed) {
 			char addr[5];
-			snprintf(addr, sizeof(addr), "%04" PRIx16, section.org);
+			sprintf_to_array(addr, "%04" PRIx16, section.org);
 			description = description + "at $" + bank + ":" + addr;
 		} else if (section.isAlignFixed) {
 			char mask[5];
-			snprintf(mask, sizeof(mask), "%" PRIx16, static_cast<uint16_t>(~section.alignMask));
+			sprintf_to_array(mask, "%" PRIx16, static_cast<uint16_t>(~section.alignMask));
 			description = description + "in bank $" + bank + " with align mask $" + mask;
 		} else {
 			description = description + "in bank $" + bank;
@@ -301,12 +302,12 @@ static std::string describeConstraintsOf(Section const &section) {
 	} else {
 		if (section.isAddressFixed) {
 			char addr[5];
-			snprintf(addr, sizeof(addr), "%04" PRIx16, section.org);
+			sprintf_to_array(addr, "%04" PRIx16, section.org);
 			description = description + "at address $" + addr;
 		} else if (section.isAlignFixed) {
 			char mask[5], offset[5];
-			snprintf(mask, sizeof(mask), "%" PRIx16, static_cast<uint16_t>(~section.alignMask));
-			snprintf(offset, sizeof(offset), "%" PRIx16, section.alignOfs);
+			sprintf_to_array(mask, "%" PRIx16, static_cast<uint16_t>(~section.alignMask));
+			sprintf_to_array(offset, "%" PRIx16, section.alignOfs);
 			description = description + "with align mask $" + mask + " and offset $" + offset;
 		} else {
 			description = description + "anywhere";
@@ -315,7 +316,7 @@ static std::string describeConstraintsOf(Section const &section) {
 		if (auto info = scrambling.getInfoFor(section.type);
 		    info.has_value() && info->maxOfs != 0) { // Only mention scrambling if it is enabled.
 			char size[6];
-			snprintf(size, sizeof(size), "%" PRIu16, info->maxOfs);
+			sprintf_to_array(size, "%" PRIu16, info->maxOfs);
 			description = description + " within the " + size + " scrambled banks";
 		}
 	}

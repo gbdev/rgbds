@@ -66,4 +66,15 @@
 	#define _POSIX_C_SOURCE 200809L
 #endif
 
+// Apple has deprecated `sprintf` since Xcode 14 (for macOS 13), but we use it solely in
+// contexts where both the size of the buffer *and* max size of the printed string are
+// known statically, which GCC thus checks for.
+// If you fail to pass an array to this macro, neither GCC nor Clang will complain,
+// but it will break on macOS.
+#ifdef __APPLE__
+	#define sprintf_to_array(array, ...) snprintf(array, sizeof(array), __VA_ARGS__)
+#else
+	#define sprintf_to_array(array, ...) sprintf(array, __VA_ARGS__)
+#endif
+
 #endif // RGBDS_PLATFORM_HPP
