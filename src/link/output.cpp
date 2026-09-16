@@ -532,7 +532,7 @@ static void writeMapSummary() {
 		    usedTotal == 1 ? "" : "s",
 		    static_cast<size_t>(nbBanks) * sectionTypeInfo[type].size - usedTotal
 		);
-		if (sectionTypeInfo[type].firstBank != sectionTypeInfo[type].lastBank || nbBanks > 1) {
+		if (sectionTypeInfo[type].firstBank != sectionTypeInfo[type].lastBank) {
 			fprintf(mapFile, " in %u bank%s", nbBanks, nbBanks == 1 ? "" : "s");
 		}
 		putc('\n', mapFile);
