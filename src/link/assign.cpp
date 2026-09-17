@@ -256,12 +256,18 @@ static void placeSection(Section &section) {
 
 	// Specially handle 0-byte SECTIONs, as they can't overlap anything
 	if (section.size == 0) {
-		// Unless the SECTION's address was fixed, the starting address
-		// is fine for any alignment, as checked in sect_DoSanityChecks.
+		// Unless the SECTION has a fixed address or non-zero alignment, the starting
+		// address is fine for any alignment, as checked in `sect_DoSanityChecks`.
 		MemoryLocation location = {
 		    .address = section.isAddressFixed ? section.org : typeInfo.startAddr,
 		    .bank = section.isBankFixed ? section.bank : typeInfo.firstBank,
 		};
+		if (section.isAlignFixed && !section.isAddressFixed) {
+			if (uint16_t offset = (location.address - section.alignOfs) & section.alignMask;
+			    offset != 0) {
+				location.address += section.alignMask + 1 - offset;
+			}
+		}
 		assignSection(section, location);
 		return;
 	}
