@@ -251,7 +251,26 @@ void reverse() {
 		}
 
 		if (options.hasExplicitPalSpec() && palettes != options.palSpec) {
-			warnx("Colors in the palette file do not match those specified with '-c'");
+			// The explicit `-c` pal spec does not match the input `-p` palette file.
+			// Check whether their 8-to-5-bit-reduced GB colors nevertheless match.
+			bool sameCGBPals = palettes.size() == options.palSpec.size();
+			// This loop will not run if `palettes` and `options.palSpec` contain different numbers
+			// of palettes, so the indexed palette color accesses inside the loop will not OOB.
+			for (size_t i = 0; sameCGBPals && i < palettes.size(); ++i) {
+				for (size_t j = 0; j < 4; ++j) {
+					std::optional<Rgba> const &inputColor = palettes[i][j];
+					std::optional<Rgba> const &specColor = options.palSpec[i][j];
+					uint16_t inputCGBColor =
+					    inputColor.has_value() ? inputColor->cgbColor() : UINT16_MAX;
+					uint16_t specCGBColor =
+					    specColor.has_value() ? specColor->cgbColor() : UINT16_MAX;
+					sameCGBPals &= inputCGBColor == specCGBColor;
+				}
+			}
+			warnx(
+			    "Colors %s the palette file do not match those specified with '-c'",
+			    sameCGBPals ? "reversed from" : "in"
+			);
 			// This spacing aligns "...versus with `-c`" above the column of `-c` palettes
 			fputs("Colors specified in the palette file:         ...versus with '-c':\n", stderr);
 			for (size_t i = 0; i < palettes.size() || i < options.palSpec.size(); ++i) {

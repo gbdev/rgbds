@@ -1,0 +1,3 @@
+-c #abcdef
+-s 1
+-p reverse_color_mismatch.pal
