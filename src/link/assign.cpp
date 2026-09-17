@@ -36,6 +36,50 @@ struct FreeSpace {
 // Table of free space for each bank
 static std::vector<std::deque<FreeSpace>> memory[SECTTYPE_INVALID];
 
+struct Scrambling {
+	uint16_t romxOfs = 0;
+	uint16_t sramOfs = 0;
+	uint16_t wramxOfs = 0;
+
+	// Helper for the next function, to give names to its two returned values.
+	struct ScramblingInfo {
+		uint16_t &curOfs;
+		uint16_t maxOfs;
+	};
+	std::optional<ScramblingInfo> getInfoFor(SectionType type) {
+		switch (type) {
+		case SECTTYPE_ROMX:
+			return {
+			    {romxOfs, options.scrambleROMX}
+			};
+		case SECTTYPE_SRAM:
+			return {
+			    {sramOfs, options.scrambleSRAM}
+			};
+		case SECTTYPE_WRAMX:
+			return {
+			    {wramxOfs, options.scrambleWRAMX}
+			};
+
+		// Non-banked sections don't need scrambling support...
+		case SECTTYPE_ROM0:
+		case SECTTYPE_WRAM0:
+		case SECTTYPE_OAM:
+		case SECTTYPE_HRAM:
+			assume(!sectionTypeInfo[type].isBanked());
+			return std::nullopt;
+		// ...but VRAM doesn't either, regardless of whether it's banked or not.
+		case SECTTYPE_VRAM:
+			return std::nullopt;
+
+		case SECTTYPE_INVALID:
+			unreachable_();
+		}
+		return std::nullopt; // Dead code, but some compilers don't recognize that.
+	}
+};
+static Scrambling scrambling;
+
 // Checks whether a given location is suitable for placing a given section
 // This checks not only that the location has enough room for the section, but
 // also that the constraints (alignment...) are respected.
@@ -58,10 +102,6 @@ static bool isLocationSuitable(
 }
 
 static MemoryLocation getStartLocation(Section const &section) {
-	static uint16_t curScrambleROM = 0;
-	static uint16_t curScrambleWRAM = 0;
-	static uint16_t curScrambleSRAM = 0;
-
 	MemoryLocation location;
 
 	// Determine which bank we should start searching in
@@ -70,22 +110,10 @@ static MemoryLocation getStartLocation(Section const &section) {
 	} else {
 		location.bank = section.typeInfo().firstBank;
 
-		// Scramble the bank if applicable
-		if (options.scrambleROMX && section.type == SECTTYPE_ROMX) {
-			if (curScrambleROM == 0) {
-				curScrambleROM = options.scrambleROMX;
-			}
-			location.bank += --curScrambleROM;
-		} else if (options.scrambleWRAMX && section.type == SECTTYPE_WRAMX) {
-			if (curScrambleWRAM == 0) {
-				curScrambleWRAM = options.scrambleWRAMX;
-			}
-			location.bank += --curScrambleWRAM;
-		} else if (options.scrambleSRAM && section.type == SECTTYPE_SRAM) {
-			if (curScrambleSRAM == 0) {
-				curScrambleSRAM = options.scrambleSRAM;
-			}
-			location.bank += --curScrambleSRAM;
+		if (auto info = scrambling.getInfoFor(section.type);
+		    info.has_value() && info->maxOfs != 0) {
+			info->curOfs = (info->curOfs != 0 ? info->curOfs : info->maxOfs) - 1;
+			location.bank += info->curOfs;
 		}
 	}
 
@@ -168,30 +196,13 @@ static std::optional<size_t> getPlacement(Section const &section, MemoryLocation
 		// available. Otherwise, try in ascending order.
 		if (section.isBankFixed) {
 			return std::nullopt;
-		} else if (options.scrambleROMX && section.type == SECTTYPE_ROMX
-		           && location.bank <= options.scrambleROMX) {
+		} else if (
+		    auto info = scrambling.getInfoFor(section.type); info.has_value() && info->maxOfs != 0
+		) {
 			if (location.bank > typeInfo.firstBank) {
 				--location.bank;
-			} else if (options.scrambleROMX < typeInfo.lastBank) {
-				location.bank = options.scrambleROMX + 1;
-			} else {
-				return std::nullopt;
-			}
-		} else if (options.scrambleWRAMX && section.type == SECTTYPE_WRAMX
-		           && location.bank <= options.scrambleWRAMX) {
-			if (location.bank > typeInfo.firstBank) {
-				--location.bank;
-			} else if (options.scrambleWRAMX < typeInfo.lastBank) {
-				location.bank = options.scrambleWRAMX + 1;
-			} else {
-				return std::nullopt;
-			}
-		} else if (options.scrambleSRAM && section.type == SECTTYPE_SRAM
-		           && location.bank <= options.scrambleSRAM) {
-			if (location.bank > typeInfo.firstBank) {
-				--location.bank;
-			} else if (options.scrambleSRAM < typeInfo.lastBank) {
-				location.bank = options.scrambleSRAM + 1;
+			} else if (info->maxOfs < typeInfo.lastBank) {
+				location.bank = info->maxOfs + 1;
 			} else {
 				return std::nullopt;
 			}
@@ -313,8 +324,9 @@ static void placeSection(Section &section) {
 	if (!section.isBankFixed || !section.isAddressFixed) {
 		// If a section failed to go to several places, nothing we can report
 		fatal("Unable to place %s", getSectionDescription(section).c_str());
-	} else if (uint16_t onePastEnd = typeInfo.endAddr() + 1;
-	           section.org + section.size > onePastEnd) {
+	} else if (
+	    uint16_t onePastEnd = typeInfo.endAddr() + 1; section.org + section.size > onePastEnd
+	) {
 		// If the section just can't fit the bank, report that
 		fatal(
 		    "Unable to place %s: section runs past end of region ($%04x > $%04x)",
