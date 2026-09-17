@@ -115,8 +115,8 @@ static void mergeSections(Section &target, std::unique_ptr<Section> &&other) {
 		    *other,
 		    "Section \"%s\" is defined with type `%s`, but also with type `%s`",
 		    target.name.c_str(),
-		    target.typeInfo().name.c_str(),
-		    other->typeInfo().name.c_str()
+		    target.typeInfo().name,
+		    other->typeInfo().name
 		);
 	}
 
@@ -190,7 +190,7 @@ void sect_AddSection(std::unique_ptr<Section> &&section) {
 		fatal(
 		    "Section \"%s\" is of type `%s`, which cannot be `UNION`ized",
 		    section->name.c_str(),
-		    section->typeInfo().name.c_str()
+		    section->typeInfo().name
 		);
 	} else {
 		sections.add(section->name, std::move(section));
@@ -262,7 +262,7 @@ static void doSanityChecks(Section &section) {
 		error(
 		    "Section \"%s\" has type `%s`, which cannot be aligned to $%04x bytes",
 		    section.name.c_str(),
-		    typeInfo.name.c_str(),
+		    typeInfo.name,
 		    section.alignMask + 1
 		);
 	}

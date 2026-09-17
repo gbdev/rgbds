@@ -309,7 +309,7 @@ static void mergeSections(
 				sectError(
 				    "Section \"%s\" already exists but with type `%s`",
 				    sect.name.c_str(),
-				    sect.typeInfo().name.c_str()
+				    sect.typeInfo().name
 				);
 			}
 
@@ -433,7 +433,7 @@ static Section *getSection(
 		} else if (bank < typeInfo.firstBank || bank > typeInfo.lastBank) {
 			error(
 			    "%s bank value $%04" PRIx32 " out of range ($%04" PRIx32 " to $%04" PRIx32 ")",
-			    typeInfo.name.c_str(),
+			    typeInfo.name,
 			    bank,
 			    typeInfo.firstBank,
 			    typeInfo.lastBank
@@ -478,9 +478,7 @@ static Section *getSection(
 			alignment = 0; // Ignore it if it's satisfied
 		} else if (typeInfo.startAddr & alignMask) {
 			error(
-			    "Section \"%s\"'s alignment cannot be attained in %s",
-			    name.c_str(),
-			    typeInfo.name.c_str()
+			    "Section \"%s\"'s alignment cannot be attained in %s", name.c_str(), typeInfo.name
 			);
 			alignment = 0; // Ignore it if it's unattainable
 			org = 0;

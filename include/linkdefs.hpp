@@ -4,7 +4,6 @@
 #define RGBDS_LINKDEFS_HPP
 
 #include <stdint.h>
-#include <string>
 
 #include "helpers.hpp" // assume
 
@@ -99,7 +98,7 @@ static constexpr uint8_t FSTACKNODE_QUIET_BIT = 7;
 
 // Non-`const` members may be patched in RGBLINK depending on CLI flags
 struct SectionTypeInfo {
-	std::string const name;
+	char const *name;
 	uint16_t const startAddr;
 	uint16_t size;
 	uint32_t const firstBank;
