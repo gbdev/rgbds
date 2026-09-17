@@ -1,0 +1,2 @@
+FATAL: Unable to place "C" (ROM0 section) at address $0150: section overlaps with "A"
+Linking aborted with 1 error
