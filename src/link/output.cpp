@@ -460,8 +460,8 @@ static void writeMapSymbols(Section const &sect) {
 static void writeMapBank(SortedSections const &sectList, SectionType type, uint32_t bank) {
 	fprintf(
 	    mapFile,
-	    "\n%s bank #%" PRIu32 ":\n",
-	    sectionTypeInfo[type].name,
+	    "\n" PRI_SV " bank #%" PRIu32 ":\n",
+	    PRI_SV_ARG(sectionTypeInfo[type].name),
 	    bank + sectionTypeInfo[type].firstBank
 	);
 
@@ -523,8 +523,8 @@ static void writeMapSummary() {
 
 		fprintf(
 		    mapFile,
-		    "\t%s: %" PRIu32 " byte%s used / %zu free",
-		    sectionTypeInfo[type].name,
+		    "\t" PRI_SV ": %" PRIu32 " byte%s used / %zu free",
+		    PRI_SV_ARG(sectionTypeInfo[type].name),
 		    usedTotal,
 		    usedTotal == 1 ? "" : "s",
 		    static_cast<size_t>(nbBanks) * sectionTypeInfo[type].size - usedTotal

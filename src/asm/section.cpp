@@ -284,8 +284,8 @@ static void mergeSections(
 
 	if (sect.modifier != mod) {
 		sectError(
-		    "Section \"%s\" already declared as `SECTION %s`",
 		    sect.name.c_str(),
+		    "Section \"%s\" already declared as `SECTION %s`",
 		    sectionModNames[sect.modifier]
 		);
 	} else {
@@ -307,9 +307,9 @@ static void mergeSections(
 		case SECTION_FRAGMENT: {
 			if (type != sect.type) {
 				sectError(
-				    "Section \"%s\" already exists but with type `%s`",
+				    "Section \"%s\" already exists but with type `" PRI_SV "`",
 				    sect.name.c_str(),
-				    sect.typeInfo().name
+				    PRI_SV_ARG(sect.typeInfo().name)
 				);
 			}
 
@@ -432,8 +432,8 @@ static Section *getSection(
 			error("`BANK` only allowed for `ROMX`, `WRAMX`, `SRAM`, or `VRAM` sections");
 		} else if (bank < typeInfo.firstBank || bank > typeInfo.lastBank) {
 			error(
-			    "%s bank value $%04" PRIx32 " out of range ($%04" PRIx32 " to $%04" PRIx32 ")",
-			    typeInfo.name,
+			    PRI_SV " bank value $%04" PRIx32 " out of range ($%04" PRIx32 " to $%04" PRIx32 ")",
+			    PRI_SV_ARG(typeInfo.name),
 			    bank,
 			    typeInfo.firstBank,
 			    typeInfo.lastBank
@@ -478,9 +478,9 @@ static Section *getSection(
 			alignment = 0; // Ignore it if it's satisfied
 		} else if (typeInfo.startAddr & alignMask) {
 			error(
-			    "Section \"%s\"'s alignment cannot be attained in %s",
+			    "Section \"%s\"'s alignment cannot be attained in " PRI_SV,
 			    name.c_str(),
-			    typeInfo.name
+			    PRI_SV_ARG(typeInfo.name)
 			);
 			alignment = 0; // Ignore it if it's unattainable
 			org = 0;

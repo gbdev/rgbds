@@ -47,7 +47,7 @@ void layout_SetFloatingSectionType(SectionType type) {
 
 void layout_SetSectionType(SectionType type) {
 	if (SectionTypeInfo const &typeInfo = sectionTypeInfo[type]; typeInfo.isBanked()) {
-		scriptError("A bank number must be specified for %s", typeInfo.name);
+		scriptError("A bank number must be specified for " PRI_SV, PRI_SV_ARG(typeInfo.name));
 		// Keep going with a default value for the bank index.
 	}
 
@@ -59,16 +59,16 @@ void layout_SetSectionType(SectionType type, uint32_t bank) {
 
 	if (bank < typeInfo.firstBank) {
 		scriptError(
-		    "%s bank %" PRIu32 " does not exist (the minimum is %" PRIu32 ")",
-		    typeInfo.name,
+		    PRI_SV " bank %" PRIu32 " does not exist (the minimum is %" PRIu32 ")",
+		    PRI_SV_ARG(typeInfo.name),
 		    bank,
 		    typeInfo.firstBank
 		);
 		bank = typeInfo.firstBank;
 	} else if (bank > typeInfo.lastBank) {
 		scriptError(
-		    "%s bank %" PRIu32 " does not exist (the maximum is %" PRIu32 ")",
-		    typeInfo.name,
+		    PRI_SV " bank %" PRIu32 " does not exist (the maximum is %" PRIu32 ")",
+		    PRI_SV_ARG(typeInfo.name),
 		    bank,
 		    typeInfo.lastBank
 		);
@@ -94,9 +94,9 @@ void layout_SetAddr(uint32_t addr) {
 		scriptError("Cannot decrease the current address (from $%04x to $%04x)", pc, addr);
 	} else if (addr > typeInfo.endAddr() + 1u) { // Allow "one past the end" zero-sized sections.
 		scriptError(
-		    "Cannot set the current address to $%04" PRIx32 ": %s ends at $%04" PRIx16,
+		    "Cannot set the current address to $%04" PRIx32 ": " PRI_SV " ends at $%04" PRIx16,
 		    addr,
-		    typeInfo.name,
+		    PRI_SV_ARG(typeInfo.name),
 		    typeInfo.endAddr()
 		);
 		pc = typeInfo.endAddr();
@@ -240,17 +240,17 @@ void layout_PlaceSection(std::string const &name, bool isOptional) {
 		// A section that has data must get assigned a type that requires data.
 		if (!sectTypeHasData(activeType) && !section->data.empty()) {
 			scriptError(
-			    "\"%s\" is specified to be a %s section, but it contains data",
+			    "\"%s\" is specified to be a " PRI_SV " section, but it contains data",
 			    name.c_str(),
-			    typeInfo.name
+			    PRI_SV_ARG(typeInfo.name)
 			);
 		} else if (sectTypeHasData(activeType) && section->data.empty() && section->size != 0) {
 			// A section that lacks data can only be assigned to a type that requires data
 			// if it's empty.
 			scriptError(
-			    "\"%s\" is specified to be a %s section, but it does not contain data",
+			    "\"%s\" is specified to be a " PRI_SV " section, but it does not contain data",
 			    name.c_str(),
-			    typeInfo.name
+			    PRI_SV_ARG(typeInfo.name)
 			);
 		} else {
 			// SDCC areas don't have a type assigned yet, so the linker script gives them one.
@@ -260,9 +260,9 @@ void layout_PlaceSection(std::string const &name, bool isOptional) {
 		}
 	} else if (section->type != activeType) {
 		scriptError(
-		    "\"%s\" is specified to be a %s section, but it is already a %s section",
+		    "\"%s\" is specified to be a " PRI_SV " section, but it is already a %s section",
 		    name.c_str(),
-		    typeInfo.name,
+		    PRI_SV_ARG(typeInfo.name),
 		    section->typeInfo().name
 		);
 	}
@@ -273,10 +273,10 @@ void layout_PlaceSection(std::string const &name, bool isOptional) {
 		uint32_t bank = activeBankIdx + typeInfo.firstBank;
 		if (section->isBankFixed && bank != section->bank) {
 			scriptError(
-			    "The linker script places section \"%s\" in %s bank %" PRIu32
+			    "The linker script places section \"%s\" in " PRI_SV_ARG " bank %" PRIu32
 			    ", but it was already defined in bank %" PRIu32,
 			    name.c_str(),
-			    section->typeInfo().name,
+			    PRI_SV_ARG(section->typeInfo().name),
 			    bank,
 			    section->bank
 			);
@@ -318,10 +318,10 @@ void layout_PlaceSection(std::string const &name, bool isOptional) {
 			uint16_t overflowSize = section->size - (typeInfo.size - curOfs);
 			scriptError(
 			    "The linker script assigns section \"%s\" to address $%04" PRIx16
-			    ", but then it would overflow %s by %" PRIu16 " byte%s",
+			    ", but then it would overflow " PRI_SV " by %" PRIu16 " byte%s",
 			    name.c_str(),
 			    org,
-			    typeInfo.name,
+			    PRI_SV_ARG(typeInfo.name),
 			    overflowSize,
 			    overflowSize == 1 ? "" : "s"
 			);

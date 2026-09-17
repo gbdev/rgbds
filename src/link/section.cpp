@@ -113,10 +113,10 @@ static void mergeSections(Section &target, std::unique_ptr<Section> &&other) {
 		fatalTwoAt(
 		    target,
 		    *other,
-		    "Section \"%s\" is defined with type `%s`, but also with type `%s`",
+		    "Section \"%s\" is defined with type `" PRI_SV "`, but also with type `" PRI_SV "`",
 		    target.name.c_str(),
-		    target.typeInfo().name,
-		    other->typeInfo().name
+		    PRI_SV_ARG(target.typeInfo().name),
+		    PRI_SV_ARG(other->typeInfo().name)
 		);
 	}
 
@@ -188,9 +188,9 @@ void sect_AddSection(std::unique_ptr<Section> &&section) {
 		mergeSections(*target, std::move(section));
 	} else if (section->modifier == SECTION_UNION && sectTypeHasData(section->type)) {
 		fatal(
-		    "Section \"%s\" is of type `%s`, which cannot be `UNION`ized",
+		    "Section \"%s\" is of type `" PRI_SV "`, which cannot be `UNION`ized",
 		    section->name.c_str(),
-		    section->typeInfo().name
+		    PRI_SV_ARG(section->typeInfo().name)
 		);
 	} else {
 		sections.add(section->name, std::move(section));
@@ -260,9 +260,9 @@ static void doSanityChecks(Section &section) {
 	// Too large an alignment may not be satisfiable
 	if (section.isAlignFixed && (section.alignMask & typeInfo.startAddr)) {
 		error(
-		    "Section \"%s\" has type `%s`, which cannot be aligned to $%04x bytes",
+		    "Section \"%s\" has type `" PRI_SV "`, which cannot be aligned to $%04x bytes",
 		    section.name.c_str(),
-		    typeInfo.name,
+		    PRI_SV_ARG(typeInfo.name),
 		    section.alignMask + 1
 		);
 	}

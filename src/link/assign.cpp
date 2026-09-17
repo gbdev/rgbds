@@ -112,8 +112,8 @@ static std::optional<size_t> getPlacement(Section const &section, MemoryLocation
 		if (location.bank < typeInfo.firstBank
 		    || location.bank >= memory[section.type].size() + typeInfo.firstBank) {
 			fatal(
-			    "Invalid bank for %s section \"%s\": %" PRIu32,
-			    typeInfo.name,
+			    "Invalid bank for " PRI_SV " section \"%s\": %" PRIu32,
+			    PRI_SV_ARG(typeInfo.name),
 			    section.name.c_str(),
 			    location.bank
 			);

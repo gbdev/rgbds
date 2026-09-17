@@ -2,61 +2,65 @@
 
 #include "linkdefs.hpp"
 
+#include <string_view>
+
+using namespace std::literals;
+
 // The default values are the most lax, as they are used as-is by RGBASM; only RGBLINK has the full
 // info, so RGBASM's job is only to catch unconditional errors earlier.
 // clang-format off: nested initializers
 SectionTypeInfo sectionTypeInfo[SECTTYPE_INVALID] = {
     {
-        .name = "WRAM0",
+        .name = "WRAM0"sv,
         .startAddr = 0xC000,
         .size = 0x2000, // Patched to 0x1000 if !isWRAM0Mode
         .firstBank = 0,
         .lastBank = 0,
     },
     {
-        .name = "VRAM",
+        .name = "VRAM"sv,
         .startAddr = 0x8000,
         .size = 0x2000,
         .firstBank = 0,
         .lastBank = 1, // Patched to 0 if isDmgMode
     },
     {
-        .name = "ROMX",
+        .name = "ROMX"sv,
         .startAddr = 0x4000,
         .size = 0x4000,
         .firstBank = 1,
         .lastBank = 65535,
     },
     {
-        .name = "ROM0",
+        .name = "ROM0"sv,
         .startAddr = 0x0000,
         .size = 0x8000, // Patched to 0x4000 if !is32kMode
         .firstBank = 0,
         .lastBank = 0,
     },
     {
-        .name = "HRAM",
+        .name = "HRAM"sv,
         .startAddr = 0xFF80,
         .size = 0x007F,
         .firstBank = 0,
         .lastBank = 0,
     },
     {
-        .name = "WRAMX",
+        .name = "WRAMX"sv,
         .startAddr = 0xD000,
         .size = 0x1000,
         .firstBank = 1,
         .lastBank = 7,
     },
     {
-        .name = "SRAM",
+        .name = "SRAM"sv,
         .startAddr = 0xA000,
         .size = 0x2000,
         .firstBank = 0,
         .lastBank = 255,
     },
     {
-        .name = "OAM",
+        .name = "OAM"sv,
         .startAddr = 0xFE00,
         .size = 0x00A0,
         .firstBank = 0,

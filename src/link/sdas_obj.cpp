@@ -862,20 +862,20 @@ void sdobj_ReadFile(FileStackNode const &src, FILE *file, std::vector<Symbol> &f
 				if (!section->data.empty()) {
 					fatalAt(
 					    where,
-					    "\"%s\" is implicitly defined as a %s section (being at address $%04" PRIx16
+					    "\"%s\" is implicitly defined as a " PRI_SV " section (being at address $%04" PRIx16
 					    "), but it has data! (Was a bad `__at()` value used?)",
 					    section->name.c_str(),
-					    section->typeInfo().name,
+					    PRI_SV_ARG(section->typeInfo().name),
 					    section->org
 					);
 				}
 			} else if (section->size != 0 && section->data.empty()) {
 				fatalAt(
 				    where,
-				    "\"%s\" is implicitly defined as a %s section (being at address $%04" PRIx16
+				    "\"%s\" is implicitly defined as a " PRI_SV_ARG " section (being at address $%04" PRIx16
 				    "), but it doesn't have any data! (Was a bad `__at()` value used?)",
 				    section->name.c_str(),
-				    section->typeInfo().name,
+				    PRI_SV_ARG(section->typeInfo().name),
 				    section->org
 				);
 			}
