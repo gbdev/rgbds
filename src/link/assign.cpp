@@ -219,14 +219,14 @@ static std::optional<size_t> getPlacement(Section const &section, MemoryLocation
 static std::string getSectionDescription(Section const &section) {
 	std::string description = "\"" + section.name + "\" (" + section.typeInfo().name + " section) ";
 	if (section.isBankFixed && section.typeInfo().isBanked()) {
-		char bank[8];
+		char bank[9];
 		snprintf(bank, sizeof(bank), "%02" PRIx32, section.bank);
 		if (section.isAddressFixed) {
-			char addr[8];
+			char addr[5];
 			snprintf(addr, sizeof(addr), "%04" PRIx16, section.org);
 			description = description + "at $" + bank + ":" + addr;
 		} else if (section.isAlignFixed) {
-			char mask[8];
+			char mask[5];
 			snprintf(mask, sizeof(mask), "%" PRIx16, static_cast<uint16_t>(~section.alignMask));
 			description = description + "in bank $" + bank + " with align mask $" + mask;
 		} else {
@@ -234,11 +234,11 @@ static std::string getSectionDescription(Section const &section) {
 		}
 	} else {
 		if (section.isAddressFixed) {
-			char addr[8];
+			char addr[5];
 			snprintf(addr, sizeof(addr), "%04" PRIx16, section.org);
 			description = description + "at address $" + addr;
 		} else if (section.isAlignFixed) {
-			char mask[8], offset[8];
+			char mask[5], offset[5];
 			snprintf(mask, sizeof(mask), "%" PRIx16, static_cast<uint16_t>(~section.alignMask));
 			snprintf(offset, sizeof(offset), "%" PRIx16, section.alignOfs);
 			description = description + "with align mask $" + mask + " and offset $" + offset;
