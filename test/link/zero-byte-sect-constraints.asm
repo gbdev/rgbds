@@ -21,3 +21,7 @@ SECTION "free align16", ROM0, ALIGN[16,$2222] ; Should be equivalent to the abov
 
 SECTION "free align", ROM0, ALIGN[13,$1234] ; Has more than one suitable location, so cannot be trivially solved.
 	assert @ == $1234 ; Assuming that it goes into the first suitable location.
+
+
+SECTION "hram align", HRAM, ALIGN[8, $84]
+	assert @ == $FF84

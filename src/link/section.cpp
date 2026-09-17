@@ -258,7 +258,7 @@ static void doSanityChecks(Section &section) {
 	SectionTypeInfo const &typeInfo = section.typeInfo();
 
 	// Too large an alignment may not be satisfiable
-	if (section.isAlignFixed && (section.alignMask & typeInfo.startAddr)) {
+	if (section.isAlignFixed && (section.alignMask & typeInfo.startAddr) > section.alignOfs) {
 		error(
 		    "Section \"%s\" has type `%s`, which cannot be aligned to $%04x bytes",
 		    section.name.c_str(),
