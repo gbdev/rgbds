@@ -85,7 +85,13 @@ evaluateTest () {
 for i in *.asm; do
 	test=${i%.asm}
 	startTest
-	"$RGBASM" -o "$otemp" "${test}.asm"
+	if ! "$RGBASM" -o "$otemp" "${test}.asm"; then
+		echo "$bold${red}Failed to assemble $test.asm!$rescolors$resbold"
+		our_rc=1
+		evaluateTest
+		continue
+	fi
+
 
 	RGBLINKFLAGS=()
 	if [ -f "${test}.flags" ]; then
