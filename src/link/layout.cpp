@@ -126,7 +126,7 @@ void layout_AlignTo(uint32_t alignment, uint32_t alignOfs) {
 
 	if (isPcFloating) {
 		if (alignment >= 16) {
-			layout_SetAddr(floatingAlignOffset);
+			layout_SetAddr(alignOfs);
 		} else {
 			uint32_t alignSize = 1u << alignment;
 			uint32_t alignMask = alignSize - 1;
