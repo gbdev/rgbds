@@ -47,7 +47,7 @@ void layout_SetFloatingSectionType(SectionType type) {
 
 void layout_SetSectionType(SectionType type) {
 	if (SectionTypeInfo const &typeInfo = sectionTypeInfo[type]; typeInfo.isBanked()) {
-		scriptError("A bank number must be specified for %s", typeInfo.name.c_str());
+		scriptError("A bank number must be specified for %s", typeInfo.name);
 		// Keep going with a default value for the bank index.
 	}
 
@@ -60,7 +60,7 @@ void layout_SetSectionType(SectionType type, uint32_t bank) {
 	if (bank < typeInfo.firstBank) {
 		scriptError(
 		    "%s bank %" PRIu32 " does not exist (the minimum is %" PRIu32 ")",
-		    typeInfo.name.c_str(),
+		    typeInfo.name,
 		    bank,
 		    typeInfo.firstBank
 		);
@@ -68,7 +68,7 @@ void layout_SetSectionType(SectionType type, uint32_t bank) {
 	} else if (bank > typeInfo.lastBank) {
 		scriptError(
 		    "%s bank %" PRIu32 " does not exist (the maximum is %" PRIu32 ")",
-		    typeInfo.name.c_str(),
+		    typeInfo.name,
 		    bank,
 		    typeInfo.lastBank
 		);
@@ -96,7 +96,7 @@ void layout_SetAddr(uint32_t addr) {
 		scriptError(
 		    "Cannot set the current address to $%04" PRIx32 ": %s ends at $%04" PRIx16,
 		    addr,
-		    typeInfo.name.c_str(),
+		    typeInfo.name,
 		    typeInfo.endAddr()
 		);
 		pc = typeInfo.endAddr();
@@ -242,7 +242,7 @@ void layout_PlaceSection(std::string const &name, bool isOptional) {
 			scriptError(
 			    "\"%s\" is specified to be a %s section, but it contains data",
 			    name.c_str(),
-			    typeInfo.name.c_str()
+			    typeInfo.name
 			);
 		} else if (sectTypeHasData(activeType) && section->data.empty() && section->size != 0) {
 			// A section that lacks data can only be assigned to a type that requires data
@@ -250,7 +250,7 @@ void layout_PlaceSection(std::string const &name, bool isOptional) {
 			scriptError(
 			    "\"%s\" is specified to be a %s section, but it does not contain data",
 			    name.c_str(),
-			    typeInfo.name.c_str()
+			    typeInfo.name
 			);
 		} else {
 			// SDCC areas don't have a type assigned yet, so the linker script gives them one.
@@ -262,8 +262,8 @@ void layout_PlaceSection(std::string const &name, bool isOptional) {
 		scriptError(
 		    "\"%s\" is specified to be a %s section, but it is already a %s section",
 		    name.c_str(),
-		    typeInfo.name.c_str(),
-		    section->typeInfo().name.c_str()
+		    typeInfo.name,
+		    section->typeInfo().name
 		);
 	}
 
@@ -276,7 +276,7 @@ void layout_PlaceSection(std::string const &name, bool isOptional) {
 			    "The linker script places section \"%s\" in %s bank %" PRIu32
 			    ", but it was already defined in bank %" PRIu32,
 			    name.c_str(),
-			    section->typeInfo().name.c_str(),
+			    section->typeInfo().name,
 			    bank,
 			    section->bank
 			);
@@ -321,7 +321,7 @@ void layout_PlaceSection(std::string const &name, bool isOptional) {
 			    ", but then it would overflow %s by %" PRIu16 " byte%s",
 			    name.c_str(),
 			    org,
-			    typeInfo.name.c_str(),
+			    typeInfo.name,
 			    overflowSize,
 			    overflowSize == 1 ? "" : "s"
 			);

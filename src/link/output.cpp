@@ -461,7 +461,7 @@ static void writeMapBank(SortedSections const &sectList, SectionType type, uint3
 	fprintf(
 	    mapFile,
 	    "\n%s bank #%" PRIu32 ":\n",
-	    sectionTypeInfo[type].name.c_str(),
+	    sectionTypeInfo[type].name,
 	    bank + sectionTypeInfo[type].firstBank
 	);
 
@@ -524,7 +524,7 @@ static void writeMapSummary() {
 		fprintf(
 		    mapFile,
 		    "\t%s: %" PRIu32 " byte%s used / %zu free",
-		    sectionTypeInfo[type].name.c_str(),
+		    sectionTypeInfo[type].name,
 		    usedTotal,
 		    usedTotal == 1 ? "" : "s",
 		    static_cast<size_t>(nbBanks) * sectionTypeInfo[type].size - usedTotal

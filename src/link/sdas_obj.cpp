@@ -865,7 +865,7 @@ void sdobj_ReadFile(FileStackNode const &src, FILE *file, std::vector<Symbol> &f
 					    "\"%s\" is implicitly defined as a %s section (being at address $%04" PRIx16
 					    "), but it has data! (Was a bad `__at()` value used?)",
 					    section->name.c_str(),
-					    section->typeInfo().name.c_str(),
+					    section->typeInfo().name,
 					    section->org
 					);
 				}
@@ -875,7 +875,7 @@ void sdobj_ReadFile(FileStackNode const &src, FILE *file, std::vector<Symbol> &f
 				    "\"%s\" is implicitly defined as a %s section (being at address $%04" PRIx16
 				    "), but it doesn't have any data! (Was a bad `__at()` value used?)",
 				    section->name.c_str(),
-				    section->typeInfo().name.c_str(),
+				    section->typeInfo().name,
 				    section->org
 				);
 			}
