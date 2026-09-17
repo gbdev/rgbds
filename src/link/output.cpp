@@ -204,7 +204,7 @@ static void
 	}
 }
 
-static void writeROM() {
+void out_WriteROMIfAny() {
 	if (options.outputFileName) {
 		char const *outputFileName = options.outputFileName->c_str();
 		if (*options.outputFileName != "-") {
@@ -536,7 +536,7 @@ static void writeMapSummary() {
 	}
 }
 
-static void writeSym() {
+void out_WriteSymIfAny() {
 	if (!options.symFileName) {
 		return;
 	}
@@ -587,7 +587,7 @@ static void writeSym() {
 	}
 }
 
-static void writeMap() {
+void out_WriteMapIfAny() {
 	if (!options.mapFileName) {
 		return;
 	}
@@ -614,10 +614,4 @@ static void writeMap() {
 			writeMapBank(sections[type][bank], type, bank);
 		}
 	}
-}
-
-void out_WriteFiles() {
-	writeROM();
-	writeSym();
-	writeMap();
 }

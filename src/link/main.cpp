@@ -433,14 +433,14 @@ int main(int argc, char *argv[]) {
 		sectionTypeInfo[SECTTYPE_VRAM].lastBank = 0;
 	}
 
-	// Read all object files first,
+	// Read all object files...
 	size_t nbFiles = localOptions.inputFileNames.size();
 	obj_Setup(nbFiles);
 	for (size_t i = 0; i < nbFiles; ++i) {
 		obj_ReadFile(localOptions.inputFileNames[i], nbFiles - i - 1);
 	}
 
-	// apply the linker script's modifications,
+	// Apply the linker script's modifications...
 	if (localOptions.linkerScriptName) {
 		verbosePrint(VERB_NOTICE, "Reading linker script...\n");
 
@@ -453,16 +453,25 @@ int main(int argc, char *argv[]) {
 		requireZeroErrors();
 	}
 
-	// then process them,
+	// Attempt to generate a layout...
 	sect_DoSanityChecks();
 	requireZeroErrors();
 	assign_AssignSections();
+
+	// Emit the symbol and/or map files now (if requested on the CLI),
+	// so that more link-time info is available to debug any failing assertions.
+	// This is safe to do, since we have a valid layout at this point;
+	// assertions only check user-level assumptions made about it.
+	out_WriteSymIfAny();
+	out_WriteMapIfAny();
+
+	// Make any last-minute verifications...
 	patch_CheckAssertions();
 
-	// and finally output the result.
+	// And, finally, make the ROM and emit it!
 	patch_ApplyPatches();
 	requireZeroErrors();
-	out_WriteFiles();
+	out_WriteROMIfAny();
 
 	return 0;
 }
