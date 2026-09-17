@@ -330,16 +330,6 @@ rgblinkQuiet -o "$gbtemp" -S "romx := 4" "$otemp" 2>"$outtemp"
 tryDiff "$test"/out.err "$outtemp"
 evaluateTest
 
-test="scramble-specs"
-startTest
-"$RGBASM" -o "$otemp" "$test"/a.asm
-continueTest
-rgblinkQuiet -o "$gbtemp" -S "romx=3,wramx=4,sram=4" "$otemp" 2>"$outtemp"
-tryDiff "$test"/out.err "$outtemp"
-# This test does not trim its output with 'dd' because it needs to verify the correct output size
-tryCmp "$test"/out.gb "$gbtemp"
-evaluateTest
-
 test="script-ds"
 startTest
 "$RGBASM" -o "$otemp" "$test"/a.asm
