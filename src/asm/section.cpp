@@ -472,16 +472,15 @@ static Section *getSection(
 	if (alignment != 0) {
 		// It doesn't make sense to have both alignment and org set
 		if (org != UINT32_MAX) {
-			if ((org - alignOffset) & alignMask) {
+			if ((org & alignMask) != alignOffset) {
 				error("Section \"%s\"'s fixed address does not match its alignment", name.c_str());
 			}
 			alignment = 0; // Ignore it if it's satisfied
-		} else if (typeInfo.startAddr & alignMask) {
+		} else if ((typeInfo.startAddr & alignMask) > alignOffset) {
 			error(
 			    "Section \"%s\"'s alignment cannot be attained in %s", name.c_str(), typeInfo.name
 			);
 			alignment = 0; // Ignore it if it's unattainable
-			org = 0;
 		} else if (alignment == 16) {
 			// Treat an alignment of 16 as fixing the address.
 			alignment = 0;
