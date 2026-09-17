@@ -1,0 +1,6 @@
+ROMX
+	"rom"
+WRAMX
+	"wram"
+VRAM
+	"vram"
