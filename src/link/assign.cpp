@@ -23,11 +23,6 @@
 #include "link/symbol.hpp"
 #include "link/warning.hpp"
 
-struct MemoryLocation {
-	uint16_t address;
-	uint32_t bank;
-};
-
 struct FreeSpace {
 	uint16_t address;
 	uint16_t size;
@@ -80,6 +75,71 @@ struct Scrambling {
 };
 static Scrambling scrambling;
 
+struct MemoryLocation {
+	uint16_t address;
+	uint32_t bank;
+
+	static MemoryLocation initFor(Section const &section) {
+		MemoryLocation location;
+
+		if (section.isAddressFixed) { // This will never change.
+			location.address = section.org;
+		}
+
+		if (section.isBankFixed) {
+			location.bank = section.bank;
+		} else {
+			location.bank = section.typeInfo().firstBank;
+
+			if (auto info = scrambling.getInfoFor(section.type);
+			    info.has_value() && info->maxOfs != 0) { // If scrambling is enabled...
+				// ...then we will begin the search from a different offset for each section.
+				// Go to the next offset (backwards), wrapping around. (Thus, no underflow!)
+				info->curOfs = (info->curOfs != 0 ? info->curOfs : info->maxOfs) - 1;
+				location.bank += info->curOfs;
+			}
+		}
+
+		return location;
+	}
+
+	// Try again in the next bank, if one is available.
+	[[nodiscard("This returns whether iteration can be continued")]]
+	bool goToNextApplicableBankFor(Section const &section) {
+		assume(bank >= section.typeInfo().firstBank);
+		assume(bank <= section.typeInfo().lastBank);
+
+		if (section.isBankFixed) {
+			// We have already tried the only possible bank.
+			return false;
+		}
+
+		// Try scrambled banks in descending order until no bank in the scrambled range is
+		// available.
+		if (auto info = scrambling.getInfoFor(section.type);
+		    info.has_value() && info->maxOfs != 0) {
+			// All floating sections within a scrambled region should be
+			// within the scrambled bank pool.
+			assume(bank < info->maxOfs + section.typeInfo().firstBank);
+
+			uint16_t ofsWithinPool = bank - section.typeInfo().firstBank;
+			// Go to the next bank (backwards), wrapping around. (Thus, no overflow!)
+			ofsWithinPool = (ofsWithinPool != 0 ? ofsWithinPool : info->maxOfs) - 1;
+
+			bank = ofsWithinPool + section.typeInfo().firstBank;
+			// Keep iterating unless we have wrapped back around to the start offset.
+			return ofsWithinPool != info->curOfs;
+		}
+
+		// Otherwise, try in ascending order.
+		if (bank == section.typeInfo().lastBank) {
+			return false;
+		}
+		++bank;
+		return true;
+	}
+};
+
 // Checks whether a given location is suitable for placing a given section
 // This checks not only that the location has enough room for the section, but
 // also that the constraints (alignment...) are respected.
@@ -101,31 +161,12 @@ static bool isLocationSuitable(
 	return location.address + section.size <= freeSpace.address + freeSpace.size;
 }
 
-static MemoryLocation getStartLocation(Section const &section) {
-	MemoryLocation location;
-
-	// Determine which bank we should start searching in
-	if (section.isBankFixed) {
-		location.bank = section.bank;
-	} else {
-		location.bank = section.typeInfo().firstBank;
-
-		if (auto info = scrambling.getInfoFor(section.type);
-		    info.has_value() && info->maxOfs != 0) {
-			info->curOfs = (info->curOfs != 0 ? info->curOfs : info->maxOfs) - 1;
-			location.bank += info->curOfs;
-		}
-	}
-
-	return location;
-}
-
 // Returns a suitable free space index into `memory[section->type]` at which to place the given
 // section, or `std::nullopt` if none was found.
 static std::optional<size_t> getPlacement(Section const &section, MemoryLocation &location) {
 	SectionTypeInfo const &typeInfo = section.typeInfo();
 
-	for (;;) {
+	do {
 		if (location.bank < typeInfo.firstBank
 		    || location.bank >= memory[section.type].size() + typeInfo.firstBank) {
 			fatal(
@@ -191,29 +232,9 @@ static std::optional<size_t> getPlacement(Section const &section, MemoryLocation
 			// Try again with the new location/free space combo
 		}
 
-		// Try again in the next bank, if one is available.
-		// Try scrambled banks in descending order until no bank in the scrambled range is
-		// available. Otherwise, try in ascending order.
-		if (section.isBankFixed) {
-			return std::nullopt;
-		} else if (
-		    auto info = scrambling.getInfoFor(section.type); info.has_value() && info->maxOfs != 0
-		) {
-			if (location.bank > typeInfo.firstBank) {
-				--location.bank;
-			} else if (info->maxOfs < typeInfo.lastBank) {
-				location.bank = info->maxOfs + 1;
-			} else {
-				return std::nullopt;
-			}
-		} else if (location.bank < typeInfo.lastBank) {
-			++location.bank;
-		} else {
-			return std::nullopt;
-		}
-
 		// Try again in the next iteration.
-	}
+	} while (location.goToNextApplicableBankFor(section));
+	return std::nullopt;
 }
 
 static std::string getSectionDescription(Section const &section) {
@@ -245,7 +266,15 @@ static std::string getSectionDescription(Section const &section) {
 		} else {
 			description = description + "anywhere";
 		}
+
+		if (auto info = scrambling.getInfoFor(section.type);
+		    info.has_value() && info->maxOfs != 0) { // Only mention scrambling if it is enabled.
+			char size[6];
+			snprintf(size, sizeof(size), "%" PRIu16, info->maxOfs);
+			description = description + " within the " + size + " scrambled banks";
+		}
 	}
+
 	return description;
 }
 
@@ -263,16 +292,13 @@ static void assignSection(Section &section, MemoryLocation const &location) {
 // Places a section in a suitable location, or error out if it fails to.
 // Due to the implemented algorithm, this should be called with sections of decreasing size!
 static void placeSection(Section &section) {
-	SectionTypeInfo const &typeInfo = section.typeInfo();
+	MemoryLocation location = MemoryLocation::initFor(section);
 
 	// Specially handle 0-byte SECTIONs, as they can't overlap anything
 	if (section.size == 0) {
-		// Unless the SECTION has a fixed address or non-zero alignment, the starting
+		// Unless the SECTION has a fixed address or non-zero alignment offset, the starting
 		// address is fine for any alignment, as checked in `sect_DoSanityChecks`.
-		MemoryLocation location = {
-		    .address = section.isAddressFixed ? section.org : typeInfo.startAddr,
-		    .bank = section.isBankFixed ? section.bank : typeInfo.firstBank,
-		};
+		location.address = section.isAddressFixed ? section.org : section.typeInfo().startAddr;
 		if (section.isAlignFixed && !section.isAddressFixed) {
 			if (uint16_t offset = (location.address - section.alignOfs) & section.alignMask;
 			    offset != 0) {
@@ -285,9 +311,9 @@ static void placeSection(Section &section) {
 
 	// Place section using first-fit decreasing algorithm
 	// https://en.wikipedia.org/wiki/Bin_packing_problem#First-fit_algorithm
-	MemoryLocation location = getStartLocation(section);
 	if (std::optional<size_t> spaceIdx = getPlacement(section, location); spaceIdx) {
-		std::deque<FreeSpace> &bankMem = memory[section.type][location.bank - typeInfo.firstBank];
+		std::deque<FreeSpace> &bankMem =
+		    memory[section.type][location.bank - section.typeInfo().firstBank];
 		FreeSpace &freeSpace = bankMem[*spaceIdx];
 
 		assignSection(section, location);
@@ -324,9 +350,8 @@ static void placeSection(Section &section) {
 	if (!section.isBankFixed || !section.isAddressFixed) {
 		// If a section failed to go to several places, nothing we can report
 		fatal("Unable to place %s", getSectionDescription(section).c_str());
-	} else if (
-	    uint16_t onePastEnd = typeInfo.endAddr() + 1; section.org + section.size > onePastEnd
-	) {
+	} else if (uint16_t onePastEnd = section.typeInfo().endAddr() + 1;
+	           section.org + section.size > onePastEnd) {
 		// If the section just can't fit the bank, report that
 		fatal(
 		    "Unable to place %s: section runs past end of region ($%04x > $%04x)",
