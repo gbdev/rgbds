@@ -36,17 +36,6 @@ struct FreeSpace {
 // Table of free space for each bank
 static std::vector<std::deque<FreeSpace>> memory[SECTTYPE_INVALID];
 
-// Assigns a section to a given memory location
-static void assignSection(Section &section, MemoryLocation const &location) {
-	// Propagate the assigned location to all UNIONs/FRAGMENTs
-	// so `jr` patches in them will have the correct offset
-	for (Section &piece : section.pieces()) {
-		piece.org = location.address;
-		piece.bank = location.bank;
-	}
-	out_AddSection(section);
-}
-
 // Checks whether a given location is suitable for placing a given section
 // This checks not only that the location has enough room for the section, but
 // also that the constraints (alignment...) are respected.
@@ -247,6 +236,17 @@ static std::string getSectionDescription(Section const &section) {
 		}
 	}
 	return description;
+}
+
+// Assigns a section to a given memory location
+static void assignSection(Section &section, MemoryLocation const &location) {
+	// Propagate the assigned location to all UNIONs/FRAGMENTs
+	// so `jr` patches in them will have the correct offset
+	for (Section &piece : section.pieces()) {
+		piece.org = location.address;
+		piece.bank = location.bank;
+	}
+	out_AddSection(section);
 }
 
 // Places a section in a suitable location, or error out if it fails to.
