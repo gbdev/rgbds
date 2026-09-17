@@ -138,6 +138,14 @@ struct MemoryLocation {
 		++bank;
 		return true;
 	}
+
+	void makeAddressAligned(uint16_t alignMask, uint16_t alignOfs) {
+		// By how much the address is past the target offset within the current alignment "page".
+		uint16_t offset = (address - alignOfs) & alignMask;
+		// Move by one page *minus* that "overshoot" offset.
+		// If it's 0, then this would move by a whole page, but `& alignMask` resets it back to 0.
+		address += ((alignMask + 1) - offset) & alignMask;
+	}
 };
 
 // Checks whether a given location is suitable for placing a given section
@@ -289,13 +297,10 @@ static void placeSection(Section &section) {
 
 	// Specially handle 0-byte SECTIONs, as they can't overlap anything
 	if (section.size == 0) {
-		// Unless the SECTION has a fixed address or non-zero alignment offset, the starting
-		// address is fine for any alignment, as checked in `sect_DoSanityChecks`.
-		location.address = section.isAddressFixed ? section.org : section.typeInfo().startAddr;
-		if (section.isAlignFixed && !section.isAddressFixed) {
-			if (uint16_t offset = (location.address - section.alignOfs) & section.alignMask;
-			    offset != 0) {
-				location.address += section.alignMask + 1 - offset;
+		if (!section.isAddressFixed) {
+			location.address = section.typeInfo().startAddr;
+			if (section.isAlignFixed) {
+				location.makeAddressAligned(section.alignMask, section.alignOfs);
 			}
 		}
 		assignSection(section, location);
