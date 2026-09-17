@@ -671,24 +671,27 @@ int main(int argc, char *argv[]) {
 	autoOutPath(localOptions.autoPalettes, options.palettes, ".pal");
 	autoOutPath(localOptions.autoPalmap, options.palmap, ".palmap");
 
-	// Execute deferred pal spec parsing, now that all other params are known
-	switch (options.palSpecType) {
-	case Options::NO_SPEC:
-	case Options::EMBEDDED:
-		assume(!localOptions.palSpec);
-		break;
-	case Options::INLINE:
-		assume(localOptions.palSpec);
-		parseInlinePalSpec(localOptions.palSpec->c_str());
-		break;
-	case Options::EXTERNAL:
-		assume(localOptions.palSpec);
-		parseExternalPalSpec(localOptions.palSpec->c_str());
-		break;
-	case Options::DMG:
-		assume(localOptions.palSpec);
-		parseDmgPalSpec(localOptions.palSpec->c_str());
-		break;
+	// Execute deferred pal spec parsing, now that all other params are known.
+	// Do not parse pal specs if `options.nbColorsPerPal` is invalid.
+	if (options.nbColorsPerPal > 0 && options.nbColorsPerPal <= 4) {
+		switch (options.palSpecType) {
+		case Options::NO_SPEC:
+		case Options::EMBEDDED:
+			assume(!localOptions.palSpec);
+			break;
+		case Options::INLINE:
+			assume(localOptions.palSpec);
+			parseInlinePalSpec(localOptions.palSpec->c_str());
+			break;
+		case Options::EXTERNAL:
+			assume(localOptions.palSpec);
+			parseExternalPalSpec(localOptions.palSpec->c_str());
+			break;
+		case Options::DMG:
+			assume(localOptions.palSpec);
+			parseDmgPalSpec(localOptions.palSpec->c_str());
+			break;
+		}
 	}
 
 	verboseDo(VERB_CONFIG, verboseOutputConfig);

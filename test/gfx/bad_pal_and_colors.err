@@ -1,0 +1,3 @@
+error: Palette size ('-s') must not exceed 4
+error: 2bpp palettes can only contain 4 colors, not 5
+Conversion aborted after 2 errors
