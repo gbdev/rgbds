@@ -2,6 +2,7 @@
 
 #include "link/assign.hpp"
 
+#include <algorithm>
 #include <deque>
 #include <inttypes.h>
 #include <optional>
@@ -25,11 +26,20 @@
 
 struct FreeSpace {
 	uint16_t address;
-	uint16_t size;
+	uint16_t size; // Never zero.
+
+	uint16_t addrOnePast() const { return address + size; }
 };
 
 // Table of free space for each bank
 static std::vector<std::deque<FreeSpace>> memory[SECTTYPE_INVALID];
+using FreeSpaceIter = std::deque<FreeSpace>::iterator;
+
+static std::deque<FreeSpace> &freeSpaceOfBank(Section const &section, uint32_t bank) {
+	assume(bank >= section.typeInfo().firstBank);
+	assume(bank <= section.typeInfo().lastBank);
+	return memory[section.type][bank - section.typeInfo().firstBank];
+}
 
 struct Scrambling {
 	uint16_t romxOfs = 0;
@@ -109,10 +119,7 @@ struct MemoryLocation {
 		assume(bank >= section.typeInfo().firstBank);
 		assume(bank <= section.typeInfo().lastBank);
 
-		if (section.isBankFixed) {
-			// We have already tried the only possible bank.
-			return false;
-		}
+		assume(!section.isBankFixed);
 
 		// Try scrambled banks in descending order until no bank in the scrambled range is
 		// available.
@@ -148,94 +155,73 @@ struct MemoryLocation {
 	}
 };
 
-// Checks whether a given location is suitable for placing a given section
-// This checks not only that the location has enough room for the section, but
-// also that the constraints (alignment...) are respected.
-static bool isLocationSuitable(
-    Section const &section, FreeSpace const &freeSpace, MemoryLocation const &location
-) {
-	if (section.isAddressFixed && section.org != location.address) {
-		return false;
-	}
+static FreeSpaceIter tryPlacingInBank(Section const &section, MemoryLocation &location) {
+	std::deque<FreeSpace> &bankMem = freeSpaceOfBank(section, location.bank);
 
-	if (section.isAlignFixed && ((location.address - section.alignOfs) & section.alignMask)) {
-		return false;
-	}
+	if (section.isAddressFixed) {
+		// There is only one candidate location in this bank: the address at which the section is
+		// fixed.
+		assume(location.address == section.org);
 
-	if (location.address < freeSpace.address) {
-		return false;
-	}
+		FreeSpaceIter iter = std::find_if(RANGE(bankMem), [&location](FreeSpace const &freeSpace) {
+			// If they both exactly match, that means the next block will begin past the requested
+			// addr, so the function would fail anyway.
+			return freeSpace.addrOnePast() >= location.address;
+		});
+		if (iter != bankMem.end()) {
+			// We have the first block ending after the section's address, so all that's left is
+			// checking that the address does fall into the block, and then that the section fits.
+			if (location.address < iter->address
+			    || location.address + section.size > iter->addrOnePast()) {
+				return bankMem.end(); // Failed! Better luck next bank?
+			}
+		}
+		return iter;
 
-	return location.address + section.size <= freeSpace.address + freeSpace.size;
+	} else {
+		// There are many possible locations within the bank, so we are going to iterate on free
+		// blocks. If it is impossible to fit at the earliest (constraint-satisfying) address, then
+		// no other address in the block will do; thus, we make only one attempt per block.
+		return std::find_if(RANGE(bankMem), [&location, &section](FreeSpace const &freeSpace) {
+			location.address = freeSpace.address;
+			if (section.isAlignFixed) {
+				location.makeAddressAligned(section.alignMask, section.alignOfs);
+				// Did it advance past the block? Or, rarely, overflowed?
+				if (location.address >= freeSpace.addrOnePast()
+				    || location.address < freeSpace.address) {
+					return false;
+				}
+			}
+
+			// Since `location.address` lies within the block,
+			// we only need to check that its end address also does.
+			return location.address + section.size <= freeSpace.addrOnePast();
+		});
+	}
 }
 
-// Returns a suitable free space index into `memory[section->type]` at which to place the given
-// section, or `std::nullopt` if none was found.
-static std::optional<size_t> getPlacement(Section const &section, MemoryLocation &location) {
-	SectionTypeInfo const &typeInfo = section.typeInfo();
+// Place section using first-fit decreasing algorithm
+// <https://en.wikipedia.org/wiki/Bin_packing_problem#First-fit_algorithm>
+// Returns an iterator to within `freeSpaceOfBank(section, location.bank)`
+// (guaranteeing that `location.bank` remains valid) pointing at the free block that
+// the section can go into (at `location.address`).
+// The iterator is an end iterator if and only if no suitable location was found.
+// `location` is updated accordingly.
+static FreeSpaceIter tryPlacing(Section const &section, MemoryLocation &location) {
+	if (section.isBankFixed) {
+		assume(location.bank == section.bank);
+		return tryPlacingInBank(section, location);
+	}
 
 	do {
-		assume(location.bank >= section.typeInfo().firstBank);
-		assume(location.bank <= section.typeInfo().lastBank);
-
-		// Switch to the beginning of the next bank
-		std::deque<FreeSpace> &bankMem = memory[section.type][location.bank - typeInfo.firstBank];
-		size_t spaceIdx = 0;
-
-		if (spaceIdx < bankMem.size()) {
-			location.address = bankMem[spaceIdx].address;
+		if (FreeSpaceIter iter = tryPlacingInBank(section, location);
+		    iter != freeSpaceOfBank(section, location.bank).end()) {
+			return iter; // Found one!
 		}
-
-		// Process locations in that bank
-		while (spaceIdx < bankMem.size()) {
-			// If that location is OK, return it
-			if (isLocationSuitable(section, bankMem[spaceIdx], location)) {
-				return spaceIdx;
-			}
-
-			// Go to the next *possible* location
-			if (section.isAddressFixed) {
-				// If the address is fixed, there can be only one candidate block per bank;
-				// if we already reached it, give up and try again in the next bank.
-				if (location.address >= section.org) {
-					break;
-				}
-				location.address = section.org;
-			} else if (section.isAlignFixed) {
-				// If the alignment is fixed, move to the next aligned location.
-				// We have previously ensured alignment to 15 or fewer bits.
-				assume(section.alignMask < (1 << 16) - 1);
-				uint16_t prevAddress = location.address;
-				// Move back to the alignment boundary.
-				// Subtracting the alignment offset may underflow on the first check from address
-				// $0000, so applying the alignment mask ensures we have a valid address.
-				location.address -= section.alignOfs;
-				location.address &= ~section.alignMask;
-				// Go to the next align boundary and add the alignment offset.
-				location.address += section.alignMask + 1 + section.alignOfs;
-				// If the aligned address wrapped around past the end of the address space,
-				// no further aligned location can fit in this bank.
-				if (location.address <= prevAddress) {
-					break;
-				}
-			} else if (++spaceIdx < bankMem.size()) {
-				// Any location is fine, so, next free block
-				location.address = bankMem[spaceIdx].address;
-			}
-
-			// If that location is past the current block's end,
-			// go forwards until that is no longer the case.
-			while (spaceIdx < bankMem.size()
-			       && location.address >= bankMem[spaceIdx].address + bankMem[spaceIdx].size) {
-				++spaceIdx;
-			}
-
-			// Try again with the new location/free space combo
-		}
-
-		// Try again in the next iteration.
 	} while (location.goToNextApplicableBankFor(section));
-	return std::nullopt;
+	// Return a deque's end iterator to signal failure.
+	// The exact deque doesn't matter, but the caller will use `freeSpaceOfBank` also.
+	return freeSpaceOfBank(section, location.bank).end();
 }
 
 static std::string getSectionDescription(Section const &section) {
@@ -281,6 +267,22 @@ static std::string getSectionDescription(Section const &section) {
 
 // Assigns a section to a given memory location
 static void assignSection(Section &section, MemoryLocation const &location) {
+	assume(location.address >= section.typeInfo().startAddr);
+	// Zero-sized sections can start one past the end of their region.
+	assume(location.address <= section.typeInfo().endAddr() + 1);
+	// This one is not redundant, it guards against overflow!
+	assume(location.address + section.size >= section.typeInfo().startAddr);
+	assume(location.address + section.size <= section.typeInfo().endAddr() + 1);
+
+	if (section.isAddressFixed) {
+		assume(location.address == section.org);
+	} else if (section.isAlignFixed) {
+		assume((location.address & section.alignMask) == section.alignOfs);
+	}
+	if (section.isBankFixed) {
+		assume(location.bank == section.bank);
+	}
+
 	// Propagate the assigned location to all UNIONs/FRAGMENTs
 	// so `jr` patches in them will have the correct offset
 	for (Section &piece : section.pieces()) {
@@ -295,7 +297,7 @@ static void assignSection(Section &section, MemoryLocation const &location) {
 static void placeSection(Section &section) {
 	MemoryLocation location = MemoryLocation::initFor(section);
 
-	// Specially handle 0-byte SECTIONs, as they can't overlap anything
+	// Specially handle 0-byte SECTIONs, as they ignore free space entirely.
 	if (section.size == 0) {
 		if (!section.isAddressFixed) {
 			location.address = section.typeInfo().startAddr;
@@ -307,39 +309,37 @@ static void placeSection(Section &section) {
 		return;
 	}
 
-	// Place section using first-fit decreasing algorithm
-	// https://en.wikipedia.org/wiki/Bin_packing_problem#First-fit_algorithm
-	if (std::optional<size_t> spaceIdx = getPlacement(section, location); spaceIdx) {
-		std::deque<FreeSpace> &bankMem =
-		    memory[section.type][location.bank - section.typeInfo().firstBank];
-		FreeSpace &freeSpace = bankMem[*spaceIdx];
-
+	FreeSpaceIter iter = tryPlacing(section, location);
+	if (std::deque<FreeSpace> &bankMem = freeSpaceOfBank(section, location.bank);
+	    iter != bankMem.end()) {
 		assignSection(section, location);
 
 		// Update the free space
 		assume(section.org + section.size <= UINT16_MAX);
 		uint16_t sectionEnd = section.org + section.size;
-		bool noLeftSpace = freeSpace.address == section.org;
-		bool noRightSpace = freeSpace.address + freeSpace.size == sectionEnd;
+		assume(section.org >= iter->address);
+		assume(sectionEnd <= iter->addrOnePast());
+
+		bool noLeftSpace = iter->address == section.org;
+		bool noRightSpace = iter->address + iter->size == sectionEnd;
 		if (noLeftSpace && noRightSpace) {
 			// The free space is entirely deleted
-			bankMem.erase(bankMem.begin() + *spaceIdx);
+			bankMem.erase(iter);
 		} else if (!noLeftSpace && !noRightSpace) {
 			// The free space is split in two
-			// Append the new space after the original one
-			uint16_t size = static_cast<uint16_t>(freeSpace.address + freeSpace.size - sectionEnd);
-			bankMem.insert(bankMem.begin() + *spaceIdx + 1, {.address = sectionEnd, .size = size});
-			// **`freeSpace` cannot be reused from this point on, because `bankMem.insert`
-			// invalidates all references to itself!**
-
+			uint16_t size = static_cast<uint16_t>(iter->address + iter->size - sectionEnd);
 			// Resize the original space (address is unmodified)
-			bankMem[*spaceIdx].size = section.org - bankMem[*spaceIdx].address;
+			iter->size = section.org - iter->address;
+			// Append the new space after the original one
+			bankMem.insert(iter + 1, {.address = sectionEnd, .size = size});
+			// **`iter` cannot be reused from this point on, because `bankMem.insert`
+			// invalidates iterators to itself!**
 		} else {
 			// The amount of free spaces doesn't change: resize!
-			freeSpace.size -= section.size;
+			iter->size -= section.size;
 			if (noLeftSpace) {
 				// The free space is moved *and* resized
-				freeSpace.address += section.size;
+				iter->address += section.size;
 			}
 		}
 		return;
