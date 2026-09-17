@@ -11,7 +11,8 @@ void out_AddSection(Section const &section);
 // Finds an assigned section overlapping another one.
 Section const *out_OverlappingSection(Section const &section);
 
-// Writes all output (bin, sym, map) files.
-void out_WriteFiles();
+void out_WriteROMIfAny();
+void out_WriteSymIfAny();
+void out_WriteMapIfAny();
 
 #endif // RGBDS_LINK_OUTPUT_HPP
