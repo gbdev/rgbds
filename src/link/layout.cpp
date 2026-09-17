@@ -263,7 +263,7 @@ void layout_PlaceSection(std::string const &name, bool isOptional) {
 		    "\"%s\" is specified to be a %s section, but it is already a %s section",
 		    name.c_str(),
 		    typeInfo.name.c_str(),
-		    sectionTypeInfo[section->type].name.c_str()
+		    section->typeInfo().name.c_str()
 		);
 	}
 
@@ -276,7 +276,7 @@ void layout_PlaceSection(std::string const &name, bool isOptional) {
 			    "The linker script places section \"%s\" in %s bank %" PRIu32
 			    ", but it was already defined in bank %" PRIu32,
 			    name.c_str(),
-			    sectionTypeInfo[section->type].name.c_str(),
+			    section->typeInfo().name.c_str(),
 			    bank,
 			    section->bank
 			);

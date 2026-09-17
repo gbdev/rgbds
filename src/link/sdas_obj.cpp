@@ -855,7 +855,6 @@ void sdobj_ReadFile(FileStackNode const &src, FILE *file, std::vector<Symbol> &f
 
 		// RAM sections can have a size, but don't get any data (they shouldn't have any)
 		if (section->type != SECTTYPE_INVALID) {
-			SectionTypeInfo const &typeInfo = sectionTypeInfo[section->type];
 			// Otherwise, how would the type already be known at this point?
 			assume(section->isAddressFixed);
 
@@ -866,7 +865,7 @@ void sdobj_ReadFile(FileStackNode const &src, FILE *file, std::vector<Symbol> &f
 					    "\"%s\" is implicitly defined as a %s section (being at address $%04" PRIx16
 					    "), but it has data! (Was a bad `__at()` value used?)",
 					    section->name.c_str(),
-					    typeInfo.name.c_str(),
+					    section->typeInfo().name.c_str(),
 					    section->org
 					);
 				}
@@ -876,7 +875,7 @@ void sdobj_ReadFile(FileStackNode const &src, FILE *file, std::vector<Symbol> &f
 				    "\"%s\" is implicitly defined as a %s section (being at address $%04" PRIx16
 				    "), but it doesn't have any data! (Was a bad `__at()` value used?)",
 				    section->name.c_str(),
-				    typeInfo.name.c_str(),
+				    section->typeInfo().name.c_str(),
 				    section->org
 				);
 			}
