@@ -167,15 +167,8 @@ static std::optional<size_t> getPlacement(Section const &section, MemoryLocation
 	SectionTypeInfo const &typeInfo = section.typeInfo();
 
 	do {
-		if (location.bank < typeInfo.firstBank
-		    || location.bank >= memory[section.type].size() + typeInfo.firstBank) {
-			fatal(
-			    "Invalid bank for %s section \"%s\": %" PRIu32,
-			    typeInfo.name,
-			    section.name.c_str(),
-			    location.bank
-			);
-		}
+		assume(location.bank >= section.typeInfo().firstBank);
+		assume(location.bank <= section.typeInfo().lastBank);
 
 		// Switch to the beginning of the next bank
 		std::deque<FreeSpace> &bankMem = memory[section.type][location.bank - typeInfo.firstBank];
