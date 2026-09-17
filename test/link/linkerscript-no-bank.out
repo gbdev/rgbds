@@ -1,0 +1,5 @@
+error: A bank number must be specified for ROMX
+    at linkerscript-no-bank.link(1)
+error: A bank number must be specified for WRAMX
+    at linkerscript-no-bank.link(3)
+Linking failed with 2 errors
