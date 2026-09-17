@@ -322,9 +322,7 @@ static void doSanityChecks(Section &section) {
 			    typeInfo.startAddr,
 			    typeInfo.endAddr()
 			);
-		}
-
-		if (section.org + section.size > typeInfo.endAddr() + 1) {
+		} else if (section.org + section.size > typeInfo.endAddr() + 1) {
 			error(
 			    "Section \"%s\"'s end address $%04x is greater than last address $%04x",
 			    section.name.c_str(),
