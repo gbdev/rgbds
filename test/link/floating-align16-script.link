@@ -1,0 +1,4 @@
+ROM0
+	FLOATING
+	ALIGN 16, $80
+	"test"
