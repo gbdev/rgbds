@@ -119,10 +119,6 @@ void reverse() {
 		warnx("Tile deduplication is enabled, but no tilemap is provided");
 	}
 
-	if (options.useColorCurve) {
-		warnx("The color curve is not yet supported in reverse mode");
-	}
-
 	if (options.inputSlice.left != 0 || options.inputSlice.top != 0
 	    || options.inputSlice.height != 0) {
 		warnx("\"Sliced-off\" pixels are ignored in reverse mode");
@@ -230,14 +226,14 @@ void reverse() {
 				    palSize
 				);
 			}
-			// Expand the colors
+			// Expand the little-endian RGB555 colors to RGB888
 			auto &palette = palettes.emplace_back();
 			std::generate(
 			    palette.begin(),
 			    palette.begin() + options.nbColorsPerPal,
 			    [&buf, i = 0]() mutable {
 				    i += 2;
-				    return Rgba::fromCGBColor(buf[i - 2] | buf[i - 1] << 8); // little-endian
+				    return Rgba::fromCGBColor(buf[i - 2] | buf[i - 1] << 8, options.useColorCurve);
 			    }
 			);
 		}
@@ -251,7 +247,20 @@ void reverse() {
 		}
 
 		if (options.hasExplicitPalSpec() && palettes != options.palSpec) {
-			warnx("Colors in the palette file do not match those specified with '-c'");
+			// The explicit `-c` pal spec does not match the input `-p` palette file.
+			// Check whether their 8-to-5-bit-reduced GB colors nevertheless match.
+			std::vector<std::array<std::optional<Rgba>, 4>> palSpecQuantized(options.palSpec);
+			for (auto &pal : palSpecQuantized) {
+				for (auto &color : pal) {
+					if (color.has_value()) {
+						color = Rgba::fromCGBColor(color->cgbColor(), options.useColorCurve);
+					}
+				}
+			}
+			warnx(
+			    "Colors %s the palette file do not match those specified with '-c'",
+			    palettes == palSpecQuantized ? "reversed from" : "in"
+			);
 			// This spacing aligns "...versus with `-c`" above the column of `-c` palettes
 			fputs("Colors specified in the palette file:         ...versus with '-c':\n", stderr);
 			for (size_t i = 0; i < palettes.size() || i < options.palSpec.size(); ++i) {

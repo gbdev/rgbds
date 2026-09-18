@@ -20,23 +20,6 @@ struct Rgba {
 	explicit constexpr Rgba(uint32_t rgba = 0)
 	    : red(rgba >> 24), green(rgba >> 16), blue(rgba >> 8), alpha(rgba) {}
 
-	// CGB colors are RGB555, so we use bit 15 to signify that the color is transparent instead
-	// Since the rest of the bits don't matter then, we return 0x8000 (1 << 15) exactly.
-	static constexpr uint16_t transparent = 0b1'00000'00000'00000;
-
-	static constexpr Rgba fromCGBColor(uint16_t color) {
-		constexpr auto _5to8 = [](uint8_t channel) -> uint8_t {
-			channel &= 0b11111; // For caller's convenience
-			return channel << 3 | channel >> 2;
-		};
-		return {
-		    _5to8(color),
-		    _5to8(color >> 5),
-		    _5to8(color >> 10),
-		    static_cast<uint8_t>(color & transparent ? 0x00 : 0xFF),
-		};
-	}
-
 	// Returns this RGBA as a 32-bit number that can be printed in hex (`#%08x`)
 	// to yield its CSS representation (`#rrggbbaa`).
 	uint32_t toCSS() const {
@@ -45,15 +28,22 @@ struct Rgba {
 		};
 		return shl(red, 24) | shl(green, 16) | shl(blue, 8) | shl(alpha, 0);
 	}
-
 	bool operator==(Rgba const &rhs) const { return toCSS() == rhs.toCSS(); }
 
+	// We allow some leeway to consider colors as transparent or opaque,
+	// but intermediate alpha values are still ambiguous.
 	static constexpr uint8_t transparency_threshold = 0x10;
 	bool isTransparent() const { return alpha < transparency_threshold; }
 	static constexpr uint8_t opacity_threshold = 0xF0;
 	bool isOpaque() const { return alpha >= opacity_threshold; }
 	bool isAmbiguous() const { return isTransparent() == isOpaque(); }
-	// Computes the equivalent CGB color, respects the color curve depending on options
+
+	// CGB colors are RGB555, so we use bit 15 to signify that the color is transparent instead
+	// Since the rest of the bits don't matter then, we return 0x8000 (1 << 15) exactly.
+	static constexpr uint16_t transparent = 0b1'00000'00000'00000;
+	// Computes the equivalent RGB888 color; respects the color curve depending on argument
+	static Rgba fromCGBColor(uint16_t color, bool useColorCurve);
+	// Computes the equivalent RGB555 color; respects the color curve depending on options
 	uint16_t cgbColor() const;
 
 	bool isGray() const { return red == green && green == blue; }

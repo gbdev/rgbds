@@ -1,0 +1,3 @@
+warning: Colors reversed from the palette file do not match those specified with '-c'
+Colors specified in the palette file:         ...versus with '-c':
+[#adceefff, <none>   , <none>   , <none>   ]  [#abcdefff, <none>   , <none>   , <none>   ]
