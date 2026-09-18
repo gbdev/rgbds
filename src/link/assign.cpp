@@ -445,8 +445,9 @@ static void checkOverlayCompat() {
 				unfixedList += "\n- and ";
 				unfixedList += std::to_string(nbUnfixedSections - nbListed);
 				unfixedList += " more";
-				break;
+				goto finish;
 			}
+
 			unfixedList += "\n- \"";
 			unfixedList += section->name;
 			unfixedList += "\" (";
@@ -463,6 +464,7 @@ static void checkOverlayCompat() {
 		}
 	}
 
+finish: // Can't `break` out of a nested loop
 	fatal(
 	    "All sections must be fixed when using an overlay file; %zu %s not:%s",
 	    nbUnfixedSections,

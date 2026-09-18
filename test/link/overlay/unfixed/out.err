@@ -1,4 +1,4 @@
-FATAL: All sections must be fixed when using an overlay file; 12 are not:
+FATAL: All sections must be fixed when using an overlay file; 14 are not:
 - "ROMX BANK[4]" (address not specified)
 - "ROMX BANK[3]" (address not specified)
 - "ROMX BANK[2]" (address not specified)
@@ -7,7 +7,7 @@ FATAL: All sections must be fixed when using an overlay file; 12 are not:
 - "ROMX[$4003]" (bank not specified)
 - "ROMX[$4002]" (bank not specified)
 - "ROMX[$4001]" (bank not specified)
+- "aligned" (bank and address not specified)
 - "ROMX #4" (bank and address not specified)
-- "ROMX #3" (bank and address not specified)
-- and 2 more
+- and 4 more
 Linking aborted with 1 error
