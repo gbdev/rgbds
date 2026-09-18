@@ -197,7 +197,7 @@ jobs:
         run: | # ASan seems to be broken on Windows, so we disable it.
           call .github\scripts\msvc-env.bat ${{ matrix.bits }}
           cmake -B build -G Ninja --preset develop -DFETCHCONTENT_BASE_DIR="${{ env.DEPS_ROOT_DIR }}" ^
-                -DSANITIZERS=OFF -DCMAKE_C_FLAGS="/nologo"
+                -DSANITIZERS=OFF -DCMAKE_C_FLAGS="/nologo" -DCMAKE_INSTALL_BINDIR=. -DCPACK_COMPONENTS_ALL=binaries
           cmake --build build -- -k 0
       - name: Install
         shell: cmd
