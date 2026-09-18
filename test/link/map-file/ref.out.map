@@ -17,7 +17,10 @@ ROM0 bank #0:
 	SECTION: $0014-$0014 ($0001 byte) ["rom0"]
 	         $0014 = Label0
 	         $0015 = Label0.local
-	EMPTY: $0015-$3fff ($3feb bytes)
+	EMPTY: $0015-$00ff ($00eb bytes)
+	SECTION: $0100 ($0000 bytes) ["rom0 lonely"]
+	         $0100 = FarAway
+	EMPTY: $0100-$3fff ($3f00 bytes)
 	TOTAL EMPTY: $3feb bytes
 
 ROMX bank #1:

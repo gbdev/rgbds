@@ -44,3 +44,6 @@ SECTION "empty rom0 again", ROM0[8]
 
 SECTION "rom0 yet again", ROM0
 Label2:: ds 10
+
+SECTION "rom0 lonely", ROM0[$100]
+FarAway::
