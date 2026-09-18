@@ -435,19 +435,17 @@ static void checkOverlayCompat() {
 	}
 
 	size_t nbListed = 0;
-	static constexpr size_t maxNbListed = 10;
-	for (uint8_t constraints = std::size(unassignedSections);
-	     nbListed < maxNbListed && constraints--;) {
+	for (uint8_t constraints = std::size(unassignedSections); constraints--;) {
 		if (isFixed(constraints)) {
 			continue;
 		}
 
 		for (Section const *section : unassignedSections[constraints]) {
-			if (nbListed == maxNbListed) {
+			if (nbListed == 10) {
 				unfixedList += "\n- and ";
 				unfixedList += std::to_string(nbUnfixedSections - nbListed);
 				unfixedList += " more";
-				break;
+				goto finish;
 			}
 
 			unfixedList += "\n- \"";
@@ -466,6 +464,7 @@ static void checkOverlayCompat() {
 		}
 	}
 
+finish: // Can't `break` out of a nested loop
 	fatal(
 	    "All sections must be fixed when using an overlay file; %zu %s not:%s",
 	    nbUnfixedSections,
