@@ -469,10 +469,12 @@ static void writeMapBank(SortedSections const &sectList, SectionType type, uint3
 	uint16_t used = forEachSection(sectList, [&](Section const &sect) {
 		assume(sect.offset == 0);
 
-		writeEmptySpace(prevEndAddr, sect.org);
+		if (sect.size != 0) {
+			writeEmptySpace(prevEndAddr, sect.org);
 
-		assume(sect.org + sect.size <= UINT16_MAX);
-		prevEndAddr = sect.org + sect.size;
+			assume(sect.org + sect.size <= UINT16_MAX);
+			prevEndAddr = sect.org + sect.size;
+		}
 
 		fprintf(mapFile, "\tSECTION: $%04" PRIx16, sect.org);
 		if (sect.size != 0) {

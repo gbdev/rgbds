@@ -4,7 +4,7 @@ Label0:: ds 1
 :
 
 SECTION "romx", ROMX
-Label1:: ds 2
+xLabel:: ds 2
 .local::
 :
 
@@ -34,3 +34,13 @@ hLabel:: ds 7
 :
 
 SECTION "\n\r\t\"\\", ROM0[1]
+
+SECTION "empty rom0", ROM0[2]
+
+SECTION "rom0 again", ROM0
+Label1:: ds 10
+
+SECTION "empty rom0 again", ROM0[8]
+
+SECTION "rom0 yet again", ROM0
+Label2:: ds 10
