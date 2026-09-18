@@ -1,7 +1,10 @@
 name: Contrib script syntax checking
 on:
-  - push
-  - pull_request
+  push:
+    paths: [ 'contrib/**', .github/scripts/check-contrib.sh ]
+  pull_request:
+    paths: [ 'contrib/**', .github/scripts/check-contrib.sh ]
+  workflow_dispatch:
 
 env:
   # Force colored output (see https://bixense.com/clicolors/ and https://force-color.org/)
