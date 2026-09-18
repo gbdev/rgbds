@@ -8,3 +8,6 @@ FOR n, 1, 5
 	SECTION "ROMX #{d:n}", ROMX
 	db n
 ENDR
+
+SECTION "aligned", ROMX, ALIGN[4]
+SECTION "unconstrained", ROMX

@@ -435,18 +435,21 @@ static void checkOverlayCompat() {
 	}
 
 	size_t nbListed = 0;
-	for (uint8_t constraints = std::size(unassignedSections); constraints--;) {
+	static constexpr size_t maxNbListed = 10;
+	for (uint8_t constraints = std::size(unassignedSections);
+	     nbListed < maxNbListed && constraints--;) {
 		if (isFixed(constraints)) {
 			continue;
 		}
 
 		for (Section const *section : unassignedSections[constraints]) {
-			if (nbListed == 10) {
+			if (nbListed == maxNbListed) {
 				unfixedList += "\n- and ";
 				unfixedList += std::to_string(nbUnfixedSections - nbListed);
 				unfixedList += " more";
 				break;
 			}
+
 			unfixedList += "\n- \"";
 			unfixedList += section->name;
 			unfixedList += "\" (";
