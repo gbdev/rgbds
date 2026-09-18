@@ -18,6 +18,10 @@ jobs:
     steps:
       - name: Checkout repo
         uses: actions/checkout@v7
+        with:
+          sparse-checkout: | # Avoid checking out other files, we don't use them here.
+            contrib
+            .github/scripts
       - name: Install zsh
         run: |
           sudo apt install -Uyq zsh
