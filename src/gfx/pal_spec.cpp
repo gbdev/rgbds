@@ -542,10 +542,10 @@ static void parseGBCFile(char const *filename, std::filebuf &file) {
 		}
 
 		options.palSpec.push_back({
-		    Rgba::fromCGBColor(toWord(buf[0], buf[1])),
-		    Rgba::fromCGBColor(toWord(buf[2], buf[3])),
-		    Rgba::fromCGBColor(toWord(buf[4], buf[5])),
-		    Rgba::fromCGBColor(toWord(buf[6], buf[7])),
+		    Rgba::fromCGBColor(toWord(buf[0], buf[1]), false),
+		    Rgba::fromCGBColor(toWord(buf[2], buf[3]), false),
+		    Rgba::fromCGBColor(toWord(buf[4], buf[5]), false),
+		    Rgba::fromCGBColor(toWord(buf[6], buf[7]), false),
 		});
 	}
 }

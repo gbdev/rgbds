@@ -528,7 +528,7 @@ static void verboseOutputConfig() {
 		for (auto const &pal : options.palSpec) {
 			fputs("\t\t", stderr);
 			for (auto const &color : pal) {
-				if (color) {
+				if (color.has_value()) {
 					fprintf(stderr, "#%06x, ", color->toCSS() >> 8);
 				} else {
 					fputs("#none, ", stderr);

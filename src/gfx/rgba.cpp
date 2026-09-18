@@ -24,16 +24,24 @@ std::string toCGB(uint16_t color) {
 	return buf;
 }
 
-// Based on inverting the "Modern - Accurate" formula used by SameBoy
-// since commit b5a611c5db46d6a0649d04d24d8d6339200f9ca1 (Dec 2020),
-// with gaps in the scale curve filled by polynomial interpolation.
+// Copied from the "Modern - Accurate" (`GB_COLOR_CORRECTION_MODERN_ACCURATE`)
+// formula used by SameBoy in its `scale_channel_with_curve` function since
+// commit b5a611c5db46d6a0649d04d24d8d6339200f9ca1 (Dec 2020).
+// clang-format off: vertically align columns of values
+static std::array<uint8_t, 32> color_curve{
+       0,   6,  12,  20,  28,  36,  45,  56,  66,  76,  88, 100, 113, 125, 137, 149,
+     161, 172, 182, 192, 202, 210, 218, 225, 232, 238, 243, 247, 250, 252, 254, 255,
+};
+// clang-format on
+
+// Inverted `color_curve`, with gaps filled by polynomial interpolation.
 // clang-format off: vertically align columns of values
 static std::array<uint8_t, 256> reverse_curve{
-    0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  1,  1,  1,  1,  1,
-    1,  1,  1,  1,  2,  2,  2,  2,  2,  2,  2,  2,  2,  3,  3,  3,
-    3,  3,  3,  3,  3,  4,  4,  4,  4,  4,  4,  4,  5,  5,  5,  5,
-    5,  5,  5,  6,  6,  6,  6,  6,  6,  7,  7,  7,  7,  7,  7,  7,
-    7,  8,  8,  8,  8,  8,  8,  9,  9,  9,  9,  9,  10, 10, 10, 10,
+     0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  1,  1,  1,  1,  1,
+     1,  1,  1,  1,  2,  2,  2,  2,  2,  2,  2,  2,  2,  3,  3,  3,
+     3,  3,  3,  3,  3,  4,  4,  4,  4,  4,  4,  4,  5,  5,  5,  5,
+     5,  5,  5,  6,  6,  6,  6,  6,  6,  7,  7,  7,  7,  7,  7,  7,
+     7,  8,  8,  8,  8,  8,  8,  9,  9,  9,  9,  9, 10, 10, 10, 10,
     10, 10, 11, 11, 11, 11, 11, 11, 12, 12, 12, 12, 12, 13, 13, 13,
     13, 13, 14, 14, 14, 14, 14, 14, 15, 15, 15, 15, 15, 16, 16, 16,
     16, 16, 16, 17, 17, 17, 17, 17, 18, 18, 18, 18, 18, 18, 19, 19,
@@ -47,6 +55,28 @@ static std::array<uint8_t, 256> reverse_curve{
     31, 31, 31, 31, 31, 31, 31, 31, 31, 31, 31, 31, 31, 31, 31, 31,
 };
 // clang-format on
+
+Rgba Rgba::fromCGBColor(uint16_t color, bool useColorCurve) {
+	uint8_t r = color & 0b11111, g = (color >> 5) & 0b11111, b = (color >> 10) & 0b11111;
+	if (useColorCurve) {
+		r = color_curve[r];
+		g = color_curve[g];
+		b = color_curve[b];
+		if (g != b) {
+			g = round(pow((pow(g / 255.0, 2.2) * 3 + pow(b / 255.0, 2.2)) / 4, 1 / 2.2) * 255);
+		}
+	} else {
+		r = r << 3 | r >> 2;
+		g = g << 3 | g >> 2;
+		b = b << 3 | b >> 2;
+	}
+	return {
+	    r,
+	    g,
+	    b,
+	    static_cast<uint8_t>(color & transparent ? 0x00 : 0xFF),
+	};
+}
 
 uint16_t Rgba::cgbColor() const {
 	if (isTransparent()) {
