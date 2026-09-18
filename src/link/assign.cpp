@@ -224,7 +224,65 @@ static FreeSpaceIter tryPlacing(Section const &section, MemoryLocation &location
 	return freeSpaceOfBank(section, location.bank).end();
 }
 
-static std::string getSectionDescription(Section const &section) {
+static void
+    updateFreeSpace(FreeSpaceIter iter, std::deque<FreeSpace> &bankMem, Section const &section) {
+	assume(section.org + section.size <= UINT16_MAX);
+	uint16_t sectionEnd = section.org + section.size;
+	assume(section.org >= iter->address);
+	assume(sectionEnd <= iter->addrOnePast());
+
+	bool noLeftSpace = iter->address == section.org;
+	bool noRightSpace = iter->address + iter->size == sectionEnd;
+	if (noLeftSpace && noRightSpace) {
+		// The free space is entirely deleted
+		bankMem.erase(iter);
+	} else if (!noLeftSpace && !noRightSpace) {
+		// The free space is split in two
+		uint16_t size = static_cast<uint16_t>(iter->address + iter->size - sectionEnd);
+		// Resize the original space (address is unmodified)
+		iter->size = section.org - iter->address;
+		// Append the new space after the original one
+		bankMem.insert(iter + 1, {.address = sectionEnd, .size = size});
+		// `iter` cannot be reused from this point on, because `bankMem.insert`
+		// invalidates iterators to itself!
+	} else {
+		// The amount of free spaces doesn't change: resize!
+		iter->size -= section.size;
+		if (noLeftSpace) {
+			// The free space is moved *and* resized
+			iter->address += section.size;
+		}
+	}
+}
+
+// Assigns a section to a given memory location
+static void assignSection(Section &section, MemoryLocation const &location) {
+	assume(location.address >= section.typeInfo().startAddr);
+	// Zero-sized sections can start one past the end of their region.
+	assume(location.address <= section.typeInfo().endAddr() + 1);
+	// This one is not redundant, it guards against overflow!
+	assume(location.address + section.size >= section.typeInfo().startAddr);
+	assume(location.address + section.size <= section.typeInfo().endAddr() + 1);
+
+	if (section.isAddressFixed) {
+		assume(location.address == section.org);
+	} else if (section.isAlignFixed) {
+		assume((location.address & section.alignMask) == section.alignOfs);
+	}
+	if (section.isBankFixed) {
+		assume(location.bank == section.bank);
+	}
+
+	// Propagate the assigned location to all UNIONs/FRAGMENTs
+	// so `jr` patches in them will have the correct offset
+	for (Section &piece : section.pieces()) {
+		piece.org = location.address;
+		piece.bank = location.bank;
+	}
+	out_AddSection(section);
+}
+
+static std::string describeConstraintsOf(Section const &section) {
 	std::string description = "\"" + section.name + "\" (" + section.typeInfo().name + " section) ";
 	if (section.isBankFixed && section.typeInfo().isBanked()) {
 		char bank[9];
@@ -265,33 +323,6 @@ static std::string getSectionDescription(Section const &section) {
 	return description;
 }
 
-// Assigns a section to a given memory location
-static void assignSection(Section &section, MemoryLocation const &location) {
-	assume(location.address >= section.typeInfo().startAddr);
-	// Zero-sized sections can start one past the end of their region.
-	assume(location.address <= section.typeInfo().endAddr() + 1);
-	// This one is not redundant, it guards against overflow!
-	assume(location.address + section.size >= section.typeInfo().startAddr);
-	assume(location.address + section.size <= section.typeInfo().endAddr() + 1);
-
-	if (section.isAddressFixed) {
-		assume(location.address == section.org);
-	} else if (section.isAlignFixed) {
-		assume((location.address & section.alignMask) == section.alignOfs);
-	}
-	if (section.isBankFixed) {
-		assume(location.bank == section.bank);
-	}
-
-	// Propagate the assigned location to all UNIONs/FRAGMENTs
-	// so `jr` patches in them will have the correct offset
-	for (Section &piece : section.pieces()) {
-		piece.org = location.address;
-		piece.bank = location.bank;
-	}
-	out_AddSection(section);
-}
-
 // Places a section in a suitable location, or error out if it fails to.
 // Due to the implemented algorithm, this should be called with sections of decreasing size!
 static void placeSection(Section &section) {
@@ -305,6 +336,7 @@ static void placeSection(Section &section) {
 				location.makeAddressAligned(section.alignMask, section.alignOfs);
 			}
 		}
+
 		assignSection(section, location);
 		return;
 	}
@@ -314,46 +346,19 @@ static void placeSection(Section &section) {
 	    iter != bankMem.end()) {
 		assignSection(section, location);
 
-		// Update the free space
-		assume(section.org + section.size <= UINT16_MAX);
-		uint16_t sectionEnd = section.org + section.size;
-		assume(section.org >= iter->address);
-		assume(sectionEnd <= iter->addrOnePast());
-
-		bool noLeftSpace = iter->address == section.org;
-		bool noRightSpace = iter->address + iter->size == sectionEnd;
-		if (noLeftSpace && noRightSpace) {
-			// The free space is entirely deleted
-			bankMem.erase(iter);
-		} else if (!noLeftSpace && !noRightSpace) {
-			// The free space is split in two
-			uint16_t size = static_cast<uint16_t>(iter->address + iter->size - sectionEnd);
-			// Resize the original space (address is unmodified)
-			iter->size = section.org - iter->address;
-			// Append the new space after the original one
-			bankMem.insert(iter + 1, {.address = sectionEnd, .size = size});
-			// **`iter` cannot be reused from this point on, because `bankMem.insert`
-			// invalidates iterators to itself!**
-		} else {
-			// The amount of free spaces doesn't change: resize!
-			iter->size -= section.size;
-			if (noLeftSpace) {
-				// The free space is moved *and* resized
-				iter->address += section.size;
-			}
-		}
+		updateFreeSpace(iter, bankMem, section);
 		return;
 	}
 
 	if (!section.isBankFixed || !section.isAddressFixed) {
 		// If a section failed to go to several places, nothing we can report
-		fatal("Unable to place %s", getSectionDescription(section).c_str());
+		fatal("Unable to place %s", describeConstraintsOf(section).c_str());
 	} else if (uint16_t onePastEnd = section.typeInfo().endAddr() + 1;
 	           section.org + section.size > onePastEnd) {
 		// If the section just can't fit the bank, report that
 		fatal(
 		    "Unable to place %s: section runs past end of region ($%04x > $%04x)",
-		    getSectionDescription(section).c_str(),
+		    describeConstraintsOf(section).c_str(),
 		    section.org + section.size,
 		    onePastEnd
 		);
@@ -363,7 +368,7 @@ static void placeSection(Section &section) {
 		assume(overlap != nullptr);
 		fatal(
 		    "Unable to place %s: section overlaps with \"%s\"",
-		    getSectionDescription(section).c_str(),
+		    describeConstraintsOf(section).c_str(),
 		    overlap->name.c_str()
 		);
 	}
