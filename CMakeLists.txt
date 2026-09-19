@@ -59,7 +59,8 @@ if(SANITIZERS)
                   -fsanitize=float-divide-by-zero)
     add_compile_options(${SAN_FLAGS})
     add_link_options(${SAN_FLAGS})
-    add_definitions(-D_GLIBCXX_ASSERTIONS -D_LIBCPP_HARDENING_MODE=_LIBCPP_HARDENING_MODE_DEBUG)
+    add_definitions(-D_GLIBCXX_DEBUG -D_GLIBCXX_DEBUG_PEDANTIC -D_GLIBCXX_SANITIZE_VECTOR
+                    -D_LIBCPP_HARDENING_MODE=_LIBCPP_HARDENING_MODE_DEBUG)
     # A non-zero optimization level is desired even in debug mode (especially for Clang),
     # and the two codegen flags improve the sanitizers' backtraces, but we want the user to
     # be able to override these easily so we put them first.
