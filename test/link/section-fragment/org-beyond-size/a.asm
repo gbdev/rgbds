@@ -1,0 +1,2 @@
+SECTION FRAGMENT "f", ROM0
+ds 32, 0

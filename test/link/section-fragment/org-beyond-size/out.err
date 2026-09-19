@@ -1,0 +1,5 @@
+FATAL: Section "f" contains 32 bytes, but is also defined with a lower fixed address $0010
+    at section-fragment/org-beyond-size/a.asm(1)
+    and also:
+    at section-fragment/org-beyond-size/b.asm(1)
+Linking aborted with 1 error
