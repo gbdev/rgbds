@@ -3,7 +3,6 @@
 #include "link/assign.hpp"
 
 #include <algorithm>
-#include <deque>
 #include <inttypes.h>
 #include <optional>
 #include <stdint.h>
@@ -369,7 +368,7 @@ static void placeSection(Section &section) {
 	}
 }
 
-static std::deque<Section *> unassignedSections[1 << 3];
+static std::vector<Section *> unassignedSections[1 << 3];
 // clang-format off: vertically align values
 static constexpr uint8_t BANK_CONSTRAINED  = 1 << 2;
 static constexpr uint8_t ORG_CONSTRAINED   = 1 << 1;
@@ -401,14 +400,14 @@ static void categorizeSection(Section &section) {
 		constraints |= ALIGN_CONSTRAINED;
 	}
 
-	std::deque<Section *> &sections = unassignedSections[constraints];
+	std::vector<Section *> &sections = unassignedSections[constraints];
 
 	// Insert section while keeping the list sorted by decreasing size
-	auto pos = sections.begin();
-	while (pos != sections.end() && (*pos)->size > section.size) {
-		++pos;
-	}
-	sections.insert(pos, &section);
+	auto iter = std::find_if(RANGE(sections), [&section](Section const *other) {
+		// TODO: `<` here is equivalent behaviour-wise to `<=` but more performant (closer to vec's end), and changes link order and that creates a lot of noise in internal tests. (Externals are fine, though.)
+		return other->size < section.size;
+	});
+	sections.insert(iter, &section);
 }
 
 static void checkOverlayCompat() {
