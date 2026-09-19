@@ -44,7 +44,7 @@ struct Assertion {
 // List of symbols to put in the object file
 static std::vector<Symbol *> objectSymbols;
 
-static std::deque<Assertion> assertions;
+static std::vector<Assertion> assertions;
 
 static std::deque<std::shared_ptr<FileStackNode>> fileStackNodes;
 
@@ -163,7 +163,7 @@ void out_CreatePatch(PatchType type, Expression const &expr, uint32_t ofs, uint3
 void out_CreateAssert(
     AssertionType type, Expression const &expr, std::string const &message, uint32_t ofs
 ) {
-	Assertion &assertion = assertions.emplace_front();
+	Assertion &assertion = assertions.emplace_back();
 	assertion.type = type;
 	assertion.src = fstk_GetFileStack();
 	// All assertions are assumed to eventually be written, so the file stack node is registered
