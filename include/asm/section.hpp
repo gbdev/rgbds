@@ -3,7 +3,6 @@
 #ifndef RGBDS_ASM_SECTION_HPP
 #define RGBDS_ASM_SECTION_HPP
 
-#include <deque>
 #include <memory>
 #include <optional>
 #include <stddef.h>
@@ -39,7 +38,7 @@ struct Section {
 	uint32_t bank;
 	uint8_t align; // Exactly as specified in `ALIGN[]`
 	uint16_t alignOfs;
-	std::deque<Patch> patches;
+	std::vector<Patch> patches;
 	std::vector<uint8_t> data;
 
 	SectionTypeInfo const &typeInfo() const { return sectionTypeInfo[type]; }
