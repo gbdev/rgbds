@@ -3,7 +3,6 @@
 #ifndef RGBDS_ASM_LEXER_HPP
 #define RGBDS_ASM_LEXER_HPP
 
-#include <deque>
 #include <memory>
 #include <optional>
 #include <stddef.h>
@@ -50,7 +49,7 @@ struct LexerState {
 	int lastToken;
 	int nextToken;
 
-	std::deque<IfStackEntry> ifStack; // Front is the innermost `IF` block
+	std::vector<IfStackEntry> ifStack; // Front is the innermost `IF` block
 
 	bool capturing;     // Whether the text being lexed should be captured
 	size_t captureSize; // Amount of text captured
@@ -59,7 +58,7 @@ struct LexerState {
 	bool enableExpansions;
 	bool enableStringExpansions;
 	size_t expansionScanDistance;         // Max distance already scanned for expansions
-	std::deque<Expansion> expansionStack; // Front is the innermost current expansion
+	std::vector<Expansion> expansionStack; // Front is the innermost current expansion
 
 	ContentSpan content; // Span of chars
 	size_t offset = 0;   // Cursor into `content.ptr`
