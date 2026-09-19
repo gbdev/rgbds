@@ -52,14 +52,22 @@ endif()
 if(SANITIZERS)
   if(MSVC)
     message(STATUS "ASan enabled")
-    add_compile_options(/fsanitize=address) # Note that this shouldn't be passed to the linker.
+    add_compile_options(/fsanitize=address /sdl) # Note that this shouldn't be passed to the linker.
+    add_definitions(/_MSVC_STL_HARDENING=1 /_MSVC_STL_DESTRUCTOR_TOMBSTONES=1 /D_ITERATOR_DEBUG_LEVEL=2)
   else() # We assume a GNU-like compiler.
     message(STATUS "ASan and UBSan enabled")
     set(SAN_FLAGS -fsanitize=address -fsanitize=undefined
                   -fsanitize=float-divide-by-zero)
     add_compile_options(${SAN_FLAGS})
     add_link_options(${SAN_FLAGS})
-    add_definitions(-D_GLIBCXX_ASSERTIONS -D_LIBCPP_HARDENING_MODE=_LIBCPP_HARDENING_MODE_DEBUG)
+    # Consider using `_GLIBCXX_DEBUG_BACKTRACE` (and `-lstdc++exp`) if unable to debug locally.
+    add_definitions(-D_GLIBCXX_DEBUG -D_GLIBCXX_DEBUG_PEDANTIC -D_GLIBCXX_SANITIZE_VECTOR
+                    -D_GLIBCXX_VERBOSE_ASSERT
+                    # This enables debug-mode checks for `std::string`s, but stdlibc++ says
+                    # "this is unsupported and not guaranteed to work", so removing it may be fine.
+                    # https://gcc.gnu.org/onlinedocs/libstdc++/manual/debug_mode_semantics.html
+                    -D_GLIBCXX_EXTERN_TEMPLATE=0
+                    -D_LIBCPP_DEBUG -D_LIBCPP_HARDENING_MODE=_LIBCPP_HARDENING_MODE_DEBUG)
     # A non-zero optimization level is desired even in debug mode (especially for Clang),
     # and the two codegen flags improve the sanitizers' backtraces, but we want the user to
     # be able to override these easily so we put them first.
