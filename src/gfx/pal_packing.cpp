@@ -3,7 +3,6 @@
 #include "gfx/pal_packing.hpp"
 
 #include <algorithm>
-#include <deque>
 #include <inttypes.h>
 #include <iterator>
 #include <numeric>
@@ -398,9 +397,7 @@ std::pair<std::vector<size_t>, size_t> overloadAndRemove(std::vector<ColorSet> c
 	std::vector<AssignedSets> assignments;
 
 	// Begin with all color sets queued up for insertion
-	for (std::queue<ColorSetAttrs> queue(std::deque<ColorSetAttrs>(RANGE(sortedColorSetIDs)));
-	     !queue.empty();
-	     queue.pop()) {
+	for (std::queue<ColorSetAttrs> queue({RANGE(sortedColorSetIDs)}); !queue.empty(); queue.pop()) {
 		ColorSetAttrs const &attrs = queue.front(); // Valid until the `queue.pop()`
 		verbosePrint(VERB_TRACE, "Handling color set %zu\n", attrs.colorSetIndex);
 
