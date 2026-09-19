@@ -646,7 +646,7 @@ uint32_t sect_GetOutputOffset() {
 }
 
 Patch *sect_AddOutputPatch() {
-	return currentSection ? &currentSection->patches.emplace_front() : nullptr;
+	return currentSection ? &currentSection->patches.emplace_back() : nullptr;
 }
 
 // Returns how many bytes need outputting for the specified alignment and offset to succeed
