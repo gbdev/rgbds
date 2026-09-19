@@ -2,7 +2,6 @@
 
 #include "link/patch.hpp"
 
-#include <deque>
 #include <inttypes.h>
 #include <limits.h>
 #include <stdint.h>
@@ -26,10 +25,10 @@ struct RPNStackEntry {
 	bool errorFlag; // Whether the value is a placeholder inserted for error recovery
 };
 
-static std::deque<RPNStackEntry> rpnStack;
+static std::vector<RPNStackEntry> rpnStack;
 
 static void pushRPN(int32_t value, bool comesFromError) {
-	rpnStack.push_front({.value = value, .errorFlag = comesFromError});
+	rpnStack.push_back({.value = value, .errorFlag = comesFromError});
 }
 
 // This flag tracks whether the RPN op that is currently being evaluated
@@ -65,11 +64,12 @@ static int32_t popRPN(Patch const &patch) {
 		fatalAt(patch, "Internal error, RPN stack empty");
 	}
 
-	RPNStackEntry entry = rpnStack.front();
+	RPNStackEntry entry = rpnStack.back();
 
-	rpnStack.pop_front();
 	isError |= entry.errorFlag;
-	return entry.value;
+	int32_t value = entry.value;
+	rpnStack.pop_back();
+	return value;
 }
 
 // RPN operators
