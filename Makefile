@@ -225,7 +225,8 @@ develop:
 		-Wformat=2 -Wformat-overflow=2 -Wformat-truncation=1 \
 		-Wno-format-nonliteral -Wno-strict-overflow -Wno-unused-but-set-variable \
 		-Wno-type-limits -Wno-tautological-constant-out-of-range-compare -Wvla \
-		-D_GLIBCXX_ASSERTIONS -D_LIBCPP_HARDENING_MODE=_LIBCPP_HARDENING_MODE_DEBUG \
+		-D_GLIBCXX_DEBUG -D_GLIBCXX_DEBUG_PEDANTIC -D_GLIBCXX_SANITIZE_VECTOR \
+		-D_LIBCPP_HARDENING_MODE=_LIBCPP_HARDENING_MODE_DEBUG \
 		-fsanitize=address -fsanitize=undefined -fsanitize=float-divide-by-zero" \
 		CXXFLAGS="-ggdb3 -Og -fno-omit-frame-pointer -fno-optimize-sibling-calls"
 
