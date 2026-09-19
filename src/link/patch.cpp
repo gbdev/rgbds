@@ -19,7 +19,7 @@
 #include "link/symbol.hpp"
 #include "link/warning.hpp"
 
-static std::deque<Assertion> assertions;
+static std::vector<Assertion> assertions;
 
 struct RPNStackEntry {
 	int32_t value;
@@ -487,7 +487,7 @@ static int32_t computeRPNExpr(Patch const &patch, std::vector<Symbol> const &fil
 }
 
 Assertion &patch_AddAssertion() {
-	return assertions.emplace_front();
+	return assertions.emplace_back();
 }
 
 void patch_CheckAssertions() {

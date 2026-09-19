@@ -38,7 +38,7 @@ struct Assertion {
 // List of symbols to put in the object file
 static std::vector<Symbol *> objectSymbols;
 
-static std::deque<Assertion> assertions;
+static std::vector<Assertion> assertions;
 
 static std::deque<std::shared_ptr<FileStackNode>> fileStackNodes;
 
@@ -166,7 +166,7 @@ void out_CreateAssert(
 		fatal("Assertion messages cannot contain '\\0' characters");
 	}
 
-	Assertion &assertion = assertions.emplace_front();
+	Assertion &assertion = assertions.emplace_back();
 
 	initPatch(assertion.patch, type, expr, ofs);
 	assertion.message = message;
