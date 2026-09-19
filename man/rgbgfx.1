@@ -491,9 +491,17 @@ deduplication if
 .Fl u
 was enabled, so you probably don't want to use this option in combination with
 .Fl u .
-Note also that the tiles that don't get output will not count towards
+.Pp
+Also note that the tiles that don't get output in the tile data
+.Em do
+still count towards
 .Fl N Ap s
-limit.
+limit, since they may get output in the tilemap or attribute map.
+If you need to omit input tiles from all output in a way that does not count towards
+.Fl N ,
+use
+.Fl B
+background tiles.
 .It Fl Y , Fl \-mirror-y
 Deduplicate tiles that are vertically symmetrical mirror images of each other across the Y axis.
 Implies
