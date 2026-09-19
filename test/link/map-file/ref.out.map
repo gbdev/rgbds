@@ -1,5 +1,5 @@
 SUMMARY:
-	ROM0: 1 byte used / 16383 free
+	ROM0: 21 bytes used / 16363 free
 	ROMX: 2 bytes used / 16382 free in 1 bank
 	SRAM: 4 bytes used / 8188 free in 1 bank
 	WRAM0: 5 bytes used / 4091 free
@@ -7,17 +7,26 @@ SUMMARY:
 	HRAM: 7 bytes used / 120 free
 
 ROM0 bank #0:
-	SECTION: $0000-$0000 ($0001 byte) ["rom0"]
-	         $0000 = Label0
-	         $0001 = Label0.local
+	SECTION: $0000-$0009 ($000a bytes) ["rom0 yet again"]
+	         $0000 = Label2
 	SECTION: $0001 ($0000 bytes) ["\n\r\t\"\\"]
-	EMPTY: $0001-$3fff ($3fff bytes)
-	TOTAL EMPTY: $3fff bytes
+	SECTION: $0002 ($0000 bytes) ["empty rom0"]
+	SECTION: $0008 ($0000 bytes) ["empty rom0 again"]
+	SECTION: $000a-$0013 ($000a bytes) ["rom0 again"]
+	         $000a = Label1
+	SECTION: $0014-$0014 ($0001 byte) ["rom0"]
+	         $0014 = Label0
+	         $0015 = Label0.local
+	EMPTY: $0015-$00ff ($00eb bytes)
+	SECTION: $0100 ($0000 bytes) ["rom0 lonely"]
+	         $0100 = FarAway
+	EMPTY: $0100-$3fff ($3f00 bytes)
+	TOTAL EMPTY: $3feb bytes
 
 ROMX bank #1:
 	SECTION: $4000-$4001 ($0002 bytes) ["romx"]
-	         $4000 = Label1
-	         $4002 = Label1.local
+	         $4000 = xLabel
+	         $4002 = xLabel.local
 	EMPTY: $4002-$7fff ($3ffe bytes)
 	TOTAL EMPTY: $3ffe bytes
 
