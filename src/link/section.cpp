@@ -56,6 +56,18 @@ static void checkPieceCompat(Section &target, Section const &other, size_t delta
 				    other.org
 				);
 			}
+		} else if (other.org < delta) {
+			// Check that `org` did not underflow. Note that it's safe for the above checks to
+			// use an underflowed value, since their reported errors will still be accurate.
+			fatalTwoAt(
+			    target,
+			    other,
+			    "Section \"%s\" contains %" PRIu16
+			    " bytes, but is also defined with a lower fixed address $%04" PRIx16,
+			    target.name.c_str(),
+			    target.size,
+			    other.org
+			);
 		}
 
 		target.isAddressFixed = true;

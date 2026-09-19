@@ -417,6 +417,15 @@ rgblinkQuiet -o "$gbtemp" "$otemp" "$gbtemp2"
 tryCmpRom "$test"/ref.out.bin
 evaluateTest
 
+test="section-fragment/org-beyond-size"
+startTest
+"$RGBASM" -o "$otemp" "$test"/a.asm
+"$RGBASM" -o "$gbtemp" "$test"/b.asm
+continueTest
+rgblinkQuiet "$otemp" "$gbtemp" 2>"$outtemp"
+tryDiff "$test"/out.err "$outtemp"
+evaluateTest
+
 test="section-normal/same-name"
 startTest
 "$RGBASM" -o "$otemp" "$test"/a.asm

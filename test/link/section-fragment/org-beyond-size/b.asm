@@ -1,0 +1,2 @@
+SECTION FRAGMENT "f", ROM0[$10]
+db 42
