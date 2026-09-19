@@ -4,7 +4,6 @@
 
 #include <algorithm>
 #include <deque>
-#include <forward_list>
 #include <inttypes.h>
 #include <optional>
 #include <stdint.h>
@@ -33,10 +32,10 @@ struct FreeSpace {
 };
 
 // Table of free space for each bank
-static std::vector<std::forward_list<FreeSpace>> memory[SECTTYPE_INVALID];
-using FreeSpaceIter = std::forward_list<FreeSpace>::iterator;
+static std::vector<std::vector<FreeSpace>> memory[SECTTYPE_INVALID];
+using FreeSpaceIter = std::vector<FreeSpace>::iterator;
 
-static std::forward_list<FreeSpace> &freeSpaceOfBank(Section const &section, uint32_t bank) {
+static std::vector<FreeSpace> &freeSpaceOfBank(Section const &section, uint32_t bank) {
 	assume(bank >= section.typeInfo().firstBank);
 	assume(bank <= section.typeInfo().lastBank);
 	return memory[section.type][bank - section.typeInfo().firstBank];
@@ -157,7 +156,7 @@ struct MemoryLocation {
 };
 
 static FreeSpaceIter tryPlacingInBank(Section const &section, MemoryLocation &location) {
-	std::forward_list<FreeSpace> &bankMem = freeSpaceOfBank(section, location.bank);
+	std::vector<FreeSpace> &bankMem = freeSpaceOfBank(section, location.bank);
 
 	if (section.isAddressFixed) {
 		// There is only one candidate location in this bank: the address at which the section is
@@ -220,13 +219,13 @@ static FreeSpaceIter tryPlacing(Section const &section, MemoryLocation &location
 			return iter; // Found one!
 		}
 	} while (location.goToNextApplicableBankFor(section));
-	// Return a forward_list's end iterator to signal failure.
-	// The exact forward_list doesn't matter, but the caller will use `freeSpaceOfBank` also.
+	// Return a vector's end iterator to signal failure.
+	// The exact vector doesn't matter, but the caller will use `freeSpaceOfBank` also.
 	return freeSpaceOfBank(section, location.bank).end();
 }
 
 static void
-    updateFreeSpace(FreeSpaceIter iter, std::forward_list<FreeSpace> &bankMem, Section const &section) {
+    updateFreeSpace(FreeSpaceIter iter, std::vector<FreeSpace> &bankMem, Section const &section) {
 	assume(section.org + section.size <= UINT16_MAX);
 	uint16_t sectionEnd = section.org + section.size;
 	assume(section.org >= iter->address);
@@ -235,24 +234,13 @@ static void
 	bool noLeftSpace = iter->address == section.org;
 	bool noRightSpace = iter->address + iter->size == sectionEnd;
 	if (noLeftSpace && noRightSpace) { // The free space is entirely deleted.
-		// We need to find the element before the one we wish to delete;
-		// this is a linear scan, but this case is generally rare so that's acceptable.
-		FreeSpaceIter prev = bankMem.before_begin();
-		for (FreeSpaceIter next;;) {
-			next = prev;
-			++next;
-			if (next == iter) {
-				break;
-			}
-			prev = next;
-		}
-		bankMem.erase_after(prev);
+		bankMem.erase(iter);
 	} else if (!noLeftSpace && !noRightSpace) { // The free space is split in two.
 		uint16_t size = static_cast<uint16_t>(iter->address + iter->size - sectionEnd);
-		// Append the new space after the original one
-		bankMem.insert_after(iter, {.address = sectionEnd, .size = size});
 		// Resize the original space (address is unmodified)
 		iter->size = section.org - iter->address;
+		// Append the new space after the original one
+		bankMem.insert(iter + 1, {.address = sectionEnd, .size = size});
 	} else { // The amount of free space blocks doesn't change: just resize!
 		iter->size -= section.size;
 		if (noLeftSpace) {
@@ -349,7 +337,7 @@ static void placeSection(Section &section) {
 	}
 
 	FreeSpaceIter iter = tryPlacing(section, location);
-	if (std::forward_list<FreeSpace> &bankMem = freeSpaceOfBank(section, location.bank);
+	if (std::vector<FreeSpace> &bankMem = freeSpaceOfBank(section, location.bank);
 	    iter != bankMem.end()) {
 		assignSection(section, location);
 
@@ -485,9 +473,9 @@ void assign_AssignSections() {
 	for (SectionType type : EnumSeq(SECTTYPE_INVALID)) {
 		SectionTypeInfo const &typeInfo = sectionTypeInfo[type];
 		memory[type].resize(typeInfo.nbBanks());
-		for (std::forward_list<FreeSpace> &bankMem : memory[type]) {
+		for (std::vector<FreeSpace> &bankMem : memory[type]) {
 			assume(bankMem.empty());
-			bankMem.push_front({
+			bankMem.push_back({
 			    .address = typeInfo.startAddr,
 			    .size = typeInfo.size,
 			});
