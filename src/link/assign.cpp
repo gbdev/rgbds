@@ -5,7 +5,6 @@
 #include "link/assign.hpp"
 
 #include <algorithm>
-#include <deque>
 #include <inttypes.h>
 #include <optional>
 #include <stdint.h>
@@ -379,7 +378,7 @@ static void placeSection(Section &section) {
 	}
 }
 
-static std::deque<Section *> unassignedSections;
+static std::vector<Section *> unassignedSections;
 
 // Categorize a section depending on how constrained it is.
 // This is so the most-constrained sections are placed first.
