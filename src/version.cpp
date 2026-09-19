@@ -8,7 +8,11 @@
 	#if __has_feature(address_sanitizer) && !defined(__SANITIZE_ADDRESS__)
 		#define __SANITIZE_ADDRESS__
 	#endif
+	#if __has_feature(address_sanitizer) && !defined(__SANITIZE_UNDEFINED__)
+		#define __SANITIZE_UNDEFINED__
+	#endif
 #endif
+
 #if !defined(NDEBUG) && defined(__SANITIZE_ADDRESS__)
 extern "C" {
 	char const *__asan_default_options(void) {
