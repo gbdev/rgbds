@@ -123,10 +123,10 @@ void reverse() {
 	    || options.inputSlice.height != 0) {
 		warnx("\"Sliced-off\" pixels are ignored in reverse mode");
 	}
-	if (options.inputSlice.width != 0 && options.inputSlice.width != options.reversedWidth * 8) {
+	if (options.inputSlice.width != 0 && options.inputSlice.width != options.reversedWidth) {
 		warnx(
 		    "Specified input slice width (%" PRIu16
-		    ") does not match provided reversing width (%" PRIu16 " * 8)",
+		    ") does not match provided reversing width (%" PRIu16 ")",
 		    options.inputSlice.width,
 		    options.reversedWidth
 		);
