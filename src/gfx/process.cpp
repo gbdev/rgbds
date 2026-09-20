@@ -689,17 +689,15 @@ static void outputUnoptimizedTileData(
 		// LCOV_EXCL_STOP
 	}
 
-	uint64_t widthTiles = options.inputSlice.width ? options.inputSlice.width : image.png.width / 8;
-	uint64_t heightTiles =
-	    options.inputSlice.height ? options.inputSlice.height : image.png.height / 8;
-	uint64_t nbTiles = widthTiles * heightTiles;
-	uint64_t nbKeptTiles = nbTiles > options.trim ? nbTiles - options.trim : 0;
-	uint64_t tileIdx = 0;
+	size_t nbTiles = std::count_if(RANGE(attrmap), [](AttrmapEntry const &attr) {
+		return !attr.isBackgroundTile();
+	});
+	size_t nbKeptTiles = nbTiles > options.trim ? nbTiles - options.trim : 0;
+	size_t tileIdx = 0;
 
 	for (auto const &[tile, attr] : zip(image.visitAsTiles(), attrmap)) {
 		// Do not emit fully-background tiles.
 		if (attr.isBackgroundTile()) {
-			++tileIdx;
 			continue;
 		}
 
@@ -918,9 +916,9 @@ static void outputTileData(UniqueTiles const &tiles) {
 		// LCOV_EXCL_STOP
 	}
 
-	uint64_t nbTiles = tiles.size();
-	uint64_t nbKeptTiles = nbTiles > options.trim ? nbTiles - options.trim : 0;
-	uint64_t tileIdx = 0;
+	size_t nbTiles = tiles.size();
+	size_t nbKeptTiles = nbTiles > options.trim ? nbTiles - options.trim : 0;
+	size_t tileIdx = 0;
 
 	for (TileData const *tile : tiles) {
 		assume(tile->tileID == tileIdx);
