@@ -729,17 +729,21 @@ String constants are not expanded within the parentheses.
 .Ic IF ) ,
 or 0 if only RGBLINK can compute its value.
 .It Fn BANK arg Ta Returns a bank number.
+.Pp
 If
 .Ar arg
 is the symbol
 .Ic @ ,
 this function returns the bank of the current section.
+.Pp
 If
 .Ar arg
 is a string, it returns the bank of the section that has that name.
+.Pp
 If
 .Ar arg
 is a label, it returns the bank number the label is in.
+.Pp
 The result may be constant if
 .Nm
 is able to compute it.
@@ -757,10 +761,17 @@ this function returns the name of the current section.
 .Ar arg
 is a string, this function returns the size of the section named
 .Ar arg .
+The result is a known constant if the section is already "completed" (i.e. not a
+.Ic UNION
+or
+.Ic FRAGMENT
+and no longer the current section).
+.Pp
 If
 .Ar arg
 is a section type keyword, it returns the size of that section type.
 The result is not constant, since only RGBLINK can compute its value.
+.Pp
 If
 .Ar arg
 is an 8-bit or 16-bit register, it returns the size of that register.
@@ -768,6 +779,8 @@ is an 8-bit or 16-bit register, it returns the size of that register.
 .Ar arg
 is a string, this function returns the starting address of the section named
 .Ar arg .
+The result is a known constant if the section has a fixed address.
+.Pp
 If
 .Ar arg
 is a section type keyword, it returns the starting address of that section type.
