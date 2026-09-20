@@ -770,7 +770,15 @@ and no longer the current section).
 If
 .Ar arg
 is a section type keyword, it returns the size of that section type.
-The result is not constant, since only RGBLINK can compute its value.
+The result is a known constant except for
+.Ic ROM0
+and
+.Ic WRAM0 ,
+since their sizes may be affected by RGBLINK options
+.Fl t
+and
+.Fl w
+respectively.
 .Pp
 If
 .Ar arg
@@ -784,7 +792,8 @@ The result is a known constant if the section has a fixed address.
 If
 .Ar arg
 is a section type keyword, it returns the starting address of that section type.
-The result is not constant, since only RGBLINK can compute its value.
+.Pp
+The result is always a known constant at assembly time.
 .El
 .Sh SECTIONS
 Before you can start writing code, you must define a section.

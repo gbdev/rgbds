@@ -142,14 +142,20 @@ void Expression::makeStartOfSection(std::string const &sectName) {
 
 void Expression::makeSizeOfSectionType(SectionType type) {
 	assume(rpn.empty());
-	data = "Section type's size is not known";
-	rpn.emplace_back(RPN_SIZEOF_SECTTYPE, static_cast<uint8_t>(type));
+	if (type == SECTTYPE_WRAM0) {
+		data = "Section type WRAM0's size is not known (can be affected by RGBLINK '-w/--wramx')";
+		rpn.emplace_back(RPN_SIZEOF_SECTTYPE, static_cast<uint8_t>(type));
+	} else if (type == SECTTYPE_ROM0) {
+		data = "Section type ROM0's size is not known (can be affected by RGBLINK '-t/--tiny')";
+		rpn.emplace_back(RPN_SIZEOF_SECTTYPE, static_cast<uint8_t>(type));
+	} else {
+		data = static_cast<int32_t>(sectionTypeInfo[type].size);
+	}
 }
 
 void Expression::makeStartOfSectionType(SectionType type) {
 	assume(rpn.empty());
-	data = "Section type's start is not known";
-	rpn.emplace_back(RPN_STARTOF_SECTTYPE, static_cast<uint8_t>(type));
+	data = static_cast<int32_t>(sectionTypeInfo[type].startAddr);
 }
 
 static bool tryConstZero(Expression const &lhs, Expression const &rhs) {
