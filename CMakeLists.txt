@@ -127,7 +127,8 @@ else()
       elseif(NOT CMAKE_MATCH_0 STREQUAL "v${PROJECT_VERSION}")
         message(SEND_ERROR "\
 Version mismatch! Git says ${CMAKE_MATCH_0},
-            version.hpp says v${PROJECT_VERSION}")
+            version.hpp says v${PROJECT_VERSION}
+Did you forget to consult `RELEASE.md`?")
       endif()
     endif()
   endif()
