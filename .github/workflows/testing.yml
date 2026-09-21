@@ -211,12 +211,12 @@ jobs:
       - name: Package binaries
         working-directory: build
         run: |
-          cpack -DCPACK_PACKAGE_FILE_NAME=rgbds-win${{ matrix.bits }} -G ZIP --verbose
+          cpack -DCPACK_PACKAGE_FILE_NAME=rgbds-canary-w${{ matrix.bits }}-${{ matrix.os }} -G ZIP --verbose
       - name: Upload Windows binaries
         uses: actions/upload-artifact@v7
         with:
-          name: rgbds-canary-w${{ matrix.bits }}-${{ matrix.os }}
-          path: build/rgbds-win${{ matrix.bits }}.zip
+          path: build/rgbds-canary-w${{ matrix.bits }}-${{ matrix.os }}.zip
+          archive: false
           if-no-files-found: error
       - name: Compute test dependency cache params
         id: test-deps-cache-params
