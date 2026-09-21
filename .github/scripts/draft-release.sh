@@ -10,10 +10,10 @@ if [[ "$tag" = v*-rc* ]]; then
 fi
 
 files=(
-	win64/rgbds-win64.zip
-	win32/rgbds-win32.zip
-	macos/rgbds-macos.zip
-	linux/rgbds-linux-x86_64.tar.xz
+	rgbds-win64.zip
+	rgbds-win32.zip
+	rgbds-macos.zip
+	rgbds-linux-x86_64.tar.xz
 	rgbds-source.tar.gz
 )
 

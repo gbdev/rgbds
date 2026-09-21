@@ -80,8 +80,8 @@ jobs:
       - name: Upload macOS binaries
         uses: actions/upload-artifact@v7
         with:
-          name: macos
           path: rgbds-macos.zip
+          archive: false
           if-no-files-found: error
 
   linux:
@@ -105,8 +105,8 @@ jobs:
       - name: Upload Linux binaries
         uses: actions/upload-artifact@v7
         with:
-          name: linux
           path: rgbds-linux-x86_64.tar.xz
+          archive: false
           if-no-files-found: error
 
   release:
@@ -122,6 +122,9 @@ jobs:
           make dist Q=
       - name: Download all binary packages
         uses: actions/download-artifact@v8
+        with:
+          skip-decompress: true # Do not decompress `.zip`s, we want them as-is.
+          merge-multiple: true # Do not download non-`.zip`s into separate directories.
       - name: Draft the release
         run: |
           .github/scripts/draft-release.sh "${ref#refs/tags/}"
