@@ -1,0 +1,2 @@
+FATAL: Unable to place "aligned" (ROM0 section) with align mask $8000 and offset $6420
+Linking aborted with 1 error

@@ -338,8 +338,16 @@ static void placeSection(Section &section) {
 			}
 		}
 
-		assignSection(section, location);
-		return;
+		// This check safely handles sections with impossible alignment and no fixed address.
+		// The above `location.address = section.typeInfo().startAddr` would be valid on its own,
+		// but `location.makeAddressAligned(...)` can increase `location.address` above the valid
+		// range for its `section`, which would violate an assumption in `assignSection`.
+		// Note that sections with fixed addresses are handled earlier by `sect_DoSanityChecks`,
+		// but this check would safely handle them too if they ever reached it.
+		if (location.address <= section.typeInfo().endAddr() + 1) {
+			assignSection(section, location);
+			return;
+		}
 	}
 
 	FreeSpaceIter iter = tryPlacing(section, location);
