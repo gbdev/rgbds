@@ -184,8 +184,12 @@ src/gfx/rgba.o: src/gfx/rgba.cpp
 .cpp.o:
 	$Q${CXX} ${WARNFLAGS} ${REALCXXFLAGS} -c -o $@ $<
 
+# Relying on the Makefile itself to introspect the installation commands.
+# First pretending to build the executables to exclude their build commands,
+# and then emitting the install commands without actually executing them.
 install.sh:
 	$Qecho '#!/usr/bin/env bash' > $@
+	$Q${MAKE} -t all
 	$Q${MAKE} -s -n install MANSRC= >> $@
 	$Qchmod +x $@
 
