@@ -338,8 +338,15 @@ static void placeSection(Section &section) {
 			}
 		}
 
-		assignSection(section, location);
-		return;
+		// This is impossible to reach merely from the above `.address = <start of region>`;
+		// however, `makeAddressAligned()` can overflow the region.
+		// Currently, fixed addresses failing the below check are caught earlier (`sect_DoSanityChecks`),
+		// but putting this check here keeps the logic a little simpler while also being
+		// a little more defensive and future-proof.
+		if (location.address <= section.typeInfo().endAddr() + 1) {
+			assignSection(section, location);
+			return;
+		}
 	}
 
 	FreeSpaceIter iter = tryPlacing(section, location);

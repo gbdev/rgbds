@@ -1,0 +1,2 @@
+error: Section "z"'s fixed address $4321 is outside of range [$0000; $3fff]
+Linking failed with 1 error
