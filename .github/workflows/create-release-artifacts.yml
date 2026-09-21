@@ -43,6 +43,7 @@ jobs:
         run: |
           call .github\scripts\msvc-env.bat ${{ matrix.bits }}
           cmake -B build -G Ninja -DFETCHCONTENT_BASE_DIR="${{ env.DEPS_ROOT_DIR }}" ^
+                -DCMAKE_COMPILE_WARNING_AS_ERROR=YES -DCMAKE_LINK_WARNING_AS_ERROR=YES ^
                 -DCMAKE_C_FLAGS="/nologo" -DCMAKE_INSTALL_BINDIR=. -DCPACK_COMPONENTS_ALL=binaries
           cmake --build build -- -k 0
       - name: Package binaries
@@ -66,7 +67,8 @@ jobs:
           ./.github/scripts/install-deps.sh macos lld
       - name: Build binaries
         run: |
-          cmake -B build -G Ninja --preset macos-static -DFETCHCONTENT_BASE_DIR="${{ env.DEPS_ROOT_DIR }}"
+          cmake -B build -G Ninja --preset macos-static -DFETCHCONTENT_BASE_DIR="${{ env.DEPS_ROOT_DIR }}" \
+                -DCMAKE_COMPILE_WARNING_AS_ERROR=YES -DCMAKE_LINK_WARNING_AS_ERROR=YES
           cmake --build build -- -k 0
           strip rgb{asm,link,fix,gfx}
         env:
@@ -94,7 +96,7 @@ jobs:
           ./.github/scripts/install-deps.sh ubuntu-22.04
       - name: Build binaries
         run: |
-          make -k -j "$(getconf _NPROCESSORS_ONLN)" WARNFLAGS="-Wall -Wextra -pedantic -static" PKG_CONFIG="pkg-config --static" Q=
+          make -k -j "$(getconf _NPROCESSORS_ONLN)" WARNFLAGS="-Werror -Wall -Wextra -pedantic -static" PKG_CONFIG="pkg-config --static" Q=
           strip rgb{asm,link,fix,gfx}
       - name: Create install script
         run: |
