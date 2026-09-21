@@ -84,7 +84,7 @@ for f in *.png; do
 	fi
 	for f_ext in o_1bpp o_2bpp p_pal t_tilemap a_attrmap q_palmap; do
 		if [[ -e "${f%.png}.out.${f_ext#*_}" ]]; then
-			flags="$flags -${f_ext%_*} result.${f_ext#*_}"
+			flags+=" -${f_ext%_*} result.${f_ext#*_}"
 		fi
 	done
 
