@@ -52,8 +52,8 @@ jobs:
       - name: Upload Windows binaries
         uses: actions/upload-artifact@v7
         with:
-          name: win${{ matrix.bits }}
           path: build/rgbds-win${{ matrix.bits }}.zip
+          archive: false
           if-no-files-found: error
 
   macos:
