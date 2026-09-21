@@ -338,11 +338,12 @@ static void placeSection(Section &section) {
 			}
 		}
 
-		// This is impossible to reach merely from the above `.address = <start of region>`;
-		// however, `makeAddressAligned()` can overflow the region.
-		// Currently, fixed addresses failing the below check are caught earlier (`sect_DoSanityChecks`),
-		// but putting this check here keeps the logic a little simpler while also being
-		// a little more defensive and future-proof.
+		// This check safely handles sections with impossible alignment and no fixed address.
+		// The above `location.address = section.typeInfo().startAddr` would be valid on its own,
+		// but `location.makeAddressAligned(...)` can increase `location.address` above the valid
+		// range for its `section`, which would violate an assumption in `assignSection`.
+		// Note that sections with fixed addresses are handled earlier by `sect_DoSanityChecks`,
+		// but this check would safely handle them too if they ever reached it.
 		if (location.address <= section.typeInfo().endAddr() + 1) {
 			assignSection(section, location);
 			return;
