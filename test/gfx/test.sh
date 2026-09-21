@@ -115,7 +115,7 @@ for f in *.[12]bpp; do
 	if [[ -e "${f%.[12]bpp}.flags" ]]; then
 		flags="@${f%.[12]bpp}.flags"
 		if [[ -e "${f%.1bpp}.flags" ]]; then
-			flags="$flags -d 1"
+			flags+=" -d 1"
 		fi
 	fi
 
