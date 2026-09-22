@@ -431,7 +431,6 @@ static std::pair<std::vector<size_t>, std::vector<Palette>>
 	}
 
 	// Convert the palette spec to actual palettes
-	bool gaveDeprecationWarning = false;
 	for (auto [spec, pal] : zip(options.palSpec, palettes)) {
 		bool skipFirst = false;
 		// If the image contains any transparent pixels, color #0 of all palettes is transparent.
@@ -440,14 +439,6 @@ static std::pair<std::vector<size_t>, std::vector<Palette>>
 		// a transparent color #0, and expecting the spec to only cover the subsequent colors.
 		if (options.hasTransparentPixels && spec.front().has_value() && spec.front()->isOpaque()) {
 			skipFirst = true;
-			if (!gaveDeprecationWarning) {
-				warning(
-				    WARNING_OBSOLETE,
-				    "Implicit transparent color #0 is deprecated; leave an explicit gap in the "
-				    "palette specs"
-				);
-				gaveDeprecationWarning = true;
-			}
 		}
 		for (size_t i = 0; i < options.nbColorsPerPal; ++i) {
 			// If the spec has a gap, there's no need to copy anything.
