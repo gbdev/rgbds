@@ -3,7 +3,6 @@
 #include "asm/fstack.hpp"
 #include <sys/stat.h>
 
-#include <deque>
 #include <errno.h>
 #include <inttypes.h>
 #include <memory>
@@ -55,7 +54,7 @@ static std::stack<Context> contextStack;
 
 // The first include path for `fstk_FindFile` to try is none at all
 static std::vector<std::string> includePaths = {""}; // -I
-static std::deque<std::string> preIncludeStack;      // -P
+static std::vector<std::string> preIncludeStack;      // -P
 static bool failedOnMissingInclude = false;
 
 void FileStackNode::printBacktrace(uint32_t curLineNo) const {
@@ -127,8 +126,8 @@ void fstk_VerboseOutputConfig() {
 	// -P/--preinclude
 	if (!preIncludeStack.empty()) {
 		fputs("\tPreincluded files:\n", stderr);
-		for (std::string const &name : preIncludeStack) {
-			fprintf(stderr, "\t - %s\n", name.c_str());
+		for (auto iter = preIncludeStack.rbegin(); iter != preIncludeStack.rend(); ++iter) {
+			fprintf(stderr, "\t - %s\n", iter->c_str());
 		}
 	}
 }
@@ -169,7 +168,7 @@ void fstk_AddIncludePath(std::string const &path) {
 }
 
 void fstk_AddPreIncludeFile(std::string const &path) {
-	preIncludeStack.emplace_front(path);
+	preIncludeStack.emplace_back(path);
 }
 
 static bool isValidFilePath(std::string const &path) {
@@ -496,10 +495,10 @@ void fstk_NewRecursionDepth(size_t newDepth) {
 bool fstk_Init(std::string const &mainPath) {
 	newFileContext(mainPath, false, true);
 
-	for (std::string const &name : preIncludeStack) {
-		if (std::optional<std::string> fullPath = fstk_FindFile(name); fullPath) {
+	for (auto iter = preIncludeStack.rbegin(); iter != preIncludeStack.rend(); ++iter) {
+		if (std::optional<std::string> fullPath = fstk_FindFile(*iter); fullPath) {
 			newFileContext(*fullPath, false, false);
-		} else if (fstk_FileError(name, "pre-included")) {
+		} else if (fstk_FileError(*iter, "pre-included")) {
 			return false;
 		}
 	}
