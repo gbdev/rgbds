@@ -12,7 +12,8 @@ GitHub.
    - [Dockerfile](/Dockerfile): update `ARG version`.
    - [test/external/\*.cfg](/test/external): update test dependency commits
      (preferably, use the latest available).
-   - [man/\*](/man/): update dates and authors.
+   - [man/\*](/man/): update dates and authors. You can use
+     `sed -Ei '/^\.Dd/ s/ .*/ '"$(LC_ALL=C date +'%B %d, %Y')"/ man/*`.
 
 2. Create a Git tag formatted as <code>v<i>&lt;MAJOR&gt;</i>.<i>&lt;MINOR&gt;</i>.<i>&lt;PATCH&gt;</i></code>,
    or <code>v<i>&lt;MAJOR&gt;</i>.<i>&lt;MINOR&gt;</i>.<i>&lt;PATCH&gt;</i>-rc<i>&lt;RC&gt;</i></code>
