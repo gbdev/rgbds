@@ -205,6 +205,7 @@ void reverse() {
 	    {grayColors[0], grayColors[1], grayColors[2], grayColors[3]}
 	};
 	// If a palette file or palette spec is used as input, it overrides the default colors.
+	bool grayscale = false;
 	if (!options.palettes.empty()) {
 		File file;
 		if (!file.open(options.palettes, std::ios::in | std::ios::binary)) {
@@ -280,11 +281,15 @@ void reverse() {
 		for (size_t i = 0; i < palettes[0].size(); ++i) {
 			palettes[0][i] = grayColors[options.dmgValue(i)];
 		}
+		grayscale = true;
 	} else if (options.palSpecType == Options::EMBEDDED) {
 		warnx("An embedded palette was requested, but no palette file was specified; ignoring "
 		      "request");
+		grayscale = true;
 	} else if (options.hasExplicitPalSpec()) {
 		palettes = std::move(options.palSpec); // We won't be using it again.
+	} else {
+		grayscale = true;
 	}
 
 	std::optional<std::vector<uint8_t>> attrmap;
@@ -497,10 +502,10 @@ void reverse() {
 	}
 	png_set_write_fn(png, &pngFile, writePng, flushPng);
 
-	int pngColorType = options.palettes.empty() ? PNG_COLOR_TYPE_GRAY
-	                   : palettes.size() == 1   ? PNG_COLOR_TYPE_PALETTE
-	                                            : PNG_COLOR_TYPE_RGB_ALPHA;
-	int pngDepth = options.palettes.empty() ? options.bitDepth : 8;
+	int pngColorType = grayscale              ? PNG_COLOR_TYPE_GRAY
+	                   : palettes.size() == 1 ? PNG_COLOR_TYPE_PALETTE
+	                                          : PNG_COLOR_TYPE_RGB_ALPHA;
+	int pngDepth = grayscale ? options.bitDepth : 8;
 
 	png_set_IHDR(
 	    png,
@@ -531,17 +536,21 @@ void reverse() {
 		png_byte pngTrans[4] = {};
 		int nbPngColors = 0, nbPngTrans = 0;
 		for (auto const &color : palettes[0]) {
-			if (!color.has_value()) {
-				continue;
+			if (color.has_value()) {
+				pngPalette[nbPngColors].red = color->red;
+				pngPalette[nbPngColors].green = color->green;
+				pngPalette[nbPngColors].blue = color->blue;
+				pngTrans[nbPngColors] = color->alpha;
+				if (color->alpha < 255) {
+					nbPngTrans = nbPngColors;
+				}
+			} else {
+				pngPalette[nbPngColors].red = 255;
+				pngPalette[nbPngColors].green = 255;
+				pngPalette[nbPngColors].blue = 255;
+				pngTrans[nbPngColors] = 255;
 			}
-			pngPalette[nbPngColors].red = color->red;
-			pngPalette[nbPngColors].green = color->green;
-			pngPalette[nbPngColors].blue = color->blue;
-			pngTrans[nbPngColors] = color->alpha;
 			++nbPngColors;
-			if (color->alpha < 255) {
-				nbPngTrans = nbPngColors;
-			}
 		}
 		png_set_PLTE(png, pngInfo, pngPalette, nbPngColors);
 		if (nbPngTrans > 0) {
