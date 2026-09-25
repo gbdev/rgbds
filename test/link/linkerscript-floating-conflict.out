@@ -1,0 +1,9 @@
+error: The linker script aligns floating section "fixed" to ALIGN[8, 42], but it was already at address $1234 which has ALIGN[8, 52]
+    at linkerscript-floating-conflict.link(4)
+error: The linker script aligns floating section "aligned" to ALIGN[8, 23], but it already has requested ALIGN[8, 42]
+    at linkerscript-floating-conflict.link(8)
+error: The linker script aligns floating section "less aligned" to ALIGN[8, 2], but it already has requested ALIGN[4, 1]
+    at linkerscript-floating-conflict.link(12)
+error: The linker script aligns floating section "more aligned" to ALIGN[4, 2], but it already has requested ALIGN[8, 1]
+    at linkerscript-floating-conflict.link(16)
+Linking failed with 4 errors
