@@ -267,6 +267,7 @@ void layout_PlaceSection(std::string const &name, bool isOptional) {
 		);
 	}
 
+	// Enforce a bank if one is active, but leave any existing constraint alone.
 	if (activeBankIdx != UINT32_MAX) {
 		uint32_t bank = activeBankIdx + typeInfo.firstBank;
 		if (section->isBankFixed && bank != section->bank) {
