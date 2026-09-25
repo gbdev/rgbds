@@ -6,5 +6,8 @@ SECTION "fixed", ROM0[0]
 SECTION "floating", ROM0
 	jr @
 
-; XXX: We rely on this landing at address $0002, which isn't *guaranteed*...
+	; This should thwart any attempts by RGBASM to compute the offset by itself.
+	jr 1 + @ - 1
+
+; We rely on this landing at address $0002, which isn't *guaranteed*...
 assert STARTOF("floating") == 2
