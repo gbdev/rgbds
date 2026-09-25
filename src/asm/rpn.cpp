@@ -83,14 +83,14 @@ void Expression::makeBankSymbol(InternedStr symName) {
 	assume(rpn.empty());
 	if (Symbol const *sym = sym_FindScopedSymbol(symName); sym_IsPC(sym)) {
 		// The @ symbol is treated differently.
-		if (std::optional<uint32_t> outputBank = sect_GetOutputBank(); !outputBank) {
+		if (Section *section = sect_GetSymbolSection(); !section) {
 			error("PC has no bank outside of a section");
 			data = 1;
-		} else if (*outputBank == UINT32_MAX) {
+		} else if (section->bank == UINT32_MAX) {
 			data = "Current section's bank is not known";
 			rpn.emplace_back(RPN_BANK_SELF);
 		} else {
-			data = static_cast<int32_t>(*outputBank);
+			data = static_cast<int32_t>(section->bank);
 		}
 	} else if (sym && !sym->isLabel()) {
 		error("`BANK` argument must be a label");

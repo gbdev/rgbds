@@ -644,10 +644,6 @@ uint32_t sect_GetOutputOffset() {
 	return curOffset + loadOffset;
 }
 
-std::optional<uint32_t> sect_GetOutputBank() {
-	return currentSection ? std::optional<uint32_t>(currentSection->bank) : std::nullopt;
-}
-
 Patch *sect_AddOutputPatch() {
 	return currentSection ? &currentSection->patches.emplace_front() : nullptr;
 }
