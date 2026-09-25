@@ -148,7 +148,7 @@ static void initPatch(Patch &patch, uint32_t type, Expression const &expr, uint3
 
 void out_CreatePatch(uint32_t type, Expression const &expr, uint32_t ofs, uint32_t pcShift) {
 	// Add the patch to the list
-	assume(sect_GetOutputBank().has_value());
+	assume(sect_GetSymbolSection() != nullptr);
 	Patch &patch = *sect_AddOutputPatch();
 
 	initPatch(patch, type, expr, ofs);

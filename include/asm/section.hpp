@@ -5,7 +5,6 @@
 
 #include <deque>
 #include <memory>
-#include <optional>
 #include <stddef.h>
 #include <stdint.h>
 #include <string>
@@ -78,7 +77,6 @@ void sect_CheckLoadClosed();
 Section *sect_GetSymbolSection();
 uint32_t sect_GetSymbolOffset();
 uint32_t sect_GetOutputOffset();
-std::optional<uint32_t> sect_GetOutputBank();
 
 Patch *sect_AddOutputPatch();
 
