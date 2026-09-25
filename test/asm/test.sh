@@ -117,6 +117,7 @@ for i in *.asm notexist.asm; do
 			# 'rgblink -x' implies '-t', so asm/*.out.bin tests cannot use ROMX past 1
 			if ! "$RGBLINK" -x -o "$gb" "$o"; then
 				echo "${bold}${red}\`$RGBLINK -x -o $gb $o\` failed!${rescolors}${resbold}"
+				(( our_rc = 1 ))
 			else
 				tryCmp "$desired_binname" "$gb" gb
 				(( our_rc = our_rc || $? ))
