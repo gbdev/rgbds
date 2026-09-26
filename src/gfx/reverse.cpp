@@ -107,8 +107,6 @@ static void printPalette(std::array<std::optional<Rgba>, 4> const &palette) {
 }
 
 void reverse() {
-	verbosePrint(VERB_CONFIG, "Using libpng %s\n", png_get_libpng_ver(nullptr));
-
 	// Check for weird flag combinations
 
 	if (options.output.empty()) {
