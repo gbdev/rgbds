@@ -30,3 +30,4 @@ dw @ >>> 1
 
 db BITWIDTH(@)
 db TZCOUNT(@)
+db POPCOUNT(@)

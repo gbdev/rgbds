@@ -141,3 +141,7 @@ int32_t op_bitwidth(int32_t value) {
 int32_t op_tzcount(int32_t value) {
 	return value != 0 ? ctz(static_cast<uint32_t>(value)) : 32;
 }
+
+int32_t op_popcount(int32_t value) {
+	return popcount(static_cast<uint32_t>(value));
+}
