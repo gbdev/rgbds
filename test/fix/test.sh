@@ -44,7 +44,7 @@ tryDiff () {
 
 tryCmp () {
 	if ! cmp "$1" "$2"; then
-		"$src/../../gbdiff.bash" "$1" "$2"
+		"$src/../../contrib/gbdiff.bash" "$1" "$2" | head
 		echo "${bold}${red}${3:-$1} mismatch!${rescolors}${resbold}"
 		false
 	fi
@@ -130,6 +130,26 @@ for i in "$src"/*.flags; do
 	runTest "$(basename "$i" .flags)" "$src"
 done
 
+# Check that RGBFIX truncates a pre-existing output file
+name=pre-existing-output
+echo "${bold}${green}${name}...${rescolors}${resbold}"
+dd if=/dev/zero of=input.gb bs=1 count=336 >/dev/null 2>&1
+dd if=/dev/zero of=out.gb bs=1 count=16384 >/dev/null 2>&1
+eval "$RGBFIX" -o out.gb input.gb '>out.out' '2>out.err'
+tryDiff out.out /dev/null "${name}.out"
+tryDiff out.err /dev/null "${name}.err"
+tryCmp input.gb out.gb "${name}.gb"
+
+# Check that RGBFIX handles an output file identical to the input file
+name=equivalent-output
+echo "${bold}${green}${name}...${rescolors}${resbold}"
+dd if=/dev/zero of=input.gb bs=1 count=336 >/dev/null 2>&1
+cp input.gb out.gb
+eval "$RGBFIX" -o out.gb out.gb '>out.out' '2>out.err'
+tryDiff out.out /dev/null "${name}.out"
+tryDiff out.err /dev/null "${name}.err"
+tryCmp input.gb out.gb "${name}.gb"
+
 # Check that RGBFIX errors out when inputting a non-existent file
 runSpecialTest no-exist no-exist
 
@@ -149,7 +169,8 @@ for (( i=0; i < 10; ++i )); do
 	echo "$padding..."
 	for suffix in '' -large -larger; do
 		cat <<<"-p $padding" >padding$suffix.flags
-		tr '\377' \\$((padding / 64))$(((padding / 8) % 8))$((padding % 8)) <"$src/padding$suffix.gb" >padding$suffix.gb # OK because $FF bytes are only used for padding
+		# `tr`ing &377 aka $FF is OK because $FF bytes are only used for padding
+		tr '\377' \\$((padding / 64))$(((padding / 8) % 8))$((padding % 8)) <"$src/padding$suffix.gb" >padding$suffix.gb
 		runTest padding${suffix} .
 	done
 done
