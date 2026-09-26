@@ -180,6 +180,7 @@ static UpperMap<int> const keywords{
     {"STRCAT",        T_(OP_STRCAT)        },
     {"STRCHAR",       T_(OP_STRCHAR)       },
     {"STRCMP",        T_(OP_STRCMP)        },
+    {"STRENDS",       T_(OP_STRENDS)       },
     {"STRFIND",       T_(OP_STRFIND)       },
     {"STRFMT",        T_(OP_STRFMT)        },
     {"STRIN",         T_(OP_STRIN)         },
@@ -189,6 +190,7 @@ static UpperMap<int> const keywords{
     {"STRRIN",        T_(OP_STRRIN)        },
     {"STRRPL",        T_(OP_STRRPL)        },
     {"STRSLICE",      T_(OP_STRSLICE)      },
+    {"STRSTARTS",     T_(OP_STRSTARTS)     },
     {"STRSUB",        T_(OP_STRSUB)        },
     {"STRUPR",        T_(OP_STRUPR)        },
 
