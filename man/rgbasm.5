@@ -659,6 +659,7 @@ The following functions operate on string expressions, but return integers:
 .It Sy Name Ta Sy Operation
 .It Fn STRLEN str Ta Returns the number of characters in Ar str .
 .It Fn STRCMP str1 str2 Ta Compares Ar str1 No and Ar str2 No according to ASCII ordering of their characters. Returns -1 if Ar str1 No is lower than Ar str2 Ns , 1 if Ar str1 No is greater than Ar str2 Ns , or 0 if they match.
+.It Fn STRICMP str1 str2 Ta Compares Ar str1 No and Ar str2 No according to case-insensitive ASCII ordering of their characters. Returns -1 if Ar str1 No is lower than Ar str2 Ns , 1 if Ar str1 No is greater than Ar str2 Ns , or 0 if they match.
 .It Fn STRFIND str sub Ta Returns the first index of Ar sub No in Ar str Ns , or -1 if it's not present.
 .It Fn STRRFIND str sub Ta Returns the last index of Ar sub No in Ar str Ns , or -1 if it's not present.
 .It Fn STRSTARTS str prefix Ta Returns 1 if Ar str No starts with Ar prefix Ns , or 0 otherwise.

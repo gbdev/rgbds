@@ -5,6 +5,8 @@
 %define api.token.constructor
 
 %code requires {
+	#include "platform.hpp"
+
 	#include <stdint.h>
 	#include <string>
 	#include <variant>
@@ -301,6 +303,7 @@
 %token OP_STRENDS "STRENDS"
 %token OP_STRFIND "STRFIND"
 %token OP_STRFMT "STRFMT"
+%token OP_STRICMP "STRICMP"
 %token OP_STRIN "STRIN"
 %token OP_STRLEN "STRLEN"
 %token OP_STRLWR "STRLWR"
@@ -1484,6 +1487,10 @@ relocexpr_no_str:
 	}
 	| OP_STRCMP LPAREN string COMMA string RPAREN {
 		int result = $3.compare($5);
+		$$.makeNumber(result < 0 ? -1 : result > 0 ? 1 : 0);
+	}
+	| OP_STRICMP LPAREN string COMMA string RPAREN {
+		int result = strcasecmp($3.c_str(), $5.c_str());
 		$$.makeNumber(result < 0 ? -1 : result > 0 ? 1 : 0);
 	}
 	| OP_STRFIND LPAREN string COMMA string RPAREN {
