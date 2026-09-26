@@ -3,13 +3,13 @@
 // This implementation was based on https://github.com/agauniyal/rang/
 // and adapted for RGBDS.
 
+#include "platform.hpp" // isatty, strcasecmp
+
 #include "style.hpp"
 
 #include <stdio.h>
 #include <stdlib.h> // getenv
 #include <string.h>
-
-#include "platform.hpp" // isatty, strcasecmp
 
 #if !STYLE_ANSI
 // clang-format off: maintain `include` order

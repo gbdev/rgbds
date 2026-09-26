@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: MIT
 
+#include "platform.hpp"
+
 #include "link/assign.hpp"
 
 #include <algorithm>
@@ -16,7 +18,6 @@
 #include "helpers.hpp"
 #include "itertools.hpp"
 #include "linkdefs.hpp"
-#include "platform.hpp"
 #include "verbosity.hpp"
 
 #include "link/main.hpp"

@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: MIT
 
+#include "platform.hpp" // fseek
+
 #include "asm/section.hpp"
 
 #include <algorithm>
@@ -21,8 +23,7 @@
 #include "helpers.hpp"
 #include "itertools.hpp" // InsertionOrderedMap
 #include "linkdefs.hpp"
-#include "platform.hpp" // fseek
-#include "util.hpp"     // xfclose, seekSize
+#include "util.hpp" // xfclose, seekSize
 
 #include "asm/fstack.hpp"
 #include "asm/lexer.hpp"

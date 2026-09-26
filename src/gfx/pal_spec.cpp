@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: MIT
 
+#include "platform.hpp"
+
 #include "gfx/pal_spec.hpp"
 
 #include <algorithm>
@@ -22,7 +24,6 @@
 #include "diagnostics.hpp"
 #include "file.hpp"
 #include "helpers.hpp"
-#include "platform.hpp"
 #include "util.hpp" // UpperMap, parseDigit
 
 #include "gfx/main.hpp"

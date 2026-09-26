@@ -222,7 +222,7 @@ install: all
 # continous integration infrastructure return failure.
 # The rationale for some of the flags is documented in the CMakeLists.
 develop:
-	$Q${MAKE} WARNFLAGS="${WARNFLAGS} -Werror -Wextra \
+	$Q${MAKE} WARNFLAGS="-Werror -Wextra \
 		-Walloc-zero -Wcast-align -Wcast-qual -Wduplicated-branches -Wduplicated-cond \
 		-Wfloat-equal -Wlogical-op -Wnull-dereference -Wold-style-cast -Wshift-overflow=2 \
 		-Wstringop-overflow=4 -Wtrampolines -Wundef -Wuninitialized -Wunused -Wshadow \
@@ -232,8 +232,9 @@ develop:
 		-D_GLIBCXX_DEBUG -D_GLIBCXX_DEBUG_PEDANTIC -D_GLIBCXX_SANITIZE_VECTOR \
 		-D_GLIBCXX_VERBOSE_ASSERT -D_GLIBCXX_EXTERN_TEMPLATE=0 \
 		-D_LIBCPP_DEBUG -D_LIBCPP_HARDENING_MODE=_LIBCPP_HARDENING_MODE_DEBUG \
-		-fsanitize=address -fsanitize=undefined -fsanitize=float-divide-by-zero" \
-		CXXFLAGS="-ggdb3 -Og -fno-omit-frame-pointer -fno-optimize-sibling-calls"
+		-fsanitize=address -fsanitize=undefined -fsanitize=float-divide-by-zero \
+		${WARNFLAGS}" \
+		CXXFLAGS="-ggdb3 -Og -fno-omit-frame-pointer -fno-optimize-sibling-calls ${CXXFLAGS}"
 
 # Target used in development to debug with gdb.
 debug:

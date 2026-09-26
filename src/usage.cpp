@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: MIT
 
+#include "platform.hpp"
+
 #include "usage.hpp"
 
 #include <stdarg.h>
@@ -8,7 +10,6 @@
 
 #include "diagnostics.hpp" // vfatalx
 #include "helpers.hpp"
-#include "platform.hpp"
 #include "style.hpp"
 #include "util.hpp" // parseWholeNumber
 #include "version.hpp"

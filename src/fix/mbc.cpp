@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: MIT
 
+#include "platform.hpp" // strcasecmp
+
 #include "fix/mbc.hpp"
 
 #include <optional>
@@ -10,8 +12,7 @@
 #include <unordered_map>
 #include <utility>
 
-#include "helpers.hpp"  // unreachable_
-#include "platform.hpp" // strcasecmp
+#include "helpers.hpp" // unreachable_
 #include "util.hpp"
 
 #include "fix/warning.hpp"

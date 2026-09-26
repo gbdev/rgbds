@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: MIT
 
+#include "platform.hpp"
+
 #include "asm/lexer.hpp"
 #include <sys/stat.h>
 
@@ -27,7 +29,6 @@
 #include <vector>
 
 #include "helpers.hpp"
-#include "platform.hpp"
 #include "style.hpp"
 #include "util.hpp"
 #include "verbosity.hpp"

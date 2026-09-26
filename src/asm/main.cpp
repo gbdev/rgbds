@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: MIT
 
+#include "platform.hpp"
+
 #include "asm/main.hpp"
 
 #include <algorithm>
@@ -23,8 +25,7 @@
 #include "diagnostics.hpp"
 #include "helpers.hpp"
 #include "parser.hpp" // Generated from parser.y
-#include "platform.hpp"
-#include "style.hpp" // style_Parse
+#include "style.hpp"  // style_Parse
 #include "usage.hpp"
 #include "util.hpp" // UpperMap
 #include "verbosity.hpp"

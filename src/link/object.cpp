@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: MIT
 
+#include "platform.hpp"
+
 #include "link/object.hpp"
 
 #include <deque>
@@ -18,7 +20,6 @@
 
 #include "helpers.hpp"
 #include "linkdefs.hpp"
-#include "platform.hpp"
 #include "util.hpp" // xfclose
 #include "verbosity.hpp"
 #include "version.hpp"
