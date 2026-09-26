@@ -1,0 +1,21 @@
+ROM0
+	FLOATING
+	ALIGN 8, 42
+	"fixed"
+ROMX 1
+	FLOATING
+	ALIGN 8, 23
+	"aligned"
+ROMX 2
+	FLOATING
+	ALIGN 8, 2
+	"less aligned"
+ROMX 3
+	FLOATING
+	ALIGN 4, 2
+	"more aligned"
+ROMX 4
+	FLOATING
+	ALIGN 8, 99
+	"address compatible"
+	"align compatible"

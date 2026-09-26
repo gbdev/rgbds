@@ -267,9 +267,8 @@ void layout_PlaceSection(std::string const &name, bool isOptional) {
 		);
 	}
 
-	if (activeBankIdx == UINT32_MAX) {
-		section->isBankFixed = false;
-	} else {
+	// Enforce a bank if one is active, but leave any existing constraint alone.
+	if (activeBankIdx != UINT32_MAX) {
 		uint32_t bank = activeBankIdx + typeInfo.firstBank;
 		if (section->isBankFixed && bank != section->bank) {
 			scriptError(
@@ -296,11 +295,11 @@ void layout_PlaceSection(std::string const &name, bool isOptional) {
 			    section->org
 			);
 		} else if (section->isAlignFixed && (org & section->alignMask) != section->alignOfs) {
-			uint8_t alignment = std::countr_one(section->alignMask);
+			int alignment = std::countr_one(section->alignMask);
 			scriptError(
 			    "The linker script assigns section \"%s\" to address $%04" PRIx16
-			    ", but that would be ALIGN[%" PRIu8 ", %" PRIu16
-			    "] instead of the requested ALIGN[%" PRIu8 ", %" PRIu16 "]",
+			    ", but that would be ALIGN[%d, %" PRIu16
+			    "] instead of the requested ALIGN[%d, %" PRIu16 "]",
 			    name.c_str(),
 			    org,
 			    alignment,
@@ -331,10 +330,38 @@ void layout_PlaceSection(std::string const &name, bool isOptional) {
 			org += section->size;
 		}
 	} else {
-		section->isAddressFixed = false;
-		section->isAlignFixed = floatingAlignMask != 0;
-		section->alignMask = floatingAlignMask;
-		section->alignOfs = floatingAlignOffset;
+		if (section->isAddressFixed) {
+			if ((section->org & floatingAlignMask) != floatingAlignOffset) {
+				int alignment = std::countr_one(floatingAlignMask);
+				scriptError(
+				    "The linker script aligns floating section \"%s\" to ALIGN[%d, %" PRIu16
+				    "], but it was already at address $%04" PRIx16 " which has ALIGN[%d, %" PRIu16
+				    "]",
+				    name.c_str(),
+				    alignment,
+				    floatingAlignOffset,
+				    section->org,
+				    alignment,
+				    static_cast<uint16_t>(section->org & floatingAlignMask)
+				);
+			}
+		} else if (uint16_t commonMask = section->alignMask & floatingAlignMask;
+		           section->isAlignFixed
+		           && (section->alignOfs & commonMask) != (floatingAlignOffset & commonMask)) {
+			scriptError(
+			    "The linker script aligns floating section \"%s\" to ALIGN[%d, %" PRIu16
+			    "], but it already has requested ALIGN[%d, %" PRIu16 "]",
+			    name.c_str(),
+			    std::countr_one(floatingAlignMask),
+			    floatingAlignOffset,
+			    std::countr_one(section->alignMask),
+			    section->alignOfs
+			);
+		} else if (!section->isAlignFixed || floatingAlignMask > section->alignMask) {
+			section->isAlignFixed = floatingAlignMask != 0;
+			section->alignMask = floatingAlignMask;
+			section->alignOfs = floatingAlignOffset;
+		}
 
 		floatingAlignOffset = (floatingAlignOffset + section->size) & floatingAlignMask;
 	}
