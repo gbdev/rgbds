@@ -20,6 +20,7 @@
 #include <vector>
 
 #include "diagnostics.hpp"
+#include "file.hpp"
 #include "helpers.hpp"
 #include "platform.hpp"
 #include "util.hpp" // UpperMap, parseDigit
@@ -171,6 +172,28 @@ void parseInlinePalSpec(char const * const rawArg) {
 			parseError(n, 1, "Unexpected character, expected '#'");
 			return;
 		}
+	}
+}
+
+void parseEmbeddedPalSpec(Png const &png) {
+	// Generate a palette spec from one palette's length of colors in the embedded palette
+	if (png.palette.empty()) {
+		error("\"-c embedded\" was given, but the PNG does not have an embedded palette");
+		return;
+	}
+
+	// Ignore extraneous colors if they are unused
+	size_t nbColors = png.palette.size();
+	if (nbColors > options.maxOpaqueColors()) {
+		nbColors = options.maxOpaqueColors();
+	}
+
+	// Fill in the palette spec
+	options.palSpec.clear();
+	auto &palette = options.palSpec.emplace_back();
+	assume(nbColors <= palette.size());
+	for (size_t i = 0; i < nbColors; ++i) {
+		palette[i] = png.palette[i];
 	}
 }
 
