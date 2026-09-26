@@ -296,6 +296,7 @@
 %token OP_STRCAT "STRCAT"
 %token OP_STRCHAR "STRCHAR"
 %token OP_STRCMP "STRCMP"
+%token OP_STRENDS "STRENDS"
 %token OP_STRFIND "STRFIND"
 %token OP_STRFMT "STRFMT"
 %token OP_STRIN "STRIN"
@@ -305,6 +306,7 @@
 %token OP_STRRIN "STRRIN"
 %token OP_STRRPL "STRRPL"
 %token OP_STRSLICE "STRSLICE"
+%token OP_STRSTARTS "STRSTARTS"
 %token OP_STRSUB "STRSUB"
 %token OP_STRUPR "STRUPR"
 %token OP_TAN "TAN"
@@ -1479,6 +1481,12 @@ relocexpr_no_str:
 	| OP_STRRFIND LPAREN string COMMA string RPAREN {
 		size_t pos = $3.rfind($5);
 		$$.makeNumber(pos != std::string::npos ? pos : -1);
+	}
+	| OP_STRSTARTS LPAREN string COMMA string RPAREN {
+		$$.makeNumber($3.starts_with($5));
+	}
+	| OP_STRENDS LPAREN string COMMA string RPAREN {
+		$$.makeNumber($3.ends_with($5));
 	}
 	| OP_STRIN LPAREN string COMMA string RPAREN {
 		warning(WARNING_OBSOLETE, "`STRIN` is deprecated; use 0-indexed `STRFIND` instead");
