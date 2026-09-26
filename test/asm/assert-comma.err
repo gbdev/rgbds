@@ -1,0 +1,42 @@
+error: Assertion failed
+    at assert-comma.asm::REPT~1::REPT~1::REPT~1(10) <- assert-comma.asm::REPT~1::REPT~1(7) <- assert-comma.asm::REPT~1(4) <- assert-comma.asm(2)
+error: Assertion failed
+    at assert-comma.asm::REPT~1::REPT~1::REPT~1(11) <- assert-comma.asm::REPT~1::REPT~1(7) <- assert-comma.asm::REPT~1(4) <- assert-comma.asm(2)
+error: Assertion failed: hello 2
+    at assert-comma.asm::REPT~1::REPT~2::REPT~1(10) <- assert-comma.asm::REPT~1::REPT~2(7) <- assert-comma.asm::REPT~1(4) <- assert-comma.asm(2)
+error: Assertion failed: hello 2
+    at assert-comma.asm::REPT~1::REPT~2::REPT~1(11) <- assert-comma.asm::REPT~1::REPT~2(7) <- assert-comma.asm::REPT~1(4) <- assert-comma.asm(2)
+warning: Assertion failed [-Wassert]
+    at assert-comma.asm::REPT~2::REPT~1::REPT~1(10) <- assert-comma.asm::REPT~2::REPT~1(7) <- assert-comma.asm::REPT~2(4) <- assert-comma.asm(2)
+warning: Assertion failed [-Wassert]
+    at assert-comma.asm::REPT~2::REPT~1::REPT~1(11) <- assert-comma.asm::REPT~2::REPT~1(7) <- assert-comma.asm::REPT~2(4) <- assert-comma.asm(2)
+warning: Assertion failed: hello 6 [-Wassert]
+    at assert-comma.asm::REPT~2::REPT~2::REPT~1(10) <- assert-comma.asm::REPT~2::REPT~2(7) <- assert-comma.asm::REPT~2(4) <- assert-comma.asm(2)
+warning: Assertion failed: hello 6 [-Wassert]
+    at assert-comma.asm::REPT~2::REPT~2::REPT~1(11) <- assert-comma.asm::REPT~2::REPT~2(7) <- assert-comma.asm::REPT~2(4) <- assert-comma.asm(2)
+error: Assertion failed
+    at assert-comma.asm::REPT~3::REPT~1::REPT~1(10) <- assert-comma.asm::REPT~3::REPT~1(7) <- assert-comma.asm::REPT~3(4) <- assert-comma.asm(2)
+error: Assertion failed
+    at assert-comma.asm::REPT~3::REPT~1::REPT~1(11) <- assert-comma.asm::REPT~3::REPT~1(7) <- assert-comma.asm::REPT~3(4) <- assert-comma.asm(2)
+error: Assertion failed: hello 10
+    at assert-comma.asm::REPT~3::REPT~2::REPT~1(10) <- assert-comma.asm::REPT~3::REPT~2(7) <- assert-comma.asm::REPT~3(4) <- assert-comma.asm(2)
+error: Assertion failed: hello 10
+    at assert-comma.asm::REPT~3::REPT~2::REPT~1(11) <- assert-comma.asm::REPT~3::REPT~2(7) <- assert-comma.asm::REPT~3(4) <- assert-comma.asm(2)
+warning: Assertion failed [-Wassert]
+    at assert-comma.asm::REPT~4::REPT~1::REPT~1(10) <- assert-comma.asm::REPT~4::REPT~1(7) <- assert-comma.asm::REPT~4(4) <- assert-comma.asm(2)
+warning: Assertion failed [-Wassert]
+    at assert-comma.asm::REPT~4::REPT~1::REPT~1(11) <- assert-comma.asm::REPT~4::REPT~1(7) <- assert-comma.asm::REPT~4(4) <- assert-comma.asm(2)
+warning: Assertion failed: hello 14 [-Wassert]
+    at assert-comma.asm::REPT~4::REPT~2::REPT~1(10) <- assert-comma.asm::REPT~4::REPT~2(7) <- assert-comma.asm::REPT~4(4) <- assert-comma.asm(2)
+warning: Assertion failed: hello 14 [-Wassert]
+    at assert-comma.asm::REPT~4::REPT~2::REPT~1(11) <- assert-comma.asm::REPT~4::REPT~2(7) <- assert-comma.asm::REPT~4(4) <- assert-comma.asm(2)
+error: Assertion failed
+    at assert-comma.asm::REPT~5::REPT~1::REPT~1(10) <- assert-comma.asm::REPT~5::REPT~1(7) <- assert-comma.asm::REPT~5(4) <- assert-comma.asm(2)
+error: Assertion failed
+    at assert-comma.asm::REPT~5::REPT~1::REPT~1(11) <- assert-comma.asm::REPT~5::REPT~1(7) <- assert-comma.asm::REPT~5(4) <- assert-comma.asm(2)
+error: Assertion failed: hello 18
+    at assert-comma.asm::REPT~5::REPT~2::REPT~1(10) <- assert-comma.asm::REPT~5::REPT~2(7) <- assert-comma.asm::REPT~5(4) <- assert-comma.asm(2)
+error: Assertion failed: hello 18
+    at assert-comma.asm::REPT~5::REPT~2::REPT~1(11) <- assert-comma.asm::REPT~5::REPT~2(7) <- assert-comma.asm::REPT~5(4) <- assert-comma.asm(2)
+FATAL: Assertion failed
+    at assert-comma.asm(23)

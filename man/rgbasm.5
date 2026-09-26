@@ -2529,16 +2529,16 @@ assert FirstByte + 1 == SecondByte
     STATIC_ASSERT .end - Function < 256, "Function is too large!"
 .Ed
 .Pp
-First, the difference between
+An
 .Ic ASSERT
-and
+is evaluated by RGBASM if it can, otherwise by RGBLINK; but a
 .Ic STATIC_ASSERT
-is that the former is evaluated by RGBASM if it can, otherwise by RGBLINK; but the latter is only ever evaluated by RGBASM.
+that RGBASM cannot evaluate will raise an error.
 If RGBASM cannot compute the value of the argument to
 .Ic STATIC_ASSERT ,
 it will produce an error.
 .Pp
-Second, as shown above, a string can be optionally added at the end, to give insight into what the assertion is checking.
+As shown above, a message string can be optionally added as the last argument, to give insight into what the assertion is checking.
 .Pp
 Finally, you can add one of
 .Ic WARN , FAIL
@@ -2559,6 +2559,13 @@ to be emitted;
 (the default) will cause a non-fatal error; and
 .Ic FATAL
 immediately aborts.
+The comma after this argument is optional; so for example,
+.Ql ASSERT WARN n == 2 ,
+.Ql ASSERT WARN, n == 2 ,
+.Ql ASSERT WARN n == 2, "n != 2" ,
+and
+.Ql ASSERT WARN, n == 2, "n != 2"
+are all valid.
 .Sh MISCELLANEOUS
 .Ss Changing options while assembling
 .Ic OPT
