@@ -752,13 +752,13 @@ assert_type:
 	%empty {
 		$$ = ASSERT_ERROR;
 	}
-	| POP_WARN COMMA {
+	| POP_WARN trailing_comma {
 		$$ = ASSERT_WARN;
 	}
-	| POP_FAIL COMMA {
+	| POP_FAIL trailing_comma {
 		$$ = ASSERT_ERROR;
 	}
-	| POP_FATAL COMMA {
+	| POP_FATAL trailing_comma {
 		$$ = ASSERT_FATAL;
 	}
 ;

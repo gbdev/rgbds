@@ -2564,6 +2564,13 @@ to be emitted;
 (the default) will cause a non-fatal error; and
 .Ic FATAL
 immediately aborts.
+The comma after this argument is optional; so for example,
+.Ql ASSERT WARN n == 2 ,
+.Ql ASSERT WARN, n == 2 ,
+.Ql ASSERT WARN n == 2, "n != 2" ,
+and
+.Ql ASSERT WARN, n == 2, "n != 2"
+are all valid.
 .Sh MISCELLANEOUS
 .Ss Changing options while assembling
 .Ic OPT
