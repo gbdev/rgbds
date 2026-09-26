@@ -1,0 +1,21 @@
+[static_]assert       $0 
+[static_]assert       $1 
+[static_]assert       $0 , "hello 2"
+[static_]assert       $1 , "hello 2"
+[static_]assert warn  $0 
+[static_]assert warn  $1 
+[static_]assert warn  $0 , "hello 6"
+[static_]assert warn  $1 , "hello 6"
+[static_]assert fail  $0 
+[static_]assert fail  $1 
+[static_]assert fail  $0 , "hello 10"
+[static_]assert fail  $1 , "hello 10"
+[static_]assert warn, $0 
+[static_]assert warn, $1 
+[static_]assert warn, $0 , "hello 14"
+[static_]assert warn, $1 , "hello 14"
+[static_]assert fail, $0 
+[static_]assert fail, $1 
+[static_]assert fail, $0 , "hello 18"
+[static_]assert fail, $1 , "hello 18"
+[static_]assert fatal...
