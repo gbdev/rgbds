@@ -279,6 +279,9 @@ void Expression::makeUnaryOp(RPNCommand op, Expression &&src) {
 		case RPN_TZCOUNT:
 			data = op_tzcount(val);
 			break;
+		case RPN_POPCOUNT:
+			data = op_popcount(val);
+			break;
 		// LCOV_EXCL_START
 		default:
 			// `makeUnaryOp` should never be called with a non-unary operator!
