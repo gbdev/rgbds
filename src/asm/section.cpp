@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <deque>
 #include <errno.h>
+#include <functional>
 #include <inttypes.h>
 #include <iterator>
 #include <optional>
@@ -92,8 +93,8 @@ size_t sect_CountSections() {
 	return sections.size();
 }
 
-void sect_ForEach(void (*callback)(Section &)) {
-	for (Section &sect : sections) {
+void sect_ForEach(std::function<void(Section const &)> callback) {
+	for (Section const &sect : sections) {
 		callback(sect);
 	}
 }
@@ -117,14 +118,12 @@ Section *sect_FindSectionByName(std::string const &name) {
 	return index ? &sections[*index] : nullptr;
 }
 
-static std::vector<std::string> sectErrors;
-
 // Ideally we'd use a variadic template function and `std::forward` the variadic arguments to
 // `snprintf`; but passing `fmt` to `snprintf` triggers a `-Wformat-security` warning which we
 // can't prevent because GCC only supports the `[[gnu::format(printf, 1, 2)]]` attribute on
 // C-style variadic functions, not on variadic templates; so we have to use `vsnprintf`.
-[[gnu::format(printf, 1, 2)]]
-static void sectError(char const *fmt, ...) {
+[[gnu::format(printf, 2, 3)]]
+static void sectError(std::vector<std::string> &sectErrors, char const *fmt, ...) {
 	std::string result;
 	va_list args1, args2;
 	va_start(args1, fmt);
@@ -144,7 +143,13 @@ static void sectError(char const *fmt, ...) {
 	sectErrors.push_back(result);
 }
 
-static void mergeSectUnion(Section &sect, uint32_t org, uint8_t alignment, uint16_t alignOffset) {
+static void mergeSectUnion(
+    Section &sect,
+    uint32_t org,
+    uint8_t alignment,
+    uint16_t alignOffset,
+    std::vector<std::string> &sectErrors
+) {
 	assume(alignment < 16); // Should be ensured by the caller
 	uint32_t alignSize = 1u << alignment;
 	uint32_t alignMask = alignSize - 1;
@@ -157,12 +162,14 @@ static void mergeSectUnion(Section &sect, uint32_t org, uint8_t alignment, uint1
 		// If both are fixed, they must be the same
 		if (sect.org != UINT32_MAX && sect.org != org) {
 			sectError(
+			    sectErrors,
 			    "Section \"%s\" already declared as fixed at different address $%04" PRIx32,
 			    sect.name.c_str(),
 			    sect.org
 			);
 		} else if (sect.align != 0 && ((org - sect.alignOfs) & sectAlignMask)) {
 			sectError(
+			    sectErrors,
 			    "Section \"%s\" already declared as aligned to %" PRIu32 " bytes (offset %" PRIu16
 			    ")",
 			    sect.name.c_str(),
@@ -179,6 +186,7 @@ static void mergeSectUnion(Section &sect, uint32_t org, uint8_t alignment, uint1
 		if (sect.org != UINT32_MAX) {
 			if ((sect.org - alignOffset) & alignMask) {
 				sectError(
+				    sectErrors,
 				    "Section \"%s\" already declared as fixed at incompatible address $%04" PRIx32,
 				    sect.name.c_str(),
 				    sect.org
@@ -187,6 +195,7 @@ static void mergeSectUnion(Section &sect, uint32_t org, uint8_t alignment, uint1
 			// Check if alignment offsets are compatible
 		} else if ((alignOffset & sectAlignMask) != (sect.alignOfs & alignMask)) {
 			sectError(
+			    sectErrors,
 			    "Section \"%s\" already declared with incompatible %" PRIu32
 			    "-byte alignment (offset %" PRIu16 ")",
 			    sect.name.c_str(),
@@ -201,7 +210,13 @@ static void mergeSectUnion(Section &sect, uint32_t org, uint8_t alignment, uint1
 	}
 }
 
-static void mergeFragments(Section &sect, uint32_t org, uint8_t alignment, uint16_t alignOffset) {
+static void mergeFragments(
+    Section &sect,
+    uint32_t org,
+    uint8_t alignment,
+    uint16_t alignOffset,
+    std::vector<std::string> &sectErrors
+) {
 	assume(alignment < 16); // Should be ensured by the caller
 	uint32_t alignSize = 1u << alignment;
 	uint32_t alignMask = alignSize - 1;
@@ -217,12 +232,14 @@ static void mergeFragments(Section &sect, uint32_t org, uint8_t alignment, uint1
 		// If both are fixed, they must be compatible
 		if (uint16_t curOrg = org - sect.size; sect.org != UINT32_MAX && sect.org != curOrg) {
 			sectError(
+			    sectErrors,
 			    "Section \"%s\" already declared as fixed at incompatible address $%04" PRIx32,
 			    sect.name.c_str(),
 			    sect.org
 			);
 		} else if (sect.align != 0 && ((curOrg - sect.alignOfs) & sectAlignMask)) {
 			sectError(
+			    sectErrors,
 			    "Section \"%s\" already declared as aligned to %" PRIu32 " bytes (offset %" PRIu16
 			    ")",
 			    sect.name.c_str(),
@@ -233,6 +250,7 @@ static void mergeFragments(Section &sect, uint32_t org, uint8_t alignment, uint1
 			// Check that `curOrg` did not underflow. Note that it's safe for the above checks to
 			// use an underflowed value, since their reported errors will still be accurate.
 			sectError(
+			    sectErrors,
 			    "Section \"%s\" already contains %" PRIu32
 			    " bytes, higher than this fragment's fixed address $%04" PRIx32,
 			    sect.name.c_str(),
@@ -249,6 +267,7 @@ static void mergeFragments(Section &sect, uint32_t org, uint8_t alignment, uint1
 		if (uint32_t curOfs = (alignOffset - sect.size) & alignMask; sect.org != UINT32_MAX) {
 			if ((sect.org - curOfs) & alignMask) {
 				sectError(
+				    sectErrors,
 				    "Section \"%s\" already declared as fixed at incompatible address $%04" PRIx32,
 				    sect.name.c_str(),
 				    sect.org
@@ -257,6 +276,7 @@ static void mergeFragments(Section &sect, uint32_t org, uint8_t alignment, uint1
 			// Check if alignment offsets are compatible
 		} else if ((curOfs & sectAlignMask) != (sect.alignOfs & alignMask)) {
 			sectError(
+			    sectErrors,
 			    "Section \"%s\" already declared with incompatible %" PRIu32
 			    "-byte alignment (offset %" PRIu16 ")",
 			    sect.name.c_str(),
@@ -280,10 +300,11 @@ static void mergeSections(
     uint16_t alignOffset,
     SectionModifier mod
 ) {
-	sectErrors.clear();
+	std::vector<std::string> sectErrors;
 
 	if (sect.modifier != mod) {
 		sectError(
+		    sectErrors,
 		    "Section \"%s\" already declared as `SECTION %s`",
 		    sect.name.c_str(),
 		    sectionModNames[sect.modifier]
@@ -307,15 +328,16 @@ static void mergeSections(
 		case SECTION_FRAGMENT: {
 			if (type != sect.type) {
 				sectError(
+				    sectErrors,
 				    "Section \"%s\" already exists but with type `%s`",
 				    sect.name.c_str(),
 				    sect.typeInfo().name
 				);
 			}
 
-			void (*merge)(Section &, uint32_t, uint8_t, uint16_t) =
+			void (*merge)(Section &, uint32_t, uint8_t, uint16_t, std::vector<std::string> &) =
 			    mod == SECTION_UNION ? mergeSectUnion : mergeFragments;
-			merge(sect, org, alignment, alignOffset);
+			merge(sect, org, alignment, alignOffset, sectErrors);
 
 			// If the section's bank is unspecified, override it
 			if (sect.bank == UINT32_MAX) {
@@ -324,6 +346,7 @@ static void mergeSections(
 			// If both specify a bank, it must be the same one
 			else if (bank != UINT32_MAX && sect.bank != bank) {
 				sectError(
+				    sectErrors,
 				    "Section \"%s\" already declared with different bank %" PRIu32,
 				    sect.name.c_str(),
 				    sect.bank
@@ -644,10 +667,6 @@ uint32_t sect_GetOutputOffset() {
 	return curOffset + loadOffset;
 }
 
-Patch *sect_AddOutputPatch() {
-	return currentSection ? &currentSection->patches.emplace_front() : nullptr;
-}
-
 // Returns how many bytes need outputting for the specified alignment and offset to succeed
 uint32_t sect_GetAlignBytes(uint8_t alignment, uint16_t offset) {
 	Section *sect = sect_GetSymbolSection();
@@ -761,7 +780,13 @@ static void writeLong(uint32_t value) {
 }
 
 static void createPatch(PatchType type, Expression const &expr, uint32_t pcShift) {
-	out_CreatePatch(type, expr, sect_GetOutputOffset(), pcShift);
+	// All callers have checked requireCodeSection(). Patches belong to the output section,
+	// even when their PC refers to a LOAD section.
+	assume(currentSection != nullptr);
+	// Expressions use the PC before any preceding opcode or repeated DS bytes were output.
+	currentSection->patches.emplace_front(
+	    type, expr, sect_GetOutputOffset(), sect_GetSymbolSection(), curOffset - pcShift
+	);
 }
 
 void sect_StartUnion() {

@@ -4,6 +4,7 @@
 #define RGBDS_ASM_SECTION_HPP
 
 #include <deque>
+#include <functional>
 #include <memory>
 #include <stddef.h>
 #include <stdint.h>
@@ -12,20 +13,10 @@
 
 #include "intern.hpp"
 #include "linkdefs.hpp"
+#include "output.hpp"
 
 struct Expression;
 struct FileStackNode;
-struct Section;
-
-struct Patch {
-	std::shared_ptr<FileStackNode> src;
-	uint32_t lineNo;
-	uint32_t offset;
-	Section *pcSection;
-	uint32_t pcOffset;
-	uint8_t type;
-	std::vector<uint8_t> rpn;
-};
 
 struct Section {
 	std::string name;
@@ -54,7 +45,7 @@ struct SectionSpec {
 };
 
 size_t sect_CountSections();
-void sect_ForEach(void (*callback)(Section &));
+void sect_ForEach(std::function<void(Section const &)> callback);
 
 Section *sect_FindSectionByName(std::string const &name);
 void sect_NewSection(
@@ -77,8 +68,6 @@ void sect_CheckLoadClosed();
 Section *sect_GetSymbolSection();
 uint32_t sect_GetSymbolOffset();
 uint32_t sect_GetOutputOffset();
-
-Patch *sect_AddOutputPatch();
 
 uint32_t sect_GetAlignBytes(uint8_t alignment, uint16_t offset);
 void sect_AlignPC(uint8_t alignment, uint16_t offset);
