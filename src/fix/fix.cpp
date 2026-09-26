@@ -383,19 +383,19 @@ static void
 		}
 	} else if (output != STDOUT_FILENO) {
 		// Truncate a pre-existing output file before writing to it
-		if (struct stat stat; fstat(input, &stat) == -1) {
+		if (ftruncate(output, 0) != 0) {
 			// LCOV_EXCL_START
-			error("Failed to stat \"%s\": %s", name, strerror(errno));
-			return;
-			// LCOV_EXCL_STOP
-		} else if (!S_ISREG(stat.st_mode)) { // We do not support FIFOs or symlinks
-			// LCOV_EXCL_START
-			error("\"%s\" is not a regular file, and thus cannot be modified in-place", name);
-			return;
-			// LCOV_EXCL_STOP
-		} else if (ftruncate(output, 0) != 0) {
-			// LCOV_EXCL_START
-			error("Failed to truncate \"%s\": %s", name, strerror(errno));
+			int errnum = errno;
+			if (errnum == EINVAL) {
+				// We do not support FIFOs or symlinks
+				if (struct stat stat; fstat(output, &stat) == 0 && !S_ISREG(stat.st_mode)) {
+					error(
+					    "\"%s\" is not a regular file, and thus cannot be modified in-place", name
+					);
+					return;
+				}
+			}
+			error("Failed to truncate \"%s\": %s", name, strerror(errnum));
 			return;
 			// LCOV_EXCL_STOP
 		}
