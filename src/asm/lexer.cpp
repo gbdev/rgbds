@@ -185,6 +185,7 @@ static UpperMap<int> const keywords{
     {"STRENDS",       T_(OP_STRENDS)       },
     {"STRFIND",       T_(OP_STRFIND)       },
     {"STRFMT",        T_(OP_STRFMT)        },
+    {"STRICMP",       T_(OP_STRICMP)       },
     {"STRIN",         T_(OP_STRIN)         },
     {"STRLEN",        T_(OP_STRLEN)        },
     {"STRLWR",        T_(OP_STRLWR)        },
