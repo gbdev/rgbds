@@ -11,8 +11,10 @@ println \2 ; 14
 println \2 ; 28
 {prefix}\2 /= 4
 println \2 ; 7
-{prefix}\2 %= 3
-println \2 ; 1
+{prefix}\2 %= 4
+println \2 ; 3
+{prefix}\2 **= 2
+println \2 ; 9
 {prefix}\2 |= 11
 println \2 ; 11
 {prefix}\2 ^= 12
@@ -23,6 +25,8 @@ println \2 ; 5
 println \2 ; 20
 {prefix}\2 >>= 1
 println \2 ; 10
+{prefix}\2 >>>= 1
+println \2 ; 5
 purge prefix
 endm
 
