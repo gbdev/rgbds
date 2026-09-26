@@ -8,7 +8,6 @@
 #include <inttypes.h>
 #include <ios>
 #include <optional>
-#include <png.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
@@ -77,8 +76,8 @@ public:
 };
 
 struct Image {
-	Png png{};
-	ImagePalette colors{};
+	Png png;
+	ImagePalette colors;
 
 	Rgba &pixel(uint32_t x, uint32_t y) { return png.pixels[y * png.width + x]; }
 	Rgba const &pixel(uint32_t x, uint32_t y) const { return png.pixels[y * png.width + x]; }
@@ -127,14 +126,7 @@ struct Image {
 		return {GrayscaleResult::GRAY_OK, std::nullopt};
 	}
 
-	explicit Image(std::string const &path) {
-		File input;
-		if (input.open(path, std::ios_base::in | std::ios_base::binary) == nullptr) {
-			fatal("Failed to open input image (\"%s\"): %s", input.c_str(path), strerror(errno));
-		}
-
-		png = Png(input.c_str(path), *input);
-
+	explicit Image(Png &&png_) : png(std::move(png_)), colors() {
 		// Validate input slice
 		if (options.inputSlice.width == 0 && png.width % 8 != 0) {
 			fatal("Image width (%" PRIu32 " pixels) is not a multiple of 8", png.width);
@@ -332,28 +324,6 @@ struct AttrmapEntry {
 	}
 };
 
-static void generatePalSpec(Image const &image) {
-	// Generate a palette spec from the first few colors in the embedded palette
-	std::vector<Rgba> const &embPal = image.png.palette;
-	if (embPal.empty()) {
-		fatal("\"-c embedded\" was given, but the PNG does not have an embedded palette");
-	}
-
-	// Ignore extraneous colors if they are unused
-	size_t nbColors = embPal.size();
-	if (nbColors > options.maxOpaqueColors()) {
-		nbColors = options.maxOpaqueColors();
-	}
-
-	// Fill in the palette spec
-	options.palSpec.clear();
-	auto &palette = options.palSpec.emplace_back();
-	assume(nbColors <= palette.size());
-	for (size_t i = 0; i < nbColors; ++i) {
-		palette[i] = embPal[i];
-	}
-}
-
 static std::pair<std::vector<size_t>, std::vector<Palette>>
     generatePalettes(std::vector<ColorSet> const &colorSets, Image const &image) {
 	// Run a "pagination" problem solver
@@ -450,7 +420,7 @@ static std::pair<std::vector<size_t>, std::vector<Palette>>
 			if (i + skipFirst >= options.nbColorsPerPal) {
 				error(
 				    "Each palette spec can only contain up to %" PRIu8
-				    " color%s plus the implict transparent color",
+				    " color%s plus the implicit transparent color",
 				    options.nbColorsPerPal - 1,
 				    options.nbColorsPerPal - 1 == 1 ? "" : "s"
 				);
@@ -992,8 +962,6 @@ static void
 }
 
 void processPalettes() {
-	verbosePrint(VERB_CONFIG, "Using libpng %s\n", png_get_libpng_ver(nullptr));
-
 	std::vector<ColorSet> colorSets;
 	std::vector<Palette> palettes;
 	std::tie(std::ignore, palettes) = makePalsAsSpecified(colorSets);
@@ -1001,11 +969,9 @@ void processPalettes() {
 	outputPalettes(palettes);
 }
 
-void process() {
-	verbosePrint(VERB_CONFIG, "Using libpng %s\n", png_get_libpng_ver(nullptr));
-
+void process(Png &&png) {
 	verbosePrint(VERB_NOTICE, "Reading tiles...\n");
-	Image image(options.input); // This also sets `hasTransparentPixels` as a side effect
+	Image image(std::move(png)); // This also sets `hasTransparentPixels` as a side effect
 
 	// LCOV_EXCL_START
 	verboseDo(VERB_INFO, [&]() {
@@ -1195,9 +1161,6 @@ continue_visiting_tiles:;
 		fatal("Image does not contain any colors");
 	}
 
-	if (options.palSpecType == Options::EMBEDDED) {
-		generatePalSpec(image);
-	}
 	auto [mappings, palettes] =
 	    options.palSpecType == Options::NO_SPEC || options.palSpecType == Options::DMG
 	        ? generatePalettes(colorSets, image)
