@@ -232,7 +232,7 @@ develop:
 		-D_GLIBCXX_DEBUG -D_GLIBCXX_DEBUG_PEDANTIC -D_GLIBCXX_SANITIZE_VECTOR \
 		-D_GLIBCXX_VERBOSE_ASSERT -D_GLIBCXX_EXTERN_TEMPLATE=0 \
 		-D_LIBCPP_DEBUG -D_LIBCPP_HARDENING_MODE=_LIBCPP_HARDENING_MODE_DEBUG \
-		-fsanitize=address -fsanitize=undefined -fsanitize=float-divide-by-zero" \
+		-fsanitize=address,undefined,float-divide-by-zero,float-cast-overflow,pointer-compare,pointer-subtract" \
 		CXXFLAGS="-ggdb3 -Og -fno-omit-frame-pointer -fno-optimize-sibling-calls"
 
 # Target used in development to debug with gdb.
