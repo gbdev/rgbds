@@ -420,7 +420,7 @@ static std::pair<std::vector<size_t>, std::vector<Palette>>
 			if (i + skipFirst >= options.nbColorsPerPal) {
 				error(
 				    "Each palette spec can only contain up to %" PRIu8
-				    " color%s plus the implict transparent color",
+				    " color%s plus the implicit transparent color",
 				    options.nbColorsPerPal - 1,
 				    options.nbColorsPerPal - 1 == 1 ? "" : "s"
 				);

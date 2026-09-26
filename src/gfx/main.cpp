@@ -680,8 +680,11 @@ int main(int argc, char *argv[]) {
 	bool useInputImage = !options.input.empty() && !localOptions.reverse;
 	Png png;
 	if (useInputImage) {
-		if (File image; image.open(options.input, std::ios_base::in | std::ios_base::binary) == nullptr) {
-			fatal("Failed to open PNG image (\"%s\"): %s", image.c_str(options.input), strerror(errno));
+		if (File image;
+		    image.open(options.input, std::ios_base::in | std::ios_base::binary) == nullptr) {
+			fatal(
+			    "Failed to open PNG image (\"%s\"): %s", image.c_str(options.input), strerror(errno)
+			);
 		} else {
 			png = Png(image.c_str(options.input), *image);
 		}
