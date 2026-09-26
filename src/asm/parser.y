@@ -884,7 +884,7 @@ capture_macro:
 ;
 
 rsset:
-	POP_RSSET uconst {
+	POP_RSSET iconst {
 		sym_SetRSValue($2);
 	}
 ;
