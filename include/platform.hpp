@@ -47,6 +47,12 @@
 	#define O_TEXT   0   // Assume that it's not defined either
 #endif                   // _MSC_VER
 
+// MSVC doesn't have POSIX `ftruncate`, use a suitable replacement
+#ifdef _MSC_VER
+	#include <io.h> // IWYU pragma: export
+	#define ftruncate _chsize_s
+#endif
+
 // Windows has stdin and stdout open as text by default, which we may not want
 #if defined(_MSC_VER) || defined(__MINGW32__)
 	#include <io.h> // IWYU pragma: export
