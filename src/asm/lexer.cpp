@@ -173,6 +173,7 @@ static UpperMap<int> const keywords{
     {"ISCONST",       T_(OP_ISCONST)       },
 
     {"BITWIDTH",      T_(OP_BITWIDTH)      },
+    {"POPCOUNT",      T_(OP_POPCOUNT)      },
     {"TZCOUNT",       T_(OP_TZCOUNT)       },
 
     {"BYTELEN",       T_(OP_BYTELEN)       },
