@@ -31,7 +31,6 @@
 
 struct Assertion {
 	Patch patch;
-	Section *section;
 	std::string message;
 };
 
@@ -134,29 +133,18 @@ void out_RegisterSymbol(Symbol &sym) {
 	}
 }
 
-static void initPatch(Patch &patch, uint32_t type, Expression const &expr, uint32_t ofs) {
-	patch.type = type;
-	patch.src = fstk_GetFileStack();
+Patch::Patch(
+    uint32_t type_,
+    Expression const &expr,
+    uint32_t offset_,
+    Section *pcSection_,
+    uint32_t pcOffset_
+)
+    : src(fstk_GetFileStack()), lineNo(lexer_GetLineNo()), offset(offset_), pcSection(pcSection_),
+      pcOffset(pcOffset_), type(type_) {
 	// All patches are assumed to eventually be written, so the file stack node is registered
-	out_RegisterNode(patch.src);
-	patch.lineNo = lexer_GetLineNo();
-	patch.offset = ofs;
-	patch.pcSection = sect_GetSymbolSection();
-	patch.pcOffset = sect_GetSymbolOffset();
-	expr.encode(patch.rpn);
-}
-
-void out_CreatePatch(uint32_t type, Expression const &expr, uint32_t ofs, uint32_t pcShift) {
-	// Add the patch to the list
-	assume(sect_GetSymbolSection() != nullptr);
-	Patch &patch = *sect_AddOutputPatch();
-
-	initPatch(patch, type, expr, ofs);
-
-	// If the patch had a quantity of bytes output before it,
-	// PC is not at the patch's location, but at the location
-	// before those bytes.
-	patch.pcOffset -= pcShift;
+	out_RegisterNode(src);
+	expr.encode(rpn);
 }
 
 void out_CreateAssert(
@@ -166,10 +154,10 @@ void out_CreateAssert(
 		fatal("Assertion messages cannot contain '\\0' characters");
 	}
 
-	Assertion &assertion = assertions.emplace_front();
-
-	initPatch(assertion.patch, type, expr, ofs);
-	assertion.message = message;
+	assertions.push_front({
+	    .patch = Patch(type, expr, ofs, sect_GetSymbolSection(), sect_GetSymbolOffset()),
+	    .message = message,
+	});
 }
 
 static void writeAssert(Assertion const &assert, FILE *file) {
@@ -201,7 +189,7 @@ void out_WriteObject() {
 		return;
 	}
 
-	static FILE *file; // `static` so `sect_ForEach` callback can see it
+	FILE *file;
 	char const *objectFileName = options.objectFileName->c_str();
 	if (*options.objectFileName != "-") {
 		file = fopen(objectFileName, "wb");
@@ -238,7 +226,7 @@ void out_WriteObject() {
 		writeSymbol(*sym, file);
 	}
 
-	sect_ForEach([](Section &sect) { writeSection(sect, file); });
+	sect_ForEach([file](Section const &sect) { writeSection(sect, file); });
 
 	putLong(assertions.size(), file);
 
