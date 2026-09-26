@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: MIT
 
+#include "platform.hpp"
+
 #include "asm/output.hpp"
 
 #include <algorithm>
@@ -16,7 +18,6 @@
 
 #include "helpers.hpp" // assume, Defer
 #include "linkdefs.hpp"
-#include "platform.hpp"
 #include "util.hpp" // xfclose
 
 #include "asm/charmap.hpp"

@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: MIT
 
+#include "platform.hpp"
+
 #include "fix/fix.hpp"
 #include <sys/stat.h>
 
@@ -14,7 +16,6 @@
 
 #include "diagnostics.hpp"
 #include "helpers.hpp"
-#include "platform.hpp"
 #include "util.hpp" // xclose, xfclose
 
 #include "fix/main.hpp"

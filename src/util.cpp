@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: MIT
 
+#include "platform.hpp"
+
 #include "util.hpp"
 
 #include <errno.h>
@@ -9,7 +11,6 @@
 #include <string.h> // strspn
 
 #include "helpers.hpp" // assume
-#include "platform.hpp"
 
 int xfclose(FILE *file) {
 	if (file == stdin || file == stdout || file == stderr) {

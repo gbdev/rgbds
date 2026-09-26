@@ -3,6 +3,12 @@
 #ifndef RGBDS_PLATFORM_HPP
 #define RGBDS_PLATFORM_HPP
 
+// MingGW and Cygwin may need POSIX functions which are not standard C explicitly enabled
+// Make sure to keep this before any system header!
+#if (defined(__MINGW32__) || defined(__CYGWIN__)) && !defined(_POSIX_C_SOURCE)
+	#define _POSIX_C_SOURCE 200809L
+#endif
+
 // MSVC doesn't have str(n)casecmp, use a suitable replacement
 #ifdef _MSC_VER
 	#include <string.h> // IWYU pragma: export
@@ -53,17 +59,6 @@
 	#define setmode(fd, mode) _setmode(fd, mode)
 #else
 	#define setmode(fd, mode) (0)
-#endif
-
-// Windows has 32-bit `long`, which limits `fseek` and `ftell` to 2 GiB
-#if defined(_MSC_VER) || defined(__MINGW32__)
-	#define fseek _fseeki64
-	#define ftell _ftelli64
-#endif
-
-// MingGW and Cygwin may need POSIX functions which are not standard C explicitly enabled
-#if (defined(__MINGW32__) || defined(__CYGWIN__)) && !defined(_POSIX_C_SOURCE)
-	#define _POSIX_C_SOURCE 200809L
 #endif
 
 // Apple has deprecated `sprintf` since Xcode 14 (for macOS 13), but we use it solely in

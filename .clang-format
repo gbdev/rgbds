@@ -42,6 +42,8 @@ EmptyLineBeforeAccessModifier: Leave
 FixNamespaceComments: false
 IncludeBlocks: Regroup
 IncludeCategories:
+  - Regex: '^"platform\.hpp"$'
+    Priority: -1
   - Regex: '^<sys/'
     Priority: 0
   - Regex: '^<'

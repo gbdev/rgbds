@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: MIT
 
+#include "platform.hpp"
+
 #include "fix/main.hpp"
 
 #include <errno.h>
@@ -15,7 +17,6 @@
 #include "cli.hpp"
 #include "diagnostics.hpp"
 #include "helpers.hpp"
-#include "platform.hpp"
 #include "style.hpp"
 #include "usage.hpp"
 #include "util.hpp"

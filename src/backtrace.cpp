@@ -1,12 +1,13 @@
 // SPDX-License-Identifier: MIT
 
+#include "platform.hpp" // strcasecmp
+
 #include "backtrace.hpp"
 
 #include <optional>
 #include <stdint.h>
 
-#include "platform.hpp" // strcasecmp
-#include "util.hpp"     // parseWholeNumber
+#include "util.hpp" // parseWholeNumber
 
 Tracing tracing;
 

@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: MIT
 
+#include "platform.hpp"
+
 #include "link/output.hpp"
 
 #include <algorithm>
@@ -19,7 +21,6 @@
 #include "extern/utf8decoder.hpp"
 #include "helpers.hpp"
 #include "linkdefs.hpp"
-#include "platform.hpp"
 #include "util.hpp"
 
 #include "link/main.hpp"

@@ -57,6 +57,18 @@ just modifying a file, you don't need to do anything (maybe update the copyright
 years). If you are adding new files, you need to use the
 `SPDX-License-Identifier: MIT` header.
 
+### AI usage
+
+If you are using AI to assist in writing your contribution, you must follow
+[GBDev's AI policy](https://gbdev.io/aipolicy.html). In particular, you are
+responsible for reviewing all AI-generated code, ensuring compliance with
+licensing requirements, and taking full responsibility for the contribution.
+When AI tools have meaningfully assisted in producing a contribution, you must
+disclose it with an `Assisted-by` tag in the Git commit message, as detailed
+by the policy.
+
+### Contribution steps
+
 1. Fork this repository.
 2. Checkout the `master` branch.
 3. Create a new branch to work on. You could still work on `master`, but it's
@@ -65,16 +77,18 @@ years). If you are adding new files, you need to use the
    target checks for additional warnings. Your patches shouldn't introduce any
    new warning (but it may be possible to remove some warning checks if it makes
    the code much easier).
-   
-   You can also use `cmake --preset develop` if you prefer.
+
+    You can also use `cmake --preset develop` if you prefer.
+
 5. Test your changes by running `./run-tests.sh` in the `test` directory.
    `./run-tests.sh --help` will print its available options. (You must run
    `external/fetch-repos.sh` first; if you forget to, the test suite will fail and
    remind you mid-way.)
-   
-   You can also use `ctest --test-dir build` if you prefer.
-   `ctest --test-dir build --print-labels` will print its available
-   [test labels](https://cmake.org/cmake/help/latest/manual/ctest.1.html#label-matching).
+
+    You can also use `ctest --test-dir build` if you prefer.
+    `ctest --test-dir build --print-labels` will print its available
+    [test labels](https://cmake.org/cmake/help/latest/manual/ctest.1.html#label-matching).
+
 6. Format your changes according to `clang-format`, which will reformat the
    coding style according to our standards defined in `.clang-format`. You can
    use `make format` to format all the C++ files.
@@ -133,7 +147,7 @@ its contents.
 
 ### RGBLINK
 
-Each `.asm` file corresponds to one test, or one *set* of tests.
+Each `.asm` file corresponds to one test, or one _set_ of tests.
 
 All tests begin by assembling the `.asm` file into an object file, which will be
 linked in various ways depending on the test.

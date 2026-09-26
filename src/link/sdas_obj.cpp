@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: MIT
 
+#include "platform.hpp"
+
 #include "link/sdas_obj.hpp"
 
 #include <inttypes.h>
@@ -14,7 +16,6 @@
 
 #include "helpers.hpp" // assume, literal_strlen
 #include "linkdefs.hpp"
-#include "platform.hpp"
 #include "util.hpp" // parseWholeNumber
 
 #include "link/fstack.hpp"

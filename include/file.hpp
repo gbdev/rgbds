@@ -3,6 +3,8 @@
 #ifndef RGBDS_FILE_HPP
 #define RGBDS_FILE_HPP
 
+#include "platform.hpp"
+
 #include <fcntl.h>
 #include <fstream>
 #include <ios>
@@ -12,7 +14,6 @@
 #include <variant>
 
 #include "helpers.hpp" // assume
-#include "platform.hpp"
 
 class File {
 	std::variant<std::streambuf *, std::filebuf> _file;

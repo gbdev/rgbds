@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: MIT
 
+#include "platform.hpp" // strncasecmp
+
 #include "asm/fstack.hpp"
 #include <sys/stat.h>
 
@@ -22,7 +24,6 @@
 #include "helpers.hpp"
 #include "itertools.hpp" // reversed
 #include "linkdefs.hpp"
-#include "platform.hpp" // strncasecmp
 #include "verbosity.hpp"
 
 #include "asm/intern.hpp"

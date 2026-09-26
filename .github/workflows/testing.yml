@@ -371,8 +371,12 @@ jobs:
             python312-imaging
       - name: Build using Make
         if: matrix.arch == 'x86'
-        run: | # Cygwin doesn't support `make develop` sanitizers ASan or UBSan, so we don't use it.
-          make -k -j "$(getconf _NPROCESSORS_ONLN)" Q=
+        run: | # Cygwin doesn't support `make develop` sanitizers ASan or UBSan, so we disable them.
+          : # 32-bit Cygwin stopped updating since 2022-11-23, and its g++ 11.3.0 gives a false
+          : # positive "potential null pointer dereference" error on `patch.pcOffset -= pcShift;`
+          : # in src/asm/output.cpp, so we disable that warning option.
+          make develop -k -j "$(getconf _NPROCESSORS_ONLN)" Q= \
+               WARNFLAGS="-fno-sanitize=all -Wno-null-dereference"
       - name: Install using Make
         if: matrix.arch == 'x86'
         run: |
