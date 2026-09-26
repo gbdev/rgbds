@@ -42,12 +42,13 @@ static inline void unreachable_() {
 
 // Ideally we'd use `std::bit_width`, but it has insufficient compiler support
 #ifdef __GNUC__ // GCC or compatible
-	#define ctz __builtin_ctz
-	#define clz __builtin_clz
+	#define ctz      __builtin_ctz
+	#define clz      __builtin_clz
+	#define popcount __builtin_popcount
 
 #elif defined(_MSC_VER)
 	#include <intrin.h>
-	#pragma intrinsic(_BitScanReverse, _BitScanForward)
+	#pragma intrinsic(_BitScanReverse, _BitScanForward, __popcnt)
 
 static inline int ctz(unsigned int x) {
 	assume(x != 0);
@@ -61,6 +62,10 @@ static inline int clz(unsigned int x) {
 	unsigned long count;
 	_BitScanReverse(&count, x);
 	return 31 - count;
+}
+
+static inline int popcount(unsigned int x) {
+	return __popcnt(x);
 }
 
 #else
@@ -81,6 +86,15 @@ static inline int clz(unsigned int x) {
 	int count = 0;
 	while (x <= UINT_MAX / 2) {
 		x <<= 1;
+		++count;
+	}
+	return count;
+}
+
+static inline int popcount(unsigned int x) {
+	int count = 0;
+	while (x) {
+		x &= x - 1;
 		++count;
 	}
 	return count;

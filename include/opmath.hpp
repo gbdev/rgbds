@@ -23,5 +23,6 @@ int32_t op_low(int32_t value);
 
 int32_t op_bitwidth(int32_t value);
 int32_t op_tzcount(int32_t value);
+int32_t op_popcount(int32_t value);
 
 #endif // RGBDS_OP_MATH_HPP

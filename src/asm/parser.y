@@ -286,6 +286,7 @@
 %token OP_ISCONST "ISCONST"
 %token OP_LOG "LOG"
 %token OP_LOW "LOW"
+%token OP_POPCOUNT "POPCOUNT"
 %token OP_POW "POW"
 %token OP_READFILE "READFILE"
 %token OP_REVCHAR "REVCHAR"
@@ -1395,6 +1396,9 @@ relocexpr_no_str:
 	}
 	| OP_BITWIDTH LPAREN relocexpr RPAREN {
 		$$.makeUnaryOp(RPN_BITWIDTH, std::move($3));
+	}
+	| OP_POPCOUNT LPAREN relocexpr RPAREN {
+		$$.makeUnaryOp(RPN_POPCOUNT, std::move($3));
 	}
 	| OP_TZCOUNT LPAREN relocexpr RPAREN {
 		$$.makeUnaryOp(RPN_TZCOUNT, std::move($3));

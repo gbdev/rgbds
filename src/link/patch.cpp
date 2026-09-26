@@ -182,6 +182,9 @@ static int32_t computeRPNExpr(Expression const &expr, std::vector<Symbol> const 
 		case RPN_TZCOUNT:
 			value = op_tzcount(popRPN(expr));
 			break;
+		case RPN_POPCOUNT:
+			value = op_popcount(popRPN(expr));
+			break;
 
 		case RPN_OR:
 			value = popRPN(expr) | popRPN(expr);
