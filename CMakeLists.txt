@@ -60,8 +60,7 @@ if(SANITIZERS)
     add_compile_options(${SAN_FLAGS})
     add_link_options(${SAN_FLAGS})
     # Consider using `_GLIBCXX_DEBUG_BACKTRACE` (and `-lstdc++exp`) if unable to debug locally.
-    add_definitions(-D_GLIBCXX_DEBUG -D_GLIBCXX_DEBUG_PEDANTIC -D_GLIBCXX_SANITIZE_VECTOR
-                    -D_GLIBCXX_VERBOSE_ASSERT
+    add_definitions(
                     # This enables debug-mode checks for `std::string`s, but stdlibc++ says
                     # "this is unsupported and not guaranteed to work", so removing it may be fine.
                     # https://gcc.gnu.org/onlinedocs/libstdc++/manual/debug_mode_semantics.html
