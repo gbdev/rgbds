@@ -143,8 +143,9 @@
 %token POP_EQUAL "="
 %token POP_ADDEQ "+=" POP_SUBEQ "-="
 %token POP_MULEQ "*=" POP_DIVEQ "/=" POP_MODEQ "%="
+%token POP_EXPEQ "**="
 %token POP_ANDEQ "&=" POP_OREQ "|=" POP_XOREQ "^="
-%token POP_SHLEQ "<<=" POP_SHREQ ">>="
+%token POP_SHLEQ "<<=" POP_SHREQ ">>=" POP_USHREQ ">>>="
 
 // SM83 registers
 %token TOKEN_A "a"
@@ -640,6 +641,9 @@ compound_eq:
 	| POP_MODEQ {
 		$$ = RPN_MOD;
 	}
+	| POP_EXPEQ {
+		$$ = RPN_EXP;
+	}
 	| POP_XOREQ {
 		$$ = RPN_XOR;
 	}
@@ -654,6 +658,9 @@ compound_eq:
 	}
 	| POP_SHREQ {
 		$$ = RPN_SHR;
+	}
+	| POP_USHREQ {
+		$$ = RPN_USHR;
 	}
 ;
 
