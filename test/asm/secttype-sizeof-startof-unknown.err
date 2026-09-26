@@ -1,0 +1,5 @@
+error: Expected constant expression: Section type ROM0's size is not known (can be affected by RGBLINK '-t/--tiny')
+    at secttype-sizeof-startof-unknown.asm(2)
+error: Expected constant expression: Section type WRAM0's size is not known (can be affected by RGBLINK '-w/--wramx')
+    at secttype-sizeof-startof-unknown.asm(5)
+Assembly aborted with 2 errors
