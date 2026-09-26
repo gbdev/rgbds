@@ -1681,9 +1681,6 @@ static Token yylex_NORMAL() {
 		case '-': // Either -= or SUB
 			return oneOrTwo('=', T_(POP_SUBEQ), T_(OP_SUB));
 
-		case '*': // Either *=, MUL, or EXP
-			return oneOrTwo('=', T_(POP_MULEQ), '*', T_(OP_EXP), T_(OP_MUL));
-
 		case '/': // Either /=, DIV, or a block comment
 			if (peek() == '*') {
 				shiftChar();
@@ -1714,6 +1711,14 @@ static Token yylex_NORMAL() {
 			}
 			return Token(T_(OP_LOGICNOT));
 
+		case '*': // Either *=, **=, MUL, or EXP
+			c = peek();
+			if (c == '*') {
+				shiftChar();
+				return oneOrTwo('=', T_(POP_EXPEQ), T_(OP_EXP));
+			}
+			return oneOrTwo('=', T_(POP_MULEQ), T_(OP_MUL));
+
 		case '<': // Either <<=, LT, LTE, or left shift
 			if (peek() == '<') {
 				shiftChar();
@@ -1721,19 +1726,25 @@ static Token yylex_NORMAL() {
 			}
 			return oneOrTwo('=', T_(OP_LOGICLE), T_(OP_LOGICLT));
 
-		case '>': // Either >>=, GT, GTE, or either kind of right shift
-			if (peek() == '>') {
-				shiftChar();
-				return oneOrTwo('=', T_(POP_SHREQ), '>', T_(OP_USHR), T_(OP_SHR));
-			}
-			return oneOrTwo('=', T_(OP_LOGICGE), T_(OP_LOGICGT));
-
 		case ':': // Either :, ::, or an anonymous label ref
 			c = peek();
 			if (c == '+' || c == '-') {
 				return Token(T_(ANON), readAnonLabelRef(c));
 			}
 			return oneOrTwo(':', T_(DOUBLE_COLON), T_(COLON));
+
+			// Handle ambiguous 1-, 2-, 3-, or 4-char tokens
+
+		case '>': // Either >>=, >>>=, GT, GTE, or either kind of right shift
+			if (peek() == '>') {
+				shiftChar();
+				if (peek() == '>') {
+					shiftChar();
+					return oneOrTwo('=', T_(POP_USHREQ), T_(OP_USHR));
+				}
+				return oneOrTwo('=', T_(POP_SHREQ), T_(OP_SHR));
+			}
+			return oneOrTwo('=', T_(OP_LOGICGE), T_(OP_LOGICGT));
 
 			// Handle numbers
 
