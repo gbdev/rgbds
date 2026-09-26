@@ -57,6 +57,16 @@ just modifying a file, you don't need to do anything (maybe update the copyright
 years). If you are adding new files, you need to use the
 `SPDX-License-Identifier: MIT` header.
 
+If you are using AI to assist in writing your contribution, you must follow the
+[GBDev AI policy](https://gbdev.io/aipolicy.html). In particular, you are
+responsible for reviewing all AI-generated code, ensuring compliance with
+licensing requirements, and taking full responsibility for the contribution.
+When AI tools have meaningfully assisted in producing a contribution, you must
+disclose it with an `Assisted-by` tag in the Git commit message, as detailed
+by the policy.
+
+The steps to making a contribution to RGBDS:
+
 1. Fork this repository.
 2. Checkout the `master` branch.
 3. Create a new branch to work on. You could still work on `master`, but it's
