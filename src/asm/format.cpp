@@ -11,7 +11,8 @@
 #include <string.h>
 #include <string>
 
-#include "util.hpp" // parseNumber
+#include "helpers.hpp" // RANGE
+#include "util.hpp"    // parseNumber, toUpper, toLower
 
 #include "asm/main.hpp" // options
 #include "asm/warning.hpp"
@@ -72,6 +73,8 @@ size_t FormatSpec::parseSpec(char const *spec) {
 	case 'o':
 	case 'f':
 	case 's':
+	case 'A':
+	case 'a':
 		++i;
 		type = c;
 		break;
@@ -130,11 +133,17 @@ void FormatSpec::appendString(std::string &str, std::string const &value) const 
 	if (hasPrec) {
 		error("Formatting string with fractional precision");
 	}
-	if (useType != 's') {
+	if (useType != 's' && useType != 'A' && useType != 'a') {
 		error("Formatting string as type '%c'", useType);
 	}
 
-	std::string useValue = exact ? escapeString(value) : value;
+	std::string useValue = value;
+	if (useType == 'A' || useType == 'a') {
+		std::transform(RANGE(useValue), useValue.begin(), useType == 'A' ? toUpper : toLower);
+	}
+	if (exact) {
+		useValue = escapeString(useValue);
+	}
 	size_t valueLen = useValue.length();
 	size_t totalLen = width > valueLen ? width : valueLen;
 	size_t padLen = totalLen - valueLen;
@@ -168,8 +177,8 @@ void FormatSpec::appendNumber(std::string &str, uint32_t value) const {
 	if (useType != 'f' && hasPrec) {
 		error("Formatting type '%c' with fractional precision", useType);
 	}
-	if (useType == 's') {
-		error("Formatting number as type 's'");
+	if (useType == 's' || useType == 'A' || useType == 'a') {
+		error("Formatting number as type '%c'", useType);
 	}
 
 	char signChar = sign; // 0 or ' ' or '+'
