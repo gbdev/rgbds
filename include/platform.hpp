@@ -48,7 +48,7 @@
 #endif                   // _MSC_VER
 
 // MSVC doesn't have POSIX `ftruncate`, use a suitable replacement
-#if defined(_MSC_VER)
+#ifdef _MSC_VER
 	#include <io.h> // IWYU pragma: export
 	#define ftruncate _chsize_s
 #endif
