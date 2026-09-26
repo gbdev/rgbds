@@ -1,0 +1,13 @@
+
+	assert STRSTARTS("string", "str")
+	assert STRENDS("string", "ing")
+	assert !STRSTARTS("string", "stringing")
+	assert !STRENDS("string", "bowstring")
+	assert STRSTARTS("string", "string")
+	assert STRENDS("string", "string")
+	assert !STRSTARTS("", "prefix")
+	assert !STRENDS("", "suffix")
+	assert STRSTARTS("string", "")
+	assert STRENDS("string", "")
+	assert STRSTARTS("", "")
+	assert STRENDS("", "")
