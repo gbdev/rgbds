@@ -372,7 +372,7 @@ jobs:
       - name: Build using Make
         if: matrix.arch == 'x86'
         run: | # Cygwin doesn't support `make develop` sanitizers ASan or UBSan, so we disable them.
-          make -k -j "$(getconf _NPROCESSORS_ONLN)" develop WARNFLAGS="-fno-sanitize=all" Q=
+          make -k -j "$(getconf _NPROCESSORS_ONLN)" develop WARNFLAGS="-fno-sanitize=all" CXXFLAGS="-D_POSIX_C_SOURCE=200809L" Q=
       - name: Install using Make
         if: matrix.arch == 'x86'
         run: |
