@@ -402,6 +402,9 @@ void sym_SetRSValue(int32_t value) {
 }
 
 void sym_IncrementCYCLESValue(uint32_t delta) {
+	// Calling this with no active section is an assembly error,
+	// but it will already have been reported
+	// by the instruction emission.
 	if (Section *section = sect_GetSymbolSection(); section) {
 		section->cyclesCounter += delta;
 	}
