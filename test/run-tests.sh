@@ -26,7 +26,7 @@ EOF
 nonfree=true
 internal=true
 external=true
-make_jobs=
+make_args=()
 osname=
 while [[ $# -gt 0 ]]; do
 	case "$1" in
@@ -45,7 +45,7 @@ while [[ $# -gt 0 ]]; do
 			;;
 		--jobs)
 			shift
-			make_jobs="-j$1"
+			make_args+=(-j "$1")
 			;;
 		--os)
 			shift
@@ -106,6 +106,6 @@ for cfg in *.cfg; do (
 
 	# Run nonfree tests only if they are opted into.
 	if ! "$EXT_TEST_IS_NONFREE" || "$nonfree"; then
-		./test.sh "$test_name" "$make_jobs"
+		./test.sh "$test_name" "${make_args[@]}"
 	fi
 ); done
