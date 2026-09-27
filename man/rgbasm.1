@@ -473,6 +473,13 @@ This warning is enabled by
 Warn when exporting an undefined symbol.
 This warning is enabled by
 .Fl Wall .
+.It Fl Winclude-shadow
+Warn when there are multiple files with the same name in different include paths.
+(The one in the first include path
+.Dq shadows
+the others.)
+This warning is enabled by
+.Fl Weverything .
 .It Fl Wno-large-constant
 Warn when a constant too large to fit in a signed 32-bit integer is encountered.
 .It Fl Wmacro-shift

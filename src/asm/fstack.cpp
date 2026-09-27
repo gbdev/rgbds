@@ -186,11 +186,37 @@ static void printDep(std::string const &path) {
 }
 
 std::optional<std::string> fstk_FindFile(std::string const &path) {
+	std::optional<std::string> foundFile = std::nullopt;
+	std::vector<std::string> shadowed;
+
 	for (std::string &incPath : includePaths) {
 		if (std::string fullPath = incPath + path; isValidFilePath(fullPath)) {
-			printDep(fullPath);
-			return fullPath;
+			if (foundFile.has_value()) {
+				shadowed.push_back(fullPath);
+			} else {
+				foundFile = fullPath;
+			}
 		}
+	}
+
+	if (!shadowed.empty()) {
+		assume(foundFile.has_value());
+		size_t nbSummarized = shadowed.size() - 1;
+		std::string summary = nbSummarized > 0 ? " and " + std::to_string(nbSummarized) + " other"
+		                                             + (nbSummarized != 1 ? "s" : "")
+		                                       : "";
+		warning(
+		    WARNING_INCLUDE_SHADOW,
+		    "File \"%s\" shadows \"%s\"%s",
+		    foundFile->c_str(),
+		    shadowed[0].c_str(),
+		    summary.c_str()
+		);
+	}
+
+	if (foundFile.has_value()) {
+		printDep(*foundFile);
+		return foundFile;
 	}
 
 	if (options.missingIncludeState != INC_ERROR) {
