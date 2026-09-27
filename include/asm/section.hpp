@@ -5,6 +5,7 @@
 
 #include <deque>
 #include <memory>
+#include <optional>
 #include <stddef.h>
 #include <stdint.h>
 #include <string>
@@ -100,8 +101,7 @@ void sect_RelBytes(uint32_t n, std::vector<Expression> const &exprs);
 void sect_RelWord(Expression const &expr, uint32_t pcShift);
 void sect_RelLong(Expression const &expr, uint32_t pcShift);
 void sect_PCRelByte(Expression const &expr, uint32_t pcShift);
-bool sect_BinaryFile(std::string const &name, uint32_t startPos);
-bool sect_BinaryFileSlice(std::string const &name, uint32_t startPos, uint32_t length);
+bool sect_BinaryFile(std::string const &name, uint32_t startPos, std::optional<uint32_t> length);
 
 void sect_EndSection();
 void sect_PushSection();
