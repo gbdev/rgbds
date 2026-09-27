@@ -89,20 +89,26 @@ for f in *.png; do
 	done
 
 	newTest "$RGBGFX" $flags "$f"
+	test_rc=0
 	if [[ -e "${f%.png}.err" ]]; then
 		runTest 2>"$errtmp"
-		diff -au --strip-trailing-cr "${f%.png}.err" "$errtmp" || failTest
+		diff -au --strip-trailing-cr "${f%.png}.err" "$errtmp" || test_rc=$?
 	else
-		runTest && checkOutput "${f%.png}" || failTest $?
+		runTest || test_rc=$?
 	fi
+	checkOutput "${f%.png}" || test_rc=$?
+	(( test_rc )) && failTest $test_rc
 
 	newTest "$RGBGFX" $flags - "<$f"
+	test_rc=0
 	if [[ -e "${f%.png}.err" ]]; then
 		runTest 2>"$errtmp"
-		diff -au --strip-trailing-cr "${f%.png}.err" <(sed "s#<stdin>#${f//#/\\#}#g" "$errtmp") || failTest
+		diff -au --strip-trailing-cr "${f%.png}.err" <(sed "s#<stdin>#${f//#/\\#}#g" "$errtmp") || test_rc=$?
 	else
-		runTest && checkOutput "${f%.png}" || failTest $?
+		runTest || test_rc=$?
 	fi
+	checkOutput "${f%.png}" || test_rc=$?
+	(( test_rc )) && failTest $test_rc
 done
 
 for f in *.[12]bpp; do
@@ -122,7 +128,7 @@ for f in *.[12]bpp; do
 	if [[ -e "${f%.[12]bpp}.err" ]]; then
 		newTest "$RGBGFX $flags -o $f -r 1 result.png"
 		runTest 2>"$errtmp"
-		diff -au --strip-trailing-cr "${f%.[12]bpp}.err" <(sed "s#<stdin>#${f//#/\\#}#g" "$errtmp") || failTest
+		diff -au --strip-trailing-cr "${f%.[12]bpp}.err" <(sed "s#<stdin>#${f//#/\\#}#g" "$errtmp") || failTest $?
 	else
 		newTest "$RGBGFX $flags -o $f -r 1 result.png && $RGBGFX $flags -o result.2bpp result.png"
 		runTest && tryCmp "$f" result.2bpp || failTest $?
