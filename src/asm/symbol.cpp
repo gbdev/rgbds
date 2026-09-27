@@ -44,6 +44,7 @@ static Symbol *SCOPESymbol;
 static Symbol *globalScopeSymbol;
 static Symbol *localScopeSymbol;
 static Symbol *RSSymbol;
+static Symbol *CYCLESSymbol;
 
 static InternedStr PCName;
 static InternedStr globalScopeName;
@@ -106,6 +107,15 @@ static std::shared_ptr<std::string> localScopeCallback() {
 		return std::make_shared<std::string>("");
 	}
 	return std::make_shared<std::string>(localScope->name.str());
+}
+
+static int32_t CYCLESCallback() {
+	Section *section = sect_GetSymbolSection();
+	if (!section) {
+		error("`__CYCLES__` has no value outside of a section");
+		return 0;
+	}
+	return static_cast<int32_t>(section->cyclesCounter);
 }
 
 static int32_t PCCallback() {
@@ -329,6 +339,10 @@ Symbol *sym_FindScopedValidSymbol(InternedStr symName) {
 	if (sym == SCOPESymbol && !sect_GetSymbolSection()) {
 		return nullptr;
 	}
+	// `__CYCLES__` has no value outside of a section
+	if (sym == CYCLESSymbol && !sect_GetSymbolSection()) {
+		return nullptr;
+	}
 
 	return sym;
 }
@@ -385,6 +399,15 @@ int32_t sym_GetRSValue() {
 void sym_SetRSValue(int32_t value) {
 	updateSymbolFilename(*RSSymbol);
 	RSSymbol->data = value;
+}
+
+void sym_IncrementCYCLESValue(uint32_t delta) {
+	// Calling this with no active section is an assembly error,
+	// but it will already have been reported
+	// by the instruction emission.
+	if (Section *section = sect_GetSymbolSection(); section) {
+		section->cyclesCounter += delta;
+	}
 }
 
 uint32_t Symbol::getConstantValue() const {
@@ -523,6 +546,15 @@ Symbol *sym_AddVar(InternedStr symName, int32_t value) {
 		sym = &createSymbol(symName);
 	} else if (sym->isDefined() && sym->type != SYM_VAR) {
 		alreadyDefinedError(*sym, sym->type == SYM_LABEL ? "label" : "constant");
+		return sym;
+	} else if (sym == CYCLESSymbol) {
+		if (Section *section = sect_GetSymbolSection(); section) {
+			// This does not call `updateSymbolFilename` because `__CYCLES__` should stay as a
+			// built-in symbol, not registered for output in the object file.
+			section->cyclesCounter = static_cast<uint32_t>(value);
+		} else {
+			error("`__CYCLES__` has no value outside of a section");
+		}
 		return sym;
 	} else {
 		updateSymbolFilename(*sym);
@@ -728,6 +760,11 @@ void sym_Init(time_t now) {
 
 	RSSymbol = sym_AddVar(intern("_RS"), 0);
 	RSSymbol->isBuiltin = true;
+
+	CYCLESSymbol = &createSymbol(intern("__CYCLES__"));
+	CYCLESSymbol->type = SYM_VAR;
+	CYCLESSymbol->data = CYCLESCallback;
+	CYCLESSymbol->isBuiltin = true;
 
 	sym_AddString(
 	    intern("__RGBDS_VERSION__"), std::make_shared<std::string>(get_package_version_string())
