@@ -14,9 +14,10 @@ gbtemp2="$(mktemp)"
 outtemp="$(mktemp)"
 outtemp2="$(mktemp)"
 outtemp3="$(mktemp)"
+errtemp="$(mktemp)"
 
 # shellcheck disable=SC2064 # (Immediate expansion is the desired behavior.)
-trap "rm -f ${otemp@Q} ${gbtemp@Q} ${gbtemp2@Q} ${outtemp@Q} ${outtemp2@Q} ${outtemp3@Q}" EXIT
+trap "rm -f ${otemp@Q} ${gbtemp@Q} ${gbtemp2@Q} ${outtemp@Q} ${outtemp2@Q} ${outtemp3@Q} ${errtemp@Q}" EXIT
 
 tests=0
 failed=0
@@ -207,7 +208,8 @@ test="fragment-literals"
 startTest
 "$RGBASM" -o "$otemp" "$test"/a.asm
 continueTest
-rgblinkQuiet -o "$gbtemp" -m "$outtemp" -n "$outtemp2" "$otemp"
+rgblinkQuiet -o "$gbtemp" -m "$outtemp" -n "$outtemp2" "$otemp" 2>"$errtemp"
+tryDiff /dev/null "$errtemp"
 tryCmpRom "$test"/ref.out.bin
 tryDiff "$test"/ref.out.map "$outtemp"
 tryDiff "$test"/ref.out.sym "$outtemp2"
@@ -218,7 +220,8 @@ startTest
 "$RGBASM" -o "$otemp" "$test"/a.asm
 "$RGBASM" -o "$outtemp" "$test"/b.asm
 continueTest
-rgblinkQuiet -o "$gbtemp" -n "$outtemp2" "$otemp" "$outtemp"
+rgblinkQuiet -o "$gbtemp" -n "$outtemp2" "$otemp" "$outtemp" 2>"$errtemp"
+tryDiff /dev/null "$errtemp"
 tryCmpRom "$test"/ref.out.bin
 tryDiff "$test"/ref.out.sym "$outtemp2"
 evaluateTest
@@ -239,8 +242,10 @@ startTest
 "$RGBASM" -o "$otemp" "$test"/a.asm
 "$RGBASM" -o "$outtemp" "$test"/b.asm
 continueTest
-rgblinkQuiet -o "$gbtemp" "$otemp"
-rgblinkQuiet -o "$gbtemp2" "$outtemp"
+rgblinkQuiet -o "$gbtemp" "$otemp" 2>"$errtemp"
+tryDiff /dev/null "$errtemp"
+rgblinkQuiet -o "$gbtemp2" "$outtemp" 2>"$errtemp"
+tryDiff /dev/null "$errtemp"
 tryCmp "$gbtemp" "$gbtemp2"
 evaluateTest
 
@@ -248,7 +253,8 @@ test="load-fragment/base"
 startTest
 "$RGBASM" -o "$otemp" "$test"/a.asm
 continueTest
-rgblinkQuiet -o "$gbtemp" -n "$outtemp" "$otemp"
+rgblinkQuiet -o "$gbtemp" -n "$outtemp" "$otemp" 2>"$errtemp"
+tryDiff /dev/null "$errtemp"
 tryCmpRom "$test"/ref.out.bin
 tryDiff "$test"/ref.out.sym "$outtemp"
 evaluateTest
@@ -258,7 +264,8 @@ startTest
 "$RGBASM" -o "$otemp" "$test"/a.asm
 "$RGBASM" -o "$gbtemp2" "$test"/b.asm
 continueTest
-rgblinkQuiet -o "$gbtemp" "$otemp" "$gbtemp2"
+rgblinkQuiet -o "$gbtemp" "$otemp" "$gbtemp2" 2>"$errtemp"
+tryDiff /dev/null "$errtemp"
 tryCmpRom "$test"/ref.out.bin
 evaluateTest
 
@@ -268,7 +275,8 @@ startTest
 "$RGBASM" -o "$outtemp" "$test"/b.asm
 "$RGBASM" -o "$outtemp2" "$test"/c.asm
 continueTest
-rgblinkQuiet -o "$gbtemp" -m "$outtemp3" -n "$gbtemp2" "$otemp" "$outtemp" "$outtemp2"
+rgblinkQuiet -o "$gbtemp" -m "$outtemp3" -n "$gbtemp2" "$otemp" "$outtemp" "$outtemp2" 2>"$errtemp"
+tryDiff /dev/null "$errtemp"
 tryCmpRom "$test"/ref.out.bin
 tryDiff "$test"/ref.out.map "$outtemp3"
 tryDiff "$test"/ref.out.sym "$gbtemp2"
@@ -399,7 +407,8 @@ startTest
 "$RGBASM" -o "$otemp" "$test"/a.asm
 "$RGBASM" -o "$gbtemp2" "$test"/b.asm
 continueTest
-rgblinkQuiet -o "$gbtemp" "$otemp" "$gbtemp2"
+rgblinkQuiet -o "$gbtemp" "$otemp" "$gbtemp2" 2>"$errtemp"
+tryDiff /dev/null "$errtemp"
 tryCmpRom "$test"/ref.out.bin
 evaluateTest
 
@@ -416,7 +425,8 @@ startTest
 "$RGBASM" -o "$otemp" "$test"/a.asm
 "$RGBASM" -o "$gbtemp2" "$test"/b.asm
 continueTest
-rgblinkQuiet -o "$gbtemp" "$otemp" "$gbtemp2"
+rgblinkQuiet -o "$gbtemp" "$otemp" "$gbtemp2" 2>"$errtemp"
+tryDiff /dev/null "$errtemp"
 tryCmpRom "$test"/ref.out.bin
 evaluateTest
 
@@ -425,7 +435,8 @@ startTest
 "$RGBASM" -o "$otemp" "$test"/a.asm
 "$RGBASM" -o "$gbtemp2" "$test"/b.asm
 continueTest
-rgblinkQuiet -o "$gbtemp" "$otemp" "$gbtemp2"
+rgblinkQuiet -o "$gbtemp" "$otemp" "$gbtemp2" 2>"$errtemp"
+tryDiff /dev/null "$errtemp"
 tryCmpRom "$test"/ref.out.bin
 evaluateTest
 
@@ -452,7 +463,8 @@ startTest
 "$RGBASM" -o "$otemp" "$test"/a.asm
 "$RGBASM" -o "$gbtemp2" "$test"/b.asm
 continueTest
-rgblinkQuiet -o "$gbtemp" -l "$test"/script.link "$otemp" "$gbtemp2"
+rgblinkQuiet -o "$gbtemp" -l "$test"/script.link "$otemp" "$gbtemp2" 2>"$errtemp"
+tryDiff /dev/null "$errtemp"
 tryCmpRom "$test"/ref.out.bin
 evaluateTest
 
@@ -461,7 +473,8 @@ startTest
 "$RGBASM" -o "$otemp" "$test"/a.asm
 "$RGBASM" -o "$gbtemp2" "$test"/b.asm
 continueTest
-rgblinkQuiet -o "$gbtemp" -l "$test"/script.link "$otemp" "$gbtemp2"
+rgblinkQuiet -o "$gbtemp" -l "$test"/script.link "$otemp" "$gbtemp2" 2>"$errtemp"
+tryDiff /dev/null "$errtemp"
 tryCmpRom "$test"/ref.out.bin
 evaluateTest
 
