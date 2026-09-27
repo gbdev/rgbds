@@ -87,13 +87,13 @@ jobs:
           if-no-files-found: error
 
   linux:
-    runs-on: ubuntu-22.04 # Oldest supported, for best glibc compatibility.
+    runs-on: ubuntu-24.04 # Oldest supported, for best glibc compatibility.
     steps:
       - name: Checkout repo
         uses: actions/checkout@v7
       - name: Install deps
         run: |
-          ./.github/scripts/install-deps.sh ubuntu-22.04
+          ./.github/scripts/install-deps.sh ubuntu-24.04
       - name: Build binaries
         run: |
           make -k -j "$(getconf _NPROCESSORS_ONLN)" WARNFLAGS="-Werror -Wall -Wextra -pedantic -static" PKG_CONFIG="pkg-config --static" Q=
