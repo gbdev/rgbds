@@ -904,6 +904,19 @@ void sect_RelByte(Expression const &expr, uint32_t pcShift) {
 	}
 }
 
+void sect_RelSignedByte(Expression const &expr, uint32_t pcShift) {
+	if (!requireCodeSection()) {
+		return;
+	}
+
+	if (!expr.isKnown()) {
+		createPatch(PATCHTYPE_SIGNED_BYTE, expr, pcShift);
+		writeByte(0);
+	} else {
+		writeByte(expr.value());
+	}
+}
+
 void sect_RelBytes(uint32_t n, std::vector<Expression> const &exprs) {
 	if (!requireCodeSection()) {
 		return;

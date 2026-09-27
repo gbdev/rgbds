@@ -560,6 +560,23 @@ static void checkPatchSize(Patch const &patch, int32_t v, uint8_t n) {
 	}
 }
 
+static void checkSignedPatchSize(Patch const &patch, int32_t v, uint8_t n) {
+	assume(n != 0);                         // That doesn't make sense
+	assume(n < CHAR_BIT * sizeof(int) - 1); // Otherwise `1 << n` is UB
+
+	if (v < -(1 << (n - 1)) || v >= 1 << (n - 1)) {
+		if (v < 0) {
+			diagnosticAt(
+			    patch, WARNING_TRUNCATION_1, "Value -$%" PRIx32 " is not signed %u-bit", -v, n
+			);
+		} else {
+			diagnosticAt(
+			    patch, WARNING_TRUNCATION_1, "Value $%" PRIx32 " is not signed %u-bit", v, n
+			);
+		}
+	}
+}
+
 // Applies all of a section's patches to a data section
 static void applyFilePatches(Section &section, Section &dataSection) {
 	verbosePrint(VERB_INFO, "Patching section \"%s\"...\n", section.name.c_str());
@@ -572,6 +589,7 @@ static void applyFilePatches(Section &section, Section &dataSection) {
 		    2, // PATCHTYPE_WORD
 		    4, // PATCHTYPE_LONG
 		    1, // PATCHTYPE_JR
+		    1, // PATCHTYPE_SIGNED_BYTE
 		};
 		uint8_t typeSize = typeSizes[patch.type];
 
@@ -588,7 +606,7 @@ static void applyFilePatches(Section &section, Section &dataSection) {
 				rpnErrorAt(patch, "PC has no value outside of a section");
 				dataSection.data[offset] = 0;
 			} else {
-				// A `jr` is *encoded* in ROM as a 1-byte (8-bit) offset, so here `typeSize == 8`,
+				// A `jr` is *encoded* in ROM as a 1-byte (8-bit) offset, so here `typeSize == 1`,
 				// but the object's *value* size is a 16-bit absolute address, so we pass 16 here.
 				checkPatchSize(patch, value, 16);
 				// Offset is relative to the byte *after* the operand
@@ -610,7 +628,9 @@ static void applyFilePatches(Section &section, Section &dataSection) {
 			}
 		} else {
 			// Patch a certain number of bytes
-			if (typeSize < sizeof(int)) {
+			if (patch.type == PATCHTYPE_SIGNED_BYTE) {
+				checkSignedPatchSize(patch, value, typeSize * 8);
+			} else if (typeSize < sizeof(int)) {
 				checkPatchSize(patch, value, typeSize * 8);
 			}
 			for (uint8_t i = 0; i < typeSize; ++i) {

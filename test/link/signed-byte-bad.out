@@ -1,0 +1,8 @@
+warning: Value -$4000 is not signed 8-bit [-Wtruncation]
+    at signed-byte-bad.asm(6)
+warning: Value $4000 is not signed 8-bit [-Wtruncation]
+    at signed-byte-bad.asm(5)
+warning: Value -$4000 is not signed 8-bit [-Wtruncation]
+    at signed-byte-bad.asm(4)
+warning: Value $4000 is not signed 8-bit [-Wtruncation]
+    at signed-byte-bad.asm(3)
