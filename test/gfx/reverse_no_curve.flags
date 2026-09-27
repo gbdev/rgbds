@@ -1,0 +1,4 @@
+-m
+-t reverse_no_curve.tilemap
+-a reverse_no_curve.attrmap
+-p reverse_no_curve.pal
