@@ -1035,17 +1035,17 @@ include:
 
 incbin:
 	POP_INCBIN string {
-		if (sect_BinaryFile($2, 0)) {
+		if (sect_BinaryFile($2, 0, std::nullopt)) {
 			YYACCEPT;
 		}
 	}
 	| POP_INCBIN string COMMA uconst {
-		if (sect_BinaryFile($2, $4)) {
+		if (sect_BinaryFile($2, $4, std::nullopt)) {
 			YYACCEPT;
 		}
 	}
 	| POP_INCBIN string COMMA uconst COMMA uconst {
-		if (sect_BinaryFileSlice($2, $4, $6)) {
+		if (sect_BinaryFile($2, $4, $6)) {
 			YYACCEPT;
 		}
 	}
