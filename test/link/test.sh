@@ -92,31 +92,39 @@ for i in *.asm; do
 		continue
 	fi
 
-
 	RGBLINKFLAGS=()
 	if [ -f "${test}.flags" ]; then
 		RGBLINKFLAGS+=("@${test}.flags")
 	fi
 
+	ran_test=false
+
 	# Some tests have variants depending on flags
-	ran_flag=false
 	for flag in '-d' '-t' '-w'; do
 		if [ -f "${test}-no${flag}.out" ]; then
 			continueTest "-no${flag}"
 			rgblinkQuiet "${RGBLINKFLAGS[@]}" -o "$gbtemp" "$otemp" 2>"$outtemp"
 			tryDiff "${test}-no${flag}.out" "$outtemp"
+			bin=${test}-no${flag}.out.bin
+			if [ -f "$bin" ]; then
+				tryCmpRom "$bin"
+			fi
 			evaluateTest
-			ran_flag=true
+			ran_test=true
 		fi
 		if [ -f "${test}${flag}.out" ]; then
 			continueTest "$flag"
 			rgblinkQuiet "${RGBLINKFLAGS[@]}" ${flag} -o "$gbtemp" "$otemp" 2>"$outtemp"
 			tryDiff "${test}${flag}.out" "$outtemp"
+			bin=${test}${flag}.out.bin
+			if [ -f "$bin" ]; then
+				tryCmpRom "$bin"
+			fi
 			evaluateTest
-			ran_flag=true
+			ran_test=true
 		fi
 	done
-	if "$ran_flag"; then
+	if "$ran_test"; then
 		continue
 	fi
 
@@ -127,10 +135,14 @@ for i in *.asm; do
 		continueTest "${script#${test}}"
 		rgblinkQuiet "${RGBLINKFLAGS[@]}" -l "$script" -o "$gbtemp" "$otemp" 2>"$outtemp"
 		tryDiff "${script%.link}.out" "$outtemp"
+		bin=${script%.link}.out.bin
+		if [ -f "$bin" ]; then
+			tryCmpRom "$bin"
+		fi
 		evaluateTest
-		ran_flag=true
+		ran_test=true
 	done
-	if "$ran_flag"; then
+	if "$ran_test"; then
 		continue
 	fi
 
