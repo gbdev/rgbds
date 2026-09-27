@@ -47,7 +47,7 @@ public:
 	}
 	std::streambuf *operator->() { return &**this; }
 
-	char const *c_str(std::string const &path) const {
+	char const *display_name(std::string const &path) const {
 		return std::holds_alternative<std::filebuf>(_file)             ? path.c_str()
 		       : std::get<std::streambuf *>(_file) == std::cin.rdbuf() ? "<stdin>"
 		                                                               : "<stdout>";

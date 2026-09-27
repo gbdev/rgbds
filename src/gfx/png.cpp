@@ -15,6 +15,7 @@
 #include <vector>
 
 #include "diagnostics.hpp"
+#include "file.hpp"
 #include "helpers.hpp"
 #include "verbosity.hpp"
 
@@ -61,7 +62,19 @@ static void readData(png_structp png, png_bytep data, size_t length) {
 	}
 }
 
+Png::Png(std::string const &path) {
+	if (File image; image.open(path, std::ios_base::in | std::ios_base::binary) == nullptr) {
+		fatal("Failed to open PNG image (\"%s\"): %s", image.display_name(path), strerror(errno));
+	} else {
+		initialize(image.display_name(path), *image);
+	}
+}
+
 Png::Png(char const *filename, std::streambuf &file) {
+	initialize(filename, file);
+}
+
+void Png::initialize(char const *filename, std::streambuf &file) {
 	Input input(filename, file);
 
 	verbosePrint(VERB_NOTICE, "Reading PNG file \"%s\"\n", input.filename);

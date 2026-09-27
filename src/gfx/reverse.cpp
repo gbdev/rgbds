@@ -31,7 +31,7 @@
 static std::vector<uint8_t> readInto(std::string const &path) {
 	File file;
 	if (!file.open(path, std::ios::in | std::ios::binary)) {
-		fatal("Failed to open \"%s\": %s", file.c_str(path), strerror(errno));
+		fatal("Failed to open \"%s\": %s", file.display_name(path), strerror(errno));
 	}
 	std::vector<uint8_t> data(128 * 16); // Begin with some room pre-allocated
 
@@ -207,7 +207,9 @@ void reverse() {
 	if (!options.palettes.empty()) {
 		File file;
 		if (!file.open(options.palettes, std::ios::in | std::ios::binary)) {
-			fatal("Failed to open \"%s\": %s", file.c_str(options.palettes), strerror(errno));
+			fatal(
+			    "Failed to open \"%s\": %s", file.display_name(options.palettes), strerror(errno)
+			);
 		}
 
 		palettes.clear();
@@ -478,12 +480,12 @@ void reverse() {
 	File pngFile;
 	if (!pngFile.open(options.input, std::ios::out | std::ios::binary)) {
 		// LCOV_EXCL_START
-		fatal("Failed to create \"%s\": %s", pngFile.c_str(options.input), strerror(errno));
+		fatal("Failed to create \"%s\": %s", pngFile.display_name(options.input), strerror(errno));
 		// LCOV_EXCL_STOP
 	}
 	png_structp png = png_create_write_struct(
 	    PNG_LIBPNG_VER_STRING,
-	    const_cast<char *>(pngFile.c_str(options.input)),
+	    const_cast<char *>(pngFile.display_name(options.input)),
 	    pngError,
 	    pngWarning
 	);
