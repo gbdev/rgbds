@@ -87,7 +87,7 @@ static void flushPng(png_structp png) {
 }
 
 static void printColor(std::optional<Rgba> const &color) {
-	if (color) {
+	if (color.has_value()) {
 		fprintf(stderr, "#%08x", color->toCSS());
 	} else {
 		fputs("<none>   ", stderr);
@@ -533,22 +533,16 @@ void reverse() {
 		png_color pngPalette[4] = {};
 		png_byte pngTrans[4] = {};
 		int nbPngColors = 0, nbPngTrans = 0;
-		for (auto const &color : palettes[0]) {
-			if (color.has_value()) {
-				pngPalette[nbPngColors].red = color->red;
-				pngPalette[nbPngColors].green = color->green;
-				pngPalette[nbPngColors].blue = color->blue;
-				pngTrans[nbPngColors] = color->alpha;
-				if (color->alpha < 255) {
-					nbPngTrans = nbPngColors;
-				}
-			} else {
-				pngPalette[nbPngColors].red = 255;
-				pngPalette[nbPngColors].green = 255;
-				pngPalette[nbPngColors].blue = 255;
-				pngTrans[nbPngColors] = 255;
-			}
+		for (auto const &slot : palettes[0]) {
+			Rgba color = slot.has_value() ? *slot : Rgba(255, 255, 255, 255);
+			pngPalette[nbPngColors].red = color.red;
+			pngPalette[nbPngColors].green = color.green;
+			pngPalette[nbPngColors].blue = color.blue;
+			pngTrans[nbPngColors] = color.alpha;
 			++nbPngColors;
+			if (color.alpha < 255) {
+				nbPngTrans = nbPngColors;
+			}
 		}
 		png_set_PLTE(png, pngInfo, pngPalette, nbPngColors);
 		if (nbPngTrans > 0) {
