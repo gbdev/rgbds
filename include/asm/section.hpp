@@ -40,6 +40,7 @@ struct Section {
 	uint16_t alignOfs;
 	std::deque<Patch> patches;
 	std::vector<uint8_t> data;
+	uint32_t cyclesCounter; // `__CYCLES__` value; unsigned for well-defined overflow on increment
 
 	SectionTypeInfo const &typeInfo() const { return sectionTypeInfo[type]; }
 

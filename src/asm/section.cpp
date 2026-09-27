@@ -374,6 +374,7 @@ static Section *createSection(
 	sect.bank = bank;
 	sect.align = alignment;
 	sect.alignOfs = alignOffset;
+	sect.cyclesCounter = 0;
 
 	out_RegisterNode(sect.src);
 
@@ -399,6 +400,7 @@ static Section *createSectionFragmentLiteral(Section const &parent) {
 	sect.bank = parent.bank == 0 ? UINT32_MAX : parent.bank;
 	sect.align = 0;
 	sect.alignOfs = 0;
+	sect.cyclesCounter = 0;
 
 	out_RegisterNode(sect.src);
 
