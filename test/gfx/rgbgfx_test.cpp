@@ -466,7 +466,7 @@ int main(int argc, char *argv[]) {
 
 			auto cgbColor = [](Rgba const &rgba) {
 				auto field = [](uint16_t component, uint8_t shift) {
-					return (component & 0x1F) << shift;
+					return (component >> 3) << shift;
 				};
 				return rgba.isTransparent()
 				           ? Rgba::transparent
