@@ -13,12 +13,10 @@ MACRO test_mod
 	def x = \1 ; dividend
 	def y = \2 ; divisor
 	shift 2
-	def q = x / y ; quotient
-	def r = x % y ; remainder
 	; identity laws
-	test (V (q * y + r)) == (V x)
-	test (V (x + y) % y) == (V r)
-	test (V (x - y) % y) == (V r)
+	test (V x) / y * y + (V x) % y == (V x)
+	test (V (x + y)) % y == (V x) % y
+	test (V (x - y)) % y == (V x) % y
 ENDM
 
 MACRO test_each_mod
