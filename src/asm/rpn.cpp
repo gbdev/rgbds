@@ -505,8 +505,7 @@ bool checkNBit(int32_t v, uint8_t n, char const *name) {
 		    n == 8 && !name ? "; use `LOW()` to force 8-bit" : ""
 		);
 		return false;
-	}
-	if (v < -(1 << (n - 1))) {
+	} else if (v < -(1 << (n - 1))) {
 		warning(
 		    WARNING_TRUNCATION_2,
 		    "%s must be %u-bit%s",
