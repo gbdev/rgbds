@@ -557,6 +557,23 @@ static void checkPatchSize(Expression const &expr, int32_t v, uint8_t n) {
 	}
 }
 
+static void checkSignedPatchSize(Expression const &expr, int32_t v, uint8_t n) {
+	assume(n != 0);                         // That doesn't make sense
+	assume(n < CHAR_BIT * sizeof(int) - 1); // Otherwise `1 << n` is UB
+
+	if (v < -(1 << (n - 1)) || v >= 1 << (n - 1)) {
+		if (v < 0) {
+			diagnosticAt(
+			    expr, WARNING_TRUNCATION_1, "Value -$%" PRIx32 " is not signed %u-bit", -v, n
+			);
+		} else {
+			diagnosticAt(
+			    expr, WARNING_TRUNCATION_1, "Value $%" PRIx32 " is not signed %u-bit", v, n
+			);
+		}
+	}
+}
+
 // Applies all of a section's patches to a data section
 static void applyFilePatches(Section &section, Section &dataSection) {
 	verbosePrint(VERB_INFO, "Patching section \"%s\"...\n", section.name.c_str());
@@ -569,6 +586,7 @@ static void applyFilePatches(Section &section, Section &dataSection) {
 		    2, // PATCHTYPE_WORD
 		    4, // PATCHTYPE_LONG
 		    1, // PATCHTYPE_JR
+		    1, // PATCHTYPE_SIGNED_BYTE
 		};
 		uint8_t typeSize = typeSizes[patch.type];
 
@@ -607,7 +625,9 @@ static void applyFilePatches(Section &section, Section &dataSection) {
 			}
 		} else {
 			// Patch a certain number of bytes
-			if (typeSize < sizeof(int)) {
+			if (patch.type == PATCHTYPE_SIGNED_BYTE) {
+				checkSignedPatchSize(patch.rpn, value, typeSize * 8);
+			} else if (typeSize < sizeof(int)) {
 				checkPatchSize(patch.rpn, value, typeSize * 8);
 			}
 			for (uint8_t i = 0; i < typeSize; ++i) {

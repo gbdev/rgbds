@@ -1928,7 +1928,7 @@ sm83_add:
 	}
 	| SM83_ADD MODE_SP COMMA reloc_8bit_signed {
 		sect_ConstByte(0xE8);
-		sect_RelByte($4, 1);
+		sect_RelSignedByte($4, 1);
 		sym_IncrementCYCLESValue(4);
 	}
 ;
@@ -2168,7 +2168,7 @@ sm83_ld:
 sm83_ld_hl:
 	SM83_LD MODE_HL COMMA MODE_SP op_sp_offset {
 		sect_ConstByte(0xF8);
-		sect_RelByte($5, 1);
+		sect_RelSignedByte($5, 1);
 		sym_IncrementCYCLESValue(3);
 	}
 	| SM83_LD MODE_HL COMMA reloc_16bit {
