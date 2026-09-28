@@ -18,8 +18,6 @@ Options:
     --only-free           skip tests that build nonfree codebases
     --jobs <n>            build external codebases with `make -j<n>`
     --os <os>             skip tests known to fail on <os> (e.g. `macos-14`)
-    --installed-rgbds     use the system installed RGBDS
-                          (only compatible with external codebases)
 EOF
 }
 
@@ -28,8 +26,7 @@ EOF
 nonfree=true
 internal=true
 external=true
-installedrgbds=false
-make_jobs=
+make_args=()
 osname=
 while [[ $# -gt 0 ]]; do
 	case "$1" in
@@ -46,12 +43,9 @@ while [[ $# -gt 0 ]]; do
 		--only-free)
 			nonfree=false
 			;;
-		--installed-rgbds)
-			installedrgbds=true
-			;;
 		--jobs)
 			shift
-			make_jobs="-j$1"
+			make_args+=(-j "$1")
 			;;
 		--os)
 			shift
@@ -73,26 +67,10 @@ if ! "$internal" && ! "$external"; then
 	false
 fi
 
-if "$internal" && "$installedrgbds"; then
-	echo "Please specify --only-external with --installed-rgbds"
-	echo "(internal tests don't support running with system-installed RGBDS)"
-	false
-fi
-
 # Refuse to run if RGBDS isn't available
-if "$installedrgbds"; then
-	is_installed() {
-		command -v "$1" >/dev/null 2>&1
-	}
-	if ! (is_installed rgbasm && is_installed rgblink && is_installed rgbfix && is_installed rgbgfx); then
-		echo "Please install RGBDS before running the tests"
-		false
-	fi
-else
-	if [[ ! ( -x ../rgbasm && -x ../rgblink && -x ../rgbfix && -x ../rgbgfx ) ]]; then
-		echo "Please build RGBDS before running the tests"
-		false
-	fi
+if [[ ! ( -x ../rgbasm && -x ../rgblink && -x ../rgbfix && -x ../rgbgfx ) ]]; then
+	echo "Please build RGBDS before running the tests"
+	false
 fi
 
 # Tests included with the repository
@@ -128,6 +106,6 @@ for cfg in *.cfg; do (
 
 	# Run nonfree tests only if they are opted into.
 	if ! "$EXT_TEST_IS_NONFREE" || "$nonfree"; then
-		./test.sh "$test_name" "$make_jobs"
+		./test.sh "$test_name" "${make_args[@]}"
 	fi
 ); done

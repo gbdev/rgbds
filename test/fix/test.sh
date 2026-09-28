@@ -35,6 +35,13 @@ rescolors="$(tput op)"
 
 RGBFIX="$src/../../rgbfix"
 
+startTest () {
+	(( tests++ ))
+	if [[ $progress -ne 0 ]]; then
+		echo "${bold}${green}$1...${rescolors}${resbold}"
+	fi
+}
+
 tryDiff () {
 	if ! diff -au --strip-trailing-cr "$1" "$2"; then
 		echo "${bold}${red}${3:-$1} mismatch!${rescolors}${resbold}"
@@ -44,7 +51,7 @@ tryDiff () {
 
 tryCmp () {
 	if ! cmp "$1" "$2"; then
-		"$src/../../gbdiff.bash" "$1" "$2"
+		"$src/../../contrib/gbdiff.bash" "$1" "$2" | head
 		echo "${bold}${red}${3:-$1} mismatch!${rescolors}${resbold}"
 		false
 	fi
@@ -61,11 +68,7 @@ runTest () {
 	fi
 
 	for variant in '' ' piped' ' output'; do
-		(( tests++ ))
-		our_rc=0
-		if [[ $progress -ne 0 ]]; then
-			echo "${bold}${green}$1${variant}...${rescolors}${resbold}"
-		fi
+		startTest "$1${variant}"
 		if [[ -r "$2/$1.bin" ]]; then
 			desired_input="$2/$1.bin"
 		else
@@ -96,7 +99,7 @@ runTest () {
 			desired_errname=/dev/null
 		fi
 		sed -e "s/$subst/<filename>/g" -e "s#$src_subst##g" out.out | tryDiff "$desired_outname" - "$1.out${variant}"
-		(( our_rc = our_rc || $? ))
+		our_rc=$?
 		sed -e "s/$subst/<filename>/g" -e "s#$src_subst##g" out.err | tryDiff "$desired_errname" - "$1.err${variant}"
 		(( our_rc = our_rc || $? ))
 
@@ -116,11 +119,36 @@ runTest () {
 runSpecialTest () {
 	name="$1"
 	shift
-	echo "${bold}${green}${name}...${rescolors}${resbold}"
+	startTest "$name"
+
+	eval "$RGBFIX" "$@" -o out.gb '>out.out' '2>out.err'
+	tryDiff out.out /dev/null "${name}.out"
+	our_rc=$?
+	tryDiff out.err /dev/null "${name}.err"
+	(( our_rc = our_rc || $? ))
+	tryCmp input.gb out.gb "${name}.gb"
+	(( our_rc = our_rc || $? ))
+
+	(( rc = rc || our_rc ))
+	if [[ $our_rc -ne 0 ]]; then
+		(( failed++ ))
+	fi
+}
+
+runTestExpectingFailure () {
+	name="$1"
+	shift
+	startTest "$name"
+
 	eval "$RGBFIX" "$@" '2>out.err'
-	rc=$((rc || $? != 1))
+	our_rc=$(($? != 1))
 	tryDiff "$src/${name}.err" out.err "${name}.err"
-	rc=$((rc || $?))
+	our_rc=$((our_rc || $?))
+
+	rc=$((rc || our_rc))
+	if [[ $our_rc -ne 0 ]]; then
+		(( failed++ ))
+	fi
 }
 
 rm -f padding*_* # Delete padding test cases generated but not deleted (e.g. interrupted)
@@ -130,14 +158,24 @@ for i in "$src"/*.flags; do
 	runTest "$(basename "$i" .flags)" "$src"
 done
 
+# Check that RGBFIX truncates a pre-existing output file
+dd if=/dev/zero of=input.gb bs=1 count=336 >/dev/null 2>&1
+dd if=/dev/zero of=out.gb bs=1 count=16384 >/dev/null 2>&1
+runSpecialTest pre-existing-output input.gb
+
+# Check that RGBFIX handles an output file identical to the input file
+dd if=/dev/zero of=input.gb bs=1 count=336 >/dev/null 2>&1
+cp input.gb out.gb
+runSpecialTest equivalent-output out.gb
+
 # Check that RGBFIX errors out when inputting a non-existent file
-runSpecialTest no-exist no-exist
+runTestExpectingFailure no-exist no-exist
 
 # Check that RGBFIX errors out when not inputting any file
-runSpecialTest no-input
+runTestExpectingFailure no-input
 
 # Check that RGBFIX errors out when inputting multiple files with an output file
-runSpecialTest multiple-to-one one two three -o multiple-to-one
+runTestExpectingFailure multiple-to-one one two three -o multiple-to-one
 
 # Check the result with all different padding bytes
 echo "${bold}Checking padding...${resbold}"
@@ -149,7 +187,8 @@ for (( i=0; i < 10; ++i )); do
 	echo "$padding..."
 	for suffix in '' -large -larger; do
 		cat <<<"-p $padding" >padding$suffix.flags
-		tr '\377' \\$((padding / 64))$(((padding / 8) % 8))$((padding % 8)) <"$src/padding$suffix.gb" >padding$suffix.gb # OK because $FF bytes are only used for padding
+		# `tr`ing &377 aka $FF is OK because $FF bytes are only used for padding
+		tr '\377' \\$((padding / 64))$(((padding / 8) % 8))$((padding % 8)) <"$src/padding$suffix.gb" >padding$suffix.gb
 		runTest padding${suffix} .
 	done
 done

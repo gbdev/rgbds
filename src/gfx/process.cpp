@@ -491,7 +491,11 @@ static void outputPalettes(std::vector<Palette> const &palettes) {
 		File output;
 		if (!output.open(options.palettes, std::ios_base::out | std::ios_base::binary)) {
 			// LCOV_EXCL_START
-			fatal("Failed to create \"%s\": %s", output.c_str(options.palettes), strerror(errno));
+			fatal(
+			    "Failed to create \"%s\": %s",
+			    output.display_name(options.palettes),
+			    strerror(errno)
+			);
 			// LCOV_EXCL_STOP
 		}
 
@@ -646,7 +650,7 @@ static void outputUnoptimizedTileData(
 	File output;
 	if (!output.open(options.output, std::ios_base::out | std::ios_base::binary)) {
 		// LCOV_EXCL_START
-		fatal("Failed to create \"%s\": %s", output.c_str(options.output), strerror(errno));
+		fatal("Failed to create \"%s\": %s", output.display_name(options.output), strerror(errno));
 		// LCOV_EXCL_STOP
 	}
 
@@ -699,7 +703,7 @@ static void outputUnoptimizedMaps(
 			file.emplace();
 			if (!file->open(path, std::ios_base::out | std::ios_base::binary)) {
 				// LCOV_EXCL_START
-				fatal("Failed to create \"%s\": %s", file->c_str(path), strerror(errno));
+				fatal("Failed to create \"%s\": %s", file->display_name(path), strerror(errno));
 				// LCOV_EXCL_STOP
 			}
 		}
@@ -873,7 +877,7 @@ static void outputTileData(UniqueTiles const &tiles) {
 	File output;
 	if (!output.open(options.output, std::ios_base::out | std::ios_base::binary)) {
 		// LCOV_EXCL_START
-		fatal("Failed to create \"%s\": %s", output.c_str(options.output), strerror(errno));
+		fatal("Failed to create \"%s\": %s", output.display_name(options.output), strerror(errno));
 		// LCOV_EXCL_STOP
 	}
 
@@ -913,7 +917,7 @@ static void outputTilemap(std::vector<AttrmapEntry> const &attrmap) {
 	File output;
 	if (!output.open(options.tilemap, std::ios_base::out | std::ios_base::binary)) {
 		// LCOV_EXCL_START
-		fatal("Failed to create \"%s\": %s", output.c_str(options.tilemap), strerror(errno));
+		fatal("Failed to create \"%s\": %s", output.display_name(options.tilemap), strerror(errno));
 		// LCOV_EXCL_STOP
 	}
 
@@ -929,7 +933,7 @@ static void
 	File output;
 	if (!output.open(options.attrmap, std::ios_base::out | std::ios_base::binary)) {
 		// LCOV_EXCL_START
-		fatal("Failed to create \"%s\": %s", output.c_str(options.attrmap), strerror(errno));
+		fatal("Failed to create \"%s\": %s", output.display_name(options.attrmap), strerror(errno));
 		// LCOV_EXCL_STOP
 	}
 
@@ -950,7 +954,7 @@ static void
 	File output;
 	if (!output.open(options.palmap, std::ios_base::out | std::ios_base::binary)) {
 		// LCOV_EXCL_START
-		fatal("Failed to create \"%s\": %s", output.c_str(options.palmap), strerror(errno));
+		fatal("Failed to create \"%s\": %s", output.display_name(options.palmap), strerror(errno));
 		// LCOV_EXCL_STOP
 	}
 

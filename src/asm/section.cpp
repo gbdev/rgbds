@@ -998,8 +998,11 @@ void sect_PCRelByte(Expression const &expr, uint32_t pcShift) {
 	}
 }
 
-bool sect_BinaryFile(std::string const &name, uint32_t startPos) {
+bool sect_BinaryFile(std::string const &name, uint32_t startPos, std::optional<uint32_t> length) {
 	if (!requireCodeSection()) {
+		return false;
+	}
+	if (length.has_value() && *length == 0) { // Don't even bother with 0-byte slices
 		return false;
 	}
 
@@ -1019,6 +1022,16 @@ bool sect_BinaryFile(std::string const &name, uint32_t startPos) {
 			    ")",
 			    startPos,
 			    name.c_str(),
+			    *fileSize
+			);
+			return false;
+		} else if (length.has_value() && *length > *fileSize - startPos) {
+			error(
+			    "Specified range in `INCBIN` file \"%s\" is out of bounds (%" PRIu32 " + %" PRIu32
+			    " > %" PRIu64 ")",
+			    name.c_str(),
+			    startPos,
+			    *length,
 			    *fileSize
 			);
 			return false;
@@ -1044,91 +1057,32 @@ bool sect_BinaryFile(std::string const &name, uint32_t startPos) {
 		// LCOV_EXCL_STOP
 	}
 
-	for (int byte; (byte = fgetc(file)) != EOF;) {
-		writeByte(byte);
+	if (length.has_value()) {
+		uint32_t remaining = *length;
+		for (; remaining; --remaining) {
+			if (int byte = fgetc(file); byte == EOF) {
+				break; // LCOV_EXCL_LINE
+			} else {
+				writeByte(byte);
+			}
+		}
+		if (remaining > 0 && !ferror(file)) {
+			error(
+			    "Premature end of `INCBIN` file \"%s\" (%" PRId32 " bytes left to read)",
+			    name.c_str(),
+			    remaining
+			);
+		}
+	} else {
+		for (int byte; (byte = fgetc(file)) != EOF;) {
+			writeByte(byte);
+		}
 	}
 
 	if (ferror(file)) {
 		// LCOV_EXCL_START
 		error("Error reading `INCBIN` file \"%s\": %s", name.c_str(), strerror(errno));
 		// LCOV_EXCL_STOP
-	}
-	return false;
-}
-
-bool sect_BinaryFileSlice(std::string const &name, uint32_t startPos, uint32_t length) {
-	if (!requireCodeSection()) {
-		return false;
-	}
-	if (length == 0) { // Don't even bother with 0-byte slices
-		return false;
-	}
-
-	FILE *file = nullptr;
-	if (std::optional<std::string> fullPath = fstk_FindFile(name); fullPath) {
-		file = fopen(fullPath->c_str(), "rb");
-	}
-	if (!file) {
-		return fstk_FileError(name, "`INCBIN`");
-	}
-	Defer closeFile{[&] { xfclose(file); }};
-
-	if (std::optional<uint64_t> fileSize = seekSize(file); fileSize.has_value()) {
-		if (startPos > *fileSize) {
-			error(
-			    "Specified start position (%" PRIu32 ") is greater than length of \"%s\" (%" PRIu64
-			    ")",
-			    startPos,
-			    name.c_str(),
-			    *fileSize
-			);
-			return false;
-		} else if (length > *fileSize - startPos) {
-			error(
-			    "Specified range in `INCBIN` file \"%s\" is out of bounds (%" PRIu32 " + %" PRIu32
-			    " > %" PRIu64 ")",
-			    name.c_str(),
-			    startPos,
-			    length,
-			    *fileSize
-			);
-			return false;
-		}
-		// The file is seekable; skip to the specified start position
-		fseek(file, startPos, SEEK_SET);
-	} else {
-		// LCOV_EXCL_START
-		if (errno != ESPIPE) {
-			error(
-			    "Error determining size of `INCBIN` file \"%s\": %s", name.c_str(), strerror(errno)
-			);
-		}
-		// The file isn't seekable, so we'll just skip bytes one at a time
-		while (startPos--) {
-			if (fgetc(file) == EOF) {
-				error(
-				    "Specified start position is greater than length of file \"%s\"", name.c_str()
-				);
-				return false;
-			}
-		}
-		// LCOV_EXCL_STOP
-	}
-
-	while (length--) {
-		if (int byte = fgetc(file); byte != EOF) {
-			writeByte(byte);
-			// LCOV_EXCL_START
-		} else if (ferror(file)) {
-			error("Error reading `INCBIN` file \"%s\": %s", name.c_str(), strerror(errno));
-		} else {
-			error(
-			    "Premature end of `INCBIN` file \"%s\" (%" PRId32 " bytes left to read)",
-			    name.c_str(),
-			    length + 1
-			);
-			// LCOV_EXCL_STOP
-		}
 	}
 	return false;
 }

@@ -31,7 +31,7 @@
 static std::vector<uint8_t> readInto(std::string const &path) {
 	File file;
 	if (!file.open(path, std::ios::in | std::ios::binary)) {
-		fatal("Failed to open \"%s\": %s", file.c_str(path), strerror(errno));
+		fatal("Failed to open \"%s\": %s", file.display_name(path), strerror(errno));
 	}
 	std::vector<uint8_t> data(128 * 16); // Begin with some room pre-allocated
 
@@ -87,7 +87,7 @@ static void flushPng(png_structp png) {
 }
 
 static void printColor(std::optional<Rgba> const &color) {
-	if (color) {
+	if (color.has_value()) {
 		fprintf(stderr, "#%08x", color->toCSS());
 	} else {
 		fputs("<none>   ", stderr);
@@ -207,7 +207,9 @@ void reverse() {
 	if (!options.palettes.empty()) {
 		File file;
 		if (!file.open(options.palettes, std::ios::in | std::ios::binary)) {
-			fatal("Failed to open \"%s\": %s", file.c_str(options.palettes), strerror(errno));
+			fatal(
+			    "Failed to open \"%s\": %s", file.display_name(options.palettes), strerror(errno)
+			);
 		}
 
 		palettes.clear();
@@ -478,12 +480,12 @@ void reverse() {
 	File pngFile;
 	if (!pngFile.open(options.input, std::ios::out | std::ios::binary)) {
 		// LCOV_EXCL_START
-		fatal("Failed to create \"%s\": %s", pngFile.c_str(options.input), strerror(errno));
+		fatal("Failed to create \"%s\": %s", pngFile.display_name(options.input), strerror(errno));
 		// LCOV_EXCL_STOP
 	}
 	png_structp png = png_create_write_struct(
 	    PNG_LIBPNG_VER_STRING,
-	    const_cast<char *>(pngFile.c_str(options.input)),
+	    const_cast<char *>(pngFile.display_name(options.input)),
 	    pngError,
 	    pngWarning
 	);
@@ -533,22 +535,16 @@ void reverse() {
 		png_color pngPalette[4] = {};
 		png_byte pngTrans[4] = {};
 		int nbPngColors = 0, nbPngTrans = 0;
-		for (auto const &color : palettes[0]) {
-			if (color.has_value()) {
-				pngPalette[nbPngColors].red = color->red;
-				pngPalette[nbPngColors].green = color->green;
-				pngPalette[nbPngColors].blue = color->blue;
-				pngTrans[nbPngColors] = color->alpha;
-				if (color->alpha < 255) {
-					nbPngTrans = nbPngColors;
-				}
-			} else {
-				pngPalette[nbPngColors].red = 255;
-				pngPalette[nbPngColors].green = 255;
-				pngPalette[nbPngColors].blue = 255;
-				pngTrans[nbPngColors] = 255;
-			}
+		for (auto const &slot : palettes[0]) {
+			Rgba color = slot.has_value() ? *slot : Rgba(255, 255, 255, 255);
+			pngPalette[nbPngColors].red = color.red;
+			pngPalette[nbPngColors].green = color.green;
+			pngPalette[nbPngColors].blue = color.blue;
+			pngTrans[nbPngColors] = color.alpha;
 			++nbPngColors;
+			if (color.alpha < 255) {
+				nbPngTrans = nbPngColors;
+			}
 		}
 		png_set_PLTE(png, pngInfo, pngPalette, nbPngColors);
 		if (nbPngTrans > 0) {
