@@ -1022,14 +1022,14 @@ bool sect_BinaryFile(std::string const &name, int32_t startPos, std::optional<ui
 		}
 		if (startPos < 0) {
 			error(
-			    "Specified start position (%" PRId32 ") is before the length of \"%s\" (%" PRIu64
+			    "Specified start position (%" PRId32 ") is before the start of \"%s\" (%" PRIu64
 			    ")",
 			    startPos,
 			    name.c_str(),
 			    *fileSize
 			);
 			return false;
-		} else if (startPos > *fileSize) {
+		} else if (uint32_t pos = static_cast<uint32_t>(startPos); pos > *fileSize) {
 			error(
 			    "Specified start position (%" PRId32 ") is greater than length of \"%s\" (%" PRIu64
 			    ")",
@@ -1038,7 +1038,7 @@ bool sect_BinaryFile(std::string const &name, int32_t startPos, std::optional<ui
 			    *fileSize
 			);
 			return false;
-		} else if (length.has_value() && *length > *fileSize - static_cast<uint32_t>(startPos)) {
+		} else if (length.has_value() && *length > *fileSize - pos) {
 			error(
 			    "Specified range in `INCBIN` file \"%s\" is out of bounds (%" PRId32 " + %" PRIu32
 			    " > %" PRIu64 ")",
