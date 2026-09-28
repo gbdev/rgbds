@@ -586,8 +586,8 @@ void sdobj_ReadFile(FileStackNode const &src, FILE *file, std::vector<Symbol> &f
 				// Turn this into a Patch
 				Patch &patch = section->patches.emplace_back();
 
-				patch.src = where.src;
-				patch.lineNo = where.lineNo;
+				patch.rpn.src = where.src;
+				patch.rpn.lineNo = where.lineNo;
 				patch.offset = offset - writtenOfs + *writeIndex;
 				if (section->patches.size() > 1) {
 					uint32_t prevOffset = section->patches[section->patches.size() - 2].offset;
@@ -601,8 +601,8 @@ void sdobj_ReadFile(FileStackNode const &src, FILE *file, std::vector<Symbol> &f
 						);
 					}
 				}
-				patch.pcSection = section;         // No need to fill `pcSectionID`, then
-				patch.pcOffset = patch.offset - 1; // For `jr`s
+				patch.rpn.pcSection = section;         // No need to fill `pcSectionID`, then
+				patch.rpn.pcOffset = patch.offset - 1; // For `jr`s
 
 				patch.type = (flags & 1 << RELOC_SIZE) ? PATCHTYPE_BYTE : PATCHTYPE_WORD;
 				uint8_t nbBaseBytes = patch.type == PATCHTYPE_BYTE ? addrSize : 2;
@@ -654,35 +654,35 @@ void sdobj_ReadFile(FileStackNode const &src, FILE *file, std::vector<Symbol> &f
 							    &sym.name.c_str()[1]
 							);
 						}
-						patch.rpnExpression.resize(5);
-						patch.rpnExpression[0] = RPN_BANK_SYM;
-						patch.rpnExpression[1] = idx;
-						patch.rpnExpression[2] = idx >> 8;
-						patch.rpnExpression[3] = 0;
-						patch.rpnExpression[4] = 0;
+						patch.rpn.rpn.resize(5);
+						patch.rpn.rpn[0] = RPN_BANK_SYM;
+						patch.rpn.rpn[1] = idx;
+						patch.rpn.rpn[2] = idx >> 8;
+						patch.rpn.rpn[3] = 0;
+						patch.rpn.rpn[4] = 0;
 					} else if (sym.name.starts_with("l_")) {
-						patch.rpnExpression.resize(1 + sym.name.length() - 2 + 1);
-						patch.rpnExpression[0] = RPN_SIZEOF_SECT;
+						patch.rpn.rpn.resize(1 + sym.name.length() - 2 + 1);
+						patch.rpn.rpn[0] = RPN_SIZEOF_SECT;
 						memcpy(
-						    reinterpret_cast<char *>(&patch.rpnExpression[1]),
+						    reinterpret_cast<char *>(&patch.rpn.rpn[1]),
 						    &sym.name.c_str()[2],
 						    sym.name.length() - 2 + 1
 						);
 					} else if (sym.name.starts_with("s_")) {
-						patch.rpnExpression.resize(1 + sym.name.length() - 2 + 1);
-						patch.rpnExpression[0] = RPN_STARTOF_SECT;
+						patch.rpn.rpn.resize(1 + sym.name.length() - 2 + 1);
+						patch.rpn.rpn[0] = RPN_STARTOF_SECT;
 						memcpy(
-						    reinterpret_cast<char *>(&patch.rpnExpression[1]),
+						    reinterpret_cast<char *>(&patch.rpn.rpn[1]),
 						    &sym.name.c_str()[2],
 						    sym.name.length() - 2 + 1
 						);
 					} else {
-						patch.rpnExpression.resize(5);
-						patch.rpnExpression[0] = RPN_SYM;
-						patch.rpnExpression[1] = idx;
-						patch.rpnExpression[2] = idx >> 8;
-						patch.rpnExpression[3] = 0;
-						patch.rpnExpression[4] = 0;
+						patch.rpn.rpn.resize(5);
+						patch.rpn.rpn[0] = RPN_SYM;
+						patch.rpn.rpn[1] = idx;
+						patch.rpn.rpn[2] = idx >> 8;
+						patch.rpn.rpn[3] = 0;
+						patch.rpn.rpn[4] = 0;
 					}
 				} else {
 					if (idx >= fileSections.size()) {
@@ -717,22 +717,20 @@ void sdobj_ReadFile(FileStackNode const &src, FILE *file, std::vector<Symbol> &f
 					if (other) {
 						baseValue += other->size;
 					}
-					patch.rpnExpression.resize(1 + name.length() + 1);
-					patch.rpnExpression[0] = RPN_STARTOF_SECT;
+					patch.rpn.rpn.resize(1 + name.length() + 1);
+					patch.rpn.rpn[0] = RPN_STARTOF_SECT;
 					// The cast is fine, it's just different signedness
 					memcpy(
-					    reinterpret_cast<char *>(&patch.rpnExpression[1]),
-					    name.c_str(),
-					    name.length() + 1
+					    reinterpret_cast<char *>(&patch.rpn.rpn[1]), name.c_str(), name.length() + 1
 					);
 				}
 
-				patch.rpnExpression.push_back(RPN_CONST);
-				patch.rpnExpression.push_back(baseValue);
-				patch.rpnExpression.push_back(baseValue >> 8);
-				patch.rpnExpression.push_back(baseValue >> 16);
-				patch.rpnExpression.push_back(baseValue >> 24);
-				patch.rpnExpression.push_back(RPN_ADD);
+				patch.rpn.rpn.push_back(RPN_CONST);
+				patch.rpn.rpn.push_back(baseValue);
+				patch.rpn.rpn.push_back(baseValue >> 8);
+				patch.rpn.rpn.push_back(baseValue >> 16);
+				patch.rpn.rpn.push_back(baseValue >> 24);
+				patch.rpn.rpn.push_back(RPN_ADD);
 
 				if (patch.type == PATCHTYPE_BYTE) {
 					// Despite the flag's name, as soon as it is set, 3 bytes
@@ -761,31 +759,29 @@ void sdobj_ReadFile(FileStackNode const &src, FILE *file, std::vector<Symbol> &f
 						patch.type = PATCHTYPE_JR;
 						// TODO: check the other flags?
 					} else if (flags & 1 << RELOC_EXPR24 && flags & 1 << RELOC_BANKBYTE) {
-						patch.rpnExpression.push_back(RPN_CONST);
-						patch.rpnExpression.push_back(16);
-						patch.rpnExpression.push_back(16 >> 8);
-						patch.rpnExpression.push_back(16 >> 16);
-						patch.rpnExpression.push_back(16 >> 24);
-						patch.rpnExpression.push_back(
-						    (flags & 1 << RELOC_SIGNED) ? RPN_SHR : RPN_USHR
-						);
+						patch.rpn.rpn.push_back(RPN_CONST);
+						patch.rpn.rpn.push_back(16);
+						patch.rpn.rpn.push_back(16 >> 8);
+						patch.rpn.rpn.push_back(16 >> 16);
+						patch.rpn.rpn.push_back(16 >> 24);
+						patch.rpn.rpn.push_back((flags & 1 << RELOC_SIGNED) ? RPN_SHR : RPN_USHR);
 					} else {
 						if (flags & 1 << RELOC_EXPR16 && flags & 1 << RELOC_WHICHBYTE) {
-							patch.rpnExpression.push_back(RPN_CONST);
-							patch.rpnExpression.push_back(8);
-							patch.rpnExpression.push_back(8 >> 8);
-							patch.rpnExpression.push_back(8 >> 16);
-							patch.rpnExpression.push_back(8 >> 24);
-							patch.rpnExpression.push_back(
+							patch.rpn.rpn.push_back(RPN_CONST);
+							patch.rpn.rpn.push_back(8);
+							patch.rpn.rpn.push_back(8 >> 8);
+							patch.rpn.rpn.push_back(8 >> 16);
+							patch.rpn.rpn.push_back(8 >> 24);
+							patch.rpn.rpn.push_back(
 							    (flags & 1 << RELOC_SIGNED) ? RPN_SHR : RPN_USHR
 							);
 						}
-						patch.rpnExpression.push_back(RPN_CONST);
-						patch.rpnExpression.push_back(0xFF);
-						patch.rpnExpression.push_back(0xFF >> 8);
-						patch.rpnExpression.push_back(0xFF >> 16);
-						patch.rpnExpression.push_back(0xFF >> 24);
-						patch.rpnExpression.push_back(RPN_AND);
+						patch.rpn.rpn.push_back(RPN_CONST);
+						patch.rpn.rpn.push_back(0xFF);
+						patch.rpn.rpn.push_back(0xFF >> 8);
+						patch.rpn.rpn.push_back(0xFF >> 16);
+						patch.rpn.rpn.push_back(0xFF >> 24);
+						patch.rpn.rpn.push_back(RPN_AND);
 					}
 				} else if (flags & 1 << RELOC_ISPCREL) {
 					assume(patch.type == PATCHTYPE_WORD);

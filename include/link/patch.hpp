@@ -11,10 +11,12 @@
 struct Symbol;
 
 struct Assertion {
-	Patch patch; // Also used for its `.type`
+	Expression rpn;
+	uint32_t offset;
+	AssertionType type;
 	std::string message;
-	// This would be redundant with `patch.pcSection->fileSymbols`, but `section` is sometimes
-	// `nullptr`!
+	// This would be redundant with `rpn.pcSection->fileSymbols`,
+	// but `rpn.pcSection` is sometimes `nullptr`!
 	std::vector<Symbol> *fileSymbols;
 };
 

@@ -18,7 +18,7 @@ enum StateFeature { STATE_EQU, STATE_VAR, STATE_EQUS, STATE_CHAR, STATE_MACRO, N
 
 void out_RegisterNode(std::shared_ptr<FileStackNode> node);
 void out_RegisterSymbol(Symbol &sym);
-void out_CreatePatch(uint32_t type, Expression const &expr, uint32_t ofs, uint32_t pcShift);
+void out_CreatePatch(PatchType type, Expression const &expr, uint32_t ofs, uint32_t pcShift);
 void out_CreateAssert(
     AssertionType type, Expression const &expr, std::string const &message, uint32_t ofs
 );
