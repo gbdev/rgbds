@@ -517,6 +517,12 @@ Warn when shifting right a negative value.
 Use a division by 2**N instead.
 .It Fl Wshift-amount
 Warn when a shift's operand is negative or greater than 32.
+.It Fl Wsingle-union
+Warn when a
+.Ic UNION
+construct has no
+.Ic NEXTU
+alternatives.
 .It Fl Wtruncation=
 Warn when an implicit truncation (for example,
 .Ic db

@@ -25,6 +25,7 @@ _rgbasm_warnings() {
 		'purge:Warn when purging exported symbols or labels'
 		'shift:Warn when shifting negative values'
 		'shift-amount:Warn when a shift'\''s operand is negative or \> 32'
+		'single-union:Warn on UNION without NEXTU'
 		'truncation:Warn when implicit truncation loses bits'
 		'unmapped-char:Warn on unmapped character'
 		'unmatched-directive:Warn on unmatched directive pair'
