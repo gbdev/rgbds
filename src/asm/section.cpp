@@ -38,6 +38,7 @@ using namespace std::literals;
 struct UnionStackEntry {
 	uint32_t start;
 	uint32_t size;
+	bool hasNextu;
 };
 
 struct SectionStackEntry {
@@ -374,6 +375,7 @@ static Section *createSection(
 	sect.bank = bank;
 	sect.align = alignment;
 	sect.alignOfs = alignOffset;
+	sect.cyclesCounter = 0;
 
 	out_RegisterNode(sect.src);
 
@@ -399,6 +401,7 @@ static Section *createSectionFragmentLiteral(Section const &parent) {
 	sect.bank = parent.bank == 0 ? UINT32_MAX : parent.bank;
 	sect.align = 0;
 	sect.alignOfs = 0;
+	sect.cyclesCounter = 0;
 
 	out_RegisterNode(sect.src);
 
@@ -780,7 +783,7 @@ void sect_StartUnion() {
 		return;
 	}
 
-	currentUnionStack.push({.start = curOffset, .size = 0});
+	currentUnionStack.push({.start = curOffset, .size = 0, .hasNextu = false});
 }
 
 static void endUnionMember() {
@@ -799,12 +802,16 @@ void sect_NextUnionMember() {
 		return;
 	}
 	endUnionMember();
+	currentUnionStack.top().hasNextu = true;
 }
 
 void sect_EndUnion() {
 	if (currentUnionStack.empty()) {
 		error("Found `ENDU` outside of a `UNION` construct");
 		return;
+	}
+	if (!currentUnionStack.top().hasNextu) {
+		warning(WARNING_SINGLE_UNION, "`UNION` construct has no `NEXTU` alternatives");
 	}
 	endUnionMember();
 	curOffset += currentUnionStack.top().size;

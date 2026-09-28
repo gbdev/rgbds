@@ -1904,9 +1904,11 @@ sm83_adc:
 	SM83_ADC op_a_n {
 		sect_ConstByte(0xCE);
 		sect_RelByte($2, 1);
+		sym_IncrementCYCLESValue(2);
 	}
 	| SM83_ADC op_a_r {
 		sect_ConstByte(0x88 | $2);
+		sym_IncrementCYCLESValue($2 == REG_HL_IND ? 2 : 1);
 	}
 ;
 
@@ -1914,16 +1916,20 @@ sm83_add:
 	SM83_ADD op_a_n {
 		sect_ConstByte(0xC6);
 		sect_RelByte($2, 1);
+		sym_IncrementCYCLESValue(2);
 	}
 	| SM83_ADD op_a_r {
 		sect_ConstByte(0x80 | $2);
+		sym_IncrementCYCLESValue($2 == REG_HL_IND ? 2 : 1);
 	}
 	| SM83_ADD MODE_HL COMMA reg_ss {
 		sect_ConstByte(0x09 | ($4 << 4));
+		sym_IncrementCYCLESValue(2);
 	}
 	| SM83_ADD MODE_SP COMMA reloc_8bit_signed {
 		sect_ConstByte(0xE8);
 		sect_RelSignedByte($4, 1);
+		sym_IncrementCYCLESValue(4);
 	}
 ;
 
@@ -1931,9 +1937,11 @@ sm83_and:
 	SM83_AND op_a_n {
 		sect_ConstByte(0xE6);
 		sect_RelByte($2, 1);
+		sym_IncrementCYCLESValue(2);
 	}
 	| SM83_AND op_a_r {
 		sect_ConstByte(0xA0 | $2);
+		sym_IncrementCYCLESValue($2 == REG_HL_IND ? 2 : 1);
 	}
 ;
 
@@ -1947,6 +1955,7 @@ sm83_bit:
 		} else {
 			sect_ConstByte(mask | ($2.value() << 3));
 		}
+		sym_IncrementCYCLESValue($4 == REG_HL_IND ? 3 : 2);
 	}
 ;
 
@@ -1954,16 +1963,19 @@ sm83_call:
 	SM83_CALL reloc_16bit {
 		sect_ConstByte(0xCD);
 		sect_RelWord($2, 1);
+		sym_IncrementCYCLESValue(6);
 	}
 	| SM83_CALL ccode_expr COMMA reloc_16bit {
 		sect_ConstByte(0xC4 | ($2 << 3));
 		sect_RelWord($4, 1);
+		sym_IncrementCYCLESValue(6);
 	}
 ;
 
 sm83_ccf:
 	SM83_CCF {
 		sect_ConstByte(0x3F);
+		sym_IncrementCYCLESValue(1);
 	}
 ;
 
@@ -1971,60 +1983,72 @@ sm83_cp:
 	SM83_CP op_a_n {
 		sect_ConstByte(0xFE);
 		sect_RelByte($2, 1);
+		sym_IncrementCYCLESValue(2);
 	}
 	| SM83_CP op_a_r {
 		sect_ConstByte(0xB8 | $2);
+		sym_IncrementCYCLESValue($2 == REG_HL_IND ? 2 : 1);
 	}
 ;
 
 sm83_cpl:
 	SM83_CPL {
 		sect_ConstByte(0x2F);
+		sym_IncrementCYCLESValue(1);
 	}
 	| SM83_CPL MODE_A {
 		sect_ConstByte(0x2F);
+		sym_IncrementCYCLESValue(1);
 	}
 ;
 
 sm83_daa:
 	SM83_DAA {
 		sect_ConstByte(0x27);
+		sym_IncrementCYCLESValue(1);
 	}
 ;
 
 sm83_dec:
 	SM83_DEC reg_r {
 		sect_ConstByte(0x05 | ($2 << 3));
+		sym_IncrementCYCLESValue($2 == REG_HL_IND ? 3 : 1);
 	}
 	| SM83_DEC reg_ss {
 		sect_ConstByte(0x0B | ($2 << 4));
+		sym_IncrementCYCLESValue(2);
 	}
 ;
 
 sm83_di:
 	SM83_DI {
 		sect_ConstByte(0xF3);
+		sym_IncrementCYCLESValue(1);
 	}
 ;
 
 sm83_ei:
 	SM83_EI {
 		sect_ConstByte(0xFB);
+		sym_IncrementCYCLESValue(1);
 	}
 ;
 
 sm83_halt:
 	SM83_HALT {
 		sect_ConstByte(0x76);
+		sym_IncrementCYCLESValue(1);
 	}
 ;
 
 sm83_inc:
 	SM83_INC reg_r {
 		sect_ConstByte(0x04 | ($2 << 3));
+		sym_IncrementCYCLESValue($2 == REG_HL_IND ? 3 : 1);
 	}
 	| SM83_INC reg_ss {
 		sect_ConstByte(0x03 | ($2 << 4));
+		sym_IncrementCYCLESValue(2);
 	}
 ;
 
@@ -2032,13 +2056,16 @@ sm83_jp:
 	SM83_JP reloc_16bit {
 		sect_ConstByte(0xC3);
 		sect_RelWord($2, 1);
+		sym_IncrementCYCLESValue(4);
 	}
 	| SM83_JP ccode_expr COMMA reloc_16bit {
 		sect_ConstByte(0xC2 | ($2 << 3));
 		sect_RelWord($4, 1);
+		sym_IncrementCYCLESValue(4);
 	}
 	| SM83_JP MODE_HL {
 		sect_ConstByte(0xE9);
+		sym_IncrementCYCLESValue(1);
 	}
 ;
 
@@ -2046,28 +2073,34 @@ sm83_jr:
 	SM83_JR reloc_16bit {
 		sect_ConstByte(0x18);
 		sect_PCRelByte($2, 1);
+		sym_IncrementCYCLESValue(3);
 	}
 	| SM83_JR ccode_expr COMMA reloc_16bit {
 		sect_ConstByte(0x20 | ($2 << 3));
 		sect_PCRelByte($4, 1);
+		sym_IncrementCYCLESValue(3);
 	}
 ;
 
 sm83_ldi:
 	SM83_LDI LBRACK MODE_HL RBRACK COMMA MODE_A {
 		sect_ConstByte(0x02 | (2 << 4));
+		sym_IncrementCYCLESValue(2);
 	}
 	| SM83_LDI MODE_A COMMA LBRACK MODE_HL RBRACK {
 		sect_ConstByte(0x0A | (2 << 4));
+		sym_IncrementCYCLESValue(2);
 	}
 ;
 
 sm83_ldd:
 	SM83_LDD LBRACK MODE_HL RBRACK COMMA MODE_A {
 		sect_ConstByte(0x02 | (3 << 4));
+		sym_IncrementCYCLESValue(2);
 	}
 	| SM83_LDD MODE_A COMMA LBRACK MODE_HL RBRACK {
 		sect_ConstByte(0x0A | (3 << 4));
+		sym_IncrementCYCLESValue(2);
 	}
 ;
 
@@ -2080,6 +2113,7 @@ sm83_ldh:
 		} else {
 			sect_ConstByte($4.value());
 		}
+		sym_IncrementCYCLESValue(3);
 	}
 	| SM83_LDH op_mem_ind COMMA MODE_A {
 		$2.addCheckHRAM();
@@ -2089,18 +2123,23 @@ sm83_ldh:
 		} else {
 			sect_ConstByte($2.value());
 		}
+		sym_IncrementCYCLESValue(3);
 	}
 	| SM83_LDH MODE_A COMMA c_ind {
 		sect_ConstByte(0xF2);
+		sym_IncrementCYCLESValue(2);
 	}
 	| SM83_LDH MODE_A COMMA ff00_c_ind {
 		sect_ConstByte(0xF2);
+		sym_IncrementCYCLESValue(2);
 	}
 	| SM83_LDH c_ind COMMA MODE_A {
 		sect_ConstByte(0xE2);
+		sym_IncrementCYCLESValue(2);
 	}
 	| SM83_LDH ff00_c_ind COMMA MODE_A {
 		sect_ConstByte(0xE2);
+		sym_IncrementCYCLESValue(2);
 	}
 ;
 
@@ -2130,10 +2169,12 @@ sm83_ld_hl:
 	SM83_LD MODE_HL COMMA MODE_SP op_sp_offset {
 		sect_ConstByte(0xF8);
 		sect_RelSignedByte($5, 1);
+		sym_IncrementCYCLESValue(3);
 	}
 	| SM83_LD MODE_HL COMMA reloc_16bit {
 		sect_ConstByte(0x01 | (REG_HL << 4));
 		sect_RelWord($4, 1);
+		sym_IncrementCYCLESValue(3);
 	}
 	| SM83_LD MODE_HL COMMA reg_tt_no_af {
 		::error(
@@ -2148,6 +2189,7 @@ sm83_ld_hl:
 sm83_ld_sp:
 	SM83_LD MODE_SP COMMA MODE_HL {
 		sect_ConstByte(0xF9);
+		sym_IncrementCYCLESValue(2);
 	}
 	| SM83_LD MODE_SP COMMA reg_bc_or_de {
 		::error("\"LD SP, %s\" is not a valid instruction", reg_tt_names[$4]);
@@ -2155,6 +2197,7 @@ sm83_ld_sp:
 	| SM83_LD MODE_SP COMMA reloc_16bit {
 		sect_ConstByte(0x01 | (REG_SP << 4));
 		sect_RelWord($4, 1);
+		sym_IncrementCYCLESValue(3);
 	}
 ;
 
@@ -2162,22 +2205,26 @@ sm83_ld_mem:
 	SM83_LD op_mem_ind COMMA MODE_SP {
 		sect_ConstByte(0x08);
 		sect_RelWord($2, 1);
+		sym_IncrementCYCLESValue(5);
 	}
 	| SM83_LD op_mem_ind COMMA MODE_A {
 		sect_ConstByte(0xEA);
 		sect_RelWord($2, 1);
+		sym_IncrementCYCLESValue(4);
 	}
 ;
 
 sm83_ld_c_ind:
 	SM83_LD ff00_c_ind COMMA MODE_A {
 		sect_ConstByte(0xE2);
+		sym_IncrementCYCLESValue(2);
 	}
 ;
 
 sm83_ld_rr:
 	SM83_LD reg_rr COMMA MODE_A {
 		sect_ConstByte(0x02 | ($2 << 4));
+		sym_IncrementCYCLESValue(2);
 	}
 ;
 
@@ -2185,12 +2232,14 @@ sm83_ld_r_no_a:
 	SM83_LD reg_r_no_a COMMA reloc_8bit {
 		sect_ConstByte(0x06 | ($2 << 3));
 		sect_RelByte($4, 1);
+		sym_IncrementCYCLESValue($2 == REG_HL_IND ? 3 : 2);
 	}
 	| SM83_LD reg_r_no_a COMMA reg_r {
 		if ($2 == REG_HL_IND && $4 == REG_HL_IND) {
 			::error("\"LD [HL], [HL]\" is not a valid instruction");
 		} else {
 			sect_ConstByte(0x40 | ($2 << 3) | $4);
+			sym_IncrementCYCLESValue($2 == REG_HL_IND ? 2 : 1);
 		}
 	}
 ;
@@ -2199,19 +2248,24 @@ sm83_ld_a:
 	SM83_LD reg_a COMMA reloc_8bit {
 		sect_ConstByte(0x06 | ($2 << 3));
 		sect_RelByte($4, 1);
+		sym_IncrementCYCLESValue(2);
 	}
 	| SM83_LD reg_a COMMA reg_r {
 		sect_ConstByte(0x40 | ($2 << 3) | $4);
+		sym_IncrementCYCLESValue($4 == REG_HL_IND ? 2 : 1);
 	}
 	| SM83_LD reg_a COMMA ff00_c_ind {
 		sect_ConstByte(0xF2);
+		sym_IncrementCYCLESValue(2);
 	}
 	| SM83_LD reg_a COMMA reg_rr {
 		sect_ConstByte(0x0A | ($4 << 4));
+		sym_IncrementCYCLESValue(2);
 	}
 	| SM83_LD reg_a COMMA op_mem_ind {
 		sect_ConstByte(0xFA);
 		sect_RelWord($4, 1);
+		sym_IncrementCYCLESValue(4);
 	}
 ;
 
@@ -2219,6 +2273,7 @@ sm83_ld_ss:
 	SM83_LD reg_bc_or_de COMMA reloc_16bit {
 		sect_ConstByte(0x01 | ($2 << 4));
 		sect_RelWord($4, 1);
+		sym_IncrementCYCLESValue(3);
 	}
 	| SM83_LD reg_bc_or_de COMMA reg_tt_no_af {
 		::error(
@@ -2238,6 +2293,7 @@ sm83_ld_ss:
 sm83_nop:
 	SM83_NOP {
 		sect_ConstByte(0x00);
+		sym_IncrementCYCLESValue(1);
 	}
 ;
 
@@ -2245,21 +2301,25 @@ sm83_or:
 	SM83_OR op_a_n {
 		sect_ConstByte(0xF6);
 		sect_RelByte($2, 1);
+		sym_IncrementCYCLESValue(2);
 	}
 	| SM83_OR op_a_r {
 		sect_ConstByte(0xB0 | $2);
+		sym_IncrementCYCLESValue($2 == REG_HL_IND ? 2 : 1);
 	}
 ;
 
 sm83_pop:
 	SM83_POP reg_tt {
 		sect_ConstByte(0xC1 | ($2 << 4));
+		sym_IncrementCYCLESValue(3);
 	}
 ;
 
 sm83_push:
 	SM83_PUSH reg_tt {
 		sect_ConstByte(0xC5 | ($2 << 4));
+		sym_IncrementCYCLESValue(4);
 	}
 ;
 
@@ -2273,21 +2333,25 @@ sm83_res:
 		} else {
 			sect_ConstByte(mask | ($2.value() << 3));
 		}
+		sym_IncrementCYCLESValue($4 == REG_HL_IND ? 4 : 2);
 	}
 ;
 
 sm83_ret:
 	SM83_RET {
 		sect_ConstByte(0xC9);
+		sym_IncrementCYCLESValue(4);
 	}
 	| SM83_RET ccode_expr {
 		sect_ConstByte(0xC0 | ($2 << 3));
+		sym_IncrementCYCLESValue(5);
 	}
 ;
 
 sm83_reti:
 	SM83_RETI {
 		sect_ConstByte(0xD9);
+		sym_IncrementCYCLESValue(4);
 	}
 ;
 
@@ -2295,12 +2359,14 @@ sm83_rl:
 	SM83_RL reg_r {
 		sect_ConstByte(0xCB);
 		sect_ConstByte(0x10 | $2);
+		sym_IncrementCYCLESValue($2 == REG_HL_IND ? 4 : 2);
 	}
 ;
 
 sm83_rla:
 	SM83_RLA {
 		sect_ConstByte(0x17);
+		sym_IncrementCYCLESValue(1);
 	}
 ;
 
@@ -2308,12 +2374,14 @@ sm83_rlc:
 	SM83_RLC reg_r {
 		sect_ConstByte(0xCB);
 		sect_ConstByte(0x00 | $2);
+		sym_IncrementCYCLESValue($2 == REG_HL_IND ? 4 : 2);
 	}
 ;
 
 sm83_rlca:
 	SM83_RLCA {
 		sect_ConstByte(0x07);
+		sym_IncrementCYCLESValue(1);
 	}
 ;
 
@@ -2321,12 +2389,14 @@ sm83_rr:
 	SM83_RR reg_r {
 		sect_ConstByte(0xCB);
 		sect_ConstByte(0x18 | $2);
+		sym_IncrementCYCLESValue($2 == REG_HL_IND ? 4 : 2);
 	}
 ;
 
 sm83_rra:
 	SM83_RRA {
 		sect_ConstByte(0x1F);
+		sym_IncrementCYCLESValue(1);
 	}
 ;
 
@@ -2334,12 +2404,14 @@ sm83_rrc:
 	SM83_RRC reg_r {
 		sect_ConstByte(0xCB);
 		sect_ConstByte(0x08 | $2);
+		sym_IncrementCYCLESValue($2 == REG_HL_IND ? 4 : 2);
 	}
 ;
 
 sm83_rrca:
 	SM83_RRCA {
 		sect_ConstByte(0x0F);
+		sym_IncrementCYCLESValue(1);
 	}
 ;
 
@@ -2351,6 +2423,7 @@ sm83_rst:
 		} else {
 			sect_ConstByte(0xC7 | $2.value());
 		}
+		sym_IncrementCYCLESValue(4);
 	}
 ;
 
@@ -2358,15 +2431,18 @@ sm83_sbc:
 	SM83_SBC op_a_n {
 		sect_ConstByte(0xDE);
 		sect_RelByte($2, 1);
+		sym_IncrementCYCLESValue(2);
 	}
 	| SM83_SBC op_a_r {
 		sect_ConstByte(0x98 | $2);
+		sym_IncrementCYCLESValue($2 == REG_HL_IND ? 2 : 1);
 	}
 ;
 
 sm83_scf:
 	SM83_SCF {
 		sect_ConstByte(0x37);
+		sym_IncrementCYCLESValue(1);
 	}
 ;
 
@@ -2380,6 +2456,7 @@ sm83_set:
 		} else {
 			sect_ConstByte(mask | ($2.value() << 3));
 		}
+		sym_IncrementCYCLESValue($4 == REG_HL_IND ? 4 : 2);
 	}
 ;
 
@@ -2387,6 +2464,7 @@ sm83_sla:
 	SM83_SLA reg_r {
 		sect_ConstByte(0xCB);
 		sect_ConstByte(0x20 | $2);
+		sym_IncrementCYCLESValue($2 == REG_HL_IND ? 4 : 2);
 	}
 ;
 
@@ -2394,6 +2472,7 @@ sm83_sra:
 	SM83_SRA reg_r {
 		sect_ConstByte(0xCB);
 		sect_ConstByte(0x28 | $2);
+		sym_IncrementCYCLESValue($2 == REG_HL_IND ? 4 : 2);
 	}
 ;
 
@@ -2401,6 +2480,7 @@ sm83_srl:
 	SM83_SRL reg_r {
 		sect_ConstByte(0xCB);
 		sect_ConstByte(0x38 | $2);
+		sym_IncrementCYCLESValue($2 == REG_HL_IND ? 4 : 2);
 	}
 ;
 
@@ -2408,10 +2488,12 @@ sm83_stop:
 	SM83_STOP {
 		sect_ConstByte(0x10);
 		sect_ConstByte(0x00);
+		sym_IncrementCYCLESValue(1);
 	}
 	| SM83_STOP reloc_8bit {
 		sect_ConstByte(0x10);
 		sect_RelByte($2, 1);
+		sym_IncrementCYCLESValue(1);
 	}
 ;
 
@@ -2419,9 +2501,11 @@ sm83_sub:
 	SM83_SUB op_a_n {
 		sect_ConstByte(0xD6);
 		sect_RelByte($2, 1);
+		sym_IncrementCYCLESValue(2);
 	}
 	| SM83_SUB op_a_r {
 		sect_ConstByte(0x90 | $2);
+		sym_IncrementCYCLESValue($2 == REG_HL_IND ? 2 : 1);
 	}
 ;
 
@@ -2429,6 +2513,7 @@ sm83_swap:
 	SM83_SWAP reg_r {
 		sect_ConstByte(0xCB);
 		sect_ConstByte(0x30 | $2);
+		sym_IncrementCYCLESValue($2 == REG_HL_IND ? 4 : 2);
 	}
 ;
 
@@ -2436,9 +2521,11 @@ sm83_xor:
 	SM83_XOR op_a_n {
 		sect_ConstByte(0xEE);
 		sect_RelByte($2, 1);
+		sym_IncrementCYCLESValue(2);
 	}
 	| SM83_XOR op_a_r {
 		sect_ConstByte(0xA8 | $2);
+		sym_IncrementCYCLESValue($2 == REG_HL_IND ? 2 : 1);
 	}
 ;
 

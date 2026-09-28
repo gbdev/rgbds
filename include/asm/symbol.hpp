@@ -83,6 +83,7 @@ Symbol *sym_RedefEqu(InternedStr symName, int32_t value);
 Symbol *sym_AddVar(InternedStr symName, int32_t value);
 int32_t sym_GetRSValue();
 void sym_SetRSValue(int32_t value);
+void sym_IncrementCYCLESValue(uint32_t delta);
 // Find a symbol by exact name, bypassing expansion checks
 Symbol *sym_FindExactSymbol(InternedStr symName);
 // Find a symbol, possibly scoped, by name

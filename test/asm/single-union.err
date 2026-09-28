@@ -1,0 +1,2 @@
+warning: `UNION` construct has no `NEXTU` alternatives [-Wsingle-union]
+    at single-union.asm(4)

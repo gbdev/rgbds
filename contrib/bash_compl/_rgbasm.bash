@@ -193,6 +193,7 @@ _rgbasm_completions() {
 				purge
 				shift
 				shift-amount
+				single-union
 				truncation
 				unmapped-char
 				unmatched-directive
