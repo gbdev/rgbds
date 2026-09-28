@@ -189,12 +189,20 @@ std::optional<std::string> fstk_FindFile(std::string const &path) {
 	std::optional<std::string> foundFile = std::nullopt;
 	std::vector<std::string> shadowed;
 
+	bool warnIncludeShadow =
+	    warnings.getWarningBehavior(WARNING_INCLUDE_SHADOW) != WarningBehavior::DISABLED;
+
 	for (std::string &incPath : includePaths) {
 		if (std::string fullPath = incPath + path; isValidFilePath(fullPath)) {
 			if (foundFile.has_value()) {
 				shadowed.push_back(fullPath);
 			} else {
 				foundFile = fullPath;
+				// If this does not need to print a `-Winclude-shadow` warning, it can immediately
+				// use the first path found instead of collecting all the `shadowed` paths.
+				if (!warnIncludeShadow) {
+					break;
+				}
 			}
 		}
 	}
