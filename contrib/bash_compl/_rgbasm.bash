@@ -185,6 +185,7 @@ _rgbasm_completions() {
 				empty-macro-arg
 				empty-strrpl
 				export-undefined
+				include-shadow
 				large-constant
 				macro-shift
 				nested-comment
