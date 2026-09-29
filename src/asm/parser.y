@@ -1052,12 +1052,12 @@ incbin:
 			YYACCEPT;
 		}
 	}
-	| POP_INCBIN string COMMA uconst {
+	| POP_INCBIN string COMMA iconst {
 		if (sect_BinaryFile($2, $4, std::nullopt)) {
 			YYACCEPT;
 		}
 	}
-	| POP_INCBIN string COMMA uconst COMMA uconst {
+	| POP_INCBIN string COMMA iconst COMMA uconst {
 		if (sect_BinaryFile($2, $4, $6)) {
 			YYACCEPT;
 		}

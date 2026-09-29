@@ -998,7 +998,7 @@ void sect_PCRelByte(Expression const &expr, uint32_t pcShift) {
 	}
 }
 
-bool sect_BinaryFile(std::string const &name, uint32_t startPos, std::optional<uint32_t> length) {
+bool sect_BinaryFile(std::string const &name, int32_t startPos, std::optional<uint32_t> length) {
 	if (!requireCodeSection()) {
 		return false;
 	}
@@ -1016,18 +1016,31 @@ bool sect_BinaryFile(std::string const &name, uint32_t startPos, std::optional<u
 	Defer closeFile{[&] { xfclose(file); }};
 
 	if (std::optional<uint64_t> fileSize = seekSize(file); fileSize.has_value()) {
-		if (startPos > *fileSize) {
+		// Adjust negative start positions such that -1 is the last byte of a file
+		if (startPos < 0) {
+			startPos += *fileSize;
+		}
+		if (startPos < 0) {
 			error(
-			    "Specified start position (%" PRIu32 ") is greater than length of \"%s\" (%" PRIu64
+			    "Specified start position (%" PRId32 ") is before the start of \"%s\" (%" PRIu64
 			    ")",
 			    startPos,
 			    name.c_str(),
 			    *fileSize
 			);
 			return false;
-		} else if (length.has_value() && *length > *fileSize - startPos) {
+		} else if (uint32_t pos = static_cast<uint32_t>(startPos); pos > *fileSize) {
 			error(
-			    "Specified range in `INCBIN` file \"%s\" is out of bounds (%" PRIu32 " + %" PRIu32
+			    "Specified start position (%" PRId32 ") is greater than length of \"%s\" (%" PRIu64
+			    ")",
+			    startPos,
+			    name.c_str(),
+			    *fileSize
+			);
+			return false;
+		} else if (length.has_value() && *length > *fileSize - pos) {
+			error(
+			    "Specified range in `INCBIN` file \"%s\" is out of bounds (%" PRId32 " + %" PRIu32
 			    " > %" PRIu64 ")",
 			    name.c_str(),
 			    startPos,
@@ -1044,6 +1057,14 @@ bool sect_BinaryFile(std::string const &name, uint32_t startPos, std::optional<u
 			error(
 			    "Error determining size of `INCBIN` file \"%s\": %s", name.c_str(), strerror(errno)
 			);
+		}
+		if (startPos < 0) {
+			error(
+			    "Specified start position (%" PRId32 ") is negative and size of \"%s\" is unknown",
+			    startPos,
+			    name.c_str()
+			);
+			return false;
 		}
 		// The file isn't seekable, so we'll just skip bytes one at a time
 		while (startPos--) {

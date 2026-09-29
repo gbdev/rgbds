@@ -1918,6 +1918,7 @@ to contain fewer than 78 + 256 = 334 bytes.
 .Pp
 The length argument is optional.
 If only the start position is specified, the bytes from the start position until the end of the file will be included.
+Negative start positions count from the end of the file, so the last byte is at position -1.
 .Ss Statically allocating space in RAM
 .Ic DS
 statically allocates a number of empty bytes.
