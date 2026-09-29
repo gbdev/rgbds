@@ -155,23 +155,27 @@ public:
 	    : _containers(std::forward<IterableTs>(containers)...) {}
 
 	auto begin() {
-		return ZipIterator(std::apply(
-		    [](auto &&...containers) {
-			    using std::begin;
-			    return std::make_tuple(begin(containers)...);
-		    },
-		    _containers
-		));
+		return ZipIterator(
+		    std::apply(
+		        [](auto &&...containers) {
+			        using std::begin;
+			        return std::make_tuple(begin(containers)...);
+		        },
+		        _containers
+		    )
+		);
 	}
 
 	auto end() {
-		return ZipIterator(std::apply(
-		    [](auto &&...containers) {
-			    using std::end;
-			    return std::make_tuple(end(containers)...);
-		    },
-		    _containers
-		));
+		return ZipIterator(
+		    std::apply(
+		        [](auto &&...containers) {
+			        using std::end;
+			        return std::make_tuple(end(containers)...);
+		        },
+		        _containers
+		    )
+		);
 	}
 };
 

@@ -281,11 +281,13 @@ static void newFileContext(std::string const &filePath, bool isQuiet, bool updat
 		macroArgs = oldContext.macroArgs;
 	}
 
-	Context &context = contextStack.emplace(Context{
-	    .fileInfo = fileInfo,
-	    .uniqueIDStr = uniqueIDStr,
-	    .macroArgs = macroArgs,
-	});
+	Context &context = contextStack.emplace(
+	    Context{
+	        .fileInfo = fileInfo,
+	        .uniqueIDStr = uniqueIDStr,
+	        .macroArgs = macroArgs,
+	    }
+	);
 
 	context.lexerState.setFileAsNextState(filePath, updateStateNow);
 }
@@ -318,11 +320,13 @@ static void
 	fileInfo->parent = oldContext.fileInfo;
 	fileInfo->lineNo = lexer_GetLineNo();
 
-	Context &context = contextStack.emplace(Context{
-	    .fileInfo = fileInfo,
-	    .uniqueIDStr = std::make_shared<std::string>(), // Create a new, not-yet-generated ID
-	    .macroArgs = macroArgs,
-	});
+	Context &context = contextStack.emplace(
+	    Context{
+	        .fileInfo = fileInfo,
+	        .uniqueIDStr = std::make_shared<std::string>(), // Create a new, not-yet-generated ID
+	        .macroArgs = macroArgs,
+	    }
+	);
 
 	context.lexerState.setViewAsNextState("MACRO", macro.getMacro(), macro.fileLine);
 }
@@ -344,11 +348,13 @@ static Context &
 	fileInfo->parent = oldContext.fileInfo;
 	fileInfo->lineNo = reptLineNo;
 
-	Context &context = contextStack.emplace(Context{
-	    .fileInfo = fileInfo,
-	    .uniqueIDStr = std::make_shared<std::string>(), // Create a new, not-yet-generated ID
-	    .macroArgs = oldContext.macroArgs,
-	});
+	Context &context = contextStack.emplace(
+	    Context{
+	        .fileInfo = fileInfo,
+	        .uniqueIDStr = std::make_shared<std::string>(), // Create a new, not-yet-generated ID
+	        .macroArgs = oldContext.macroArgs,
+	    }
+	);
 
 	context.lexerState.setViewAsNextState("REPT", span, reptLineNo);
 
