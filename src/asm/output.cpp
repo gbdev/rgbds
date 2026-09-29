@@ -71,19 +71,6 @@ void out_RegisterNode(std::shared_ptr<FileStackNode> node) {
 	}
 }
 
-static void writePatch(Patch const &patch, FILE *file) {
-	assume(patch.src->ID != UINT32_MAX);
-
-	putLong(patch.src->ID, file);
-	putLong(patch.lineNo, file);
-	putLong(patch.offset, file);
-	putLong(patch.pcSection ? patch.pcSection->getID() : UINT32_MAX, file);
-	putLong(patch.pcOffset, file);
-	putc(patch.type, file);
-	putLong(patch.rpn.size(), file);
-	fwrite(patch.rpn.data(), 1, patch.rpn.size(), file);
-}
-
 static void writeSection(Section const &sect, FILE *file) {
 	assume(sect.src->ID != UINT32_MAX);
 
@@ -109,7 +96,16 @@ static void writeSection(Section const &sect, FILE *file) {
 		putLong(sect.patches.size(), file);
 
 		for (Patch const &patch : sect.patches) {
-			writePatch(patch, file);
+			assume(patch.src->ID != UINT32_MAX);
+
+			putLong(patch.src->ID, file);
+			putLong(patch.lineNo, file);
+			putLong(patch.offset, file);
+			putLong(patch.pcSection ? patch.pcSection->getID() : UINT32_MAX, file);
+			putLong(patch.pcOffset, file);
+			putc(patch.type, file);
+			putLong(patch.rpn.size(), file);
+			fwrite(patch.rpn.data(), 1, patch.rpn.size(), file);
 		}
 	}
 }
