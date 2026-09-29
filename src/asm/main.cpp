@@ -528,8 +528,10 @@ int main(int argc, char *argv[]) {
 
 	if (localOptions.dependFileName) {
 		if (!options.targetFileName) {
-			fatal("Dependency files can only be created if a target file is specified with either "
-			      "'-o', '-MQ' or '-MT'");
+			fatal(
+			    "Dependency files can only be created if a target file is specified with either "
+			    "'-o', '-MQ' or '-MT'"
+			);
 		}
 
 		if (*localOptions.dependFileName == "-") {

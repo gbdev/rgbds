@@ -649,11 +649,14 @@ int main(int argc, char *argv[]) {
 
 	if (localOptions.groupOutputs) {
 		if (!localOptions.autoAny()) {
-			warnx("Grouping outputs ('-O') is enabled, but without any automatic output paths "
-			      "('-A', '-P', '-Q', or '-T')");
+			warnx(
+			    "Grouping outputs ('-O') is enabled, but without any automatic output paths "
+			    "('-A', '-P', '-Q', or '-T')"
+			);
 		}
 		if (options.output.empty()) {
-			warnx("Grouping outputs ('-O') is enabled, but without an output tile data file ('-o')"
+			warnx(
+			    "Grouping outputs ('-O') is enabled, but without an output tile data file ('-o')"
 			);
 		}
 	}
