@@ -5,7 +5,6 @@
 #include "asm/section.hpp"
 
 #include <algorithm>
-#include <deque>
 #include <errno.h>
 #include <inttypes.h>
 #include <iterator>
@@ -54,7 +53,7 @@ static InsertionOrderedMap<std::string, Section> sections;
 
 static uint32_t curOffset; // Offset into the current section (see `sect_GetSymbolOffset`)
 
-static std::deque<SectionStackEntry> sectionStack;
+static std::vector<SectionStackEntry> sectionStack;
 
 static Section *currentLoadSection = nullptr;
 static std::pair<Symbol const *, Symbol const *> currentLoadLabelScopes = {nullptr, nullptr};
@@ -533,8 +532,8 @@ bool Section::isSizeKnown() const {
 	}
 
 	// Any section on the stack is still growing
-	for (SectionStackEntry &entry : sectionStack) {
-		if (entry.section && entry.section->name == name) {
+	for (auto iter = sectionStack.rbegin(); iter != sectionStack.rend(); ++iter) {
+		if (iter->section && iter->section->name == name) {
 			return false;
 		}
 	}
@@ -553,8 +552,8 @@ void sect_NewSection(
 		fatal("Section names cannot contain '\\0' characters");
 	}
 
-	for (SectionStackEntry &entry : sectionStack) {
-		if (entry.section && entry.section->name == name) {
+	for (auto iter = sectionStack.rbegin(); iter != sectionStack.rend(); ++iter) {
+		if (iter->section && iter->section->name == name) {
 			fatal("Section \"%s\" is already on the stack", name.c_str());
 		}
 	}
@@ -646,7 +645,7 @@ uint32_t sect_GetOutputOffset() {
 }
 
 Patch *sect_AddOutputPatch() {
-	return currentSection ? &currentSection->patches.emplace_front() : nullptr;
+	return currentSection ? &currentSection->patches.emplace_back() : nullptr;
 }
 
 // Returns how many bytes need outputting for the specified alignment and offset to succeed
@@ -1068,7 +1067,7 @@ bool sect_BinaryFile(std::string const &name, uint32_t startPos, std::optional<u
 }
 
 void sect_PushSection() {
-	sectionStack.push_front({
+	sectionStack.push_back({
 	    .section = currentSection,
 	    .loadSection = currentLoadSection,
 	    .labelScopes = sym_GetCurrentLabelScopes(),
@@ -1081,7 +1080,7 @@ void sect_PushSection() {
 	currentSection = nullptr;
 	currentLoadSection = nullptr;
 	sym_ResetCurrentLabelScopes();
-	std::swap(currentUnionStack, sectionStack.front().unionStack);
+	std::swap(currentUnionStack, sectionStack.back().unionStack);
 }
 
 void sect_PopSection() {
@@ -1093,9 +1092,7 @@ void sect_PopSection() {
 		sect_EndLoadSection("POPS");
 	}
 
-	SectionStackEntry entry = sectionStack.front();
-	sectionStack.pop_front();
-
+	SectionStackEntry entry = sectionStack.back();
 	changeSection();
 	currentSection = entry.section;
 	currentLoadSection = entry.loadSection;
@@ -1103,6 +1100,8 @@ void sect_PopSection() {
 	curOffset = entry.offset;
 	loadOffset = entry.loadOffset;
 	std::swap(currentUnionStack, entry.unionStack);
+
+	sectionStack.pop_back();
 }
 
 void sect_CheckStack() {

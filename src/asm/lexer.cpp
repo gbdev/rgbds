@@ -314,7 +314,7 @@ uint32_t lexer_GetIFDepth() {
 }
 
 void lexer_IncIFDepth() {
-	lexerState->ifStack.push_front({.ranIfBlock = false, .reachedElseBlock = false});
+	lexerState->ifStack.push_back({.ranIfBlock = false, .reachedElseBlock = false});
 }
 
 void lexer_DecIFDepth() {
@@ -322,23 +322,23 @@ void lexer_DecIFDepth() {
 		fatal("Found `ENDC` outside of a conditional (not after an `IF`/`ELIF`/`ELSE` block)");
 	}
 
-	lexerState->ifStack.pop_front();
+	lexerState->ifStack.pop_back();
 }
 
 bool lexer_RanIFBlock() {
-	return lexerState->ifStack.front().ranIfBlock;
+	return lexerState->ifStack.back().ranIfBlock;
 }
 
 bool lexer_ReachedELSEBlock() {
-	return lexerState->ifStack.front().reachedElseBlock;
+	return lexerState->ifStack.back().reachedElseBlock;
 }
 
 void lexer_RunIFBlock() {
-	lexerState->ifStack.front().ranIfBlock = true;
+	lexerState->ifStack.back().ranIfBlock = true;
 }
 
 void lexer_ReachELSEBlock() {
-	lexerState->ifStack.front().reachedElseBlock = true;
+	lexerState->ifStack.back().reachedElseBlock = true;
 }
 
 void LexerState::setAsCurrentState() {
@@ -501,7 +501,7 @@ static void beginExpansion(std::shared_ptr<std::string> str, std::optional<Inter
 		return;
 	}
 
-	lexerState->expansionStack.push_front({.name = name, .contents = str, .offset = 0});
+	lexerState->expansionStack.push_back({.name = name, .contents = str, .offset = 0});
 }
 
 void lexer_CheckRecursionDepth() {
@@ -651,9 +651,9 @@ static std::shared_ptr<std::string> readMacroArg() {
 
 int LexerState::peekChar() {
 	// This is `.peekCharAhead()` modified for zero lookahead distance
-	for (Expansion const &exp : expansionStack) {
-		if (exp.offset < exp.size()) {
-			return static_cast<uint8_t>((*exp.contents)[exp.offset]);
+	for (auto iter = expansionStack.rbegin(); iter != expansionStack.rend(); ++iter) {
+		if (iter->offset < iter->size()) {
+			return static_cast<uint8_t>((*iter->contents)[iter->offset]);
 		}
 	}
 
@@ -669,16 +669,16 @@ int LexerState::peekCharAhead() {
 	// We only need one character of lookahead, for macro arguments
 	uint8_t distance = 1;
 
-	for (Expansion const &exp : expansionStack) {
+	for (auto iter = expansionStack.rbegin(); iter != expansionStack.rend(); ++iter) {
 		// An expansion that has reached its end will have `exp.offset` == `exp.size()`,
 		// and `.peekCharAhead()` will continue with its parent
-		assume(exp.offset <= exp.size());
-		if (size_t idx = exp.offset + distance; idx < exp.size()) {
+		assume(iter->offset <= iter->size());
+		if (size_t idx = iter->offset + distance; idx < iter->size()) {
 			// Macro args can't be recursive, since `peek()` marks them as scanned, so
 			// this is a failsafe that (as far as I can tell) won't ever actually run.
-			return static_cast<uint8_t>((*exp.contents)[idx]); // LCOV_EXCL_LINE
+			return static_cast<uint8_t>((*iter->contents)[idx]); // LCOV_EXCL_LINE
 		}
-		distance -= exp.size() - exp.offset;
+		distance -= iter->size() - iter->offset;
 	}
 
 	if (offset + distance < content.size) {
@@ -750,10 +750,10 @@ static void shiftChar() {
 	for (;;) {
 		if (!lexerState->expansionStack.empty()) {
 			// Advance within the current expansion
-			if (lexerState->expansionStack.front().advance()) {
+			if (lexerState->expansionStack.back().advance()) {
 				// When advancing would go past an expansion's end,
 				// move up to its parent and try again to advance
-				lexerState->expansionStack.pop_front();
+				lexerState->expansionStack.pop_back();
 				continue;
 			}
 		} else {
