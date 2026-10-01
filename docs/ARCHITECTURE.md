@@ -202,7 +202,7 @@ These files have been copied ("vendored") from external authors and adapted for 
   This file *owns* the `OptStackEntry`s in its `stack` collection (which is affected by `PUSHO` and `POPO` directives).
 - **`output.cpp`:**  
   Functions and data related to outputting object files (with `-o/--output`) and state files (with `-s/--state`).  
-  This file *owns* its `assertions` (created by `ASSERT` and `STATIC_ASSERT` directives). Every assertion gets output in the object file.  
+  This file implements `Patch` construction from an expression and explicit output/PC locations. It *owns* its deferred `assertions` (created by `ASSERT` directives), each with its own patch. Every deferred assertion gets output in the object file.
   This file also *references* some `fileStackNodes`, and maintains static pointers to `Symbol`s in `objectSymbols`. Only the "registered" symbols and fstack nodes get output in the object file. The `fileStackNodes` and `objectSymbols` collections keep track of which nodes and symbols have been registered for output.
 - **`parser.y`:**  
   Grammar for the RGBASM assembly language, which Bison preprocesses into a [LALR(1) parser](https://en.wikipedia.org/wiki/LALR_parser).  
@@ -211,7 +211,7 @@ These files have been copied ("vendored") from external authors and adapted for 
   `Expression` methods and data related to "[RPN](https://en.wikipedia.org/wiki/Reverse_Polish_notation)" expressions. When a numeric expression is parsed, if its value cannot be calculated at assembly time, it is built up into a buffer of RPN-encoded operations to do so at link time by RGBLINK. The valid RPN operations are defined in [man/rgbds.5](/man/rgbds.5).
 - **`section.cpp`:**  
   Functions and data related to `SECTION`s.  
-  This file *owns* the `Section`s in its `sections` collection. It also maintains various static pointers to those sections, including the `currentSection`, `currentLoadSection`, and `sectionStack` (which is affected by `PUSHS` and `POPS` directives). (Note that sections cannot be deleted.)
+  This file *owns* the `Section`s in its `sections` collection. Each section owns its data and patches; patches are inserted into the output section, but their PC may refer to a `LOAD` section. It also maintains various static pointers to those sections, including the `currentSection`, `currentLoadSection`, and `sectionStack` (which is affected by `PUSHS` and `POPS` directives). (Note that sections cannot be deleted.)
 - **`symbol.cpp`:**  
   Functions and data related to symbols (labels, constants, variables, string constants, macros, etc).  
   This file *owns* the `Symbol`s in its `symbols` collection, and the various built-in ones outside that collection (`PCSymbol` for "`@`", `NARGSymbol` for "`_NARG`", etc). It also maintains a static `purgedSymbols` collection to remember which symbol names have been `PURGE`d from `symbols`, for error reporting purposes.
