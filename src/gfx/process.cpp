@@ -287,24 +287,6 @@ public:
 	}
 };
 
-class RawTiles {
-	// A tile which only contains indices into the image's global palette
-	class RawTile {
-		std::array<std::array<size_t, 8>, 8> _pixelIndices{};
-
-	public:
-		// Not super clean, but it's closer to matrix notation
-		size_t &operator()(size_t x, size_t y) { return _pixelIndices[y][x]; }
-	};
-
-private:
-	std::vector<RawTile> _tiles;
-
-public:
-	// Creates a new raw tile, and returns a reference to it so it can be filled in
-	RawTile &newTile() { return _tiles.emplace_back(); }
-};
-
 struct AttrmapEntry {
 	// This field can either be a color set ID, or `transparent` to indicate that the
 	// corresponding tile is fully transparent. If you are looking to get the palette ID for this
