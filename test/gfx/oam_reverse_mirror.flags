@@ -1,0 +1,1 @@
+-j -m -c #fff,#0f0,#f00,#00f -t oam_reverse_mirror.tilemap -a oam_reverse_mirror.attrmap

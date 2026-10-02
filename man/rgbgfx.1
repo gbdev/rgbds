@@ -19,6 +19,7 @@
 .Op Fl \-color Ar when
 .Op Fl d Ar depth
 .Op Fl i Ar input_tiles
+.Op Fl j
 .Op Fl L Ar slice
 .Op Fl l Ar base_pal
 .Op Fl N Ar nb_tiles
@@ -43,6 +44,11 @@ is to divide the input PNG into 8\[tmu]8 pixel
 .Em squares ,
 convert each of those squares into 1bpp or 2bpp tile data, and save all of the tile data in a file.
 It also has options to generate a tile map, attribute map, and/or palette set as well; more on that and how the conversion process can be tweaked below.
+.Pp
+The squares can be 8\[tmu]16 pixels instead, to match the OAM objects
+.Pq Dq sprites
+of the Game Boy; see
+.Sx OAM OBJECTS .
 .Sh ARGUMENTS
 .Nm
 accepts the usual short and long options, such as
@@ -143,6 +149,11 @@ Set the base IDs for tile map output.
 .Ar base_ids
 should be one or two numbers between 0 and 255, separated by a comma; they are for bank 0 and bank 1 respectively.
 Both default to 0.
+.Pp
+With
+.Fl j ,
+they must also be even, since an OAM object takes up two tile IDs; see
+.Sx OAM OBJECTS .
 .It Fl C , Fl \-color-curve
 Modifies the color palettes
 .Pq whether they are generated from the input image or taken from an input palette specification
@@ -275,6 +286,9 @@ must contain 1bpp or 2bpp tile data
 as could be previously generated with the
 .Fl o
 option.
+If
+.Fl j
+was specified, each tile in the input tileset is read as an 8\[tmu]16 px one, so it is twice as large (16 or 32 bytes).
 .Pp
 If the
 .Fl o
@@ -311,6 +325,18 @@ for examples of how to use this option.
 .Pp
 This option is ignored in
 .Sx REVERSE MODE .
+.It Fl j , Fl \-oam
+Convert 8\[tmu]16 px tiles, as used by the Game Boy's OAM objects
+.Pq also known as Dq sprites ,
+instead of 8\[tmu]8 px ones.
+Since each such tile is twice as tall, it takes up twice as many tile IDs in the
+.Fl t
+and
+.Fl a
+outputs (one per 8\[tmu]8 px half), and twice as many bytes in the
+.Fl o
+output; see
+.Sx OAM OBJECTS .
 .It Fl L Ar slice , Fl \-slice Ar slice
 Only process a given rectangle of the image.
 This is useful for example if the input image is a sheet of some sort, and you want to convert each cel individually.
@@ -323,6 +349,9 @@ two comma-separated number pairs, separated by a colon.
 Whitespace is allowed around all punctuation.
 The first number pair specifies the X and Y coordinates of the top-left pixel that will be processed (anything above it or to its left will be ignored).
 The second number pair specifies how many tiles to process horizontally and vertically, respectively.
+The height counts 16 px tiles if
+.Fl j
+was specified, and 8 px tiles otherwise.
 .Pp
 .Fl L Sy is ignored in reverse mode , No no padding is inserted .
 .It Fl l Ar base_pal , Fl \-base-palette Ar base_pal
@@ -346,7 +375,11 @@ Equivalent to
 Set a maximum number of tiles that can be placed in each VRAM bank.
 .Ar nb_tiles
 should be one or two numbers between 0 and 256, separated by a comma; if the latter is omitted, it defaults to 0.
-Setting either number to 0 prevents any tiles from being output in that bank.
+Setting either number to 0 prevents any tiles from be output in that bank.
+.Pp
+If
+.Fl j
+was specified, each tile takes up twice as much space in a bank, so these numbers may not exceed 128 instead.
 .Pp
 If more tiles are generated than can fit in the two banks combined,
 .Nm
@@ -421,6 +454,11 @@ Useful in combination with
 and/or
 .Fl m
 to keep track of duplicate tiles.
+.Pp
+With
+.Fl j ,
+each 8\[tmu]16 px object is made of two 8\[tmu]8 px halves, so it is assigned as many tile IDs; see
+.Sx OAM OBJECTS .
 .It Fl T , Fl \-auto-tilemap
 Same as
 .Fl t Ar base_path Ns .tilemap
@@ -679,6 +717,10 @@ The leftmost pixel's color ID is stored in the two bytes' most significant bits,
 When the bit depth
 .Pq Fl d
 is set to 1, the most significant bitplane (second byte) of each row, being all zeros, is simply not output.
+.Pp
+With
+.Fl j ,
+tiles are 16 pixels tall instead of 8, so they are 32 bytes at 2bpp, or 16 at 1bpp.
 .Ss Palette data
 Palette data is output like a dump of palette memory.
 Each color is written as GBC-native little-endian RGB555, with the unused bit 15 set to 0.
@@ -701,6 +743,10 @@ The first byte always corresponds to the ID of the tile in top-left corner of th
 .Pq with Fl Z ;
 and so on, continuing in the same direction.
 Rows / columns (respectively) are stored consecutively, with no padding.
+.Pp
+With
+.Fl j ,
+there is still one byte per OAM object, but each object uses one ID per 8\[tmu]8 px half, so three consecutive ones would get the IDs $00, $02, then $04.
 .Ss Attribute map data
 Attribute maps mirror the format of tile maps, like on the GBC, especially the order in which bytes are output.
 The contents of individual bytes follows the GBC's native format:
@@ -737,6 +783,43 @@ And so are these two:
 $ rgbgfx img/player.png -o build/player.2bpp -O -P
 $ rgbgfx img/player.png -o build/player.2bpp -p build/player.pal
 .Ed
+.Sh OAM OBJECTS
+The Game Boy's OAM entries
+.Pq also known as Dq sprites
+can select between 8\[tmu]8 and 8\[tmu]16 px tiles; the
+.Fl j
+option makes
+.Nm
+process the latter.
+.Pp
+An 8\[tmu]16 px tile is simply two 8\[tmu]8 px tiles stacked vertically, so it is stored as two of them, and it takes up two tile IDs in the
+.Fl t
+and
+.Fl a
+outputs.
+.Nm
+always assigns such IDs in pairs, in the order the objects appear in the image; for example, the first three would get $00, $02, then $04.
+Since only the first ID of each pair is stored, they always start from an even ID; this is why
+.Fl b
+requires an even base ID.
+The hardware uses the low bit of the OAM entry to pick which half comes first, so the game's own code is what decides that, not
+.Nm .
+.Pp
+Since the objects are twice as large, a VRAM bank only fits half as many of them; see
+.Fl N .
+All the other options work on them as they do on 8\[tmu]8 px tiles, with the exception of
+.Fl L ,
+whose height counts 16 px tiles.
+.Fl m ,
+.Fl X ,
+.Fl Y
+and
+.Fl u
+all mirror or deduplicate whole 8\[tmu]16 px tiles, not their halves.
+.Pp
+Reverse mode
+.Pq see Sx REVERSE MODE
+works on them too, reading each object's first tile ID and treating the following one as its second half.
 .Sh REVERSE MODE
 .Nm
 can produce a PNG image from valid data.
@@ -749,6 +832,7 @@ both ways, so the
 .Pp
 When using reverse mode, make sure to pass the same flags that were given when generating the data, especially
 .Fl C , d , N , s , x ,
+.Fl j ,
 and
 .Fl Z .
 .Do Sx At-files Dc may help with this .
