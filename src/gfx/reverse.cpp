@@ -595,8 +595,8 @@ void reverse() {
 			auto const &palette = palettes[palOfs];
 			for (uint8_t y = 0; y < options.tileHeight(); ++y) {
 				// If vertically mirrored, fetch the bytes from the other end
-				uint8_t realY = (attribute & 0x40 ? options.tileHeight() - 1 - y : y)
-				                * options.bitDepth;
+				uint8_t realY =
+				    (attribute & 0x40 ? options.tileHeight() - 1 - y : y) * options.bitDepth;
 				uint8_t bitplane0 = tileData[realY];
 				uint8_t bitplane1 = options.bitDepth == 2 ? tileData[realY + 1] : 0;
 				if (attribute & 0x20) { // Handle horizontal flip

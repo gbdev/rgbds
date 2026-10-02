@@ -138,7 +138,7 @@ struct Image {
 			    tileHeight
 			);
 		} else if (options.inputSlice.right() > png.width
-		    || options.inputSlice.bottom() > png.height) {
+		           || options.inputSlice.bottom() > png.height) {
 			error(
 			    "Image slice ((%" PRIu16 ", %" PRIu16 ") to (%" PRIu32 ", %" PRIu32
 			    ")) is outside the image bounds (%" PRIu32 "x%" PRIu32 ")",
@@ -1209,7 +1209,7 @@ continue_visiting_tiles:;
 			    options.maxNbTiles[1]
 			);
 		} else if (((nbTiles > options.maxNbTilesPerBank()
-		            && options.maxNbTiles[0] > options.maxNbTilesPerBank())
+		             && options.maxNbTiles[0] > options.maxNbTilesPerBank())
 		            || (nbTiles > options.maxNbTiles[0] + options.maxNbTilesPerBank()
 		                && options.maxNbTiles[1] > options.maxNbTilesPerBank()))
 		           && !options.tilemap.empty()) {
