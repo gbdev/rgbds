@@ -71,8 +71,6 @@ static option const longopts[] = {
     {"depth",            required_argument, nullptr,  'd'},
     {"help",             no_argument,       nullptr,  'h'},
     {"input-tileset",    required_argument, nullptr,  'i'},
-    // `--oam` shares its first letter with `--output`, but only the `--o` prefix is ambiguous,
-    // and that one already was, since `-o/--output` exists.
     {"oam",              no_argument,       nullptr,  'j'},
     {"slice",            required_argument, nullptr,  'L'},
     {"base-palette",     required_argument, nullptr,  'l'},
@@ -113,7 +111,7 @@ static Usage usage = {
         "<file>",
     },
     .options = {
-        {{"-j", "--oam"}, {"convert 8x16 px OAM objects instead of 8x8 px tiles"}},
+        {{"-j", "--oam"}, {"convert 8x16 pixel OAM objects instead of 8x8 pixel tiles"}},
         {{"-m", "--mirror-tiles"}, {"optimize out mirrored tiles"}},
         {{"-o", "--output <path>"}, {"output the tile data to this path"}},
         {{"-t", "--tilemap <path>"}, {"output the tile map to this path"}},
@@ -311,12 +309,13 @@ static void parseArg(int ch, char *arg) {
 		break;
 
 	case 'N': {
-		// The capacity of a bank depends on whether tiles are 8x8 or 8x16 px, so the numbers are
-		// only range-checked once all the options have been parsed, in `main`.
-		// If they were allowed to be greater than a bank's capacity, it would permit tile IDs to
-		// be truncated in the tilemap. We do warn that tile IDs may be truncated for the
-		// implicit/default unlimited number of tiles in bank 0.
+		// A bank can hold 256 of 8x8 pixel tiles, or 128 of 8x16 px OAM objects.
+		// Explicit numbers for either tile bank cannot be greater than that maximum.
+		// If they were greater than that, it would permit tile IDs to be truncated in the tilemap.
+		// We do warn that tile IDs may be truncated for the implicit/default unlimited number of
+		// tiles in bank 0.
 		uint16_t bank0 = readNumber(argPtr, "Number of tiles in bank 0", 256);
+		// If only bank 0 was specified, bank 1 defaults to 0, i.e. tiles cannot go in it at all.
 		uint16_t bank1 = 0;
 		if (*argPtr != '\0') {
 			skipBlankSpace(argPtr);
@@ -332,7 +331,6 @@ static void parseArg(int ch, char *arg) {
 				break;
 			}
 		}
-		// If only bank 0 was specified, bank 1 defaults to 0, i.e. tiles cannot go in it at all.
 		localOptions.maxNbTiles = {bank0, bank1};
 		break;
 	}
@@ -517,10 +515,10 @@ static void verboseOutputConfig() {
 	if (options.useColorCurve) {
 		fputs("\tUse color curve\n", stderr);
 	}
-	// -j/--oam
-	fprintf(stderr, "\tTiles are %" PRIu32 "x%" PRIu32 " pixels\n", 8, options.tileHeight());
 	// -d/--depth
 	fprintf(stderr, "\tBit depth: %" PRIu8 "bpp\n", options.bitDepth);
+	// -j/--oam
+	fprintf(stderr, "\tTiles are %" PRIu32 "x%" PRIu32 " pixels\n", 8, options.tileHeight());
 	// -x/--trim-end
 	if (options.trim != 0) {
 		fprintf(stderr, "\tTrim the last %" PRIu64 " tiles\n", options.trim);
@@ -650,9 +648,7 @@ static void replaceExtension(std::string &path, char const *extension) {
 int main(int argc, char *argv[]) {
 	cli_ParseArgs(argc, argv, optstring, longopts, parseArg, usage);
 
-	// How many tiles fit in a VRAM bank depends on `-j/--oam`, which may only be known now that
-	// all the options have been parsed.
-	if (std::optional<std::array<uint16_t, 2>> const &maxNbTiles = localOptions.maxNbTiles) {
+	if (auto const &maxNbTiles = localOptions.maxNbTiles; maxNbTiles.has_value()) {
 		uint16_t const limit = options.maxNbTilesPerBank();
 		for (size_t bank = 0; bank < maxNbTiles->size(); ++bank) {
 			if ((*maxNbTiles)[bank] > limit) {
@@ -662,8 +658,7 @@ int main(int argc, char *argv[]) {
 		options.maxNbTiles = *maxNbTiles;
 	}
 
-	// An OAM object is made of two 8x8 px tiles, and thus takes up two tile IDs; the second one
-	// must be implied by the first, so the base ID that they start from has to be even.
+	// An OAM object is made of two 8x8 px tiles, with the first one having an even tile ID.
 	if (options.oam) {
 		for (size_t bank = 0; bank < options.baseTileIDs.size(); ++bank) {
 			if (options.baseTileIDs[bank] % 2 != 0) {

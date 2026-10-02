@@ -10,7 +10,7 @@
 .Nd Game Boy graphics converter
 .Sh SYNOPSIS
 .Nm
-.Op Fl CmhOuVwXYZ
+.Op Fl CmhjOuVwXYZ
 .Op Fl v Op Fl v No ...
 .Op Fl a Ar attrmap | Fl A
 .Op Fl B Ar color
@@ -19,7 +19,6 @@
 .Op Fl \-color Ar when
 .Op Fl d Ar depth
 .Op Fl i Ar input_tiles
-.Op Fl j
 .Op Fl L Ar slice
 .Op Fl l Ar base_pal
 .Op Fl N Ar nb_tiles
@@ -293,7 +292,7 @@ as could be previously generated with the
 option.
 If
 .Fl j
-was specified, each tile in the input tileset is read as an 8\[tmu]16 px one, so it is twice as large (16 or 32 bytes).
+was specified, each tile in the input tileset is read as an 8\[tmu]16 pixel one, so it is twice as large (16 or 32 bytes).
 .Pp
 If the
 .Fl o
@@ -331,14 +330,14 @@ for examples of how to use this option.
 This option is ignored in
 .Sx REVERSE MODE .
 .It Fl j , Fl \-oam
-Convert 8\[tmu]16 px tiles, as used by the Game Boy's OAM objects
+Convert 8\[tmu]16 pixel tiles, as used by the Game Boy's OAM objects
 .Pq also known as Dq sprites ,
-instead of 8\[tmu]8 px ones.
+instead of 8\[tmu]8 pixel ones.
 Since each such tile is twice as tall, it takes up twice as many tile IDs in the
 .Fl t
 and
 .Fl a
-outputs (one per 8\[tmu]8 px half), and twice as many bytes in the
+outputs (one per 8\[tmu]8 pixel half), and twice as many bytes in the
 .Fl o
 output; see
 .Sx OAM OBJECTS .
@@ -354,9 +353,9 @@ two comma-separated number pairs, separated by a colon.
 Whitespace is allowed around all punctuation.
 The first number pair specifies the X and Y coordinates of the top-left pixel that will be processed (anything above it or to its left will be ignored).
 The second number pair specifies how many tiles to process horizontally and vertically, respectively.
-The height counts 16 px tiles if
+The height counts 16 pixel tiles if
 .Fl j
-was specified, and 8 px tiles otherwise.
+was specified, and 8 pixel tiles otherwise.
 .Pp
 .Fl L Sy is ignored in reverse mode , No no padding is inserted .
 .It Fl l Ar base_pal , Fl \-base-palette Ar base_pal
@@ -462,7 +461,7 @@ to keep track of duplicate tiles.
 .Pp
 With
 .Fl j ,
-each 8\[tmu]16 px object is made of two 8\[tmu]8 px halves, so it is assigned as many tile IDs; see
+each 8\[tmu]16 pixel object is made of two 8\[tmu]8 pixel halves, so it is assigned as many tile IDs; see
 .Sx OAM OBJECTS .
 .It Fl T , Fl \-auto-tilemap
 Same as
@@ -751,7 +750,7 @@ Rows / columns (respectively) are stored consecutively, with no padding.
 .Pp
 With
 .Fl j ,
-there is still one byte per OAM object, but each object uses one ID per 8\[tmu]8 px half, so three consecutive ones would get the IDs $00, $02, then $04.
+there is still one byte per OAM object, but each object uses one ID per 8\[tmu]8 pixel half, so three consecutive ones would get the IDs $00, $02, then $04.
 .Ss Attribute map data
 Attribute maps mirror the format of tile maps, like on the GBC, especially the order in which bytes are output.
 The contents of individual bytes follows the GBC's native format:
@@ -791,13 +790,13 @@ $ rgbgfx img/player.png -o build/player.2bpp -p build/player.pal
 .Sh OAM OBJECTS
 The Game Boy's OAM entries
 .Pq also known as Dq sprites
-can select between 8\[tmu]8 and 8\[tmu]16 px tiles; the
+can select between 8\[tmu]8 and 8\[tmu]16 pixel tiles; the
 .Fl j
 option makes
 .Nm
 process the latter.
 .Pp
-An 8\[tmu]16 px tile is simply two 8\[tmu]8 px tiles stacked vertically, so it is stored as two of them, and it takes up two tile IDs in the
+An 8\[tmu]16 pixel tile is simply two 8\[tmu]8 pixel tiles stacked vertically, so it is stored as two of them, and it takes up two tile IDs in the
 .Fl t
 and
 .Fl a
@@ -812,15 +811,15 @@ The hardware uses the low bit of the OAM entry to pick which half comes first, s
 .Pp
 Since the objects are twice as large, a VRAM bank only fits half as many of them; see
 .Fl N .
-All the other options work on them as they do on 8\[tmu]8 px tiles, with the exception of
+All the other options work on them as they do on 8\[tmu]8 pixel tiles, with the exception of
 .Fl L ,
-whose height counts 16 px tiles.
+whose height counts 16 pixel tiles.
 .Fl m ,
 .Fl X ,
 .Fl Y
 and
 .Fl u
-all mirror or deduplicate whole 8\[tmu]16 px tiles, not their halves.
+all mirror or deduplicate whole 8\[tmu]16 pixel tiles, not their halves.
 .Pp
 Reverse mode
 .Pq see Sx REVERSE MODE
