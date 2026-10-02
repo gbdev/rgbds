@@ -132,19 +132,16 @@ void reverse() {
 
 	verbosePrint(VERB_NOTICE, "Reading tiles...\n");
 	std::vector<uint8_t> const tiles = readInto(options.output);
-	// Tiles are always 8 pixels wide, and either 8 or 16 pixels tall (`-j/--oam`)
-	uint8_t const tileHeight = options.tileHeight();
-	uint8_t tileSize = options.tileSize();
-	if (tiles.size() % tileSize != 0) {
+	if (tiles.size() % options.tileSize() != 0) {
 		fatal(
-		    "Tile data size (%zu bytes) is not a multiple of %" PRIu8 " bytes",
+		    "Tile data size (%zu bytes) is not a multiple of %zu bytes",
 		    tiles.size(),
-		    tileSize
+		    options.tileSize()
 		);
 	}
 
 	// By default, assume tiles are not deduplicated, and add the (allegedly) trimmed tiles
-	size_t const nbTiles = tiles.size() / tileSize;
+	size_t const nbTiles = tiles.size() / options.tileSize();
 	verbosePrint(VERB_INFO, "Read %zu tiles\n", nbTiles);
 	size_t mapSize = nbTiles + options.trim; // Image size in tiles
 	std::optional<std::vector<uint8_t>> tilemap;
@@ -517,7 +514,7 @@ void reverse() {
 	    png,
 	    pngInfo,
 	    width * 8,
-	    height * tileHeight,
+	    height * options.tileHeight(),
 	    pngDepth,
 	    pngColorType,
 	    PNG_INTERLACE_NONE,
@@ -563,11 +560,10 @@ void reverse() {
 	// N bits/pixel * 8 pixels/tile row / 8 bits/byte = N bytes/tile row
 	uint8_t const bytesPerTileRow = pngColorType == PNG_COLOR_TYPE_RGB_ALPHA ? 32 : pngDepth;
 	size_t const bytesPerRow = width * bytesPerTileRow;
-	// One tile's worth of rows; `tileHeight` is 8, or 16 with `-j/--oam`
-	std::vector<uint8_t> tileRow(tileHeight * bytesPerRow, 0xFF);
+	std::vector<uint8_t> tileBytes(options.tileHeight() * bytesPerRow, 0xFF);
 	std::array<uint8_t *, 16> rowPtrs{};
-	for (uint8_t y = 0; y < tileHeight; ++y) {
-		rowPtrs[y] = &tileRow.data()[y * bytesPerRow];
+	for (uint8_t y = 0; y < options.tileHeight(); ++y) {
+		rowPtrs[y] = &tileBytes.data()[y * bytesPerRow];
 	}
 
 	for (size_t ty = 0; ty < height; ++ty) {
@@ -576,8 +572,8 @@ void reverse() {
 			// By default, a tile is unflipped, in bank 0, and uses palette #0
 			uint8_t attribute = attrmap ? (*attrmap)[index] : 0b0000;
 			bool bank = attribute & 0b1000;
-			// Get the tile ID at this location; an OAM object is indexed by its first 8x8 px
-			// half's ID, so dividing by the number of halves it spans recovers its index
+			// Get the tile ID at this location. An OAM object is indexed by its first 8x8 px
+			// half's ID, so dividing by the number of halves it spans recovers its index.
 			size_t tileOfs =
 			    tilemap ? static_cast<size_t>(
 			                  static_cast<uint8_t>((*tilemap)[index] - options.baseTileIDs[bank])
@@ -595,11 +591,12 @@ void reverse() {
 			// We do not have data for tiles trimmed with `-x`, so assume they are "blank"
 			static std::array<uint8_t, 32> const trimmedTile{0x00};
 			uint8_t const *tileData =
-			    tileOfs >= nbTiles ? trimmedTile.data() : &tiles[tileOfs * tileSize];
+			    tileOfs >= nbTiles ? trimmedTile.data() : &tiles[tileOfs * options.tileSize()];
 			auto const &palette = palettes[palOfs];
-			for (uint8_t y = 0; y < tileHeight; ++y) {
+			for (uint8_t y = 0; y < options.tileHeight(); ++y) {
 				// If vertically mirrored, fetch the bytes from the other end
-				uint8_t realY = (attribute & 0x40 ? tileHeight - 1 - y : y) * options.bitDepth;
+				uint8_t realY = (attribute & 0x40 ? options.tileHeight() - 1 - y : y)
+				                * options.bitDepth;
 				uint8_t bitplane0 = tileData[realY];
 				uint8_t bitplane1 = options.bitDepth == 2 ? tileData[realY + 1] : 0;
 				if (attribute & 0x20) { // Handle horizontal flip
@@ -658,7 +655,7 @@ void reverse() {
 		// signature.
 		// (AIUI, casting away const-ness is okay as long as you don't actually modify the
 		// pointed-to data)
-		png_write_rows(png, const_cast<uint8_t **>(rowPtrs.data()), tileHeight);
+		png_write_rows(png, const_cast<uint8_t **>(rowPtrs.data()), options.tileHeight());
 	}
 
 	// Finalize the write
