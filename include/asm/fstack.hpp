@@ -10,7 +10,6 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <string>
-#include <variant>
 #include <vector>
 
 #include "linkdefs.hpp"
@@ -20,14 +19,12 @@
 
 struct FileStackNode {
 	FileStackNodeType type;
-	std::variant<
-	    std::vector<uint32_t>, // NODE_REPT
-	    std::string            // NODE_FILE, NODE_MACRO
-	    >
-	    data;
+	std::string name;
 	bool isQuiet; // Whether to omit this node from error reporting
 
-	std::shared_ptr<FileStackNode> parent; // Pointer to parent node, for error reporting
+	uint32_t reptCount = 0; // Only for NODE_REPT
+
+	std::shared_ptr<FileStackNode> parent = nullptr; // Pointer to parent node, for error reporting
 	// Line at which the parent context was exited
 	// Meaningless at the root level, but gets written to the object file anyway, so init it
 	uint32_t lineNo = 0;
@@ -35,19 +32,8 @@ struct FileStackNode {
 	// Set only if referenced: ID within the object file, `UINT32_MAX` if not output yet
 	uint32_t ID = UINT32_MAX;
 
-	// REPT iteration counts since last named node, in reverse depth order
-	std::vector<uint32_t> &iters() { return std::get<std::vector<uint32_t>>(data); }
-	std::vector<uint32_t> const &iters() const { return std::get<std::vector<uint32_t>>(data); }
-	// File name for files, file::macro name for macros
-	std::string &name() { return std::get<std::string>(data); }
-	std::string const &name() const { return std::get<std::string>(data); }
-
-	FileStackNode(
-	    FileStackNodeType type_,
-	    std::variant<std::vector<uint32_t>, std::string> data_,
-	    bool isQuiet_
-	)
-	    : type(type_), data(data_), isQuiet(isQuiet_) {}
+	FileStackNode(FileStackNodeType type_, std::string name_, bool isQuiet_)
+	    : type(type_), name(name_), isQuiet(isQuiet_) {}
 
 	void printBacktrace(uint32_t curLineNo) const;
 };

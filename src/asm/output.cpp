@@ -185,15 +185,11 @@ static void writeFileStackNode(FileStackNode const &node, FILE *file) {
 	putc(node.type | node.isQuiet << FSTACKNODE_QUIET_BIT, file);
 
 	if (node.type != NODE_REPT) {
-		putString(node.name(), file);
+		putString(node.name, file);
 	} else {
-		std::vector<uint32_t> const &nodeIters = node.iters();
-
-		putLong(nodeIters.size(), file);
-		// Iters are stored by decreasing depth, so reverse the order for output
-		for (uint32_t iter : reversed(nodeIters)) {
-			putLong(iter, file);
-		}
+		// TODO: put names for REPT nodes too (object file format change, update RGBLINK too)
+		putLong(1, file);
+		putLong(node.reptCount, file);
 	}
 }
 

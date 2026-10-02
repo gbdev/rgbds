@@ -17,7 +17,6 @@
 #include <string.h>
 #include <string>
 #include <utility>
-#include <variant>
 #include <vector>
 
 #include "backtrace.hpp"
@@ -69,7 +68,7 @@ void FileStackNode::printBacktrace(uint32_t curLineNo) const {
 			items.emplace_back(node, itemLineNo);
 		}
 		if (!node->parent) {
-			assume(node->type != NODE_REPT && std::holds_alternative<std::string>(node->data));
+			assume(node->type != NODE_REPT);
 			break;
 		}
 		if (loud || node->type != NODE_REPT) {
@@ -85,17 +84,12 @@ void FileStackNode::printBacktrace(uint32_t curLineNo) const {
 	std::vector<TraceNode> traceNodes;
 	traceNodes.reserve(items.size());
 	for (auto &[node, itemLineNo] : reversed(items)) {
-		if (std::holds_alternative<std::vector<uint32_t>>(node->data)) {
-			assume(!traceNodes.empty()); // REPT nodes use their parent's name
-			std::string reptName = traceNodes.back().first;
-			if (std::vector<uint32_t> const &nodeIters = node->iters(); !nodeIters.empty()) {
-				reptName.append(NODE_SEPARATOR REPT_NODE_PREFIX);
-				reptName.append(std::to_string(nodeIters.front()));
-			}
-			traceNodes.emplace_back(reptName, itemLineNo);
-		} else {
-			traceNodes.emplace_back(node->name(), itemLineNo);
+		std::string itemName = node->name;
+		if (node->type == NODE_REPT) {
+			itemName.append(NODE_SEPARATOR REPT_NODE_PREFIX);
+			itemName.append(std::to_string(node->reptCount));
 		}
+		traceNodes.emplace_back(std::move(itemName), itemLineNo);
 	}
 
 	trace_PrintBacktrace(
@@ -259,10 +253,8 @@ bool yywrap() {
 			context.fileInfo->ID = UINT32_MAX; // The copy is not yet registered
 		}
 
-		std::vector<uint32_t> &fileInfoIters = context.fileInfo->iters();
-
 		// If this is a FOR, update the symbol value
-		if (context.isForLoop && fileInfoIters.front() <= context.nbReptIters) {
+		if (context.isForLoop && context.fileInfo->reptCount <= context.nbReptIters) {
 			// Avoid arithmetic overflow runtime error
 			uint32_t forValue =
 			    static_cast<uint32_t>(context.forValue) + static_cast<uint32_t>(context.forStep);
@@ -276,9 +268,9 @@ bool yywrap() {
 			}
 		}
 		// Advance to the next iteration
-		++fileInfoIters.front();
+		++context.fileInfo->reptCount;
 		// If this wasn't the last iteration, wrap instead of popping
-		if (fileInfoIters.front() <= context.nbReptIters) {
+		if (context.fileInfo->reptCount <= context.nbReptIters) {
 			lexer_RestartRept(context.fileInfo->lineNo);
 			context.uniqueIDStr->clear(); // Invalidate the current unique ID (if any).
 			return false;
@@ -328,27 +320,20 @@ static void
     newMacroContext(Symbol const &macro, std::shared_ptr<MacroArgs> macroArgs, bool isQuiet) {
 	checkRecursionDepth();
 
+	// The top level context cannot be a MACRO, so when this function is called, `contextStack`
+	// must already have at least one context.
+	assume(!contextStack.empty());
 	Context &oldContext = contextStack.top();
 
-	std::string fileInfoName;
-	for (FileStackNode const *node = macro.src.get(); node; node = node->parent.get()) {
-		if (node->type != NODE_REPT) {
-			fileInfoName.append(node->name());
-			break;
-		}
-	}
+	std::string fileInfoName = macro.src->name;
 	if (macro.src->type == NODE_REPT) {
-		std::vector<uint32_t> const &srcIters = macro.src->iters();
-		for (uint32_t iter : reversed(srcIters)) {
-			fileInfoName.append(NODE_SEPARATOR REPT_NODE_PREFIX);
-			fileInfoName.append(std::to_string(iter));
-		}
+		fileInfoName.append(NODE_SEPARATOR REPT_NODE_PREFIX);
+		fileInfoName.append(std::to_string(macro.src->reptCount));
 	}
 	fileInfoName.append(NODE_SEPARATOR);
 	fileInfoName.append(macro.name.str());
 
 	auto fileInfo = std::make_shared<FileStackNode>(NODE_MACRO, fileInfoName, isQuiet);
-	assume(!contextStack.empty()); // The top level context cannot be a MACRO
 	fileInfo->parent = oldContext.fileInfo;
 	fileInfo->lineNo = lexer_GetLineNo();
 
@@ -365,16 +350,20 @@ static Context &
     newReptContext(int32_t reptLineNo, ContentSpan const &span, uint32_t count, bool isQuiet) {
 	checkRecursionDepth();
 
+	// The top level context cannot be a REPT, so when this function is called, `contextStack`
+	// must already have at least one context.
+	assume(!contextStack.empty());
 	Context &oldContext = contextStack.top();
 
-	std::vector<uint32_t> fileInfoIters{1};
-	if (oldContext.fileInfo->type == NODE_REPT && !oldContext.fileInfo->iters().empty()) {
-		// Append all parent iter counts
-		fileInfoIters.insert(fileInfoIters.end(), RANGE(oldContext.fileInfo->iters()));
+	std::string fileInfoName = oldContext.fileInfo->name;
+	if (oldContext.fileInfo->type == NODE_REPT) {
+		fileInfoName.append(NODE_SEPARATOR REPT_NODE_PREFIX);
+		fileInfoName.append(std::to_string(oldContext.fileInfo->reptCount));
 	}
+	// The new REPT node's iteration will mutate, so is not part of its stored name.
 
-	auto fileInfo = std::make_shared<FileStackNode>(NODE_REPT, fileInfoIters, isQuiet);
-	assume(!contextStack.empty()); // The top level context cannot be a REPT
+	auto fileInfo = std::make_shared<FileStackNode>(NODE_REPT, std::move(fileInfoName), isQuiet);
+	fileInfo->reptCount = 1;
 	fileInfo->parent = oldContext.fileInfo;
 	fileInfo->lineNo = reptLineNo;
 
