@@ -31,8 +31,13 @@
 #include "asm/warning.hpp"
 
 struct Assertion {
-	Patch patch;
-	Section *section;
+	std::shared_ptr<FileStackNode> src;
+	uint32_t lineNo;
+	uint32_t offset;
+	Section *pcSection;
+	uint32_t pcOffset;
+	AssertionType type;
+	std::vector<uint8_t> rpn;
 	std::string message;
 };
 
@@ -66,19 +71,6 @@ void out_RegisterNode(std::shared_ptr<FileStackNode> node) {
 	}
 }
 
-static void writePatch(Patch const &patch, FILE *file) {
-	assume(patch.src->ID != UINT32_MAX);
-
-	putLong(patch.src->ID, file);
-	putLong(patch.lineNo, file);
-	putLong(patch.offset, file);
-	putLong(patch.pcSection ? patch.pcSection->getID() : UINT32_MAX, file);
-	putLong(patch.pcOffset, file);
-	putc(patch.type, file);
-	putLong(patch.rpn.size(), file);
-	fwrite(patch.rpn.data(), 1, patch.rpn.size(), file);
-}
-
 static void writeSection(Section const &sect, FILE *file) {
 	assume(sect.src->ID != UINT32_MAX);
 
@@ -104,7 +96,16 @@ static void writeSection(Section const &sect, FILE *file) {
 		putLong(sect.patches.size(), file);
 
 		for (Patch const &patch : sect.patches) {
-			writePatch(patch, file);
+			assume(patch.src->ID != UINT32_MAX);
+
+			putLong(patch.src->ID, file);
+			putLong(patch.lineNo, file);
+			putLong(patch.offset, file);
+			putLong(patch.pcSection ? patch.pcSection->getID() : UINT32_MAX, file);
+			putLong(patch.pcOffset, file);
+			putc(patch.type, file);
+			putLong(patch.rpn.size(), file);
+			fwrite(patch.rpn.data(), 1, patch.rpn.size(), file);
 		}
 	}
 }
@@ -135,7 +136,11 @@ void out_RegisterSymbol(Symbol &sym) {
 	}
 }
 
-static void initPatch(Patch &patch, uint32_t type, Expression const &expr, uint32_t ofs) {
+void out_CreatePatch(PatchType type, Expression const &expr, uint32_t ofs, uint32_t pcShift) {
+	assume(sect_GetSymbolSection() != nullptr);
+
+	// Add the patch to the list
+	Patch &patch = *sect_AddOutputPatch();
 	patch.type = type;
 	patch.src = fstk_GetFileStack();
 	// All patches are assumed to eventually be written, so the file stack node is registered
@@ -145,18 +150,8 @@ static void initPatch(Patch &patch, uint32_t type, Expression const &expr, uint3
 	patch.pcSection = sect_GetSymbolSection();
 	patch.pcOffset = sect_GetSymbolOffset();
 	expr.encode(patch.rpn);
-}
-
-void out_CreatePatch(uint32_t type, Expression const &expr, uint32_t ofs, uint32_t pcShift) {
-	// Add the patch to the list
-	assume(sect_GetSymbolSection() != nullptr);
-	Patch &patch = *sect_AddOutputPatch();
-
-	initPatch(patch, type, expr, ofs);
-
-	// If the patch had a quantity of bytes output before it,
-	// PC is not at the patch's location, but at the location
-	// before those bytes.
+	// If the patch had a quantity of bytes output before it, PC is not at the patch's location,
+	// but at the location before those bytes.
 	patch.pcOffset -= pcShift;
 }
 
@@ -168,13 +163,29 @@ void out_CreateAssert(
 	}
 
 	Assertion &assertion = assertions.emplace_front();
-
-	initPatch(assertion.patch, type, expr, ofs);
+	assertion.type = type;
+	assertion.src = fstk_GetFileStack();
+	// All assertions are assumed to eventually be written, so the file stack node is registered
+	out_RegisterNode(assertion.src);
+	assertion.lineNo = lexer_GetLineNo();
+	assertion.offset = ofs;
+	assertion.pcSection = sect_GetSymbolSection();
+	assertion.pcOffset = sect_GetSymbolOffset();
+	expr.encode(assertion.rpn);
 	assertion.message = message;
 }
 
 static void writeAssert(Assertion const &assert, FILE *file) {
-	writePatch(assert.patch, file);
+	assume(assert.src->ID != UINT32_MAX);
+
+	putLong(assert.src->ID, file);
+	putLong(assert.lineNo, file);
+	putLong(assert.offset, file);
+	putLong(assert.pcSection ? assert.pcSection->getID() : UINT32_MAX, file);
+	putLong(assert.pcOffset, file);
+	putc(assert.type, file);
+	putLong(assert.rpn.size(), file);
+	fwrite(assert.rpn.data(), 1, assert.rpn.size(), file);
 	putString(assert.message, file);
 }
 
