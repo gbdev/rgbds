@@ -41,13 +41,23 @@ void FileStackNode::printBacktrace(uint32_t curLineNo) const {
 	traceNodes.reserve(items.size());
 	for (auto &[node, itemLineNo] : reversed(items)) {
 		if (std::holds_alternative<std::vector<uint32_t>>(node->data)) {
-			assume(!traceNodes.empty()); // REPT nodes use their parent's name
-			std::string reptName = traceNodes.back().first;
-			if (std::vector<uint32_t> const &nodeIters = node->iters(); !nodeIters.empty()) {
-				reptName.append(NODE_SEPARATOR REPT_NODE_PREFIX);
-				reptName.append(std::to_string(nodeIters.back()));
+			// REPT nodes use their first non-REPT parent's name (which may be a quiet node and
+			// thus not in `traceNodes`), followed by their REPT parents' iteration counts,
+			// followed by their own iteration count.
+			std::string reptName;
+			for (FileStackNode const *ancestor = node->parent;; ancestor = ancestor->parent) {
+				// The top level context cannot be a REPT (guaranteed by `readFileStackNode`)
+				assume(ancestor != nullptr);
+				if (ancestor->type != NODE_REPT) {
+					reptName.append(ancestor->name());
+					break;
+				}
 			}
-			traceNodes.emplace_back(reptName, itemLineNo);
+			for (uint32_t iter : node->iters()) {
+				reptName.append(NODE_SEPARATOR REPT_NODE_PREFIX);
+				reptName.append(std::to_string(iter));
+			}
+			traceNodes.emplace_back(std::move(reptName), itemLineNo);
 		} else {
 			traceNodes.emplace_back(node->name(), itemLineNo);
 		}
