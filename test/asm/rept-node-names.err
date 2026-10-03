@@ -1,0 +1,8 @@
+warning: $0 [-Wuser]
+    at rept-node-names.inc::quiet::REPT~1(3) <- rept-node-names.asm(2)
+warning: $1 [-Wuser]
+    at rept-node-names.inc::quiet::REPT~2(3) <- rept-node-names.asm(2)
+warning: $0 [-Wuser]
+    at rept-node-names.inc::loud::REPT~1(8) <- rept-node-names.inc::loud(7) <- rept-node-names.asm(3)
+warning: $1 [-Wuser]
+    at rept-node-names.inc::loud::REPT~2(8) <- rept-node-names.inc::loud(7) <- rept-node-names.asm(3)
