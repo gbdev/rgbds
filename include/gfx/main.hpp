@@ -39,6 +39,7 @@ struct Options {
 		INLINE,
 		EXTERNAL,
 		EMBEDDED,
+		EMBEDDED_MULTIPLE,
 		DMG,
 	} palSpecType = NO_SPEC; // -c
 	std::vector<std::array<std::optional<Rgba>, MAX_PAL_COLORS>> palSpec{};
@@ -72,6 +73,9 @@ struct Options {
 	uint16_t maxNbColors() const { return nbColorsPerPal * nbPalettes; }
 
 	bool hasExplicitPalSpec() const { return palSpecType == INLINE || palSpecType == EXTERNAL; }
+	bool hasEmbeddedPalSpec() const {
+		return palSpecType == EMBEDDED || palSpecType == EMBEDDED_MULTIPLE;
+	}
 
 	uint8_t dmgColors[MAX_PAL_COLORS] = {};
 	uint8_t dmgValue(uint8_t i) const {

@@ -189,6 +189,11 @@ is the case-insensitive word
 then the first four colors of the input PNG's embedded palette are used.
 It is an error if the PNG is not indexed, or if colors other than these 4 are used.
 .Pq This is different from the default behavior of indexed PNGs, as then unused entries in the embedded palette are ignored, whereas they are not with Fl c Cm embedded .
+If
+.Ar pal_spec
+is case-insensitive
+.Cm embedded:multiple ,
+then every four colors of the input PNG's embedded palette are used for multiple palettes.
 .It Sy DMG palette spec
 If
 .Ar pal_spec
