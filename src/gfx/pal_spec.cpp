@@ -185,8 +185,8 @@ void parseEmbeddedPalSpec(Png const &png) {
 
 	// Ignore extraneous colors if they are unused
 	size_t nbColors = png.palette.size();
-	if (nbColors > options.maxOpaqueColors()) {
-		nbColors = options.maxOpaqueColors();
+	if (nbColors > options.nbColorsPerPal) {
+		nbColors = options.nbColorsPerPal;
 	}
 
 	// Fill in the palette spec
@@ -195,6 +195,46 @@ void parseEmbeddedPalSpec(Png const &png) {
 	assume(nbColors <= palette.size());
 	for (size_t i = 0; i < nbColors; ++i) {
 		palette[i] = png.palette[i];
+	}
+}
+
+void parseEmbeddedMultiplePalSpec(Png const &png) {
+	// Generate a palette spec from N palettes' length of colors in the embedded palette
+	if (png.palette.empty()) {
+		error("\"-c embedded:multiple\" was given, but the PNG does not have an embedded palette");
+		return;
+	}
+
+	// Use enough embedded colors to evenly divide into N palettes
+	size_t nbColors = png.palette.size();
+	size_t nbPalettes = nbColors / options.nbColorsPerPal;
+	if (uint16_t maxNbColors = options.maxNbColors(); nbColors > maxNbColors) {
+		warnx(
+		    "PNG embedded palette contains %zu colors, but there can only be %" PRIu16
+		    "; ignoring extra",
+		    nbColors,
+		    maxNbColors
+		);
+		nbColors = maxNbColors;
+		nbPalettes = options.nbPalettes;
+	}
+	if (size_t nbUsedColors = options.nbColorsPerPal * nbPalettes; nbColors > nbUsedColors) {
+		warnx(
+		    "PNG embedded palette contains %zu colors, but only %zu can be used for %zu palettes; "
+		    "ignoring extra",
+		    nbColors,
+		    nbUsedColors,
+		    nbPalettes
+		);
+	}
+
+	// Fill in the palette spec
+	options.palSpec.clear();
+	for (size_t i = 0; i < nbPalettes; ++i) {
+		auto &palette = options.palSpec.emplace_back();
+		for (size_t j = 0; j < options.nbColorsPerPal; ++j) {
+			palette[j] = png.palette[i * options.nbColorsPerPal + j];
+		}
 	}
 }
 
