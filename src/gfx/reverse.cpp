@@ -282,7 +282,7 @@ void reverse() {
 			palettes[0][i] = grayColors[options.dmgValue(i)];
 		}
 		grayscale = true;
-	} else if (options.palSpecType == Options::EMBEDDED) {
+	} else if (options.hasEmbeddedPalSpec()) {
 		warnx("An embedded palette was requested, but no palette file was specified; ignoring "
 		      "request");
 		grayscale = true;

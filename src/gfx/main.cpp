@@ -200,6 +200,9 @@ static void parseArg(int ch, char *arg) {
 		} else if (strcasecmp(arg, "embedded") == 0) {
 			// Use PLTE, error out if missing
 			options.palSpecType = Options::EMBEDDED;
+		} else if (strcasecmp(arg, "embedded:multiple") == 0) {
+			// Use PLTE, error out if missing
+			options.palSpecType = Options::EMBEDDED_MULTIPLE;
 		} else if (strcasecmp(arg, "auto") == 0) {
 			options.palSpecType = Options::NO_SPEC;
 		} else if (strcasecmp(arg, "dmg") == 0) {
@@ -526,7 +529,10 @@ static void verboseOutputConfig() {
 	case Options::INLINE:
 	case Options::EXTERNAL:
 	case Options::EMBEDDED:
+	case Options::EMBEDDED_MULTIPLE:
 		if (options.palSpecType == Options::EMBEDDED) {
+			fputs("\tEmbedded single palette spec from PNG indexed PLTE chunk\n", stderr);
+		} else if (options.palSpecType == Options::EMBEDDED_MULTIPLE) {
 			fputs("\tEmbedded palette spec from PNG indexed PLTE chunk\n", stderr);
 		} else {
 			fputs("\tExplicit palette spec\n", stderr);
@@ -693,6 +699,12 @@ int main(int argc, char *argv[]) {
 			assume(!localOptions.palSpec);
 			if (useInputImage) {
 				parseEmbeddedPalSpec(png);
+			}
+			break;
+		case Options::EMBEDDED_MULTIPLE:
+			assume(!localOptions.palSpec);
+			if (useInputImage) {
+				parseEmbeddedMultiplePalSpec(png);
 			}
 			break;
 		case Options::INLINE:
