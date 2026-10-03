@@ -10,6 +10,7 @@
 
 void parseInlinePalSpec(char const * const rawArg);
 void parseEmbeddedPalSpec(Png const &png);
+void parseEmbeddedMultiplePalSpec(Png const &png);
 void parseExternalPalSpec(char const *arg);
 void parseDmgPalSpec(char const * const rawArg);
 void parseBackgroundPalSpec(char const *arg);
