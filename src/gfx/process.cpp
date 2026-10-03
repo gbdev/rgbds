@@ -128,13 +128,17 @@ struct Image {
 
 	explicit Image(Png &&png_) : png(std::move(png_)), colors() {
 		// Validate input slice
-		if (options.inputSlice.width == 0 && png.width % 8 != 0) {
+		if (uint32_t tileHeight = options.tileHeight();
+		    options.inputSlice.width == 0 && png.width % 8 != 0) {
 			fatal("Image width (%" PRIu32 " pixels) is not a multiple of 8", png.width);
-		}
-		if (options.inputSlice.height == 0 && png.height % 8 != 0) {
-			fatal("Image height (%" PRIu32 " pixels) is not a multiple of 8", png.height);
-		}
-		if (options.inputSlice.right() > png.width || options.inputSlice.bottom() > png.height) {
+		} else if (options.inputSlice.height == 0 && png.height % tileHeight != 0) {
+			fatal(
+			    "Image height (%" PRIu32 " pixels) is not a multiple of %" PRIu32,
+			    png.height,
+			    tileHeight
+			);
+		} else if (options.inputSlice.right() > png.width
+		           || options.inputSlice.bottom() > png.height) {
 			error(
 			    "Image slice ((%" PRIu16 ", %" PRIu16 ") to (%" PRIu32 ", %" PRIu32
 			    ")) is outside the image bounds (%" PRIu32 "x%" PRIu32 ")",
@@ -145,15 +149,15 @@ struct Image {
 			    png.width,
 			    png.height
 			);
-			if (options.inputSlice.width % 8 == 0 && options.inputSlice.height % 8 == 0) {
+			if (options.inputSlice.width % 8 == 0 && options.inputSlice.height % tileHeight == 0) {
 				fprintf(
 				    stderr,
-				    "       (Did you mean the slice \"%" PRIu32 ",%" PRIu32 ":%" PRId32 ",%" PRId32
+				    "       (Did you mean the slice \"%" PRIu16 ",%" PRIu16 ":%" PRIu16 ",%" PRIu16
 				    "\"? The width and height are in tiles, not pixels!)\n",
 				    options.inputSlice.left,
 				    options.inputSlice.top,
-				    options.inputSlice.width / 8,
-				    options.inputSlice.height / 8
+				    static_cast<uint16_t>(options.inputSlice.width / 8),
+				    static_cast<uint16_t>(options.inputSlice.height / tileHeight)
 				);
 			}
 			giveUp();
@@ -222,7 +226,7 @@ struct Image {
 	class TilesVisitor {
 		Image const &_image;
 		bool const _columnMajor;
-		uint32_t const _width, _height;
+		uint32_t const _width, _height; // In pixels
 		uint32_t const _limit = _columnMajor ? _height : _width;
 
 	public:
@@ -256,11 +260,18 @@ struct Image {
 			}
 
 			Iterator &operator++() {
-				auto [major, minor] = parent._columnMajor ? std::tie(y, x) : std::tie(x, y);
-				major += 8;
-				if (major == limit) {
-					minor += 8;
-					major = 0;
+				if (parent._columnMajor) {
+					y += options.tileHeight();
+					if (y == limit) {
+						x += 8;
+						y = 0;
+					}
+				} else {
+					x += 8;
+					if (x == limit) {
+						y += options.tileHeight();
+						x = 0;
+					}
 				}
 				return *this;
 			}
@@ -271,18 +282,22 @@ struct Image {
 	public:
 		Iterator begin() const { return {*this, _limit, 0, 0}; }
 		Iterator end() const {
-			Iterator it{*this, _limit, _width - 8, _height - 8}; // Last valid one...
-			return ++it;                                         // ...now one-past-last!
+			// Construct an iterator to the last valid tile...
+			Iterator it{*this, _limit, _width - 8, _height - options.tileHeight()};
+			// ...and return one past the end!
+			return ++it;
 		}
 	};
 
 public:
 	TilesVisitor visitAsTiles() const {
+		// The slice's width and height are counts of tiles, not of pixels
 		return {
 		    *this,
 		    options.columnMajor,
 		    options.inputSlice.width ? options.inputSlice.width * 8 : png.width,
-		    options.inputSlice.height ? options.inputSlice.height * 8 : png.height,
+		    options.inputSlice.height ? options.inputSlice.height * options.tileHeight()
+		                              : png.height,
 		};
 	}
 };
@@ -526,7 +541,10 @@ class TileData {
 	// If the active bit depth is 1bpp, all tiles are processed as 2bpp nonetheless, but emitted as
 	// 1bpp. This massively simplifies internal processing, since bit depth is always identical
 	// outside of I/O / serialization boundaries.
-	std::array<uint8_t, 16> _data;
+	std::array<uint8_t, 32> _data;
+	// How many of `data`'s bytes are actually in use.
+	// Since it does not depend on the bit depth, `_size / 2` is the tile's height in rows.
+	size_t _size;
 	// The hash is a bit lax: it's the XOR of all lines, and every other nibble is identical
 	// if horizontal mirroring is in effect. It should still be a reasonable tie-breaker in
 	// non-pathological cases.
@@ -555,16 +573,17 @@ public:
 		return row;
 	}
 
-	TileData(std::array<uint8_t, 16> &&raw) : _data(raw), _hash(0) {
-		for (uint8_t y = 0; y < 8; ++y) {
+	TileData(std::array<uint8_t, 32> &&raw) : _data(raw), _size(options.tileDataSize()), _hash(0) {
+		for (size_t y = 0; y < _size / 2; ++y) {
 			uint16_t bitplanes = _data[y * 2] | _data[y * 2 + 1] << 8;
 			hashBitplanes(bitplanes, _hash);
 		}
 	}
 
-	TileData(Image::TilesVisitor::Tile const &tile, Palette const &palette) : _hash(0) {
+	TileData(Image::TilesVisitor::Tile const &tile, Palette const &palette)
+	    : _size(options.tileDataSize()), _hash(0) {
 		size_t writeIndex = 0;
-		for (uint32_t y = 0; y < 8; ++y) {
+		for (size_t y = 0; y < _size / 2; ++y) {
 			uint16_t bitplanes = rowBitplanes(tile, palette, y);
 			hashBitplanes(bitplanes, _hash);
 
@@ -573,7 +592,10 @@ public:
 		}
 	}
 
-	std::array<uint8_t, 16> const &data() const { return _data; }
+	// Only the first `size()` bytes of `data()` are meaningful; the rest is unused padding
+	uint8_t const *data() const { return _data.data(); }
+	size_t size() const { return _size; }
+
 	uint16_t hash() const { return _hash; }
 
 	enum MatchType {
@@ -584,15 +606,18 @@ public:
 		VHFLIP,
 	};
 	MatchType tryMatching(TileData const &other) const {
+		assume(_size == other._size); // Both come from the same image, so they must agree
+		uint8_t const *data = _data.data(), *otherData = other._data.data();
+
 		// Check for strict equality first, as that can typically be optimized, and it allows
 		// hoisting the mirroring check out of the loop
-		if (_data == other._data) {
+		if (std::equal(data, data + _size, otherData)) {
 			return MatchType::EXACT;
 		}
 
 		// Check if we have horizontal mirroring, which scans the array forward again
 		if (options.allowMirroringX
-		    && std::equal(RANGE(_data), other._data.begin(), [](uint8_t lhs, uint8_t rhs) {
+		    && std::equal(data, data + _size, otherData, [](uint8_t lhs, uint8_t rhs) {
 			       return lhs == flipTable[rhs];
 		       })) {
 			return MatchType::HFLIP;
@@ -606,10 +631,10 @@ public:
 		// Check if we have vertical or vertical+horizontal mirroring, for which we have to read
 		// bitplane *pairs*  backwards
 		bool hasVFlip = true, hasVHFlip = true;
-		for (uint8_t i = 0; i < _data.size(); ++i) {
+		for (size_t i = 0; i < _size; ++i) {
 			// Flip the bottom bit to get the corresponding row's bitplane 0/1
 			// (This works because the array size is even)
-			uint8_t lhs = _data[i], rhs = other._data[(15 - i) ^ 1];
+			uint8_t lhs = data[i], rhs = otherData[(_size - 1 - i) ^ 1];
 			if (lhs != rhs) {
 				hasVFlip = false;
 			}
@@ -670,7 +695,7 @@ static void outputUnoptimizedTileData(
 		Palette const &palette = palettes[attr.getPalID(mappings)];
 
 		bool empty = true;
-		for (uint32_t y = 0; y < 8; ++y) {
+		for (uint32_t y = 0; y < options.tileHeight(); ++y) {
 			uint16_t bitplanes = TileData::rowBitplanes(tile, palette, y);
 			if (bitplanes != 0) {
 				empty = false;
@@ -740,9 +765,11 @@ static void outputUnoptimizedMaps(
 
 			// A non-zero base ID may make this addition overflow, wrapping around the available
 			// tile IDs. Since the operands are unsigned, this won't cause undefined behavior.
+			// An OAM object takes up as many tile IDs as it has 8x8 px halves, so the tilemaps
+			// still only makes sense tile by tile.
 			// With `-N/--nb-tiles` unlimited (by default) for bank 0, tile IDs may be truncated in
 			// the tilemap, which was already warned about.
-			uint8_t tileID = tileIdx + options.baseTileIDs[bank];
+			uint8_t tileID = tileIdx * options.nbTileIDs() + options.baseTileIDs[bank];
 			emit(tilemapOutput, tileID);
 			emit(attrmapOutput, (palID & 0b111) | bank << 3); // The other flags are all zeros.
 			emit(palmapOutput, palID);
@@ -808,22 +835,22 @@ static UniqueTiles dedupTiles(
 			fatal("Failed to open \"%s\": %s", options.inputTileset.c_str(), strerror(errno));
 		}
 
-		std::array<uint8_t, 16> tile;
-		size_t const tileSize = options.bitDepth * 8;
+		std::array<uint8_t, 32> tile;
 		for (;;) {
 			// It's okay to cast between character types.
-			size_t len = inputTileset->sgetn(reinterpret_cast<char *>(tile.data()), tileSize);
+			size_t len =
+			    inputTileset->sgetn(reinterpret_cast<char *>(tile.data()), options.tileSize());
 			if (len == 0) { // EOF!
 				break;
-			} else if (len != tileSize) {
+			} else if (len != options.tileSize()) {
 				fatal(
 				    "\"%s\" does not contain a multiple of %zu bytes; is it actually tile data?",
 				    options.inputTileset.c_str(),
-				    tileSize
+				    options.tileSize()
 				);
-			} else if (len == 8) {
+			} else if (options.bitDepth == 1) {
 				// Expand the tile data to 2bpp.
-				for (size_t i = 8; i--;) {
+				for (size_t i = options.tileHeight(); i--;) {
 					tile[i * 2 + 1] = 0;
 					tile[i * 2] = tile[i];
 				}
@@ -864,8 +891,10 @@ static UniqueTiles dedupTiles(
 			attr.xFlip = matchType == TileData::HFLIP || matchType == TileData::VHFLIP;
 			attr.yFlip = matchType == TileData::VFLIP || matchType == TileData::VHFLIP;
 			attr.bank = tileIdx >= options.maxNbTiles[0];
-			attr.tileID = (attr.bank ? tileIdx - options.maxNbTiles[0] : tileIdx)
-			              + options.baseTileIDs[attr.bank];
+			// An OAM object occupies 2 consecutive tile IDs.
+			attr.tileID =
+			    (attr.bank ? tileIdx - options.maxNbTiles[0] : tileIdx) * options.nbTileIDs()
+			    + options.baseTileIDs[attr.bank];
 		}
 	}
 
@@ -888,7 +917,7 @@ static void outputTileData(UniqueTiles const &tiles) {
 	for (TileData const *tile : tiles) {
 		assume(tile->tileID == tileIdx);
 		bool empty = true;
-		for (uint32_t y = 0; y < 8; ++y) {
+		for (size_t y = 0; y < tile->size() / 2; ++y) {
 			uint8_t bitplane0 = tile->data()[y * 2];
 			uint8_t bitplane1 = tile->data()[y * 2 + 1];
 			if (bitplane0 || bitplane1) {
@@ -1024,7 +1053,7 @@ void process(Png &&png) {
 
 		// Count the unique opaque colors for packing
 		std::unordered_set<uint16_t> tileColors;
-		for (uint32_t y = 0; y < 8; ++y) {
+		for (uint32_t y = 0; y < options.tileHeight(); ++y) {
 			for (uint32_t x = 0; x < 8; ++x) {
 				Rgba color = tile.pixel(x, y);
 				// Ambiguous colors should not be in `tileColors`
@@ -1179,14 +1208,18 @@ continue_visiting_tiles:;
 			    options.maxNbTiles[0],
 			    options.maxNbTiles[1]
 			);
-		} else if (((nbTiles > 256 && options.maxNbTiles[0] > 256)
-		            || (nbTiles > options.maxNbTiles[0] + 256u && options.maxNbTiles[1] > 256))
+		} else if (((nbTiles > options.maxNbTilesPerBank()
+		             && options.maxNbTiles[0] > options.maxNbTilesPerBank())
+		            || (nbTiles > options.maxNbTiles[0] + options.maxNbTilesPerBank()
+		                && options.maxNbTiles[1] > options.maxNbTilesPerBank()))
 		           && !options.tilemap.empty()) {
 			// With `-N/--nb-tiles` unlimited (by default) for bank 0, tile IDs may be truncated in
 			// the tilemap, so warn about that.
 			warnx(
-			    "Image contains %zu tiles, of which only 256 are representable in the tilemap",
-			    nbTiles
+			    "Image contains %zu tiles, of which only %" PRIu16
+			    " are representable in the tilemap",
+			    nbTiles,
+			    options.maxNbTilesPerBank()
 			);
 		}
 	};

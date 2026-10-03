@@ -36,19 +36,20 @@ Options options;
 
 // Flags which must be processed after the option parsing finishes
 static struct LocalOptions {
-	std::optional<std::string> palSpec; // -c
-	bool autoAttrmap;                   // -A
-	bool autoTilemap;                   // -T
-	bool autoPalettes;                  // -P
-	bool autoPalmap;                    // -Q
-	bool groupOutputs;                  // -O
-	bool reverse;                       // -r
+	std::optional<std::string> palSpec;                // -c
+	std::optional<std::array<uint16_t, 2>> maxNbTiles; // -N
+	bool autoAttrmap;                                  // -A
+	bool autoTilemap;                                  // -T
+	bool autoPalettes;                                 // -P
+	bool autoPalmap;                                   // -Q
+	bool groupOutputs;                                 // -O
+	bool reverse;                                      // -r
 
 	bool autoAny() const { return autoAttrmap || autoTilemap || autoPalettes || autoPalmap; }
 } localOptions;
 
 // Short options
-static char const *optstring = "Aa:B:b:Cc:d:hi:L:l:mN:n:Oo:Pp:Qq:r:s:Tt:U:uVvW:wXx:YZ";
+static char const *optstring = "Aa:B:b:Cc:d:hi:jL:l:mN:n:Oo:Pp:Qq:r:s:Tt:U:uVvW:wXx:YZ";
 
 // Long-only option variable
 static int longOpt; // `--color`
@@ -70,6 +71,7 @@ static option const longopts[] = {
     {"depth",            required_argument, nullptr,  'd'},
     {"help",             no_argument,       nullptr,  'h'},
     {"input-tileset",    required_argument, nullptr,  'i'},
+    {"oam",              no_argument,       nullptr,  'j'},
     {"slice",            required_argument, nullptr,  'L'},
     {"base-palette",     required_argument, nullptr,  'l'},
     {"mirror-tiles",     no_argument,       nullptr,  'm'},
@@ -102,13 +104,14 @@ static option const longopts[] = {
 static Usage usage = {
     .name = "rgbgfx",
     .flags = {
-        "[-r stride]", "[-ChmOuVXYZ]", "[-v [-v ...]]", "[-a <attr_map> | -A]", "[-b <base_ids>]",
+        "[-r stride]", "[-ChjmOuVXYZ]", "[-v [-v ...]]", "[-a <attr_map> | -A]", "[-b <base_ids>]",
         "[-c <colors>]", "[-d <depth>]", "[-i <tileset_file>]", "[-L <slice>]", "[-l <base_pal>]",
         "[-N <nb_tiles>]", "[-n <nb_pals>]", "[-o <out_file>]", "[-p <pal_file> | -P]",
         "[-q <pal_map> | -Q]", "[-s <nb_colors>]", "[-t <tile_map> | -T]", "[-x <nb_tiles>]",
         "<file>",
     },
     .options = {
+        {{"-j", "--oam"}, {"convert 8x16 pixel OAM objects instead of 8x8 pixel tiles"}},
         {{"-m", "--mirror-tiles"}, {"optimize out mirrored tiles"}},
         {{"-o", "--output <path>"}, {"output the tile data to this path"}},
         {{"-t", "--tilemap <path>"}, {"output the tile map to this path"}},
@@ -239,6 +242,10 @@ static void parseArg(int ch, char *arg) {
 		options.inputTileset = arg;
 		break;
 
+	case 'j':
+		options.oam = true;
+		break;
+
 	case 'L':
 		options.inputSlice.left = readNumber(argPtr, "Input slice left coordinate");
 		if (options.inputSlice.left > INT16_MAX) {
@@ -301,35 +308,32 @@ static void parseArg(int ch, char *arg) {
 		options.allowDedup = true;
 		break;
 
-	case 'N':
-		// Explicit numbers for either tile bank cannot be greater than 256.
-		// If they were greater than 256, it would permit tile IDs to be truncated in the tilemap.
+	case 'N': {
+		// A bank can hold 256 of 8x8 pixel tiles, or 128 of 8x16 px OAM objects.
+		// Explicit numbers for either tile bank cannot be greater than that maximum.
+		// If they were greater than that, it would permit tile IDs to be truncated in the tilemap.
 		// We do warn that tile IDs may be truncated for the implicit/default unlimited number of
 		// tiles in bank 0.
-		options.maxNbTiles[0] = readNumber(argPtr, "Number of tiles in bank 0", 256);
-		if (options.maxNbTiles[0] > 256) {
-			error("Bank 0 cannot contain more than 256 tiles");
-		}
-		if (*argPtr == '\0') {
-			options.maxNbTiles[1] = 0;
-			break;
-		}
-		skipBlankSpace(argPtr);
-		if (*argPtr != ',') {
-			error("Bank capacity must be one or two comma-separated numbers, not \"%s\"", arg);
-			break;
-		}
-		++argPtr; // Skip comma
-		skipBlankSpace(argPtr);
-		options.maxNbTiles[1] = readNumber(argPtr, "Number of tiles in bank 1", 256);
-		if (options.maxNbTiles[1] > 256) {
-			error("Bank 1 cannot contain more than 256 tiles");
-		}
+		uint16_t bank0 = readNumber(argPtr, "Number of tiles in bank 0", 256);
+		// If only bank 0 was specified, bank 1 defaults to 0, i.e. tiles cannot go in it at all.
+		uint16_t bank1 = 0;
 		if (*argPtr != '\0') {
-			error("Bank capacity must be one or two comma-separated numbers, not \"%s\"", arg);
-			break;
+			skipBlankSpace(argPtr);
+			if (*argPtr != ',') {
+				error("Bank capacity must be one or two comma-separated numbers, not \"%s\"", arg);
+				break;
+			}
+			++argPtr; // Skip comma
+			skipBlankSpace(argPtr);
+			bank1 = readNumber(argPtr, "Number of tiles in bank 1", 256);
+			if (*argPtr != '\0') {
+				error("Bank capacity must be one or two comma-separated numbers, not \"%s\"", arg);
+				break;
+			}
 		}
+		localOptions.maxNbTiles = {bank0, bank1};
 		break;
+	}
 
 	case 'n': {
 		uint16_t number = readNumber(argPtr, "Number of palettes", 256);
@@ -513,6 +517,8 @@ static void verboseOutputConfig() {
 	}
 	// -d/--depth
 	fprintf(stderr, "\tBit depth: %" PRIu8 "bpp\n", options.bitDepth);
+	// -j/--oam
+	fprintf(stderr, "\tTiles are %" PRIu32 "x%" PRIu32 " pixels\n", 8, options.tileHeight());
 	// -x/--trim-end
 	if (options.trim != 0) {
 		fprintf(stderr, "\tTrim the last %" PRIu64 " tiles\n", options.trim);
@@ -560,7 +566,7 @@ static void verboseOutputConfig() {
 	    || options.inputSlice.top) {
 		fprintf(
 		    stderr,
-		    "\tInput image slice: %" PRIu16 "x%" PRIu16 " pixels starting at (%" PRIu16 ", %" PRIu16
+		    "\tInput image slice: %" PRIu16 "x%" PRIu16 " tiles starting at (%" PRIu16 ", %" PRIu16
 		    ")\n",
 		    options.inputSlice.width,
 		    options.inputSlice.height,
@@ -641,6 +647,25 @@ static void replaceExtension(std::string &path, char const *extension) {
 
 int main(int argc, char *argv[]) {
 	cli_ParseArgs(argc, argv, optstring, longopts, parseArg, usage);
+
+	if (auto const &maxNbTiles = localOptions.maxNbTiles; maxNbTiles.has_value()) {
+		uint16_t const limit = options.maxNbTilesPerBank();
+		for (size_t bank = 0; bank < maxNbTiles->size(); ++bank) {
+			if ((*maxNbTiles)[bank] > limit) {
+				error("Bank %zu cannot contain more than %" PRIu16 " tiles", bank, limit);
+			}
+		}
+		options.maxNbTiles = *maxNbTiles;
+	}
+
+	// An OAM object is made of two 8x8 px tiles, with the first one having an even tile ID.
+	if (options.oam) {
+		for (size_t bank = 0; bank < options.baseTileIDs.size(); ++bank) {
+			if (options.baseTileIDs[bank] % 2 != 0) {
+				error("Bank %zu base tile ID must be even with '-j/--oam'", bank);
+			}
+		}
+	}
 
 	if (options.nbColorsPerPal == 0) {
 		options.nbColorsPerPal = 1u << options.bitDepth;

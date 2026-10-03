@@ -132,17 +132,16 @@ void reverse() {
 
 	verbosePrint(VERB_NOTICE, "Reading tiles...\n");
 	std::vector<uint8_t> const tiles = readInto(options.output);
-	uint8_t tileSize = 8 * options.bitDepth;
-	if (tiles.size() % tileSize != 0) {
+	if (tiles.size() % options.tileSize() != 0) {
 		fatal(
-		    "Tile data size (%zu bytes) is not a multiple of %" PRIu8 " bytes",
+		    "Tile data size (%zu bytes) is not a multiple of %zu bytes",
 		    tiles.size(),
-		    tileSize
+		    options.tileSize()
 		);
 	}
 
 	// By default, assume tiles are not deduplicated, and add the (allegedly) trimmed tiles
-	size_t const nbTiles = tiles.size() / tileSize;
+	size_t const nbTiles = tiles.size() / options.tileSize();
 	verbosePrint(VERB_INFO, "Read %zu tiles\n", nbTiles);
 	size_t mapSize = nbTiles + options.trim; // Image size in tiles
 	std::optional<std::vector<uint8_t>> tilemap;
@@ -342,7 +341,10 @@ void reverse() {
 			} else {
 				// The unsigned underflow for `tileOfs` is intentional, since a nonzero
 				// base tile ID may overflow and continue with IDs from 0.
-				if (uint8_t tileOfs = (*tilemap)[index] - options.baseTileIDs[bank];
+				// An OAM object occupies `nbTileIDs()` tile IDs, and only its first one is in the
+				// tilemap, so dividing by that recovers the object's index within its bank.
+				if (uint8_t tileOfs =
+				        ((*tilemap)[index] - options.baseTileIDs[bank]) / options.nbTileIDs();
 				    tileOfs >= nbTilesMappedInBank[bank]) {
 					nbTilesMappedInBank[bank] = tileOfs + 1;
 				}
@@ -404,7 +406,7 @@ void reverse() {
 
 				// The unsigned underflow for `tileOfs` is intentional, since a nonzero
 				// base tile ID may overflow and continue with IDs from 0.
-				if (uint8_t tileOfs = tileID - options.baseTileIDs[bank];
+				if (uint8_t tileOfs = (tileID - options.baseTileIDs[bank]) / options.nbTileIDs();
 				    tileOfs >= options.maxNbTiles[bank]) {
 					error(
 					    "Tilemap references tile #%" PRIu8
@@ -427,7 +429,8 @@ void reverse() {
 
 				// The unsigned underflow for `tileOfs` is intentional, since a nonzero
 				// base tile ID may overflow and continue with IDs from 0.
-				if (uint8_t tileOfs = tileID - options.baseTileIDs[0]; tileOfs >= limit) {
+				if (uint8_t tileOfs = (tileID - options.baseTileIDs[0]) / options.nbTileIDs();
+				    tileOfs >= limit) {
 					error(
 					    "Tilemap references tile #%" PRIu8 " at (%zu, %zu), but the limit is %zu",
 					    tileID,
@@ -511,7 +514,7 @@ void reverse() {
 	    png,
 	    pngInfo,
 	    width * 8,
-	    height * 8,
+	    height * options.tileHeight(),
 	    pngDepth,
 	    pngColorType,
 	    PNG_INTERLACE_NONE,
@@ -557,17 +560,11 @@ void reverse() {
 	// N bits/pixel * 8 pixels/tile row / 8 bits/byte = N bytes/tile row
 	uint8_t const bytesPerTileRow = pngColorType == PNG_COLOR_TYPE_RGB_ALPHA ? 32 : pngDepth;
 	size_t const bytesPerRow = width * bytesPerTileRow;
-	std::vector<uint8_t> tileRow(8 * bytesPerRow, 0xFF); // Data for 8 rows of pixels
-	uint8_t * const rowPtrs[8] = {
-	    &tileRow.data()[0 * bytesPerRow],
-	    &tileRow.data()[1 * bytesPerRow],
-	    &tileRow.data()[2 * bytesPerRow],
-	    &tileRow.data()[3 * bytesPerRow],
-	    &tileRow.data()[4 * bytesPerRow],
-	    &tileRow.data()[5 * bytesPerRow],
-	    &tileRow.data()[6 * bytesPerRow],
-	    &tileRow.data()[7 * bytesPerRow],
-	};
+	std::vector<uint8_t> tileBytes(options.tileHeight() * bytesPerRow, 0xFF);
+	std::array<uint8_t *, 16> rowPtrs{};
+	for (uint8_t y = 0; y < options.tileHeight(); ++y) {
+		rowPtrs[y] = &tileBytes.data()[y * bytesPerRow];
+	}
 
 	for (size_t ty = 0; ty < height; ++ty) {
 		for (size_t tx = 0; tx < width; ++tx) {
@@ -575,10 +572,13 @@ void reverse() {
 			// By default, a tile is unflipped, in bank 0, and uses palette #0
 			uint8_t attribute = attrmap ? (*attrmap)[index] : 0b0000;
 			bool bank = attribute & 0b1000;
-			// Get the tile ID at this location
+			// Get the tile ID at this location. An OAM object is indexed by its first 8x8 px
+			// half's ID, so dividing by the number of halves it spans recovers its index.
 			size_t tileOfs =
-			    tilemap ? static_cast<uint8_t>((*tilemap)[index] - options.baseTileIDs[bank])
-			                  + (bank ? options.maxNbTiles[0] : 0)
+			    tilemap ? static_cast<size_t>(
+			                  static_cast<uint8_t>((*tilemap)[index] - options.baseTileIDs[bank])
+			                  / options.nbTileIDs()
+			              ) + (bank ? options.maxNbTiles[0] : 0)
 			            : index;
 			// This should have been enforced by the earlier checking.
 			assume(tileOfs < nbTiles + options.trim);
@@ -589,13 +589,14 @@ void reverse() {
 			assume(palOfs < palettes.size()); // Should be ensured on data read
 
 			// We do not have data for tiles trimmed with `-x`, so assume they are "blank"
-			static std::array<uint8_t, 16> const trimmedTile{0x00};
+			static std::array<uint8_t, 32> const trimmedTile{0x00};
 			uint8_t const *tileData =
-			    tileOfs >= nbTiles ? trimmedTile.data() : &tiles[tileOfs * tileSize];
+			    tileOfs >= nbTiles ? trimmedTile.data() : &tiles[tileOfs * options.tileSize()];
 			auto const &palette = palettes[palOfs];
-			for (uint8_t y = 0; y < 8; ++y) {
+			for (uint8_t y = 0; y < options.tileHeight(); ++y) {
 				// If vertically mirrored, fetch the bytes from the other end
-				uint8_t realY = (attribute & 0x40 ? 7 - y : y) * options.bitDepth;
+				uint8_t realY =
+				    (attribute & 0x40 ? options.tileHeight() - 1 - y : y) * options.bitDepth;
 				uint8_t bitplane0 = tileData[realY];
 				uint8_t bitplane1 = options.bitDepth == 2 ? tileData[realY + 1] : 0;
 				if (attribute & 0x20) { // Handle horizontal flip
@@ -654,7 +655,7 @@ void reverse() {
 		// signature.
 		// (AIUI, casting away const-ness is okay as long as you don't actually modify the
 		// pointed-to data)
-		png_write_rows(png, const_cast<uint8_t **>(rowPtrs), 8);
+		png_write_rows(png, const_cast<uint8_t **>(rowPtrs.data()), options.tileHeight());
 	}
 
 	// Finalize the write
