@@ -567,8 +567,8 @@ static void verboseOutputConfig() {
 	    || options.inputSlice.top) {
 		fprintf(
 		    stderr,
-		    "\tInput image slice: %" PRIu16 "x%" PRIu16 " tiles starting at pixel (%" PRIu16 ", %"
-		    PRIu16 ")\n",
+		    "\tInput image slice: %" PRIu16 "x%" PRIu16 " tiles starting at pixel (%" PRIu16
+		    ", %" PRIu16 ")\n",
 		    options.inputSlice.width,
 		    options.inputSlice.height,
 		    options.inputSlice.left,

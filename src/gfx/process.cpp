@@ -152,8 +152,8 @@ struct Image {
 			    png.width,
 			    png.height
 			);
-			if (options.inputSlice.width % TILE_WIDTH == 0 &&
-			    options.inputSlice.height % options.tileHeight() == 0) {
+			if (options.inputSlice.width % TILE_WIDTH == 0
+			    && options.inputSlice.height % options.tileHeight() == 0) {
 				fprintf(
 				    stderr,
 				    "       (Did you mean the slice \"%" PRIu16 ",%" PRIu16 ":%" PRIu16 ",%" PRIu16
