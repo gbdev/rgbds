@@ -741,7 +741,7 @@ static void outputUnoptimizedMaps(
 		if (attr.isBackgroundTile()) {
 			// The tile bank may be 2 here, which is fine since background tiles are emitted as
 			// if they used the base tile ID and bank 0.
-			assume(bank <= 2);
+			assume(bank <= NB_BANKS);
 
 			emit(tilemapOutput, options.baseTileIDs[0]);
 			emit(attrmapOutput, palID & 0b111); // The other flags are all zeros.
@@ -749,7 +749,7 @@ static void outputUnoptimizedMaps(
 			// Since background tiles are not in tile data, they do not increment the tile index.
 		} else {
 			// The only valid tile banks are 0 and 1.
-			assume(bank < 2);
+			assume(bank < NB_BANKS);
 
 			// A non-zero base ID may make this addition overflow, wrapping around the available
 			// tile IDs. Since the operands are unsigned, this won't cause undefined behavior.

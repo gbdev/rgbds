@@ -292,7 +292,7 @@ void reverse() {
 	}
 
 	std::optional<std::vector<uint8_t>> attrmap;
-	uint16_t nbTilesMappedInBank[2] = {0, 0}; // Only used if there is an attrmap.
+	uint16_t nbTilesMappedInBank[NB_BANKS] = {0, 0}; // Only used if there is an attrmap.
 	if (!options.attrmap.empty()) {
 		attrmap = readInto(options.attrmap);
 		if (attrmap->size() != mapSize) {
@@ -358,10 +358,10 @@ void reverse() {
 		    nbTilesMappedInBank[1]
 		);
 
-		for (int bank = 0; bank < 2; ++bank) {
+		for (size_t bank = 0; bank < NB_BANKS; ++bank) {
 			if (nbTilesMappedInBank[bank] > options.maxNbTiles[bank]) {
 				error(
-				    "Bank %d contains %" PRIu16 " tiles, but the specified limit is %" PRIu16,
+				    "Bank %zu contains %" PRIu16 " tiles, but the specified limit is %" PRIu16,
 				    bank,
 				    nbTilesMappedInBank[bank],
 				    options.maxNbTiles[bank]

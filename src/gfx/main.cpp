@@ -36,14 +36,14 @@ Options options;
 
 // Flags which must be processed after the option parsing finishes
 static struct LocalOptions {
-	std::optional<std::string> palSpec;                // -c
-	std::optional<std::array<uint16_t, 2>> maxNbTiles; // -N
-	bool autoAttrmap;                                  // -A
-	bool autoTilemap;                                  // -T
-	bool autoPalettes;                                 // -P
-	bool autoPalmap;                                   // -Q
-	bool groupOutputs;                                 // -O
-	bool reverse;                                      // -r
+	std::optional<std::string> palSpec;                       // -c
+	std::optional<std::array<uint16_t, NB_BANKS>> maxNbTiles; // -N
+	bool autoAttrmap;                                         // -A
+	bool autoTilemap;                                         // -T
+	bool autoPalettes;                                        // -P
+	bool autoPalmap;                                          // -Q
+	bool groupOutputs;                                        // -O
+	bool reverse;                                             // -r
 
 	bool autoAny() const { return autoAttrmap || autoTilemap || autoPalettes || autoPalmap; }
 } localOptions;
@@ -315,7 +315,6 @@ static void parseArg(int ch, char *arg) {
 		// We do warn that tile IDs may be truncated for the implicit/default unlimited number of
 		// tiles in bank 0.
 		uint16_t bank0 = readNumber(argPtr, "Number of tiles in bank 0", 256);
-		// If only bank 0 was specified, bank 1 defaults to 0, i.e. tiles cannot go in it at all.
 		uint16_t bank1 = 0;
 		if (*argPtr != '\0') {
 			skipBlankSpace(argPtr);
@@ -568,8 +567,8 @@ static void verboseOutputConfig() {
 	    || options.inputSlice.top) {
 		fprintf(
 		    stderr,
-		    "\tInput image slice: %" PRIu16 "x%" PRIu16 " tiles starting at (%" PRIu16 ", %" PRIu16
-		    ")\n",
+		    "\tInput image slice: %" PRIu16 "x%" PRIu16 " tiles starting at pixel (%" PRIu16 ", %"
+		    PRIu16 ")\n",
 		    options.inputSlice.width,
 		    options.inputSlice.height,
 		    options.inputSlice.left,
@@ -650,19 +649,21 @@ static void replaceExtension(std::string &path, char const *extension) {
 int main(int argc, char *argv[]) {
 	cli_ParseArgs(argc, argv, optstring, longopts, parseArg, usage);
 
-	if (auto const &maxNbTiles = localOptions.maxNbTiles; maxNbTiles.has_value()) {
-		uint16_t const limit = options.maxNbTilesPerBank();
-		for (size_t bank = 0; bank < maxNbTiles->size(); ++bank) {
-			if ((*maxNbTiles)[bank] > limit) {
-				error("Bank %zu cannot contain more than %" PRIu16 " tiles", bank, limit);
+	if (localOptions.maxNbTiles.has_value()) {
+		uint16_t const maxNbTilesPerBank = options.maxNbTilesPerBank();
+		for (size_t bank = 0; bank < NB_BANKS; ++bank) {
+			if ((*localOptions.maxNbTiles)[bank] > maxNbTilesPerBank) {
+				error(
+				    "Bank %zu cannot contain more than %" PRIu16 " tiles", bank, maxNbTilesPerBank
+				);
 			}
 		}
-		options.maxNbTiles = *maxNbTiles;
+		options.maxNbTiles = *localOptions.maxNbTiles;
 	}
 
 	// An OAM object is made of two 8x8 px tiles, with the first one having an even tile ID.
 	if (options.oam) {
-		for (size_t bank = 0; bank < options.baseTileIDs.size(); ++bank) {
+		for (size_t bank = 0; bank < NB_BANKS; ++bank) {
 			if (options.baseTileIDs[bank] % 2 != 0) {
 				error("Bank %zu base tile ID must be even with '-j/--oam'", bank);
 			}

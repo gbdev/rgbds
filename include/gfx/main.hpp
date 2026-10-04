@@ -14,6 +14,8 @@
 
 #include "gfx/rgba.hpp"
 
+static constexpr size_t NB_BANKS = 2;
+
 static constexpr uint32_t TILE_WIDTH = 8;  // in pixels
 static constexpr uint32_t TILE_HEIGHT = 8; // in pixels
 
@@ -34,9 +36,9 @@ struct Options {
 	uint32_t tileHeight() const { return TILE_HEIGHT * nbIDsPerTile(); } // in pixels
 	uint16_t maxNbTilesPerBank() const { return 256 / nbIDsPerTile(); }
 
-	std::string attrmap{};                    // -a, -A
-	std::optional<Rgba> bgColor{};            // -B
-	std::array<uint8_t, 2> baseTileIDs{0, 0}; // -b
+	std::string attrmap{};                           // -a, -A
+	std::optional<Rgba> bgColor{};                   // -B
+	std::array<uint8_t, NB_BANKS> baseTileIDs{0, 0}; // -b
 	enum {
 		NO_SPEC,
 		INLINE,
@@ -56,17 +58,17 @@ struct Options {
 		uint16_t height;
 		uint32_t right() const { return left + width * TILE_WIDTH; }
 		uint32_t bottom() const { return top + height * options.tileHeight(); }
-	} inputSlice{0, 0, 0, 0};                          // -L (margins in clockwise order, like CSS)
-	uint8_t basePalID = 0;                             // -l
-	std::array<uint16_t, 2> maxNbTiles{UINT16_MAX, 0}; // -N
-	uint16_t nbPalettes = 8;                           // -n
-	std::string output{};                              // -o
-	std::string palettes{};                            // -p, -P
-	std::string palmap{};                              // -q, -Q
-	uint16_t reversedWidth = 0;                        // -r, in tiles
-	uint8_t nbColorsPerPal = 0;                        // -s; 0 means "auto" = 1 << bitDepth;
-	std::string tilemap{};                             // -t, -T
-	uint64_t trim = 0;                                 // -x
+	} inputSlice{0, 0, 0, 0};                                 // -L (clockwise margins like CSS)
+	uint8_t basePalID = 0;                                    // -l
+	std::array<uint16_t, NB_BANKS> maxNbTiles{UINT16_MAX, 0}; // -N
+	uint16_t nbPalettes = 8;                                  // -n
+	std::string output{};                                     // -o
+	std::string palettes{};                                   // -p, -P
+	std::string palmap{};                                     // -q, -Q
+	uint16_t reversedWidth = 0;                               // -r, in tiles
+	uint8_t nbColorsPerPal = 0;                               // -s; 0 means "auto" = 1 << bitDepth
+	std::string tilemap{};                                    // -t, -T
+	uint64_t trim = 0;                                        // -x
 
 	std::string input{}; // positional arg
 
