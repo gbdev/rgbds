@@ -128,18 +128,17 @@ struct Image {
 
 	explicit Image(Png &&png_) : png(std::move(png_)), colors() {
 		// Validate input slice
-		if (uint32_t tileHeight = options.tileHeight();
-		    options.inputSlice.width == 0 && png.width % TILE_WIDTH != 0) {
+		if (options.inputSlice.width == 0 && png.width % TILE_WIDTH != 0) {
 			fatal(
 			    "Image width (%" PRIu32 " pixels) is not a multiple of %" PRIu32,
 			    png.width,
 			    TILE_WIDTH
 			);
-		} else if (options.inputSlice.height == 0 && png.height % tileHeight != 0) {
+		} else if (options.inputSlice.height == 0 && png.height % options.tileHeight() != 0) {
 			fatal(
 			    "Image height (%" PRIu32 " pixels) is not a multiple of %" PRIu32,
 			    png.height,
-			    tileHeight
+			    options.tileHeight()
 			);
 		} else if (options.inputSlice.right() > png.width
 		           || options.inputSlice.bottom() > png.height) {
@@ -154,15 +153,15 @@ struct Image {
 			    png.height
 			);
 			if (options.inputSlice.width % TILE_WIDTH == 0 &&
-			    options.inputSlice.height % tileHeight == 0) {
+			    options.inputSlice.height % options.tileHeight() == 0) {
 				fprintf(
 				    stderr,
 				    "       (Did you mean the slice \"%" PRIu16 ",%" PRIu16 ":%" PRIu16 ",%" PRIu16
 				    "\"? The width and height are in tiles, not pixels!)\n",
 				    options.inputSlice.left,
 				    options.inputSlice.top,
-				    static_cast<uint16_t>(options.inputSlice.width / TILE_WIDTH),
-				    static_cast<uint16_t>(options.inputSlice.height / tileHeight)
+				    options.inputSlice.width / TILE_WIDTH,
+				    options.inputSlice.height / options.tileHeight()
 				);
 			}
 			giveUp();
@@ -231,7 +230,7 @@ struct Image {
 	class TilesVisitor {
 		Image const &_image;
 		bool const _columnMajor;
-		uint32_t const _width, _height; // In pixels
+		uint32_t const _width, _height; // in pixels
 		uint32_t const _limit = _columnMajor ? _height : _width;
 
 	public:
@@ -296,7 +295,6 @@ struct Image {
 
 public:
 	TilesVisitor visitAsTiles() const {
-		// The slice's width and height are counts of tiles, not of pixels
 		return {
 		    *this,
 		    options.columnMajor,
@@ -524,14 +522,12 @@ static void hashBitplanes(uint16_t bitplanes, uint16_t &hash) {
 }
 
 class TileData {
+	// `_data` is large enough for one 8x8 px tile, or one 8x16 px OAM object.
 	// Importantly, `TileData` is **always** 2bpp.
 	// If the active bit depth is 1bpp, all tiles are processed as 2bpp nonetheless, but emitted as
 	// 1bpp. This massively simplifies internal processing, since bit depth is always identical
 	// outside of I/O / serialization boundaries.
 	std::array<uint8_t, 32> _data;
-	// How many of `data`'s bytes are actually in use.
-	// Since it does not depend on the bit depth, `_size / 2` is the tile's height in rows.
-	size_t _size;
 	// The hash is a bit lax: it's the XOR of all lines, and every other nibble is identical
 	// if horizontal mirroring is in effect. It should still be a reasonable tie-breaker in
 	// non-pathological cases.
@@ -560,18 +556,16 @@ public:
 		return row;
 	}
 
-	TileData(std::array<uint8_t, 32> &&raw)
-	    : _data(raw), _size(options.tileHeight() * 2), _hash(0) {
-		for (size_t y = 0; y < _size / 2; ++y) {
+	TileData(std::array<uint8_t, 32> &&raw) : _data(raw), _hash(0) {
+		for (size_t y = 0; y < options.tileHeight(); ++y) {
 			uint16_t bitplanes = _data[y * 2] | _data[y * 2 + 1] << 8;
 			hashBitplanes(bitplanes, _hash);
 		}
 	}
 
-	TileData(Image::TilesVisitor::Tile const &tile, Palette const &palette)
-	    : _size(options.tileHeight() * 2), _hash(0) {
+	TileData(Image::TilesVisitor::Tile const &tile, Palette const &palette) : _hash(0) {
 		size_t writeIndex = 0;
-		for (size_t y = 0; y < _size / 2; ++y) {
+		for (size_t y = 0; y < options.tileHeight(); ++y) {
 			uint16_t bitplanes = rowBitplanes(tile, palette, y);
 			hashBitplanes(bitplanes, _hash);
 
@@ -580,9 +574,8 @@ public:
 		}
 	}
 
-	// Only the first `size()` bytes of `data()` are meaningful; the rest is unused padding
 	uint8_t const *data() const { return _data.data(); }
-	size_t size() const { return _size; }
+	size_t size() const { return options.tileHeight() * 2; }
 
 	uint16_t hash() const { return _hash; }
 
@@ -594,18 +587,18 @@ public:
 		VHFLIP,
 	};
 	MatchType tryMatching(TileData const &other) const {
-		assume(_size == other._size); // Both come from the same image, so they must agree
 		uint8_t const *data = _data.data(), *otherData = other._data.data();
+		size_t dataSize = options.tileHeight() * 2;
 
 		// Check for strict equality first, as that can typically be optimized, and it allows
 		// hoisting the mirroring check out of the loop
-		if (std::equal(data, data + _size, otherData)) {
+		if (std::equal(data, data + dataSize, otherData)) {
 			return MatchType::EXACT;
 		}
 
 		// Check if we have horizontal mirroring, which scans the array forward again
 		if (options.allowMirroringX
-		    && std::equal(data, data + _size, otherData, [](uint8_t lhs, uint8_t rhs) {
+		    && std::equal(data, data + dataSize, otherData, [](uint8_t lhs, uint8_t rhs) {
 			       return lhs == flipTable[rhs];
 		       })) {
 			return MatchType::HFLIP;
@@ -619,10 +612,10 @@ public:
 		// Check if we have vertical or vertical+horizontal mirroring, for which we have to read
 		// bitplane *pairs*  backwards
 		bool hasVFlip = true, hasVHFlip = true;
-		for (size_t i = 0; i < _size; ++i) {
+		for (size_t i = 0; i < dataSize; ++i) {
 			// Flip the bottom bit to get the corresponding row's bitplane 0/1
 			// (This works because the array size is even)
-			uint8_t lhs = data[i], rhs = otherData[(_size - 1 - i) ^ 1];
+			uint8_t lhs = data[i], rhs = otherData[(dataSize - 1 - i) ^ 1];
 			if (lhs != rhs) {
 				hasVFlip = false;
 			}
@@ -879,7 +872,6 @@ static UniqueTiles dedupTiles(
 			attr.xFlip = matchType == TileData::HFLIP || matchType == TileData::VHFLIP;
 			attr.yFlip = matchType == TileData::VFLIP || matchType == TileData::VHFLIP;
 			attr.bank = tileIdx >= options.maxNbTiles[0];
-			// An OAM object occupies 2 consecutive tile IDs.
 			attr.tileID =
 			    (attr.bank ? tileIdx - options.maxNbTiles[0] : tileIdx) * options.nbIDsPerTile()
 			    + options.baseTileIDs[attr.bank];
@@ -905,7 +897,7 @@ static void outputTileData(UniqueTiles const &tiles) {
 	for (TileData const *tile : tiles) {
 		assume(tile->tileID == tileIdx);
 		bool empty = true;
-		for (size_t y = 0; y < tile->size() / 2; ++y) {
+		for (size_t y = 0; y < options.tileHeight(); ++y) {
 			uint8_t bitplane0 = tile->data()[y * 2];
 			uint8_t bitplane1 = tile->data()[y * 2 + 1];
 			if (bitplane0 || bitplane1) {
