@@ -230,9 +230,7 @@ void reverse() {
 			// Expand the little-endian RGB555 colors to RGB888
 			auto &palette = palettes.emplace_back();
 			std::generate(
-			    palette.begin(),
-			    palette.begin() + options.nbColorsPerPal,
-			    [&buf, i = 0]() mutable {
+			    palette.begin(), palette.begin() + options.nbColorsPerPal, [&buf, i = 0]() mutable {
 				    i += 2;
 				    return Rgba::fromCGBColor(buf[i - 2] | buf[i - 1] << 8, options.useColorCurve);
 			    }
@@ -283,8 +281,10 @@ void reverse() {
 		}
 		grayscale = true;
 	} else if (options.palSpecType == Options::EMBEDDED) {
-		warnx("An embedded palette was requested, but no palette file was specified; ignoring "
-		      "request");
+		warnx(
+		    "An embedded palette was requested, but no palette file was specified; ignoring "
+		    "request"
+		);
 		grayscale = true;
 	} else if (options.hasExplicitPalSpec()) {
 		palettes = std::move(options.palSpec); // We won't be using it again.
