@@ -560,7 +560,8 @@ public:
 		return row;
 	}
 
-	TileData(std::array<uint8_t, 32> &&raw) : _data(raw), _size(options.tileDataSize()), _hash(0) {
+	TileData(std::array<uint8_t, 32> &&raw)
+	    : _data(raw), _size(options.tileHeight() * 2), _hash(0) {
 		for (size_t y = 0; y < _size / 2; ++y) {
 			uint16_t bitplanes = _data[y * 2] | _data[y * 2 + 1] << 8;
 			hashBitplanes(bitplanes, _hash);
@@ -568,7 +569,7 @@ public:
 	}
 
 	TileData(Image::TilesVisitor::Tile const &tile, Palette const &palette)
-	    : _size(options.tileDataSize()), _hash(0) {
+	    : _size(options.tileHeight() * 2), _hash(0) {
 		size_t writeIndex = 0;
 		for (size_t y = 0; y < _size / 2; ++y) {
 			uint16_t bitplanes = rowBitplanes(tile, palette, y);

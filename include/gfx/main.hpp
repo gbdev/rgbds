@@ -32,6 +32,7 @@ struct Options {
 	// An 8x16 px OAM object is two 8x8 px tiles stacked vertically.
 	uint8_t nbIDsPerTile() const { return oam ? 2 : 1; }
 	uint32_t tileHeight() const { return TILE_HEIGHT * nbIDsPerTile(); } // in pixels
+	uint16_t maxNbTilesPerBank() const { return 256 / nbIDsPerTile(); }
 
 	std::string attrmap{};                    // -a, -A
 	std::optional<Rgba> bgColor{};            // -B
@@ -79,13 +80,7 @@ struct Options {
 		return palSpecType == EMBEDDED || palSpecType == EMBEDDED_MULTIPLE;
 	}
 
-	// How many tiles fit in one VRAM bank; since each one still takes up `tileHeightFactor()`
-	// tile IDs, OAM objects only leave room for half as many of them.
-	uint16_t maxNbTilesPerBank() const { return 256 / nbIDsPerTile(); }
-	// How many bytes one tile takes up in the tile data file, at the output bit depth.
-	size_t tileSize() const { return tileHeight() * bitDepth; }
-	// How many bytes one tile takes up internally, where they are **always** 2bpp (see `TileData`).
-	size_t tileDataSize() const { return tileHeight() * 2; }
+	size_t tileSize() const { return tileHeight() * bitDepth; } // in bytes
 
 	uint8_t dmgColors[4] = {};
 	uint8_t dmgValue(uint8_t i) const {
