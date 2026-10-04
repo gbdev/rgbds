@@ -518,7 +518,9 @@ static void verboseOutputConfig() {
 	// -d/--depth
 	fprintf(stderr, "\tBit depth: %" PRIu8 "bpp\n", options.bitDepth);
 	// -j/--oam
-	fprintf(stderr, "\tTiles are %" PRIu32 "x%" PRIu32 " pixels\n", 8, options.tileHeight());
+	fprintf(
+	    stderr, "\tTiles are %" PRIu32 "x%" PRIu32 " pixels\n", TILE_WIDTH, options.tileHeight()
+	);
 	// -x/--trim-end
 	if (options.trim != 0) {
 		fprintf(stderr, "\tTrim the last %" PRIu64 " tiles\n", options.trim);

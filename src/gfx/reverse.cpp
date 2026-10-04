@@ -341,10 +341,10 @@ void reverse() {
 			} else {
 				// The unsigned underflow for `tileOfs` is intentional, since a nonzero
 				// base tile ID may overflow and continue with IDs from 0.
-				// An OAM object occupies `nbTileIDs()` tile IDs, and only its first one is in the
-				// tilemap, so dividing by that recovers the object's index within its bank.
+				// An OAM object occupies `nbIDsPerTile()` tile IDs, and only its first one is in
+				// the tilemap, so dividing by that recovers the object's index within its bank.
 				if (uint8_t tileOfs =
-				        ((*tilemap)[index] - options.baseTileIDs[bank]) / options.nbTileIDs();
+				        ((*tilemap)[index] - options.baseTileIDs[bank]) / options.nbIDsPerTile();
 				    tileOfs >= nbTilesMappedInBank[bank]) {
 					nbTilesMappedInBank[bank] = tileOfs + 1;
 				}
@@ -406,7 +406,7 @@ void reverse() {
 
 				// The unsigned underflow for `tileOfs` is intentional, since a nonzero
 				// base tile ID may overflow and continue with IDs from 0.
-				if (uint8_t tileOfs = (tileID - options.baseTileIDs[bank]) / options.nbTileIDs();
+				if (uint8_t tileOfs = (tileID - options.baseTileIDs[bank]) / options.nbIDsPerTile();
 				    tileOfs >= options.maxNbTiles[bank]) {
 					error(
 					    "Tilemap references tile #%" PRIu8
@@ -429,7 +429,7 @@ void reverse() {
 
 				// The unsigned underflow for `tileOfs` is intentional, since a nonzero
 				// base tile ID may overflow and continue with IDs from 0.
-				if (uint8_t tileOfs = (tileID - options.baseTileIDs[0]) / options.nbTileIDs();
+				if (uint8_t tileOfs = (tileID - options.baseTileIDs[0]) / options.nbIDsPerTile();
 				    tileOfs >= limit) {
 					error(
 					    "Tilemap references tile #%" PRIu8 " at (%zu, %zu), but the limit is %zu",
@@ -513,7 +513,7 @@ void reverse() {
 	png_set_IHDR(
 	    png,
 	    pngInfo,
-	    width * 8,
+	    width * TILE_WIDTH,
 	    height * options.tileHeight(),
 	    pngDepth,
 	    pngColorType,
@@ -557,7 +557,7 @@ void reverse() {
 
 	png_write_info(png, pngInfo);
 
-	// N bits/pixel * 8 pixels/tile row / 8 bits/byte = N bytes/tile row
+	// N bits/pixel * TILE_WIDTH (8) pixels/tile row / 8 bits/byte = N bytes/tile row
 	uint8_t const bytesPerTileRow = pngColorType == PNG_COLOR_TYPE_RGB_ALPHA ? 32 : pngDepth;
 	size_t const bytesPerRow = width * bytesPerTileRow;
 	std::vector<uint8_t> tileBytes(options.tileHeight() * bytesPerRow, 0xFF);
@@ -577,7 +577,7 @@ void reverse() {
 			size_t tileOfs =
 			    tilemap ? static_cast<size_t>(
 			                  static_cast<uint8_t>((*tilemap)[index] - options.baseTileIDs[bank])
-			                  / options.nbTileIDs()
+			                  / options.nbIDsPerTile()
 			              ) + (bank ? options.maxNbTiles[0] : 0)
 			            : index;
 			// This should have been enforced by the earlier checking.
@@ -606,7 +606,7 @@ void reverse() {
 
 				uint8_t *ptr = &rowPtrs[y][tx * bytesPerTileRow];
 				uint16_t gray = 0;
-				for (uint8_t x = 0; x < 8; ++x) {
+				for (uint8_t x = 0; x < TILE_WIDTH; ++x) {
 					uint8_t bit0 = bitplane0 & 0x80, bit1 = bitplane1 & 0x80;
 					uint8_t colorID = bit0 >> 7 | bit1 >> 6;
 

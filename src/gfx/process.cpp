@@ -129,8 +129,12 @@ struct Image {
 	explicit Image(Png &&png_) : png(std::move(png_)), colors() {
 		// Validate input slice
 		if (uint32_t tileHeight = options.tileHeight();
-		    options.inputSlice.width == 0 && png.width % 8 != 0) {
-			fatal("Image width (%" PRIu32 " pixels) is not a multiple of 8", png.width);
+		    options.inputSlice.width == 0 && png.width % TILE_WIDTH != 0) {
+			fatal(
+			    "Image width (%" PRIu32 " pixels) is not a multiple of %" PRIu32,
+			    png.width,
+			    TILE_WIDTH
+			);
 		} else if (options.inputSlice.height == 0 && png.height % tileHeight != 0) {
 			fatal(
 			    "Image height (%" PRIu32 " pixels) is not a multiple of %" PRIu32,
@@ -149,14 +153,15 @@ struct Image {
 			    png.width,
 			    png.height
 			);
-			if (options.inputSlice.width % 8 == 0 && options.inputSlice.height % tileHeight == 0) {
+			if (options.inputSlice.width % TILE_WIDTH == 0 &&
+			    options.inputSlice.height % tileHeight == 0) {
 				fprintf(
 				    stderr,
 				    "       (Did you mean the slice \"%" PRIu16 ",%" PRIu16 ":%" PRIu16 ",%" PRIu16
 				    "\"? The width and height are in tiles, not pixels!)\n",
 				    options.inputSlice.left,
 				    options.inputSlice.top,
-				    static_cast<uint16_t>(options.inputSlice.width / 8),
+				    static_cast<uint16_t>(options.inputSlice.width / TILE_WIDTH),
 				    static_cast<uint16_t>(options.inputSlice.height / tileHeight)
 				);
 			}
@@ -263,11 +268,11 @@ struct Image {
 				if (parent._columnMajor) {
 					y += options.tileHeight();
 					if (y == limit) {
-						x += 8;
+						x += TILE_WIDTH;
 						y = 0;
 					}
 				} else {
-					x += 8;
+					x += TILE_WIDTH;
 					if (x == limit) {
 						y += options.tileHeight();
 						x = 0;
@@ -283,7 +288,7 @@ struct Image {
 		Iterator begin() const { return {*this, _limit, 0, 0}; }
 		Iterator end() const {
 			// Construct an iterator to the last valid tile...
-			Iterator it{*this, _limit, _width - 8, _height - options.tileHeight()};
+			Iterator it{*this, _limit, _width - TILE_WIDTH, _height - options.tileHeight()};
 			// ...and return one past the end!
 			return ++it;
 		}
@@ -295,7 +300,7 @@ public:
 		return {
 		    *this,
 		    options.columnMajor,
-		    options.inputSlice.width ? options.inputSlice.width * 8 : png.width,
+		    options.inputSlice.width ? options.inputSlice.width * TILE_WIDTH : png.width,
 		    options.inputSlice.height ? options.inputSlice.height * options.tileHeight()
 		                              : png.height,
 		};
@@ -541,7 +546,7 @@ public:
 	static uint16_t
 	    rowBitplanes(Image::TilesVisitor::Tile const &tile, Palette const &palette, uint32_t y) {
 		uint16_t row = 0;
-		for (uint32_t x = 0; x < 8; ++x) {
+		for (uint32_t x = 0; x < TILE_WIDTH; ++x) {
 			row <<= 1;
 			uint8_t index = palette.indexOf(tile.pixel(x, y).cgbColor());
 			assume(index < palette.size()); // The color should be in the palette
@@ -751,7 +756,7 @@ static void outputUnoptimizedMaps(
 			// still only makes sense tile by tile.
 			// With `-N/--nb-tiles` unlimited (by default) for bank 0, tile IDs may be truncated in
 			// the tilemap, which was already warned about.
-			uint8_t tileID = tileIdx * options.nbTileIDs() + options.baseTileIDs[bank];
+			uint8_t tileID = tileIdx * options.nbIDsPerTile() + options.baseTileIDs[bank];
 			emit(tilemapOutput, tileID);
 			emit(attrmapOutput, (palID & 0b111) | bank << 3); // The other flags are all zeros.
 			emit(palmapOutput, palID);
@@ -875,7 +880,7 @@ static UniqueTiles dedupTiles(
 			attr.bank = tileIdx >= options.maxNbTiles[0];
 			// An OAM object occupies 2 consecutive tile IDs.
 			attr.tileID =
-			    (attr.bank ? tileIdx - options.maxNbTiles[0] : tileIdx) * options.nbTileIDs()
+			    (attr.bank ? tileIdx - options.maxNbTiles[0] : tileIdx) * options.nbIDsPerTile()
 			    + options.baseTileIDs[attr.bank];
 		}
 	}

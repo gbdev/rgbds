@@ -14,6 +14,9 @@
 
 #include "gfx/rgba.hpp"
 
+static constexpr uint32_t TILE_WIDTH = 8;  // in pixels
+static constexpr uint32_t TILE_HEIGHT = 8; // in pixels
+
 // Forward declaration so `inputSlice`'s `bottom` method inside `Options` can refer to `options`.
 struct Options;
 extern Options options;
@@ -26,7 +29,9 @@ struct Options {
 	bool allowMirroringY = false; // -Y, -m
 	bool columnMajor = false;     // -Z
 
-	uint32_t tileHeight() const { return 8 * (oam ? 2 : 1); }
+	// An 8x16 px OAM object is two 8x8 px tiles stacked vertically.
+	uint8_t nbIDsPerTile() const { return oam ? 2 : 1; }
+	uint32_t tileHeight() const { return TILE_HEIGHT * nbIDsPerTile(); } // in pixels
 
 	std::string attrmap{};                    // -a, -A
 	std::optional<Rgba> bgColor{};            // -B
@@ -48,8 +53,7 @@ struct Options {
 		uint16_t top;
 		uint16_t width;
 		uint16_t height;
-		uint32_t right() const { return left + width * 8; }
-		// The height counts tiles, which are twice as tall with `-j/--oam`
+		uint32_t right() const { return left + width * TILE_WIDTH; }
 		uint32_t bottom() const { return top + height * options.tileHeight(); }
 	} inputSlice{0, 0, 0, 0};                          // -L (margins in clockwise order, like CSS)
 	uint8_t basePalID = 0;                             // -l
@@ -75,12 +79,9 @@ struct Options {
 		return palSpecType == EMBEDDED || palSpecType == EMBEDDED_MULTIPLE;
 	}
 
-	// How many 8x8 px tiles a tile is made of, which is also how many tile IDs it takes up in the
-	// tilemap: an OAM object is two 8x8 px tiles stacked vertically.
-	uint8_t nbTileIDs() const { return tileHeight() / 8; }
-	// How many tiles fit in one VRAM bank; since each one still takes up `nbTileIDs()` tile IDs,
-	// OAM objects only leave room for half as many of them.
-	uint16_t maxNbTilesPerBank() const { return 256 / nbTileIDs(); }
+	// How many tiles fit in one VRAM bank; since each one still takes up `tileHeightFactor()`
+	// tile IDs, OAM objects only leave room for half as many of them.
+	uint16_t maxNbTilesPerBank() const { return 256 / nbIDsPerTile(); }
 	// How many bytes one tile takes up in the tile data file, at the output bit depth.
 	size_t tileSize() const { return tileHeight() * bitDepth; }
 	// How many bytes one tile takes up internally, where they are **always** 2bpp (see `TileData`).
