@@ -149,6 +149,15 @@ void reverse() {
 		tilemap = readInto(options.tilemap);
 		mapSize = tilemap->size();
 		verbosePrint(VERB_INFO, "Read %zu tilemap entries\n", mapSize);
+
+		// OAM objects must start at even tile IDs.
+		if (options.oam) {
+			for (uint8_t tileID : *tilemap) {
+				if (tileID % 2 != 0) {
+					error("Tile ID #%" PRIu8 "is not even with '-j/--oam'", tileID);
+				}
+			}
+		}
 	}
 
 	if (mapSize == 0) {
@@ -339,12 +348,10 @@ void reverse() {
 					);
 				}
 			} else {
-				// The unsigned underflow for `tileOfs` is intentional, since a nonzero
+				// The unsigned underflow for `subtileOfs` is intentional, since a nonzero
 				// base tile ID may overflow and continue with IDs from 0.
-				// An OAM object occupies `nbIDsPerTile()` tile IDs, and only its first one is in
-				// the tilemap, so dividing by that recovers the object's index within its bank.
-				if (uint8_t tileOfs =
-				        ((*tilemap)[index] - options.baseTileIDs[bank]) / options.nbIDsPerTile();
+				uint8_t subtileOfs = (*tilemap)[index] - options.baseTileIDs[bank];
+				if (uint8_t tileOfs = subtileOfs / options.nbIDsPerTile();
 				    tileOfs >= nbTilesMappedInBank[bank]) {
 					nbTilesMappedInBank[bank] = tileOfs + 1;
 				}
@@ -404,9 +411,10 @@ void reverse() {
 				uint8_t attr = (*attrmap)[index];
 				bool bank = attr & 0b1000;
 
-				// The unsigned underflow for `tileOfs` is intentional, since a nonzero
+				// The unsigned underflow for `subtileOfs` is intentional, since a nonzero
 				// base tile ID may overflow and continue with IDs from 0.
-				if (uint8_t tileOfs = (tileID - options.baseTileIDs[bank]) / options.nbIDsPerTile();
+				uint8_t subtileOfs = tileID - options.baseTileIDs[bank];
+				if (uint8_t tileOfs = subtileOfs / options.nbIDsPerTile();
 				    tileOfs >= options.maxNbTiles[bank]) {
 					error(
 					    "Tilemap references tile #%" PRIu8
@@ -427,10 +435,10 @@ void reverse() {
 				size_t tx = index % width, ty = index / width;
 				uint8_t tileID = (*tilemap)[index];
 
-				// The unsigned underflow for `tileOfs` is intentional, since a nonzero
+				// The unsigned underflow for `subtileOfs` is intentional, since a nonzero
 				// base tile ID may overflow and continue with IDs from 0.
-				if (uint8_t tileOfs = (tileID - options.baseTileIDs[0]) / options.nbIDsPerTile();
-				    tileOfs >= limit) {
+				uint8_t subtileOfs = tileID - options.baseTileIDs[0];
+				if (uint8_t tileOfs = subtileOfs / options.nbIDsPerTile(); tileOfs >= limit) {
 					error(
 					    "Tilemap references tile #%" PRIu8 " at (%zu, %zu), but the limit is %zu",
 					    tileID,
@@ -561,8 +569,8 @@ void reverse() {
 	uint8_t const bytesPerTileRow = pngColorType == PNG_COLOR_TYPE_RGB_ALPHA ? 32 : pngDepth;
 	size_t const bytesPerRow = width * bytesPerTileRow;
 	std::vector<uint8_t> tileBytes(options.tileHeight() * bytesPerRow, 0xFF);
-	std::array<uint8_t *, 16> rowPtrs{};
-	for (uint8_t y = 0; y < options.tileHeight(); ++y) {
+	std::vector<uint8_t *> rowPtrs(options.tileHeight());
+	for (uint32_t y = 0; y < options.tileHeight(); ++y) {
 		rowPtrs[y] = &tileBytes.data()[y * bytesPerRow];
 	}
 
@@ -572,8 +580,7 @@ void reverse() {
 			// By default, a tile is unflipped, in bank 0, and uses palette #0
 			uint8_t attribute = attrmap ? (*attrmap)[index] : 0b0000;
 			bool bank = attribute & 0b1000;
-			// Get the tile ID at this location. An OAM object is indexed by its first 8x8 px
-			// half's ID, so dividing by the number of halves it spans recovers its index.
+			// Get the tile offset at this location
 			size_t tileOfs =
 			    tilemap ? static_cast<size_t>(
 			                  static_cast<uint8_t>((*tilemap)[index] - options.baseTileIDs[bank])
@@ -589,7 +596,7 @@ void reverse() {
 			assume(palOfs < palettes.size()); // Should be ensured on data read
 
 			// We do not have data for tiles trimmed with `-x`, so assume they are "blank"
-			static std::array<uint8_t, 32> const trimmedTile{0x00};
+			static std::vector<uint8_t> const trimmedTile(options.tileHeight() * 2, 0x00);
 			uint8_t const *tileData =
 			    tileOfs >= nbTiles ? trimmedTile.data() : &tiles[tileOfs * options.tileSize()];
 			auto const &palette = palettes[palOfs];
