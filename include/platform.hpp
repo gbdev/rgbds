@@ -67,13 +67,6 @@
 	#define setmode(fd, mode) (0)
 #endif
 
-// Windows has 32-bit `long`, which limits `fseek` and `ftell` to 2 GiB
-#if defined(_MSC_VER) || defined(__MINGW32__)
-	#include <stdio.h> // IWYU pragma: export
-	#define fseek _fseeki64
-	#define ftell _ftelli64
-#endif
-
 // Apple has deprecated `sprintf` since Xcode 14 (for macOS 13), but we use it solely in
 // contexts where both the size of the buffer *and* max size of the printed string are
 // known statically, which GCC thus checks for.
