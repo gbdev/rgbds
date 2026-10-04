@@ -24,7 +24,7 @@ struct Patch {
 	uint32_t offset;
 	Section *pcSection;
 	uint32_t pcOffset;
-	uint8_t type;
+	PatchType type;
 	std::vector<uint8_t> rpn;
 };
 

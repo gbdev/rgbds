@@ -205,111 +205,6 @@ static void readSymbol(
 	}
 }
 
-// Reads a patch from a file.
-static void readPatch(
-    FILE *file,
-    Patch &patch,
-    char const *fileName,
-    std::string const &sectName,
-    uint32_t patchID,
-    std::vector<FileStackNode> const &fileNodes
-) {
-	uint32_t nodeID;
-	tryReadLong(
-	    nodeID,
-	    file,
-	    "%s: Cannot read \"%s\"'s patch #%" PRIu32 "'s node ID: %s",
-	    fileName,
-	    sectName.c_str(),
-	    patchID
-	);
-	if (nodeID >= fileNodes.size()) {
-		fatal(
-		    "%s: \"%s\"'s patch #%" PRIu32 " has invalid node ID #%" PRIu32,
-		    fileName,
-		    sectName.c_str(),
-		    patchID,
-		    nodeID
-		);
-	}
-	patch.src = &fileNodes[nodeID];
-
-	tryReadLong(
-	    patch.lineNo,
-	    file,
-	    "%s: Cannot read \"%s\"'s patch #%" PRIu32 "'s line number: %s",
-	    fileName,
-	    sectName.c_str(),
-	    patchID
-	);
-	tryReadLong(
-	    patch.offset,
-	    file,
-	    "%s: Cannot read \"%s\"'s patch #%" PRIu32 "'s offset: %s",
-	    fileName,
-	    sectName.c_str(),
-	    patchID
-	);
-	tryReadLong(
-	    patch.pcSectionID,
-	    file,
-	    "%s: Cannot read \"%s\"'s patch #%" PRIu32 "'s PC offset: %s",
-	    fileName,
-	    sectName.c_str(),
-	    patchID
-	);
-	tryReadLong(
-	    patch.pcOffset,
-	    file,
-	    "%s: Cannot read \"%s\"'s patch #%" PRIu32 "'s PC offset: %s",
-	    fileName,
-	    sectName.c_str(),
-	    patchID
-	);
-
-	uint8_t type;
-	tryGetc(
-	    type,
-	    file,
-	    "%s: Cannot read \"%s\"'s patch #%" PRIu32 "'s type: %s",
-	    fileName,
-	    sectName.c_str(),
-	    patchID
-	);
-	if (type >= PATCHTYPE_INVALID) {
-		fatal(
-		    "%s: \"%s\"'s patch #%" PRIu32 " has unknown type 0x%02x",
-		    fileName,
-		    sectName.c_str(),
-		    patchID,
-		    type
-		);
-	} else {
-		patch.type = PatchType(type);
-	}
-
-	uint32_t rpnSize;
-	tryReadLong(
-	    rpnSize,
-	    file,
-	    "%s: Cannot read \"%s\"'s patch #%" PRIu32 "'s RPN size: %s",
-	    fileName,
-	    sectName.c_str(),
-	    patchID
-	);
-
-	patch.rpnExpression.resize(rpnSize);
-	if (fread(patch.rpnExpression.data(), 1, rpnSize, file) != rpnSize) {
-		fatal(
-		    "%s: Cannot read \"%s\"'s patch #%" PRIu32 "'s RPN expression: %s",
-		    fileName,
-		    sectName.c_str(),
-		    patchID,
-		    feof(file) ? "Unexpected end of file" : strerror(errno)
-		);
-	}
-}
-
 // Reads a section from a file.
 static void readSection(
     FILE *file, Section &section, char const *fileName, std::vector<FileStackNode> const &fileNodes
@@ -386,31 +281,127 @@ static void readSection(
 	}
 	section.alignOfs = tmp;
 
-	if (sectTypeHasData(section.type)) {
-		if (section.size) {
-			section.data.resize(section.size);
-			if (fread(section.data.data(), 1, section.size, file) != section.size) {
-				fatal(
-				    "%s: Cannot read \"%s\"'s data: %s",
-				    fileName,
-				    section.name.c_str(),
-				    feof(file) ? "Unexpected end of file" : strerror(errno)
-				);
-			}
-		}
+	if (!sectTypeHasData(section.type)) {
+		return;
+	}
 
-		uint32_t nbPatches;
+	if (section.size) {
+		section.data.resize(section.size);
+		if (fread(section.data.data(), 1, section.size, file) != section.size) {
+			fatal(
+			    "%s: Cannot read \"%s\"'s data: %s",
+			    fileName,
+			    section.name.c_str(),
+			    feof(file) ? "Unexpected end of file" : strerror(errno)
+			);
+		}
+	}
+
+	uint32_t nbPatches;
+	tryReadLong(
+	    nbPatches,
+	    file,
+	    "%s: Cannot read \"%s\"'s number of patches: %s",
+	    fileName,
+	    section.name.c_str()
+	);
+
+	section.patches.resize(nbPatches);
+	for (uint32_t patchID = 0; patchID < nbPatches; ++patchID) {
+		Patch &patch = section.patches[patchID];
+
 		tryReadLong(
-		    nbPatches,
+		    nodeID,
 		    file,
-		    "%s: Cannot read \"%s\"'s number of patches: %s",
+		    "%s: Cannot read \"%s\"'s patch #%" PRIu32 "'s node ID: %s",
 		    fileName,
-		    section.name.c_str()
+		    section.name.c_str(),
+		    patchID
+		);
+		if (nodeID >= fileNodes.size()) {
+			fatal(
+			    "%s: \"%s\"'s patch #%" PRIu32 " has invalid node ID #%" PRIu32,
+			    fileName,
+			    section.name.c_str(),
+			    patchID,
+			    nodeID
+			);
+		}
+		patch.rpn.src = &fileNodes[nodeID];
+
+		tryReadLong(
+		    patch.rpn.lineNo,
+		    file,
+		    "%s: Cannot read \"%s\"'s patch #%" PRIu32 "'s line number: %s",
+		    fileName,
+		    section.name.c_str(),
+		    patchID
+		);
+		tryReadLong(
+		    patch.offset,
+		    file,
+		    "%s: Cannot read \"%s\"'s patch #%" PRIu32 "'s offset: %s",
+		    fileName,
+		    section.name.c_str(),
+		    patchID
+		);
+		tryReadLong(
+		    patch.rpn.pcSectionID,
+		    file,
+		    "%s: Cannot read \"%s\"'s patch #%" PRIu32 "'s PC offset: %s",
+		    fileName,
+		    section.name.c_str(),
+		    patchID
+		);
+		tryReadLong(
+		    patch.rpn.pcOffset,
+		    file,
+		    "%s: Cannot read \"%s\"'s patch #%" PRIu32 "'s PC offset: %s",
+		    fileName,
+		    section.name.c_str(),
+		    patchID
 		);
 
-		section.patches.resize(nbPatches);
-		for (uint32_t i = 0; i < nbPatches; ++i) {
-			readPatch(file, section.patches[i], fileName, section.name, i, fileNodes);
+		uint8_t type;
+		tryGetc(
+		    type,
+		    file,
+		    "%s: Cannot read \"%s\"'s patch #%" PRIu32 "'s type: %s",
+		    fileName,
+		    section.name.c_str(),
+		    patchID
+		);
+		if (type >= PATCHTYPE_INVALID) {
+			fatal(
+			    "%s: \"%s\"'s patch #%" PRIu32 " has unknown type 0x%02x",
+			    fileName,
+			    section.name.c_str(),
+			    patchID,
+			    type
+			);
+		} else {
+			patch.type = PatchType(type);
+		}
+
+		uint32_t rpnSize;
+		tryReadLong(
+		    rpnSize,
+		    file,
+		    "%s: Cannot read \"%s\"'s patch #%" PRIu32 "'s RPN size: %s",
+		    fileName,
+		    section.name.c_str(),
+		    patchID
+		);
+
+		patch.rpn.rpn.resize(rpnSize);
+		if (fread(patch.rpn.rpn.data(), 1, rpnSize, file) != rpnSize) {
+			fatal(
+			    "%s: Cannot read \"%s\"'s patch #%" PRIu32 "'s RPN expression: %s",
+			    fileName,
+			    section.name.c_str(),
+			    patchID,
+			    feof(file) ? "Unexpected end of file" : strerror(errno)
+			);
 		}
 	}
 }
@@ -423,11 +414,76 @@ static void readAssertion(
     uint32_t assertID,
     std::vector<FileStackNode> const &fileNodes
 ) {
-	std::string assertName("Assertion #");
+	uint32_t nodeID;
+	tryReadLong(
+	    nodeID, file, "%s: Cannot read assertion #%" PRIu32 "'s node ID: %s", fileName, assertID
+	);
+	if (nodeID >= fileNodes.size()) {
+		fatal(
+		    "%s: assertion #%" PRIu32 " has invalid node ID #%" PRIu32, fileName, assertID, nodeID
+		);
+	}
+	assert.rpn.src = &fileNodes[nodeID];
 
-	assertName += std::to_string(assertID);
-	readPatch(file, assert.patch, fileName, assertName, 0, fileNodes);
-	tryReadString(assert.message, file, "%s: Cannot read assertion's message: %s", fileName);
+	tryReadLong(
+	    assert.rpn.lineNo,
+	    file,
+	    "%s: Cannot read assertion #%" PRIu32 "'s line number: %s",
+	    fileName,
+	    assertID
+	);
+	tryReadLong(
+	    assert.offset,
+	    file,
+	    "%s: Cannot read assertion #%" PRIu32 "'s offset: %s",
+	    fileName,
+	    assertID
+	);
+	tryReadLong(
+	    assert.rpn.pcSectionID,
+	    file,
+	    "%s: Cannot read assertion #%" PRIu32 "'s PC offset: %s",
+	    fileName,
+	    assertID
+	);
+	tryReadLong(
+	    assert.rpn.pcOffset,
+	    file,
+	    "%s: Cannot read assertion #%" PRIu32 "'s PC offset: %s",
+	    fileName,
+	    assertID
+	);
+
+	uint8_t type;
+	tryGetc(type, file, "%s: Cannot read assertion #%" PRIu32 "'s type: %s", fileName, assertID);
+	if (type > ASSERT_FATAL) {
+		fatal("%s: assertion #%" PRIu32 " has unknown type 0x%02x", fileName, assertID, type);
+	} else {
+		assert.type = AssertionType(type);
+	}
+
+	uint32_t rpnSize;
+	tryReadLong(
+	    rpnSize, file, "%s: Cannot read assertion #%" PRIu32 "'s RPN size: %s", fileName, assertID
+	);
+
+	assert.rpn.rpn.resize(rpnSize);
+	if (fread(assert.rpn.rpn.data(), 1, rpnSize, file) != rpnSize) {
+		fatal(
+		    "%s: Cannot read assertion #%" PRIu32 "'s RPN expression: %s",
+		    fileName,
+		    assertID,
+		    feof(file) ? "Unexpected end of file" : strerror(errno)
+		);
+	}
+
+	tryReadString(
+	    assert.message,
+	    file,
+	    "%s: Cannot read assertion #%" PRIu32 "'s message: %s",
+	    fileName,
+	    assertID
+	);
 }
 
 void obj_ReadFile(std::string const &filePath, size_t fileID) {
@@ -557,17 +613,17 @@ void obj_ReadFile(std::string const &filePath, size_t fileID) {
 
 		readAssertion(file, assertion, fileName, i, nodes[fileID]);
 
-		if (assertion.patch.pcSectionID == UINT32_MAX) {
-			assertion.patch.pcSection = nullptr;
-		} else if (assertion.patch.pcSectionID >= fileSections.size()) {
+		if (assertion.rpn.pcSectionID == UINT32_MAX) {
+			assertion.rpn.pcSection = nullptr;
+		} else if (assertion.rpn.pcSectionID >= fileSections.size()) {
 			fatal(
-			    "%s: Assertion #%" PRIu32 "'s patch has invalid section ID #%" PRIu32,
+			    "%s: Assertion #%" PRIu32 " has invalid section ID #%" PRIu32,
 			    fileName,
 			    i,
-			    assertion.patch.pcSectionID
+			    assertion.rpn.pcSectionID
 			);
 		} else {
-			assertion.patch.pcSection = fileSections[assertion.patch.pcSectionID].get();
+			assertion.rpn.pcSection = fileSections[assertion.rpn.pcSectionID].get();
 		}
 
 		assertion.fileSymbols = &fileSymbols;
@@ -579,18 +635,18 @@ void obj_ReadFile(std::string const &filePath, size_t fileID) {
 			continue;
 		}
 		for (size_t i = 0; i < sect->patches.size(); ++i) {
-			if (Patch &patch = sect->patches[i]; patch.pcSectionID == UINT32_MAX) {
-				patch.pcSection = nullptr;
-			} else if (patch.pcSectionID >= fileSections.size()) {
+			if (Expression &rpn = sect->patches[i].rpn; rpn.pcSectionID == UINT32_MAX) {
+				rpn.pcSection = nullptr;
+			} else if (rpn.pcSectionID >= fileSections.size()) {
 				fatal(
 				    "%s: \"%s\"'s patch #%zu has invalid section ID #%" PRIu32,
 				    fileName,
 				    sect->name.c_str(),
 				    i,
-				    patch.pcSectionID
+				    rpn.pcSectionID
 				);
 			} else {
-				patch.pcSection = fileSections[patch.pcSectionID].get();
+				rpn.pcSection = fileSections[rpn.pcSectionID].get();
 			}
 		}
 	}

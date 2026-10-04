@@ -15,15 +15,19 @@ struct FileStackNode;
 struct Section;
 struct Symbol;
 
-struct Patch {
+struct Expression {
 	FileStackNode const *src;
 	uint32_t lineNo;
-	uint32_t offset;
 	Section const *pcSection;
 	uint32_t pcSectionID;
 	uint32_t pcOffset;
+	std::vector<uint8_t> rpn;
+};
+
+struct Patch {
+	Expression rpn;
+	uint32_t offset;
 	PatchType type;
-	std::vector<uint8_t> rpnExpression;
 };
 
 struct Section {

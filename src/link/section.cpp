@@ -175,7 +175,7 @@ static void mergeSections(Section &target, std::unique_ptr<Section> &&other) {
 			target.data.insert(target.data.end(), RANGE(other->data));
 			// Adjust patches' PC offsets
 			for (Patch &patch : other->patches) {
-				patch.pcOffset += other->offset;
+				patch.rpn.pcOffset += other->offset;
 			}
 		} else if (!target.data.empty()) {
 			assume(other->size == 0);
