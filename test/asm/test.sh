@@ -112,15 +112,27 @@ for i in *.asm notexist.asm; do
 		tryDiff "$desired_errput" "$errput" err
 		(( our_rc = our_rc || $? ))
 
-		desired_binname=${i%.asm}.out.bin
-		if [[ -f "$desired_binname" && $our_rc -eq 0 ]]; then
-			# 'rgblink -x' implies '-t', so asm/*.out.bin tests cannot use ROMX past 1
-			if ! "$RGBLINK" -x -o "$gb" "$o"; then
-				echo "${bold}${red}\`$RGBLINK -x -o $gb $o\` failed!${rescolors}${resbold}"
-				(( our_rc = 1 ))
+		if ! (( our_rc )); then # Don't attempt to link if anything assembling-related has failed.
+			desired_binname=${i%.asm}.out.bin
+			if [[ -f "$desired_binname" ]]; then
+				# 'rgblink -x' implies '-t', so asm/*.out.bin tests cannot use ROMX past 1
+				if ! "$RGBLINK" -x -o "$gb" "$o"; then
+					echo "${bold}${red}\`$RGBLINK -x -o $gb $o\` failed!${rescolors}${resbold}"
+					(( our_rc = 1 ))
+				else
+					tryCmp "$desired_binname" "$gb" gb
+					(( our_rc = our_rc || $? ))
+				fi
 			else
-				tryCmp "$desired_binname" "$gb" gb
-				(( our_rc = our_rc || $? ))
+				# Perform a (no-op) link, to check that no link-time assertions have been forgotten about.
+				# Do not pass `-x` because that implies tiny mode, which would make tests using ROM2+ fail.
+				# Also, we do not pass `-o` as that should do everything except actually emitting the ROM;
+				# this is a possibly fragile assumption, but it means that *something* in our test suite is
+				# exercising this flag combination.
+				if ! "$RGBLINK" "$o"; then
+					echo "${bold}${red}\`$RGBLINK $o\` failed!${rescolors}${resbold}"
+					(( our_rc = 1 ))
+				fi
 			fi
 		fi
 
