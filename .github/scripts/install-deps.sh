@@ -12,7 +12,7 @@ case $# in
 esac
 
 case "${OS%%-*}" in
-	ubuntu|debian)
+	ubuntu|debian|ubuntumingw)
 		pkgs=bison
 		case "$TOOLSET" in
 			mingw32)
@@ -35,6 +35,19 @@ case "${OS%%-*}" in
 		sudo apt-get update -qq
 		# shellcheck disable=SC2086 # (This word splitting is intentional.)
 		sudo apt-get install -yq $pkgs
+		if [ "$OS" = ubuntumingw ]; then
+			# GitHub Actions' hosted runners ship CMake 3.x, but versions prior to 4.0.0 ignore `CPACK_PACKAGE_FILE_NAME`.
+			# Install newer CMake as per steps from https://apt.kitware.com/.
+			sudo apt-get install -yq software-properties-common lsb-release
+			test -f /usr/share/doc/kitware-archive-keyring/copyright || \
+				wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null | \
+				gpg --dearmor - | \
+				sudo tee /usr/share/keyrings/kitware-archive-keyring.gpg >/dev/null
+			sudo apt-add-repository "deb https://apt.kitware.com/ubuntu/ $(lsb_release -cs) main"
+			sudo apt-get update
+			sudo apt-get install -yq kitware-archive-keyring
+			sudo apt-get install -yq cmake
+		fi
 		;;
 	macos)
 		pkgs="bison make pillow"
