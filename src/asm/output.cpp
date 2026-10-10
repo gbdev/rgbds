@@ -131,8 +131,10 @@ static void writeSymbol(Symbol const &sym, FILE *file) {
 }
 
 void out_RegisterSymbol(Symbol &sym) {
-	// Check for `sym.src`, to skip any built-in symbol from rgbasm
-	if (sym.src && !sym.isReferenced() && !sym_IsPC(&sym)) {
+	// Do not re-register already-referenced symbols, since their ID should not change.
+	// Do not register builtins, since they are designed to be specific to be per-invocation,
+	// and they should not be accessible to other assembled objects.
+	if (!sym.isReferenced() && !sym.isBuiltin) {
 		sym.ID = objectSymbols.size(); // Set the symbol's ID within the object file
 		objectSymbols.push_back(&sym);
 		out_RegisterNode(sym.src);
