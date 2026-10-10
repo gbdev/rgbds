@@ -45,7 +45,8 @@ struct Symbol {
 	    >
 	    data;
 
-	uint32_t ID;       // ID of the symbol in the object file (`UINT32_MAX` if none)
+	uint32_t ID; // ID of the symbol in the object file (`UINT32_MAX` if none)
+	bool isReferenced() const { return ID != UINT32_MAX; }
 	uint32_t defIndex; // Ordering of the symbol in the state file
 
 	bool isDefined() const { return type != SYM_REF; }

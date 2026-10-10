@@ -65,14 +65,14 @@ static void putString(std::string const &s, FILE *file) {
 
 void out_RegisterNode(std::shared_ptr<FileStackNode> node) {
 	// If node is not already registered, register it (and parents), and give it a unique ID
-	for (; node && node->ID == UINT32_MAX; node = node->parent) {
+	for (; node && !node->isReferenced(); node = node->parent) {
 		node->ID = fileStackNodes.size();
 		fileStackNodes.push_front(node);
 	}
 }
 
 static void writeSection(Section const &sect, FILE *file) {
-	assume(sect.src->ID != UINT32_MAX);
+	assume(sect.src->isReferenced());
 
 	putString(sect.name, file);
 
@@ -96,7 +96,7 @@ static void writeSection(Section const &sect, FILE *file) {
 		putLong(sect.patches.size(), file);
 
 		for (Patch const &patch : sect.patches) {
-			assume(patch.src->ID != UINT32_MAX);
+			assume(patch.src->isReferenced());
 
 			putLong(patch.src->ID, file);
 			putLong(patch.lineNo, file);
@@ -111,13 +111,14 @@ static void writeSection(Section const &sect, FILE *file) {
 }
 
 static void writeSymbol(Symbol const &sym, FILE *file) {
-	assume(sym.ID != UINT32_MAX);
+	assume(!sym.isBuiltin); // All builtin symbols are designed to be per-invocation, not unique.
+	assume(sym.isReferenced()); // Expect that its `ID` has been set.
 
 	putString(sym.name.str(), file);
 	if (!sym.isDefined()) {
 		putc(SYMTYPE_IMPORT, file);
 	} else {
-		assume(sym.src->ID != UINT32_MAX);
+		assume(sym.src->isReferenced());
 
 		Section *symSection = sym.getSection();
 
@@ -131,7 +132,7 @@ static void writeSymbol(Symbol const &sym, FILE *file) {
 
 void out_RegisterSymbol(Symbol &sym) {
 	// Check for `sym.src`, to skip any built-in symbol from rgbasm
-	if (sym.src && sym.ID == UINT32_MAX && !sym_IsPC(&sym)) {
+	if (sym.src && !sym.isReferenced() && !sym_IsPC(&sym)) {
 		sym.ID = objectSymbols.size(); // Set the symbol's ID within the object file
 		objectSymbols.push_back(&sym);
 		out_RegisterNode(sym.src);
@@ -178,7 +179,7 @@ void out_CreateAssert(
 }
 
 static void writeAssert(Assertion const &assert, FILE *file) {
-	assume(assert.src->ID != UINT32_MAX);
+	assume(assert.src->isReferenced());
 
 	putLong(assert.src->ID, file);
 	putLong(assert.lineNo, file);

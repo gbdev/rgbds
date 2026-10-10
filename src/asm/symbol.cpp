@@ -164,7 +164,7 @@ static void updateSymbolFilename(Symbol &sym) {
 	sym.fileLine = sym.src ? lexer_GetLineNo() : 0;
 
 	// If the old node was registered, ensure the new one is too
-	if (oldSrc && oldSrc->ID != UINT32_MAX) {
+	if (oldSrc && oldSrc->isReferenced()) {
 		out_RegisterNode(sym.src);
 	}
 }
@@ -348,7 +348,7 @@ void sym_Purge(InternedStr symName) {
 		}
 	} else if (sym->isBuiltin) {
 		error("Built-in symbol `%s` cannot be purged", symName.c_str());
-	} else if (sym->ID != UINT32_MAX) {
+	} else if (sym->isReferenced()) {
 		error("Symbol `%s` is referenced and thus cannot be purged", symName.c_str());
 	} else {
 		if (sym->isExported) {
