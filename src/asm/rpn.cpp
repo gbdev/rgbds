@@ -596,7 +596,6 @@ void RPNValue::appendEncoded(std::vector<uint8_t> &buffer) const {
 		assume(std::holds_alternative<InternedStr>(data));
 		// The symbol name is always written expanded
 		Symbol *sym = sym_FindExactSymbol(std::get<InternedStr>(data));
-		sym->isReferenced = true;
 		out_RegisterSymbol(*sym); // Ensure that `sym->ID` is set
 		buffer.push_back(sym->ID & 0xFF);
 		buffer.push_back(sym->ID >> 8);

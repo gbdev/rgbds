@@ -112,7 +112,6 @@ static void writeSection(Section const &sect, FILE *file) {
 
 static void writeSymbol(Symbol const &sym, FILE *file) {
 	assume(sym.ID != UINT32_MAX);
-	assume(sym.isReferenced || sym.isExported);
 
 	putString(sym.name.str(), file);
 	if (!sym.isDefined()) {
@@ -131,10 +130,8 @@ static void writeSymbol(Symbol const &sym, FILE *file) {
 }
 
 void out_RegisterSymbol(Symbol &sym) {
-	// Register symbols for output if they were referenced or exported
 	// Check for `sym.src`, to skip any built-in symbol from rgbasm
-	if (sym.src != nullptr && sym.ID == UINT32_MAX && (sym.isReferenced || sym.isExported)
-	    && !sym_IsPC(&sym)) {
+	if (sym.src && sym.ID == UINT32_MAX && !sym_IsPC(&sym)) {
 		sym.ID = objectSymbols.size(); // Set the symbol's ID within the object file
 		objectSymbols.push_back(&sym);
 		out_RegisterNode(sym.src);
@@ -234,8 +231,12 @@ void out_WriteObject() {
 	}
 	Defer closeFile{[&] { xfclose(file); }};
 
-	// Also write symbols that weren't written above
-	sym_ForEach(out_RegisterSymbol);
+	// Also write exported symbols that weren't referenced above
+	sym_ForEach([](Symbol &sym) {
+		if (sym.isExported) {
+			out_RegisterSymbol(sym);
+		}
+	});
 
 	fputs(RGBDS_OBJECT_VERSION_STRING, file);
 	putLong(RGBDS_OBJECT_REV, file);

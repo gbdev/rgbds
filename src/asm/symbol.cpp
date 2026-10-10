@@ -239,7 +239,6 @@ static Symbol &createSymbol(InternedStr symName) {
 
 	sym.name = symName;
 	sym.isBuiltin = false;
-	sym.isReferenced = false;
 	sym.isExported = false;
 	sym.isQuiet = false;
 	sym.section = nullptr;
@@ -349,7 +348,7 @@ void sym_Purge(InternedStr symName) {
 		}
 	} else if (sym->isBuiltin) {
 		error("Built-in symbol `%s` cannot be purged", symName.c_str());
-	} else if (sym->isReferenced) {
+	} else if (sym->ID != UINT32_MAX) {
 		error("Symbol `%s` is referenced and thus cannot be purged", symName.c_str());
 	} else {
 		if (sym->isExported) {
@@ -692,7 +691,6 @@ Symbol *sym_Ref(InternedStr symName) {
 	if (!sym) {
 		sym = &createSymbol(expandedSymName(symName));
 		sym->type = SYM_REF;
-		sym->isReferenced = true;
 	}
 
 	return sym;
