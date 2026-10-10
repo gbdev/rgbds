@@ -418,9 +418,12 @@ static void categorizeSection(Section &section) {
 
 	// Insert section while keeping the list sorted by decreasing alignment and size
 	std::deque<Section *> &sections = unassignedSections[constraints];
-	auto const compareSections = [](Section const *prev, Section const &sect) {
-		return prev->alignMask != sect.alignMask ? prev->alignMask > sect.alignMask
-		                                         : prev->size > sect.size;
+	auto const compareSections = [&constraints](Section const *prev, Section const &sect) {
+		assume(prev->isAlignFixed == sect.isAlignFixed);
+		if ((constraints & ALIGN_CONSTRAINED) && prev->alignMask != sect.alignMask) {
+			return prev->alignMask > sect.alignMask;
+		}
+		return prev->size > sect.size;
 	};
 	sections.insert(std::lower_bound(RANGE(sections), section, compareSections), &section);
 }
