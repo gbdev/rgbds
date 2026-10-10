@@ -111,6 +111,9 @@ static void writeSection(Section const &sect, FILE *file) {
 }
 
 static void writeSymbol(Symbol const &sym, FILE *file) {
+	assume(sym.ID != UINT32_MAX);
+	assume(sym.isReferenced || sym.isExported);
+
 	putString(sym.name.str(), file);
 	if (!sym.isDefined()) {
 		putc(SYMTYPE_IMPORT, file);
@@ -128,8 +131,10 @@ static void writeSymbol(Symbol const &sym, FILE *file) {
 }
 
 void out_RegisterSymbol(Symbol &sym) {
+	// Register symbols for output if they were referenced or exported
 	// Check for `sym.src`, to skip any built-in symbol from rgbasm
-	if (sym.src && sym.ID == UINT32_MAX && !sym_IsPC(&sym)) {
+	if (sym.src != nullptr && sym.ID == UINT32_MAX && (sym.isReferenced || sym.isExported)
+	    && !sym_IsPC(&sym)) {
 		sym.ID = objectSymbols.size(); // Set the symbol's ID within the object file
 		objectSymbols.push_back(&sym);
 		out_RegisterNode(sym.src);

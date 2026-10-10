@@ -1,3 +1,3 @@
 SECTION "low", ROM0[$0048]
-LCDInterrupt:
+LCDInterrupt::
 	jr hLCDInterruptHandler

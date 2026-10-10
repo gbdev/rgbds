@@ -30,6 +30,7 @@ struct Symbol {
 	InternedStr name;
 	SymbolType type;
 	bool isBuiltin;
+	bool isReferenced;
 	bool isExported; // Not relevant for SYM_MACRO or SYM_EQUS
 	bool isQuiet;    // Only relevant for SYM_MACRO
 	Section *section;
