@@ -111,6 +111,8 @@ static void writeSection(Section const &sect, FILE *file) {
 }
 
 static void writeSymbol(Symbol const &sym, FILE *file) {
+	assume(sym.ID != UINT32_MAX);
+
 	putString(sym.name.str(), file);
 	if (!sym.isDefined()) {
 		putc(SYMTYPE_IMPORT, file);
@@ -229,8 +231,14 @@ void out_WriteObject() {
 	}
 	Defer closeFile{[&] { xfclose(file); }};
 
-	// Also write symbols that weren't written above
-	sym_ForEach(out_RegisterSymbol);
+	// Register exported symbols that weren't referenced within this assembled object, so that other
+	// objects may reference them. We do not immediately register symbols upon exporting them,
+	// because we allow purging exported symbols (see `-Wpurge`) but not referenced ones.
+	sym_ForEach([](Symbol &sym) {
+		if (sym.isExported) {
+			out_RegisterSymbol(sym);
+		}
+	});
 
 	fputs(RGBDS_OBJECT_VERSION_STRING, file);
 	putLong(RGBDS_OBJECT_REV, file);
