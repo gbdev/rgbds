@@ -820,10 +820,7 @@ disables; and
 enables every warning that
 .Fl Wno-all
 disables).
-Only the non-default flag is listed here.
-Ignoring the
-.Dq no-
-prefix, entries are listed alphabetically.
+The flags are listed alphabetically below.
 .Bl -tag -width Ds
 .It Fl Wembedded
 Warn when a generated palette is sorted according to the input PNG's embedded palette but
@@ -831,8 +828,9 @@ Warn when a generated palette is sorted according to the input PNG's embedded pa
 was not provided.
 This warning is enabled by
 .Fl Weverything .
-.It Fl Wno-obsolete
+.It Fl Wobsolete
 Warn when obsolete features are encountered, which have been deprecated and may later be removed.
+This warning is enabled by default.
 .It Fl Wtrim-nonempty
 Warn when
 .Fl x
