@@ -1888,10 +1888,15 @@ INCBIN "sprites/hero.bin"
 .Pp
 You can also include only part of a file with
 .Ic INCBIN .
-The example below includes 256 bytes from data.bin, starting from byte 78.
+The example below includes 256 bytes from
+.Ql data.bin ,
+starting from byte 78.
 .Bd -literal -offset indent
 INCBIN "data.bin", 78, 256
 .Ed
+It is an error for
+.Ql data.bin
+to contain fewer than 78 + 256 = 334 bytes.
 .Pp
 The length argument is optional.
 If only the start position is specified, the bytes from the start position until the end of the file will be included.
