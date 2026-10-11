@@ -30,6 +30,7 @@ local args=(
 
 	'(-a --attr-map -A --auto-attr-map)'{-A,--auto-attr-map}'[Shortcut for -a <file>.attrmap]'
 	'(-C --color-curve)'{-C,--color-curve}'[Generate palettes using GBC color curve]'
+	'(-j --oam)'{-j,--oam}'[Use 8x16px OAM tiles]'
 	'(-m --mirror-tiles)'{-m,--mirror-tiles}'[Eliminate mirrored tiles from output]'
 	'(-O --group-outputs)'{-O,--group-outputs}'[Base "shortcut" options on the output path, not input]'
 	'(-p --palette -P --auto-palette)'{-P,--auto-palette}'[Shortcut for -p <file>.pal]'
