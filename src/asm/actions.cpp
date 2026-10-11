@@ -126,7 +126,7 @@ void act_Assert(AssertionType type, Expression const &expr, std::string const &m
 		fatal("Assertion messages cannot contain '\\0' characters");
 	}
 	if (!expr.isKnown()) {
-		out_CreateAssert(type, expr, message, sect_GetOutputOffset());
+		out_CreateAssert(type, expr, message);
 	} else if (expr.value() == 0) {
 		failAssert(type, message);
 	}
