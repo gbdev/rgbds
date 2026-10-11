@@ -216,28 +216,12 @@ is the case-insensitive word
 .Cm dmg ,
 then it acts like
 .Cm dmg=E4 ,
-i.e. the lightest gray will end up in color index 0, and so on.
+i.e. the darkest gray will end up in color index 0, and so on.
 The same gray shade cannot go in two color indexes.
-.Pp
-If the input PNG contains
-.Em any
-transparent pixels,
-then color index 0 is transparent instead of a gray shade
-(as described in
-.Sx PALETTE GENERATION ) ,
-and the other gray shades are unaffected.
-The gray shade which the specification assigns to color index 0 then has nowhere to go,
-so it is an error for the input PNG to contain that shade as well,
-as that would require five colors in a palette, which only holds four.
-This is useful for OAM sprite graphics,
-where the Game Boy hardware always makes color index 0 transparent,
-letting the BG tiles behind the sprites show through.
-Note that
-.Fl B Cm transparent
-does not have this effect,
-as it makes transparent pixels be skipped as background instead.
-.Pp
 To specify a DMG palette, the input PNG must have all its colors in shades of gray.
+If the image contains
+.Em any
+transparent pixels, then color #0 of the palette will be transparent instead, and the shade of gray which would otherwise have gone in color #0 will not be usable.
 .It Sy automatic palette generation
 If
 .Ar pal_spec
@@ -643,7 +627,7 @@ may be appropriate.
 Otherwise, if the PNG only contains shades of gray, they will be categorized into as many
 .Dq bins
 as there are colors per palette, and the palette is set to these bins.
-The lightest gray will end up in bin #0, and so on; note that this is the opposite of the RGB method below.
+The darkest gray will end up in bin #0, and so on; note that this is the opposite of the RGB method below.
 This is equivalent to having specified a DMG palette of
 .Fl c Cm dmg=E4 .
 If two distinct grays end up in the same bin, the RGB method is used instead.

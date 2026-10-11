@@ -737,9 +737,7 @@ void parseDmgPalSpec(char const * const rawArg) {
 
 	options.palSpecDmg = toHex(arg[0], arg[1]);
 
-	// Map gray shades to their DMG color indexes for fast lookup by `Rgba::grayShade` and
-	// `Rgba::grayIndex`. Note that if the image contains transparent pixels, color index 0 will be
-	// transparent instead, which `Options::dmgShadeIsUnusable` accounts for.
+	// Map gray shades to their DMG color indexes for fast lookup by `Rgba::grayIndex`
 	for (uint8_t i = 0; i < 4; ++i) {
 		options.dmgColors[options.dmgValue(i)] = i;
 	}

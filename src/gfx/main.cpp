@@ -207,7 +207,7 @@ static void parseArg(int ch, char *arg) {
 			options.palSpecType = Options::NO_SPEC;
 		} else if (strcasecmp(arg, "dmg") == 0) {
 			options.palSpecType = Options::DMG;
-			localOptions.palSpec = "e4"; // Same lightest-first order as `sortGrayscale`
+			localOptions.palSpec = "e4"; // Same darkest-first order as `sortGrayscale`
 		} else if (strncasecmp(arg, "dmg=", literal_strlen("dmg=")) == 0) {
 			options.palSpecType = Options::DMG;
 			localOptions.palSpec = &arg[literal_strlen("dmg=")];

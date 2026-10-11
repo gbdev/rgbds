@@ -45,12 +45,9 @@ struct Rgba {
 	static Rgba fromCGBColor(uint16_t color, bool useColorCurve);
 	// Computes the equivalent RGB555 color; respects the color curve depending on options
 	uint16_t cgbColor() const;
+	uint8_t dmgColor() const;
 
 	bool isGray() const { return red == green && green == blue; }
-	// Reduces the gray shade to one of 4 "bins" (0 = white, 1 = light gray, 2 = dark gray,
-	// 3 = black), for lookup by `Options::dmgColors`.
-	uint8_t grayShade() const;
-	// Returns the color index this gray shade maps to, which depends on the palette spec.
 	uint8_t grayIndex() const;
 };
 

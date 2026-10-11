@@ -100,28 +100,29 @@ uint16_t Rgba::cgbColor() const {
 	return r | g << 5 | b << 10;
 }
 
-uint8_t Rgba::grayShade() const {
+uint8_t Rgba::dmgColor() const {
 	assume(isGray());
-	// 2bpp shades are inverted from RGB PNG; %00 = white, %11 = black
-	return (255 - red) * 4 / 256;
+	// Reduce from [0, 256) RGB channel to [0, 4) gray shade, then map to color index.
+	// 2bpp shades are inverted from RGB PNG; %00 = white, %11 = black.
+	return options.dmgColors[(255 - red) * 4 / 256];
 }
 
 uint8_t Rgba::grayIndex() const {
 	assume(isGray());
+	auto const scaleIndex = []<typename T>(T value, T limit) {
+		// Reduce from [0, limit) value to [hasTransparentPixels, nbColorsPerPal) gray shade.
+		// Note that `maxOpaqueColors()` already takes `hasTransparentPixels` into account.
+		return value * options.maxOpaqueColors() / limit + options.hasTransparentPixels;
+	};
 	if (options.palSpecType == Options::DMG) {
-		// Map the gray shade to the DMG color index it belongs to, then reduce that index to the
-		// palette slot it ends up in, merging DMG color indexes together if `nbColorsPerPal` < 4.
-		// Color index 0 is taken by transparency if the image has any transparent pixels, which
-		// leaves the shade that `dmg=` assigned to it unusable;
-		// `Image::isSuitableForGrayscale` rejects such images, so the subtraction cannot underflow.
-		uint8_t firstIndex = options.hasTransparentPixels; // 0, or 1 for transparency
-		uint8_t dmgIndex = options.dmgColors[grayShade()];
-		assume(dmgIndex >= firstIndex);
-		return firstIndex + (dmgIndex - firstIndex) * options.maxOpaqueColors() / (4 - firstIndex);
+		// If the image uses any transparent pixels, color index 0 is transparent instead of
+		// whichever DMG shade corresponds to that index from the `-c/--colors`-specified
+		// `palSpecDmg`, and that now-transparent DMG shade is not available in the palette.
+		uint8_t index = dmgColor();
+		assume(index >= options.hasTransparentPixels);
+		return scaleIndex(index - options.hasTransparentPixels, 4 - options.hasTransparentPixels);
+	} else {
+		// 2bpp shades are inverted from RGB PNG; %00 = white, %11 = black.
+		return scaleIndex(255 - red, 256);
 	}
-	// 2bpp shades are inverted from RGB PNG; %00 = white, %11 = black
-	uint8_t gray = 255 - red;
-	// Reduce gray shade from 0..<256 to hasTransparentPixels..<nbColorsPerPal
-	// Note that `maxOpaqueColors()` already takes `hasTransparentPixels` into account
-	return gray * options.maxOpaqueColors() / 256 + options.hasTransparentPixels;
 }

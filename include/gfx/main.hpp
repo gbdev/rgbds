@@ -66,19 +66,12 @@ struct Options {
 		return palSpecType == EMBEDDED || palSpecType == EMBEDDED_MULTIPLE;
 	}
 
-	// `dmgColors` maps each of the 4 gray shades (0 = white ... 3 = black) to the DMG color index
-	// it belongs to, for fast lookup by `Rgba::grayShade` and `Rgba::grayIndex`.
+	// dmgColors[gray shade] = palette color index for that shade
 	uint8_t dmgColors[4] = {};
+	// Returns the DMG shade corresponding to a given palette color index.
 	uint8_t dmgValue(uint8_t i) const {
 		assume(i < 4);
 		return (palSpecDmg >> (2 * i)) & 0b11;
-	}
-	// Color index 0 is used for transparency if the image contains any transparent pixels, so the
-	// gray shade which the DMG palette spec put there has nowhere to go: a palette only has room
-	// for `nbColorsPerPal` colors, so using it as well would require 5 of them.
-	bool dmgShadeIsUnusable(uint8_t grayShade) const {
-		assume(grayShade < 4);
-		return hasTransparentPixels && dmgColors[grayShade] == 0;
 	}
 };
 

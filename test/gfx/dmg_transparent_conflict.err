@@ -1,2 +1,2 @@
-FATAL: Image is not compatible with a DMG palette specification: it contains a color #ffffffff that the DMG palette spec maps to the transparent color index
+FATAL: Image is not compatible with a DMG palette specification: it contains a color #ffffffff that reduces to the same gray shade as transparent color #0
 Conversion aborted after 1 error
