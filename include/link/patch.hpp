@@ -12,7 +12,6 @@ struct Symbol;
 
 struct Assertion {
 	Expression rpn;
-	uint32_t offset;
 	AssertionType type;
 	std::string message;
 	// This would be redundant with `rpn.pcSection->fileSymbols`,
