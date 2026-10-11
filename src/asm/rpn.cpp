@@ -98,9 +98,9 @@ void Expression::makeBankSymbol(InternedStr symName) {
 	} else {
 		sym = sym_Ref(symName);
 		assume(sym); // If the symbol didn't exist, it should have been created
-		if (sym->getSection() && sym->getSection()->bank != UINT32_MAX) {
+		if (Section *symSect = sym->getSection(); symSect && symSect->bank != UINT32_MAX) {
 			// Symbol's section is known and bank is fixed
-			data = static_cast<int32_t>(sym->getSection()->bank);
+			data = static_cast<int32_t>(symSect->bank);
 		} else {
 			data = sym_IsPurgedScoped(symName)
 			           ? "`"s + symName.str() + "`'s bank is not known; it was purged"
