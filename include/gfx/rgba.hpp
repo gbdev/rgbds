@@ -45,6 +45,7 @@ struct Rgba {
 	static Rgba fromCGBColor(uint16_t color, bool useColorCurve);
 	// Computes the equivalent RGB555 color; respects the color curve depending on options
 	uint16_t cgbColor() const;
+	uint8_t dmgColor() const;
 
 	bool isGray() const { return red == green && green == blue; }
 	uint8_t grayIndex() const;

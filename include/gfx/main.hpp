@@ -66,7 +66,9 @@ struct Options {
 		return palSpecType == EMBEDDED || palSpecType == EMBEDDED_MULTIPLE;
 	}
 
+	// dmgColors[gray shade] = palette color index for that shade
 	uint8_t dmgColors[4] = {};
+	// Returns the DMG shade corresponding to a given palette color index.
 	uint8_t dmgValue(uint8_t i) const {
 		assume(i < 4);
 		return (palSpecDmg >> (2 * i)) & 0b11;

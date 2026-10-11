@@ -218,7 +218,10 @@ then it acts like
 .Cm dmg=E4 ,
 i.e. the darkest gray will end up in color index 0, and so on.
 The same gray shade cannot go in two color indexes.
-To specify a DMG palette, the input PNG must have all its colors in shades of gray, without any transparent colors.
+To specify a DMG palette, the input PNG must have all its colors in shades of gray.
+If the image contains
+.Em any
+transparent pixels, then color #0 of the palette will be transparent instead, and the shade of gray which would otherwise have gone in color #0 will not be usable.
 .It Sy automatic palette generation
 If
 .Ar pal_spec
