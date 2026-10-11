@@ -33,7 +33,6 @@
 struct Assertion {
 	std::shared_ptr<FileStackNode> src;
 	uint32_t lineNo;
-	uint32_t offset;
 	Section *pcSection;
 	uint32_t pcOffset;
 	AssertionType type;
@@ -155,9 +154,7 @@ void out_CreatePatch(PatchType type, Expression const &expr, uint32_t ofs, uint3
 	patch.pcOffset -= pcShift;
 }
 
-void out_CreateAssert(
-    AssertionType type, Expression const &expr, std::string const &message, uint32_t ofs
-) {
+void out_CreateAssert(AssertionType type, Expression const &expr, std::string const &message) {
 	if (message.find('\0') != std::string::npos) {
 		fatal("Assertion messages cannot contain '\\0' characters");
 	}
@@ -168,7 +165,6 @@ void out_CreateAssert(
 	// All assertions are assumed to eventually be written, so the file stack node is registered
 	out_RegisterNode(assertion.src);
 	assertion.lineNo = lexer_GetLineNo();
-	assertion.offset = ofs;
 	assertion.pcSection = sect_GetSymbolSection();
 	assertion.pcOffset = sect_GetSymbolOffset();
 	expr.encode(assertion.rpn);
@@ -180,7 +176,6 @@ static void writeAssert(Assertion const &assert, FILE *file) {
 
 	putLong(assert.src->ID, file);
 	putLong(assert.lineNo, file);
-	putLong(assert.offset, file);
 	putLong(assert.pcSection ? assert.pcSection->getID() : UINT32_MAX, file);
 	putLong(assert.pcOffset, file);
 	putc(assert.type, file);
