@@ -123,7 +123,7 @@ static void failAssert(AssertionType type, std::string const &message) {
 
 void act_Assert(AssertionType type, Expression const &expr, std::string const &message) {
 	if (!expr.isKnown()) {
-		out_CreateAssert(type, expr, message, sect_GetOutputOffset());
+		out_CreateAssert(type, expr, message);
 	} else if (expr.value() == 0) {
 		failAssert(type, message);
 	}

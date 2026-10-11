@@ -433,13 +433,6 @@ static void readAssertion(
 	    assertID
 	);
 	tryReadLong(
-	    assert.offset,
-	    file,
-	    "%s: Cannot read assertion #%" PRIu32 "'s offset: %s",
-	    fileName,
-	    assertID
-	);
-	tryReadLong(
 	    assert.rpn.pcSectionID,
 	    file,
 	    "%s: Cannot read assertion #%" PRIu32 "'s PC offset: %s",
