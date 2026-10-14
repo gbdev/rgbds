@@ -1,0 +1,11 @@
+error: Undefined symbol `Foo`
+    at const-unknown.asm(3)
+error: Undefined symbol `Foo`
+    at const-unknown.asm(4)
+error: Undefined symbol `Foo`
+    at const-unknown.asm(5)
+error: Undefined symbol `Foo`
+    at const-unknown.asm(6)
+error: Undefined symbol `Foo`
+    at const-unknown.asm(6)
+Linking failed with 5 errors

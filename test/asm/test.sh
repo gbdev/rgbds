@@ -81,6 +81,7 @@ for i in *.asm notexist.asm; do
 		else
 			desired_errname=/dev/null
 		fi
+		rm -f "$o" # Delete any previous object file so it will only exist if RGBASM creates one.
 		if [ -z "$variant" ]; then
 			"$RGBASM" "${RGBASMFLAGS[@]}" -o "$o" "$i" >"$output" 2>"$errput"
 			desired_output=$desired_outname
@@ -112,14 +113,38 @@ for i in *.asm notexist.asm; do
 		tryDiff "$desired_errput" "$errput" err
 		(( our_rc = our_rc || $? ))
 
-		desired_binname=${i%.asm}.out.bin
-		if [[ -f "$desired_binname" && $our_rc -eq 0 ]]; then
-			# 'rgblink -x' implies '-t', so asm/*.out.bin tests cannot use ROMX past 1
-			if ! "$RGBLINK" -x -o "$gb" "$o"; then
-				echo "${bold}${red}\`$RGBLINK -x -o $gb $o\` failed!${rescolors}${resbold}"
-				(( our_rc = 1 ))
+		# Only attempt to link if RGBASM created an object file.
+		if [[ -f "$o" ]]; then
+			desired_binname=${i%.asm}.out.bin
+			if [[ -f "$desired_binname" ]]; then
+				# 'rgblink -x' implies '-t', so asm/*.out.bin tests cannot use ROMX banks above 1.
+				if ! "$RGBLINK" -x -o "$gb" "$o"; then
+					echo "${bold}${red}\`$RGBLINK -x -o $gb $o\` failed!${rescolors}${resbold}"
+					(( our_rc = 1 ))
+				else
+					tryCmp "$desired_binname" "$gb" gb
+					(( our_rc = our_rc || $? ))
+				fi
 			else
-				tryCmp "$desired_binname" "$gb" gb
+				# Link to check that any link-time assertions pass.
+				# Do not pass '-x' in case tests used ROMX banks above 1.
+				if [ -e "${i%.asm}.link.err" ]; then
+					desired_errname=${i%.asm}.link.err
+				else
+					desired_errname=/dev/null
+				fi
+				if [ -z "$variant" ]; then
+					desired_errput=$desired_errname
+				else
+					# Use an otherwise unused file for temp storage
+					desired_errput="$gb"
+					# Escape regex metacharacters
+					subst="$(printf '%s\n' "$i" | sed 's:[][\/.^$*]:\\&:g')"
+					# Replace the file name with "<stdin>" to match changed output
+					sed "s/$subst/<stdin>/g" "$desired_errname" >"$desired_errput"
+				fi
+				"$RGBLINK" "$o" 2>"$errput"
+				tryDiff "$desired_errput" "$errput" link.err
 				(( our_rc = our_rc || $? ))
 			fi
 		fi

@@ -1,0 +1,3 @@
+error: Undefined symbol `foo.bar`
+    at undefined-local.asm(3)
+Linking failed with 1 error

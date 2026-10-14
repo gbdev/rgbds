@@ -1,0 +1,3 @@
+error: Undefined symbol `rDMA`
+    at endl-local-scope.asm(18)
+Linking failed with 1 error

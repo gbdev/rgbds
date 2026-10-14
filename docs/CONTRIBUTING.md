@@ -129,9 +129,15 @@ its contents.
 If a `.err` file exists, RGBASM's error output (`warn`, errors, etc.) must match
 its contents.
 
-If a `.out.bin` file exists, the object file will be linked, and the generated
-ROM truncated to the length of the `.out.bin` file.
-After that, the ROM must match the `.out.bin` file.
+If RGBASM did not create an object file (either because it failed or it was not
+expected to), RGBLINK will not be run and its output will not be checked.
+
+If a `.out.bin` file exists, the object file will be linked in `-x/--nopad`
+mode, and the generated ROM must match its contents.
+
+If no `.out.bin` file exists, the object file will be linked in normal mode.
+If a `.link.err` file exists, RGBLINK's error output must match its contents;
+otherwise, RGBLINK is expected to succeed and not output anything.
 
 #### CLI tests
 
@@ -196,7 +202,7 @@ explain what the test is about.)
 RGBFIX will be invoked on the `.bin` file if it exists, or else on
 default-input.bin.
 
-If no `.out` file exist, RGBFIX is not expected to output anything.
+If no `.out` file exists, RGBFIX is not expected to output anything.
 If one *does* exist, RGBFIX's output **must** match the `.out` file's contents.
 
 If no `.err` file exists, RGBFIX is simply expected to be able to process the
