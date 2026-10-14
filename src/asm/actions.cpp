@@ -132,8 +132,9 @@ void act_Assert(AssertionType type, Expression const &expr, std::string const &m
 	}
 }
 
-void act_StaticAssert(AssertionType type, int32_t condition, std::string const &message) {
-	if (!condition) {
+void act_StaticAssert(AssertionType type, Expression const &expr, std::string const &message) {
+	// If `expr` is not a known constant, `expr.getConstVal()` will print its own error.
+	if (int32_t condition = expr.getConstVal(); expr.isKnown() && !condition) {
 		failAssert(type, message);
 	}
 }

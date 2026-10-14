@@ -761,10 +761,10 @@ assert:
 	| POP_ASSERT assert_type relocexpr COMMA string {
 		act_Assert($2, $3, $5);
 	}
-	| POP_STATIC_ASSERT assert_type iconst {
+	| POP_STATIC_ASSERT assert_type relocexpr {
 		act_StaticAssert($2, $3, "");
 	}
-	| POP_STATIC_ASSERT assert_type iconst COMMA string {
+	| POP_STATIC_ASSERT assert_type relocexpr COMMA string {
 		act_StaticAssert($2, $3, $5);
 	}
 ;
