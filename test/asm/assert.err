@@ -6,7 +6,5 @@ warning: Assertion failed [-Wassert]
     at assert.asm(10)
 error: Expected constant expression: `FloatingBase` is not constant at assembly time
     at assert.asm(18)
-error: Assertion failed
-    at assert.asm(18)
 FATAL: Assertion failed
     at assert.asm(21)

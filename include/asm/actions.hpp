@@ -29,7 +29,7 @@ void act_Endc();
 AlignmentSpec act_Alignment(int32_t alignment, int32_t alignOfs);
 
 void act_Assert(AssertionType type, Expression const &expr, std::string const &message);
-void act_StaticAssert(AssertionType type, int32_t condition, std::string const &message);
+void act_StaticAssert(AssertionType type, Expression const &expr, std::string const &message);
 
 std::optional<std::string> act_ReadFile(std::string const &name, uint32_t maxLen);
 
