@@ -1,1 +1,1 @@
-assert 1 + 1 == 2 \
+static_assert 1 + 1 == 2 \

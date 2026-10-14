@@ -1,9 +1,9 @@
 macro try
 	def x = \1
 	if _NARG > 1
-		assert x == \2
+		static_assert x == \2
 	else
-		assert x == 0
+		static_assert x == 0
 	endc
 endm
 

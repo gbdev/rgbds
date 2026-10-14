@@ -4,7 +4,7 @@ MACRO test
 	def quo = num / den
 	def rem = num % den
 	def rev = quo * den + rem
-	assert num == rev
+	static_assert num == rev
 	println "{ 11d:num} (${08x:num}) / { 11d:den} (${08x:den}) = { 11d:quo} (${08x:quo}) R { 11d:rem} (${08x:rem})"
 ENDM
 

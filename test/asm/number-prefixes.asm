@@ -1,5 +1,5 @@
 MACRO test
-	assert (\1) == (\2)
+	static_assert (\1) == (\2)
 ENDM
 
 test 0xDEADbeef, $DEADbeef

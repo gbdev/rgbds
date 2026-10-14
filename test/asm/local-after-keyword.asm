@@ -7,7 +7,7 @@ else
 endc
 
 rept 0
-	assert.local "lol"
+	static_assert.local "lol"
 endr
 rept 1
 	println "this is fine"

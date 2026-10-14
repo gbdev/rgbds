@@ -4,4 +4,4 @@
 
 SECTION "rgbasm passing asserts", ROM0[0]
 	db 0
-	assert @
+	static_assert @

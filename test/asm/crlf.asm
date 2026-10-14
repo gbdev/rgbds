@@ -2,7 +2,7 @@
 
 DEF s EQUS "Hello, \
 world!"
-assert !strcmp("{s}", "Hello, world!")
+static_assert !strcmp("{s}", "Hello, world!")
 
 /*
  * block comment
@@ -11,11 +11,11 @@ assert !strcmp("{s}", "Hello, world!")
 REPT 2
 	REDEF t EQUS """Hello,
 world!"""
-	assert !strcmp("{t}", "Hello,\nworld!")
+	static_assert !strcmp("{t}", "Hello,\nworld!")
 ENDR
 
 MACRO m
-	assert "\1" === "Hello, world!"
+	static_assert "\1" === "Hello, world!"
 ENDM
 
 m Hello\, \

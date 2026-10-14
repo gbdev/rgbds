@@ -6,6 +6,6 @@ for x, -n, n
     for i, p
       def v2 *= x
     endr
-    assert v1 == v2, "{d:x}**{d:p} = {d:v1} or {d:v2}?"
+    static_assert v1 == v2, "{d:x}**{d:p} = {d:v1} or {d:v2}?"
   endr
 endr

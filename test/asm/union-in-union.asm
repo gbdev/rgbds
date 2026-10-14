@@ -1,5 +1,5 @@
 SECTION "test", WRAM0
-UNION
+: UNION
 	UNION
 		db
 	NEXTU
@@ -8,4 +8,4 @@ UNION
 NEXTU
 	dl
 ENDU
-assert sizeof("test") == 4
+static_assert @ - :- == 4

@@ -4,9 +4,9 @@ ENDM
 
 MACRO now_in
 	if strcmp("\1", "nothing")
-		assert !strcmp(SECTION(@), \1)
+		static_assert !strcmp(SECTION(@), \1)
 	else
-		assert !def(@)
+		static_assert !def(@)
 	endc
 ENDM
 
