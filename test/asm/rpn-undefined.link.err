@@ -1,0 +1,7 @@
+error: Undefined symbol `UNDEFINED`
+    at rpn-undefined.asm(4)
+error: Requested `BANK()` of undefined section "Undefined"
+    at rpn-undefined.asm(3)
+error: Undefined symbol `UNDEFINED`
+    at rpn-undefined.asm(2)
+Linking failed with 3 errors

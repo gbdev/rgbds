@@ -1,0 +1,3 @@
+error: Value $2a is not a `RST` vector; use `CALL` instead
+    at rst.asm(15)
+Linking failed with 1 error

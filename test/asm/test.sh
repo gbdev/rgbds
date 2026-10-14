@@ -83,6 +83,7 @@ for i in *.asm notexist.asm; do
 		fi
 		if [ -z "$variant" ]; then
 			"$RGBASM" "${RGBASMFLAGS[@]}" -o "$o" "$i" >"$output" 2>"$errput"
+			assembled=$?
 			desired_output=$desired_outname
 			desired_errput=$desired_errname
 		else
@@ -96,6 +97,7 @@ for i in *.asm notexist.asm; do
 
 			# shellcheck disable=SC2002 # (This use of `cat` intentionally makes the input an unseekable pipe.)
 			cat "$i" | "$RGBASM" "${RGBASMFLAGS[@]}" -o "$o" - >"$output" 2>"$errput"
+			assembled=$?
 
 			# Use two otherwise unused files for temp storage
 			desired_output="$input"
@@ -112,10 +114,11 @@ for i in *.asm notexist.asm; do
 		tryDiff "$desired_errput" "$errput" err
 		(( our_rc = our_rc || $? ))
 
-		if ! (( our_rc )); then # Don't attempt to link if anything assembling-related has failed.
+		# Only attempt to link if assembling had the expected output.
+		if (( our_rc == 0 )); then
 			desired_binname=${i%.asm}.out.bin
 			if [[ -f "$desired_binname" ]]; then
-				# 'rgblink -x' implies '-t', so asm/*.out.bin tests cannot use ROMX past 1
+				# 'rgblink -x' implies '-t', so asm/*.out.bin tests cannot use ROMX banks above 1.
 				if ! "$RGBLINK" -x -o "$gb" "$o"; then
 					echo "${bold}${red}\`$RGBLINK -x -o $gb $o\` failed!${rescolors}${resbold}"
 					(( our_rc = 1 ))
@@ -123,16 +126,29 @@ for i in *.asm notexist.asm; do
 					tryCmp "$desired_binname" "$gb" gb
 					(( our_rc = our_rc || $? ))
 				fi
-			else
-				# Perform a (no-op) link, to check that no link-time assertions have been forgotten about.
-				# Do not pass `-x` because that implies tiny mode, which would make tests using ROM2+ fail.
-				# Also, we do not pass `-o` as that should do everything except actually emitting the ROM;
-				# this is a possibly fragile assumption, but it means that *something* in our test suite is
-				# exercising this flag combination.
-				if ! "$RGBLINK" "$o"; then
-					echo "${bold}${red}\`$RGBLINK $o\` failed!${rescolors}${resbold}"
-					(( our_rc = 1 ))
+			elif [[ "$assembled" -eq 0 && "$i" != "abort-on-missing-incbin"* ]]; then
+				# Link to check that any link-time assertions pass.
+				# Skip linking "abort-on-missing-incbin-*" since they exit normally despite not
+				# producing an object file.
+				# Do not pass '-x' in case tests used ROMX banks above 1.
+				if [ -e "${i%.asm}.link.err" ]; then
+					desired_errname=${i%.asm}.link.err
+				else
+					desired_errname=/dev/null
 				fi
+				if [ -z "$variant" ]; then
+					desired_errput=$desired_errname
+				else
+					# Use an otherwise unused file for temp storage
+					desired_errput="$gb"
+					# Escape regex metacharacters
+					subst="$(printf '%s\n' "$i" | sed 's:[][\/.^$*]:\\&:g')"
+					# Replace the file name with "<stdin>" to match changed output
+					sed "s/$subst/<stdin>/g" "$desired_errname" >"$desired_errput"
+				fi
+				"$RGBLINK" "$o" 2>"$errput"
+				tryDiff "$desired_errput" "$errput" link.err
+				(( our_rc = our_rc || $? ))
 			fi
 		fi
 

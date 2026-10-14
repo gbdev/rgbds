@@ -1,0 +1,3 @@
+error: Undefined symbol `Parent.orphan`
+    at remote-local-noexist.asm(7)
+Linking failed with 1 error
