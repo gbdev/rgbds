@@ -10,7 +10,7 @@ charmap '\n\r\t\0', 1337
 charmap '\',\",\\', 99
 
 MACRO char
-	assert (\1) == (\2)
+	static_assert (\1) == (\2)
 ENDM
 
 char 'A', 1
@@ -32,4 +32,4 @@ char '?', $3f ; ASCII
 char 'F', 0
 char 'ABF', 0
 char '\n\r\t', 0
-assert 0 == '
+static_assert 0 == '

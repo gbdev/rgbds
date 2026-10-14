@@ -3,15 +3,15 @@ def s equs "hello"
 macro m
 endm
 
-assert (#n) == 42
-assert (#s) == 0
-assert (#m) == 0
-assert (#u) == 0
+static_assert (#n) == 42
+static_assert (#s) == 0
+static_assert (#m) == 0
+static_assert (#u) == 0
 
-assert strlen(#n) == 0
-assert strlen(#s) == 5
-assert strlen(#m) == 0
-assert strlen(#u) == 0
+static_assert strlen(#n) == 0
+static_assert strlen(#s) == 5
+static_assert strlen(#m) == 0
+static_assert strlen(#u) == 0
 
 def d_n = (#n)
 def d_s = (#s)
@@ -25,5 +25,5 @@ def s_u equs #u
 
 purge #s
 purge #s
-assert (#s) == 0
-assert strlen(#s) == 0
+static_assert (#s) == 0
+static_assert strlen(#s) == 0

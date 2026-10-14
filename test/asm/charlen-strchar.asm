@@ -9,21 +9,21 @@ SECTION "test", ROM0
 
 DEF S EQUS "XBold<NULL>ABC"
 
-	assert CHARLEN("{S}") == 6
+	static_assert CHARLEN("{S}") == 6
 	println STRCHAR("{S}", 1)
 
-	assert !STRCMP(STRCHAR("{S}", 1), "Bold")
-	assert STRCHAR("{S}", -5) == STRCHAR("{S}", CHARLEN("{S}") - 5)
-	assert STRCHAR("{S}", 1) == "Bold" && "Bold" == $88
-	assert STRCHAR("{S}", 0) == $58 ; ASCII "X"
+	static_assert !STRCMP(STRCHAR("{S}", 1), "Bold")
+	static_assert STRCHAR("{S}", -5) == STRCHAR("{S}", CHARLEN("{S}") - 5)
+	static_assert STRCHAR("{S}", 1) == "Bold" && "Bold" == $88
+	static_assert STRCHAR("{S}", 0) == $58 ; ASCII "X"
 	db "{S}"
 
 	newcharmap ascii
 
-	assert CHARLEN("{S}") == 14
+	static_assert CHARLEN("{S}") == 14
 	println STRCHAR("{S}", 1)
-	assert !STRCMP(STRCHAR("{S}", 1), "B")
-	assert STRCHAR("{S}", -5) == STRCHAR("{S}", CHARLEN("{S}") - 5)
-	assert STRCHAR("{S}", 1) == "B" && "B" == $42 ; ASCII "B"
-	assert STRCHAR("{S}", 0) == $58 ; ASCII "X"
+	static_assert !STRCMP(STRCHAR("{S}", 1), "B")
+	static_assert STRCHAR("{S}", -5) == STRCHAR("{S}", CHARLEN("{S}") - 5)
+	static_assert STRCHAR("{S}", 1) == "B" && "B" == $42 ; ASCII "B"
+	static_assert STRCHAR("{S}", 0) == $58 ; ASCII "X"
 	db "{S}"

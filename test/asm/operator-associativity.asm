@@ -6,12 +6,12 @@ ENDM
 
 MACRO left
 	setup \#
-	ASSERT result == leftgroup && result != rightgroup
+	STATIC_ASSERT result == leftgroup && result != rightgroup
 ENDM
 
 MACRO right
 	setup \#
-	ASSERT result == rightgroup && result != leftgroup
+	STATIC_ASSERT result == rightgroup && result != leftgroup
 ENDM
 
 	left /, 24, 6, 2

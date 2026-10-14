@@ -3,7 +3,7 @@ SECTION "test", ROM0[1]
 	PRINTLN "PC in ROM: {@}"
 	LOAD "new", WRAMX[$D001],BANK[1]
 	PRINTLN "PC in WRAM: {@}"
-	assert @ == $D001
+	static_assert @ == $D001
 Target:	dl DEAD << 16 | BEEF
 	db BANK(@)
 	jr .end

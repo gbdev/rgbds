@@ -1,3 +1,3 @@
 ; these have unpredictable values depending on the locale
-assert STRLEN(__DATE__)
-assert STRLEN(__TIME__)
+static_assert STRLEN(__DATE__)
+static_assert STRLEN(__TIME__)

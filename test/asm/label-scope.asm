@@ -1,4 +1,4 @@
-ASSERT !DEF(@) && !DEF(.) && !DEF(..)
+STATIC_ASSERT !DEF(@) && !DEF(.) && !DEF(..)
 
 PURGE @, ., ..
 
@@ -11,7 +11,7 @@ db 3
 
 PURGE @, ., ..
 
-ASSERT DEF(@) && DEF(.) && DEF(..) && DEF(Foo) && DEF(.bar)
+STATIC_ASSERT DEF(@) && DEF(.) && DEF(..) && DEF(Foo) && DEF(.bar)
 
 PRINTLN "PC: {#05X:@}"
 PRINTLN "global scope: \"{.}\" ({#05X:{.}})"

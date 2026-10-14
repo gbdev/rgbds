@@ -1,2 +1,2 @@
 def s equs readfile("readfile-nonexist.inc")
-assert strlen(#s) == 0
+static_assert strlen(#s) == 0

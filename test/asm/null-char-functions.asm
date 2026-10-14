@@ -3,14 +3,14 @@ def s equs "hello\0world"
 println #s
 
 MACRO assert_equal
-	assert !strcmp(\1, \2)
+	static_assert !strcmp(\1, \2)
 ENDM
 
-assert strlen(#s) == 11
-assert strfind(#s, "o\0w") == 4
-assert strfind(#s, "orld") == 7
-assert strrfind(#s, "o\0w") == 4
-assert strrfind(#s, "o") == 7
+static_assert strlen(#s) == 11
+static_assert strfind(#s, "o\0w") == 4
+static_assert strfind(#s, "orld") == 7
+static_assert strrfind(#s, "o\0w") == 4
+static_assert strrfind(#s, "o") == 7
 
 assert_equal strcat(#s, "\0lol"), "hello\0world\0lol"
 assert_equal #s ++ "\0lol", "hello\0world\0lol"

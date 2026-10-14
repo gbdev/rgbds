@@ -1,5 +1,5 @@
 MACRO test
-	assert warn, 0, "-Wassert is on by default"
+	static_assert warn, 0, "-Wassert is on by default"
 	warn "-Wuser is on by default"
 ENDM
 

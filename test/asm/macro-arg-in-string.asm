@@ -1,6 +1,6 @@
 MACRO print1
 	if _NARG == 2
-		assert !STRCMP("\1", \2)
+		static_assert !STRCMP("\1", \2)
 	endc
 	PRINTLN "\1"
 ENDM

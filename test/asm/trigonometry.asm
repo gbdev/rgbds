@@ -1,23 +1,23 @@
 for Q, 2, 31
 	OPT Q.{d:Q}
 
-	assert sin(0.25) == 1.0
-	assert asin(1.0) == 0.25
+	static_assert sin(0.25) == 1.0
+	static_assert asin(1.0) == 0.25
 
-	assert sin(0.0) == 0.0
-	assert asin(0.0) == 0.0
+	static_assert sin(0.0) == 0.0
+	static_assert asin(0.0) == 0.0
 
-	assert cos(0.0) == 1.0
-	assert acos(1.0) == 0.0
+	static_assert cos(0.0) == 1.0
+	static_assert acos(1.0) == 0.0
 
 	if Q > 2 ; can't represent 0.125 in Q.2
-		assert tan(0.125) == 1.0
-		assert atan(1.0) == 0.125
-		assert atan2(1.0, 1.0) == 0.125
+		static_assert tan(0.125) == 1.0
+		static_assert atan(1.0) == 0.125
+		static_assert atan2(1.0, 1.0) == 0.125
 	else
-		assert tan(0.0) == 0.0
-		assert atan(0.0) == 0.0
-		assert atan2(0.0, 1.0) == 0.0
+		static_assert tan(0.0) == 0.0
+		static_assert atan(0.0) == 0.0
+		static_assert atan2(0.0, 1.0) == 0.0
 	endc
 endr
 

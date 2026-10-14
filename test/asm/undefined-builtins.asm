@@ -1,49 +1,49 @@
 ; not inside a section
-assert !DEF(@)
+static_assert !DEF(@)
 println @
 println "{@}?"
 
 ; not inside a section
-assert !DEF(__SCOPE__)
+static_assert !DEF(__SCOPE__)
 println __SCOPE__
 println "{__SCOPE__}?"
 
 ; not inside a global scope
-assert !DEF(.)
+static_assert !DEF(.)
 println .
 println "{.}?"
 
 ; not inside a local scope
-assert !DEF(..)
+static_assert !DEF(..)
 println ..
 println "{..}?"
 
 ; not inside a macro
-assert !DEF(_NARG)
+static_assert !DEF(_NARG)
 println _NARG
 println "{_NARG}?"
 
 SECTION "s", ROM0[$42]
-assert DEF(@)
+static_assert DEF(@)
 println @
 println "{@}!"
 
-assert DEF(__SCOPE__)
+static_assert DEF(__SCOPE__)
 println __SCOPE__
 println "{__SCOPE__}!"
 
 GlobalScope:
-assert DEF(.)
+static_assert DEF(.)
 println .
 println "{.}!"
 
 .localScope:
-assert DEF(..)
+static_assert DEF(..)
 println ..
 println "{..}!"
 
 MACRO m
-	assert DEF(_NARG)
+	static_assert DEF(_NARG)
 	println _NARG
 	println "{_NARG}!"
 ENDM

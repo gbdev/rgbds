@@ -1,1 +1,1 @@
-assert 1 ** -1 == 1 ; mathematically yes, technically no
+static_assert 1 ** -1 == 1 ; mathematically yes, technically no

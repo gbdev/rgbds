@@ -1,7 +1,7 @@
 MACRO test
 	charmap \1, 42
-	assert charlen(\1) == 1
-	assert incharmap(\1) == 1
+	static_assert charlen(\1) == 1
+	static_assert incharmap(\1) == 1
 ENDM
 
 	test "a" ; one ASCII

@@ -1,1 +1,1 @@
-assert BANK(@) == 1
+static_assert BANK(@) == 1

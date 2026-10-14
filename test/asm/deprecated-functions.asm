@@ -1,18 +1,18 @@
 opt Wno-unmapped-char
 def s equs "Hello world!"
 
-assert strin(#s, "l") == strfind(#s, "l") + 1
-assert strrin(#s, "l") == strrfind(#s, "l") + 1
+static_assert strin(#s, "l") == strfind(#s, "l") + 1
+static_assert strrin(#s, "l") == strrfind(#s, "l") + 1
 
-assert strsub(#s, 7) === strslice(#s, 6)
-assert strsub(#s, 7, 5) === strslice(#s, 6, 11)
-assert strsub(#s, strlen(#s), 1) === strslice(#s, strlen(#s) - 1, strlen(#s))
-assert strsub(#s, 7, 999) === strslice(#s, 6, 999)
+static_assert strsub(#s, 7) === strslice(#s, 6)
+static_assert strsub(#s, 7, 5) === strslice(#s, 6, 11)
+static_assert strsub(#s, strlen(#s), 1) === strslice(#s, strlen(#s) - 1, strlen(#s))
+static_assert strsub(#s, 7, 999) === strslice(#s, 6, 999)
 
-assert charsub(#s, 12) === strchar(#s, 11)
-assert charsub(#s, -1) === strchar(#s, -1)
-assert charsub(#s, -999) === strchar(#s, -999)
-assert charsub(#s, 999) === strchar(#s, 999)
+static_assert charsub(#s, 12) === strchar(#s, 11)
+static_assert charsub(#s, -1) === strchar(#s, -1)
+static_assert charsub(#s, -999) === strchar(#s, -999)
+static_assert charsub(#s, 999) === strchar(#s, 999)
 
 ; characters:
 ; 1: U+0061 a

@@ -1,1 +1,1 @@
-assert SECTION(Undefined)
+static_assert SECTION(Undefined)

@@ -1,1 +1,1 @@
-assert (@) || 1
+static_assert (@) || 1

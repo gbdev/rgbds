@@ -11,7 +11,7 @@ MACRO #macro
 ENDM
 	#macro first, second
 	purge #macro
-	assert !def(#macro)
+	static_assert !def(#macro)
 
 section "section", rom0
 #section::
@@ -27,8 +27,8 @@ def #sub equs "def"
 for #for, {{#add}{#sub}}
 	println "for == ", #for
 endr
-	assert #for == 2
-	assert !{#sub}(#FOR)
+	static_assert #for == 2
+	static_assert !{#sub}(#FOR)
 
 	newcharmap #charmap, #main
 	charmap "#", $42

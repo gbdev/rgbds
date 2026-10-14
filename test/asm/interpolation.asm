@@ -12,7 +12,7 @@ def {NAME}_{d:INDEX} equs "\"hundredth\""
 PRINTLN STRCAT("{NAME}_{d:INDEX}", " is ", {{NAME}_{d:INDEX}})
 ; Purges ITEM_100
 PURGE {NAME}_{d:INDEX}
-ASSERT !DEF({NAME}_{d:INDEX})
+STATIC_ASSERT !DEF({NAME}_{d:INDEX})
 
 ; undefined
 PRINTLN "undef {undef}"

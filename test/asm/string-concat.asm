@@ -1,7 +1,7 @@
 SECTION "test", ROM0
 
 MACRO test
-	assert !strcmp(\1, \2)
+	static_assert !strcmp(\1, \2)
 ENDM
 
 test "a"++"b", "ab"
@@ -18,9 +18,9 @@ test "a" ++ """b""" ++ strupr("c") ++ strslice(#str, 0, 0), "abC"
 charmap "a", 1
 charmap "b", 2
 charmap "ab", 12
-assert charval("a") + charval("b") == 3
-assert charval("a" ++ "b") == 12
+static_assert charval("a") + charval("b") == 3
+static_assert charval("a" ++ "b") == 12
 
 ; errors
-assert 2 ++ 2 == 4
+static_assert 2 ++ 2 == 4
 ld a, [hl++]

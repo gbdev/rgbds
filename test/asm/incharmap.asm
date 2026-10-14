@@ -10,19 +10,19 @@ charmap {__ISO_8601_UTC__}, 6 ; expands with quotes
 
 setcharmap main
 
-assert incharmap("a")
-assert incharmap("ab")
-assert incharmap(strcat("ab", "c"))
+static_assert incharmap("a")
+static_assert incharmap("ab")
+static_assert incharmap(strcat("ab", "c"))
 
-assert !incharmap("") ; empty
-assert !incharmap("A") ; case sensitive
-assert !incharmap("aa") ; multiple chars "a" "a"
-assert !incharmap("d") ; unmapped char "d"
-assert !incharmap("bc") ; unmapped chars "b" "c"
+static_assert !incharmap("") ; empty
+static_assert !incharmap("A") ; case sensitive
+static_assert !incharmap("aa") ; multiple chars "a" "a"
+static_assert !incharmap("d") ; unmapped char "d"
+static_assert !incharmap("bc") ; unmapped chars "b" "c"
 
 setcharmap second
 
-assert incharmap("d") ; now "d" is mapped
-assert !incharmap("a") ; only in 'main'
-assert !incharmap("bc") ; still unmapped chars
-assert incharmap({__ISO_8601_UTC__})
+static_assert incharmap("d") ; now "d" is mapped
+static_assert !incharmap("a") ; only in 'main'
+static_assert !incharmap("bc") ; still unmapped chars
+static_assert incharmap({__ISO_8601_UTC__})

@@ -1,7 +1,7 @@
-assert "hello" === "hello"
-assert "hello" !== "goodbye"
-assert "game" ++ "boy" === "gameboy"
-assert "fire flower" === "fire" ++ " " ++ "flower"
-assert "a" === "b" == 0
-assert 1 == "a" !== "b"
-assert 1 + 2 * 3 ** "x" !== "y" == 7
+static_assert "hello" === "hello"
+static_assert "hello" !== "goodbye"
+static_assert "game" ++ "boy" === "gameboy"
+static_assert "fire flower" === "fire" ++ " " ++ "flower"
+static_assert "a" === "b" == 0
+static_assert 1 == "a" !== "b"
+static_assert 1 + 2 * 3 ** "x" !== "y" == 7

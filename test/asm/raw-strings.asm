@@ -1,35 +1,35 @@
 DEF q EQUS "\""
 
-	assert !strcmp( \
+	static_assert !strcmp( \
 		#"\t\1{s}\", \
 		"\\t\\1\{s}\\" )
-	assert !strcmp( \
+	static_assert !strcmp( \
 		#"\a,\b,\1,\2", \
 		"\\a,\\b,\\1,\\2" )
-	assert !strcmp( \
+	static_assert !strcmp( \
 		#"""new
 line""", \
 		"new\nline" )
-	assert !strcmp( \
+	static_assert !strcmp( \
 		#"""new\nline""", \
 		"""new\\nline""" )
-	assert !strcmp( \
+	static_assert !strcmp( \
 		#"/\w+(\+\w+)?@[a-z]+\.[a-z]{2,3}/i", \
 		"/\\w+(\\+\\w+)?@[a-z]+\\.[a-z]\{2,3}/i" )
-	assert !strcmp( \
+	static_assert !strcmp( \
 		#{q}{q}{q}rs", \
 		{q}\{q}\{q}rs" )
-	assert !strcmp( \
+	static_assert !strcmp( \
 		#"", \
 		"" )
-	assert !strcmp( \
+	static_assert !strcmp( \
 		#"""""", \
 		"""""" )
 
 MACRO test
 	REDEF raw EQUS \1
 	REDEF plain EQUS \2
-	assert !strcmp("{raw}", "{plain}")
+	static_assert !strcmp("{raw}", "{plain}")
 ENDM
 
 	; test lexing string literals within macro args
