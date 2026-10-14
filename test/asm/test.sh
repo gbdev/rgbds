@@ -81,9 +81,9 @@ for i in *.asm notexist.asm; do
 		else
 			desired_errname=/dev/null
 		fi
+		rm -f "$o" # Delete any previous object file so it will only exist if RGBASM creates one.
 		if [ -z "$variant" ]; then
 			"$RGBASM" "${RGBASMFLAGS[@]}" -o "$o" "$i" >"$output" 2>"$errput"
-			assembled=$?
 			desired_output=$desired_outname
 			desired_errput=$desired_errname
 		else
@@ -97,7 +97,6 @@ for i in *.asm notexist.asm; do
 
 			# shellcheck disable=SC2002 # (This use of `cat` intentionally makes the input an unseekable pipe.)
 			cat "$i" | "$RGBASM" "${RGBASMFLAGS[@]}" -o "$o" - >"$output" 2>"$errput"
-			assembled=$?
 
 			# Use two otherwise unused files for temp storage
 			desired_output="$input"
@@ -114,8 +113,8 @@ for i in *.asm notexist.asm; do
 		tryDiff "$desired_errput" "$errput" err
 		(( our_rc = our_rc || $? ))
 
-		# Only attempt to link if assembling had the expected output.
-		if (( our_rc == 0 )); then
+		# Only attempt to link if RGBASM created an object file.
+		if [[ -f "$o" ]]; then
 			desired_binname=${i%.asm}.out.bin
 			if [[ -f "$desired_binname" ]]; then
 				# 'rgblink -x' implies '-t', so asm/*.out.bin tests cannot use ROMX banks above 1.
@@ -126,10 +125,8 @@ for i in *.asm notexist.asm; do
 					tryCmp "$desired_binname" "$gb" gb
 					(( our_rc = our_rc || $? ))
 				fi
-			elif [[ "$assembled" -eq 0 && "$i" != "abort-on-missing-incbin"* ]]; then
+			else
 				# Link to check that any link-time assertions pass.
-				# Skip linking "abort-on-missing-incbin-*" since they exit normally despite not
-				# producing an object file.
 				# Do not pass '-x' in case tests used ROMX banks above 1.
 				if [ -e "${i%.asm}.link.err" ]; then
 					desired_errname=${i%.asm}.link.err

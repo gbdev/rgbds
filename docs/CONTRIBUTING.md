@@ -129,11 +129,13 @@ its contents.
 If a `.err` file exists, RGBASM's error output (`warn`, errors, etc.) must match
 its contents.
 
+If RGBASM did not create an object file (either because it failed or it was not
+expected to), RGBLINK will not be run and its output will not be checked.
+
 If a `.out.bin` file exists, the object file will be linked in `-x/--nopad`
 mode, and the generated ROM must match its contents.
 
-If RGBASM succeeds but no `.out.bin` file exists, the object file will be linked
-in normal mode.
+If no `.out.bin` file exists, the object file will be linked in normal mode.
 If a `.link.err` file exists, RGBLINK's error output must match its contents;
 otherwise, RGBLINK is expected to succeed and not output anything.
 
