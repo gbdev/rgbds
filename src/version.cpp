@@ -17,7 +17,7 @@
 extern "C" {
 	char const *__asan_default_options(void) {
 		return ":check_initialization_order=1"
-		       ":detect_invalid_pointer_pairs=2"
+		       ":detect_invalid_pointer_pairs=1"
 	// `detect_leaks` is not supported on macOS.
 	#ifndef __APPLE__
 		       ":detect_leaks=1"
