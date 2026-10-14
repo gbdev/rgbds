@@ -56,8 +56,7 @@ if(SANITIZERS)
     add_definitions(/_MSVC_STL_HARDENING=1 /_MSVC_STL_DESTRUCTOR_TOMBSTONES=1 /D_ITERATOR_DEBUG_LEVEL=2)
   else() # We assume a GNU-like compiler.
     message(STATUS "ASan and UBSan enabled")
-    set(SAN_FLAGS -fsanitize=address -fsanitize=undefined
-                  -fsanitize=float-divide-by-zero)
+    set(SAN_FLAGS -fsanitize=address,undefined,float-divide-by-zero,float-cast-overflow,pointer-compare,pointer-subtract)
     add_compile_options(${SAN_FLAGS})
     add_link_options(${SAN_FLAGS})
     # Consider using `_GLIBCXX_DEBUG_BACKTRACE` (and `-lstdc++exp`) if unable to debug locally.
