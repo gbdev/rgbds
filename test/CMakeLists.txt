@@ -89,5 +89,5 @@ endforeach()
 # gb-starter kit fails with any `make` on Windows: https://codeberg.org/ISSOtm/gb-starter-kit/issues/1
 # gb-starter-kit fails with macOS/BSD `make`: https://codeberg.org/ISSOtm/gb-starter-kit/issues/29
 if(TESTS_OS_NAME MATCHES "^(windows|macos|[^-]*bsd)(-.*)?")
-  set_tests_properties(gb-starter-kit PROPERTIES DISABLED TRUE)
+  set_tests_properties(gb-starter-kit PROPERTIES DISABLED ON)
 endif()
