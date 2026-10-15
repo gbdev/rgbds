@@ -229,14 +229,10 @@ void reverse() {
 			}
 			// Expand the little-endian RGB555 colors to RGB888
 			auto &palette = palettes.emplace_back();
-			std::generate(
-			    palette.begin(),
-			    palette.begin() + options.nbColorsPerPal,
-			    [&buf, i = 0]() mutable {
-				    i += 2;
-				    return Rgba::fromCGBColor(buf[i - 2] | buf[i - 1] << 8, options.useColorCurve);
-			    }
-			);
+			for (uint8_t i = 0; i < options.nbColorsPerPal; ++i) {
+				palette[i] =
+				    Rgba::fromCGBColor(buf[i * 2] | buf[i * 2 + 1] << 8, options.useColorCurve);
+			}
 		}
 
 		if (palettes.size() > options.nbPalettes) {
