@@ -79,7 +79,10 @@ include(CheckCXXCompilerFlag)
 check_cxx_compiler_flag("-fhardened" CXX_SUPPORTS_FHARDENED)
 if(CXX_SUPPORTS_FHARDENED)
   message(CHECK_PASS "yes")
-  add_compile_options(-fhardened)
+  # `-Wno-hardened` prevents `-fhardened`-enabled `D_FORTIFY_SOURCE=3` from conflicting with
+  # platform-default `_FORTIFY_SOURCE` values, e.g. Ubuntu's `distro_defaults_cpp`.
+  # https://bugs.launchpad.net/ubuntu/+source/gcc-14/+bug/2088289
+  add_compile_options(-Wno-hardened -fhardened)
 else()
   message(CHECK_FAIL "no")
 endif()
