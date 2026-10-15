@@ -5,9 +5,9 @@ SECTION "VRAM", VRAM[STARTOF(VRAM)], BANK[0]
 vLabel:: ds SIZEOF(VRAM)
 
 SECTION "ROM0", ROM0[STARTOF(ROM0)]
-ASSERT !ISCONST(SIZEOF(ROM0))  ; rgblink may have -t/--tiny
+STATIC_ASSERT !ISCONST(SIZEOF(ROM0))  ; rgblink may have -t/--tiny
 Label:: ds $4000, $11
 
 SECTION "WRAM0", WRAM0[STARTOF(WRAM0)]
-ASSERT !ISCONST(SIZEOF(WRAM0)) ; rgblink may have -w/--wramx
+STATIC_ASSERT !ISCONST(SIZEOF(WRAM0)) ; rgblink may have -w/--wramx
 wLabel:: ds $1000
