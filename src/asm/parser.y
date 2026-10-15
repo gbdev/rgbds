@@ -1470,7 +1470,8 @@ relocexpr_no_str:
 		$$.makeNumber(fix_ATan2($3, $5, $6));
 	}
 	| OP_STRCMP LPAREN string COMMA string RPAREN {
-		$$.makeNumber($3.compare($5));
+		int result = $3.compare($5);
+		$$.makeNumber(result < 0 ? -1 : result > 0 ? 1 : 0);
 	}
 	| OP_STRFIND LPAREN string COMMA string RPAREN {
 		size_t pos = $3.find($5);
