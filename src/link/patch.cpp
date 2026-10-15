@@ -582,7 +582,7 @@ static void applyFilePatches(Section &section, Section &dataSection) {
 				rpnErrorAt(patch.rpn, "PC has no value outside of a section");
 				dataSection.data[offset] = 0;
 			} else {
-				// A `jr` is *encoded* in ROM as a 1-byte (8-bit) offset, so here `typeSize == 8`,
+				// A `jr` is *encoded* in ROM as a 1-byte (8-bit) offset, so here `typeSize == 1`,
 				// but the object's *value* size is a 16-bit absolute address, so we pass 16 here.
 				checkPatchSize(patch.rpn, value, 16);
 				// Offset is relative to the byte *after* the operand
