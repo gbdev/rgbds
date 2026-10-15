@@ -251,7 +251,7 @@ Valid types are:
 .It Ql b Ta Binary Ta 101010
 .It Ql o Ta Octal Ta 52
 .It Ql f Ta Fixed-point Ta 1234.56789
-.It Ql s Ta String Ta string contents
+.It Ql s Ta String Ta String contents
 .El
 .Pp
 Examples:
@@ -1890,7 +1890,7 @@ You can also include only part of a file with
 .Ic INCBIN .
 The example below includes 256 bytes from
 .Ql data.bin ,
-starting from byte 78.
+starting from byte 78 (byte positions start from 0).
 .Bd -literal -offset indent
 INCBIN "data.bin", 78, 256
 .Ed
@@ -2522,16 +2522,16 @@ assert FirstByte + 1 == SecondByte
     STATIC_ASSERT .end - Function < 256, "Function is too large!"
 .Ed
 .Pp
-First, the difference between
+An
 .Ic ASSERT
-and
+is evaluated by RGBASM if it can, otherwise by RGBLINK; but a
 .Ic STATIC_ASSERT
-is that the former is evaluated by RGBASM if it can, otherwise by RGBLINK; but the latter is only ever evaluated by RGBASM.
+that RGBASM cannot evaluate will raise an error.
 If RGBASM cannot compute the value of the argument to
 .Ic STATIC_ASSERT ,
 it will produce an error.
 .Pp
-Second, as shown above, a string can be optionally added at the end, to give insight into what the assertion is checking.
+As shown above, a message string can be optionally added as the last argument, to give insight into what the assertion is checking.
 .Pp
 Finally, you can add one of
 .Ic WARN , FAIL
