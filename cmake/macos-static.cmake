@@ -9,8 +9,9 @@
 set(CMAKE_OSX_DEPLOYMENT_TARGET 10.4 CACHE STRING "Minimum Mac OS X version to target for deployment (at runtime)")
 # This builds a "fat binary" that works on both Apple architectures:
 # older Intel x64 Macs and newer ARM "Apple Silicon" ones.
-# Due to a libpng build script limitation/bug (as of 1.6.58), the native architecture has to be first...
-# and since our CI builds this executable on an ARM machine, that's what we're putting first.
+# Due to a libpng build script limitation/bug (https://github.com/pnggroup/libpng/pull/926), the
+# native architecture has to be first; and since our CI builds this executable on an ARM machine,
+# that's what we're putting first.
 set(CMAKE_OSX_ARCHITECTURES arm64 x86_64 CACHE STRING "Build architectures for Mac OS X")
 # This controls the SIMD optimizations, which include architecture-specific headers that get rejected
 # in a dual-arch build, thus we have to disable them.
