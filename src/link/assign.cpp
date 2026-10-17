@@ -479,11 +479,7 @@ void assign_AssignSections() {
 	}
 
 	// Generate sorted list of sections to assign
-	static uint64_t nbSectionsToAssign = 0; // `static` so `sect_ForEach` callback can see it
-	sect_ForEach([](Section &section) {
-		categorizeSection(section);
-		++nbSectionsToAssign;
-	});
+	sect_ForEach(categorizeSection);
 
 	// Overlaying requires only fully-constrained sections
 	if (options.overlayFileName) {
@@ -493,12 +489,5 @@ void assign_AssignSections() {
 	// Assign sections in the order they were sorted
 	for (Section *section : unassignedSections) {
 		placeSection(*section);
-
-		// If all sections were fully constrained, we have nothing left to do
-		if (!--nbSectionsToAssign) {
-			return;
-		}
 	}
-
-	assume(nbSectionsToAssign == 0);
 }
