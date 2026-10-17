@@ -309,9 +309,9 @@ jobs:
         with:
           name: testing-programs-mingw-win${{ matrix.bits }}
           path: test/gfx
-      - name: Extract binaries
+      - name: Move test/gfx DLLs
         run: |
-          unzip rgbds-canary-mingw-win${{ matrix.bits }}.zip
+          ls >&2
           cp *.dll test/gfx
       - name: Compute test dependency cache params
         id: test-deps-cache-params
