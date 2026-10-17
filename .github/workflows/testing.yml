@@ -136,7 +136,8 @@ jobs:
           enableCrossOsArchive: true
       - name: Build
         run: |
-          cmake -B build -G Ninja --preset macos-static -DFETCHCONTENT_BASE_DIR="${{ env.DEPS_ROOT_DIR }}"
+          cmake -B build -G Ninja --preset macos-static -DFETCHCONTENT_BASE_DIR="${{ env.DEPS_ROOT_DIR }}" \
+                -DCPACK_COMPONENTS_ALL=binaries
           cmake --build build -- -k 0
         env:
           LDFLAGS: -fuse-ld=lld # cmake/macos-static.cmake comments explain why we use lld.
@@ -146,14 +147,14 @@ jobs:
           type rgbasm rgblink rgbfix rgbgfx
           man -w 1 rgbasm rgblink rgbfix rgbgfx
       - name: Package binaries
+        working-directory: build
         run: |
-          mkdir bins
-          cp rgb{asm,link,fix,gfx} bins
+          cpack -DCPACK_PACKAGE_FILE_NAME=rgbds-canary-macos-static -G ZIP --verbose
       - name: Upload binaries
         uses: actions/upload-artifact@v7
         with:
-          name: rgbds-canary-macos-static
-          path: bins
+          path: build/rgbds-canary-macos-static.zip
+          archive: false
           if-no-files-found: error
       - name: Compute test dependency cache params
         id: test-deps-cache-params
@@ -245,7 +246,7 @@ jobs:
       matrix:
         bits: [32, 64]
       fail-fast: false
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04 # TODO: go back to ubuntu-latest after it upgrades to 26.04
     steps:
       - name: Checkout repo
         uses: actions/checkout@v7
@@ -262,18 +263,18 @@ jobs:
         run: | # MinGW doesn't support `--preset develop` sanitizers ASan or UBSan, so we disable them.
           dll_search_dir=$(printf '%s\n' /usr/lib/gcc/*-w64-mingw32/*-win32 | tee -a /dev/stderr)
           cmake -B build -G Ninja --preset develop -DFETCHCONTENT_BASE_DIR="${{ env.DEPS_ROOT_DIR }}" \
-                -DSANITIZERS=OFF -DDLL_SEARCH_DIRS="$dll_search_dir" \
-                --toolchain cmake/toolchain-mingw${{ matrix.bits }}.cmake
+                -DSANITIZERS=OFF -DCMAKE_INSTALL_BINDIR=. -DCPACK_COMPONENTS_ALL="binaries;shared-libs" \
+                -DDLL_SEARCH_DIRS="$dll_search_dir" --toolchain cmake/toolchain-mingw${{ matrix.bits }}.cmake
           cmake --build build -- -k 0
       - name: Package Windows binaries
+        working-directory: build
         run: |
-          cmake --install build --prefix . --verbose --component binaries
-          cmake --install build --prefix . --verbose --component shared-libs
+          cpack -DCPACK_PACKAGE_FILE_NAME=rgbds-canary-mingw-win${{ matrix.bits }} -G ZIP --verbose
       - name: Upload Windows binaries
         uses: actions/upload-artifact@v7
         with:
-          name: rgbds-canary-mingw-win${{ matrix.bits }}
-          path: bin
+          path: build/rgbds-canary-mingw-win${{ matrix.bits }}.zip
+          archive: false
           if-no-files-found: error
       - name: Upload Windows test binaries
         uses: actions/upload-artifact@v7
@@ -301,17 +302,17 @@ jobs:
       - name: Retrieve binaries
         uses: actions/download-artifact@v8
         with:
-          name: rgbds-canary-mingw-win${{ matrix.bits }}
-          path: bins
+          name: rgbds-canary-mingw-win${{ matrix.bits }}.zip
+          path: .
       - name: Retrieve test binaries
         uses: actions/download-artifact@v8
         with:
           name: testing-programs-mingw-win${{ matrix.bits }}
           path: test/gfx
-      - name: Extract binaries
+      - name: Move test/gfx DLLs
         run: |
-          cp bins/* .
-          cp bins/*.dll test/gfx
+          ls >&2
+          cp *.dll test/gfx
       - name: Compute test dependency cache params
         id: test-deps-cache-params
         run: |
