@@ -384,99 +384,77 @@ static void placeSection(Section &section) {
 	}
 }
 
-static std::deque<Section *> unassignedSections[1 << 3];
-// clang-format off: vertically align values
-static constexpr uint8_t BANK_CONSTRAINED  = 1 << 2;
-static constexpr uint8_t ORG_CONSTRAINED   = 1 << 1;
-static constexpr uint8_t ALIGN_CONSTRAINED = 1 << 0;
-// clang-format on
-static char const * const constraintNames[] = {
-    "un",
-    "align-",
-    "org-",
-    nullptr, // align+org (impossible)
-    "bank-",
-    "bank+align-",
-    "bank+org-",
-    nullptr, // bank+align+org (impossible)
-};
+static std::deque<Section *> unassignedSections;
 
 // Categorize a section depending on how constrained it is.
 // This is so the most-constrained sections are placed first.
 static void categorizeSection(Section &section) {
-	uint8_t constraints = 0;
-
-	if (section.isBankFixed) {
-		constraints |= BANK_CONSTRAINED;
-	}
-	// Can't have both!
-	if (section.isAddressFixed) {
-		constraints |= ORG_CONSTRAINED;
-	} else if (section.isAlignFixed) {
-		constraints |= ALIGN_CONSTRAINED;
-	}
-
-	// Insert section while keeping the list sorted by decreasing alignment and size
-	std::deque<Section *> &sections = unassignedSections[constraints];
+	// Insert section while keeping the list sorted by decreasing constraints, alignment, and size.
 	auto const compareSections = [](Section const *prev, Section const &sect) {
+		// Sort more-constrained sections first (bank > address > alignment).
+		if (prev->isBankFixed != sect.isBankFixed) {
+			return prev->isBankFixed > sect.isBankFixed;
+		}
+		if (prev->isAddressFixed != sect.isAddressFixed) {
+			return prev->isAddressFixed > sect.isAddressFixed;
+		}
+		if (prev->isAlignFixed != sect.isAlignFixed) {
+			return prev->isAlignFixed > sect.isAlignFixed;
+		}
+		// For equally-constrained sections, sort more-aligned ones first.
 		assume(prev->isAlignFixed == sect.isAlignFixed);
 		if (sect.isAlignFixed && prev->alignMask != sect.alignMask) {
 			return prev->alignMask > sect.alignMask;
 		}
+		// For equally-aligned sections, sort larger ones first.
 		return prev->size > sect.size;
 	};
-	sections.insert(std::lower_bound(RANGE(sections), section, compareSections), &section);
+	unassignedSections.insert(
+	    std::lower_bound(RANGE(unassignedSections), section, compareSections), &section
+	);
 }
 
 static void checkOverlayCompat() {
-	auto isFixed = [](uint8_t constraints) {
-		return (constraints & BANK_CONSTRAINED) && (constraints & ORG_CONSTRAINED);
-	};
-
 	std::string unfixedList;
+	size_t nbListed = 0;
+	size_t nbUnlisted = 0;
 
-	size_t nbUnfixedSections = 0;
-	for (uint8_t constraints = std::size(unassignedSections); constraints--;) {
-		if (!isFixed(constraints)) {
-			nbUnfixedSections += unassignedSections[constraints].size();
+	for (Section const *section : unassignedSections) {
+		if (section->isBankFixed && section->isAddressFixed) {
+			continue;
 		}
+
+		if (nbListed == 10) {
+			++nbUnlisted;
+			continue;
+		}
+
+		unfixedList += "\n- \"";
+		unfixedList += section->name;
+		unfixedList += "\" (";
+		if (!section->isBankFixed && !section->isAddressFixed) {
+			unfixedList += "bank and address";
+		} else if (!section->isBankFixed) {
+			unfixedList += "bank";
+		} else {
+			assume(!section->isAddressFixed);
+			unfixedList += "address";
+		}
+		unfixedList += " not specified)";
+		++nbListed;
 	}
 
+	size_t nbUnfixedSections = nbListed + nbUnlisted;
 	if (nbUnfixedSections == 0) {
 		return;
 	}
 
-	size_t nbListed = 0;
-	for (uint8_t constraints = std::size(unassignedSections); constraints--;) {
-		if (isFixed(constraints)) {
-			continue;
-		}
-
-		for (Section const *section : unassignedSections[constraints]) {
-			if (nbListed == 10) {
-				unfixedList += "\n- and ";
-				unfixedList += std::to_string(nbUnfixedSections - nbListed);
-				unfixedList += " more";
-				goto finish;
-			}
-
-			unfixedList += "\n- \"";
-			unfixedList += section->name;
-			unfixedList += "\" (";
-			if (!(constraints & (BANK_CONSTRAINED | ORG_CONSTRAINED))) {
-				unfixedList += "bank and address";
-			} else if (!(constraints & BANK_CONSTRAINED)) {
-				unfixedList += "bank";
-			} else {
-				assume(!(constraints & ORG_CONSTRAINED));
-				unfixedList += "address";
-			}
-			unfixedList += " not specified)";
-			++nbListed;
-		}
+	if (nbUnlisted > 0) {
+		unfixedList += "\n- and ";
+		unfixedList += std::to_string(nbUnlisted);
+		unfixedList += " more";
 	}
 
-finish: // Can't `break` out of a nested loop
 	fatal(
 	    "All sections must be fixed when using an overlay file; %zu %s not:%s",
 	    nbUnfixedSections,
@@ -500,7 +478,7 @@ void assign_AssignSections() {
 		}
 	}
 
-	// Generate linked lists of sections to assign
+	// Generate sorted list of sections to assign
 	static uint64_t nbSectionsToAssign = 0; // `static` so `sect_ForEach` callback can see it
 	sect_ForEach([](Section &section) {
 		categorizeSection(section);
@@ -512,21 +490,13 @@ void assign_AssignSections() {
 		checkOverlayCompat();
 	}
 
-	// Assign sections in decreasing constraint order
-	for (uint8_t constraints = std::size(unassignedSections); constraints--;) {
-		if (char const *constraintName = constraintNames[constraints]; constraintName) {
-			verbosePrint(VERB_INFO, "Assigning %sconstrained sections...\n", constraintName);
-		} else {
-			assume(unassignedSections[constraints].empty());
-		}
+	// Assign sections in the order they were sorted
+	for (Section *section : unassignedSections) {
+		placeSection(*section);
 
-		for (Section *section : unassignedSections[constraints]) {
-			placeSection(*section);
-
-			// If all sections were fully constrained, we have nothing left to do
-			if (!--nbSectionsToAssign) {
-				return;
-			}
+		// If all sections were fully constrained, we have nothing left to do
+		if (!--nbSectionsToAssign) {
+			return;
 		}
 	}
 
