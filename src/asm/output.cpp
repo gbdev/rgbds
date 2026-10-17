@@ -5,7 +5,6 @@
 #include "asm/output.hpp"
 
 #include <algorithm>
-#include <deque>
 #include <errno.h>
 #include <inttypes.h>
 #include <memory>
@@ -44,9 +43,9 @@ struct Assertion {
 // List of symbols to put in the object file
 static std::vector<Symbol *> objectSymbols;
 
-static std::deque<Assertion> assertions;
+static std::vector<Assertion> assertions;
 
-static std::deque<std::shared_ptr<FileStackNode>> fileStackNodes;
+static std::vector<std::shared_ptr<FileStackNode>> fileStackNodes;
 
 static void putLong(uint32_t n, FILE *file) {
 	uint8_t bytes[] = {
@@ -67,7 +66,7 @@ void out_RegisterNode(std::shared_ptr<FileStackNode> node) {
 	// If node is not already registered, register it (and parents), and give it a unique ID
 	for (; node && !node->isReferenced(); node = node->parent) {
 		node->ID = fileStackNodes.size();
-		fileStackNodes.push_front(node);
+		fileStackNodes.push_back(node);
 	}
 }
 
@@ -163,7 +162,7 @@ void out_CreatePatch(PatchType type, Expression const &expr, uint32_t ofs, uint3
 void out_CreateAssert(
     AssertionType type, Expression const &expr, std::string const &message, uint32_t ofs
 ) {
-	Assertion &assertion = assertions.emplace_front();
+	Assertion &assertion = assertions.emplace_back();
 	assertion.type = type;
 	assertion.src = fstk_GetFileStack();
 	// All assertions are assumed to eventually be written, so the file stack node is registered
@@ -246,11 +245,11 @@ void out_WriteObject() {
 	putLong(sect_CountSections(), file);
 
 	putLong(fileStackNodes.size(), file);
-	for (auto it = fileStackNodes.begin(); it != fileStackNodes.end(); ++it) {
+	for (auto it = fileStackNodes.rbegin(); it != fileStackNodes.rend(); ++it) {
 		writeFileStackNode(**it, file);
 
 		// The list is supposed to have decrementing IDs
-		assume(it + 1 == fileStackNodes.end() || it[1]->ID == it[0]->ID - 1);
+		assume(it + 1 == fileStackNodes.rend() || it[1]->ID == it[0]->ID - 1);
 	}
 
 	for (Symbol const *sym : objectSymbols) {
