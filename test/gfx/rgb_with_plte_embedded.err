@@ -1,0 +1,2 @@
+error: "-c embedded" was given, but the PNG does not have an indexed palette
+Conversion aborted after 1 error

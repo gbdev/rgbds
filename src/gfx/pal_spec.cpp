@@ -178,8 +178,8 @@ void parseInlinePalSpec(char const * const rawArg) {
 
 void parseEmbeddedPalSpec(Png const &png) {
 	// Generate a palette spec from one palette's length of colors in the embedded palette
-	if (png.palette.empty()) {
-		error("\"-c embedded\" was given, but the PNG does not have an embedded palette");
+	if (!png.isIndexed) {
+		error("\"-c embedded\" was given, but the PNG does not have an indexed palette");
 		return;
 	}
 
