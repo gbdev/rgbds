@@ -48,7 +48,7 @@ void sortGrayscale(
 	assume(palettes.size() == 1);
 
 	Palette &palette = palettes[0];
-	std::fill(RANGE(palette.colors), Rgba::transparent);
+	std::fill(RANGE(palette.colors), UINT16_MAX); // Will output `UINT16_MAX` for unused slots
 	for (std::optional<Rgba> const &slot : colors) {
 		if (!slot.has_value() || slot->isTransparent()) {
 			continue;
