@@ -1,0 +1,7 @@
+error: Missing option
+    at empty-opt.asm(1)
+error: Missing option
+    at empty-opt.asm(2)
+error: Missing option
+    at empty-opt.asm(3)
+Assembly aborted with 3 errors

@@ -59,6 +59,10 @@ void opt_Parse(char const *s) {
 	}
 
 	char c = *s++;
+	if (c == '\0') {
+		error("Missing option");
+		return;
+	}
 
 	while (isBlankSpace(*s)) {
 		++s; // Skip leading blank spaces

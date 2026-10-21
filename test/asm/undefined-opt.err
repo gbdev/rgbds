@@ -1,3 +1,5 @@
 error: Unknown option 'x'
     at undefined-opt.asm(1)
-Assembly aborted with 1 error
+error: Unknown option ' '
+    at undefined-opt.asm(2)
+Assembly aborted with 2 errors
