@@ -325,21 +325,21 @@ static void doSanityChecks(Section &section) {
 		}
 
 		// Ensure the target address is valid
-		if (section.org < typeInfo.startAddr || section.org > typeInfo.endAddr()) {
+		if (section.org < typeInfo.startAddr || section.org > typeInfo.onePastEndAddr()) {
 			error(
 			    "Section \"%s\"'s fixed address $%04" PRIx16 " is outside of range [$%04" PRIx16
 			    "; $%04" PRIx16 "]",
 			    section.name.c_str(),
 			    section.org,
 			    typeInfo.startAddr,
-			    typeInfo.endAddr()
+			    typeInfo.onePastEndAddr()
 			);
-		} else if (section.org + section.size > typeInfo.endAddr() + 1) {
+		} else if (section.org + section.size > typeInfo.onePastEndAddr()) {
 			error(
 			    "Section \"%s\"'s end address $%04x is greater than last address $%04x",
 			    section.name.c_str(),
 			    section.org + section.size,
-			    typeInfo.endAddr() + 1
+			    typeInfo.onePastEndAddr()
 			);
 		}
 	}

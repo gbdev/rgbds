@@ -1,0 +1,2 @@
+error: Section "test"'s end address $4001 is greater than last address $4000
+Linking failed with 1 error
