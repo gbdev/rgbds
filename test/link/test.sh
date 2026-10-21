@@ -393,6 +393,13 @@ rgblinkQuiet "$otemp" "$test"/b.rel 2>"$outtemp"
 tryDiff "$test"/out.err "$outtemp"
 evaluateTest
 
+test="sdcc/t-overflow"
+startTest
+continueTest
+rgblinkQuiet "$test"/a.rel 2>"$outtemp"
+tryDiff "$test"/out.err "$outtemp"
+evaluateTest
+
 test="section-conflict/different-mod"
 startTest
 "$RGBASM" -o "$otemp" "$test"/a.asm
