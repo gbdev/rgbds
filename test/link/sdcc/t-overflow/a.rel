@@ -1,0 +1,7 @@
+XL3
+H 1 areas 1 global symbols
+M _main
+A _CODE size 4 flags 0 addr 0
+S _main Def0000
+T 00 00 00 01 02 03 04 05 06 07
+R 00 00 00 00 09 07 00 00

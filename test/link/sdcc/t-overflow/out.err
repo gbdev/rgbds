@@ -1,0 +1,3 @@
+FATAL: 'T' line writes past "_CODE"'s end (5 > 4)
+    at sdcc/t-overflow/a.rel(7)
+Linking aborted with 1 error

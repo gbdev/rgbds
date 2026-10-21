@@ -736,12 +736,12 @@ void sdobj_ReadFile(FileStackNode const &src, FILE *file, std::vector<Symbol> &f
 					// Despite the flag's name, as soon as it is set, 3 bytes
 					// are present, so we must skip two of them
 					if (flags & 1 << RELOC_EXPR16) {
-						if (*writeIndex + (offset - writtenOfs) > section->size) {
+						if (*writeIndex + (offset - writtenOfs + 1) > section->size) {
 							fatalAt(
 							    where,
 							    "'T' line writes past \"%s\"'s end (%u > %" PRIu16 ")",
 							    section->name.c_str(),
-							    *writeIndex + (offset - writtenOfs),
+							    *writeIndex + (offset - writtenOfs + 1),
 							    section->size
 							);
 						}
