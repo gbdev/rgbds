@@ -11,6 +11,7 @@
 #include "helpers.hpp"
 #include "verbosity.hpp"
 
+#include "gfx/main.hpp"
 #include "gfx/palette.hpp"
 #include "gfx/rgba.hpp"
 
@@ -48,7 +49,10 @@ void sortGrayscale(
 	assume(palettes.size() == 1);
 
 	Palette &palette = palettes[0];
-	std::fill(RANGE(palette.colors), Rgba::transparent);
+	std::fill(RANGE(palette.colors), UINT16_MAX); // Will output `UINT16_MAX` for unused slots
+	if (options.hasTransparentPixels) {
+		palette.colors[0] = Rgba::transparent;
+	}
 	for (std::optional<Rgba> const &slot : colors) {
 		if (!slot.has_value() || slot->isTransparent()) {
 			continue;
