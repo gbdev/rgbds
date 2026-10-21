@@ -493,8 +493,7 @@ static void writeMapBank(SortedSections const &sectList, SectionType type, uint3
 	if (used == 0) {
 		fputs("\tEMPTY\n", mapFile);
 	} else {
-		uint16_t bankEndAddr = sectionTypeInfo[type].endAddr() + 1;
-		writeEmptySpace(prevEndAddr, bankEndAddr);
+		writeEmptySpace(prevEndAddr, sectionTypeInfo[type].onePastEndAddr());
 
 		uint16_t slack = sectionTypeInfo[type].size - used;
 		fprintf(mapFile, "\tTOTAL EMPTY: $%04" PRIx16 " byte%s\n", slack, slack == 1 ? "" : "s");

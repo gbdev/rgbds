@@ -92,7 +92,7 @@ void layout_SetAddr(uint32_t addr) {
 
 	if (uint16_t &pc = curAddr[activeType][activeBankIdx]; addr < pc) {
 		scriptError("Cannot decrease the current address (from $%04x to $%04x)", pc, addr);
-	} else if (addr > typeInfo.endAddr() + 1u) { // Allow "one past the end" zero-sized sections.
+	} else if (addr > typeInfo.onePastEndAddr()) { // Allow "one past the end" zero-sized sections.
 		scriptError(
 		    "Cannot set the current address to $%04" PRIx32 ": %s ends at $%04" PRIx16,
 		    addr,
@@ -182,7 +182,7 @@ void layout_AlignTo(uint32_t alignment, uint32_t alignOfs) {
 		    ", past $%04" PRIx16,
 		    pc,
 		    static_cast<uint16_t>(pc + length),
-		    static_cast<uint16_t>(typeInfo.endAddr() + 1)
+		    typeInfo.onePastEndAddr()
 		);
 		return;
 	}
@@ -212,7 +212,7 @@ void layout_Pad(uint32_t length) {
 		    "Cannot increase the current address by %u bytes: only %u bytes to $%04" PRIx16,
 		    length,
 		    typeInfo.size - offset,
-		    static_cast<uint16_t>(typeInfo.endAddr() + 1)
+		    typeInfo.onePastEndAddr()
 		);
 	} else {
 		pc += length;

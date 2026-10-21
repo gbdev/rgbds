@@ -107,6 +107,9 @@ struct SectionTypeInfo {
 	// Returns a memory region's end address (last byte), e.g. 0x7FFF
 	uint16_t endAddr() const { return startAddr + size - 1; }
 
+	// Returns a memory region's one-past-the-end address, e.g. 0x8000
+	uint16_t onePastEndAddr() const { return startAddr + size; }
+
 	// Returns a memory region's number of banks, or 1 for regions without banking
 	uint32_t nbBanks() const { return lastBank - firstBank + 1; }
 

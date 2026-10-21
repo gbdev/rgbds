@@ -261,10 +261,10 @@ static void
 static void assignSection(Section &section, MemoryLocation const &location) {
 	assume(location.address >= section.typeInfo().startAddr);
 	// Zero-sized sections can start one past the end of their region.
-	assume(location.address <= section.typeInfo().endAddr() + 1);
+	assume(location.address <= section.typeInfo().onePastEndAddr());
 	// This one is not redundant, it guards against overflow!
 	assume(location.address + section.size >= section.typeInfo().startAddr);
-	assume(location.address + section.size <= section.typeInfo().endAddr() + 1);
+	assume(location.address + section.size <= section.typeInfo().onePastEndAddr());
 
 	if (section.isAddressFixed) {
 		assume(location.address == section.org);
@@ -345,7 +345,7 @@ static void placeSection(Section &section) {
 		// range for its `section`, which would violate an assumption in `assignSection`.
 		// Note that sections with fixed addresses are handled earlier by `sect_DoSanityChecks`,
 		// but this check would safely handle them too if they ever reached it.
-		if (location.address <= section.typeInfo().endAddr() + 1) {
+		if (location.address <= section.typeInfo().onePastEndAddr()) {
 			assignSection(section, location);
 			return;
 		}
@@ -363,14 +363,13 @@ static void placeSection(Section &section) {
 	if (!section.isBankFixed || !section.isAddressFixed) {
 		// If a section failed to go to several places, nothing we can report
 		fatal("Unable to place %s", describeConstraintsOf(section).c_str());
-	} else if (uint16_t onePastEnd = section.typeInfo().endAddr() + 1;
-	           section.org + section.size > onePastEnd) {
+	} else if (section.org + section.size > section.typeInfo().onePastEndAddr()) {
 		// If the section just can't fit the bank, report that
 		fatal(
 		    "Unable to place %s: section runs past end of region ($%04x > $%04x)",
 		    describeConstraintsOf(section).c_str(),
 		    section.org + section.size,
-		    onePastEnd
+		    section.typeInfo().onePastEndAddr()
 		);
 	} else {
 		// Otherwise there is overlap with another section
