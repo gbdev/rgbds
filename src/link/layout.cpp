@@ -124,25 +124,30 @@ void layout_AlignTo(uint32_t alignment, uint32_t alignOfs) {
 		return;
 	}
 
+	if (alignment > 16) {
+		scriptError("Cannot align: The alignment (%" PRIu32 ") must be less than 16", alignment);
+		return;
+	}
+
+	uint32_t alignSize = 1u << alignment;
+	uint32_t alignMask = alignSize - 1;
+
+	if (alignOfs >= alignSize) {
+		scriptError(
+		    "Cannot align: The alignment offset (%" PRIu32
+		    ") must be less than alignment size (%" PRIu32 ")",
+		    alignOfs,
+		    alignSize
+		);
+		return;
+	}
+
 	if (isPcFloating) {
-		if (alignment >= 16) {
-			layout_SetAddr(alignOfs);
-		} else {
-			uint32_t alignSize = 1u << alignment;
-			uint32_t alignMask = alignSize - 1;
-
-			if (alignOfs >= alignSize) {
-				scriptError(
-				    "Cannot align: The alignment offset (%" PRIu32
-				    ") must be less than alignment size (%" PRIu32 ")",
-				    alignOfs,
-				    alignSize
-				);
-				return;
-			}
-
+		if (alignment < 16) {
 			floatingAlignMask = alignMask;
 			floatingAlignOffset = alignOfs & alignMask;
+		} else {
+			layout_SetAddr(alignOfs);
 		}
 		return;
 	}
@@ -150,28 +155,10 @@ void layout_AlignTo(uint32_t alignment, uint32_t alignOfs) {
 	SectionTypeInfo const &typeInfo = sectionTypeInfo[activeType];
 	uint16_t &pc = curAddr[activeType][activeBankIdx];
 
-	if (alignment > 16) {
-		scriptError("Cannot align: The alignment (%" PRIu32 ") must be less than 16", alignment);
-		return;
-	}
-
 	// Let it wrap around, this'll trip the final check if alignment == 16.
 	uint16_t length = alignOfs - pc;
 
 	if (alignment < 16) {
-		uint32_t alignSize = 1u << alignment;
-		uint32_t alignMask = alignSize - 1;
-
-		if (alignOfs >= alignSize) {
-			scriptError(
-			    "Cannot align: The alignment offset (%" PRIu32
-			    ") must be less than alignment size (%" PRIu32 ")",
-			    alignOfs,
-			    alignSize
-			);
-			return;
-		}
-
 		assume(pc >= typeInfo.startAddr);
 		length &= alignMask;
 	}
