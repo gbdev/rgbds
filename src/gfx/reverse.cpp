@@ -235,6 +235,10 @@ void reverse() {
 			}
 		}
 
+		if (palettes.empty()) {
+			fatal("Read 0 palettes");
+		}
+
 		if (palettes.size() > options.nbPalettes) {
 			warnx(
 			    "Read %zu palettes, more than the specified limit of %" PRIu16,
