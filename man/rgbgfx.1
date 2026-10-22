@@ -211,7 +211,7 @@ is the case-insensitive word
 .Cm dmg ,
 then it acts like
 .Cm dmg=E4 ,
-i.e. the darkest gray will end up in color index 0, and so on.
+i.e. the lightest gray will end up in color index 0, and so on.
 The same gray shade cannot go in two color indexes.
 To specify a DMG palette, the input PNG must have all its colors in shades of gray, without any transparent colors.
 .It Sy automatic palette generation
@@ -619,7 +619,7 @@ may be appropriate.
 Otherwise, if the PNG only contains shades of gray, they will be categorized into as many
 .Dq bins
 as there are colors per palette, and the palette is set to these bins.
-The darkest gray will end up in bin #0, and so on; note that this is the opposite of the RGB method below.
+The lightest gray will end up in bin #0, and so on; this is the same luminance ordering as the RGB method below.
 This is equivalent to having specified a DMG palette of
 .Fl c Cm dmg=E4 .
 If two distinct grays end up in the same bin, the RGB method is used instead.
