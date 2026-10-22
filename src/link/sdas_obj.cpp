@@ -639,21 +639,21 @@ void sdobj_ReadFile(FileStackNode const &src, FILE *file, std::vector<Symbol> &f
 					// letter and an underscore. These are not compatibility
 					// hacks, this is how SDLD actually works.
 					if (sym.name.starts_with("b_")) {
-						// Look for the symbol being referenced, and use its index instead
-						for (idx = 0; idx < fileSymbols.size(); ++idx) {
-							if (sym.name.ends_with(fileSymbols[idx].name)
-							    && 1 + sym.name.length() == fileSymbols[idx].name.length()) {
-								break;
-							}
-						}
-						if (idx == fileSymbols.size()) {
+						// Look for the symbol being referenced, and use its index instead.
+						char const *refName = &sym.name.c_str()[1];
+						auto iter =
+						    std::find_if(RANGE(fileSymbols), [&refName](Symbol const &symbol) {
+							    return symbol.name == refName;
+						    });
+						if (iter == fileSymbols.end()) {
 							fatalAt(
 							    where,
 							    "\"%s\" is missing a reference to \"%s\"",
 							    sym.name.c_str(),
-							    &sym.name.c_str()[1]
+							    refName
 							);
 						}
+						idx = std::distance(fileSymbols.begin(), iter);
 						patch.rpn.rpn.resize(5);
 						patch.rpn.rpn[0] = RPN_BANK_SYM;
 						patch.rpn.rpn[1] = idx;

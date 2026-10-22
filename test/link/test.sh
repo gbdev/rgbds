@@ -375,6 +375,15 @@ tryDiff "$test"/out.err "$outtemp"
 tryCmpRom "$test"/ref.out.bin
 evaluateTest
 
+test="sdcc/bank-ref"
+startTest
+continueTest
+rgblinkQuiet -o "$gbtemp" -n "$outtemp2" -l "$test"/script.link "$test"/a.rel 2>"$outtemp"
+tryDiff "$test"/out.err "$outtemp"
+tryDiff "$test"/ref.out.sym "$outtemp2"
+tryCmpRom "$test"/ref.out.bin
+evaluateTest
+
 test="sdcc/good"
 startTest
 "$RGBASM" -o "$otemp" "$test"/a.asm
