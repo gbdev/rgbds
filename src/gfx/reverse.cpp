@@ -288,6 +288,18 @@ void reverse() {
 		grayscale = true;
 	} else if (options.hasExplicitPalSpec()) {
 		palettes = std::move(options.palSpec); // We won't be using it again.
+
+		if (palettes.empty()) {
+			fatal("Specified 0 palettes");
+		}
+
+		if (palettes.size() > options.nbPalettes) {
+			warnx(
+			    "Specified %zu palettes, more than the specified limit of %" PRIu16,
+			    palettes.size(),
+			    options.nbPalettes
+			);
+		}
 	} else {
 		grayscale = true;
 	}
