@@ -108,7 +108,8 @@ uint8_t Rgba::grayIndex() const {
 		assume(!options.hasTransparentPixels);
 		// Reduce gray shade from 0..<256 to 0..<4, then map to color index,
 		// then reduce to 0..<nbColorsPerPal
-		return options.dmgColors[gray * 4 / 256] * options.nbColorsPerPal / 4;
+		return options.dmgColors[gray * MAX_PAL_COLORS / 256] * options.nbColorsPerPal
+		       / MAX_PAL_COLORS;
 	}
 	// Reduce gray shade from 0..<256 to hasTransparentPixels..<nbColorsPerPal
 	// Note that `maxOpaqueColors()` already takes `hasTransparentPixels` into account

@@ -550,9 +550,9 @@ static void parseGBCFile(char const *filename, std::filebuf &file) {
 	options.palSpec.clear();
 
 	size_t const palSize = sizeof(uint16_t) * options.nbColorsPerPal;
-	assume(options.nbColorsPerPal <= 4);
+	assume(options.nbColorsPerPal <= MAX_PAL_COLORS);
 	for (;;) {
-		char buf[sizeof(uint16_t) * 4];
+		char buf[sizeof(uint16_t) * MAX_PAL_COLORS];
 		if (size_t len = file.sgetn(buf, palSize); len == 0) {
 			break;
 		} else if (len != palSize) {
@@ -699,13 +699,13 @@ void parseDmgPalSpec(char const * const rawArg) {
 	options.palSpecDmg = toHex(arg[0], arg[1]);
 
 	// Map gray shades to their DMG color indexes for fast lookup by `Rgba::grayIndex`
-	for (uint8_t i = 0; i < 4; ++i) {
+	for (uint8_t i = 0; i < MAX_PAL_COLORS; ++i) {
 		options.dmgColors[options.dmgValue(i)] = i;
 	}
 
 	// Validate that DMG palette spec does not have conflicting colors
-	for (uint8_t i = 0; i < 3; ++i) {
-		for (uint8_t j = i + 1; j < 4; ++j) {
+	for (uint8_t i = 0; i < MAX_PAL_COLORS - 1; ++i) {
+		for (uint8_t j = i + 1; j < MAX_PAL_COLORS; ++j) {
 			if (options.dmgValue(i) == options.dmgValue(j)) {
 				error("DMG palette specification maps two gray shades to the same color index");
 				return;

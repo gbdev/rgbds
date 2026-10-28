@@ -13,6 +13,17 @@
 
 #include "gfx/rgba.hpp"
 
+static constexpr size_t NB_BANKS = 2;
+
+static constexpr uint32_t TILE_WIDTH = 8;  // in pixels
+static constexpr uint32_t TILE_HEIGHT = 8; // in pixels
+
+static constexpr size_t MAX_PAL_COLORS = 4;
+
+// Forward declaration so `inputSlice`'s `bottom` method inside `Options` can refer to `options`.
+struct Options;
+extern Options options;
+
 struct Options {
 	bool useColorCurve = false;   // -C
 	bool allowDedup = false;      // -u
@@ -20,9 +31,9 @@ struct Options {
 	bool allowMirroringY = false; // -Y, -m
 	bool columnMajor = false;     // -Z
 
-	std::string attrmap{};                    // -a, -A
-	std::optional<Rgba> bgColor{};            // -B
-	std::array<uint8_t, 2> baseTileIDs{0, 0}; // -b
+	std::string attrmap{};                           // -a, -A
+	std::optional<Rgba> bgColor{};                   // -B
+	std::array<uint8_t, NB_BANKS> baseTileIDs{0, 0}; // -b
 	enum {
 		NO_SPEC,
 		INLINE,
@@ -30,7 +41,7 @@ struct Options {
 		EMBEDDED,
 		DMG,
 	} palSpecType = NO_SPEC; // -c
-	std::vector<std::array<std::optional<Rgba>, 4>> palSpec{};
+	std::vector<std::array<std::optional<Rgba>, MAX_PAL_COLORS>> palSpec{};
 	uint8_t palSpecDmg = 0;
 	uint8_t bitDepth = 2;       // -d
 	std::string inputTileset{}; // -i
@@ -39,8 +50,8 @@ struct Options {
 		uint16_t top;
 		uint16_t width;
 		uint16_t height;
-		uint32_t right() const { return left + width * 8; }
-		uint32_t bottom() const { return top + height * 8; }
+		uint32_t right() const { return left + width * TILE_WIDTH; }
+		uint32_t bottom() const { return top + height * TILE_HEIGHT; }
 	} inputSlice{0, 0, 0, 0};                          // -L (margins in clockwise order, like CSS)
 	uint8_t basePalID = 0;                             // -l
 	std::array<uint16_t, 2> maxNbTiles{UINT16_MAX, 0}; // -N
@@ -62,9 +73,9 @@ struct Options {
 
 	bool hasExplicitPalSpec() const { return palSpecType == INLINE || palSpecType == EXTERNAL; }
 
-	uint8_t dmgColors[4] = {};
+	uint8_t dmgColors[MAX_PAL_COLORS] = {};
 	uint8_t dmgValue(uint8_t i) const {
-		assume(i < 4);
+		assume(i < MAX_PAL_COLORS);
 		return (palSpecDmg >> (2 * i)) & 0b11;
 	}
 };

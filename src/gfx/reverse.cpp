@@ -94,7 +94,7 @@ static void printColor(std::optional<Rgba> const &color) {
 	}
 }
 
-static void printPalette(std::array<std::optional<Rgba>, 4> const &palette) {
+static void printPalette(std::array<std::optional<Rgba>, MAX_PAL_COLORS> const &palette) {
 	putc('[', stderr);
 	printColor(palette[0]);
 	fputs(", ", stderr);
@@ -196,10 +196,10 @@ void reverse() {
 
 	verbosePrint(VERB_INFO, "Reversed image dimensions: %zux%zu tiles\n", width, height);
 
-	Rgba const grayColors[4] = {
+	Rgba const grayColors[MAX_PAL_COLORS] = {
 	    Rgba(0xFFFFFFFF), Rgba(0xAAAAAAFF), Rgba(0x555555FF), Rgba(0x000000FF)
 	};
-	std::vector<std::array<std::optional<Rgba>, 4>> palettes{
+	std::vector<std::array<std::optional<Rgba>, MAX_PAL_COLORS>> palettes{
 	    {grayColors[0], grayColors[1], grayColors[2], grayColors[3]}
 	};
 	// If a palette file or palette spec is used as input, it overrides the default colors.
@@ -213,7 +213,7 @@ void reverse() {
 		}
 
 		palettes.clear();
-		std::array<uint8_t, sizeof(uint16_t) * 4> buf; // max 4 colors
+		std::array<uint8_t, sizeof(uint16_t) * MAX_PAL_COLORS> buf;
 		size_t const palSize = sizeof(uint16_t) * options.nbColorsPerPal;
 		assume(buf.size() >= palSize);
 		for (;;) {
@@ -250,7 +250,9 @@ void reverse() {
 		if (options.hasExplicitPalSpec() && palettes != options.palSpec) {
 			// The explicit `-c` pal spec does not match the input `-p` palette file.
 			// Check whether their 8-to-5-bit-reduced GB colors nevertheless match.
-			std::vector<std::array<std::optional<Rgba>, 4>> palSpecQuantized(options.palSpec);
+			std::vector<std::array<std::optional<Rgba>, MAX_PAL_COLORS>> palSpecQuantized(
+			    options.palSpec
+			);
 			for (auto &pal : palSpecQuantized) {
 				for (auto &color : pal) {
 					if (color.has_value()) {
@@ -305,7 +307,7 @@ void reverse() {
 	}
 
 	std::optional<std::vector<uint8_t>> attrmap;
-	uint16_t nbTilesMappedInBank[2] = {0, 0}; // Only used if there is an attrmap.
+	uint16_t nbTilesMappedInBank[NB_BANKS] = {0, 0}; // Only used if there is an attrmap.
 	if (!options.attrmap.empty()) {
 		attrmap = readInto(options.attrmap);
 		if (attrmap->size() != mapSize) {
@@ -368,10 +370,10 @@ void reverse() {
 		    nbTilesMappedInBank[1]
 		);
 
-		for (int bank = 0; bank < 2; ++bank) {
+		for (size_t bank = 0; bank < NB_BANKS; ++bank) {
 			if (nbTilesMappedInBank[bank] > options.maxNbTiles[bank]) {
 				error(
-				    "Bank %d contains %" PRIu16 " tiles, but the specified limit is %" PRIu16,
+				    "Bank %zu contains %" PRIu16 " tiles, but the specified limit is %" PRIu16,
 				    bank,
 				    nbTilesMappedInBank[bank],
 				    options.maxNbTiles[bank]
@@ -522,8 +524,8 @@ void reverse() {
 	png_set_IHDR(
 	    png,
 	    pngInfo,
-	    width * 8,
-	    height * 8,
+	    width * TILE_WIDTH,
+	    height * TILE_HEIGHT,
 	    pngDepth,
 	    pngColorType,
 	    PNG_INTERLACE_NONE,
@@ -544,8 +546,8 @@ void reverse() {
 
 	if (pngColorType == PNG_COLOR_TYPE_PALETTE) {
 		assume(palettes.size() == 1);
-		png_color pngPalette[4] = {};
-		png_byte pngTrans[4] = {};
+		png_color pngPalette[MAX_PAL_COLORS] = {};
+		png_byte pngTrans[MAX_PAL_COLORS] = {};
 		int nbPngColors = 0, nbPngTrans = 0;
 		for (auto const &slot : palettes[0]) {
 			Rgba color = slot.has_value() ? *slot : Rgba(255, 255, 255, 255);
@@ -567,10 +569,11 @@ void reverse() {
 	png_write_info(png, pngInfo);
 
 	// N bits/pixel * 8 pixels/tile row / 8 bits/byte = N bytes/tile row
+	assume(TILE_WIDTH == 8);
 	uint8_t const bytesPerTileRow = pngColorType == PNG_COLOR_TYPE_RGB_ALPHA ? 32 : pngDepth;
 	size_t const bytesPerRow = width * bytesPerTileRow;
-	std::vector<uint8_t> tileRow(8 * bytesPerRow, 0xFF); // Data for 8 rows of pixels
-	uint8_t * const rowPtrs[8] = {
+	std::vector<uint8_t> tileRow(TILE_HEIGHT * bytesPerRow, 0xFF); // Data for 8 rows of pixels
+	uint8_t * const rowPtrs[TILE_HEIGHT] = {
 	    &tileRow.data()[0 * bytesPerRow],
 	    &tileRow.data()[1 * bytesPerRow],
 	    &tileRow.data()[2 * bytesPerRow],
@@ -605,7 +608,7 @@ void reverse() {
 			uint8_t const *tileData =
 			    tileOfs >= nbTiles ? trimmedTile.data() : &tiles[tileOfs * tileSize];
 			auto const &palette = palettes[palOfs];
-			for (uint8_t y = 0; y < 8; ++y) {
+			for (uint8_t y = 0; y < TILE_HEIGHT; ++y) {
 				// If vertically mirrored, fetch the bytes from the other end
 				uint8_t realY = (attribute & 0x40 ? 7 - y : y) * options.bitDepth;
 				uint8_t bitplane0 = tileData[realY];
@@ -617,7 +620,7 @@ void reverse() {
 
 				uint8_t *ptr = &rowPtrs[y][tx * bytesPerTileRow];
 				uint16_t gray = 0;
-				for (uint8_t x = 0; x < 8; ++x) {
+				for (uint8_t x = 0; x < TILE_WIDTH; ++x) {
 					uint8_t bit0 = bitplane0 & 0x80, bit1 = bitplane1 & 0x80;
 					uint8_t colorID = bit0 >> 7 | bit1 >> 6;
 
@@ -666,7 +669,7 @@ void reverse() {
 		// signature.
 		// (AIUI, casting away const-ness is okay as long as you don't actually modify the
 		// pointed-to data)
-		png_write_rows(png, const_cast<uint8_t **>(rowPtrs), 8);
+		png_write_rows(png, const_cast<uint8_t **>(rowPtrs), TILE_HEIGHT);
 	}
 
 	// Finalize the write

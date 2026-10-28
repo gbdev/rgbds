@@ -387,12 +387,12 @@ static void parseArg(int ch, char *arg) {
 		break;
 
 	case 's':
-		options.nbColorsPerPal = readNumber(argPtr, "Number of colors per palette", 4);
+		options.nbColorsPerPal = readNumber(argPtr, "Number of colors per palette", MAX_PAL_COLORS);
 		if (*argPtr != '\0') {
 			error("Palette size ('-s') must be a valid number, not \"%s\"", arg);
 		}
-		if (options.nbColorsPerPal > 4) {
-			error("Palette size ('-s') must not exceed 4");
+		if (options.nbColorsPerPal > MAX_PAL_COLORS) {
+			error("Palette size ('-s') must not exceed %zu", MAX_PAL_COLORS);
 		} else if (options.nbColorsPerPal == 0) {
 			error("Palette size ('-s') may not be 0");
 		}
@@ -684,7 +684,7 @@ int main(int argc, char *argv[]) {
 
 	// Execute deferred pal spec parsing, now that all other params are known.
 	// Do not parse pal specs if `options.nbColorsPerPal` is invalid.
-	if (options.nbColorsPerPal > 0 && options.nbColorsPerPal <= 4) {
+	if (options.nbColorsPerPal > 0 && options.nbColorsPerPal <= MAX_PAL_COLORS) {
 		switch (options.palSpecType) {
 		case Options::NO_SPEC:
 			assume(!localOptions.palSpec);
