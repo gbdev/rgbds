@@ -128,11 +128,19 @@ struct Image {
 
 	explicit Image(Png &&png_) : png(std::move(png_)), colors() {
 		// Validate input slice
-		if (options.inputSlice.width == 0 && png.width % 8 != 0) {
-			fatal("Image width (%" PRIu32 " pixels) is not a multiple of 8", png.width);
+		if (options.inputSlice.width == 0 && png.width % TILE_WIDTH != 0) {
+			fatal(
+			    "Image width (%" PRIu32 " pixels) is not a multiple of %" PRIu32,
+			    png.width,
+			    TILE_WIDTH
+			);
 		}
-		if (options.inputSlice.height == 0 && png.height % 8 != 0) {
-			fatal("Image height (%" PRIu32 " pixels) is not a multiple of 8", png.height);
+		if (options.inputSlice.height == 0 && png.height % TILE_HEIGHT != 0) {
+			fatal(
+			    "Image height (%" PRIu32 " pixels) is not a multiple of %" PRIu32,
+			    png.height,
+			    TILE_HEIGHT
+			);
 		}
 		if (options.inputSlice.right() > png.width || options.inputSlice.bottom() > png.height) {
 			error(
@@ -145,15 +153,16 @@ struct Image {
 			    png.width,
 			    png.height
 			);
-			if (options.inputSlice.width % 8 == 0 && options.inputSlice.height % 8 == 0) {
+			if (options.inputSlice.width % TILE_WIDTH == 0
+			    && options.inputSlice.height % TILE_HEIGHT == 0) {
 				fprintf(
 				    stderr,
 				    "       (Did you mean the slice \"%" PRIu32 ",%" PRIu32 ":%" PRId32 ",%" PRId32
 				    "\"? The width and height are in tiles, not pixels!)\n",
 				    options.inputSlice.left,
 				    options.inputSlice.top,
-				    options.inputSlice.width / 8,
-				    options.inputSlice.height / 8
+				    options.inputSlice.width / TILE_WIDTH,
+				    options.inputSlice.height / TILE_HEIGHT
 				);
 			}
 			giveUp();
@@ -256,10 +265,11 @@ struct Image {
 			}
 
 			Iterator &operator++() {
+				assume(TILE_WIDTH == TILE_HEIGHT);
 				auto [major, minor] = parent._columnMajor ? std::tie(y, x) : std::tie(x, y);
-				major += 8;
+				major += TILE_WIDTH;
 				if (major == limit) {
-					minor += 8;
+					minor += TILE_HEIGHT;
 					major = 0;
 				}
 				return *this;
@@ -271,8 +281,10 @@ struct Image {
 	public:
 		Iterator begin() const { return {*this, _limit, 0, 0}; }
 		Iterator end() const {
-			Iterator it{*this, _limit, _width - 8, _height - 8}; // Last valid one...
-			return ++it;                                         // ...now one-past-last!
+			// Construct an iterator to the last valid tile...
+			Iterator it{*this, _limit, _width - TILE_WIDTH, _height - TILE_HEIGHT};
+			// ...and return one past the end
+			return ++it;
 		}
 	};
 
@@ -281,8 +293,8 @@ public:
 		return {
 		    *this,
 		    options.columnMajor,
-		    options.inputSlice.width ? options.inputSlice.width * 8 : png.width,
-		    options.inputSlice.height ? options.inputSlice.height * 8 : png.height,
+		    options.inputSlice.width ? options.inputSlice.width * TILE_WIDTH : png.width,
+		    options.inputSlice.height ? options.inputSlice.height * TILE_HEIGHT : png.height,
 		};
 	}
 };
@@ -523,7 +535,7 @@ public:
 	static uint16_t
 	    rowBitplanes(Image::TilesVisitor::Tile const &tile, Palette const &palette, uint32_t y) {
 		uint16_t row = 0;
-		for (uint32_t x = 0; x < 8; ++x) {
+		for (uint32_t x = 0; x < TILE_WIDTH; ++x) {
 			row <<= 1;
 			uint8_t index = palette.indexOf(tile.pixel(x, y).cgbColor());
 			assume(index < palette.size()); // The color should be in the palette
@@ -538,7 +550,7 @@ public:
 	}
 
 	TileData(std::array<uint8_t, 16> &&raw) : _data(raw), _hash(0) {
-		for (uint8_t y = 0; y < 8; ++y) {
+		for (uint8_t y = 0; y < TILE_HEIGHT; ++y) {
 			uint16_t bitplanes = _data[y * 2] | _data[y * 2 + 1] << 8;
 			hashBitplanes(bitplanes, _hash);
 		}
@@ -546,7 +558,7 @@ public:
 
 	TileData(Image::TilesVisitor::Tile const &tile, Palette const &palette) : _hash(0) {
 		size_t writeIndex = 0;
-		for (uint32_t y = 0; y < 8; ++y) {
+		for (uint32_t y = 0; y < TILE_HEIGHT; ++y) {
 			uint16_t bitplanes = rowBitplanes(tile, palette, y);
 			hashBitplanes(bitplanes, _hash);
 
@@ -652,7 +664,7 @@ static void outputUnoptimizedTileData(
 		Palette const &palette = palettes[attr.getPalID(mappings)];
 
 		bool empty = true;
-		for (uint32_t y = 0; y < 8; ++y) {
+		for (uint32_t y = 0; y < TILE_HEIGHT; ++y) {
 			uint16_t bitplanes = TileData::rowBitplanes(tile, palette, y);
 			if (bitplanes != 0) {
 				empty = false;
@@ -710,7 +722,7 @@ static void outputUnoptimizedMaps(
 		if (attr.isBackgroundTile()) {
 			// The tile bank may be 2 here, which is fine since background tiles are emitted as
 			// if they used the base tile ID and bank 0.
-			assume(bank <= 2);
+			assume(bank <= NB_BANKS);
 
 			emit(tilemapOutput, options.baseTileIDs[0]);
 			emit(attrmapOutput, palID & 0b111); // The other flags are all zeros.
@@ -718,7 +730,7 @@ static void outputUnoptimizedMaps(
 			// Since background tiles are not in tile data, they do not increment the tile index.
 		} else {
 			// The only valid tile banks are 0 and 1.
-			assume(bank < 2);
+			assume(bank < NB_BANKS);
 
 			// A non-zero base ID may make this addition overflow, wrapping around the available
 			// tile IDs. Since the operands are unsigned, this won't cause undefined behavior.
@@ -870,7 +882,7 @@ static void outputTileData(UniqueTiles const &tiles) {
 	for (TileData const *tile : tiles) {
 		assume(tile->tileID == tileIdx);
 		bool empty = true;
-		for (uint32_t y = 0; y < 8; ++y) {
+		for (uint32_t y = 0; y < TILE_HEIGHT; ++y) {
 			uint8_t bitplane0 = tile->data()[y * 2];
 			uint8_t bitplane1 = tile->data()[y * 2 + 1];
 			if (bitplane0 || bitplane1) {
@@ -1006,8 +1018,8 @@ void process(Png &&png) {
 
 		// Count the unique opaque colors for packing
 		std::unordered_set<uint16_t> tileColors;
-		for (uint32_t y = 0; y < 8; ++y) {
-			for (uint32_t x = 0; x < 8; ++x) {
+		for (uint32_t y = 0; y < TILE_HEIGHT; ++y) {
+			for (uint32_t x = 0; x < TILE_WIDTH; ++x) {
 				Rgba color = tile.pixel(x, y);
 				// Ambiguous colors should not be in `tileColors`
 				assume(color.isOpaque() != color.isTransparent());
