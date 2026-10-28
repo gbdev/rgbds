@@ -30,7 +30,7 @@ static void checkPieceCompat(Section &target, Section const &other, size_t delta
 
 	if (other.isAddressFixed) {
 		uint16_t org = other.org - delta;
-		char const * wasAdjusted = delta ? " after adjustment" : "";
+		char const *wasAdjusted = delta ? " after adjustment" : "";
 
 		if (target.isAddressFixed) {
 			if (target.org != org) {
@@ -77,7 +77,7 @@ static void checkPieceCompat(Section &target, Section const &other, size_t delta
 		target.org = org;
 	} else if (other.isAlignFixed) {
 		uint32_t ofs = (other.alignOfs - delta) & other.alignMask;
-		char const * wasAdjusted = delta ? " after adjustment" : "";
+		char const *wasAdjusted = delta ? " after adjustment" : "";
 
 		if (target.isAddressFixed) {
 			if ((target.org - ofs) & other.alignMask) {
