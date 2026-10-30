@@ -1168,7 +1168,7 @@ continue_visiting_tiles:;
 	auto checkTileCountLimit = [](size_t nbTiles) {
 		if (nbTiles > options.maxNbTiles[0] + options.maxNbTiles[1]) {
 			fatal(
-			    "Image contains %zu tiles, exceeding the limit of %" PRIu16 " + %" PRIu16,
+			    "Image contains %zu tiles, exceeding the limit of %" PRIu32 " + %" PRIu32,
 			    nbTiles,
 			    options.maxNbTiles[0],
 			    options.maxNbTiles[1]

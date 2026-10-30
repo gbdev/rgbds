@@ -157,7 +157,7 @@ void reverse() {
 	}
 	if (mapSize > options.maxNbTiles[0] + options.maxNbTiles[1]) {
 		warnx(
-		    "Total number of tiles (%zu) is more than the limit of %" PRIu16 " + %" PRIu16,
+		    "Total number of tiles (%zu) is more than the limit of %" PRIu32 " + %" PRIu32,
 		    mapSize,
 		    options.maxNbTiles[0],
 		    options.maxNbTiles[1]
@@ -373,7 +373,7 @@ void reverse() {
 		for (size_t bank = 0; bank < NB_BANKS; ++bank) {
 			if (nbTilesMappedInBank[bank] > options.maxNbTiles[bank]) {
 				error(
-				    "Bank %zu contains %" PRIu16 " tiles, but the specified limit is %" PRIu16,
+				    "Bank %zu contains %" PRIu16 " tiles, but the specified limit is %" PRIu32,
 				    bank,
 				    nbTilesMappedInBank[bank],
 				    options.maxNbTiles[bank]
@@ -381,9 +381,9 @@ void reverse() {
 			}
 		}
 
-		if (uint16_t const maxTotalNbTiles =
+		if (uint32_t const maxTotalNbTiles =
 		        nbTilesMappedInBank[1] > 0
-		            ? std::max<uint16_t>(
+		            ? std::max<uint32_t>(
 		                  nbTilesMappedInBank[0], options.maxNbTiles[0] + nbTilesMappedInBank[1]
 		              )
 		            : nbTilesMappedInBank[0];
@@ -422,7 +422,7 @@ void reverse() {
 				    tileOfs >= options.maxNbTiles[bank]) {
 					error(
 					    "Tilemap references tile #%" PRIu8
-					    " at (%zu, %zu), but the limit for bank %u is %" PRIu16,
+					    " at (%zu, %zu), but the limit for bank %u is %" PRIu32,
 					    tileID,
 					    tx,
 					    ty,
