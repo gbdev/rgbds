@@ -54,7 +54,7 @@ struct Options {
 		uint32_t bottom() const { return top + height * TILE_HEIGHT; }
 	} inputSlice{0, 0, 0, 0};                          // -L (margins in clockwise order, like CSS)
 	uint8_t basePalID = 0;                             // -l
-	std::array<uint16_t, 2> maxNbTiles{UINT16_MAX, 0}; // -N
+	std::array<uint32_t, 2> maxNbTiles{UINT32_MAX, 0}; // -N
 	uint16_t nbPalettes = 8;                           // -n
 	std::string output{};                              // -o
 	std::string palettes{};                            // -p, -P

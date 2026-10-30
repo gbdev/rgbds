@@ -578,7 +578,7 @@ static void verboseOutputConfig() {
 	// -N/--nb-tiles
 	fprintf(
 	    stderr,
-	    "\tMaximum %" PRIu16 " tiles in bank 0, and %" PRIu16 " in bank 1\n",
+	    "\tMaximum %" PRIu32 " tiles in bank 0, and %" PRIu32 " in bank 1\n",
 	    options.maxNbTiles[0],
 	    options.maxNbTiles[1]
 	);
