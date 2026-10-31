@@ -5,7 +5,6 @@
 #include "link/assign.hpp"
 
 #include <algorithm>
-#include <deque>
 #include <inttypes.h>
 #include <optional>
 #include <stdint.h>
@@ -34,10 +33,10 @@ struct FreeSpace {
 };
 
 // Table of free space for each bank
-static std::vector<std::deque<FreeSpace>> memory[SECTTYPE_INVALID];
-using FreeSpaceIter = std::deque<FreeSpace>::iterator;
+static std::vector<std::vector<FreeSpace>> memory[SECTTYPE_INVALID];
+using FreeSpaceIter = std::vector<FreeSpace>::iterator;
 
-static std::deque<FreeSpace> &freeSpaceOfBank(Section const &section, uint32_t bank) {
+static std::vector<FreeSpace> &freeSpaceOfBank(Section const &section, uint32_t bank) {
 	assume(bank >= section.typeInfo().firstBank);
 	assume(bank <= section.typeInfo().lastBank);
 	return memory[section.type][bank - section.typeInfo().firstBank];
@@ -158,7 +157,7 @@ struct MemoryLocation {
 };
 
 static FreeSpaceIter tryPlacingInBank(Section const &section, MemoryLocation &location) {
-	std::deque<FreeSpace> &bankMem = freeSpaceOfBank(section, location.bank);
+	std::vector<FreeSpace> &bankMem = freeSpaceOfBank(section, location.bank);
 
 	if (section.isAddressFixed) {
 		// There is only one candidate location in this bank: the address at which the section is
@@ -221,13 +220,13 @@ static FreeSpaceIter tryPlacing(Section const &section, MemoryLocation &location
 			return iter; // Found one!
 		}
 	} while (location.goToNextApplicableBankFor(section));
-	// Return a deque's end iterator to signal failure.
-	// The exact deque doesn't matter, but the caller will use `freeSpaceOfBank` also.
+	// Return a vector's end iterator to signal failure.
+	// The exact vector doesn't matter, but the caller will use `freeSpaceOfBank` also.
 	return freeSpaceOfBank(section, location.bank).end();
 }
 
 static void
-    updateFreeSpace(FreeSpaceIter iter, std::deque<FreeSpace> &bankMem, Section const &section) {
+    updateFreeSpace(FreeSpaceIter iter, std::vector<FreeSpace> &bankMem, Section const &section) {
 	assume(section.org + section.size <= UINT16_MAX);
 	uint16_t sectionEnd = section.org + section.size;
 	assume(section.org >= iter->address);
@@ -235,23 +234,18 @@ static void
 
 	bool noLeftSpace = iter->address == section.org;
 	bool noRightSpace = iter->address + iter->size == sectionEnd;
-	if (noLeftSpace && noRightSpace) {
-		// The free space is entirely deleted
+	if (noLeftSpace && noRightSpace) { // The free space is entirely deleted.
 		bankMem.erase(iter);
-	} else if (!noLeftSpace && !noRightSpace) {
-		// The free space is split in two
+	} else if (!noLeftSpace && !noRightSpace) { // The free space is split in two.
 		uint16_t size = static_cast<uint16_t>(iter->address + iter->size - sectionEnd);
 		// Resize the original space (address is unmodified)
 		iter->size = section.org - iter->address;
 		// Append the new space after the original one
 		bankMem.insert(iter + 1, {.address = sectionEnd, .size = size});
-		// `iter` cannot be reused from this point on, because `bankMem.insert`
-		// invalidates iterators to itself!
-	} else {
-		// The amount of free spaces doesn't change: resize!
+	} else { // The amount of free space blocks doesn't change: just resize!
 		iter->size -= section.size;
 		if (noLeftSpace) {
-			// The free space is moved *and* resized
+			// The free space's left boundary is what changed.
 			iter->address += section.size;
 		}
 	}
@@ -352,7 +346,7 @@ static void placeSection(Section &section) {
 	}
 
 	FreeSpaceIter iter = tryPlacing(section, location);
-	if (std::deque<FreeSpace> &bankMem = freeSpaceOfBank(section, location.bank);
+	if (std::vector<FreeSpace> &bankMem = freeSpaceOfBank(section, location.bank);
 	    iter != bankMem.end()) {
 		assignSection(section, location);
 
@@ -383,7 +377,7 @@ static void placeSection(Section &section) {
 	}
 }
 
-static std::deque<Section *> unassignedSections;
+static std::vector<Section *> unassignedSections;
 
 // Categorize a section depending on how constrained it is.
 // This is so the most-constrained sections are placed first.
@@ -469,7 +463,8 @@ void assign_AssignSections() {
 	for (SectionType type : EnumSeq(SECTTYPE_INVALID)) {
 		SectionTypeInfo const &typeInfo = sectionTypeInfo[type];
 		memory[type].resize(typeInfo.nbBanks());
-		for (std::deque<FreeSpace> &bankMem : memory[type]) {
+		for (std::vector<FreeSpace> &bankMem : memory[type]) {
+			assume(bankMem.empty());
 			bankMem.push_back({
 			    .address = typeInfo.startAddr,
 			    .size = typeInfo.size,
