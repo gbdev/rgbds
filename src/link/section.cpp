@@ -30,6 +30,7 @@ static void checkPieceCompat(Section &target, Section const &other, size_t delta
 
 	if (other.isAddressFixed) {
 		uint16_t org = other.org - delta;
+		char const *wasAdjusted = delta ? " after adjustment" : "";
 
 		if (target.isAddressFixed) {
 			if (target.org != org) {
@@ -37,10 +38,11 @@ static void checkPieceCompat(Section &target, Section const &other, size_t delta
 				    target,
 				    other,
 				    "Section \"%s\" is defined with address $%04" PRIx16
-				    ", but also with address $%04" PRIx16,
+				    ", but also with address $%04" PRIx16 "%s",
 				    target.name.c_str(),
 				    target.org,
-				    other.org
+				    org,
+				    wasAdjusted
 				);
 			}
 		} else if (target.isAlignFixed) {
@@ -49,11 +51,12 @@ static void checkPieceCompat(Section &target, Section const &other, size_t delta
 				    target,
 				    other,
 				    "Section \"%s\" is defined with %d-byte alignment (offset %" PRIu16
-				    "), but also with address $%04" PRIx16,
+				    "), but also with address $%04" PRIx16 "%s",
 				    target.name.c_str(),
 				    target.alignMask + 1,
 				    target.alignOfs,
-				    other.org
+				    org,
+				    wasAdjusted
 				);
 			}
 		} else if (other.org < delta) {
@@ -62,11 +65,11 @@ static void checkPieceCompat(Section &target, Section const &other, size_t delta
 			fatalTwoAt(
 			    target,
 			    other,
-			    "Section \"%s\" contains %" PRIu16
-			    " bytes, but is also defined with a lower fixed address $%04" PRIx16,
+			    "The fixed address $%04" PRIx16
+			    " of \"%s\" is lower than its current size of %" PRIu16 " bytes",
+			    other.org,
 			    target.name.c_str(),
-			    target.size,
-			    other.org
+			    target.size
 			);
 		}
 
@@ -74,6 +77,7 @@ static void checkPieceCompat(Section &target, Section const &other, size_t delta
 		target.org = org;
 	} else if (other.isAlignFixed) {
 		uint32_t ofs = (other.alignOfs - delta) & other.alignMask;
+		char const *wasAdjusted = delta ? " after adjustment" : "";
 
 		if (target.isAddressFixed) {
 			if ((target.org - ofs) & other.alignMask) {
@@ -81,11 +85,12 @@ static void checkPieceCompat(Section &target, Section const &other, size_t delta
 				    target,
 				    other,
 				    "Section \"%s\" is defined with address $%04" PRIx16
-				    ", but also with %d-byte alignment (offset %" PRIu16 ")",
+				    ", but also with %d-byte alignment (offset %" PRIu16 "%s)",
 				    target.name.c_str(),
 				    target.org,
 				    other.alignMask + 1,
-				    other.alignOfs
+				    ofs,
+				    wasAdjusted
 				);
 			}
 		} else if (target.isAlignFixed
@@ -94,12 +99,13 @@ static void checkPieceCompat(Section &target, Section const &other, size_t delta
 			    target,
 			    other,
 			    "Section \"%s\" is defined with %d-byte alignment (offset %" PRIu16
-			    "), but also with %d-byte alignment (offset %" PRIu16 ")",
+			    "), but also with %d-byte alignment (offset %" PRIu16 "%s)",
 			    target.name.c_str(),
 			    target.alignMask + 1,
 			    target.alignOfs,
 			    other.alignMask + 1,
-			    other.alignOfs
+			    ofs,
+			    wasAdjusted
 			);
 		} else if (!target.isAlignFixed || other.alignMask > target.alignMask) {
 			target.isAlignFixed = true;

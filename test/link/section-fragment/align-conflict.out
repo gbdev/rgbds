@@ -1,4 +1,4 @@
-FATAL: Section "conflicting alignment" is defined with 4-byte alignment (offset 0), but also with address $1337
+FATAL: Section "conflicting alignment" is defined with 4-byte alignment (offset 0), but also with address $1336 after adjustment
     at section-fragment/align-conflict.asm(7)
     and also:
     at section-fragment/align-conflict.asm(7)
