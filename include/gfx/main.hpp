@@ -80,6 +80,4 @@ struct Options {
 	}
 };
 
-extern Options options;
-
 #endif // RGBDS_GFX_MAIN_HPP

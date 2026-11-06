@@ -38,6 +38,8 @@ struct Rgba {
 	bool isOpaque() const { return alpha >= opacity_threshold; }
 	bool isAmbiguous() const { return isTransparent() == isOpaque(); }
 
+	bool isBackground() const;
+
 	// CGB colors are RGB555, so we use bit 15 to signify that the color is transparent instead
 	// Since the rest of the bits don't matter then, we return 0x8000 (1 << 15) exactly.
 	static constexpr uint16_t transparent = 0b1'00000'00000'00000;

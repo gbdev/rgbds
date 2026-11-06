@@ -54,7 +54,7 @@ void sortGrayscale(
 		palette.colors[0] = Rgba::transparent;
 	}
 	for (std::optional<Rgba> const &slot : colors) {
-		if (!slot.has_value() || slot->isTransparent()) {
+		if (!slot.has_value() || slot->isTransparent() || slot->isBackground()) {
 			continue;
 		}
 		palette[slot->grayIndex()] = slot->cgbColor();

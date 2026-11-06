@@ -12,6 +12,10 @@
 
 #include "gfx/main.hpp" // options
 
+bool Rgba::isBackground() const {
+	return options.bgColor.has_value() && *this == *options.bgColor;
+}
+
 std::string toCGB(uint16_t color) {
 	if (color == Rgba::transparent) {
 		return "transparent"; // same length as "GB:rr,gg,bb"
