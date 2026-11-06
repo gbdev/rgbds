@@ -1,4 +1,4 @@
-FATAL: Section "f" contains 32 bytes, but is also defined with a lower fixed address $0010
+FATAL: The fixed address $0010 of "f" is lower than its current size of 32 bytes
     at section-fragment/org-beyond-size/a.asm(1)
     and also:
     at section-fragment/org-beyond-size/b.asm(1)

@@ -1,4 +1,4 @@
-FATAL: Section "Frag" is defined with address $0000, but also with 4-byte alignment (offset 2)
+FATAL: Section "Frag" is defined with address $0000, but also with 4-byte alignment (offset 1 after adjustment)
     at fragment-align/org-bad/a.asm(2)
     and also:
     at fragment-align/org-bad/b.asm(2)
