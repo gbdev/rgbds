@@ -90,18 +90,19 @@ struct Image {
 	};
 	std::pair<GrayscaleResult, std::optional<Rgba>> isSuitableForGrayscale() const {
 		// Check that all of the grays don't fall into the same "bin"
-		if (colors.size() > options.maxOpaqueColors()) { // Apply the Pigeonhole Principle
+		if (size_t nbVisibleColors = options.maxOpaqueColors() - options.bgColor.has_value();
+		    colors.size() > nbVisibleColors) { // Apply the Pigeonhole Principle
 			verbosePrint(
 			    VERB_DEBUG,
-			    "Too many colors for grayscale sorting (%zu > %" PRIu8 ")\n",
+			    "Too many colors for grayscale sorting (%zu > %zu)\n",
 			    colors.size(),
-			    options.maxOpaqueColors()
+			    nbVisibleColors
 			);
 			return {GrayscaleResult::GRAY_TOO_MANY, std::nullopt};
 		}
 		uint8_t bins = 0;
 		for (std::optional<Rgba> const &color : colors) {
-			if (!color.has_value() || color->isTransparent()) {
+			if (!color.has_value() || color->isTransparent() || color->isBackground()) {
 				continue;
 			}
 			if (!color->isGray()) {
