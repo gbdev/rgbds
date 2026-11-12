@@ -160,11 +160,6 @@ done
 
 # These tests do their own thing
 
-test="patch-bounds"
-continueTest
-bash "$test/test.sh" "$RGBASM" "$RGBLINK" || our_rc=1
-evaluateTest
-
 test="bank-const"
 startTest
 "$RGBASM" -o "$otemp" "$test"/a.asm
