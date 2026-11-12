@@ -560,15 +560,7 @@ static void applyFilePatches(Section &section, Section &dataSection) {
 	for (Patch &patch : section.patches) {
 		int32_t value = computeRPNExpr(patch.rpn, *section.fileSymbols);
 		uint32_t offset = patch.offset + section.offset;
-
-		uint8_t typeSizes[PATCHTYPE_INVALID] = {
-		    1, // PATCHTYPE_BYTE
-		    2, // PATCHTYPE_WORD
-		    4, // PATCHTYPE_LONG
-		    1, // PATCHTYPE_JR
-		};
-		uint8_t typeSize = typeSizes[patch.type];
-
+		uint8_t typeSize = patch.typeSize();
 		if (dataSection.data.size() < offset + typeSize) {
 			rpnErrorAt(
 			    patch.rpn,
