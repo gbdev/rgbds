@@ -57,9 +57,10 @@ gcov src/**/*.cpp
 mkdir -p coverage
 
 # Generate coverage report, excluding Bison-generated files
+# Ignore errors with inconsistent coverage, since some may be false positives
 COVERAGE_INFO=coverage/coverage.info
-lcov -c --no-external -d . -o "$COVERAGE_INFO"
-lcov -r "$COVERAGE_INFO" src/asm/parser.{hpp,cpp} src/link/script.{hpp,cpp} -o "$COVERAGE_INFO"
+lcov -c --no-external --ignore-errors inconsistent,inconsistent -d . -o "$COVERAGE_INFO"
+lcov --ignore-errors inconsistent,inconsistent -r "$COVERAGE_INFO" src/asm/parser.{hpp,cpp} src/link/script.{hpp,cpp} -o "$COVERAGE_INFO"
 genhtml --dark-mode --num-spaces 4 -f -s -o coverage/ "$COVERAGE_INFO"
 
 if "$open_report"; then
