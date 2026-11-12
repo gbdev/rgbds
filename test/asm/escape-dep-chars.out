@@ -1,0 +1,3 @@
+unescaped$:#%\.o escaped$$\:\#\%\\.o: escape-dep-chars.asm
+unescaped$:#%\.o escaped$$\:\#\%\\.o: $$(shell\ echo\ Hello!\ \:heart\:\ \#hashtag).inc
+unescaped$:#%\.o escaped$$\:\#\%\\.o: $$(shell\ xeyes).bin
