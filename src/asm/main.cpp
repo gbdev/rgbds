@@ -111,18 +111,27 @@ static Usage usage = {
 
 std::string escapeMakeChars(std::string const &str) {
 	std::string escaped;
-	size_t pos = 0;
-	for (;;) {
-		// All dollars needs to be doubled
-		size_t nextPos = str.find('$', pos);
-		if (nextPos == std::string::npos) {
+	escaped.reserve(str.length());
+	for (char c : str) {
+		// Escape characters that need escaping
+		switch (c) {
+		case '$':
+			// Dollar signs needs to be doubled
+			escaped += "$$";
+			break;
+		case ' ':
+		case '#':
+		case ':':
+		case '%':
+		case '\\':
+			// All other special characters need backslash escaping
+			escaped += '\\';
+			[[fallthrough]];
+		default:
+			escaped += c;
 			break;
 		}
-		escaped.append(str, pos, nextPos - pos);
-		escaped.append("$$");
-		pos = nextPos + literal_strlen("$");
 	}
-	escaped.append(str, pos, str.length() - pos);
 	return escaped;
 }
 
