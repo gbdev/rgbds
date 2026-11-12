@@ -11,6 +11,8 @@
 #include "helpers.hpp" // assume
 #include "util.hpp"    // xfclose
 
+std::string escapeMakeChars(std::string const &str);
+
 enum MissingInclude {
 	INC_ERROR,    // A missing included file is an error that halts assembly
 	GEN_EXIT,     // A missing included file is assumed to be generated; exit normally
@@ -40,7 +42,8 @@ struct Options {
 	void printDep(std::string const &depName) {
 		if (dependFile) {
 			assume(targetFileName.has_value());
-			fprintf(dependFile, "%s: %s\n", targetFileName->c_str(), depName.c_str());
+			std::string escapedDepName = escapeMakeChars(depName);
+			fprintf(dependFile, "%s: %s\n", targetFileName->c_str(), escapedDepName.c_str());
 		}
 	}
 };
