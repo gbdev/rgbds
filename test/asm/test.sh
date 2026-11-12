@@ -103,9 +103,14 @@ for i in *.asm notexist.asm; do
 			desired_errput="$gb"
 			# Escape regex metacharacters
 			subst="$(printf '%s\n' "$i" | sed 's:[][\/.^$*]:\\&:g')"
-			# Replace the file name with "<stdin>" to match changed output
-			sed "s/$subst/<stdin>/g" "$desired_outname" >"$desired_output"
-			sed "s/$subst/<stdin>/g" "$desired_errname" >"$desired_errput"
+			# Replace the file name with "<stdin>" to match changed output (or "-" for Make deps)
+			if [ "$i" = "escape-dep-chars.asm" ]; then
+				subst_with="-"
+			else
+				subst_with="<stdin>"
+			fi
+			sed "s/$subst/$subst_with/g" "$desired_outname" >"$desired_output"
+			sed "s/$subst/$subst_with/g" "$desired_errname" >"$desired_errput"
 		fi
 
 		tryDiff "$desired_output" "$output" out
