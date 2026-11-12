@@ -109,7 +109,7 @@ static Usage usage = {
 };
 // clang-format on
 
-static std::string escapeMakeChars(std::string &str) {
+std::string escapeMakeChars(std::string const &str) {
 	std::string escaped;
 	size_t pos = 0;
 	for (;;) {

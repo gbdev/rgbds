@@ -188,10 +188,11 @@ static bool isValidFilePath(std::string const &path) {
 	return stat(path.c_str(), &statBuf) == 0 && !S_ISDIR(statBuf.st_mode); // Reject directories
 }
 
-static void printDep(std::string const &path) {
-	options.printDep(path);
-	if (options.dependFile && options.generatePhonyDeps && isValidFilePath(path)) {
-		fprintf(options.dependFile, "%s:\n", path.c_str());
+static void printDep(std::string const &depName) {
+	options.printDep(depName);
+	if (options.dependFile && options.generatePhonyDeps && isValidFilePath(depName)) {
+		std::string escapedDepName = escapeMakeChars(depName);
+		fprintf(options.dependFile, "%s:\n", escapedDepName.c_str());
 	}
 }
 
