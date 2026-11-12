@@ -25,6 +25,9 @@ Assertion &patch_AddAssertion();
 // Checks all assertions
 void patch_CheckAssertions();
 
+// Validates patches against their own section, before fragments are merged
+void patch_CheckBounds(Section const &section);
+
 // Applies all SECTIONs' patches to them
 void patch_ApplyPatches();
 

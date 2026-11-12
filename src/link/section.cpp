@@ -15,6 +15,7 @@
 #include "linkdefs.hpp"
 
 #include "link/main.hpp"
+#include "link/patch.hpp"
 #include "link/warning.hpp"
 
 static InsertionOrderedMap<std::string, std::unique_ptr<Section>> sections;
@@ -201,6 +202,9 @@ static void mergeSections(Section &target, std::unique_ptr<Section> &&other) {
 }
 
 void sect_AddSection(std::unique_ptr<Section> &&section) {
+	// Validate each object's patches before merging changes the first fragment's size.
+	patch_CheckBounds(*section);
+
 	// Check if the section already exists; if not, add it
 	if (Section *target = sect_GetSection(section->name); target) {
 		mergeSections(*target, std::move(section));

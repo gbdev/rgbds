@@ -554,22 +554,48 @@ static void checkPatchSize(Expression const &expr, int32_t v, uint8_t n) {
 	}
 }
 
+static uint8_t patchSize(Patch const &patch) {
+	switch (patch.type) {
+	case PATCHTYPE_BYTE:
+	case PATCHTYPE_JR:
+		return 1;
+	case PATCHTYPE_WORD:
+		return 2;
+	case PATCHTYPE_LONG:
+		return 4;
+	default:
+		fatalAt(patch.rpn, "Unknown patch type 0x%02x", static_cast<unsigned int>(patch.type));
+	}
+}
+
+void patch_CheckBounds(Section const &section) {
+	for (Patch const &patch : section.patches) {
+		uint8_t size = patchSize(patch);
+
+		if (patch.offset > section.size || size > section.size - patch.offset) {
+			fatalAt(
+			    patch.rpn,
+			    "Patch of size %u at offset $%" PRIx32
+			    " writes past the end of section \"%s\" (%" PRIu16 " bytes long)",
+			    size,
+			    patch.offset,
+			    section.name.c_str(),
+			    section.size
+			);
+		}
+	}
+}
+
 // Applies all of a section's patches to a data section
 static void applyFilePatches(Section &section, Section &dataSection) {
 	verbosePrint(VERB_INFO, "Patching section \"%s\"...\n", section.name.c_str());
+	patch_CheckBounds(section);
 	for (Patch &patch : section.patches) {
-		int32_t value = computeRPNExpr(patch.rpn, *section.fileSymbols);
-		uint32_t offset = patch.offset + section.offset;
+		// Both offsets now fit in 16 bits, so this addition cannot wrap.
+		size_t offset = static_cast<size_t>(patch.offset) + section.offset;
+		uint8_t typeSize = patchSize(patch);
 
-		uint8_t typeSizes[PATCHTYPE_INVALID] = {
-		    1, // PATCHTYPE_BYTE
-		    2, // PATCHTYPE_WORD
-		    4, // PATCHTYPE_LONG
-		    1, // PATCHTYPE_JR
-		};
-		uint8_t typeSize = typeSizes[patch.type];
-
-		if (dataSection.data.size() < offset + typeSize) {
+		if (offset > dataSection.data.size() || typeSize > dataSection.data.size() - offset) {
 			rpnErrorAt(
 			    patch.rpn,
 			    "Patch would write %zu bytes past the end of section \"%s\" (%zu bytes long)",
@@ -577,7 +603,11 @@ static void applyFilePatches(Section &section, Section &dataSection) {
 			    dataSection.name.c_str(),
 			    dataSection.data.size()
 			);
-		} else if (patch.type == PATCHTYPE_JR) {
+			continue;
+		}
+
+		int32_t value = computeRPNExpr(patch.rpn, *section.fileSymbols);
+		if (patch.type == PATCHTYPE_JR) {
 			if (!patch.rpn.pcSection) {
 				rpnErrorAt(patch.rpn, "PC has no value outside of a section");
 				dataSection.data[offset] = 0;
