@@ -22,7 +22,76 @@
 #include "fix/mbc.hpp"
 #include "fix/warning.hpp"
 
+#if defined(_MSC_VER) || defined(__MINGW32__)
+// clang-format off: maintain `include` order
+	#define WIN32_LEAN_AND_MEAN // Include less from `windows.h`
+	#include <windows.h>
+// clang-format on
+	#include <system_error>
+#endif
+
 static constexpr off_t BANK_SIZE = 0x4000;
+
+static int openFile(char const *name, int flags) {
+	char const *access = flags & O_RDWR     ? "reading+writing"
+	                     : flags & O_WRONLY ? "writing"
+	                                        : "reading";
+	auto fail = [&](char const *reason) {
+		error("Failed to open \"%s\" for %s: %s", name, access, reason);
+		return -1;
+	};
+	int fd;
+	if (flags & (O_WRONLY | O_RDWR)) {
+		// Check the opened object, never the path before opening it: that would race
+		// with replacement of the file. Parent directory symlinks are still followed.
+#if defined(_MSC_VER) || defined(__MINGW32__)
+		auto failWindows = [&](DWORD errnum) {
+			auto condition = std::system_category().default_error_condition(errnum);
+			// Preserve the CRT's existing diagnostics for errors with an errno equivalent.
+			return fail(
+			    condition.category() == std::generic_category() ? strerror(condition.value())
+			                                                    : condition.message().c_str()
+			);
+		};
+		HANDLE handle = CreateFileA(
+		    name,
+		    flags & O_RDWR ? GENERIC_READ | GENERIC_WRITE : GENERIC_WRITE,
+		    FILE_SHARE_READ | FILE_SHARE_WRITE,
+		    nullptr,
+		    flags & O_CREAT ? OPEN_ALWAYS : OPEN_EXISTING,
+		    FILE_FLAG_OPEN_REPARSE_POINT,
+		    nullptr
+		);
+		if (handle == INVALID_HANDLE_VALUE) {
+			return failWindows(GetLastError());
+		}
+		BY_HANDLE_FILE_INFORMATION info;
+		if (!GetFileInformationByHandle(handle, &info)) {
+			DWORD errnum = GetLastError();
+			CloseHandle(handle);
+			return failWindows(errnum);
+		}
+		if (info.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT) {
+			CloseHandle(handle);
+			return fail("Cannot modify a reparse point");
+		}
+		// Transfer ownership of this checked handle; do not reopen the path.
+		fd = _open_osfhandle(reinterpret_cast<intptr_t>(handle), (flags & ~O_CREAT) | O_BINARY);
+		if (fd == -1) {
+			int errnum = errno;
+			CloseHandle(handle);
+			return fail(strerror(errnum));
+		}
+#else
+		// POSIX leaves O_RDWR on a FIFO undefined. Opening first and checking with
+		// fstat avoids a TOCTTOU; any I/O errors are handled by the caller.
+		fd = open(name, flags | O_BINARY | O_NOFOLLOW, 0600);
+#endif
+	} else {
+		fd = open(name, flags | O_BINARY);
+	}
+	return fd == -1 ? fail(strerror(errno)) : fd;
+}
 
 static ssize_t readBytes(int fd, uint8_t *buf, size_t len) {
 	// POSIX specifies that lengths greater than SSIZE_MAX yield implementation-defined results
@@ -387,7 +456,7 @@ static void
 			// LCOV_EXCL_START
 			int errnum = errno;
 			if (errnum == EINVAL) {
-				// We do not support FIFOs or symlinks
+				// Non-regular files such as FIFOs cannot be truncated.
 				if (struct stat stat; fstat(output, &stat) == 0 && !S_ISREG(stat.st_mode)) {
 					error(
 					    "\"%s\" is not a regular file, and thus cannot be modified in-place", name
@@ -488,12 +557,9 @@ bool fix_ProcessFile(char const *name, char const *outputName) {
 			output = STDOUT_FILENO;
 			(void)setmode(STDOUT_FILENO, O_BINARY);
 		} else {
-			output = open(outputName, O_WRONLY | O_BINARY | O_CREAT, 0600);
+			output = openFile(outputName, O_WRONLY | O_CREAT);
 			if (output == -1) {
-				// LCOV_EXCL_START
-				error("Failed to open \"%s\" for writing: %s", outputName, strerror(errno));
 				return true;
-				// LCOV_EXCL_STOP
 			}
 		}
 	}
@@ -507,18 +573,15 @@ bool fix_ProcessFile(char const *name, char const *outputName) {
 		name = "<stdin>";
 		(void)setmode(STDIN_FILENO, O_BINARY);
 		processFile(STDIN_FILENO, output, name, 0, false);
-	} else if (int input = open(name, (outputName ? O_RDONLY : O_RDWR) | O_BINARY); input == -1) {
-		// POSIX specifies that the results of O_RDWR on a FIFO are undefined.
-		// However, this is necessary to avoid a TOCTTOU, if the file was changed between
-		// `stat()` and `open(O_RDWR)`, which could trigger the UB anyway.
-		// Thus, we're going to hope that either the `open` fails, or it succeeds but I/O
-		// operations may fail, all of which we handle.
-		error("Failed to open \"%s\" for reading+writing: %s", name, strerror(errno));
 	} else {
+		int input = openFile(name, outputName ? O_RDONLY : O_RDWR);
+		if (input == -1) {
+			return checkErrors(name);
+		}
 		Defer closeInput{[&] { xclose(input); }};
 		if (struct stat stat; fstat(input, &stat) == -1) {
 			error("Failed to stat \"%s\": %s", name, strerror(errno)); // LCOV_EXCL_LINE
-		} else if (!S_ISREG(stat.st_mode)) { // We do not support FIFOs or symlinks
+		} else if (!S_ISREG(stat.st_mode)) { // We do not support FIFOs or other non-regular files
 			// LCOV_EXCL_START
 			error("\"%s\" is not a regular file, and thus cannot be modified in-place", name);
 			// LCOV_EXCL_STOP

@@ -151,6 +151,35 @@ runTestExpectingFailure () {
 	fi
 }
 
+runSymlinkTest () {
+	name="$1"
+	shift
+	startTest "$name"
+
+	cp "$src/default-input.bin" target.gb
+	cp target.gb input.gb
+	cp target.gb out.gb
+	"$RGBFIX" -v "$@" >out.out 2>out.err
+	our_rc=$(($? != 1))
+	# The exact open error varies by OS, but it must be reported.
+	grep -q 'error:' out.err
+	(( our_rc = our_rc || $? ))
+	tryDiff /dev/null out.out "${name}.out"
+	(( our_rc = our_rc || $? ))
+	for file in target.gb input.gb out.gb; do
+		tryCmp "$src/default-input.bin" "$file" "${name}: $file"
+		(( our_rc = our_rc || $? ))
+	done
+	[[ -L symlink.gb && -L chained.gb && -L dangling.gb && ! -e missing.gb ]]
+	(( our_rc = our_rc || $? ))
+
+	(( rc = rc || our_rc ))
+	if [[ $our_rc -ne 0 ]]; then
+		echo "${bold}${red}${name} failed!${rescolors}${resbold}"
+		(( failed++ ))
+	fi
+}
+
 rm -f padding*_* # Delete padding test cases generated but not deleted (e.g. interrupted)
 
 progress=1
@@ -167,6 +196,34 @@ runSpecialTest pre-existing-output input.gb
 dd if=/dev/zero of=input.gb bs=1 count=336 >/dev/null 2>&1
 cp input.gb out.gb
 runSpecialTest equivalent-output out.gb
+
+# MinGW builds need native Windows symlinks, not MSYS/Cygwin emulation or copies.
+# Some Windows installations do not grant permission to create native symlinks.
+cp "$src/default-input.bin" target.gb
+if MSYS="${MSYS:+$MSYS }winsymlinks:nativestrict" CYGWIN="${CYGWIN:+$CYGWIN }winsymlinks:nativestrict" \
+	ln -s target.gb symlink.gb && [[ -L symlink.gb ]]; then
+	MSYS="${MSYS:+$MSYS }winsymlinks:nativestrict" CYGWIN="${CYGWIN:+$CYGWIN }winsymlinks:nativestrict" \
+		ln -s symlink.gb chained.gb || exit 1
+	# MSYS needs an existing target to determine the native symlink's type.
+	cp target.gb missing.gb
+	MSYS="${MSYS:+$MSYS }winsymlinks:nativestrict" CYGWIN="${CYGWIN:+$CYGWIN }winsymlinks:nativestrict" \
+		ln -s missing.gb dangling.gb || exit 1
+	rm missing.gb
+	runSymlinkTest symlink-in-place symlink.gb
+	runSymlinkTest symlink-padding -p 255 symlink.gb
+	runSymlinkTest symlink-chain chained.gb
+	runSymlinkTest symlink-output -o symlink.gb input.gb
+	runSymlinkTest symlink-same-output -o symlink.gb symlink.gb
+	runSymlinkTest dangling-in-place dangling.gb
+	runSymlinkTest dangling-output -o dangling.gb input.gb
+
+	# Reading a symlink with a separate output remains supported.
+	"$RGBFIX" -v -o input.gb target.gb || exit 1
+	runSpecialTest symlink-read -v symlink.gb
+	tryCmp "$src/default-input.bin" target.gb || exit 1
+else
+	echo 'Skipping symlink tests: native symbolic links are not available'
+fi
 
 # Check that RGBFIX errors out when inputting a non-existent file
 runTestExpectingFailure no-exist no-exist

@@ -199,6 +199,13 @@ to a given value from 0 to 0xFF.
 .It Fl o Ar out_file , Fl \-output Ar out_file
 Write the modified ROM image to the given file, or '-' to write to standard output.
 If not specified, the input files are modified in-place, or written to standard output if read from standard input.
+Files opened for writing must not be symbolic links (or reparse points on Windows).
+This applies both to in-place input files and to
+.Ar out_file .
+Symbolic links in parent directories are still followed.
+Input files read with
+.Fl o
+may be symbolic links.
 .It Fl p Ar pad_value , Fl \-pad-value Ar pad_value
 Pad the ROM image to a valid size with a given pad value from 0 to 255 (0xFF).
 .Nm

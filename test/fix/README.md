@@ -14,3 +14,8 @@ These tests check that RGBFIX behaves properly.
 ## Special tests
 
 - `noexist.err` is the expected error output when RGBFIX is given a non-existent input file.
+- Symlink tests in `test.sh` check that in-place edits and explicit outputs reject symbolic
+  links without changing the target, input, or an unrelated output file, including with padding,
+  chained links, and dangling links. Reading a link with a separate output is also checked.
+  These tests are skipped when native symbolic links cannot be created (for example, when
+  Windows denies the required privilege).
