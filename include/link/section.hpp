@@ -8,7 +8,7 @@
 #include <string>
 #include <vector>
 
-#include "helpers.hpp" // QualifiedEquivalent
+#include "helpers.hpp" // assume, QualifiedEquivalent
 #include "linkdefs.hpp"
 
 struct FileStackNode;
@@ -28,6 +28,17 @@ struct Patch {
 	Expression rpn;
 	uint32_t offset;
 	PatchType type;
+
+	uint8_t typeSize() const {
+		assume(type < PATCHTYPE_INVALID);
+		uint8_t typeSizes[PATCHTYPE_INVALID] = {
+		    1, // PATCHTYPE_BYTE
+		    2, // PATCHTYPE_WORD
+		    4, // PATCHTYPE_LONG
+		    1, // PATCHTYPE_JR
+		};
+		return typeSizes[type];
+	}
 };
 
 struct Section {

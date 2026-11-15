@@ -383,6 +383,15 @@ static void readSection(
 			patch.type = PatchType(type);
 		}
 
+		if (patch.offset > section.size || patch.offset + patch.typeSize() > section.size) {
+			fatal(
+			    "%s: \"%s\"'s patch #%" PRIu32 " overflows the section",
+			    fileName,
+			    section.name.c_str(),
+			    patchID
+			);
+		}
+
 		uint32_t rpnSize;
 		tryReadLong(
 		    rpnSize,
