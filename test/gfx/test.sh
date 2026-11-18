@@ -66,7 +66,7 @@ checkOutput () {
 while [[ "$ofs" -eq 0 ]]; do (( ofs = RANDOM % 256 )); done
 while [[ "$size" -eq 0 ]]; do (( size = RANDOM % 256 )); done
 for f in seed*.bin; do
-	for flags in ""{," -b $ofs"}{," -N $size,256"}; do
+	for flags in ""{," -b $ofs"}{," -N $size,256"," -N 0,256"}; do
 		newTest ./rgbgfx_test "$f" $flags
 		runTest || failTest $?
 	done
