@@ -14,8 +14,8 @@ set(PNG_SHARED OFF CACHE INTERNAL "")
 set(PNG_STATIC ON CACHE INTERNAL "")
 
 FetchContent_Declare(ZLIB
-                     URL https://www.zlib.net/zlib-1.3.2.tar.xz
-                     URL_HASH SHA256=d7a0654783a4da529d1bb793b7ad9c3318020af77667bcae35f95d0e42a792f3
+                     URL https://www.zlib.net/zlib-1.4.tar.xz
+                     URL_HASH SHA256=4f11c512053d7bab8d9e9b89bde3575add3e4c50a383b42ef6cb837035fc5a7c
                      EXCLUDE_FROM_ALL # We only install the runtime dependencies, and do so separately.
 # libpng documents requiring "zlib 1.0.4 or later (1.2.13 or later recommended for performance and security reasons)".
 # We thus enforce 1.0.4, but note that the libpng source code mentions that "it may work with versions as old as zlib 0.95".
