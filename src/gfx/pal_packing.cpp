@@ -5,7 +5,6 @@
 #include <algorithm>
 #include <inttypes.h>
 #include <iterator>
-#include <numeric>
 #include <optional>
 #include <queue>
 #include <stddef.h>
@@ -21,6 +20,7 @@
 
 #include "gfx/color_set.hpp"
 #include "gfx/main.hpp"
+#include "gfx/warning.hpp"
 
 // The solvers here are picked from the paper at https://arxiv.org/abs/1605.00558:
 // "Algorithms for the Pagination Problem, a Bin Packing with Overlapping Items"
@@ -51,6 +51,31 @@ struct ColorSetAttrs {
 			bannedPages.resize(index + 1);
 		}
 		bannedPages[index] = true;
+	}
+};
+
+// Compare fractions with positive denominators without overflowing a cross product.
+struct Fraction {
+	uint64_t num, den;
+
+	int compare(Fraction rhs) const {
+		Fraction lhs = *this;
+		int sign = 1;
+		for (;;) {
+			uint64_t left = lhs.num / lhs.den, right = rhs.num / rhs.den;
+			if (left != right) {
+				return left < right ? -sign : sign;
+			}
+			left = lhs.num % lhs.den;
+			right = rhs.num % rhs.den;
+			if (left == 0 || right == 0) {
+				return sign * ((left != 0) - (right != 0));
+			}
+			// The whole parts matched. Taking reciprocals reverses the order of the remainders.
+			lhs = {lhs.den, left};
+			rhs = {rhs.den, right};
+			sign = -sign;
+		}
 	}
 };
 
@@ -204,38 +229,17 @@ public:
 		});
 	}
 
-	// The `relSizeOf` method below should compute the sum, for each color in `colorSet`, of
-	// the reciprocal of the "multiplicity" of the color across "our" color sets.
-	// However, literally computing the reciprocals would involve floating-point division, which
-	// leads to imprecision and even platform-specific differences.
-	// We avoid this by multiplying the reciprocals by a factor such that division always produces
-	// an integer; the LCM of all values the denominator can take is the smallest suitable factor.
-	static constexpr uint32_t scaleFactor = [] {
-		// Fold over 1..=17 with the associative LCM function
-		// (17 is the largest the denominator in `relSizeOf` below can be)
-		uint32_t factor = 1;
-		for (uint32_t n = 2; n <= 17; ++n) {
-			factor = std::lcm(factor, n);
-		}
-		return factor;
-	}();
-
-	// Computes the "relative size" of a color set on this palette;
-	// it's a measure of how much this color set would "cost" to introduce.
-	uint32_t relSizeOf(ColorSet const &colorSet) const {
-		uint32_t relSize = 0;
+	// Sum 1 / (multiplicity + 1) for each color, including when scoring a set already assigned.
+	Fraction relSizeOf(ColorSet const &colorSet) const {
+		Fraction sum{0, 1};
 		for (uint16_t color : colorSet) {
-			uint32_t n = multiplicity(color);
-			// We increase the denominator by 1 here; the reference code does this,
-			// but the paper does not. Not adding 1 makes a multiplicity of 0 cause a division by 0
-			// (that is, if the color is not found in any color set), and adding 1 still seems
-			// to preserve the paper's reasoning.
-			//
-			// The scale factor should ensure integer divisions only.
-			assume(scaleFactor % (n + 1) == 0);
-			relSize += scaleFactor / (n + 1);
+			uint64_t divisor = multiplicity(color) + 1;
+			// The input bound in overloadAndRemove gives divisor <= 3841. There are at most
+			// four terms, so the denominator is at most 3841^4 and the numerator at most four
+			// times that. Neither fraction reduction nor a shared scale factor is needed.
+			sum = {sum.num * divisor + sum.den, sum.den * divisor};
 		}
-		return relSize;
+		return sum;
 	}
 
 	// Computes the "relative size" of a set of color sets on this palette
@@ -379,6 +383,19 @@ static void decant(std::vector<AssignedSets> &assignments, std::vector<ColorSet>
 std::pair<std::vector<size_t>, size_t> overloadAndRemove(std::vector<ColorSet> const &colorSets) {
 	verbosePrint(VERB_NOTICE, "Paginating palettes using \"overload-and-remove\" strategy...\n");
 
+	// A finished palette with k opaque colors covers at most 2^k - 1 distinct nonempty sets.
+	// The input sets are distinct, so exceeding this bound makes the requested packing impossible.
+	size_t maxSets = options.nbPalettes * ((1u << options.maxOpaqueColors()) - 1);
+	if (colorSets.size() > maxSets) {
+		fatal(
+		    "%zu distinct color sets cannot fit in %" PRIu16 " palette%s (at most %zu sets)",
+		    colorSets.size(),
+		    options.nbPalettes,
+		    options.nbPalettes == 1 ? "" : "s",
+		    maxSets
+		);
+	}
+
 	// Sort the color sets by size, which improves the packing algorithm's efficiency
 	auto const indexOfLargestColorSetFirst = [&colorSets](size_t left, size_t right) {
 		ColorSet const &lhs = colorSets[left];
@@ -405,7 +422,7 @@ std::pair<std::vector<size_t>, size_t> overloadAndRemove(std::vector<ColorSet> c
 		size_t bestPalIndex = assignments.size();
 		// We're looking for a palette where the color set's relative size is less than
 		// its actual size; so only overwrite the "not found" index on meeting that criterion
-		uint32_t bestRelSize = colorSet.size() * AssignedSets::scaleFactor;
+		Fraction bestRelSize{colorSet.size(), 1};
 
 		for (size_t i = 0; i < assignments.size(); ++i) {
 			// Skip the page if this one is banned from it
@@ -413,16 +430,17 @@ std::pair<std::vector<size_t>, size_t> overloadAndRemove(std::vector<ColorSet> c
 				continue;
 			}
 
-			uint32_t relSize = assignments[i].relSizeOf(colorSet);
+			Fraction relSize = assignments[i].relSizeOf(colorSet);
 			verbosePrint(
 			    VERB_TRACE,
-			    "  Relative size to palette %zu (of %zu): %" PRIu32 " (size = %zu)\n",
+			    "  Relative size to palette %zu (of %zu): %" PRIu64 "/%" PRIu64 " (size = %zu)\n",
 			    i,
 			    assignments.size(),
-			    relSize,
+			    relSize.num,
+			    relSize.den,
 			    colorSet.size()
 			);
-			if (relSize < bestRelSize) {
+			if (relSize.compare(bestRelSize) < 0) {
 				bestPalIndex = i;
 				bestRelSize = relSize;
 			}
@@ -455,27 +473,24 @@ std::pair<std::vector<size_t>, size_t> overloadAndRemove(std::vector<ColorSet> c
 			ColorSet const &colorSet2 = colorSets[attrs2.colorSetIndex];
 			size_t size1 = colorSet1.size();
 			size_t size2 = colorSet2.size();
-			uint32_t relSize1 = bestPal.relSizeOf(colorSet1);
-			uint32_t relSize2 = bestPal.relSizeOf(colorSet2);
+			Fraction relSize1 = bestPal.relSizeOf(colorSet1);
+			Fraction relSize2 = bestPal.relSizeOf(colorSet2);
+			// Efficiency is size / relative size. Each set has at most four colors.
+			Fraction efficiency1{size1 * relSize1.den, relSize1.num};
+			Fraction efficiency2{size2 * relSize2.den, relSize2.num};
 
 			verbosePrint(
 			    VERB_TRACE,
-			    "  Color sets %zu <=> %zu: Efficiency: %zu / %" PRIu32 " <=> %zu / "
-			    "%" PRIu32 "\n",
+			    "  Color sets %zu <=> %zu: Efficiency: %" PRIu64 "/%" PRIu64 " <=> %" PRIu64
+			    "/%" PRIu64 "\n",
 			    attrs1.colorSetIndex,
 			    attrs2.colorSetIndex,
-			    size1,
-			    relSize1,
-			    size2,
-			    relSize2
+			    efficiency1.num,
+			    efficiency1.den,
+			    efficiency2.num,
+			    efficiency2.den
 			);
-
-			// This comparison is algebraically equivalent to
-			// `size1 / relSize1 <=> size2 / relSize2`,
-			// but without potential precision loss from floating-point division.
-			size_t efficiency1 = size1 * relSize2;
-			size_t efficiency2 = size2 * relSize1;
-			return (efficiency1 > efficiency2) - (efficiency1 < efficiency2);
+			return efficiency1.compare(efficiency2);
 		};
 
 		// If this overloads the palette, get it back to normal (if possible)
