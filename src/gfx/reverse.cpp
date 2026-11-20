@@ -285,8 +285,10 @@ void reverse() {
 		}
 		grayscale = true;
 	} else if (options.palSpecType == Options::EMBEDDED) {
-		warnx("An embedded palette was requested, but no palette file was specified; ignoring "
-		      "request");
+		warnx(
+		    "An embedded palette was requested, but no palette file was specified; ignoring "
+		    "request"
+		);
 		grayscale = true;
 	} else if (options.hasExplicitPalSpec()) {
 		palettes = std::move(options.palSpec); // We won't be using it again.
