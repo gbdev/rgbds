@@ -358,8 +358,8 @@ static void parseArg(int ch, char *arg) {
 	case 'n':
 		if (std::optional<uint64_t> number = parseWholeNumber(argPtr); !number) {
 			error("Invalid argument for number of palettes");
-		} else if (*number > 256) {
-			error("Number of palettes must not exceed 256");
+		} else if (*number > MAX_NB_PALETTES) {
+			error("Number of palettes must not exceed %zu", MAX_NB_PALETTES);
 		} else if (*number == 0) {
 			error("Number of palettes may not be 0");
 		} else {
