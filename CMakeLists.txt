@@ -187,7 +187,7 @@ if(MSVC)
     /wd4996 # Warning C4996 is about using POSIX names, which we want to do for portability.
     /Zc:preprocessor # Opt into the C++20-conformant preprocessor.
   )
-  add_definitions(/D_CRT_SECURE_NO_WARNINGS)
+  add_compile_definitions(_CRT_SECURE_NO_WARNINGS)
 else()
   add_compile_options(-Wall -pedantic -Wno-unknown-warning-option -fno-exceptions -fno-rtti)
 
