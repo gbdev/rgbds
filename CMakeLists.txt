@@ -177,6 +177,10 @@ include_directories("include")
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+# CMake 4.5 C++ module scanning breaks with libstdc++.
+# https://gitlab.kitware.com/cmake/cmake/-/work_items/28313
+set(CMAKE_CXX_SCAN_FOR_MODULES OFF)
+
 if(MSVC)
   add_compile_options(
     /wd5030 # Warning C5030 is about unknown attributes (`[[gnu::ATTR]]`), none of ours being load-bearing.
