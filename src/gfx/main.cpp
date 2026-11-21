@@ -119,20 +119,6 @@ static Usage usage = {
 };
 // clang-format on
 
-// Parses a number at the beginning of a string, moving the pointer to skip the parsed characters.
-// Returns the provided errVal on error.
-static uint16_t readNumber(char const *&str, char const *errPrefix, uint16_t errVal = UINT16_MAX) {
-	if (std::optional<uint64_t> number = parseNumber(str); !number) {
-		error("%s: expected number, but found nothing", errPrefix);
-		return errVal;
-	} else if (*number > UINT16_MAX) {
-		error("%s: the number is too large", errPrefix);
-		return errVal;
-	} else {
-		return *number;
-	}
-}
-
 static void skipBlankSpace(char const *&arg) {
 	arg += strspn(arg, " \t");
 }
@@ -157,12 +143,13 @@ static void parseArg(int ch, char *arg) {
 		parseBackgroundPalSpec(arg);
 		break;
 
-	case 'b': {
-		uint16_t number = readNumber(argPtr, "Bank 0 base tile ID", 0);
-		if (number >= 256) {
+	case 'b':
+		if (std::optional<uint64_t> number = parseNumber(argPtr); !number) {
+			error("Invalid argument for bank 0 base tile ID");
+		} else if (*number >= 256) {
 			error("Bank 0 base tile ID must be below 256");
 		} else {
-			options.baseTileIDs[0] = number;
+			options.baseTileIDs[0] = *number;
 		}
 		if (*argPtr == '\0') {
 			options.baseTileIDs[1] = 0;
@@ -175,18 +162,18 @@ static void parseArg(int ch, char *arg) {
 		}
 		++argPtr; // Skip comma
 		skipBlankSpace(argPtr);
-		number = readNumber(argPtr, "Bank 1 base tile ID", 0);
-		if (number >= 256) {
+		if (std::optional<uint64_t> number = parseNumber(argPtr); !number) {
+			error("Invalid argument for bank 1 base tile ID");
+		} else if (*number >= 256) {
 			error("Bank 1 base tile ID must be below 256");
 		} else {
-			options.baseTileIDs[1] = number;
+			options.baseTileIDs[1] = *number;
 		}
 		if (*argPtr != '\0') {
 			error("Base tile IDs must be one or two comma-separated numbers, not \"%s\"", arg);
 			break;
 		}
 		break;
-	}
 
 	case 'C':
 		options.useColorCurve = true;
@@ -215,12 +202,13 @@ static void parseArg(int ch, char *arg) {
 		break;
 
 	case 'd':
-		options.bitDepth = readNumber(argPtr, "Bit depth", 2);
-		if (*argPtr != '\0') {
-			error("Bit depth ('-d') argument must be a valid number, not \"%s\"", arg);
-		} else if (options.bitDepth != 1 && options.bitDepth != 2) {
-			error("Bit depth must be 1 or 2, not %" PRIu8, options.bitDepth);
+		if (std::optional<uint64_t> number = parseWholeNumber(argPtr); !number) {
+			error("Invalid argument for bit depth");
+		} else if (*number != 1 && *number != 2) {
+			error("Bit depth must be 1 or 2, not %" PRIu64, *number);
 			options.bitDepth = 2;
+		} else {
+			options.bitDepth = *number;
 		}
 		break;
 
@@ -237,10 +225,14 @@ static void parseArg(int ch, char *arg) {
 		break;
 
 	case 'L':
-		options.inputSlice.left = readNumber(argPtr, "Input slice left coordinate");
-		if (options.inputSlice.left > INT16_MAX) {
+		if (std::optional<uint64_t> number = parseNumber(argPtr); !number) {
+			error("Invalid argument for input slice left coordinate");
+			break;
+		} else if (*number > INT16_MAX) {
 			error("Input slice left coordinate is out of range");
 			break;
+		} else {
+			options.inputSlice.left = *number;
 		}
 		skipBlankSpace(argPtr);
 		if (*argPtr != ',') {
@@ -249,7 +241,15 @@ static void parseArg(int ch, char *arg) {
 		}
 		++argPtr;
 		skipBlankSpace(argPtr);
-		options.inputSlice.top = readNumber(argPtr, "Input slice upper coordinate");
+		if (std::optional<uint64_t> number = parseNumber(argPtr); !number) {
+			error("Invalid argument for input slice upper coordinate");
+			break;
+		} else if (*number > INT16_MAX) {
+			error("Input slice upper coordinate is out of range");
+			break;
+		} else {
+			options.inputSlice.top = *number;
+		}
 		skipBlankSpace(argPtr);
 		if (*argPtr != ':') {
 			error("Missing colon after upper coordinate in \"%s\"", arg);
@@ -257,7 +257,18 @@ static void parseArg(int ch, char *arg) {
 		}
 		++argPtr;
 		skipBlankSpace(argPtr);
-		options.inputSlice.width = readNumber(argPtr, "Input slice width");
+		if (std::optional<uint64_t> number = parseNumber(argPtr); !number) {
+			error("Invalid argument for input slice width");
+			break;
+		} else if (*number > INT16_MAX) {
+			error("Input slice width is too large");
+			break;
+		} else if (*number == 0) {
+			error("Input slice width may not be 0");
+			break;
+		} else {
+			options.inputSlice.width = *number;
+		}
 		skipBlankSpace(argPtr);
 		if (options.inputSlice.width == 0) {
 			error("Input slice width may not be 0");
@@ -268,26 +279,32 @@ static void parseArg(int ch, char *arg) {
 		}
 		++argPtr;
 		skipBlankSpace(argPtr);
-		options.inputSlice.height = readNumber(argPtr, "Input slice height");
-		if (options.inputSlice.height == 0) {
+		if (std::optional<uint64_t> number = parseNumber(argPtr); !number) {
+			error("Invalid argument for input slice height");
+			break;
+		} else if (*number > INT16_MAX) {
+			error("Input slice height is too large");
+			break;
+		} else if (*number == 0) {
 			error("Input slice height may not be 0");
+			break;
+		} else {
+			options.inputSlice.height = *number;
 		}
 		if (*argPtr != '\0') {
 			error("Unexpected extra characters after slice spec in \"%s\"", arg);
 		}
 		break;
 
-	case 'l': {
-		uint16_t number = readNumber(argPtr, "Base palette ID", 0);
-		if (*argPtr != '\0') {
-			error("Base palette ID must be a valid number, not \"%s\"", arg);
-		} else if (number >= 256) {
+	case 'l':
+		if (std::optional<uint64_t> number = parseWholeNumber(argPtr); !number) {
+			error("Invalid argument for base palette ID");
+		} else if (*number >= 256) {
 			error("Base palette ID must be below 256");
 		} else {
-			options.basePalID = number;
+			options.basePalID = *number;
 		}
 		break;
-	}
 
 	case 'm':
 		options.allowMirroringX = true; // Imply `-X`
@@ -303,9 +320,14 @@ static void parseArg(int ch, char *arg) {
 		// If they were greater than 256, it would permit tile IDs to be truncated in the tilemap.
 		// We do warn that tile IDs may be truncated for the implicit/default unlimited number of
 		// tiles in bank 0.
-		options.maxNbTiles[0] = readNumber(argPtr, "Number of tiles in bank 0", 256);
-		if (options.maxNbTiles[0] > 256) {
+		if (std::optional<uint64_t> number = parseNumber(argPtr); !number) {
+			error("Invalid argument for number of tiles in bank 0");
+			break;
+		} else if (*number > 256) {
 			error("Bank 0 cannot contain more than 256 tiles");
+			break;
+		} else {
+			options.maxNbTiles[0] = *number;
 		}
 		if (*argPtr == '\0') {
 			options.maxNbTiles[1] = 0;
@@ -318,9 +340,14 @@ static void parseArg(int ch, char *arg) {
 		}
 		++argPtr; // Skip comma
 		skipBlankSpace(argPtr);
-		options.maxNbTiles[1] = readNumber(argPtr, "Number of tiles in bank 1", 256);
-		if (options.maxNbTiles[1] > 256) {
+		if (std::optional<uint64_t> number = parseNumber(argPtr); !number) {
+			error("Invalid argument for number of tiles in bank 1");
+			break;
+		} else if (*number > 256) {
 			error("Bank 1 cannot contain more than 256 tiles");
+			break;
+		} else {
+			options.maxNbTiles[1] = *number;
 		}
 		if (*argPtr != '\0') {
 			error("Bank capacity must be one or two comma-separated numbers, not \"%s\"", arg);
@@ -328,20 +355,17 @@ static void parseArg(int ch, char *arg) {
 		}
 		break;
 
-	case 'n': {
-		uint16_t number = readNumber(argPtr, "Number of palettes", 256);
-		if (*argPtr != '\0') {
-			error("Number of palettes ('-n') must be a valid number, not \"%s\"", arg);
-		}
-		if (number > 256) {
-			error("Number of palettes ('-n') must not exceed 256");
-		} else if (number == 0) {
-			error("Number of palettes ('-n') may not be 0");
+	case 'n':
+		if (std::optional<uint64_t> number = parseWholeNumber(argPtr); !number) {
+			error("Invalid argument for number of palettes");
+		} else if (*number > 256) {
+			error("Number of palettes must not exceed 256");
+		} else if (*number == 0) {
+			error("Number of palettes may not be 0");
 		} else {
-			options.nbPalettes = number;
+			options.nbPalettes = *number;
 		}
 		break;
-	}
 
 	case 'O':
 		localOptions.groupOutputs = true;
@@ -380,21 +404,24 @@ static void parseArg(int ch, char *arg) {
 
 	case 'r':
 		localOptions.reverse = true;
-		options.reversedWidth = readNumber(argPtr, "Reversed image stride");
-		if (*argPtr != '\0') {
-			error("Reversed image stride ('-r') must be a valid number, not \"%s\"", arg);
+		if (std::optional<uint64_t> number = parseWholeNumber(argPtr); !number) {
+			error("Invalid argument for reversed image stride");
+		} else if (*number > INT16_MAX) {
+			error("Reversed image stride is too large");
+		} else {
+			options.reversedWidth = *number;
 		}
 		break;
 
 	case 's':
-		options.nbColorsPerPal = readNumber(argPtr, "Number of colors per palette", MAX_PAL_COLORS);
-		if (*argPtr != '\0') {
-			error("Palette size ('-s') must be a valid number, not \"%s\"", arg);
-		}
-		if (options.nbColorsPerPal > MAX_PAL_COLORS) {
-			error("Palette size ('-s') must not exceed %zu", MAX_PAL_COLORS);
-		} else if (options.nbColorsPerPal == 0) {
-			error("Palette size ('-s') may not be 0");
+		if (std::optional<uint64_t> number = parseWholeNumber(argPtr); !number) {
+			error("Invalid argument for number of colors per palette");
+		} else if (*number > MAX_PAL_COLORS) {
+			error("Number of colors per palette must not exceed %zu", MAX_PAL_COLORS);
+		} else if (*number == 0) {
+			error("Number of colors per palette may not be 0");
+		} else {
+			options.nbColorsPerPal = *number;
 		}
 		break;
 
@@ -429,9 +456,12 @@ static void parseArg(int ch, char *arg) {
 		break;
 
 	case 'x':
-		options.trim = readNumber(argPtr, "Number of tiles to trim", 0);
-		if (*argPtr != '\0') {
-			error("Tile trim ('-x') argument must be a valid number, not \"%s\"", arg);
+		if (std::optional<uint64_t> number = parseWholeNumber(argPtr); !number) {
+			error("Invalid argument for number of tiles to trim");
+		} else if (*number > INT16_MAX) {
+			error("Number of tiles to trim is too large");
+		} else {
+			options.trim = *number;
 		}
 		break;
 
@@ -451,7 +481,7 @@ static void parseArg(int ch, char *arg) {
 
 	case 0: // Long-only options
 		if (longOpt == 'c' && !style_Parse(arg)) {
-			fatal("Invalid argument for option '--color'");
+			error("Invalid argument for option '--color'");
 		}
 		break;
 

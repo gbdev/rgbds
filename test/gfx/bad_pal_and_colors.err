@@ -1,3 +1,5 @@
-error: Palette size ('-s') must not exceed 4
-error: 2bpp palettes can only contain 4 colors, not 5
+error: Number of colors per palette must not exceed 4
+error: Each palette can only contain up to 4 colors
+In inline palette spec: "#111,#222,#333,#444,#555"
+                                             ^
 Conversion aborted after 2 errors
