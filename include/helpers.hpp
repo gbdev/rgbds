@@ -40,53 +40,6 @@ static inline void unreachable_() {
 	#define assume assert
 #endif
 
-// Ideally we'd use `std::bit_width`, but it has insufficient compiler support
-#ifdef __GNUC__ // GCC or compatible
-	#define ctz __builtin_ctz
-	#define clz __builtin_clz
-
-#elif defined(_MSC_VER)
-	#include <intrin.h>
-	#pragma intrinsic(_BitScanReverse, _BitScanForward)
-
-static inline int ctz(unsigned int x) {
-	assume(x != 0);
-	unsigned long count;
-	_BitScanForward(&count, x);
-	return count;
-}
-
-static inline int clz(unsigned int x) {
-	assume(x != 0);
-	unsigned long count;
-	_BitScanReverse(&count, x);
-	return 31 - count;
-}
-
-#else
-	#include <limits.h>
-
-static inline int ctz(unsigned int x) {
-	assume(x != 0);
-	int count = 0;
-	while (!(x & 1)) {
-		x >>= 1;
-		++count;
-	}
-	return count;
-}
-
-static inline int clz(unsigned int x) {
-	assume(x != 0);
-	int count = 0;
-	while (x <= UINT_MAX / 2) {
-		x <<= 1;
-		++count;
-	}
-	return count;
-}
-#endif
-
 // Macros for stringification
 #define STR(x)            #x
 #define EXPAND_AND_STR(x) STR(x)
