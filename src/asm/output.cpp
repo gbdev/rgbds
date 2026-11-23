@@ -390,7 +390,7 @@ static bool dumpMacros(FILE *file) {
 	for (Symbol const *sym : macros) {
 		ContentSpan const &body = sym->getMacro();
 		fprintf(file, "macro %s\n", sym->name.c_str());
-		fwrite(body.ptr.get(), 1, body.size, file);
+		fwrite(body.ptr, 1, body.size, file);
 		fputs("endm\n", file);
 	}
 

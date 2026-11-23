@@ -32,7 +32,8 @@ struct Expansion {
 };
 
 struct ContentSpan {
-	std::shared_ptr<char[]> ptr;
+	std::shared_ptr<std::vector<char>> owner;
+	char const *ptr;
 	size_t size;
 };
 

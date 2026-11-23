@@ -363,16 +363,15 @@ void LexerState::setFileAsNextState(std::string const &filePath, bool updateStat
 
 		if (std::streamsize size = statBuf.st_size; statBuf.st_size > 0) {
 			// Read the entire file for better performance
-			// Ideally we'd use C++20 `content.ptr = std::make_shared<char[]>(size)`,
-			// but it has insufficient compiler support
-			content.ptr = std::shared_ptr<char[]>(new char[size]);
-			content.size = static_cast<size_t>(size);
+			content.owner = std::make_shared<std::vector<char>>(static_cast<size_t>(size));
+			content.ptr = content.owner->data();
+			content.size = content.owner->size();
 
 			if (std::ifstream fs(path, std::ios::binary); !fs) {
 				// LCOV_EXCL_START
 				fatal("Failed to open file \"%s\": %s", path.c_str(), strerror(errno));
 				// LCOV_EXCL_STOP
-			} else if (!fs.read(content.ptr.get(), size) || fs.gcount() != size) {
+			} else if (!fs.read(content.owner->data(), size) || fs.gcount() != size) {
 				// LCOV_EXCL_START
 				fatal("Failed to read file \"%s\": %s", path.c_str(), strerror(errno));
 				// LCOV_EXCL_STOP
@@ -431,8 +430,9 @@ void LexerState::setFileAsNextState(std::string const &filePath, bool updateStat
 				vec->insert(vec->end(), buf, buf + ret);
 			}
 		}
-		content.ptr = std::shared_ptr<char[]>(vec, vec->data());
-		content.size = vec->size();
+		content.owner = std::move(vec);
+		content.ptr = content.owner->data();
+		content.size = content.owner->size();
 
 		verbosePrint(VERB_INFO, "File \"%s\" is fully read\n", path.c_str()); // LCOV_EXCL_LINE
 	}
@@ -2079,7 +2079,7 @@ static UpperMap<int> const leadingKeywords{
 static Token skipToLeadingKeywordFast(Procedure<> auto shiftFast) {
 	// This is essentially `skipToLeadingKeyword` with `peek` and `shiftChar` replaced,
 	// as well as anything that calls them like `nextChar` or `handleCRLF`.
-	char const *ptr = lexerState->content.ptr.get();
+	char const *ptr = lexerState->content.ptr;
 	auto peekFast = [&]() {
 		return lexerState->offset < lexerState->content.size ? ptr[lexerState->offset] : EOF;
 	};
@@ -2362,12 +2362,11 @@ static Capture makeCapture(char const *name, InvocableR<int, int> auto callback)
 	lexerState->captureSize = 0;
 
 	Capture capture = {
-	    .lineNo = lexer_GetLineNo(), .span = {.ptr = nullptr, .size = 0}
+	    .lineNo = lexer_GetLineNo(), .span = {.owner = nullptr, .ptr = nullptr, .size = 0}
 	};
 	if (lexerState->expansionStack.empty()) {
-		capture.span.ptr = std::shared_ptr<char[]>(
-		    lexerState->content.ptr, &lexerState->content.ptr[lexerState->offset]
-		);
+		capture.span.owner = lexerState->content.owner;
+		capture.span.ptr = lexerState->content.ptr + lexerState->offset;
 	} else {
 		assume(lexerState->captureBuf == nullptr);
 		lexerState->captureBuf = std::make_shared<std::vector<char>>();
@@ -2381,13 +2380,13 @@ static Capture makeCapture(char const *name, InvocableR<int, int> auto callback)
 	for (;;) {
 		if (Token token = skipToLeadingKeyword(); token.type == T_(YYEOF)) {
 			error("Unterminated %s", name);
-			capture.span = {.ptr = nullptr, .size = lexerState->captureSize};
+			capture.span = {.owner = nullptr, .ptr = nullptr, .size = lexerState->captureSize};
 			break;
 		} else if (size_t endTokenLength = callback(token.type); endTokenLength > 0) {
 			if (!capture.span.ptr) {
 				// Retrieve the capture buffer now that we're done capturing
-				capture.span.ptr =
-				    std::shared_ptr<char[]>(lexerState->captureBuf, lexerState->captureBuf->data());
+				capture.span.owner = lexerState->captureBuf;
+				capture.span.ptr = lexerState->captureBuf->data();
 			}
 			// Subtract the length of the ending token; we know we have read it exactly,
 			// not e.g. an interpolation or EQUS expansion, since those are disabled.
@@ -2400,7 +2399,7 @@ static Capture makeCapture(char const *name, InvocableR<int, int> auto callback)
 	verboseDo(VERB_TRACE, [&]() {
 		if (capture.span.ptr) {
 			fprintf(stderr, "Captured %s (", name);
-			verboseOutputString(std::string_view{capture.span.ptr.get(), capture.span.size});
+			verboseOutputString(std::string_view{capture.span.ptr, capture.span.size});
 			fputs(")\n", stderr);
 		}
 	});
