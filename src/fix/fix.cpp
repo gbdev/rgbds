@@ -5,6 +5,7 @@
 #include "fix/fix.hpp"
 #include <sys/stat.h>
 
+#include <bit>
 #include <errno.h>
 #include <limits.h>
 #include <stdarg.h>
@@ -305,14 +306,9 @@ static void
 			assume(rom0Len == sizeof(rom0));
 		}
 		assume(nbBanks >= 2);
-		// Alter number of banks to reflect required value
-		// x&(x-1) is zero iff x is a power of 2, or 0; we know for sure it's non-zero,
-		// so this is true (non-zero) when we don't have a power of 2
-		if (nbBanks & (nbBanks - 1)) {
-			nbBanks = 1 << (CHAR_BIT * sizeof(nbBanks) - clz(nbBanks));
-		}
+		nbBanks = std::bit_ceil(nbBanks);
 		// Write final ROM size
-		rom0[0x148] = ctz(nbBanks / 2);
+		rom0[0x148] = std::countr_zero(nbBanks / 2);
 		// Alter global checksum based on how many bytes will be added (not counting ROM0)
 		globalSum += options.padValue * ((nbBanks - 1) * BANK_SIZE - totalRomxLen);
 	}

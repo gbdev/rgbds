@@ -4,9 +4,10 @@
 
 #include "opmath.hpp"
 
+#include <bit>
 #include <stdint.h>
 
-#include "helpers.hpp" // assume, clz, ctz
+#include "helpers.hpp" // assume
 
 // Signed overflow is UB, so these compute with unsigned arithmetic, which wraps around.
 // Casting back is OK because the types implement two's complement behavior.
@@ -135,9 +136,9 @@ int32_t op_low(int32_t value) {
 }
 
 int32_t op_bitwidth(int32_t value) {
-	return value != 0 ? 32 - clz(static_cast<uint32_t>(value)) : 0;
+	return std::bit_width(static_cast<uint32_t>(value));
 }
 
 int32_t op_tzcount(int32_t value) {
-	return value != 0 ? ctz(static_cast<uint32_t>(value)) : 32;
+	return std::countr_zero(static_cast<uint32_t>(value));
 }
