@@ -63,7 +63,6 @@ bison_target(linker_script_parser "link/script.y"
 add_executable(rgblink $<TARGET_OBJECTS:common>
     "${BISON_linker_script_parser_OUTPUT_SOURCE}"
     "link/assign.cpp"
-    "link/fstack.cpp"
     "link/lexer.cpp"
     "link/layout.cpp"
     "link/main.cpp"

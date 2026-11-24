@@ -57,14 +57,10 @@ static std::vector<std::string> includePaths = {""}; // -I
 static std::deque<std::string> preIncludeStack;      // -P
 static bool failedOnMissingInclude = false;
 
-void FileStackNode::printBacktrace(uint32_t curLineNo) const {
-	trace_PrintFstackNodeBacktrace(*this, curLineNo);
-}
-
 void fstk_TraceCurrent() {
 	if (!lexer_AtTopLevel()) {
 		assume(!contextStack.empty());
-		contextStack.top().fileInfo->printBacktrace(lexer_GetLineNo());
+		trace_PrintFstackNodeBacktrace(*contextStack.top().fileInfo, lexer_GetLineNo());
 	}
 	lexer_TraceStringExpansions();
 }

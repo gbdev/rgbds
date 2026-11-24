@@ -16,6 +16,7 @@
 #include <utility>
 #include <variant>
 
+#include "backtrace.hpp"
 #include "diagnostics.hpp"
 #include "helpers.hpp" // assume
 #include "util.hpp"
@@ -152,7 +153,7 @@ static void printBacktraces(Symbol const &sym) {
 	fstk_TraceCurrent();
 	fputs("    and also:\n", stderr);
 	if (sym.src) {
-		sym.src->printBacktrace(sym.fileLine);
+		trace_PrintFstackNodeBacktrace(*sym.src, sym.fileLine);
 	} else {
 		fprintf(stderr, "    at <%s>\n", sym.isBuiltin ? "builtin" : "command-line");
 	}

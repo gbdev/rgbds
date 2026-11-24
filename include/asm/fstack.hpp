@@ -49,8 +49,6 @@ struct FileStackNode {
 	)
 	    : type(type_), data(data_), isQuiet(isQuiet_) {}
 
-	void printBacktrace(uint32_t curLineNo) const;
-
 	// For use inside `trace_PrintFstackNodeBacktrace`
 	FileStackNode const *parentNode() const { return parent.get(); }
 };

@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "backtrace.hpp"
 #include "diagnostics.hpp"
 #include "style.hpp"
 
@@ -59,7 +60,7 @@ void warning(FileStackNode const *src, uint32_t lineNo, char const *fmt, ...) {
 	vwarnx(fmt, args);
 	va_end(args);
 	if (src) {
-		src->printBacktrace(lineNo);
+		trace_PrintFstackNodeBacktrace(*src, lineNo);
 	}
 }
 
@@ -77,7 +78,7 @@ void error(FileStackNode const *src, uint32_t lineNo, char const *fmt, ...) {
 	va_end(args);
 
 	if (src) {
-		src->printBacktrace(lineNo);
+		trace_PrintFstackNodeBacktrace(*src, lineNo);
 	}
 	warnings.incrementErrors();
 }
@@ -109,7 +110,7 @@ void fatal(FileStackNode const *src, uint32_t lineNo, char const *fmt, ...) {
 	va_end(args);
 
 	if (src) {
-		src->printBacktrace(lineNo);
+		trace_PrintFstackNodeBacktrace(*src, lineNo);
 	}
 	warnings.incrementErrors();
 	abortLinking(nullptr);
@@ -140,9 +141,9 @@ void fatalTwo(
 	vfatalx(fmt, args);
 	va_end(args);
 
-	src1.printBacktrace(lineNo1);
+	trace_PrintFstackNodeBacktrace(src1, lineNo1);
 	fputs("    and also:\n", stderr);
-	src2.printBacktrace(lineNo2);
+	trace_PrintFstackNodeBacktrace(src2, lineNo2);
 	warnings.incrementErrors();
 	abortLinking(nullptr);
 }
@@ -161,7 +162,7 @@ void warning(FileStackNode const *src, uint32_t lineNo, WarningID id, char const
 
 	if (behavior != WarningBehavior::DISABLED) {
 		if (src) {
-			src->printBacktrace(lineNo);
+			trace_PrintFstackNodeBacktrace(*src, lineNo);
 		}
 		if (behavior == WarningBehavior::ERROR) {
 			warnings.incrementErrors();

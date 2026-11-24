@@ -11,7 +11,8 @@
 #include <variant>
 #include <vector>
 
-#include "helpers.hpp" // assume
+#include "backtrace.hpp" // assume
+#include "helpers.hpp"   // assume
 #include "linkdefs.hpp"
 
 #include "link/fstack.hpp"
@@ -87,7 +88,7 @@ void sym_TraceLocalAliasedSymbols(std::string const &name) {
 			break;
 		}
 		assume(local->src);
-		local->src->printBacktrace(local->lineNo);
+		trace_PrintFstackNodeBacktrace(*local->src, local->lineNo);
 		++nbListed;
 	}
 }
