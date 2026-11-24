@@ -20,6 +20,7 @@
 #include <utility>
 #include <vector>
 
+#include "backtrace.hpp"
 #include "helpers.hpp"
 #include "itertools.hpp" // InsertionOrderedMap
 #include "linkdefs.hpp"
@@ -301,7 +302,7 @@ static void mergeSections(
 				fprintf(stderr, "Section \"%s\" already defined\n", sect.name.c_str());
 				fstk_TraceCurrent();
 				fputs("    and also:\n", stderr);
-				sect.src->printBacktrace(sect.fileLine);
+				trace_PrintFstackNodeBacktrace(*sect.src, sect.fileLine);
 			});
 
 		case SECTION_UNION:
