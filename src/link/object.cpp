@@ -129,7 +129,7 @@ static void readFileStackNode(
 		node.data = std::vector<uint32_t>(depth);
 		for (uint32_t i = 0; i < depth; ++i) {
 			tryReadLong(
-			    node.iters()[i],
+			    node.iters()[depth - i - 1],
 			    file,
 			    "%s: Cannot read node #%" PRIu32 "'s iter #%" PRIu32 ": %s",
 			    fileName,

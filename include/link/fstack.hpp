@@ -33,6 +33,9 @@ struct FileStackNode {
 	std::string const &name() const { return std::get<std::string>(data); }
 
 	void printBacktrace(uint32_t curLineNo) const;
+
+	// For use inside `trace_PrintFstackNodeBacktrace`
+	FileStackNode const *parentNode() const { return parent; }
 };
 
 #endif // RGBDS_LINK_FSTACK_HPP
