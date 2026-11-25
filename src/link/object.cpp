@@ -275,9 +275,12 @@ static void readSection(
 	tryReadLong(
 	    tmp, file, "%s: Cannot read \"%s\"'s alignment offset: %s", fileName, section.name.c_str()
 	);
-	if (tmp > UINT16_MAX) {
-		error("\"%s\"'s alignment offset is too large ($%" PRIx32 ")", section.name.c_str(), tmp);
+	if (tmp < 0 || tmp > UINT16_MAX) {
+		error("\"%s\"'s alignment offset is invalid ($%" PRIx32 ")", section.name.c_str(), tmp);
 		tmp = UINT16_MAX;
+	} else if (section.isAlignFixed && static_cast<uint32_t>(tmp) > section.alignMask) {
+		error("\"%s\"'s alignment offset is too large ($%" PRIx32 ")", section.name.c_str(), tmp);
+		tmp = 0;
 	}
 	section.alignOfs = tmp;
 
