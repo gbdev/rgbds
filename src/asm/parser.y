@@ -397,6 +397,7 @@
 %type <Capture> capture_rept
 %type <RPNCommand> compound_eq
 %type <std::vector<int32_t>> charmap_args
+%type <std::vector<Expression>> ds_list
 %type <std::vector<Expression>> ds_args
 %type <ForArgs> for_args
 %type <std::shared_ptr<MacroArgs>> macro_args
@@ -1828,18 +1829,25 @@ ds:
 	POP_DS uconst {
 		sect_Skip($2, true);
 	}
-	| POP_DS uconst COMMA ds_args trailing_comma {
+	| POP_DS uconst COMMA ds_list {
 		sect_RelBytes($2, $4);
 	}
-	| POP_DS POP_ALIGN LBRACK align_spec RBRACK trailing_comma {
+	| POP_DS POP_ALIGN LBRACK align_spec RBRACK {
 		uint32_t n = sect_GetAlignBytes($4.alignment, $4.alignOfs);
 		sect_Skip(n, true);
 		sect_AlignPC($4.alignment, $4.alignOfs);
 	}
-	| POP_DS POP_ALIGN LBRACK align_spec RBRACK COMMA ds_args trailing_comma {
+	| POP_DS POP_ALIGN LBRACK align_spec RBRACK COMMA ds_list {
 		uint32_t n = sect_GetAlignBytes($4.alignment, $4.alignOfs);
 		sect_RelBytes(n, $7);
 		sect_AlignPC($4.alignment, $4.alignOfs);
+	}
+;
+
+ds_list:
+	  %empty {}
+	| ds_args trailing_comma {
+		$$ = std::move($1);
 	}
 ;
 
