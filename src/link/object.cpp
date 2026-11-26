@@ -498,6 +498,34 @@ static void readAssertion(
 	);
 }
 
+// Validates that there are no cycles in the graph of parent nodes with a three-color DFS.
+// Any cycles from an invalid object file would cause printing backtraces to infinitely loop.
+static void checkFileStackNodes(std::vector<FileStackNode> const &fileNodes, char const *fileName) {
+	enum DfsState : uint8_t { DFS_UNVISITED, DFS_VISITED, DFS_TERMINATES };
+	std::vector<DfsState> states(fileNodes.size(), DFS_UNVISITED);
+	for (size_t nodeID = 0; nodeID < fileNodes.size(); ++nodeID) {
+		for (size_t i = nodeID; states[i] != DFS_TERMINATES;) {
+			if (states[i] == DFS_VISITED) {
+				fatal("%s: Node #%zu has cyclic parent ID #%zu", fileName, nodeID, i);
+			}
+			states[i] = DFS_VISITED;
+			if (FileStackNode const *parent = fileNodes[i].parent; parent != nullptr) {
+				i = static_cast<size_t>(parent - fileNodes.data());
+			} else {
+				break;
+			}
+		}
+		for (size_t i = nodeID; states[i] == DFS_VISITED;) {
+			states[i] = DFS_TERMINATES;
+			if (FileStackNode const *parent = fileNodes[i].parent; parent != nullptr) {
+				i = static_cast<size_t>(parent - fileNodes.data());
+			} else {
+				break;
+			}
+		}
+	}
+}
+
 void obj_ReadFile(std::string const &filePath, size_t fileID) {
 	FILE *file;
 	char const *fileName = filePath.c_str();
@@ -582,6 +610,7 @@ void obj_ReadFile(std::string const &filePath, size_t fileID) {
 	for (uint32_t nodeID = nbNodes; nodeID--;) {
 		readFileStackNode(file, nodes[fileID], nodeID, fileName);
 	}
+	checkFileStackNodes(nodes[fileID], fileName);
 
 	// This file's symbols, kept to link sections to them
 	std::vector<Symbol> &fileSymbols = symbolLists.emplace_front(nbSymbols);

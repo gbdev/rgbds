@@ -1,0 +1,2 @@
+FATAL: <object>: Node #0 has cyclic parent ID #0
+Linking aborted with 1 error
