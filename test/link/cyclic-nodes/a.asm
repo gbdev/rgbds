@@ -1,0 +1,2 @@
+SECTION "s", ROM0
+db 42

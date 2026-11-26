@@ -180,6 +180,29 @@ tryDiff "$test"/ref.out.sym "$outtemp2"
 tryCmpRom "$test"/ref.out.bin
 evaluateTest
 
+test="cyclic-nodes"
+startTest
+"$RGBASM" -o "$otemp" "$test"/a.asm
+"$RGBASM" -o "$gbtemp2" "$test"/a.asm
+# Patch one node's parent ID to be itself, #0
+dd if=/dev/zero "of=$gbtemp2" bs=1 count=4 seek=20 conv=notrunc >/dev/null
+continueTest
+rgblinkQuiet -o "$gbtemp" "$otemp" "$gbtemp2" 2>"$outtemp"
+# Replace the file name with "<object>" to match changed output
+fixed_output="$input"
+if type -t cygpath >/dev/null; then
+	# MinGW needs the Windows path substituted but with forward slash separators;
+	# Cygwin has `cygpath` but just needs the original path substituted.
+	subst1="$(printf '%s\n' "$gbtemp2" | sed 's:[][\/.^$*]:\\&:g')"
+	subst2="$(printf '%s\n' "$(cygpath -w "$gbtemp2")" | sed -e 's:\\:/:g' -e 's:[][\/.^$*]:\\&:g')"
+	sed -e "s/$subst1/<object>/g" -e "s/$subst2/<object>/g" "$outtemp" >"$outtemp2"
+else
+	subst="$(printf '%s\n' "$gbtemp2" | sed 's:[][\/.^$*]:\\&:g')"
+	sed "s/$subst/<object>/g" "$outtemp" >"$outtemp2"
+fi
+tryDiff "$test"/out.err "$outtemp2"
+evaluateTest
+
 test="export-all"
 startTest
 "$RGBASM" -E -o "$otemp" "$test"/a.asm
