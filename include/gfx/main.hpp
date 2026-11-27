@@ -19,6 +19,7 @@ static constexpr uint32_t TILE_WIDTH = 8;  // in pixels
 static constexpr uint32_t TILE_HEIGHT = 8; // in pixels
 
 static constexpr size_t MAX_PAL_COLORS = 4;
+static constexpr size_t MAX_NB_PALETTES = 256;
 
 // Forward declaration so `inputSlice`'s `bottom` method inside `Options` can refer to `options`.
 struct Options;
